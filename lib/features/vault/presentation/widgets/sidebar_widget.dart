@@ -21,11 +21,38 @@ import 'tree_node_widget.dart';
 import 'workspace_head.dart';
 
 /// Full sidebar. Matches `Sidebar` from `shell.jsx:72-126`.
-class SidebarWidget extends StatelessWidget {
+class SidebarWidget extends StatefulWidget {
   const SidebarWidget({super.key, this.activeUlid, this.width = 260});
 
   final String? activeUlid;
   final double width;
+
+  @override
+  State<SidebarWidget> createState() => _SidebarWidgetState();
+}
+
+class _SidebarWidgetState extends State<SidebarWidget> {
+  final TextEditingController _treeFilter = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _treeFilter.addListener(_rebuildOnFilter);
+  }
+
+  @override
+  void dispose() {
+    _treeFilter.removeListener(_rebuildOnFilter);
+    _treeFilter.dispose();
+    super.dispose();
+  }
+
+  void _rebuildOnFilter() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  String? get _activeUlid => widget.activeUlid;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +78,7 @@ class SidebarWidget extends StatelessWidget {
     final pageCount = state is VaultLoaded ? state.pageCount : 0;
 
     return Container(
-      width: width,
+      width: widget.width,
       decoration: BoxDecoration(
         color: tokens.sidebar,
         border: Border(right: BorderSide(color: tokens.divider, width: 0.5)),
@@ -73,7 +100,7 @@ class SidebarWidget extends StatelessWidget {
                     const SideHead(label: 'Favorites'),
                     _FavoritesList(
                       ulids: state.workspace.favorites,
-                      activeUlid: activeUlid,
+                      activeUlid: _activeUlid,
                       rebuildKey: '${state.rootPath}-${state.workspace.favorites.length}',
                     ),
                   ],
@@ -81,7 +108,7 @@ class SidebarWidget extends StatelessWidget {
                     const SideHead(label: 'Recent'),
                     _RecentList(
                       rebuildKey: '${state.rootPath}-${state.pageCount}',
-                      activeUlid: activeUlid,
+                      activeUlid: _activeUlid,
                     ),
                   ],
                   SideHead(
@@ -91,7 +118,12 @@ class SidebarWidget extends StatelessWidget {
                         ? () => _promptNewPage(context)
                         : null,
                   ),
-                  TreeRoot(activeUlid: activeUlid),
+                  if (state is VaultLoaded)
+                    _TreeFilterField(controller: _treeFilter),
+                  TreeRoot(
+                    activeUlid: _activeUlid,
+                    filter: _treeFilter.text.trim(),
+                  ),
                   const SideHead(label: 'Databases', actionIcon: 'plus'),
                   if (state is VaultLoaded)
                     _DatabasesList(rebuildKey: state.rootPath)
@@ -178,6 +210,67 @@ class SidebarWidget extends StatelessWidget {
       return '~${path.substring(home.length)}';
     }
     return path;
+  }
+}
+
+/// Inline search input that filters the vault tree by name. Setting
+/// text rebuilds the tree with the new query; clearing returns to the
+/// full tree. Owned by SidebarWidget so the query persists while the
+/// user switches between pages.
+class _TreeFilterField extends StatelessWidget {
+  const _TreeFilterField({required this.controller});
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: tokens.inputBg,
+          border: Border.all(color: tokens.divider2, width: 0.5),
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+        ),
+        child: Row(
+          children: [
+            QuillIcon('filter',
+                size: 11, strokeWidth: 1.7, color: tokens.text3),
+            const SizedBox(width: 6),
+            Expanded(
+              child: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: controller,
+                builder: (_, val, __) => TextField(
+                  controller: controller,
+                  style: TextStyle(fontSize: 11.5, color: tokens.text),
+                  decoration: InputDecoration(
+                    isCollapsed: true,
+                    contentPadding: EdgeInsets.zero,
+                    border: InputBorder.none,
+                    hintText: 'Filter tree',
+                    hintStyle: TextStyle(fontSize: 11.5, color: tokens.text3),
+                  ),
+                ),
+              ),
+            ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (_, val, __) => val.text.isEmpty
+                  ? const SizedBox.shrink()
+                  : GestureDetector(
+                      onTap: () => controller.clear(),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Icon(Icons.close,
+                            size: 11, color: tokens.text3),
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

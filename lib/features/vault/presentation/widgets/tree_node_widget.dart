@@ -270,14 +270,31 @@ class _AddSubpageButton extends StatelessWidget {
 
 /// Stateless adapter — reads vault state and renders the top-level tree.
 class TreeRoot extends StatelessWidget {
-  const TreeRoot({super.key, required this.activeUlid});
+  const TreeRoot({super.key, required this.activeUlid, this.filter = ''});
   final String? activeUlid;
+
+  /// Non-empty filter narrows the tree to nodes whose name contains
+  /// the query (case-insensitive), plus their ancestor folders. Empty
+  /// = no filtering.
+  final String filter;
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<VaultBloc>().state;
     if (state is! VaultLoaded) return const SizedBox.shrink();
     final tokens = QuillTokens.of(context);
+
+    final q = filter.toLowerCase();
+    final activeFilter = q.isNotEmpty;
+    final visible = activeFilter
+        ? _filterNodes(state.tree.topLevel, q)
+        : state.tree.topLevel;
+    // When filtering, expand every visible folder so matches are reachable
+    // without manual clicking.
+    final expanded = activeFilter
+        ? _allFolderPaths(visible)
+        : state.expandedFolders;
+
     return DragTarget<String>(
       onWillAcceptWithDetails: (_) => true,
       onAcceptWithDetails: (d) {
@@ -308,11 +325,20 @@ class TreeRoot extends StatelessWidget {
                     style: TextStyle(fontSize: 11.5, color: tokens.text3),
                   ),
                 ),
-              for (final node in state.tree.topLevel)
+              if (state.tree.topLevel.isNotEmpty && visible.isEmpty)
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Text(
+                    'No matches',
+                    style: TextStyle(fontSize: 11.5, color: tokens.text3),
+                  ),
+                ),
+              for (final node in visible)
                 TreeNodeWidget(
                   node: node,
                   level: 0,
-                  expandedFolders: state.expandedFolders,
+                  expandedFolders: expanded,
                   activeUlid: activeUlid,
                 ),
             ],
@@ -320,5 +346,43 @@ class TreeRoot extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Walk [nodes] keeping any file whose name contains [q] and any
+  /// folder that has a matching descendant. Order preserved.
+  static List<VaultNode> _filterNodes(List<VaultNode> nodes, String q) {
+    final out = <VaultNode>[];
+    for (final node in nodes) {
+      if (node is VaultFile) {
+        if (node.name.toLowerCase().contains(q)) out.add(node);
+      } else if (node is VaultFolder) {
+        final keptChildren = _filterNodes(node.children, q);
+        if (keptChildren.isNotEmpty ||
+            node.name.toLowerCase().contains(q)) {
+          out.add(VaultFolder(
+            name: node.name,
+            relativePath: node.relativePath,
+            children: keptChildren,
+          ));
+        }
+      }
+    }
+    return out;
+  }
+
+  static Set<String> _allFolderPaths(List<VaultNode> nodes) {
+    final out = <String>{};
+    void walk(VaultNode n) {
+      if (n is VaultFolder) {
+        out.add(n.relativePath);
+        for (final c in n.children) {
+          walk(c);
+        }
+      }
+    }
+    for (final n in nodes) {
+      walk(n);
+    }
+    return out;
   }
 }
