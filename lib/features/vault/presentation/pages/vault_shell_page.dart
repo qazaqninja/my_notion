@@ -9,6 +9,8 @@ import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../commands/presentation/widgets/command_palette_overlay.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
+import '../../../../shared/widgets/responsive_layout.dart';
+import '../widgets/mobile_chrome.dart';
 import '../widgets/sidebar_widget.dart';
 
 /// Desktop shell — sidebar on the left, child route content on the right,
@@ -63,36 +65,69 @@ class _VaultShellPageState extends State<VaultShellPage> {
         child: Focus(
           focusNode: _rootFocus,
           autofocus: true,
-          child: Scaffold(
-            backgroundColor: tokens.bg,
-            body: Stack(
-              children: [
-                Row(
-                  children: [
-                    SidebarWidget(activeUlid: widget.activeUlid),
-                    Expanded(child: widget.child),
-                  ],
-                ),
-                CommandPaletteOverlay(
-                  onPickPage: (p) {
-                    context.read<CommandPaletteCubit>().dismiss();
-                    context.go('/editor/${p.ulid}');
-                  },
-                  onPickDatabase: (d) {
-                    context.read<CommandPaletteCubit>().dismiss();
-                    context.go('/db/${d.id}');
-                  },
-                  onInvokeAction: (a) {
-                    context.read<CommandPaletteCubit>().dismiss();
-                    // Actions are visual-only in v1 — the user can wire
-                    // real handlers in subsequent milestones.
-                  },
-                ),
-              ],
+          child: ResponsiveLayout(
+            desktop: Scaffold(
+              backgroundColor: tokens.bg,
+              body: Stack(
+                children: [
+                  Row(
+                    children: [
+                      SidebarWidget(activeUlid: widget.activeUlid),
+                      Expanded(child: widget.child),
+                    ],
+                  ),
+                  _paletteOverlay(context),
+                ],
+              ),
+            ),
+            mobile: Scaffold(
+              backgroundColor: tokens.bg,
+              drawer: Drawer(
+                width: 300,
+                backgroundColor: tokens.sidebar,
+                child: SidebarWidget(activeUlid: widget.activeUlid, width: 300),
+              ),
+              body: Stack(
+                children: [
+                  Column(
+                    children: [
+                      Expanded(child: widget.child),
+                      const MobileTabBar(),
+                    ],
+                  ),
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 4,
+                    left: 4,
+                    child: Builder(
+                      builder: (innerContext) => IconButton(
+                        icon: Icon(Icons.menu, color: tokens.text2, size: 18),
+                        onPressed: () => Scaffold.of(innerContext).openDrawer(),
+                      ),
+                    ),
+                  ),
+                  _paletteOverlay(context),
+                ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _paletteOverlay(BuildContext context) {
+    return CommandPaletteOverlay(
+      onPickPage: (p) {
+        context.read<CommandPaletteCubit>().dismiss();
+        context.go('/editor/${p.ulid}');
+      },
+      onPickDatabase: (d) {
+        context.read<CommandPaletteCubit>().dismiss();
+        context.go('/db/${d.id}');
+      },
+      onInvokeAction: (a) {
+        context.read<CommandPaletteCubit>().dismiss();
+      },
     );
   }
 }
