@@ -31,7 +31,7 @@ void main() {
       expect(body, contains('id: '));
       // Every template's id should be a valid ULID (26 chars [0-9A-Z]).
       final idMatch =
-          RegExp(r'^id: ([0-9A-Za-z]{26})', multiLine: true).firstMatch(body);
+          RegExp(r'^id: ([0-9A-Z]{26})', multiLine: true).firstMatch(body);
       expect(idMatch, isNotNull, reason: '${p.basename(f.path)} missing id');
       // Placeholders are replaced.
       expect(body, isNot(contains('__ULID__')));
@@ -53,7 +53,7 @@ void main() {
     final ulids = <String>{};
     for (final f in files) {
       final body = await f.readAsString();
-      final m = RegExp(r'^id: ([0-9A-Za-z]{26})', multiLine: true)
+      final m = RegExp(r'^id: ([0-9A-Z]{26})', multiLine: true)
           .firstMatch(body);
       if (m != null) ulids.add(m.group(1)!);
     }
