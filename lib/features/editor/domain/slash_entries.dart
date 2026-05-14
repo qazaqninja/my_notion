@@ -168,6 +168,13 @@ const List<SlashEntry> kSlashEntries = [
   ),
   SlashEntry(
     icon: 'note',
+    label: 'Breadcrumb',
+    hint: 'path',
+    snippet: '[breadcrumb]\n',
+    keywords: ['breadcrumb', 'path', 'trail', 'crumbs'],
+  ),
+  SlashEntry(
+    icon: 'note',
     label: 'Toggle (collapsible)',
     hint: '⌄',
     snippet: '<details><summary>Summary</summary>\nBody\n</details>\n',

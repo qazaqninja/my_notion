@@ -32,6 +32,7 @@ class MarkdownRenderer extends StatefulWidget {
     this.showUlid = false,
     this.onBodyChange,
     this.font,
+    this.relativePath,
   });
 
   final String body;
@@ -47,6 +48,11 @@ class MarkdownRenderer extends StatefulWidget {
   /// commit, this callback receives the body with the block's source
   /// slice replaced.
   final ValueChanged<String>? onBodyChange;
+
+  /// Vault-relative path of the current page (e.g. `Ops/Customers/Acmeco.md`).
+  /// Powers the inline `[breadcrumb]` block. When null, that block
+  /// renders nothing.
+  final String? relativePath;
 
   @override
   State<MarkdownRenderer> createState() => _MarkdownRendererState();
@@ -421,6 +427,8 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
         );
       case _BlockKind.toc:
         return _renderToc(context, tokens);
+      case _BlockKind.breadcrumb:
+        return _renderBreadcrumb(context, tokens);
       case _BlockKind.toggle:
         return _ToggleBlock(
           rawText: b.text,
@@ -518,6 +526,57 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
               text: t,
               lineFraction: totalLines == 0 ? 0 : idx / totalLines,
             ),
+        ],
+      ),
+    );
+  }
+
+  /// Breadcrumb body block. Splits [widget.relativePath] on `/`, strips
+  /// the trailing `.md`, and renders each segment as mono text with a
+  /// dim `/` separator — same visual language as the PageHeader crumbs
+  /// but inline in the page body. Renders nothing when relativePath is
+  /// null so the parser still recognises `[breadcrumb]` without
+  /// crashing during preview rendering.
+  Widget _renderBreadcrumb(BuildContext context, QuillTokens tokens) {
+    final rp = widget.relativePath;
+    if (rp == null || rp.trim().isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'Breadcrumb · (path unavailable — only renders inside the editor)',
+          style: TextStyle(fontSize: 12, color: tokens.text3),
+        ),
+      );
+    }
+    final stripped =
+        rp.endsWith('.md') ? rp.substring(0, rp.length - 3) : rp;
+    final crumbs = stripped.split('/').where((s) => s.isNotEmpty).toList();
+    if (crumbs.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (var i = 0; i < crumbs.length; i++) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  '/',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: tokens.text3.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+            Text(
+              crumbs[i],
+              style: mono(
+                fontSize: 12.5,
+                color: i == crumbs.length - 1 ? tokens.text2 : tokens.text3,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -743,6 +802,22 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
         i++;
         out.add(_Block(
           kind: _BlockKind.toc,
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
+        continue;
+      }
+
+      // Breadcrumb: a line consisting only of `[breadcrumb]` or
+      // `[[breadcrumb]]`. Renders the page's vault-relative path as
+      // a mono `/`-separated trail. When relativePath is null, falls
+      // back to a dim placeholder so authors know the block is
+      // recognised but inert.
+      if (line.trim().toLowerCase() == '[breadcrumb]' ||
+          line.trim().toLowerCase() == '[[breadcrumb]]') {
+        i++;
+        out.add(_Block(
+          kind: _BlockKind.breadcrumb,
           sourceStart: start,
           sourceEnd: endOf(i),
         ));
@@ -1714,6 +1789,7 @@ enum _BlockKind {
   columns,
   button,
   dbEmbed,
+  breadcrumb,
 }
 
 List<String> _splitTableRow(String line) {
@@ -2525,6 +2601,7 @@ String _blockKindLabel(_BlockKind k) => switch (k) {
       _BlockKind.columns => 'Columns',
       _BlockKind.button => 'Button',
       _BlockKind.dbEmbed => 'Database',
+      _BlockKind.breadcrumb => 'Breadcrumb',
       _BlockKind.hr => 'Divider',
     };
 

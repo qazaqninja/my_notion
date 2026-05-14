@@ -612,6 +612,7 @@ class _EditorBodyState extends State<_EditorBody> {
                                 MarkdownRenderer(
                                   body: page.body,
                                   font: page.frontmatter.get('font')?.toString(),
+                                  relativePath: page.relativePath,
                                   onBodyChange: locked
                                       ? null
                                       : (next) => context
