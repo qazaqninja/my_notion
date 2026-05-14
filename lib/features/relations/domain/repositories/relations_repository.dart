@@ -14,10 +14,16 @@ class Backlink {
     required this.title,
     required this.relativePath,
     required this.snippet,
+    this.emojiIcon,
   });
 
   final String fromUlid;
   final String title;
   final String relativePath;
   final String snippet;
+
+  /// Plain-emoji `icon:` from the linking page's frontmatter. Asset
+  /// paths and URLs are surfaced as null (a 12px backlink card can't
+  /// render an async-loaded image).
+  final String? emojiIcon;
 }

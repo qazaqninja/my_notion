@@ -64,7 +64,23 @@ class BacklinksRail extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            QuillIcon('file-md', size: 12, strokeWidth: 1.7, color: tokens.text3),
+                            if (bl.emojiIcon != null)
+                              SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: Center(
+                                  child: Text(
+                                    bl.emojiIcon!,
+                                    style: const TextStyle(
+                                        fontSize: 11, height: 1),
+                                  ),
+                                ),
+                              )
+                            else
+                              QuillIcon('file-md',
+                                  size: 12,
+                                  strokeWidth: 1.7,
+                                  color: tokens.text3),
                             const SizedBox(width: 5),
                             Flexible(
                               child: Text(
