@@ -129,8 +129,10 @@ GoRouter _buildRouter(VaultBloc vault) {
           GoRoute(
             path: '/editor/:ulid',
             builder: (context, state) => EditorPage(
-              key: ValueKey(state.pathParameters['ulid']),
+              key: ValueKey(
+                  '${state.pathParameters['ulid']}#${state.uri.queryParameters['anchor'] ?? ''}'),
               ulid: state.pathParameters['ulid']!,
+              anchor: state.uri.queryParameters['anchor'],
             ),
           ),
           GoRoute(

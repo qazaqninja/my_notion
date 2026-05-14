@@ -30,8 +30,12 @@ import '../widgets/properties_panel.dart';
 import '../widgets/source_view.dart';
 
 class EditorPage extends StatelessWidget {
-  const EditorPage({super.key, required this.ulid});
+  const EditorPage({super.key, required this.ulid, this.anchor});
   final String ulid;
+
+  /// When non-null, the editor scrolls to the first heading whose
+  /// slugified text matches. Populated from `?anchor=…` in the URL.
+  final String? anchor;
 
   @override
   Widget build(BuildContext context) {
@@ -50,16 +54,25 @@ class EditorPage extends StatelessWidget {
         bloc.add(OpenEditor(ulid));
         return bloc;
       },
-      child: const _EditorBody(),
+      child: _EditorBody(anchor: anchor),
     );
   }
 }
 
 class _EditorBody extends StatefulWidget {
-  const _EditorBody();
+  const _EditorBody({this.anchor});
+  final String? anchor;
 
   @override
   State<_EditorBody> createState() => _EditorBodyState();
+}
+
+/// Heading slug: lowercase, runs of non-word collapsed to `-`, trimmed.
+/// Mirrors the common GFM heading-anchor convention.
+String _slugify(String s) {
+  final lower = s.toLowerCase();
+  final cleaned = lower.replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+  return cleaned.replaceAll(RegExp(r'(^-+)|(-+$)'), '');
 }
 
 bool _isFullWidth(dynamic frontmatter) {
@@ -70,6 +83,55 @@ bool _isFullWidth(dynamic frontmatter) {
 
 class _EditorBodyState extends State<_EditorBody> {
   bool _propertiesOpen = false;
+  final ScrollController _scroll = ScrollController();
+  bool _anchorJumped = false;
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// After the body lays out, scroll to the heading line whose slug
+  /// matches `anchor`. We approximate the offset as
+  ///   (lineIdx / totalLines) * maxScrollExtent
+  /// — same heuristic the TOC links use (M68) — which is close enough
+  /// for monospace-tall heading rows and degrades gracefully for
+  /// pages with mixed block heights.
+  void _jumpToAnchorIfNeeded(String body) {
+    if (_anchorJumped) return;
+    final anchor = widget.anchor;
+    if (anchor == null || anchor.isEmpty) return;
+    _anchorJumped = true;
+    final lines = body.split('\n');
+    int? hit;
+    for (var i = 0; i < lines.length; i++) {
+      final l = lines[i];
+      String? heading;
+      if (l.startsWith('# ')) {
+        heading = l.substring(2);
+      } else if (l.startsWith('## ')) {
+        heading = l.substring(3);
+      } else if (l.startsWith('### ')) {
+        heading = l.substring(4);
+      }
+      if (heading != null && _slugify(heading) == anchor) {
+        hit = i;
+        break;
+      }
+    }
+    if (hit == null) return;
+    final frac = lines.isEmpty ? 0.0 : hit / lines.length;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scroll.hasClients) return;
+      final pos = _scroll.position;
+      final target = (pos.maxScrollExtent * frac)
+          .clamp(pos.minScrollExtent, pos.maxScrollExtent);
+      pos.animateTo(target,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOut);
+    });
+  }
 
   Future<void> _pickIcon(BuildContext context, EditorLoaded loaded) async {
     final bloc = context.read<EditorBloc>();
@@ -208,9 +270,12 @@ class _EditorBodyState extends State<_EditorBody> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 64),
-                      child: Center(
+                    child: Builder(builder: (innerCtx) {
+                      _jumpToAnchorIfNeeded(page.body);
+                      return SingleChildScrollView(
+                        controller: _scroll,
+                        padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 64),
+                        child: Center(
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                             maxWidth: _isFullWidth(page.frontmatter)
@@ -309,7 +374,8 @@ class _EditorBodyState extends State<_EditorBody> {
                           ),
                         ),
                       ),
-                    ),
+                    );
+                    }),
                   ),
                   if (_propertiesOpen)
                     PropertiesPanel(

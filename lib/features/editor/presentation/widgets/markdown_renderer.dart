@@ -2454,15 +2454,20 @@ List<InlineSpan> _buildSpans(
   }
 
   while (i < n) {
-    // Wikilink chip — [[ULID]]
+    // Wikilink chip — [[ULID]] or [[ULID#anchor]]
     if (text[i] == '[' && i + 1 < n && text[i + 1] == '[') {
-      final m = RegExp(r'\[\[([0-9A-HJKMNP-TV-Z]{26})\]\]')
+      final m = RegExp(
+              r'\[\[([0-9A-HJKMNP-TV-Z]{26})(?:#([a-z0-9][a-z0-9\-]*))?\]\]')
           .matchAsPrefix(text, i);
       if (m != null) {
         flushPlain(i);
         out.add(WidgetSpan(
           alignment: PlaceholderAlignment.middle,
-          child: _ResolvedChip(ulid: m.group(1)!, showUlid: showUlid),
+          child: _ResolvedChip(
+            ulid: m.group(1)!,
+            anchor: m.group(2),
+            showUlid: showUlid,
+          ),
         ));
         i = m.end;
         committed = i;
@@ -2630,9 +2635,18 @@ List<InlineSpan> _buildSpans(
 }
 
 class _ResolvedChip extends StatelessWidget {
-  const _ResolvedChip({required this.ulid, required this.showUlid});
+  const _ResolvedChip({
+    required this.ulid,
+    required this.showUlid,
+    this.anchor,
+  });
   final String ulid;
   final bool showUlid;
+
+  /// Optional `#section-slug` suffix that drives an in-page scroll on
+  /// the target editor page (M79). Surfaces visually as a `#anchor`
+  /// tail on the chip label so the link's target is discoverable.
+  final String? anchor;
 
   @override
   Widget build(BuildContext context) {
@@ -2641,13 +2655,19 @@ class _ResolvedChip extends StatelessWidget {
       future: (db.select(db.pages)..where((p) => p.ulid.equals(ulid)))
           .getSingleOrNull(),
       builder: (context, snap) {
-        final title = snap.data?.title ?? '…${ulid.substring(ulid.length - 6)}';
+        final base = snap.data?.title ?? '…${ulid.substring(ulid.length - 6)}';
+        final title = anchor == null ? base : '$base #$anchor';
         return RelationChip(
           label: title,
           ulid: ulid,
           showUlid: showUlid,
           icon: 'file-md',
-          onTap: () => Navigator.of(context).pushReplacementNamed('/editor/$ulid'),
+          onTap: () {
+            final route = anchor == null
+                ? '/editor/$ulid'
+                : '/editor/$ulid?anchor=$anchor';
+            GoRouter.of(context).push(route);
+          },
         );
       },
     );
