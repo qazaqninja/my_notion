@@ -118,7 +118,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Grouping (by any property) — M19.
 - 🚧 Sub-grouping — M86 ships sub-group dividers in BoardView; other views still 📋.
 - ✅ Hide/show properties per view — M72, Properties popover; persists per-database (M96).
-- 🚧 Reorder properties — Long-press-drag column headers (M63); persistence per-database in SharedPreferences (M97).
+- ✅ Reorder properties — Long-press-drag column headers (M63); persistence per-database in SharedPreferences (M97).
 - ✅ Property width adjustment — Resize handle on the right edge (M56); persisted per-database in SharedPreferences (M97).
 - ✅ Frozen columns in table view — M7.
 - ✅ Calculations per column (sum, average, count, min, max, range, etc.) — M43 footer row.
@@ -150,7 +150,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Chart view (bar, line, donut) — M34 via `fl_chart`.
 - ✅ View-specific filters, sorts, properties — Property selection via Properties popover (M72) + per-database persistence (M96).
 - 🚧 Group and sub-group per view — Group ✅. Sub-group in BoardView ✅ (M86), other views 📋.
-- 🚧 Customize card size, preview image, fields shown — Cover images M92, card-size S/M/L M165 (persisted per-database in SharedPreferences). Configurable card fields still 📋 — currently hard-coded to stage / arr / owner / updated.
+- ✅ Customize card size, preview image, fields shown — Cover images M92, card-size S/M/L M165 (per-database persisted), configurable fields M167 via `views[].card_fields: [...]` (renderer special-cases stage/status/priority → TagChip, arr/mrr/revenue → $k, ISO date → mono pill).
 
 ## Search & Navigation
 
