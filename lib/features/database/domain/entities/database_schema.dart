@@ -6,12 +6,17 @@ class ColumnDef {
     required this.type,
     this.options = const [],
     this.targetDatabase,
+    this.formula,
   });
 
   final String key;
   final ColumnType type;
   final List<String> options;
   final String? targetDatabase;
+
+  /// For [ColumnType.formula]: the source expression to evaluate per row.
+  /// Read from `.database.yaml`'s `schema.<key>.formula:` field.
+  final String? formula;
 }
 
 enum ViewType { table, gallery, board, timeline }

@@ -4,6 +4,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/database_schema.dart';
+import '../../domain/formula/formula.dart';
 import '../../domain/repositories/database_repository.dart';
 import 'cell_renderers.dart';
 
@@ -263,7 +264,11 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   }
 
   Widget _scrollCell(DatabasePageRow row, ColumnDef c, QuillTokens tokens) {
-    final value = row.cells[c.key];
+    Object? value = row.cells[c.key];
+    if (c.type == ColumnType.formula && c.formula != null) {
+      value = evaluateFormula(c.formula!, row.cells);
+      if (value is FormulaError) value = value.toString();
+    }
     final isLast = widget.schema.columns.last == c;
     final editable = widget.onEditCell != null && _isEditable(c.type) && c.key != 'health';
     final align = c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft;
