@@ -17,6 +17,7 @@ import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../data/exporter.dart';
+import '../../data/html_exporter.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
@@ -192,6 +193,27 @@ class _VaultShellPageState extends State<VaultShellPage> {
         );
       case 'Toggle theme':
         await themeCubit.cycleMode();
+      case 'Export vault as HTML':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final dest = await FilePicker.platform.getDirectoryPath(
+          dialogTitle: 'Export HTML site to…',
+        );
+        if (dest == null) return;
+        try {
+          final n = await const HtmlExporter().export(
+            src: Directory(vaultPath),
+            dest: Directory(dest),
+          );
+          messenger?.showSnackBar(SnackBar(
+            content: Text('Exported $n pages → $dest'),
+            duration: const Duration(seconds: 4),
+          ));
+        } catch (e) {
+          messenger?.showSnackBar(SnackBar(content: Text('HTML export failed: $e')));
+        }
       case 'Import CSV as database':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
