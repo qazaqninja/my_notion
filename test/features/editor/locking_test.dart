@@ -61,4 +61,48 @@ void main() {
     ]));
     expect(EditorBloc.isLocked(loaded), isFalse);
   });
+
+  group('isLocked: permissions:', () {
+    for (final keyword in [
+      'read_only',
+      'read-only',
+      'readonly',
+      'locked',
+      'READ_ONLY',
+    ]) {
+      test('permissions: $keyword → true', () {
+        final loaded = build(Frontmatter(entries: [
+          FrontmatterEntry(
+              key: 'permissions',
+              rawScalar: keyword,
+              type: FrontmatterType.text,
+              value: keyword),
+        ]));
+        expect(EditorBloc.isLocked(loaded), isTrue,
+            reason: '`permissions: $keyword` should lock');
+      });
+    }
+
+    test('permissions: private → false (doc-only, not enforced)', () {
+      final loaded = build(const Frontmatter(entries: [
+        FrontmatterEntry(
+            key: 'permissions',
+            rawScalar: 'private',
+            type: FrontmatterType.text,
+            value: 'private'),
+      ]));
+      expect(EditorBloc.isLocked(loaded), isFalse);
+    });
+
+    test('permissions: team_only → false (doc-only)', () {
+      final loaded = build(const Frontmatter(entries: [
+        FrontmatterEntry(
+            key: 'permissions',
+            rawScalar: 'team_only',
+            type: FrontmatterType.text,
+            value: 'team_only'),
+      ]));
+      expect(EditorBloc.isLocked(loaded), isFalse);
+    });
+  });
 }

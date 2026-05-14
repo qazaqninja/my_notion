@@ -64,11 +64,22 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     }
   }
 
-  /// True when the loaded page has `locked: true` in its frontmatter.
+  /// True when the loaded page is locked by frontmatter. Recognises:
+  ///   - `locked: true` — the legacy single-flag lock.
+  ///   - `permissions: read_only` / `read-only` / `locked` — the new
+  ///     `permissions:` block (M170). Any other `permissions:` value
+  ///     (e.g. `private`, `team_only`) is documentation-only and does
+  ///     not lock the page.
   /// Locked pages reject all editing events; the UI surfaces a banner.
   static bool isLocked(EditorLoaded loaded) {
     final v = loaded.page.frontmatter.get('locked');
-    return v == true || '$v'.toLowerCase() == 'true';
+    if (v == true || '$v'.toLowerCase() == 'true') return true;
+    final p = loaded.page.frontmatter.get('permissions');
+    final ps = '$p'.trim().toLowerCase();
+    return ps == 'read_only' ||
+        ps == 'read-only' ||
+        ps == 'readonly' ||
+        ps == 'locked';
   }
 
   Future<void> _onEditBody(EditBody e, Emitter<EditorState> emit) async {
@@ -111,7 +122,9 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     if (state is! EditorLoaded) return;
     final loaded = state as EditorLoaded;
     // Allow `locked` itself to be toggled — otherwise users can't unlock.
-    if (isLocked(loaded) && e.key != 'locked') return;
+    if (isLocked(loaded) && e.key != 'locked' && e.key != 'permissions') {
+      return;
+    }
     final entries = loaded.page.frontmatter.entries;
     final i = entries.indexWhere((x) => x.key == e.key);
     if (i < 0) return;
@@ -123,7 +136,11 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
   Future<void> _onAddField(AddFrontmatterField e, Emitter<EditorState> emit) async {
     if (state is! EditorLoaded) return;
     final loaded = state as EditorLoaded;
-    if (isLocked(loaded) && e.entry.key != 'locked') return;
+    if (isLocked(loaded) &&
+        e.entry.key != 'locked' &&
+        e.entry.key != 'permissions') {
+      return;
+    }
     final entries = loaded.page.frontmatter.entries;
     if (entries.any((x) => x.key == e.entry.key)) return; // duplicate key
     final next = [...entries, e.entry];
@@ -134,7 +151,9 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     if (state is! EditorLoaded) return;
     if (e.key == 'id') return; // protected
     final loaded = state as EditorLoaded;
-    if (isLocked(loaded) && e.key != 'locked') return;
+    if (isLocked(loaded) && e.key != 'locked' && e.key != 'permissions') {
+      return;
+    }
     final next = [
       for (final x in loaded.page.frontmatter.entries)
         if (x.key != e.key) x,
