@@ -574,6 +574,16 @@ class _SourceViewState extends State<SourceView> {
                       () => _wrapSelection('*', '*'),
                   const SingleActivator(LogicalKeyboardKey.keyI, control: true):
                       () => _wrapSelection('*', '*'),
+                  const SingleActivator(LogicalKeyboardKey.keyX,
+                      meta: true, shift: true): () => _wrapSelection('~~', '~~'),
+                  const SingleActivator(LogicalKeyboardKey.keyX,
+                      control: true, shift: true):
+                      () => _wrapSelection('~~', '~~'),
+                  const SingleActivator(LogicalKeyboardKey.keyC,
+                      meta: true, shift: true): () => _wrapSelection('`', '`'),
+                  const SingleActivator(LogicalKeyboardKey.keyC,
+                      control: true, shift: true):
+                      () => _wrapSelection('`', '`'),
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
