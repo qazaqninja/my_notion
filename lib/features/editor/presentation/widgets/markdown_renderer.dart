@@ -146,20 +146,7 @@ class MarkdownRenderer extends StatelessWidget {
           ),
         );
       case _BlockKind.quote:
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 10),
-          padding: const EdgeInsets.fromLTRB(14, 6, 8, 6),
-          decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(color: tokens.accent, width: 3),
-            ),
-          ),
-          child: _ParagraphWithChips(
-            text: b.text,
-            showUlid: showUlid,
-            tokens: tokens,
-          ),
-        );
+        return _renderQuoteOrCallout(b.text, tokens, showUlid);
       case _BlockKind.hr:
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -194,6 +181,95 @@ class MarkdownRenderer extends StatelessWidget {
             ),
           ),
         );
+    }
+  }
+
+  /// GFM-admonition style callouts: `> [!NOTE]\n> body` etc. The first
+  /// line of [text] (already with `> ` stripped by the tokenizer) carries
+  /// the marker `[!KIND]`. If present, render a coloured callout box;
+  /// otherwise render a plain accent-bordered quote.
+  Widget _renderQuoteOrCallout(String text, QuillTokens tokens, bool showUlid) {
+    final lines = text.split('\n');
+    final m = lines.isNotEmpty
+        ? RegExp(r'^\[!(\w+)\]\s*(.*)$').firstMatch(lines.first)
+        : null;
+    if (m != null) {
+      final kind = m.group(1)!.toLowerCase();
+      final firstLine = m.group(2) ?? '';
+      final rest = lines.skip(1).join('\n');
+      final body = firstLine.isEmpty ? rest : '$firstLine\n$rest';
+      final (icon, color) = _calloutStyle(kind, tokens);
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: tokens.isDark ? 0.12 : 0.08),
+          border: Border(left: BorderSide(color: color, width: 3)),
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(4),
+            bottomRight: Radius.circular(4),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: color),
+                const SizedBox(width: 6),
+                Text(
+                  kind.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.8,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            _ParagraphWithChips(
+              text: body.trim(),
+              showUlid: showUlid,
+              tokens: tokens,
+            ),
+          ],
+        ),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.fromLTRB(14, 6, 8, 6),
+      decoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(color: tokens.accent, width: 3),
+        ),
+      ),
+      child: _ParagraphWithChips(
+        text: text,
+        showUlid: showUlid,
+        tokens: tokens,
+      ),
+    );
+  }
+
+  (IconData, Color) _calloutStyle(String kind, QuillTokens t) {
+    switch (kind) {
+      case 'note':
+        return (Icons.info_outline, const Color(0xFF4A90D9));
+      case 'tip':
+        return (Icons.lightbulb_outline, const Color(0xFF55A06A));
+      case 'important':
+        return (Icons.priority_high_rounded, const Color(0xFF8E5CD0));
+      case 'warning':
+      case 'warn':
+        return (Icons.warning_amber_outlined, const Color(0xFFD08F3D));
+      case 'caution':
+      case 'danger':
+        return (Icons.error_outline, const Color(0xFFCB5A4F));
+      default:
+        return (Icons.bookmark_outline, t.accent);
     }
   }
 
