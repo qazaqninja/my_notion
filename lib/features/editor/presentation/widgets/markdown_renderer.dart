@@ -162,16 +162,18 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
     if (onBodyChange == null) return inner;
 
     // Tap-to-edit. Paragraph / headings / quote get the standard
-    // inline TextField. Code / math also opt in — _EditableBlock just
-    // splices the raw source slice, so the user sees the fenced/dollar-
-    // wrapped form and can edit it as-is (a per-block source mode).
+    // inline TextField. Code / math / table also opt in —
+    // _EditableBlock just splices the raw source slice, so the user
+    // sees the fenced / dollar-wrapped / pipe-table form and can edit
+    // it as-is (a per-block source mode).
     final editable = b.kind == _BlockKind.paragraph ||
         b.kind == _BlockKind.h1 ||
         b.kind == _BlockKind.h2 ||
         b.kind == _BlockKind.h3 ||
         b.kind == _BlockKind.quote ||
         b.kind == _BlockKind.code ||
-        b.kind == _BlockKind.math;
+        b.kind == _BlockKind.math ||
+        b.kind == _BlockKind.table;
     if (editable) {
       inner = _EditableBlock(
         key: ValueKey('blk-${b.sourceStart}-${b.sourceEnd}'),
