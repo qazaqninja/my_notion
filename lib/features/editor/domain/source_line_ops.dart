@@ -161,6 +161,29 @@ LineOpResult? continueListAtNewline(String text, int caret) {
   return LineOpResult(text: newText, caret: caret + insertion.length);
 }
 
+/// Backspace handling for list lines. If [caret] sits at the end of an
+/// otherwise-empty list marker (e.g. `- `, `1. `, `- [ ] `), strip the
+/// marker but keep the leading indent — the standard "backspace at the
+/// start of an empty bullet to step out of the list" UX. Returns `null`
+/// for any other line shape so callers fall through to the platform's
+/// default Backspace behaviour.
+LineOpResult? backspaceListMarker(String text, int caret) {
+  if (caret < 0) caret = 0;
+  if (caret > text.length) caret = text.length;
+  final lineStart =
+      caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
+  final upToCaret = text.substring(lineStart, caret);
+  // Note: the body group must be empty for backspace to strip the
+  // marker. Anything else (a space the user added by mistake, content
+  // after the marker) means the user is actively editing — pass.
+  final re = RegExp(r'^(\s*)(- \[ \] |- \[x\] |- |\* |\d+\. )$');
+  final m = re.firstMatch(upToCaret);
+  if (m == null) return null;
+  final indent = m.group(1)!;
+  final newText = text.replaceRange(lineStart, caret, indent);
+  return LineOpResult(text: newText, caret: lineStart + indent.length);
+}
+
 /// Return the half-open `[start, end)` byte offsets of the line
 /// containing [caret]. The line excludes the trailing '\n'. Empty
 /// strings return `(0, 0)`.

@@ -353,6 +353,30 @@ class _SourceViewState extends State<SourceView> {
       }
     }
 
+    // Backspace at end of an empty list marker strips the marker
+    // (keeping the indent). The standard "press Backspace to exit a
+    // bullet" UX.
+    if (!_slash.state.open &&
+        !_picker.state.open &&
+        key == LogicalKeyboardKey.backspace &&
+        !HardwareKeyboard.instance.isShiftPressed &&
+        !HardwareKeyboard.instance.isMetaPressed &&
+        !HardwareKeyboard.instance.isAltPressed &&
+        !HardwareKeyboard.instance.isControlPressed) {
+      final v = _controller.value;
+      if (v.selection.isValid &&
+          v.selection.baseOffset == v.selection.extentOffset) {
+        final r = backspaceListMarker(v.text, v.selection.baseOffset);
+        if (r != null) {
+          _controller.value = TextEditingValue(
+            text: r.text,
+            selection: TextSelection.collapsed(offset: r.caret),
+          );
+          return KeyEventResult.handled;
+        }
+      }
+    }
+
     // Smart-Enter continuation for list lines (only when no picker is
     // intercepting). Shift+Enter keeps the platform's plain-newline
     // behaviour for users who want to break out of the list.

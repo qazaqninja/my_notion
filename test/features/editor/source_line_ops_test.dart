@@ -275,4 +275,52 @@ void main() {
       expect(continueListAtNewline('## Heading', 5), isNull);
     });
   });
+
+  group('backspaceListMarker', () {
+    test('strips `- ` when caret sits right after the marker', () {
+      final r = backspaceListMarker('- ', 2);
+      expect(r, isNotNull);
+      expect(r!.text, '');
+      expect(r.caret, 0);
+    });
+
+    test('strips `1. ` ordered marker', () {
+      final r = backspaceListMarker('1. ', 3);
+      expect(r!.text, '');
+      expect(r.caret, 0);
+    });
+
+    test('strips `- [ ] ` unchecked todo marker', () {
+      final r = backspaceListMarker('- [ ] ', 6);
+      expect(r!.text, '');
+      expect(r.caret, 0);
+    });
+
+    test('preserves leading indentation', () {
+      final r = backspaceListMarker('  - ', 4);
+      expect(r!.text, '  ');
+      expect(r.caret, 2);
+    });
+
+    test('returns null when the item has body content', () {
+      expect(backspaceListMarker('- hi', 4), isNull);
+    });
+
+    test('returns null when caret is mid-marker', () {
+      // "- " caret at offset 1 (between `-` and ` `) — user is still
+      // editing the marker. Don't fire.
+      expect(backspaceListMarker('- ', 1), isNull);
+    });
+
+    test('only operates on the line under the caret in a multi-line text',
+        () {
+      final r = backspaceListMarker('first\n- ', 8);
+      expect(r!.text, 'first\n');
+      expect(r.caret, 6);
+    });
+
+    test('returns null for a plain line', () {
+      expect(backspaceListMarker('hello', 5), isNull);
+    });
+  });
 }
