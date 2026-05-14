@@ -148,4 +148,47 @@ void main() {
       expect(u.text, original);
     });
   });
+
+  group('deleteLineAt', () {
+    test('removes a middle line and lands caret on the line below', () {
+      // caret on 'b' col 1 of "bbb"
+      final r = deleteLineAt('aaa\nbbb\nccc\n', 5);
+      expect(r.text, 'aaa\nccc\n');
+      expect(r.caret, 5); // col 1 on "ccc"
+    });
+
+    test('removes the final line and moves caret up to the new last line',
+        () {
+      final r = deleteLineAt('aaa\nbbb', 5); // caret on "bbb"
+      expect(r.text, 'aaa');
+      expect(r.caret, 1); // col 1 on "aaa"
+    });
+
+    test('removes the only line → empties the text', () {
+      final r = deleteLineAt('alone', 2);
+      expect(r.text, '');
+      expect(r.caret, 0);
+    });
+
+    test('removes the first line of a 2-line text', () {
+      final r = deleteLineAt('aaa\nbbb\n', 1);
+      expect(r.text, 'bbb\n');
+      expect(r.caret, 1); // col 1 on "bbb"
+    });
+
+    test('caret column is clamped to the new line\'s length', () {
+      // "abcdef\nxy" — delete first line, caret col 5 → end of "xy" (2)
+      final r = deleteLineAt('abcdef\nxy', 5);
+      expect(r.text, 'xy');
+      expect(r.caret, 2);
+    });
+
+    test('removes the trailing empty line after a final \\n', () {
+      // Caret at offset 4 is on the empty line after "abc\n". Column 0,
+      // so after delete the caret lands at column 0 of "abc".
+      final r = deleteLineAt('abc\n', 4);
+      expect(r.text, 'abc');
+      expect(r.caret, 0);
+    });
+  });
 }

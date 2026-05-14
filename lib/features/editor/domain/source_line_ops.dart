@@ -114,6 +114,42 @@ LineOpResult toggleCommentLine(String text, int caret) {
   return LineOpResult(text: newText, caret: newCaret);
 }
 
+/// Delete the entire line containing [caret] and place the caret on
+/// the line that takes its place at the same column. For a middle line
+/// the caret moves down to the following line; for the final line it
+/// moves up to the (new) last line. Empties the text when there's only
+/// one line.
+LineOpResult deleteLineAt(String text, int caret) {
+  if (caret < 0) caret = 0;
+  if (caret > text.length) caret = text.length;
+  final lineStart =
+      caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
+  final nextNl = text.indexOf('\n', caret);
+  final lineEnd = nextNl == -1 ? text.length : nextNl;
+  final column = caret - lineStart;
+  if (nextNl != -1) {
+    // Middle line — remove the line plus its trailing '\n'.
+    final newText =
+        text.substring(0, lineStart) + text.substring(lineEnd + 1);
+    final newNextNl = newText.indexOf('\n', lineStart);
+    final newLineLen =
+        (newNextNl == -1 ? newText.length : newNextNl) - lineStart;
+    final newCaret =
+        lineStart + (column < newLineLen ? column : newLineLen);
+    return LineOpResult(text: newText, caret: newCaret);
+  }
+  // Last line. Remove the leading '\n' too if there's a previous line.
+  if (lineStart == 0) {
+    return const LineOpResult(text: '', caret: 0);
+  }
+  final newText = text.substring(0, lineStart - 1);
+  final newLineStart = newText.lastIndexOf('\n') + 1;
+  final newLineLen = newText.length - newLineStart;
+  final newCaret =
+      newLineStart + (column < newLineLen ? column : newLineLen);
+  return LineOpResult(text: newText, caret: newCaret);
+}
+
 /// Duplicate the line containing [caret] and place the caret at the
 /// same column on the new line below. If the original line lacks a
 /// trailing newline (i.e. the file ends mid-line), one is inserted

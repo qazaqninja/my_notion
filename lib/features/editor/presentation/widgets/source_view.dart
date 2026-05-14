@@ -270,6 +270,11 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp(toggleCommentLine);
   }
 
+  /// Delete the line under the caret. Cmd+Shift+K / Ctrl+Shift+K.
+  void _deleteLine() {
+    _applyLineOp(deleteLineAt);
+  }
+
   void _applyLineOp(LineOpResult Function(String text, int caret) op) {
     final v = _controller.value;
     final caret = v.selection.isValid ? v.selection.baseOffset : v.text.length;
@@ -628,6 +633,10 @@ class _SourceViewState extends State<SourceView> {
                       _toggleComment,
                   const SingleActivator(LogicalKeyboardKey.slash,
                       control: true): _toggleComment,
+                  const SingleActivator(LogicalKeyboardKey.keyK,
+                      meta: true, shift: true): _deleteLine,
+                  const SingleActivator(LogicalKeyboardKey.keyK,
+                      control: true, shift: true): _deleteLine,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
