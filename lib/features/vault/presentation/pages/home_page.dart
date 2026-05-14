@@ -86,10 +86,10 @@ class HomePage extends StatelessWidget {
                   const SizedBox(width: 16),
                   _Tile(
                     tokens: tokens,
-                    icon: 'export',
-                    title: 'Export',
-                    subtitle: 'Markdown / HTML / PDF / CSV — Settings → Export.',
-                    onTap: () => context.go('/settings'),
+                    icon: 'tag',
+                    title: 'Tags',
+                    subtitle: 'See every label across the vault.',
+                    onTap: () => context.go('/tags'),
                   ),
                 ]),
                 if (state is VaultLoaded) ...[
