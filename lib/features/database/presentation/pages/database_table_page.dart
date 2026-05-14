@@ -21,6 +21,7 @@ import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
 import '../../domain/usecases/apply_query.dart';
 import '../widgets/board_view.dart';
+import '../widgets/calendar_view.dart';
 import '../widgets/frozen_column_table.dart';
 import '../widgets/gallery_view.dart';
 import '../widgets/query_popovers.dart';
@@ -264,6 +265,8 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                     ),
                   ViewType.timeline =>
                     TimelineView(schema: schema, rows: filtered),
+                  ViewType.calendar =>
+                    CalendarView(schema: schema, rows: filtered),
                 };
               }),
             ),
@@ -310,6 +313,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
           SegmentOption(value: ViewType.gallery, label: 'Gallery', icon: 'gallery'),
           SegmentOption(value: ViewType.board, label: 'Board', icon: 'board'),
           SegmentOption(value: ViewType.timeline, label: 'Timeline', icon: 'timeline'),
+          SegmentOption(value: ViewType.calendar, label: 'Calendar', icon: 'calendar'),
         ],
       ),
       if (!mobile) const Spacer(),

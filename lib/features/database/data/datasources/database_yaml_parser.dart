@@ -96,6 +96,7 @@ class DatabaseYamlParser {
         'gallery' => ViewType.gallery,
         'board' => ViewType.board,
         'timeline' => ViewType.timeline,
+        'calendar' => ViewType.calendar,
         _ => ViewType.table,
       };
 }

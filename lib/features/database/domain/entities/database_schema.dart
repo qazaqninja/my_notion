@@ -19,7 +19,7 @@ class ColumnDef {
   final String? formula;
 }
 
-enum ViewType { table, gallery, board, timeline }
+enum ViewType { table, gallery, board, timeline, calendar }
 
 class DatabaseView {
   const DatabaseView({
