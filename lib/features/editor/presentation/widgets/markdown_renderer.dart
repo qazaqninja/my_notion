@@ -2494,6 +2494,51 @@ List<InlineSpan> _buildSpans(
       }
     }
 
+    // Inline underline: <u>text</u>. No portable markdown for underline,
+    // so we accept the HTML form (Notion exports use it too) and keep
+    // the round-trip byte-identical.
+    if (c == '<' && text.startsWith('<u>', i)) {
+      final m = RegExp(r'<u>([^<]*)<\/u>').matchAsPrefix(text, i);
+      if (m != null) {
+        flushPlain(i);
+        out.add(TextSpan(
+          text: m.group(1),
+          style: const TextStyle(decoration: TextDecoration.underline),
+        ));
+        i = m.end;
+        committed = i;
+        continue;
+      }
+    }
+
+    // Inline highlight: <mark>text</mark>. Renders a yellow background
+    // pill — matches GFM-rendering rules everywhere markdown is rendered
+    // with HTML enabled.
+    if (c == '<' && text.startsWith('<mark>', i)) {
+      final m = RegExp(r'<mark>([^<]*)<\/mark>').matchAsPrefix(text, i);
+      if (m != null) {
+        flushPlain(i);
+        out.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 3, vertical: 0.5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE486).withValues(alpha: 0.55),
+              borderRadius: const BorderRadius.all(Radius.circular(2)),
+            ),
+            child: Text(
+              m.group(1) ?? '',
+              style: TextStyle(fontSize: 16, color: tokens.text, height: 1.6),
+            ),
+          ),
+        ));
+        i = m.end;
+        committed = i;
+        continue;
+      }
+    }
+
     // Inline @YYYY-MM-DD date mention.
     if (c == '@') {
       final prev = i == 0 ? '' : text[i - 1];
