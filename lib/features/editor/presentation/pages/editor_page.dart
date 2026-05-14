@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/page_icon.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
@@ -145,7 +146,32 @@ class _EditorBodyState extends State<_EditorBody> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              PageTitleField(title: page.title),
+                              PageCoverBand(
+                                coverValue: page.frontmatter.get('cover') is String
+                                    ? page.frontmatter.get('cover') as String
+                                    : null,
+                                vaultRoot: context.read<VaultBloc>().state is VaultLoaded
+                                    ? (context.read<VaultBloc>().state as VaultLoaded).rootPath
+                                    : null,
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 22, right: 12),
+                                    child: PageIcon(
+                                      iconValue: page.frontmatter.get('icon') is String
+                                          ? page.frontmatter.get('icon') as String
+                                          : null,
+                                      size: 28,
+                                      vaultRoot: context.read<VaultBloc>().state is VaultLoaded
+                                          ? (context.read<VaultBloc>().state as VaultLoaded).rootPath
+                                          : null,
+                                    ),
+                                  ),
+                                  Expanded(child: PageTitleField(title: page.title)),
+                                ],
+                              ),
                               FrontmatterCard(frontmatter: page.frontmatter),
                               if (loaded.mode == EditorMode.rendered)
                                 MarkdownRenderer(body: page.body)
