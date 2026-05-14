@@ -90,7 +90,7 @@ void main() {
 </note>
 </en-export>
 ''');
-    final summary = await EnexPageImporter.importTo(src, vault);
+    await EnexPageImporter.importTo(src, vault);
     final body = await File(p.join(vault.path, 'Evernote/Bare.md'))
         .readAsString();
     expect(body, contains('just plain xhtml'));

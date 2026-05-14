@@ -21,6 +21,7 @@ import '../../../database/data/datasources/csv_importer.dart';
 import '../../data/html_page_importer.dart';
 import '../../data/opml_page_importer.dart';
 import '../../data/asana_csv_importer.dart';
+import '../../data/docx_page_importer.dart';
 import '../../data/enex_page_importer.dart';
 import '../../data/roam_page_importer.dart';
 import '../../data/text_page_importer.dart';
@@ -534,6 +535,32 @@ class _VaultShellPageState extends State<VaultShellPage> {
         } catch (e) {
           messenger?.showSnackBar(
               SnackBar(content: Text('HTML import failed: $e')));
+        }
+      case 'Import Word .docx as page':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final docxPick = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: const ['docx'],
+        );
+        if (docxPick == null || docxPick.files.isEmpty) return;
+        final docxPath = docxPick.files.first.path;
+        if (docxPath == null) return;
+        try {
+          final summary = await DocxPageImporter.importTo(
+            File(docxPath),
+            Directory(vaultPath),
+          );
+          vaultBloc.add(const ReindexVault());
+          messenger?.showSnackBar(SnackBar(
+            content: Text('Imported → ${summary.relativePath}'),
+            duration: const Duration(seconds: 4),
+          ));
+        } catch (e) {
+          messenger?.showSnackBar(
+              SnackBar(content: Text('Word import failed: $e')));
         }
       case 'Import Evernote .enex notebook':
         if (vaultPath == null) {
