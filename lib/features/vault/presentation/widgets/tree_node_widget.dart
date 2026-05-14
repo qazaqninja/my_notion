@@ -8,6 +8,7 @@ import '../../../../core/platform/reveal.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/side_item.dart';
+import '../../../editor/presentation/widgets/page_history_dialog.dart';
 import '../../domain/entities/vault_tree.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
@@ -111,6 +112,7 @@ class TreeNodeWidget extends StatelessWidget {
       items: const [
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
+        PopupMenuItem(value: 'history', child: Text('Page history')),
         PopupMenuDivider(),
         PopupMenuItem(value: 'trash', child: Text('Move to trash')),
       ],
@@ -120,6 +122,14 @@ class TreeNodeWidget extends StatelessWidget {
       await Reveal.show(p.join(state.rootPath, fl.relativePath));
     } else if (selected == 'copy-ulid') {
       await _copyUlid(context, fl.ulid);
+    } else if (selected == 'history') {
+      await showDialog(
+        context: context,
+        builder: (_) => PageHistoryDialog(
+          vaultRoot: state.rootPath,
+          relativePath: fl.relativePath,
+        ),
+      );
     } else if (selected == 'trash') {
       if (fl.ulid.isEmpty) return;
       context.read<VaultBloc>().add(MoveToTrash(fl.ulid));
