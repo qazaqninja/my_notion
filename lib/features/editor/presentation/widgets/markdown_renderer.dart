@@ -76,6 +76,12 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
   /// so that's automatic.
   final Set<int> _collapsed = <int>{};
 
+  /// Source-start offsets of blocks the user has marked for bulk
+  /// operations via the hover checkbox. Persists only as long as the
+  /// renderer is mounted on the same body — any external body edit
+  /// (and consequent index shift) clears it.
+  final Set<int> _selected = <int>{};
+
   String get body => widget.body;
   bool get showUlid => widget.showUlid;
   ValueChanged<String>? get onBodyChange => widget.onBodyChange;
@@ -86,6 +92,75 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
         _collapsed.remove(sourceStart);
       } else {
         _collapsed.add(sourceStart);
+      }
+    });
+  }
+
+  void _toggleSelected(int sourceStart) {
+    setState(() {
+      if (_selected.contains(sourceStart)) {
+        _selected.remove(sourceStart);
+      } else {
+        _selected.add(sourceStart);
+      }
+    });
+  }
+
+  void _clearSelection() {
+    if (_selected.isEmpty) return;
+    setState(_selected.clear);
+  }
+
+  void _deleteSelected(List<_Block> blocks) {
+    final ranges = <(int, int)>[];
+    for (final b in blocks) {
+      if (!_selected.contains(b.sourceStart)) continue;
+      var end = b.sourceEnd;
+      if (end < body.length && body[end] == '\n') end += 1;
+      ranges.add((b.sourceStart, end));
+    }
+    if (ranges.isEmpty) return;
+    // Splice from the back so earlier indices stay valid.
+    ranges.sort((a, b) => b.$1.compareTo(a.$1));
+    var next = body;
+    for (final r in ranges) {
+      next = next.replaceRange(r.$1, r.$2, '');
+    }
+    _selected.clear();
+    onBodyChange?.call(next);
+  }
+
+  Future<void> _copySelected(List<_Block> blocks) async {
+    final ordered = [
+      for (final b in blocks)
+        if (_selected.contains(b.sourceStart)) b,
+    ];
+    if (ordered.isEmpty) return;
+    final buf = StringBuffer();
+    for (var i = 0; i < ordered.length; i++) {
+      if (i > 0) buf.writeln();
+      buf.write(body.substring(ordered[i].sourceStart, ordered[i].sourceEnd));
+    }
+    await Clipboard.setData(ClipboardData(text: buf.toString()));
+  }
+
+  void _selectAllEditable(List<_Block> blocks) {
+    const eligible = {
+      _BlockKind.paragraph,
+      _BlockKind.h1,
+      _BlockKind.h2,
+      _BlockKind.h3,
+      _BlockKind.quote,
+      _BlockKind.ul,
+      _BlockKind.ol,
+      _BlockKind.code,
+      _BlockKind.math,
+      _BlockKind.table,
+    };
+    setState(() {
+      _selected.clear();
+      for (final b in blocks) {
+        if (eligible.contains(b.kind)) _selected.add(b.sourceStart);
       }
     });
   }
@@ -131,8 +206,30 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       ],
     );
     final fontOverride = _fontOverride(widget.font);
-    if (fontOverride == null) return column;
-    return DefaultTextStyle.merge(style: fontOverride, child: column);
+    final inner =
+        fontOverride == null ? column : DefaultTextStyle.merge(
+            style: fontOverride, child: column);
+    // Selection toolbar overlays the renderer when the user has marked
+    // one or more blocks via the hover checkbox.
+    if (_selected.isEmpty) return inner;
+    return Stack(
+      children: [
+        inner,
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 12,
+          child: _SelectionToolbar(
+            count: _selected.length,
+            total: blocks.length,
+            onCopy: () => _copySelected(blocks),
+            onDelete: () => _deleteSelected(blocks),
+            onSelectAll: () => _selectAllEditable(blocks),
+            onClear: _clearSelection,
+          ),
+        ),
+      ],
+    );
   }
 
   /// Maps the frontmatter `font:` value to a TextStyle override. The
@@ -194,6 +291,8 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       onBodyChange: onBodyChange!,
       onBlockComment: editable ? widget.onBlockComment : null,
       ulidGenerator: _ulids,
+      selected: _selected.contains(b.sourceStart),
+      onToggleSelected: () => _toggleSelected(b.sourceStart),
       child: inner,
     );
   }
@@ -2811,6 +2910,94 @@ class _ListItemDragWrapState extends State<_ListItemDragWrap> {
   }
 }
 
+/// Floating action bar that surfaces when the user has marked one or
+/// more blocks for bulk operations. Centred at the bottom of the
+/// renderer; offers Select all / Copy / Delete / Cancel.
+class _SelectionToolbar extends StatelessWidget {
+  const _SelectionToolbar({
+    required this.count,
+    required this.total,
+    required this.onCopy,
+    required this.onDelete,
+    required this.onSelectAll,
+    required this.onClear,
+  });
+
+  final int count;
+  final int total;
+  final VoidCallback onCopy;
+  final VoidCallback onDelete;
+  final VoidCallback onSelectAll;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: tokens.surface,
+          border: Border.all(color: tokens.divider2, width: 0.5),
+          borderRadius: const BorderRadius.all(Radius.circular(20)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x22000000),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$count / $total',
+              style: mono(fontSize: 11, color: tokens.text2),
+            ),
+            const SizedBox(width: 12),
+            _bar(tokens),
+            const SizedBox(width: 8),
+            _btn('Select all', tokens, onSelectAll, Icons.select_all),
+            _btn('Copy', tokens, onCopy, Icons.content_copy),
+            _btn('Delete', tokens, onDelete, Icons.delete_outline,
+                color: const Color(0xFFCB5A4F)),
+            _btn('Cancel', tokens, onClear, Icons.close),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _bar(QuillTokens tokens) => Container(
+        width: 0.5,
+        height: 16,
+        color: tokens.divider2,
+      );
+
+  Widget _btn(String label, QuillTokens tokens, VoidCallback onTap,
+      IconData icon,
+      {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: TextButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 13, color: color ?? tokens.text2),
+        label: Text(label,
+            style:
+                TextStyle(fontSize: 11.5, color: color ?? tokens.text2)),
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+        ),
+      ),
+    );
+  }
+}
+
 /// Wraps a rendered block with a hover-revealed drag handle (left
 /// margin) and a DragTarget that, on accept, splices the dragged
 /// block's source slice in front of this one. Reordering uses the
@@ -2822,6 +3009,8 @@ class _BlockDragWrap extends StatefulWidget {
     required this.body,
     required this.onBodyChange,
     required this.child,
+    required this.selected,
+    required this.onToggleSelected,
     this.onBlockComment,
     this.ulidGenerator,
   });
@@ -2830,6 +3019,14 @@ class _BlockDragWrap extends StatefulWidget {
   final String body;
   final ValueChanged<String> onBodyChange;
   final Widget child;
+
+  /// True when this block is part of the renderer's current selection.
+  /// Drives the left accent border + filled checkbox in the hover row.
+  final bool selected;
+
+  /// Click handler for the hover checkbox — toggles this block's
+  /// selection state in `_MarkdownRendererState`.
+  final VoidCallback onToggleSelected;
 
   /// When set, a small "💬" chip is revealed on hover. Clicking it
   /// ensures the block has a `^<ULID>` suffix (generating one if
@@ -2962,7 +3159,21 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                           )
                         : const SizedBox.shrink(),
                   ),
-                  Expanded(child: widget.child),
+                  Expanded(
+                    child: widget.selected
+                        ? Container(
+                            decoration: BoxDecoration(
+                              color: tokens.accent.withValues(alpha: 0.06),
+                              border: Border(
+                                left: BorderSide(
+                                    color: tokens.accent, width: 2),
+                              ),
+                            ),
+                            padding: const EdgeInsets.only(left: 6),
+                            child: widget.child,
+                          )
+                        : widget.child,
+                  ),
                   if (_hover && widget.onBlockComment != null)
                     Padding(
                       padding: const EdgeInsets.only(left: 4, top: 4),
@@ -2983,6 +3194,40 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                               Icons.mode_comment_outlined,
                               size: 12,
                               color: widget.block.blockId != null
+                                  ? tokens.accent
+                                  : tokens.text3,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (_hover || widget.selected)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, top: 4),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: widget.onToggleSelected,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: widget.selected
+                                  ? tokens.accent.withValues(alpha: 0.18)
+                                  : tokens.surface,
+                              border: Border.all(
+                                  color: widget.selected
+                                      ? tokens.accent
+                                      : tokens.divider2,
+                                  width: 0.5),
+                              borderRadius: const BorderRadius.all(
+                                  Radius.circular(4)),
+                            ),
+                            child: Icon(
+                              widget.selected
+                                  ? Icons.check_box
+                                  : Icons.check_box_outline_blank,
+                              size: 12,
+                              color: widget.selected
                                   ? tokens.accent
                                   : tokens.text3,
                             ),
