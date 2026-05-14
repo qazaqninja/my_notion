@@ -318,6 +318,7 @@ class _EditorBodyState extends State<_EditorBody> {
               actions: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  _ReminderBadge(page: page),
                   if (loaded.dirty)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -602,6 +603,66 @@ class _FindBar extends StatelessWidget {
             tooltip: 'Close (Esc)',
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Badge surfaced in the page header when the frontmatter carries a
+/// `reminder:` field. Reads as ISO YYYY-MM-DD (optional time), shows a
+/// bell + relative time pill that flips red when overdue.
+class _ReminderBadge extends StatelessWidget {
+  const _ReminderBadge({required this.page});
+  final dynamic page;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final raw = page.frontmatter.get('reminder');
+    if (raw == null) return const SizedBox.shrink();
+    final s = '$raw'.trim();
+    if (s.isEmpty) return const SizedBox.shrink();
+    final target = DateTime.tryParse(s);
+    if (target == null) return const SizedBox.shrink();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final t = DateTime(target.year, target.month, target.day);
+    final days = t.difference(today).inDays;
+    final overdue = days < 0;
+    final today0 = days == 0;
+    final label = today0
+        ? 'today'
+        : days == 1
+            ? 'tomorrow'
+            : days > 0
+                ? 'in ${days}d'
+                : '${-days}d ago';
+    final fg = overdue
+        ? const Color(0xFFCB5A4F)
+        : today0
+            ? tokens.accent
+            : tokens.text2;
+    final bg = overdue
+        ? const Color(0xFFCB5A4F).withValues(alpha: 0.16)
+        : today0
+            ? tokens.accent.withValues(alpha: 0.16)
+            : tokens.surface2;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.notifications_active_outlined, size: 11, color: fg),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(fontSize: 11, color: fg)),
+          ],
+        ),
       ),
     );
   }
