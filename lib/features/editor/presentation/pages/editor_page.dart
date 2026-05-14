@@ -234,7 +234,14 @@ class _EditorBodyState extends State<_EditorBody> {
                               ),
                               FrontmatterCard(frontmatter: page.frontmatter),
                               if (loaded.mode == EditorMode.rendered)
-                                MarkdownRenderer(body: page.body)
+                                MarkdownRenderer(
+                                  body: page.body,
+                                  onBodyChange: locked
+                                      ? null
+                                      : (next) => context
+                                          .read<EditorBloc>()
+                                          .add(EditBody(next)),
+                                )
                               else
                                 SourceView(
                                   key: ValueKey('source-${page.ulid}'),

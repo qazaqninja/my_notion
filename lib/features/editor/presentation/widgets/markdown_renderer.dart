@@ -19,10 +19,21 @@ import '../../../vault/presentation/bloc/vault_state.dart';
 /// deferred; the design didn't surface them and we can extend later
 /// without breaking the contract.
 class MarkdownRenderer extends StatelessWidget {
-  const MarkdownRenderer({super.key, required this.body, this.showUlid = false});
+  const MarkdownRenderer({
+    super.key,
+    required this.body,
+    this.showUlid = false,
+    this.onBodyChange,
+  });
 
   final String body;
   final bool showUlid;
+
+  /// When supplied, paragraph + heading blocks become tap-to-edit:
+  /// clicking swaps the rendered widget for an inline TextField; on
+  /// commit, this callback receives the body with the block's source
+  /// slice replaced.
+  final ValueChanged<String>? onBodyChange;
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +42,28 @@ class MarkdownRenderer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final b in blocks) _renderBlock(context, tokens, b),
+        for (final b in blocks) _wrapBlock(context, tokens, b),
       ],
+    );
+  }
+
+  Widget _wrapBlock(BuildContext context, QuillTokens tokens, _Block b) {
+    final inner = _renderBlock(context, tokens, b);
+    if (onBodyChange == null) return inner;
+    // Only paragraph + headings are tap-to-edit in this MVP; lists,
+    // tables, code, math, etc. still require source-mode toggle.
+    final editable = b.kind == _BlockKind.paragraph ||
+        b.kind == _BlockKind.h1 ||
+        b.kind == _BlockKind.h2 ||
+        b.kind == _BlockKind.h3 ||
+        b.kind == _BlockKind.quote;
+    if (!editable) return inner;
+    return _EditableBlock(
+      key: ValueKey('blk-${b.sourceStart}-${b.sourceEnd}'),
+      block: b,
+      body: body,
+      onBodyChange: onBodyChange!,
+      child: inner,
     );
   }
 
@@ -325,10 +356,26 @@ class MarkdownRenderer extends StatelessWidget {
 
   static List<_Block> _splitBlocks(String body) {
     final lines = body.split('\n');
+    // Compute the byte offset where each line starts. The last entry is
+    // one-past-the-end so we can derive `end` for the last block.
+    final lineOffsets = <int>[0];
+    for (var k = 0; k < lines.length; k++) {
+      lineOffsets.add(lineOffsets[k] + lines[k].length + 1); // +1 for `\n`
+    }
+    int offsetFor(int line) =>
+        line < lineOffsets.length ? lineOffsets[line] : body.length;
+    int endOf(int upToLine) {
+      // upToLine is exclusive; range ends just before its starting offset.
+      final v = offsetFor(upToLine);
+      // Drop the trailing newline so the slice is the block's own text.
+      return v > 0 && v <= body.length && upToLine > 0 ? v - 1 : v;
+    }
+
     final out = <_Block>[];
     int i = 0;
 
     while (i < lines.length) {
+      final start = offsetFor(i);
       final line = lines[i];
 
       // Code fence
@@ -340,8 +387,13 @@ class MarkdownRenderer extends StatelessWidget {
           buf.write(lines[i]);
           i++;
         }
-        out.add(_Block(kind: _BlockKind.code, text: buf.toString()));
         if (i < lines.length) i++; // skip closing ```
+        out.add(_Block(
+          kind: _BlockKind.code,
+          text: buf.toString(),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
 
@@ -357,7 +409,12 @@ class MarkdownRenderer extends StatelessWidget {
           rows.add(_splitTableRow(lines[i]));
           i++;
         }
-        out.add(_Block(kind: _BlockKind.table, tableRows: rows));
+        out.add(_Block(
+          kind: _BlockKind.table,
+          tableRows: rows,
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
 
@@ -367,11 +424,13 @@ class MarkdownRenderer extends StatelessWidget {
         final stripped = line.substring(2);
         final closeIdx = stripped.lastIndexOf(r'$$');
         if (closeIdx >= 0) {
+          i++;
           out.add(_Block(
             kind: _BlockKind.math,
             text: stripped.substring(0, closeIdx).trim(),
+            sourceStart: start,
+            sourceEnd: endOf(i),
           ));
-          i++;
           continue;
         }
         // Block form: collect until next `$$` line.
@@ -383,25 +442,45 @@ class MarkdownRenderer extends StatelessWidget {
           buf.write(lines[i]);
           i++;
         }
-        out.add(_Block(kind: _BlockKind.math, text: buf.toString().trim()));
         if (i < lines.length) i++;
+        out.add(_Block(
+          kind: _BlockKind.math,
+          text: buf.toString().trim(),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
 
       // Heading
       if (line.startsWith('### ')) {
-        out.add(_Block(kind: _BlockKind.h3, text: line.substring(4)));
         i++;
+        out.add(_Block(
+          kind: _BlockKind.h3,
+          text: line.substring(4),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
       if (line.startsWith('## ')) {
-        out.add(_Block(kind: _BlockKind.h2, text: line.substring(3)));
         i++;
+        out.add(_Block(
+          kind: _BlockKind.h2,
+          text: line.substring(3),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
       if (line.startsWith('# ')) {
-        out.add(_Block(kind: _BlockKind.h1, text: line.substring(2)));
         i++;
+        out.add(_Block(
+          kind: _BlockKind.h1,
+          text: line.substring(2),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
 
@@ -414,14 +493,23 @@ class MarkdownRenderer extends StatelessWidget {
           buf.write(lines[i] == '>' ? '' : lines[i].substring(2));
           i++;
         }
-        out.add(_Block(kind: _BlockKind.quote, text: buf.toString()));
+        out.add(_Block(
+          kind: _BlockKind.quote,
+          text: buf.toString(),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
 
       // Horizontal rule
       if (line.trim() == '---' || line.trim() == '***' || line.trim() == '___') {
-        out.add(_Block(kind: _BlockKind.hr));
         i++;
+        out.add(_Block(
+          kind: _BlockKind.hr,
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
 
@@ -432,7 +520,12 @@ class MarkdownRenderer extends StatelessWidget {
           items.add(lines[i].substring(2));
           i++;
         }
-        out.add(_Block(kind: _BlockKind.ul, items: items));
+        out.add(_Block(
+          kind: _BlockKind.ul,
+          items: items,
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
 
@@ -443,7 +536,12 @@ class MarkdownRenderer extends StatelessWidget {
           items.add(lines[i].replaceFirst(RegExp(r'^\d+\.\s'), ''));
           i++;
         }
-        out.add(_Block(kind: _BlockKind.ol, items: items));
+        out.add(_Block(
+          kind: _BlockKind.ol,
+          items: items,
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
         continue;
       }
 
@@ -463,7 +561,12 @@ class MarkdownRenderer extends StatelessWidget {
         buf.write(n);
         i++;
       }
-      out.add(_Block(kind: _BlockKind.paragraph, text: buf.toString()));
+      out.add(_Block(
+        kind: _BlockKind.paragraph,
+        text: buf.toString(),
+        sourceStart: start,
+        sourceEnd: endOf(i),
+      ));
     }
 
     return out;
@@ -650,11 +753,32 @@ class _BrokenImageBox extends StatelessWidget {
 }
 
 class _Block {
-  const _Block({required this.kind, this.text = '', this.items, this.tableRows});
+  const _Block({
+    required this.kind,
+    this.text = '',
+    this.items,
+    this.tableRows,
+    this.sourceStart = 0,
+    this.sourceEnd = 0,
+  });
   final _BlockKind kind;
   final String text;
   final List<String>? items;
   final List<List<String>>? tableRows;
+
+  /// `[sourceStart, sourceEnd)` is the half-open range in the full body
+  /// that produced this block. Used for tap-to-edit splicing.
+  final int sourceStart;
+  final int sourceEnd;
+
+  _Block withRange(int start, int end) => _Block(
+        kind: kind,
+        text: text,
+        items: items,
+        tableRows: tableRows,
+        sourceStart: start,
+        sourceEnd: end,
+      );
 }
 
 enum _BlockKind { h1, h2, h3, paragraph, ul, ol, code, math, quote, hr, table }
@@ -752,6 +876,119 @@ class _ListItem extends StatelessWidget {
               _ParagraphWithChips(text: raw, showUlid: showUlid, tokens: tokens),
         ),
       ],
+    );
+  }
+}
+
+/// Wraps a rendered block widget. Tapping it swaps the display for an
+/// inline TextField pre-filled with the block's source slice. On commit
+/// (Enter, blur, or tap-outside), the new source is spliced into the
+/// full body and the parent's onBodyChange callback fires.
+///
+/// Limited to single-line block kinds in this MVP (paragraph + h1/h2/h3 +
+/// quote). Lists, tables, code, math, and HR are not editable in place.
+class _EditableBlock extends StatefulWidget {
+  const _EditableBlock({
+    super.key,
+    required this.block,
+    required this.body,
+    required this.onBodyChange,
+    required this.child,
+  });
+
+  final _Block block;
+  final String body;
+  final ValueChanged<String> onBodyChange;
+  final Widget child;
+
+  @override
+  State<_EditableBlock> createState() => _EditableBlockState();
+}
+
+class _EditableBlockState extends State<_EditableBlock> {
+  bool _editing = false;
+  late TextEditingController _ctl;
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = TextEditingController(text: _slice);
+  }
+
+  @override
+  void didUpdateWidget(_EditableBlock old) {
+    super.didUpdateWidget(old);
+    if (!_editing && _slice != _ctl.text) {
+      _ctl.text = _slice;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  String get _slice =>
+      widget.body.substring(widget.block.sourceStart, widget.block.sourceEnd);
+
+  void _start() {
+    if (_editing) return;
+    setState(() => _editing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focus.requestFocus();
+      _ctl.selection =
+          TextSelection(baseOffset: 0, extentOffset: _ctl.text.length);
+    });
+  }
+
+  void _commit() {
+    final next = _ctl.text;
+    setState(() => _editing = false);
+    if (next == _slice) return;
+    final body = widget.body;
+    final patched = body.replaceRange(
+      widget.block.sourceStart,
+      widget.block.sourceEnd,
+      next,
+    );
+    widget.onBodyChange(patched);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    if (!_editing) {
+      return GestureDetector(
+        onTap: _start,
+        behavior: HitTestBehavior.opaque,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.text,
+          child: widget.child,
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: TextField(
+        controller: _ctl,
+        focusNode: _focus,
+        maxLines: null,
+        onSubmitted: (_) => _commit(),
+        onTapOutside: (_) {
+          if (_editing) _commit();
+        },
+        style: mono(fontSize: 13.5, color: tokens.text).copyWith(height: 1.55),
+        decoration: InputDecoration(
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 6),
+          border: InputBorder.none,
+          hintText: 'edit · enter / click out to commit',
+          hintStyle: TextStyle(color: tokens.text3, fontSize: 12.5),
+        ),
+      ),
     );
   }
 }
