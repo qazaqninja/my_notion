@@ -73,6 +73,17 @@ class ToggleFavorite extends VaultEvent {
   List<Object?> get props => [ulid];
 }
 
+/// Move a page's .md file into [targetFolder] (relative to vault root,
+/// empty = root). The page's ULID stays the same so wikilinks are
+/// unaffected. No-op if the move would be to the same folder.
+class MovePage extends VaultEvent {
+  const MovePage({required this.ulid, required this.targetFolder});
+  final String ulid;
+  final String targetFolder;
+  @override
+  List<Object?> get props => [ulid, targetFolder];
+}
+
 /// Copy a page to a new .md with a fresh ULID and a `(copy)` title suffix.
 /// Defaults to the source page's parent folder; pass [targetFolder] to
 /// override (empty string = vault root). Used both for context-menu

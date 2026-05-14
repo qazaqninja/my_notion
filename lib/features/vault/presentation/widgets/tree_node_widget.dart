@@ -38,17 +38,39 @@ class TreeNodeWidget extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SideItem(
-            level: level,
-            icon: 'folder',
-            label: n.name,
-            chevron: open ? SideChevron.open : SideChevron.closed,
-            onTap: () => context.read<VaultBloc>().add(ToggleFolder(n.relativePath)),
-            onSecondaryTap: (pos) => _showFolderMenu(context, n, pos),
-            trailingOnHover: _AddSubpageButton(
-              onTap: () => _promptNewSubpage(context, folderPath: n.relativePath),
-            ),
-            mute: !open,
+          DragTarget<String>(
+            onWillAcceptWithDetails: (_) => true,
+            onAcceptWithDetails: (d) {
+              context.read<VaultBloc>().add(
+                    MovePage(ulid: d.data, targetFolder: n.relativePath),
+                  );
+            },
+            builder: (context, candidate, _) {
+              final hovering = candidate.isNotEmpty;
+              return Container(
+                decoration: hovering
+                    ? BoxDecoration(
+                        color: QuillTokens.of(context).accentTint,
+                      )
+                    : null,
+                child: SideItem(
+                  level: level,
+                  icon: 'folder',
+                  label: n.name,
+                  chevron:
+                      open ? SideChevron.open : SideChevron.closed,
+                  onTap: () => context
+                      .read<VaultBloc>()
+                      .add(ToggleFolder(n.relativePath)),
+                  onSecondaryTap: (pos) => _showFolderMenu(context, n, pos),
+                  trailingOnHover: _AddSubpageButton(
+                    onTap: () => _promptNewSubpage(context,
+                        folderPath: n.relativePath),
+                  ),
+                  mute: !open,
+                ),
+              );
+            },
           ),
           if (open)
             for (final child in n.children)
@@ -62,13 +84,38 @@ class TreeNodeWidget extends StatelessWidget {
       );
     }
     if (n is VaultFile) {
-      return SideItem(
+      final inner = SideItem(
         level: level,
         icon: 'file-md',
         label: n.name,
         active: n.ulid == activeUlid && n.ulid.isNotEmpty,
         onTap: () => n.ulid.isNotEmpty ? context.go('/editor/${n.ulid}') : null,
         onSecondaryTap: (pos) => _showFileMenu(context, n, pos),
+      );
+      if (n.ulid.isEmpty) return inner;
+      return Draggable<String>(
+        data: n.ulid,
+        feedback: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: QuillTokens.of(context).surface,
+              border:
+                  Border.all(color: QuillTokens.of(context).divider2, width: 0.5),
+              borderRadius: const BorderRadius.all(Radius.circular(4)),
+            ),
+            child: Text(
+              n.name,
+              style: TextStyle(
+                fontSize: 13,
+                color: QuillTokens.of(context).text2,
+              ),
+            ),
+          ),
+        ),
+        childWhenDragging: Opacity(opacity: 0.4, child: inner),
+        child: inner,
       );
     }
     return const SizedBox.shrink();
@@ -230,18 +277,48 @@ class TreeRoot extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<VaultBloc>().state;
     if (state is! VaultLoaded) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final node in state.tree.topLevel)
-          TreeNodeWidget(
-            node: node,
-            level: 0,
-            expandedFolders: state.expandedFolders,
-            activeUlid: activeUlid,
+    final tokens = QuillTokens.of(context);
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (_) => true,
+      onAcceptWithDetails: (d) {
+        context
+            .read<VaultBloc>()
+            .add(MovePage(ulid: d.data, targetFolder: ''));
+      },
+      builder: (context, candidate, _) {
+        final hovering = candidate.isNotEmpty;
+        return Container(
+          decoration: hovering
+              ? BoxDecoration(
+                  border: Border.all(color: tokens.accent, width: 1),
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(4)),
+                )
+              : null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (state.tree.topLevel.isEmpty)
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Text(
+                    'Empty vault',
+                    style: TextStyle(fontSize: 11.5, color: tokens.text3),
+                  ),
+                ),
+              for (final node in state.tree.topLevel)
+                TreeNodeWidget(
+                  node: node,
+                  level: 0,
+                  expandedFolders: state.expandedFolders,
+                  activeUlid: activeUlid,
+                ),
+            ],
           ),
-      ],
+        );
+      },
     );
   }
 }

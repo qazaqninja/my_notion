@@ -43,6 +43,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<MoveToTrash>(_onMoveToTrash);
     on<DuplicatePage>(_onDuplicate);
     on<ToggleFavorite>(_onToggleFavorite);
+    on<MovePage>(_onMovePage);
     _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
   }
 
@@ -311,6 +312,47 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       emit(loaded.copyWith(workspace: next));
     } catch (err) {
       emit(VaultError('Favorites write failed: $err'));
+      emit(loaded);
+    }
+  }
+
+  Future<void> _onMovePage(MovePage e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final row = await (_db.select(_db.pages)..where((p) => p.ulid.equals(e.ulid)))
+        .getSingleOrNull();
+    if (row == null) return;
+    final root = Directory(loaded.rootPath);
+    final currentFolder = p.dirname(row.relativePath);
+    final normalisedTarget = e.targetFolder == '.' ? '' : e.targetFolder;
+    final normalisedCurrent = currentFolder == '.' ? '' : currentFolder;
+    if (normalisedTarget == normalisedCurrent) return;
+    final basename = p.basename(row.relativePath);
+    final newRel = normalisedTarget.isEmpty
+        ? basename
+        : p.join(normalisedTarget, basename);
+    final src = File(p.join(root.path, row.relativePath));
+    final dest = File(p.join(root.path, newRel));
+    if (!await src.exists()) return;
+    if (await dest.exists()) {
+      emit(VaultError(
+          'Move skipped: ${dest.path.split('/').last} already exists in target folder.'));
+      emit(loaded);
+      return;
+    }
+    try {
+      await dest.parent.create(recursive: true);
+      await src.rename(dest.path);
+      // Update drift's relative_path and re-read the page so the tree
+      // can pick it up. The frontmatter doesn't change, and the ULID
+      // stays the same — wikilinks remain valid.
+      final updated = await _repo.readPage(newRel, root: root);
+      await _indexer.upsertPage(updated);
+      final tree = await _buildTree(root);
+      final count = (await _db.select(_db.pages).get()).length;
+      emit(loaded.copyWith(tree: tree, pageCount: count));
+    } catch (err) {
+      emit(VaultError('Move failed: $err'));
       emit(loaded);
     }
   }
