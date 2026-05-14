@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show OrderingTerm;
@@ -8,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -538,12 +538,12 @@ class _FavoritesList extends StatelessWidget {
             for (final ulid in ulids)
               if (byUlid.containsKey(ulid))
                 SideItem(
-                  icon: _emojiFromFrontmatter(byUlid[ulid]!.frontmatterJson) ==
+                  icon: emojiFromFrontmatterJson(byUlid[ulid]!.frontmatterJson) ==
                           null
                       ? 'star'
                       : null,
                   emojiIcon:
-                      _emojiFromFrontmatter(byUlid[ulid]!.frontmatterJson),
+                      emojiFromFrontmatterJson(byUlid[ulid]!.frontmatterJson),
                   label: byUlid[ulid]!.title,
                   active: ulid == activeUlid,
                   onTap: () => context.go('/editor/$ulid'),
@@ -566,23 +566,6 @@ class _FavoritesList extends StatelessWidget {
       },
     );
   }
-}
-
-/// Extract a plain-emoji `icon:` value from a page's cached
-/// frontmatter_json. Mirrors the gating in vault_bloc._buildTree —
-/// asset / URL icons are returned as null because the sidebar can't
-/// render them at 13px without an async load.
-String? _emojiFromFrontmatter(String json) {
-  if (json.isEmpty) return null;
-  try {
-    final m = jsonDecode(json);
-    if (m is Map && m['icon'] is String) {
-      final s = (m['icon'] as String).trim();
-      if (s.isEmpty || s.contains('/') || s.startsWith('http')) return null;
-      return s;
-    }
-  } catch (_) {/* ignore malformed */}
-  return null;
 }
 
 /// Top-N most-recently-edited pages, sourced from drift's pages.mtime_ms.
@@ -621,10 +604,10 @@ class _RecentList extends StatelessWidget {
           children: [
             for (final r in rows)
               SideItem(
-                icon: _emojiFromFrontmatter(r.frontmatterJson) == null
+                icon: emojiFromFrontmatterJson(r.frontmatterJson) == null
                     ? 'file-md'
                     : null,
-                emojiIcon: _emojiFromFrontmatter(r.frontmatterJson),
+                emojiIcon: emojiFromFrontmatterJson(r.frontmatterJson),
                 label: r.title,
                 active: r.ulid == activeUlid,
                 onTap: () => context.go('/editor/${r.ulid}'),

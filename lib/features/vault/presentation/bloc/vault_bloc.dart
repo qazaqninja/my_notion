@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -10,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:drift/drift.dart' show Value;
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../data/indexer.dart';
 import '../../data/vault_watcher.dart';
@@ -449,20 +449,10 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     final pageRows = await _db.select(_db.pages).get();
     final ulidByPath = {for (final p in pageRows) p.relativePath: p.ulid};
     // Collect frontmatter `icon:` values for surfacing in the sidebar.
-    // Skip non-emoji icons (anything that looks like a path or URL) so
-    // we don't try to render an image in a 13px row.
     final iconByPath = <String, String>{};
     for (final row in pageRows) {
-      if (row.frontmatterJson.isEmpty) continue;
-      try {
-        final m = jsonDecode(row.frontmatterJson);
-        if (m is Map && m['icon'] is String) {
-          final s = (m['icon'] as String).trim();
-          if (s.isNotEmpty && !s.contains('/') && !s.startsWith('http')) {
-            iconByPath[row.relativePath] = s;
-          }
-        }
-      } catch (_) {/* ignore malformed cached frontmatter */}
+      final emoji = emojiFromFrontmatterJson(row.frontmatterJson);
+      if (emoji != null) iconByPath[row.relativePath] = emoji;
     }
 
     Future<List<VaultNode>> walk(Directory dir) async {

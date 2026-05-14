@@ -5,6 +5,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../database/domain/entities/database_schema.dart';
 import '../../../database/domain/repositories/database_repository.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
@@ -164,22 +165,9 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
             title: r.title,
             relativePath: r.relativePath,
             snippet: '',
-            emojiIcon: _emojiFromJson(r.frontmatterJson),
+            emojiIcon: emojiFromFrontmatterJson(r.frontmatterJson),
           ),
     ];
-  }
-
-  static String? _emojiFromJson(String json) {
-    if (json.isEmpty) return null;
-    try {
-      final m = jsonDecode(json);
-      if (m is Map && m['icon'] is String) {
-        final s = (m['icon'] as String).trim();
-        if (s.isEmpty || s.contains('/') || s.startsWith('http')) return null;
-        return s;
-      }
-    } catch (_) {/* ignore */}
-    return null;
   }
 
   Future<List<PageSearchResult>> _filterByTag(

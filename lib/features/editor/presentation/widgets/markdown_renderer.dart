@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/gestures.dart';
@@ -9,6 +8,7 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
@@ -1571,7 +1571,7 @@ class _SubpageCard extends StatelessWidget {
         final path = page?.relativePath ?? '';
         final emoji = page == null
             ? null
-            : _subpageEmojiFromFrontmatter(page.frontmatterJson);
+            : emojiFromFrontmatterJson(page.frontmatterJson);
         return GestureDetector(
           onTap: () => Navigator.of(context).pushReplacementNamed('/editor/$ulid'),
           child: MouseRegion(
@@ -1635,19 +1635,6 @@ class _SubpageCard extends StatelessWidget {
       },
     );
   }
-}
-
-String? _subpageEmojiFromFrontmatter(String json) {
-  if (json.isEmpty) return null;
-  try {
-    final m = jsonDecode(json);
-    if (m is Map && m['icon'] is String) {
-      final s = (m['icon'] as String).trim();
-      if (s.isEmpty || s.contains('/') || s.startsWith('http')) return null;
-      return s;
-    }
-  } catch (_) {/* ignore malformed cached frontmatter */}
-  return null;
 }
 
 class _MarkdownImage extends StatelessWidget {

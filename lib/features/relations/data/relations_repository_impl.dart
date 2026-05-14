@@ -1,8 +1,7 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart';
 
 import '../../../core/db/quill_database.dart' hide Page;
+import '../../../core/markdown/frontmatter_icon.dart';
 import '../domain/repositories/relations_repository.dart';
 
 class RelationsRepositoryImpl implements RelationsRepository {
@@ -44,24 +43,11 @@ class RelationsRepositoryImpl implements RelationsRepository {
           title: page.title,
           relativePath: page.relativePath,
           snippet: _snippetAround(page.bodyText, rel.position),
-          emojiIcon: _emojiFromFrontmatter(page.frontmatterJson),
+          emojiIcon: emojiFromFrontmatterJson(page.frontmatterJson),
         ),
       );
     }
     return result;
-  }
-
-  static String? _emojiFromFrontmatter(String json) {
-    if (json.isEmpty) return null;
-    try {
-      final m = jsonDecode(json);
-      if (m is Map && m['icon'] is String) {
-        final s = (m['icon'] as String).trim();
-        if (s.isEmpty || s.contains('/') || s.startsWith('http')) return null;
-        return s;
-      }
-    } catch (_) {/* ignore */}
-    return null;
   }
 
   static String _snippetAround(String body, int linkPos, {int radius = 60}) {
