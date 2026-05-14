@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
@@ -44,6 +45,7 @@ class VaultShellPage extends StatefulWidget {
 class _VaultShellPageState extends State<VaultShellPage> {
   CommandPaletteCubit? _palette;
   final FocusNode _rootFocus = FocusNode(skipTraversal: true);
+  bool _sidebarCollapsed = false;
 
   @override
   void initState() {
@@ -95,6 +97,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
               _newPage(context),
           const SingleActivator(LogicalKeyboardKey.slash, shift: true): () =>
               _showShortcuts(context),
+          const SingleActivator(LogicalKeyboardKey.backslash, meta: true): () =>
+              setState(() => _sidebarCollapsed = !_sidebarCollapsed),
+          const SingleActivator(LogicalKeyboardKey.backslash, control: true): () =>
+              setState(() => _sidebarCollapsed = !_sidebarCollapsed),
         },
         child: Focus(
           focusNode: _rootFocus,
@@ -106,10 +112,32 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 children: [
                   Row(
                     children: [
-                      SidebarWidget(activeUlid: widget.activeUlid),
+                      if (!_sidebarCollapsed)
+                        SidebarWidget(activeUlid: widget.activeUlid),
                       Expanded(child: widget.child),
                     ],
                   ),
+                  if (_sidebarCollapsed)
+                    Positioned(
+                      top: 14,
+                      left: 8,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: IconButton(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(
+                              minWidth: 32, minHeight: 32),
+                          onPressed: () => setState(
+                              () => _sidebarCollapsed = false),
+                          icon: QuillIcon('sidebar',
+                              size: 16,
+                              strokeWidth: 1.7,
+                              color: tokens.text3),
+                          tooltip: 'Show sidebar (⌘\\)',
+                        ),
+                      ),
+                    ),
                   _paletteOverlay(context),
                 ],
               ),
@@ -177,6 +205,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘N', 'New page'),
                 _kbRow(tokens, '⌘R', 'Reindex vault'),
                 _kbRow(tokens, '⌘⇧R', 'Reveal vault in Finder'),
+                _kbRow(tokens, '⌘\\', 'Toggle sidebar'),
                 _kbRow(tokens, '?', 'This shortcut list'),
                 const SizedBox(height: 10),
                 _kbSection(tokens, 'Editor'),
