@@ -107,11 +107,18 @@ class FrozenColumnTable extends StatefulWidget {
     this.onDuplicateRow,
     this.wrap = false,
     this.persistKey,
+    this.subGroupBy,
   });
 
   final DatabaseSchema schema;
   final List<DatabasePageRow> rows;
   final void Function(DatabasePageRow row) onOpenPage;
+
+  /// Column key by which adjacent rows are visually divided. When set,
+  /// the table inserts a 22px header band between rows whose value
+  /// differs. Rows must already be sorted by this column for the
+  /// dividers to be meaningful — ApplyQuery handles that upstream.
+  final String? subGroupBy;
 
   /// Optional duplicate-row callback. When set, the row context menu
   /// gains a Duplicate item.
@@ -380,6 +387,23 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
               if (!hiddenUlids.contains(r.ulid)) r,
           ];
 
+    // Build the entry stream — sub-group dividers interleaved with rows
+    // when widget.subGroupBy is set, otherwise pure rows.
+    final entries = <_TableEntry>[];
+    String? lastSubGroup;
+    final subKey = widget.subGroupBy;
+    for (final r in visibleRows) {
+      if (subKey != null) {
+        final raw = '${r.cells[subKey] ?? ''}'.trim();
+        final label = raw.isEmpty ? '—' : raw;
+        if (label != lastSubGroup) {
+          entries.add(_TableEntry.divider(label));
+          lastSubGroup = label;
+        }
+      }
+      entries.add(_TableEntry.row(r));
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -410,9 +434,9 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                     ? _emptyState(tokens)
                     : ListView.builder(
                   controller: _vertLeft,
-                  itemCount: visibleRows.length + 1,
+                  itemCount: entries.length + 1,
                   itemBuilder: (context, i) {
-                    if (i == visibleRows.length) {
+                    if (i == entries.length) {
                       final enabled = widget.onCreateRow != null;
                       return GestureDetector(
                         onTap: enabled ? widget.onCreateRow : null,
@@ -435,7 +459,14 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                         ),
                       );
                     }
-                    final row = visibleRows[i];
+                    final e = entries[i];
+                    if (e.isDivider) {
+                      return _SubgroupDividerLeft(
+                        label: e.label!,
+                        tokens: tokens,
+                      );
+                    }
+                    final row = e.row!;
                     return _titleRow(
                       row,
                       tokens,
@@ -512,13 +543,17 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                     Expanded(
                       child: ListView.builder(
                         controller: _vertRight,
-                        itemCount: visibleRows.length + 1,
+                        itemCount: entries.length + 1,
                         itemBuilder: (context, i) {
-                          if (i == visibleRows.length) {
+                          if (i == entries.length) {
                             return SizedBox(
                                 height: widget.wrap ? _rowHeight : _rowHeight);
                           }
-                          final row = visibleRows[i];
+                          final entry = entries[i];
+                          if (entry.isDivider) {
+                            return _SubgroupDividerRight(tokens: tokens);
+                          }
+                          final row = entry.row!;
                           return Container(
                             constraints:
                                 BoxConstraints(minHeight: _rowHeight),
@@ -1075,5 +1110,54 @@ class _EditableCellState extends State<_EditableCell> {
             : TextAlign.left,
       ),
     );
+  }
+}
+
+/// Either a real row or a sub-group divider band. Used to render the
+/// frozen + scrollable ListViews from a single index space so the
+/// dividers stay aligned across panes.
+class _TableEntry {
+  const _TableEntry._({this.row, this.label});
+  factory _TableEntry.row(DatabasePageRow row) => _TableEntry._(row: row);
+  factory _TableEntry.divider(String label) => _TableEntry._(label: label);
+  final DatabasePageRow? row;
+  final String? label;
+  bool get isDivider => row == null;
+}
+
+class _SubgroupDividerLeft extends StatelessWidget {
+  const _SubgroupDividerLeft({required this.label, required this.tokens});
+  final String label;
+  final QuillTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 22,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      color: tokens.surface2,
+      alignment: Alignment.centerLeft,
+      child: Text(
+        label,
+        style: mono(
+          fontSize: 10.5,
+          color: tokens.text2,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+      ),
+    );
+  }
+}
+
+class _SubgroupDividerRight extends StatelessWidget {
+  const _SubgroupDividerRight({required this.tokens});
+  final QuillTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(height: 22, color: tokens.surface2);
   }
 }

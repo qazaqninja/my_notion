@@ -357,6 +357,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       onDuplicateRow: schema.locked ? null : _duplicateRow,
                       wrap: _wrap,
                       persistKey: widget.dbId,
+                      subGroupBy: _query.subGroupBy,
                     ),
                   ViewType.gallery => GalleryView(
                       schema: viewSchema,
