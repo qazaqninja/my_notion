@@ -42,6 +42,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<CreatePage>(_onCreatePage);
     on<MoveToTrash>(_onMoveToTrash);
     on<DuplicatePage>(_onDuplicate);
+    on<ToggleFavorite>(_onToggleFavorite);
     _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
   }
 
@@ -290,6 +291,26 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       e.onCreated?.call(newUlid);
     } catch (err) {
       emit(VaultError('Duplicate failed: $err'));
+      emit(loaded);
+    }
+  }
+
+  Future<void> _onToggleFavorite(
+      ToggleFavorite e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final list = [...loaded.workspace.favorites];
+    if (list.contains(e.ulid)) {
+      list.remove(e.ulid);
+    } else {
+      list.add(e.ulid);
+    }
+    final next = loaded.workspace.copyWith(favorites: list);
+    try {
+      await next.save(Directory(loaded.rootPath));
+      emit(loaded.copyWith(workspace: next));
+    } catch (err) {
+      emit(VaultError('Favorites write failed: $err'));
       emit(loaded);
     }
   }

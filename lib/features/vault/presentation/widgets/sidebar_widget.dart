@@ -68,6 +68,15 @@ class SidebarWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (state is VaultLoaded &&
+                      state.workspace.favorites.isNotEmpty) ...[
+                    const SideHead(label: 'Favorites'),
+                    _FavoritesList(
+                      ulids: state.workspace.favorites,
+                      activeUlid: activeUlid,
+                      rebuildKey: '${state.rootPath}-${state.workspace.favorites.length}',
+                    ),
+                  ],
                   if (state is VaultLoaded) ...[
                     const SideHead(label: 'Recent'),
                     _RecentList(
@@ -217,6 +226,68 @@ class _DatabasesList extends StatelessWidget {
     if (hex.length == 6) hex = 'FF$hex';
     final v = int.tryParse(hex, radix: 16);
     return Color(v ?? 0xFF6B8E7F);
+  }
+}
+
+/// Pinned pages, ordered as declared in `.quill.yaml`'s `favorites:`.
+class _FavoritesList extends StatelessWidget {
+  const _FavoritesList({
+    required this.ulids,
+    required this.rebuildKey,
+    this.activeUlid,
+  });
+  final List<String> ulids;
+  final String rebuildKey;
+  final String? activeUlid;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final db = context.read<QuillDatabase>();
+    return FutureBuilder(
+      key: ValueKey('favorites-$rebuildKey'),
+      future: (db.select(db.pages)..where((p) => p.ulid.isIn(ulids))).get(),
+      builder: (context, snap) {
+        final rows = snap.data ?? const [];
+        if (rows.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Text(
+              'No favorites',
+              style: TextStyle(fontSize: 11.5, color: tokens.text3),
+            ),
+          );
+        }
+        // Preserve declared order from `ulids` (the IN query loses it).
+        final byUlid = {for (final r in rows) r.ulid: r};
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final ulid in ulids)
+              if (byUlid.containsKey(ulid))
+                SideItem(
+                  icon: 'star',
+                  label: byUlid[ulid]!.title,
+                  active: ulid == activeUlid,
+                  onTap: () => context.go('/editor/$ulid'),
+                  trailingOnHover: GestureDetector(
+                    onTap: () => context
+                        .read<VaultBloc>()
+                        .add(ToggleFavorite(ulid)),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Icon(Icons.close,
+                            size: 12, color: tokens.text3),
+                      ),
+                    ),
+                  ),
+                ),
+          ],
+        );
+      },
+    );
   }
 }
 

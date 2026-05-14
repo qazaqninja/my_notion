@@ -109,13 +109,21 @@ class TreeNodeWidget extends StatelessWidget {
         Rect.fromLTWH(pos.dx, pos.dy, 1, 1),
         Offset.zero & overlay.size,
       ),
-      items: const [
-        PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
-        PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
-        PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
-        PopupMenuItem(value: 'history', child: Text('Page history')),
-        PopupMenuDivider(),
-        PopupMenuItem(value: 'trash', child: Text('Move to trash')),
+      items: [
+        const PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
+        const PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
+        const PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
+        const PopupMenuItem(value: 'history', child: Text('Page history')),
+        PopupMenuItem(
+          value: 'pin',
+          child: Text(
+            state.workspace.favorites.contains(fl.ulid)
+                ? 'Unpin from favorites'
+                : 'Pin to favorites',
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(value: 'trash', child: Text('Move to trash')),
       ],
     );
     if (!context.mounted) return;
@@ -138,6 +146,9 @@ class TreeNodeWidget extends StatelessWidget {
             fl.ulid,
             onCreated: (newUlid) => router.go('/editor/$newUlid'),
           ));
+    } else if (selected == 'pin') {
+      if (fl.ulid.isEmpty) return;
+      context.read<VaultBloc>().add(ToggleFavorite(fl.ulid));
     } else if (selected == 'trash') {
       if (fl.ulid.isEmpty) return;
       context.read<VaultBloc>().add(MoveToTrash(fl.ulid));

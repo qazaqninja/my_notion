@@ -64,6 +64,15 @@ class MoveToTrash extends VaultEvent {
   List<Object?> get props => [ulid];
 }
 
+/// Toggle a page in the workspace's `favorites:` list. Adds if absent,
+/// removes if present. Writes through to `.quill.yaml`.
+class ToggleFavorite extends VaultEvent {
+  const ToggleFavorite(this.ulid);
+  final String ulid;
+  @override
+  List<Object?> get props => [ulid];
+}
+
 /// Copy a page to a new .md with a fresh ULID and a `(copy)` title suffix.
 /// Defaults to the source page's parent folder; pass [targetFolder] to
 /// override (empty string = vault root). Used both for context-menu
