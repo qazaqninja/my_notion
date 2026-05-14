@@ -164,6 +164,7 @@ class CsvImporter {
       case ColumnType.relation:
       case ColumnType.formula:
       case ColumnType.rollup:
+      case ColumnType.person:
       case ColumnType.file:
       case ColumnType.createdTime:
       case ColumnType.lastEditedTime:
@@ -277,6 +278,7 @@ class CsvImporter {
         ColumnType.relation => 'relation',
         ColumnType.formula => 'formula',
         ColumnType.rollup => 'rollup',
+        ColumnType.person => 'person',
         ColumnType.checkbox => 'checkbox',
         ColumnType.file => 'file',
         ColumnType.createdTime => 'created_time',

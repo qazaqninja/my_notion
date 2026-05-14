@@ -8,6 +8,7 @@ import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/person_chip.dart';
 import '../../../../shared/widgets/relation_chip.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/tag_chip.dart';
@@ -155,6 +156,24 @@ class CellRenderer extends StatelessWidget {
           child: Text(
             _formatTimestamp(v),
             style: mono(fontSize: 12, color: tokens.text3),
+          ),
+        );
+      case ColumnType.person:
+        // A person column carries either a single name string or a
+        // comma-separated list (or YAML list). Render each as a person
+        // chip — small initial-circle + name. The colour is derived
+        // from the name so the same person reads the same way across
+        // the vault.
+        final names = _parseList(v);
+        return Align(
+          alignment: align,
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (final n in names)
+                if (n.isNotEmpty) PersonChip(name: n),
+            ],
           ),
         );
       case ColumnType.rollup:

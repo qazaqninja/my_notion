@@ -124,6 +124,9 @@ class DatabaseYamlParser {
         'checkbox' => ColumnType.checkbox,
         'file' => ColumnType.file,
         'rollup' => ColumnType.rollup,
+        'person' || 'user' || 'owner' || 'assignee' ||
+            'created_by' || 'last_edited_by' =>
+          ColumnType.person,
         'created_time' || 'created' => ColumnType.createdTime,
         'last_edited_time' || 'edited_time' || 'modified' => ColumnType.lastEditedTime,
         _ => ColumnType.text,

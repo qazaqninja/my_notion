@@ -11,6 +11,7 @@ enum ColumnType {
   createdTime,
   lastEditedTime,
   rollup,
+  person,
 }
 
 enum RollupAgg { sum, avg, min, max, count, list }

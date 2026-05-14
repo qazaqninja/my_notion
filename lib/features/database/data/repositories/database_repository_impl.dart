@@ -241,6 +241,7 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
       case ColumnType.relation:
       case ColumnType.formula:
       case ColumnType.rollup:
+      case ColumnType.person:
       case ColumnType.file:
       case ColumnType.createdTime:
       case ColumnType.lastEditedTime:
@@ -257,6 +258,7 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         ColumnType.relation => FrontmatterType.relation,
         ColumnType.formula => FrontmatterType.formula,
         ColumnType.rollup => FrontmatterType.formula,
+        ColumnType.person => FrontmatterType.text,
         ColumnType.file => FrontmatterType.file,
         ColumnType.checkbox => FrontmatterType.checkbox,
         // The two timestamp types are derived metadata — they're never

@@ -118,6 +118,7 @@ List<FilterOp> filterOpsForType(ColumnType t) {
     case ColumnType.multi:
     case ColumnType.formula:
     case ColumnType.rollup:
+    case ColumnType.person:
     case ColumnType.file:
       return const [
         FilterOp.contains,
