@@ -96,8 +96,11 @@ class SidebarWidget extends StatelessWidget {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {},
-                  child: QuillIcon('gear', size: 13, strokeWidth: 1.7, color: tokens.text3),
+                  onTap: () => context.go('/settings'),
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: QuillIcon('gear', size: 13, strokeWidth: 1.7, color: tokens.text3),
+                  ),
                 ),
               ],
             ),

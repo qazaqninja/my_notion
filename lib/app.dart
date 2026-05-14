@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'core/db/quill_database.dart' hide Page;
 import 'features/database/presentation/pages/database_table_page.dart';
 import 'features/editor/presentation/pages/editor_page.dart';
+import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/vault/data/indexer.dart';
 import 'features/vault/data/repositories/vault_repository_impl.dart';
 import 'features/vault/domain/repositories/vault_repository.dart';
@@ -139,6 +140,13 @@ GoRouter _buildRouter(VaultBloc vault) {
                 ),
               ),
             ],
+          ),
+          GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
+          GoRoute(
+            path: '/settings/:section',
+            builder: (context, state) => SettingsPage(
+              section: state.pathParameters['section']!,
+            ),
           ),
         ],
       ),
