@@ -21,6 +21,7 @@ double _widthForType(ColumnType t) => switch (t) {
       ColumnType.relation => 160,
       ColumnType.checkbox => 60,
       ColumnType.formula => 130,
+      ColumnType.rollup => 110,
       ColumnType.file => 130,
       ColumnType.createdTime => 130,
       ColumnType.lastEditedTime => 130,
@@ -35,6 +36,7 @@ String _iconForType(ColumnType t) => switch (t) {
       ColumnType.relation => 'link',
       ColumnType.checkbox => 'checksquare',
       ColumnType.formula => 'code',
+      ColumnType.rollup => 'sigma',
       ColumnType.file => 'file',
       ColumnType.createdTime => 'calendar',
       ColumnType.lastEditedTime => 'calendar',
@@ -918,6 +920,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
         return true;
       case ColumnType.relation:
       case ColumnType.formula:
+      case ColumnType.rollup:
       case ColumnType.file:
       case ColumnType.createdTime:
       case ColumnType.lastEditedTime:

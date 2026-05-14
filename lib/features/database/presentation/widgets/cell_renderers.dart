@@ -157,6 +157,27 @@ class CellRenderer extends StatelessWidget {
             style: mono(fontSize: 12, color: tokens.text3),
           ),
         );
+      case ColumnType.rollup:
+        // Pre-computed by RollupCompute before the table is rendered.
+        // Numbers get the standard right-aligned mono formatting; lists
+        // (RollupAgg.list) come in as comma-joined strings.
+        if (v is num) {
+          final isInt = v == v.truncate();
+          return Align(
+            alignment: align,
+            child: Text(
+              isInt ? '${v.toInt()}' : v.toStringAsFixed(2),
+              style: mono(fontSize: 12, color: tokens.text2),
+            ),
+          );
+        }
+        return Align(
+          alignment: align,
+          child: Text('$v',
+              style: mono(fontSize: 12, color: tokens.text2),
+              overflow: TextOverflow.ellipsis,
+              maxLines: wrap ? null : 1),
+        );
     }
   }
 

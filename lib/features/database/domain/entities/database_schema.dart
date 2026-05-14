@@ -10,7 +10,10 @@ enum ColumnType {
   file,
   createdTime,
   lastEditedTime,
+  rollup,
 }
+
+enum RollupAgg { sum, avg, min, max, count, list }
 
 class ColumnDef {
   const ColumnDef({
@@ -20,6 +23,9 @@ class ColumnDef {
     this.targetDatabase,
     this.formula,
     this.isParent = false,
+    this.rollupRelation,
+    this.rollupTarget,
+    this.rollupAgg = RollupAgg.sum,
   });
 
   final String key;
@@ -36,6 +42,19 @@ class ColumnDef {
   /// each row's depth via parent walk and indents the title.
   /// Declared as `is_parent: true` in `.database.yaml`.
   final bool isParent;
+
+  /// For [ColumnType.rollup]: which relation column on this row to
+  /// follow (e.g. `subtasks`, `depends_on`). Read from
+  /// `.database.yaml`'s `schema.<key>.relation:` field.
+  final String? rollupRelation;
+
+  /// For [ColumnType.rollup]: which cell key on each related row to
+  /// aggregate. Read from `.database.yaml`'s `schema.<key>.target:`.
+  final String? rollupTarget;
+
+  /// For [ColumnType.rollup]: which aggregation to apply. Defaults to
+  /// `sum`. Read from `.database.yaml`'s `schema.<key>.agg:`.
+  final RollupAgg rollupAgg;
 }
 
 enum ViewType { table, gallery, board, timeline, calendar, chart, list }

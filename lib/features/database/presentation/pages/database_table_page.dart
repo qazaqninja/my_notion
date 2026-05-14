@@ -24,6 +24,7 @@ import '../../domain/entities/database_query.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
 import '../../domain/usecases/apply_query.dart';
+import '../../domain/usecases/rollup_compute.dart';
 import '../widgets/board_view.dart';
 import '../widgets/calendar_view.dart';
 import '../widgets/chart_view.dart';
@@ -334,7 +335,9 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
             ),
             Expanded(
               child: Builder(builder: (context) {
-                final filtered = ApplyQuery.apply(rows, _query, schema);
+                final withRollups = RollupCompute.apply(rows, schema);
+                final filtered =
+                    ApplyQuery.apply(withRollups, _query, schema);
                 // Honour `views[].visible:` — restrict columns shown by
                 // table/gallery/etc. ApplyQuery already ran on the full
                 // schema so filter/sort/group can reference hidden cols.

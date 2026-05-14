@@ -67,6 +67,9 @@ class DatabaseYamlParser {
     final target = def['target_database'];
     final formula = def['formula'];
     final isParent = def['is_parent'] == true;
+    final rollupRelation = def['relation'];
+    final rollupTarget = def['target'];
+    final rollupAgg = _rollupAgg('${def['agg'] ?? 'sum'}');
     return ColumnDef(
       key: key,
       type: type,
@@ -74,8 +77,20 @@ class DatabaseYamlParser {
       targetDatabase: target != null ? '$target' : null,
       formula: formula != null ? '$formula' : null,
       isParent: isParent,
+      rollupRelation: rollupRelation != null ? '$rollupRelation' : null,
+      rollupTarget: rollupTarget != null ? '$rollupTarget' : null,
+      rollupAgg: rollupAgg,
     );
   }
+
+  static RollupAgg _rollupAgg(String s) => switch (s.toLowerCase()) {
+        'avg' || 'mean' || 'average' => RollupAgg.avg,
+        'min' => RollupAgg.min,
+        'max' => RollupAgg.max,
+        'count' => RollupAgg.count,
+        'list' || 'join' => RollupAgg.list,
+        _ => RollupAgg.sum,
+      };
 
   static DatabaseView _parseView(YamlMap m) {
     List<String>? visible;
@@ -108,6 +123,7 @@ class DatabaseYamlParser {
         'formula' => ColumnType.formula,
         'checkbox' => ColumnType.checkbox,
         'file' => ColumnType.file,
+        'rollup' => ColumnType.rollup,
         'created_time' || 'created' => ColumnType.createdTime,
         'last_edited_time' || 'edited_time' || 'modified' => ColumnType.lastEditedTime,
         _ => ColumnType.text,
