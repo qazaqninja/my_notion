@@ -11,9 +11,7 @@ import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
 
 /// Shows up next to "Choose folder…" when SharedPreferences has the
-/// last-opened vault path. Hidden when there's no prior vault, or when
-/// the saved folder no longer exists on disk (we don't check — the
-/// LoadFromPath path already surfaces missing-folder errors).
+/// last-opened vault path. Hidden when there's no prior vault.
 class _ReopenLastVaultButton extends StatefulWidget {
   const _ReopenLastVaultButton();
 
@@ -54,6 +52,96 @@ class _ReopenLastVaultButtonState extends State<_ReopenLastVaultButton> {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(6)),
         ),
+      ),
+    );
+  }
+}
+
+/// "Recent vaults" list — up to 5 entries. The newest pick is on top.
+/// Hidden when there are fewer than 2 entries (the [_ReopenLastVaultButton]
+/// already covers the single-vault case).
+class _RecentVaultsList extends StatefulWidget {
+  const _RecentVaultsList();
+
+  @override
+  State<_RecentVaultsList> createState() => _RecentVaultsListState();
+}
+
+class _RecentVaultsListState extends State<_RecentVaultsList> {
+  List<String> _recent = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final r = prefs.getStringList('vault.recent') ?? const [];
+    if (!mounted) return;
+    setState(() => _recent = r);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    if (_recent.length < 2) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'RECENT VAULTS',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
+              color: tokens.text3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final path in _recent.skip(1))
+            GestureDetector(
+              onTap: () =>
+                  context.read<VaultBloc>().add(LoadFromPath(path)),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      QuillIcon('folder',
+                          size: 12, color: tokens.text3),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          p.basename(path),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: tokens.text2,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          path,
+                          style:
+                              mono(fontSize: 11, color: tokens.text3),
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -172,6 +260,7 @@ class VaultPickerPage extends StatelessWidget {
                       child: Text(state.message, style: TextStyle(color: tokens.text2, fontSize: 13)),
                     ),
                   ],
+                  const _RecentVaultsList(),
                 ],
               ),
             ),

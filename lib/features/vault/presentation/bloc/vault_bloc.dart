@@ -63,6 +63,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   }
 
   static const _prefVaultPath = 'vault.path';
+  static const _prefVaultRecent = 'vault.recent';
 
   Future<void> _onPick(PickVault e, Emitter<VaultState> emit) async {
     emit(const VaultPicking());
@@ -75,6 +76,13 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefVaultPath, selected);
+    // Recent list: dedupe by string, prepend the new pick, cap at 5.
+    final recent = prefs.getStringList(_prefVaultRecent) ?? const <String>[];
+    final next = [
+      selected,
+      ...recent.where((p) => p != selected),
+    ].take(5).toList();
+    await prefs.setStringList(_prefVaultRecent, next);
     add(LoadFromPath(selected));
   }
 
