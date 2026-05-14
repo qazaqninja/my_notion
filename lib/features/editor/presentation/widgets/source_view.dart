@@ -206,6 +206,27 @@ class _SourceViewState extends State<SourceView> {
     return Rect.fromLTWH(x, caretInField.dy, 320, 0);
   }
 
+  /// Wrap the current selection (or insert two markers and place the
+  /// caret between them) with [pre]/[post]. Cmd+B → **bold**, Cmd+I →
+  /// *italic*.
+  void _wrapSelection(String pre, String post) {
+    final v = _controller.value;
+    final sel = v.selection;
+    if (!sel.isValid) return;
+    final start = sel.start.clamp(0, v.text.length);
+    final end = sel.end.clamp(0, v.text.length);
+    final selected = v.text.substring(start, end);
+    final replaced = '$pre$selected$post';
+    final newText = v.text.replaceRange(start, end, replaced);
+    final caretAfter = selected.isEmpty
+        ? start + pre.length // insert caret between markers
+        : start + replaced.length;
+    _controller.value = v.copyWith(
+      text: newText,
+      selection: TextSelection.collapsed(offset: caretAfter),
+    );
+  }
+
   /// When the relation picker OR slash menu is open, intercept
   /// ↑ / ↓ / ↵ / esc to drive selection without losing keyboard focus.
   KeyEventResult _onKeyEvent(FocusNode _, KeyEvent event) {
@@ -427,13 +448,26 @@ class _SourceViewState extends State<SourceView> {
             ),
             child: Focus(
               onKeyEvent: _onKeyEvent,
-              child: TextField(
-                controller: _controller,
-                focusNode: _focus,
-                maxLines: null,
-                minLines: 8,
-                decoration: const InputDecoration.collapsed(hintText: ''),
-                style: mono(fontSize: 13.5, color: tokens.text).copyWith(height: 1.65),
+              child: CallbackShortcuts(
+                bindings: {
+                  const SingleActivator(LogicalKeyboardKey.keyB, meta: true):
+                      () => _wrapSelection('**', '**'),
+                  const SingleActivator(LogicalKeyboardKey.keyB, control: true):
+                      () => _wrapSelection('**', '**'),
+                  const SingleActivator(LogicalKeyboardKey.keyI, meta: true):
+                      () => _wrapSelection('*', '*'),
+                  const SingleActivator(LogicalKeyboardKey.keyI, control: true):
+                      () => _wrapSelection('*', '*'),
+                },
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focus,
+                  maxLines: null,
+                  minLines: 8,
+                  decoration: const InputDecoration.collapsed(hintText: ''),
+                  style: mono(fontSize: 13.5, color: tokens.text)
+                      .copyWith(height: 1.65),
+                ),
               ),
             ),
           ),
