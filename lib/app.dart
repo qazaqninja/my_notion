@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/db/quill_database.dart' hide Page;
-import 'features/editor/presentation/pages/editor_placeholder_page.dart';
+import 'features/editor/presentation/pages/editor_page.dart';
 import 'features/vault/data/indexer.dart';
 import 'features/vault/data/repositories/vault_repository_impl.dart';
 import 'features/vault/domain/repositories/vault_repository.dart';
@@ -65,7 +65,9 @@ class _QuillAppState extends State<QuillApp> {
         value: _db,
         child: RepositoryProvider<VaultRepository>.value(
           value: _repo,
-          child: BlocBuilder<ThemeCubit, ThemeState>(
+          child: RepositoryProvider<Indexer>.value(
+            value: _indexer,
+            child: BlocBuilder<ThemeCubit, ThemeState>(
             builder: (context, themeState) {
               return MaterialApp.router(
                 title: 'Quill',
@@ -77,6 +79,7 @@ class _QuillAppState extends State<QuillApp> {
               );
             },
           ),
+        ),
         ),
       ),
     );
@@ -112,7 +115,8 @@ GoRouter _buildRouter(VaultBloc vault) {
           GoRoute(path: '/home', builder: (_, __) => const HomePage()),
           GoRoute(
             path: '/editor/:ulid',
-            builder: (context, state) => EditorPlaceholderPage(
+            builder: (context, state) => EditorPage(
+              key: ValueKey(state.pathParameters['ulid']),
               ulid: state.pathParameters['ulid']!,
             ),
           ),
