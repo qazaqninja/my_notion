@@ -212,6 +212,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import Markdown file as page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import OPML outline as page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import Roam JSON export', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'table', label: 'Import Trello board as database', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'export', label: 'Export vault as HTML', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'export', label: 'Export vault as PDF', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'New page from template…', hint: ''),

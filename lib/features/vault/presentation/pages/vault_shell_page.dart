@@ -22,6 +22,7 @@ import '../../data/html_page_importer.dart';
 import '../../data/opml_page_importer.dart';
 import '../../data/roam_page_importer.dart';
 import '../../data/text_page_importer.dart';
+import '../../data/trello_database_importer.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
@@ -531,6 +532,33 @@ class _VaultShellPageState extends State<VaultShellPage> {
         } catch (e) {
           messenger?.showSnackBar(
               SnackBar(content: Text('HTML import failed: $e')));
+        }
+      case 'Import Trello board as database':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final trPick = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: const ['json'],
+        );
+        if (trPick == null || trPick.files.isEmpty) return;
+        final trPath = trPick.files.first.path;
+        if (trPath == null) return;
+        try {
+          final summary = await TrelloDatabaseImporter.importTo(
+            File(trPath),
+            Directory(vaultPath),
+          );
+          vaultBloc.add(const ReindexVault());
+          messenger?.showSnackBar(SnackBar(
+            content: Text(
+                'Imported ${summary.cards.length} cards → ${summary.folder}/'),
+            duration: const Duration(seconds: 4),
+          ));
+        } catch (e) {
+          messenger?.showSnackBar(
+              SnackBar(content: Text('Trello import failed: $e')));
         }
       case 'Import Roam JSON export':
         if (vaultPath == null) {
