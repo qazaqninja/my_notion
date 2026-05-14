@@ -204,6 +204,16 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 backgroundColor: tokens.sidebar,
                 child: SidebarWidget(activeUlid: widget.activeUlid, width: 300),
               ),
+              floatingActionButton:
+                  context.watch<VaultBloc>().state is VaultLoaded
+                      ? FloatingActionButton(
+                          backgroundColor: tokens.accent,
+                          foregroundColor: Colors.white,
+                          tooltip: 'New page',
+                          onPressed: () => _newPage(context),
+                          child: const Icon(Icons.add, size: 22),
+                        )
+                      : null,
               body: Stack(
                 children: [
                   Column(
