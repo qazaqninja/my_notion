@@ -132,7 +132,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Formulas (Notion formula language v2) — M31.
 - ✅ Buttons inside rows that trigger actions — M70.
 - 🔮 Automations (no-code rules: when X changes, do Y) — Requires backend daemon.
-- 📋 Database locking — Schema `locked: true`.
+- ✅ Database locking — M161, schema `locked: true` in `.database.yaml`. Table view drops edit/add/duplicate callbacks and the header shows a "locked" pill.
 - ✅ CSV import — M29.
 - ✅ CSV export — M45.
 - ✅ Markdown export (with subpages) — M12.
@@ -194,7 +194,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Custom emojis (via picker) — M62 emoji picker; works for both page icons (M26) and workspace icon (M107).
 - 🚧 Sidebar customization — Filter (M90), collapse (M109), favorites pinning. Reorderable sections still 📋.
 - ✅ Compact mode / small text toggle — M57 + M100 settings UI.
-- 📋 Font choice (default, serif, mono) per page — Frontmatter `font:`; renderer override.
+- ✅ Font choice (default, serif, mono) per page — M160, frontmatter `font: serif | mono | default`. MarkdownRenderer wraps the body in DefaultTextStyle.merge with Georgia / JetBrainsMono.
 - ✅ Full-width page toggle — M46 frontmatter `full_width: true`.
 
 ## Templates
