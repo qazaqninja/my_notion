@@ -296,15 +296,29 @@ class _DatabasesList extends StatelessWidget {
   const _DatabasesList({required this.rebuildKey});
   final String rebuildKey;
 
+  Future<({List<DatabaseSchema> dbs, Map<String, int> counts})>
+      _load(QuillDatabase db) async {
+    final repo = DatabaseRepositoryImpl(db);
+    final dbs = await repo.listDatabases();
+    final counts = <String, int>{};
+    for (final s in dbs) {
+      final rows = await (db.select(db.pages)
+            ..where((p) => p.databaseId.equals(s.id)))
+          .get();
+      counts[s.id] = rows.length;
+    }
+    return (dbs: dbs, counts: counts);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    final repo = DatabaseRepositoryImpl(context.read<QuillDatabase>());
-    return FutureBuilder<List<DatabaseSchema>>(
+    final qdb = context.read<QuillDatabase>();
+    return FutureBuilder<({List<DatabaseSchema> dbs, Map<String, int> counts})>(
       key: ValueKey('dbs-$rebuildKey'),
-      future: repo.listDatabases(),
+      future: _load(qdb),
       builder: (context, snap) {
-        final dbs = snap.data ?? const [];
+        final dbs = snap.data?.dbs ?? const [];
         if (dbs.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -314,6 +328,7 @@ class _DatabasesList extends StatelessWidget {
             ),
           );
         }
+        final counts = snap.data?.counts ?? const <String, int>{};
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -324,6 +339,7 @@ class _DatabasesList extends StatelessWidget {
                   letter: db.icon.isNotEmpty ? db.icon.substring(0, 1) : 'D',
                 ),
                 label: db.name,
+                count: counts[db.id],
                 onTap: () => context.go('/db/${db.id}'),
               ),
           ],
