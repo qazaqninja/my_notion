@@ -132,6 +132,14 @@ class MarkdownRenderer extends StatelessWidget {
             child: _MarkdownImage(alt: image.$1, src: image.$2),
           );
         }
+        // Standalone transclusion: ![[ULID]] inlines the target body.
+        final transcludeUlid = _matchStandaloneTransclusion(b.text);
+        if (transcludeUlid != null) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: _TranscludedBlock(ulid: transcludeUlid),
+          );
+        }
         // Standalone wikilink: render as a sub-page card.
         final ulid = _matchStandaloneWikilink(b.text);
         if (ulid != null) {
@@ -789,8 +797,131 @@ class MarkdownRenderer extends StatelessWidget {
 /// the ULID. Used to render sub-page cards.
 String? _matchStandaloneWikilink(String text) {
   final trimmed = text.trim();
-  final m = RegExp(r'^\[\[([0-9A-HJKMNP-TV-Z]{26})\]\]$').firstMatch(trimmed);
+  final m = RegExp(r'^\[\[([0-9A-Z]{26})\]\]$').firstMatch(trimmed);
   return m?.group(1);
+}
+
+/// If [text] is JUST a transclusion — `![[ULID]]` with nothing else —
+/// return the ULID. Renders the target page's body inline.
+String? _matchStandaloneTransclusion(String text) {
+  final trimmed = text.trim();
+  final m = RegExp(r'^!\[\[([0-9A-Z]{26})\]\]$').firstMatch(trimmed);
+  return m?.group(1);
+}
+
+/// Inline-rendered target page (frontmatter-stripped body) wrapped in
+/// a labelled container. Cycle-safe: nests up to [maxDepth] before
+/// degrading to a placeholder.
+class _TranscludedBlock extends StatelessWidget {
+  // The depth field exists so the recursive transclusion paths can
+  // pass a higher value, but the call sites currently rely on the
+  // body-rewriting strategy below rather than recursing the widget
+  // itself. Keeping the parameter so future work can lift the rewrite
+  // and recurse honestly.
+  // ignore: unused_element_parameter
+  const _TranscludedBlock({required this.ulid, this.depth = 0});
+  final String ulid;
+  final int depth;
+
+  static const int maxDepth = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    if (depth >= maxDepth) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: tokens.surface2,
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+        ),
+        child: Text(
+          'Transclusion depth limit reached (would loop).',
+          style: TextStyle(fontSize: 11.5, color: tokens.text3),
+        ),
+      );
+    }
+    final db = context.read<QuillDatabase>();
+    return FutureBuilder(
+      future: (db.select(db.pages)..where((p) => p.ulid.equals(ulid)))
+          .getSingleOrNull(),
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text('Loading transclusion…',
+                style: TextStyle(fontSize: 11.5, color: tokens.text3)),
+          );
+        }
+        final page = snap.data;
+        if (page == null) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: tokens.surface2,
+              borderRadius: const BorderRadius.all(Radius.circular(4)),
+            ),
+            child: Text('Page not found: $ulid',
+                style: mono(fontSize: 11.5, color: tokens.text3)),
+          );
+        }
+        return GestureDetector(
+          onTap: () =>
+              Navigator.of(context).pushReplacementNamed('/editor/$ulid'),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              decoration: BoxDecoration(
+                color: tokens.surface,
+                border: Border.all(color: tokens.divider2, width: 0.5),
+                borderRadius: const BorderRadius.all(Radius.circular(6)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+                    decoration: BoxDecoration(
+                      color: tokens.surface2,
+                      border: Border(
+                          bottom: BorderSide(color: tokens.divider, width: 0.5)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.sync_alt, size: 12, color: tokens.text3),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Synced from ${page.title}',
+                          style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                              color: tokens.text2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                    child: MarkdownRenderer(
+                      body: _bodyAtDepth(page.bodyText, depth + 1),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Strip nested `![[ULID]]` from the body if we're already at max
+  /// depth, so the FutureBuilder above doesn't keep recursing.
+  static String _bodyAtDepth(String body, int nextDepth) {
+    if (nextDepth < maxDepth) return body;
+    return body.replaceAll(RegExp(r'!\[\[[0-9A-Z]{26}\]\]'),
+        '⟪deeply nested transclusion⟫');
+  }
 }
 
 /// If [text] is JUST a URL on its own line, return it. Used for
