@@ -167,7 +167,16 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     Emitter<EditorState> emit,
   ) {
     final fm = Frontmatter(entries: entries);
-    final updated = loaded.page.copyWith(frontmatter: fm);
+    // Keep Page.title in sync with frontmatter['title'] so the in-memory
+    // entity matches what a fresh read would produce.
+    final titleEntry = entries.cast<FrontmatterEntry?>().firstWhere(
+          (e) => e!.key == 'title',
+          orElse: () => null,
+        );
+    final nextTitle = titleEntry?.value is String
+        ? titleEntry!.value as String
+        : loaded.page.title;
+    final updated = loaded.page.copyWith(frontmatter: fm, title: nextTitle);
     emit(loaded.copyWith(page: updated, dirty: true));
     _scheduleSave();
   }

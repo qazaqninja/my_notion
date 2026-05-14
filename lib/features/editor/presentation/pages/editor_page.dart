@@ -22,6 +22,7 @@ import '../widgets/backlinks_rail.dart';
 import '../widgets/frontmatter_card.dart';
 import '../widgets/markdown_renderer.dart';
 import '../widgets/outline_rail.dart';
+import '../widgets/page_title_field.dart';
 import '../widgets/properties_panel.dart';
 import '../widgets/source_view.dart';
 
@@ -144,6 +145,7 @@ class _EditorBodyState extends State<_EditorBody> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              PageTitleField(title: page.title),
                               FrontmatterCard(frontmatter: page.frontmatter),
                               if (loaded.mode == EditorMode.rendered)
                                 MarkdownRenderer(body: page.body)
