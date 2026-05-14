@@ -75,7 +75,7 @@ class _Card extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      QuillIcon('file-md', size: 12, strokeWidth: 1.7, color: tokens.text3),
+                      _rowIcon(row, tokens),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -115,6 +115,20 @@ class _Card extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _rowIcon(DatabasePageRow row, QuillTokens tokens) {
+    final raw = '${row.cells['icon'] ?? ''}'.trim();
+    if (raw.isNotEmpty && raw.length <= 4 && !raw.contains('/')) {
+      return SizedBox(
+        width: 14,
+        child: Text(raw,
+            style: TextStyle(fontSize: 12, color: tokens.text),
+            textAlign: TextAlign.center),
+      );
+    }
+    return QuillIcon('file-md',
+        size: 12, strokeWidth: 1.7, color: tokens.text3);
   }
 
   static StatusDotColor _dotColor(String h) => switch (h.toLowerCase()) {

@@ -415,8 +415,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                 ),
               Padding(
                 padding: EdgeInsets.only(top: widget.wrap ? 2 : 0),
-                child: QuillIcon('file-md',
-                    size: 13, strokeWidth: 1.7, color: tokens.text3),
+                child: _rowIcon(row, tokens),
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -433,6 +432,24 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
         ),
       ),
     );
+  }
+
+  /// Row icon: render the `icon:` frontmatter field if present and short
+  /// enough to be a single glyph / emoji; otherwise fall back to the
+  /// default `file-md` chrome. Longer values (asset paths, URLs) are
+  /// ignored here — those are full-page concerns rendered by PageIcon.
+  Widget _rowIcon(DatabasePageRow row, QuillTokens tokens) {
+    final raw = '${row.cells['icon'] ?? ''}'.trim();
+    if (raw.isNotEmpty && raw.length <= 4 && !raw.contains('/')) {
+      return SizedBox(
+        width: 14,
+        child: Text(raw,
+            style: TextStyle(fontSize: 13, color: tokens.text),
+            textAlign: TextAlign.center),
+      );
+    }
+    return QuillIcon('file-md',
+        size: 13, strokeWidth: 1.7, color: tokens.text3);
   }
 
   Widget _colHeader(ColumnDef c, QuillTokens tokens, bool isLast) {
