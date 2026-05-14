@@ -389,6 +389,13 @@ class _SourceViewState extends State<SourceView> {
           selection: TextSelection.collapsed(offset: stripStart),
         );
         await _pickAndInsertImage(stripStart);
+      case SlashAction.pickFile:
+        final cleared = text.replaceRange(stripStart, caret, '');
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart),
+        );
+        await _pickAndInsertFile(stripStart);
       case SlashAction.insertToday:
         final today = DateTime.now();
         final yyyy = today.year.toString().padLeft(4, '0');
@@ -415,6 +422,38 @@ class _SourceViewState extends State<SourceView> {
           selection:
               TextSelection.collapsed(offset: stripStart + snippet.length),
         );
+    }
+  }
+
+  Future<void> _pickAndInsertFile(int insertAt) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      withData: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final picked = result.files.first;
+    if (picked.path == null) return;
+    try {
+      final relative = await const AttachmentWriter().copy(
+        source: File(picked.path!),
+        vaultRoot: Directory(vault.rootPath),
+      );
+      // Label = original filename so the rendered card / chip carries
+      // a meaningful name even after the ULID-rename inside attachments/.
+      final label = picked.name;
+      final snippet = '![$label]($relative)';
+      final text = _controller.text;
+      final at = insertAt.clamp(0, text.length);
+      final newText = text.replaceRange(at, at, snippet);
+      _controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: at + snippet.length),
+      );
+    } catch (e) {
+      messenger?.showSnackBar(SnackBar(content: Text('File copy failed: $e')));
     }
   }
 
