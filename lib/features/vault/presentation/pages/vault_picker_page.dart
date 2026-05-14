@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -7,6 +9,55 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
+
+/// Shows up next to "Choose folder…" when SharedPreferences has the
+/// last-opened vault path. Hidden when there's no prior vault, or when
+/// the saved folder no longer exists on disk (we don't check — the
+/// LoadFromPath path already surfaces missing-folder errors).
+class _ReopenLastVaultButton extends StatefulWidget {
+  const _ReopenLastVaultButton();
+
+  @override
+  State<_ReopenLastVaultButton> createState() => _ReopenLastVaultButtonState();
+}
+
+class _ReopenLastVaultButtonState extends State<_ReopenLastVaultButton> {
+  String? _path;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final s = prefs.getString('vault.path');
+    if (!mounted) return;
+    setState(() => _path = s);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final path = _path;
+    if (path == null || path.isEmpty) return const SizedBox.shrink();
+    return OutlinedButton.icon(
+      onPressed: () => context.read<VaultBloc>().add(LoadFromPath(path)),
+      icon: QuillIcon('reveal', size: 12, color: tokens.text2),
+      label: Text('Reopen ${p.basename(path)}'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: tokens.text2,
+        side: BorderSide(color: tokens.divider2, width: 0.5),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(6)),
+        ),
+      ),
+    );
+  }
+}
 
 class VaultPickerPage extends StatelessWidget {
   const VaultPickerPage({super.key});
@@ -90,7 +141,9 @@ class VaultPickerPage extends StatelessWidget {
                       ],
                     )
                   else
-                    Row(
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
                       children: [
                         ElevatedButton.icon(
                           onPressed: () => context.read<VaultBloc>().add(const PickVault()),
@@ -105,6 +158,7 @@ class VaultPickerPage extends StatelessWidget {
                             ),
                           ),
                         ),
+                        const _ReopenLastVaultButton(),
                       ],
                     ),
                   if (state is VaultError) ...[
