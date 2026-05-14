@@ -15,6 +15,8 @@ import '../../../../shared/theme/accent.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../vault/data/exporter.dart';
+import '../../../vault/data/html_exporter.dart';
+import '../../../vault/data/pdf_exporter.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
@@ -79,6 +81,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _content(QuillTokens tokens) {
     if (_active == 'theme') return _appearancePane(tokens);
+    if (_active == 'export') return _exportPane(tokens);
 
     final state = context.watch<VaultBloc>().state;
     final vaultPath = state is VaultLoaded ? state.rootPath : '(no vault opened)';
@@ -270,6 +273,114 @@ class _SettingsPageState extends State<SettingsPage> {
       messenger.showSnackBar(
         SnackBar(content: Text('Export failed: $e')),
       );
+    }
+  }
+
+  Widget _exportPane(QuillTokens tokens) {
+    final state = context.watch<VaultBloc>().state;
+    final loaded = state is VaultLoaded;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Export & Backup',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: tokens.text,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: 600,
+          child: Text(
+            'Snapshot your vault to portable formats. Markdown round-trips '
+            'back into Quill (or any other markdown app); HTML and PDF are '
+            'one-way reads for sharing.',
+            style: TextStyle(
+                fontSize: 13.5, color: tokens.text3, height: 1.55),
+          ),
+        ),
+        const SizedBox(height: 28),
+        _sectionLabel(tokens, 'Whole vault'),
+        _SettingRow(
+          label: 'Markdown copy',
+          hint: 'Folder of .md files with frontmatter intact.',
+          child: _Btn(
+            label: 'Export…',
+            icon: 'export',
+            primary: true,
+            onTap: !loaded ? null : () => _exportVault(context),
+          ),
+        ),
+        _SettingRow(
+          label: 'HTML site',
+          hint: 'One .html per page + index. Open the folder in a browser.',
+          child: _Btn(
+            label: 'Export…',
+            icon: 'export',
+            onTap: !loaded ? null : () => _exportHtml(context),
+          ),
+        ),
+        _SettingRow(
+          label: 'PDF',
+          hint: 'Single PDF document. Useful for sharing or archiving.',
+          child: _Btn(
+            label: 'Export…',
+            icon: 'export',
+            onTap: !loaded ? null : () => _exportPdf(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _exportHtml(BuildContext context) async {
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return;
+    final dest = await FilePicker.platform
+        .getDirectoryPath(dialogTitle: 'Export HTML to…');
+    if (dest == null) return;
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final n = await const HtmlExporter().export(
+        src: Directory(state.rootPath),
+        dest: Directory(dest),
+      );
+      messenger.showSnackBar(SnackBar(
+        content: Text('Exported $n HTML files to $dest'),
+        duration: const Duration(seconds: 4),
+      ));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('HTML export failed: $e')));
+    }
+  }
+
+  Future<void> _exportPdf(BuildContext context) async {
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return;
+    final picked = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save PDF…',
+      fileName: 'vault.pdf',
+      type: FileType.custom,
+      allowedExtensions: const ['pdf'],
+    );
+    if (picked == null) return;
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final n = await const PdfExporter().export(
+        src: Directory(state.rootPath),
+        dest: File(picked),
+      );
+      messenger.showSnackBar(SnackBar(
+        content: Text('Exported $n pages to $picked'),
+        duration: const Duration(seconds: 4),
+      ));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('PDF export failed: $e')));
     }
   }
 
