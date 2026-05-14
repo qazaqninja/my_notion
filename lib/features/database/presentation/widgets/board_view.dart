@@ -8,6 +8,7 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../../domain/row_display.dart';
 
 /// Kanban view grouped by a select column. Matches `altviews.jsx:98-150`.
 class BoardView extends StatelessWidget {
@@ -209,10 +210,6 @@ class _Card extends StatelessWidget {
     final arr = '${row.cells['arr'] ?? ''}';
     final owner = '${row.cells['owner'] ?? ''}';
     final date = '${row.cells['updated'] ?? ''}';
-    final rawIcon = '${row.cells['icon'] ?? ''}'.trim();
-    final hasEmojiIcon =
-        rawIcon.isNotEmpty && rawIcon.length <= 4 && !rawIcon.contains('/');
-    final displayTitle = hasEmojiIcon ? '$rawIcon  ${row.title}' : row.title;
     return GestureDetector(
       onTap: () => context.go('/editor/${row.ulid}'),
       child: MouseRegion(
@@ -228,7 +225,7 @@ class _Card extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                displayTitle,
+                displayTitle(row),
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.text, height: 1.35),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

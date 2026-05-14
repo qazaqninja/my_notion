@@ -6,6 +6,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../../domain/row_display.dart';
 
 /// Gantt-lite. Matches `altviews.jsx:153-242`.
 ///
@@ -303,7 +304,7 @@ class _Row extends StatelessWidget {
                   const SizedBox(width: 7),
                   Expanded(
                     child: Text(
-                      _displayTitle(row),
+                      displayTitle(row),
                       style: TextStyle(fontSize: 13, color: tokens.text),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -357,7 +358,7 @@ class _Row extends StatelessWidget {
                           borderRadius: const BorderRadius.all(Radius.circular(3)),
                         ),
                         child: Text(
-                          _displayTitle(row),
+                          displayTitle(row),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 11.5,
@@ -388,15 +389,6 @@ class _Row extends StatelessWidget {
   }
 }
 
-/// Prepend the row's `icon:` cell to the title when it's a plain
-/// emoji glyph. Matches the gating in M256: bare emoji only, no paths
-/// / URLs (those need PageIcon's async image load which doesn't fit a
-/// 22px ribbon row).
-String _displayTitle(DatabasePageRow row) {
-  final raw = '${row.cells['icon'] ?? ''}'.trim();
-  if (raw.isEmpty || raw.length > 4 || raw.contains('/')) return row.title;
-  return '$raw  ${row.title}';
-}
 
 /// Full-width band that splits the timeline rows into sub-group
 /// sections. Sits between two `_Row`s; renders the group label in

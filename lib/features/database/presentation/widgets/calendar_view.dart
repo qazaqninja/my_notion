@@ -6,6 +6,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../../domain/row_display.dart';
 
 /// Calendar projection of database rows. Each row with a parseable date in
 /// its first date column shows as an event on that day. Clicking a day's
@@ -268,7 +269,7 @@ class _CalendarViewState extends State<CalendarView> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  _displayTitle(r),
+                                  displayTitle(r),
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: tokens.text,
@@ -294,10 +295,3 @@ class _CalendarViewState extends State<CalendarView> {
   }
 }
 
-/// Prepend the row's `icon:` cell to the title when it's a plain emoji
-/// glyph. Matches the gating used in board_view / timeline_view.
-String _displayTitle(DatabasePageRow row) {
-  final raw = '${row.cells['icon'] ?? ''}'.trim();
-  if (raw.isEmpty || raw.length > 4 || raw.contains('/')) return row.title;
-  return '$raw  ${row.title}';
-}
