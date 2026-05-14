@@ -325,14 +325,17 @@ class MarkdownRenderer extends StatelessWidget {
   }
 
   Widget _renderToc(BuildContext context, QuillTokens tokens) {
-    final headings = <(int, String)>[];
-    for (final line in body.split('\n')) {
+    final lines = body.split('\n');
+    final totalLines = lines.length;
+    final headings = <(int, String, int)>[]; // (level, text, lineIdx)
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
       if (line.startsWith('### ')) {
-        headings.add((3, line.substring(4)));
+        headings.add((3, line.substring(4), i));
       } else if (line.startsWith('## ')) {
-        headings.add((2, line.substring(3)));
+        headings.add((2, line.substring(3), i));
       } else if (line.startsWith('# ')) {
-        headings.add((1, line.substring(2)));
+        headings.add((1, line.substring(2), i));
       }
     }
     if (headings.isEmpty) {
@@ -363,17 +366,11 @@ class MarkdownRenderer extends StatelessWidget {
                 color: tokens.text3,
               )),
           const SizedBox(height: 6),
-          for (final (lvl, t) in headings)
-            Padding(
-              padding: EdgeInsets.only(left: (lvl - 1) * 14.0, top: 3),
-              child: Text(
-                t,
-                style: TextStyle(
-                  fontSize: lvl == 1 ? 14 : (lvl == 2 ? 13 : 12.5),
-                  fontWeight: lvl == 1 ? FontWeight.w600 : FontWeight.w500,
-                  color: tokens.text2,
-                ),
-              ),
+          for (final (lvl, t, idx) in headings)
+            _TocLink(
+              level: lvl,
+              text: t,
+              lineFraction: totalLines == 0 ? 0 : idx / totalLines,
             ),
         ],
       ),
@@ -1302,6 +1299,61 @@ class _ListItem extends StatelessWidget {
               _ParagraphWithChips(text: raw, showUlid: showUlid, tokens: tokens),
         ),
       ],
+    );
+  }
+}
+
+/// Tappable TOC row. Scrolls the enclosing Scrollable to a fractional
+/// position derived from the heading's line index. The result is
+/// approximate (rows have variable heights — code blocks are taller
+/// than paragraphs) but lands the user near the heading; the renderer
+/// is too dynamic for pixel-precise anchors without GlobalKey
+/// plumbing across nested renderers.
+class _TocLink extends StatelessWidget {
+  const _TocLink({
+    required this.level,
+    required this.text,
+    required this.lineFraction,
+  });
+  final int level;
+  final String text;
+  final double lineFraction;
+
+  void _jump(BuildContext context) {
+    final scrollable = Scrollable.maybeOf(context);
+    if (scrollable == null) return;
+    final pos = scrollable.position;
+    final target = (pos.maxScrollExtent * lineFraction).clamp(
+      pos.minScrollExtent,
+      pos.maxScrollExtent,
+    );
+    pos.animateTo(
+      target,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return GestureDetector(
+      onTap: () => _jump(context),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Padding(
+          padding: EdgeInsets.only(left: (level - 1) * 14.0, top: 3, bottom: 1),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: level == 1 ? 14 : (level == 2 ? 13 : 12.5),
+              fontWeight: level == 1 ? FontWeight.w600 : FontWeight.w500,
+              color: tokens.text2,
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
