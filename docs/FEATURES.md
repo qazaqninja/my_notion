@@ -89,10 +89,10 @@ If your feature wants to store something new, the answer is almost always "add a
 
 - ✅ Image upload and embed — M27, slash-menu "Image" copies file to `<vault>/attachments/<ULID>.<ext>` and inserts `![alt](attachments/...)`.
 - ✅ Image alignment, resize, full-width — M73, alt-text pipe modifiers `![Diagram|w=600|align=right](path)` / `|full`.
-- 🚧 Video upload and embed — Detected as file attachment (M76) with movie icon, opens in OS player. Inline `<video>` rendering still 📋.
-- 🚧 Audio upload and embed — Same as video; M76 chip with audio icon.
+- 🚧 Video upload and embed — File attachment chip M76 with movie icon. M201 renders video files as a prominent card (terracotta band, centred play button) but tap still opens in the OS default player. Inline playback would need `video_player` + platform setup.
+- 🚧 Audio upload and embed — Same as video. M201 renders audio files as a prominent card (blue band, centred headphones icon); tap opens in OS default player. Inline playback would need `audioplayers` + platform setup.
 - ✅ File attachments — M76, `![label](path.ext)` for non-image extensions renders a clickable chip with extension icon + size.
-- 🚧 PDF embed and preview — M76 renders as a chip that opens in OS default app. Inline preview via `pdfx` still 📋.
+- 🚧 PDF embed and preview — M76 renders as a chip. M201 promotes PDFs to a prominent card (sage band, PDF glyph). Tap opens in the OS default app. Inline page preview would need `pdfx` + platform setup.
 - ✅ Image galleries (via database) — M87, `_FileChip` renders image extensions as 22-px thumbnails so a `files`-typed cell looks like a micro-gallery.
 
 ## Databases
