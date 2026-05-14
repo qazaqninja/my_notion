@@ -92,6 +92,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
               _newPage(context),
           const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
               _newPage(context),
+          const SingleActivator(LogicalKeyboardKey.slash, shift: true): () =>
+              _showShortcuts(context),
         },
         child: Focus(
           focusNode: _rootFocus,
@@ -142,6 +144,90 @@ class _VaultShellPageState extends State<VaultShellPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _showShortcuts(BuildContext context) async {
+    if (!context.mounted) return;
+    final tokens = QuillTokens.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: tokens.surface,
+        child: SizedBox(
+          width: 460,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('KEYBOARD SHORTCUTS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                      color: tokens.text3,
+                    )),
+                const SizedBox(height: 14),
+                _kbSection(tokens, 'Workspace'),
+                _kbRow(tokens, '⌘K', 'Open command palette'),
+                _kbRow(tokens, '⌘N', 'New page'),
+                _kbRow(tokens, '⌘R', 'Reindex vault'),
+                _kbRow(tokens, '⌘⇧R', 'Reveal vault in Finder'),
+                _kbRow(tokens, '?', 'This shortcut list'),
+                const SizedBox(height: 10),
+                _kbSection(tokens, 'Editor'),
+                _kbRow(tokens, '⌘F', 'Find in page'),
+                _kbRow(tokens, 'Esc', 'Close find / dialogs'),
+                _kbRow(tokens, '/', 'Open slash menu (source mode)'),
+                _kbRow(tokens, '[[ULID]]', 'Wikilink chip'),
+                _kbRow(tokens, '[[ULID#anchor]]', 'Link to heading'),
+                _kbRow(tokens, '![[ULID]]', 'Transclude page body'),
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _kbSection(QuillTokens tokens, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 4),
+      child: Text(label.toUpperCase(),
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.0,
+            color: tokens.text3,
+          )),
+    );
+  }
+
+  Widget _kbRow(QuillTokens tokens, String keys, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text(keys, style: mono(fontSize: 12, color: tokens.text2)),
+          ),
+          Expanded(
+            child: Text(label,
+                style: TextStyle(fontSize: 12.5, color: tokens.text2)),
+          ),
+        ],
       ),
     );
   }
