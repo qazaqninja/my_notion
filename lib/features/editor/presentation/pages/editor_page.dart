@@ -26,6 +26,7 @@ import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
 import '../widgets/backlinks_rail.dart';
+import '../widgets/comments_dialog.dart';
 import '../widgets/frontmatter_card.dart';
 import '../widgets/markdown_renderer.dart';
 import '../widgets/outline_rail.dart';
@@ -349,6 +350,21 @@ class _EditorBodyState extends State<_EditorBody> {
     await Reveal.show('${vault.rootPath}/${loaded.page.relativePath}');
   }
 
+  Future<void> _openBlockComments(
+      BuildContext context, String pageUlid, String blockId) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => CommentsDialog(
+        vaultRoot: vault.rootPath,
+        pageUlid: pageUlid,
+        defaultAuthor: vault.workspace.currentUserName ?? 'You',
+        blockId: blockId,
+      ),
+    );
+  }
+
   void _toggleEditorMode(BuildContext context, EditorLoaded loaded) {
     final next = loaded.mode == EditorMode.rendered
         ? EditorMode.source
@@ -634,6 +650,10 @@ class _EditorBodyState extends State<_EditorBody> {
                                       : (next) => context
                                           .read<EditorBloc>()
                                           .add(EditBody(next)),
+                                  onBlockComment: locked
+                                      ? null
+                                      : (blockId) => _openBlockComments(
+                                          context, page.ulid, blockId),
                                 ),
                               ]
                               else

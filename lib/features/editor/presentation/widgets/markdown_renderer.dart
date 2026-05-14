@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/platform/reveal.dart';
+import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/relation_chip.dart';
@@ -35,6 +36,7 @@ class MarkdownRenderer extends StatefulWidget {
     this.onBodyChange,
     this.font,
     this.relativePath,
+    this.onBlockComment,
   });
 
   final String body;
@@ -55,6 +57,13 @@ class MarkdownRenderer extends StatefulWidget {
   /// Powers the inline `[breadcrumb]` block. When null, that block
   /// renders nothing.
   final String? relativePath;
+
+  /// Optional callback fired when the user clicks the "comment" hover
+  /// chip on a block. The renderer ensures the block has a stable
+  /// `^<ULID>` suffix (generates + splices via [onBodyChange] when
+  /// absent), then passes that id to the callback so the caller can
+  /// open a scoped CommentsDialog. When null, the chip is hidden.
+  final ValueChanged<String>? onBlockComment;
 
   @override
   State<MarkdownRenderer> createState() => _MarkdownRendererState();
@@ -176,9 +185,13 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       block: b,
       body: body,
       onBodyChange: onBodyChange!,
+      onBlockComment: editable ? widget.onBlockComment : null,
+      ulidGenerator: _ulids,
       child: inner,
     );
   }
+
+  final UlidGenerator _ulids = const UlidGenerator();
 
   Widget _heading(
     _Block b,
@@ -2634,6 +2647,8 @@ class _BlockDragWrap extends StatefulWidget {
     required this.body,
     required this.onBodyChange,
     required this.child,
+    this.onBlockComment,
+    this.ulidGenerator,
   });
 
   final _Block block;
@@ -2641,12 +2656,44 @@ class _BlockDragWrap extends StatefulWidget {
   final ValueChanged<String> onBodyChange;
   final Widget child;
 
+  /// When set, a small "💬" chip is revealed on hover. Clicking it
+  /// ensures the block has a `^<ULID>` suffix (generating one if
+  /// absent) and then invokes the callback with the resulting id.
+  final ValueChanged<String>? onBlockComment;
+
+  /// Source of fresh ULIDs for newly-attached block ids. Required when
+  /// [onBlockComment] is supplied.
+  final UlidGenerator? ulidGenerator;
+
   @override
   State<_BlockDragWrap> createState() => _BlockDragWrapState();
 }
 
 class _BlockDragWrapState extends State<_BlockDragWrap> {
   bool _hover = false;
+
+  /// If the block lacks a `^<ULID>` suffix, generate one and splice
+  /// it into the source via `onBodyChange`. Then dispatch the comment
+  /// callback with the resulting block id. When the block already has
+  /// an id, just dispatch directly.
+  void _attachAndComment() {
+    final cb = widget.onBlockComment;
+    if (cb == null) return;
+    var id = widget.block.blockId;
+    if (id == null) {
+      final gen = widget.ulidGenerator;
+      if (gen == null) return;
+      id = gen.generate();
+      final block = widget.block;
+      final body = widget.body;
+      final slice = body.substring(block.sourceStart, block.sourceEnd);
+      final patched = BlockId.append(slice, id);
+      final next = body.replaceRange(
+          block.sourceStart, block.sourceEnd, patched);
+      widget.onBodyChange(next);
+    }
+    cb(id);
+  }
 
   /// Move the source slice `[dragStart..dragEnd)` (plus its trailing
   /// newline, if any) so it lands immediately before `targetStart`.
@@ -2741,6 +2788,33 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                         : const SizedBox.shrink(),
                   ),
                   Expanded(child: widget.child),
+                  if (_hover && widget.onBlockComment != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, top: 4),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: _attachAndComment,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: tokens.surface,
+                              border: Border.all(
+                                  color: tokens.divider2, width: 0.5),
+                              borderRadius: const BorderRadius.all(
+                                  Radius.circular(4)),
+                            ),
+                            child: Icon(
+                              Icons.mode_comment_outlined,
+                              size: 12,
+                              color: widget.block.blockId != null
+                                  ? tokens.accent
+                                  : tokens.text3,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ],
