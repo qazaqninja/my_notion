@@ -38,7 +38,7 @@ class ColumnDef {
   final bool isParent;
 }
 
-enum ViewType { table, gallery, board, timeline, calendar, chart }
+enum ViewType { table, gallery, board, timeline, calendar, chart, list }
 
 class DatabaseView {
   const DatabaseView({

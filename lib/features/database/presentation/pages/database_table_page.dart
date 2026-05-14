@@ -27,6 +27,7 @@ import '../widgets/calendar_view.dart';
 import '../widgets/chart_view.dart';
 import '../widgets/frozen_column_table.dart';
 import '../widgets/gallery_view.dart';
+import '../widgets/list_view.dart';
 import '../widgets/query_popovers.dart';
 import '../widgets/timeline_view.dart';
 
@@ -283,6 +284,8 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                     CalendarView(schema: viewSchema, rows: filtered),
                   ViewType.chart =>
                     ChartView(schema: viewSchema, rows: filtered),
+                  ViewType.list =>
+                    DatabaseListView(schema: viewSchema, rows: filtered),
                 };
               }),
             ),
@@ -326,6 +329,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         onChanged: (v) => setState(() => _currentView = v),
         options: const [
           SegmentOption(value: ViewType.table, label: 'Table', icon: 'table'),
+          SegmentOption(value: ViewType.list, label: 'List', icon: 'note'),
           SegmentOption(value: ViewType.gallery, label: 'Gallery', icon: 'gallery'),
           SegmentOption(value: ViewType.board, label: 'Board', icon: 'board'),
           SegmentOption(value: ViewType.timeline, label: 'Timeline', icon: 'timeline'),

@@ -110,6 +110,7 @@ class DatabaseYamlParser {
         'timeline' => ViewType.timeline,
         'calendar' => ViewType.calendar,
         'chart' => ViewType.chart,
+        'list' => ViewType.list,
         _ => ViewType.table,
       };
 }

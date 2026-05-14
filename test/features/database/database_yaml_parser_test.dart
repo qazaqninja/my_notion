@@ -92,6 +92,20 @@ schema:
         isNull,
       );
     });
+
+    test('parses list view type', () {
+      final s = DatabaseYamlParser.parse(
+        '''
+id: db
+name: T
+views:
+  - id: compact
+    type: list
+''',
+        folderPath: 'T',
+      );
+      expect(s!.views.first.type, equals(ViewType.list));
+    });
   });
 
   group('DatabaseSchema.filterColumns', () {
