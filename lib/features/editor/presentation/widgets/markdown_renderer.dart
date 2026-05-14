@@ -132,7 +132,7 @@ class MarkdownRenderer extends StatelessWidget {
         if (image != null) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            child: _MarkdownImage(alt: image.$1, src: image.$2),
+            child: _MarkdownImage(spec: image),
           );
         }
         // Standalone transclusion: ![[ULID]] inlines the target body.
@@ -822,13 +822,80 @@ class MarkdownRenderer extends StatelessWidget {
 }
 
 /// If [text] is JUST an image — `![alt](path)` with nothing else — return
-/// (alt, path). Otherwise null. We render standalone images as Image widgets
-/// rather than inline (which would need RichText with WidgetSpans).
-(String, String)? _matchStandaloneImage(String text) {
+/// its parts. Alt may carry modifiers separated by `|`:
+///   `![Diagram|w=600](attachments/foo.png)`        — fixed width
+///   `![Diagram|w=600|align=right](path.png)`        — width + alignment
+///   `![|full](cover.png)`                           — full container width
+/// Known modifiers: `w=<px>`, `h=<px>`, `align=left|center|right`, `full`.
+/// Unknown modifiers are silently ignored so we stay open-ended without
+/// breaking older content.
+_ImageSpec? _matchStandaloneImage(String text) {
   final trimmed = text.trim();
   final m = RegExp(r'^!\[([^\]]*)\]\(([^)]+)\)$').firstMatch(trimmed);
   if (m == null) return null;
-  return (m.group(1) ?? '', m.group(2) ?? '');
+  final altRaw = m.group(1) ?? '';
+  final src = m.group(2) ?? '';
+  final parts = altRaw.split('|');
+  final alt = parts.first.trim();
+  double? width;
+  double? height;
+  _ImageAlign align = _ImageAlign.center;
+  bool full = false;
+  for (var i = 1; i < parts.length; i++) {
+    final p = parts[i].trim();
+    if (p == 'full' || p == 'block') {
+      full = true;
+      continue;
+    }
+    final eq = p.indexOf('=');
+    if (eq < 0) continue;
+    final key = p.substring(0, eq).trim().toLowerCase();
+    final val = p.substring(eq + 1).trim();
+    switch (key) {
+      case 'w':
+      case 'width':
+        width = double.tryParse(val);
+        break;
+      case 'h':
+      case 'height':
+        height = double.tryParse(val);
+        break;
+      case 'align':
+        align = switch (val.toLowerCase()) {
+          'left' => _ImageAlign.left,
+          'right' => _ImageAlign.right,
+          _ => _ImageAlign.center,
+        };
+        break;
+    }
+  }
+  return _ImageSpec(
+    alt: alt,
+    src: src,
+    width: width,
+    height: height,
+    align: align,
+    fullWidth: full,
+  );
+}
+
+enum _ImageAlign { left, center, right }
+
+class _ImageSpec {
+  const _ImageSpec({
+    required this.alt,
+    required this.src,
+    this.width,
+    this.height,
+    this.align = _ImageAlign.center,
+    this.fullWidth = false,
+  });
+  final String alt;
+  final String src;
+  final double? width;
+  final double? height;
+  final _ImageAlign align;
+  final bool fullWidth;
 }
 
 /// If [text] is JUST a wikilink — `[[ULID]]` with nothing else — return
@@ -1131,48 +1198,75 @@ class _SubpageCard extends StatelessWidget {
 }
 
 class _MarkdownImage extends StatelessWidget {
-  const _MarkdownImage({required this.alt, required this.src});
-  final String alt;
-  final String src;
+  const _MarkdownImage({required this.spec});
+  final _ImageSpec spec;
 
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final vault = context.read<VaultBloc>().state;
     final vaultRoot = vault is VaultLoaded ? vault.rootPath : null;
-    final image = _buildImage(src, vaultRoot);
-    return Column(
+    final image = _buildImage(spec.src, vaultRoot, spec);
+    final caption = spec.alt.isEmpty
+        ? const SizedBox.shrink()
+        : Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              spec.alt,
+              style: TextStyle(fontSize: 11.5, color: tokens.text3),
+              textAlign: TextAlign.center,
+            ),
+          );
+
+    final body = Column(
       crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       children: [
         ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(4)),
           child: image,
         ),
-        if (alt.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              alt,
-              style: TextStyle(fontSize: 11.5, color: tokens.text3),
-              textAlign: TextAlign.center,
-            ),
-          ),
+        caption,
       ],
     );
+
+    if (spec.fullWidth) {
+      return SizedBox(width: double.infinity, child: body);
+    }
+
+    final alignment = switch (spec.align) {
+      _ImageAlign.left => Alignment.centerLeft,
+      _ImageAlign.right => Alignment.centerRight,
+      _ImageAlign.center => Alignment.center,
+    };
+    return Align(alignment: alignment, child: body);
   }
 
-  Widget _buildImage(String src, String? vaultRoot) {
+  Widget _buildImage(String src, String? vaultRoot, _ImageSpec spec) {
+    final fit = spec.fullWidth ? BoxFit.cover : BoxFit.contain;
+    Widget raw;
     if (src.startsWith('http://') || src.startsWith('https://')) {
-      return Image.network(src,
+      raw = Image.network(src,
+          width: spec.fullWidth ? double.infinity : spec.width,
+          height: spec.height,
+          fit: fit,
+          errorBuilder: (_, __, ___) => const _BrokenImageBox());
+    } else if (src.startsWith('/')) {
+      raw = Image.file(File(src),
+          width: spec.fullWidth ? double.infinity : spec.width,
+          height: spec.height,
+          fit: fit,
+          errorBuilder: (_, __, ___) => const _BrokenImageBox());
+    } else if (vaultRoot == null) {
+      raw = const _BrokenImageBox();
+    } else {
+      raw = Image.file(File('$vaultRoot/$src'),
+          width: spec.fullWidth ? double.infinity : spec.width,
+          height: spec.height,
+          fit: fit,
           errorBuilder: (_, __, ___) => const _BrokenImageBox());
     }
-    if (src.startsWith('/')) {
-      return Image.file(File(src),
-          errorBuilder: (_, __, ___) => const _BrokenImageBox());
-    }
-    if (vaultRoot == null) return const _BrokenImageBox();
-    return Image.file(File('$vaultRoot/$src'),
-        errorBuilder: (_, __, ___) => const _BrokenImageBox());
+    return raw;
   }
 }
 
