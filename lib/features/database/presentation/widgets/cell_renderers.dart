@@ -1,13 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/relation_chip.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/tag_chip.dart';
+import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/entities/database_schema.dart';
 
 /// Render a single cell value. Each branch matches the design's
@@ -18,11 +23,15 @@ class CellRenderer extends StatelessWidget {
     required this.column,
     required this.value,
     this.align = Alignment.centerLeft,
+    this.wrap = false,
   });
 
   final ColumnDef column;
   final dynamic value;
   final Alignment align;
+
+  /// When true, text-style cells use unlimited line count.
+  final bool wrap;
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +50,9 @@ class CellRenderer extends StatelessWidget {
           alignment: align,
           child: Text(
             '$v',
-            style: TextStyle(fontSize: 13, color: tokens.text),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
+            style: TextStyle(fontSize: 13, color: tokens.text, height: 1.4),
+            overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+            maxLines: wrap ? null : 1,
           ),
         );
       case ColumnType.number:
@@ -88,10 +97,21 @@ class CellRenderer extends StatelessWidget {
           ),
         );
       case ColumnType.formula:
-      case ColumnType.file:
         return Align(
           alignment: align,
           child: Text('$v', style: mono(fontSize: 12, color: tokens.text2)),
+        );
+      case ColumnType.file:
+        final paths = _parseList(v);
+        return Align(
+          alignment: align,
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (final path in paths) _FileChip(value: path),
+            ],
+          ),
         );
       case ColumnType.createdTime:
       case ColumnType.lastEditedTime:
@@ -221,6 +241,79 @@ class HealthCell extends StatelessWidget {
         const SizedBox(width: 6),
         Text(value, style: TextStyle(fontSize: 12, color: tokens.text2)),
       ],
+    );
+  }
+}
+
+/// Clickable chip for a file/media cell value. URLs open externally,
+/// vault-relative paths shell out to Reveal.show.
+class _FileChip extends StatelessWidget {
+  const _FileChip({required this.value});
+  final String value;
+
+  bool get _isUrl =>
+      value.startsWith('http://') || value.startsWith('https://');
+
+  String get _label {
+    if (_isUrl) {
+      return Uri.tryParse(value)?.host ?? value;
+    }
+    // For paths, show the basename.
+    final slash = value.lastIndexOf('/');
+    return slash < 0 ? value : value.substring(slash + 1);
+  }
+
+  Future<void> _open(BuildContext context) async {
+    if (_isUrl) {
+      try {
+        if (Platform.isMacOS) {
+          await Process.run('open', [value]);
+        } else if (Platform.isLinux) {
+          await Process.run('xdg-open', [value]);
+        } else if (Platform.isWindows) {
+          await Process.run('cmd', ['/c', 'start', '', value]);
+        }
+      } catch (_) {}
+      return;
+    }
+    // Vault-relative path. Resolve via the vault root from VaultBloc.
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return;
+    final resolved = value.startsWith('/') ? value : '${state.rootPath}/$value';
+    await Reveal.show(resolved);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return GestureDetector(
+      onTap: () => _open(context),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: tokens.surface2,
+            border: Border.all(color: tokens.divider2, width: 0.5),
+            borderRadius: const BorderRadius.all(Radius.circular(3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _isUrl ? Icons.link : Icons.attach_file,
+                size: 11,
+                color: tokens.text3,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _label,
+                style: TextStyle(fontSize: 11.5, color: tokens.text2),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

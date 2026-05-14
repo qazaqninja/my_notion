@@ -1327,6 +1327,49 @@ List<InlineSpan> _buildSpans(
     }
     final c = text[i];
     // Inline code: `text`
+    // Inline @YYYY-MM-DD date mention.
+    if (c == '@') {
+      final prev = i == 0 ? '' : text[i - 1];
+      final boundary = prev.isEmpty ||
+          prev == ' ' ||
+          prev == '\n' ||
+          prev == '\t' ||
+          prev == '(' ||
+          prev == '[';
+      if (boundary) {
+        final m = RegExp(r'^@(\d{4}-\d{2}-\d{2})(?![0-9\-])')
+            .matchAsPrefix(text, i);
+        if (m != null) {
+          flushPlain(i);
+          final dateStr = m.group(1)!;
+          out.add(WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+              decoration: BoxDecoration(
+                color: tokens.surface2,
+                borderRadius: const BorderRadius.all(Radius.circular(3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.calendar_today_outlined,
+                      size: 11, color: tokens.text3),
+                  const SizedBox(width: 4),
+                  Text(dateStr,
+                      style: mono(fontSize: 11.5, color: tokens.text2)),
+                ],
+              ),
+            ),
+          ));
+          i = m.end;
+          committed = i;
+          continue;
+        }
+      }
+    }
+
     // Inline URL: http(s)://… up to a whitespace or closing bracket.
     if (c == 'h' &&
         (text.startsWith('http://', i) || text.startsWith('https://', i))) {

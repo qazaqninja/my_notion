@@ -98,6 +98,7 @@ class FrozenColumnTable extends StatefulWidget {
     required this.onOpenPage,
     this.onEditCell,
     this.onCreateRow,
+    this.wrap = false,
   });
 
   final DatabaseSchema schema;
@@ -106,6 +107,12 @@ class FrozenColumnTable extends StatefulWidget {
 
   /// When set, cells in editable types become click-to-edit.
   final Future<void> Function(DatabasePageRow row, ColumnDef column, Object? newValue)? onEditCell;
+
+  /// When true, cells render with `maxLines: null` and rows scale to fit.
+  /// The frozen-column layout is preserved but rows in left and right lists
+  /// may visually misalign for super-long content — explicit tradeoff for
+  /// keeping the impl simple.
+  final bool wrap;
 
   /// When set, the trailing "+ New" row becomes interactive.
   final VoidCallback? onCreateRow;
@@ -236,19 +243,24 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                         itemCount: widget.rows.length + 1,
                         itemBuilder: (context, i) {
                           if (i == widget.rows.length) {
-                            return Container(height: _rowHeight);
+                            return SizedBox(
+                                height: widget.wrap ? _rowHeight : _rowHeight);
                           }
                           final row = widget.rows[i];
                           return Container(
-                            height: _rowHeight,
+                            constraints:
+                                BoxConstraints(minHeight: _rowHeight),
                             decoration: BoxDecoration(
                               border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
                             ),
-                            child: Row(
-                              children: [
-                                for (final c in cols)
-                                  _scrollCell(row, c, tokens),
-                              ],
+                            child: IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  for (final c in cols)
+                                    _scrollCell(row, c, tokens),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -271,21 +283,29 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
-          height: _rowHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          constraints: BoxConstraints(minHeight: _rowHeight),
+          padding:
+              EdgeInsets.fromLTRB(10, widget.wrap ? 8 : 0, 10, widget.wrap ? 8 : 0),
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
           ),
           child: Row(
+            crossAxisAlignment:
+                widget.wrap ? CrossAxisAlignment.start : CrossAxisAlignment.center,
             children: [
-              QuillIcon('file-md', size: 13, strokeWidth: 1.7, color: tokens.text3),
+              Padding(
+                padding: EdgeInsets.only(top: widget.wrap ? 2 : 0),
+                child: QuillIcon('file-md',
+                    size: 13, strokeWidth: 1.7, color: tokens.text3),
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   row.title,
-                  style: TextStyle(fontSize: 13, color: tokens.text),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+                  style: TextStyle(fontSize: 13, color: tokens.text, height: 1.4),
+                  overflow:
+                      widget.wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+                  maxLines: widget.wrap ? null : 1,
                 ),
               ),
             ],
@@ -335,7 +355,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     final align = c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft;
     Widget rendered = c.key == 'health'
         ? HealthCell(value: '$value')
-        : CellRenderer(column: c, value: value, align: align);
+        : CellRenderer(column: c, value: value, align: align, wrap: widget.wrap);
     if (editable) {
       rendered = _EditableCell(
         key: ValueKey('${row.ulid}-${c.key}'),

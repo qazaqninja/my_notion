@@ -47,6 +47,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   List<DatabasePageRow>? _rows;
   String? _error;
   DatabaseQuery _query = const DatabaseQuery();
+  bool _wrap = false;
 
   @override
   void initState() {
@@ -267,6 +268,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       onOpenPage: (row) => context.go('/editor/${row.ulid}'),
                       onEditCell: _editCell,
                       onCreateRow: _createRow,
+                      wrap: _wrap,
                     ),
                   ViewType.gallery =>
                     GalleryView(schema: viewSchema, rows: filtered),
@@ -351,6 +353,19 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         label: _query.groupBy == null ? 'Group' : 'Group: ${_query.groupBy}',
         active: _query.groupBy != null,
         onTap: () => _openGroupPopover(context, schema),
+      ),
+      if (!mobile) const SizedBox(width: 4),
+      IconButton(
+        visualDensity: VisualDensity.compact,
+        icon: Icon(
+          _wrap ? Icons.wrap_text : Icons.short_text,
+          size: 14,
+          color: _wrap ? tokens.accent : tokens.text3,
+        ),
+        padding: const EdgeInsets.all(4),
+        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        onPressed: () => setState(() => _wrap = !_wrap),
+        tooltip: _wrap ? 'Truncate cells' : 'Wrap cells',
       ),
       if (!mobile) const SizedBox(width: 4),
       IconButton(
