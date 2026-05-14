@@ -1287,6 +1287,60 @@ class _EditableBlockState extends State<_EditableBlock> {
   }
 }
 
+/// Parse a CSS-ish style string into a Flutter TextStyle. Supports
+/// `color:` and `background-color:` with named colors + hex.
+TextStyle _parseInlineStyle(String css) {
+  Color? fg;
+  Color? bg;
+  for (final part in css.split(';')) {
+    final colon = part.indexOf(':');
+    if (colon < 0) continue;
+    final key = part.substring(0, colon).trim().toLowerCase();
+    final value = part.substring(colon + 1).trim();
+    final color = _parseCssColor(value);
+    if (key == 'color') {
+      fg = color;
+    } else if (key == 'background-color' || key == 'background') {
+      bg = color;
+    }
+  }
+  return TextStyle(color: fg, backgroundColor: bg);
+}
+
+Color? _parseCssColor(String value) {
+  final v = value.toLowerCase();
+  // Hex like #RGB / #RRGGBB / #AARRGGBB.
+  if (v.startsWith('#')) {
+    var hex = v.substring(1);
+    if (hex.length == 3) {
+      hex = hex.split('').map((c) => '$c$c').join();
+    }
+    if (hex.length == 6) hex = 'FF$hex';
+    if (hex.length == 8) {
+      final n = int.tryParse(hex, radix: 16);
+      if (n != null) return Color(n);
+    }
+    return null;
+  }
+  // Named colors — a small set Notion / GitHub actually emit.
+  const named = <String, int>{
+    'red': 0xFFCB5A4F,
+    'orange': 0xFFD08F3D,
+    'yellow': 0xFFD4B85F,
+    'green': 0xFF55A06A,
+    'blue': 0xFF4A90D9,
+    'purple': 0xFF8E5CD0,
+    'pink': 0xFFD06D9C,
+    'gray': 0xFF7A7468,
+    'grey': 0xFF7A7468,
+    'brown': 0xFF6F5B41,
+    'black': 0xFF000000,
+    'white': 0xFFFFFFFF,
+  };
+  final c = named[v];
+  return c == null ? null : Color(c);
+}
+
 /// Inline tokenizer: produces TextSpan/WidgetSpan list for a paragraph.
 /// Handles `**bold**`, `*italic*` / `_italic_`, `~~strike~~`, `` `code` ``,
 /// and `[[ULID]]` wikilink chips. Unmatched delimiters are emitted as plain
@@ -1327,6 +1381,24 @@ List<InlineSpan> _buildSpans(
     }
     final c = text[i];
     // Inline code: `text`
+    // Inline <span style="color:X;background-color:Y">...</span>
+    if (c == '<' && text.startsWith('<span', i)) {
+      final m = RegExp(
+              r'<span\s+style="([^"]*)">([^<]*)<\/span>')
+          .matchAsPrefix(text, i);
+      if (m != null) {
+        flushPlain(i);
+        final style = _parseInlineStyle(m.group(1) ?? '');
+        out.add(TextSpan(
+          text: m.group(2),
+          style: style,
+        ));
+        i = m.end;
+        committed = i;
+        continue;
+      }
+    }
+
     // Inline @YYYY-MM-DD date mention.
     if (c == '@') {
       final prev = i == 0 ? '' : text[i - 1];
