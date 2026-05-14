@@ -186,6 +186,8 @@ img { max-width: 100%; border-radius: 4px; }
 figcaption { font-size: 12px; color: #7a7468; margin-top: 6px; }
 .math { font-family: ui-monospace, Menlo, monospace; padding: 12px;
         background: #efebde; border-radius: 4px; margin: 12px 0; }
+mark { background: rgba(251,225,154,0.55); color: #3c2f0f; padding: 0 2px;
+       border-radius: 2px; }
 .index { list-style: none; padding: 0; }
 .index li a { display: block; padding: 8px 10px; border: 1px solid #d8d3c4;
               border-radius: 4px; background: #fff; margin: 4px 0;

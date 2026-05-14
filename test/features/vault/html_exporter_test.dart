@@ -66,6 +66,11 @@ void main() {
       expect(html, contains('<figcaption>alt</figcaption>'));
     });
 
+    test('highlight ==text== → <mark>', () {
+      final html = markdownToHtml('I want to ==highlight this==.');
+      expect(html, contains('<mark>highlight this</mark>'));
+    });
+
     test('escapes HTML in fenced code', () {
       final html = markdownToHtml('```\n<script>\n```');
       expect(html, contains('&lt;script&gt;'));

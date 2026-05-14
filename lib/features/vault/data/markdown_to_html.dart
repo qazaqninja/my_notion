@@ -269,6 +269,11 @@ String _inline(String s) {
     RegExp(r'~~([^~\n]+)~~'),
     (m) => '<del>${m.group(1)}</del>',
   );
+  // Highlight  ==text==
+  s = s.replaceAllMapped(
+    RegExp(r'==([^=\n]+)=='),
+    (m) => '<mark>${m.group(1)}</mark>',
+  );
   // Bare URLs
   s = s.replaceAllMapped(
     RegExp(r'(?<!["=])(https?://[^\s\<\>\[\]\(\)]+)'),

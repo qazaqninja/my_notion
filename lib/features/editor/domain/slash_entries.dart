@@ -257,6 +257,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.pickEmoji,
     keywords: ['emoji', 'icon', 'sticker', 'reaction', 'smiley', 'glyph'],
   ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Highlight',
+    hint: '==…==',
+    snippet: '==highlight==',
+    cursorOffset: 2, // start of inner text
+    keywords: ['highlight', 'mark', 'yellow', 'emphasis'],
+  ),
 ];
 
 /// Filter the catalog by [query] (case-insensitive). Empty query returns all.

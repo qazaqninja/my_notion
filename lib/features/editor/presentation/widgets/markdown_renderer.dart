@@ -4010,6 +4010,26 @@ List<InlineSpan> _buildSpans(
         }
       }
     }
+    // Highlight: ==text== (mark)
+    if (c == '=' && i + 1 < n && text[i + 1] == '=') {
+      final end = text.indexOf('==', i + 2);
+      if (end != -1 && end > i + 2) {
+        final inner = text.substring(i + 2, end);
+        if (!inner.contains('\n')) {
+          flushPlain(i);
+          out.add(TextSpan(
+            text: inner,
+            style: const TextStyle(
+              backgroundColor: Color(0x55FBE19A),
+              color: Color(0xFF3C2F0F),
+            ),
+          ));
+          i = end + 2;
+          committed = i;
+          continue;
+        }
+      }
+    }
     i++;
   }
   flushPlain(n);
