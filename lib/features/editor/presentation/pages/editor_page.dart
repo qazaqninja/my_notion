@@ -54,6 +54,7 @@ class EditorPage extends StatelessWidget {
         final vaultState = context.read<VaultBloc>().state;
         if (vaultState is VaultLoaded) {
           bloc.setVaultRoot(Directory(vaultState.rootPath));
+          bloc.setCurrentUser(vaultState.workspace.currentUserName);
         }
         bloc.add(OpenEditor(ulid));
         return bloc;

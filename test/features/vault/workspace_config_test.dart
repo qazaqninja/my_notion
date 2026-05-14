@@ -115,4 +115,72 @@ workspace:
       expect(cfg.sidebarHidden, isEmpty);
     });
   });
+
+  group('users + currentUserName', () {
+    test('reads users with name + email + default flag', () async {
+      await File(p.join(tmp.path, '.quill.yaml')).writeAsString('''
+users:
+  - name: Alice
+    email: alice@example.com
+  - name: Bob
+    default: true
+''');
+      final cfg = await WorkspaceConfig.load(tmp);
+      expect(cfg.users.length, 2);
+      expect(cfg.users[0].name, 'Alice');
+      expect(cfg.users[0].email, 'alice@example.com');
+      expect(cfg.users[0].isDefault, isFalse);
+      expect(cfg.users[1].name, 'Bob');
+      expect(cfg.users[1].isDefault, isTrue);
+    });
+
+    test('currentUserName returns the default-flagged user', () async {
+      await File(p.join(tmp.path, '.quill.yaml')).writeAsString('''
+users:
+  - name: Alice
+  - name: Bob
+    default: true
+''');
+      final cfg = await WorkspaceConfig.load(tmp);
+      expect(cfg.currentUserName, 'Bob');
+    });
+
+    test('currentUserName falls back to the first entry', () async {
+      await File(p.join(tmp.path, '.quill.yaml')).writeAsString('''
+users:
+  - name: Alice
+  - name: Bob
+''');
+      final cfg = await WorkspaceConfig.load(tmp);
+      expect(cfg.currentUserName, 'Alice');
+    });
+
+    test('empty list → null', () async {
+      const cfg = WorkspaceConfig();
+      expect(cfg.currentUserName, isNull);
+    });
+
+    test('plain-string entries work as a shorthand', () async {
+      await File(p.join(tmp.path, '.quill.yaml')).writeAsString('''
+users:
+  - alice
+  - bob
+''');
+      final cfg = await WorkspaceConfig.load(tmp);
+      expect(cfg.users.map((u) => u.name), equals(['alice', 'bob']));
+    });
+
+    test('save round-trips users including email + default', () async {
+      const cfg = WorkspaceConfig(users: [
+        WorkspaceUser(name: 'A', email: 'a@x'),
+        WorkspaceUser(name: 'B', isDefault: true),
+      ]);
+      await cfg.save(tmp);
+      final reloaded = await WorkspaceConfig.load(tmp);
+      expect(reloaded.users.length, 2);
+      expect(reloaded.users[0].email, 'a@x');
+      expect(reloaded.users[1].isDefault, isTrue);
+      expect(reloaded.currentUserName, 'B');
+    });
+  });
 }

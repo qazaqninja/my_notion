@@ -43,6 +43,13 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
   Directory? _vaultRoot;
   void setVaultRoot(Directory root) => _vaultRoot = root;
 
+  /// Optional display name of the workspace's current user. When set,
+  /// `_onSave` stamps frontmatter `last_edited_by:` on every save and
+  /// `created_by:` the first time the page is saved. Configured from
+  /// `.quill.yaml`'s `users:` list via WorkspaceConfig.currentUserName.
+  String? _currentUser;
+  void setCurrentUser(String? name) => _currentUser = name;
+
   Future<void> _onOpen(OpenEditor e, Emitter<EditorState> emit) async {
     emit(EditorLoading(e.ulid));
     try {
@@ -101,8 +108,19 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
 
   Future<void> _onSave(SaveNow e, Emitter<EditorState> emit) async {
     if (state is! EditorLoaded) return;
-    final loaded = state as EditorLoaded;
+    var loaded = state as EditorLoaded;
     if (!loaded.dirty || _vaultRoot == null) return;
+    // Auto-stamp last_edited_by + created_by when a current user is known.
+    final user = _currentUser;
+    if (user != null && user.isNotEmpty) {
+      final fm = loaded.page.frontmatter;
+      final stamped = _stampAuthor(fm, user);
+      if (!identical(stamped, fm)) {
+        loaded = loaded.copyWith(
+          page: loaded.page.copyWith(frontmatter: stamped),
+        );
+      }
+    }
     emit(loaded.copyWith(saving: true));
     try {
       await _repo.writePage(loaded.page, root: _vaultRoot!);
@@ -111,6 +129,52 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     } catch (err) {
       emit(EditorError('Save failed: $err'));
     }
+  }
+
+  /// Add or update `last_edited_by:` to [user]; add `created_by:` to
+  /// [user] only when it is not already present (a once-stamped author
+  /// should never be overwritten by another editor).
+  ///
+  /// Exposed publicly so author-stamping is exercisable in tests
+  /// without spinning up the full bloc + filesystem.
+  static Frontmatter stampAuthor(Frontmatter fm, String user) =>
+      _stampAuthor(fm, user);
+
+  static Frontmatter _stampAuthor(Frontmatter fm, String user) {
+    final hasCreatedBy =
+        fm.entries.any((x) => x.key == 'created_by' && '${x.value}'.isNotEmpty);
+    final next = <FrontmatterEntry>[];
+    var replaced = false;
+    for (final e in fm.entries) {
+      if (e.key == 'last_edited_by') {
+        next.add(FrontmatterEntry(
+          key: 'last_edited_by',
+          rawScalar: user,
+          type: FrontmatterType.text,
+          value: user,
+        ));
+        replaced = true;
+      } else {
+        next.add(e);
+      }
+    }
+    if (!replaced) {
+      next.add(FrontmatterEntry(
+        key: 'last_edited_by',
+        rawScalar: user,
+        type: FrontmatterType.text,
+        value: user,
+      ));
+    }
+    if (!hasCreatedBy) {
+      next.add(FrontmatterEntry(
+        key: 'created_by',
+        rawScalar: user,
+        type: FrontmatterType.text,
+        value: user,
+      ));
+    }
+    return Frontmatter(entries: next);
   }
 
   void _scheduleSave() {
