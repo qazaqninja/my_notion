@@ -64,9 +64,17 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     }
   }
 
+  /// True when the loaded page has `locked: true` in its frontmatter.
+  /// Locked pages reject all editing events; the UI surfaces a banner.
+  static bool isLocked(EditorLoaded loaded) {
+    final v = loaded.page.frontmatter.get('locked');
+    return v == true || '$v'.toLowerCase() == 'true';
+  }
+
   Future<void> _onEditBody(EditBody e, Emitter<EditorState> emit) async {
     if (state is! EditorLoaded) return;
     final loaded = state as EditorLoaded;
+    if (isLocked(loaded)) return;
     if (loaded.page.body == e.body) return;
     final updated = loaded.page.copyWith(body: e.body);
     emit(loaded.copyWith(page: updated, dirty: true));
@@ -102,6 +110,8 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
   Future<void> _onEditField(EditFrontmatterField e, Emitter<EditorState> emit) async {
     if (state is! EditorLoaded) return;
     final loaded = state as EditorLoaded;
+    // Allow `locked` itself to be toggled — otherwise users can't unlock.
+    if (isLocked(loaded) && e.key != 'locked') return;
     final entries = loaded.page.frontmatter.entries;
     final i = entries.indexWhere((x) => x.key == e.key);
     if (i < 0) return;
@@ -113,6 +123,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
   Future<void> _onAddField(AddFrontmatterField e, Emitter<EditorState> emit) async {
     if (state is! EditorLoaded) return;
     final loaded = state as EditorLoaded;
+    if (isLocked(loaded) && e.entry.key != 'locked') return;
     final entries = loaded.page.frontmatter.entries;
     if (entries.any((x) => x.key == e.entry.key)) return; // duplicate key
     final next = [...entries, e.entry];
@@ -123,6 +134,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     if (state is! EditorLoaded) return;
     if (e.key == 'id') return; // protected
     final loaded = state as EditorLoaded;
+    if (isLocked(loaded) && e.key != 'locked') return;
     final next = [
       for (final x in loaded.page.frontmatter.entries)
         if (x.key != e.key) x,
@@ -134,6 +146,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
   Future<void> _onReplaceYaml(ReplaceFrontmatterYaml e, Emitter<EditorState> emit) async {
     if (state is! EditorLoaded) return;
     final loaded = state as EditorLoaded;
+    if (isLocked(loaded)) return;
     // Wrap in delimiters so the parser reuses its proven path. The body is
     // empty — we only care about the frontmatter side.
     final wrapped = '---\n${e.rawYaml.endsWith('\n') ? e.rawYaml : '${e.rawYaml}\n'}---\n';

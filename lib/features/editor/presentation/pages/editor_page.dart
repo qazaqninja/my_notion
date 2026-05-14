@@ -11,6 +11,7 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/data/indexer.dart';
+import '../../../vault/domain/entities/frontmatter_entry.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 // ignore: unused_import — Indexer used via context.read
 import '../../../vault/presentation/bloc/vault_bloc.dart';
@@ -63,6 +64,27 @@ class _EditorBody extends StatefulWidget {
 class _EditorBodyState extends State<_EditorBody> {
   bool _propertiesOpen = false;
 
+  void _toggleLock(BuildContext context, EditorLoaded loaded) {
+    final bloc = context.read<EditorBloc>();
+    final wasLocked = EditorBloc.isLocked(loaded);
+    final fm = loaded.page.frontmatter;
+    final existing = fm.find('locked');
+    final next = wasLocked ? 'false' : 'true';
+    if (existing == null) {
+      bloc.add(AddFrontmatterField(FrontmatterEntry(
+        key: 'locked',
+        rawScalar: next,
+        type: FrontmatterType.checkbox,
+        value: !wasLocked,
+      )));
+    } else {
+      bloc.add(EditFrontmatterField(
+        'locked',
+        existing.copyWith(rawScalar: next, value: !wasLocked),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
@@ -92,6 +114,7 @@ class _EditorBodyState extends State<_EditorBody> {
         final page = loaded.page;
         final crumbs = page.relativePath.split('/');
         final mobile = isMobileWidth(context);
+        final locked = EditorBloc.isLocked(loaded);
         return Column(
           children: [
             PageHeader(
@@ -115,6 +138,18 @@ class _EditorBodyState extends State<_EditorBody> {
                         style: mono(fontSize: 11, color: tokens.text3),
                       ),
                     ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => _toggleLock(context, loaded),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    tooltip: locked ? 'Unlock page' : 'Lock page',
+                    icon: Icon(
+                      locked ? Icons.lock_outline : Icons.lock_open,
+                      size: 15,
+                      color: locked ? tokens.accent : tokens.text3,
+                    ),
+                  ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     onPressed: () => setState(() => _propertiesOpen = !_propertiesOpen),
@@ -154,6 +189,31 @@ class _EditorBodyState extends State<_EditorBody> {
                                     ? (context.read<VaultBloc>().state as VaultLoaded).rootPath
                                     : null,
                               ),
+                              if (locked)
+                                Container(
+                                  margin: const EdgeInsets.only(top: 16, bottom: 4),
+                                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+                                  decoration: BoxDecoration(
+                                    color: tokens.accentTint,
+                                    borderRadius:
+                                        const BorderRadius.all(Radius.circular(4)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.lock_outline,
+                                          size: 13, color: tokens.accent),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Locked — click the lock to enable editing',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: tokens.accent,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [

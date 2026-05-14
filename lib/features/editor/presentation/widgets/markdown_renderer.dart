@@ -88,6 +88,14 @@ class MarkdownRenderer extends StatelessWidget {
             child: _MarkdownImage(alt: image.$1, src: image.$2),
           );
         }
+        // Standalone wikilink: render as a sub-page card.
+        final ulid = _matchStandaloneWikilink(b.text);
+        if (ulid != null) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: _SubpageCard(ulid: ulid),
+          );
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 14),
           child: _ParagraphWithChips(text: b.text, showUlid: showUlid, tokens: tokens),
@@ -486,6 +494,93 @@ class MarkdownRenderer extends StatelessWidget {
   final m = RegExp(r'^!\[([^\]]*)\]\(([^)]+)\)$').firstMatch(trimmed);
   if (m == null) return null;
   return (m.group(1) ?? '', m.group(2) ?? '');
+}
+
+/// If [text] is JUST a wikilink — `[[ULID]]` with nothing else — return
+/// the ULID. Used to render sub-page cards.
+String? _matchStandaloneWikilink(String text) {
+  final trimmed = text.trim();
+  final m = RegExp(r'^\[\[([0-9A-HJKMNP-TV-Z]{26})\]\]$').firstMatch(trimmed);
+  return m?.group(1);
+}
+
+/// Sub-page card. Looks up the page's title and icon from drift and
+/// renders a clickable Notion-style row with icon + title + path.
+class _SubpageCard extends StatelessWidget {
+  const _SubpageCard({required this.ulid});
+  final String ulid;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final db = context.read<QuillDatabase>();
+    return FutureBuilder(
+      future: (db.select(db.pages)..where((p) => p.ulid.equals(ulid)))
+          .getSingleOrNull(),
+      builder: (context, snap) {
+        final page = snap.data;
+        final title = page?.title ?? 'Untitled (${ulid.substring(20)})';
+        final path = page?.relativePath ?? '';
+        return GestureDetector(
+          onTap: () => Navigator.of(context).pushReplacementNamed('/editor/$ulid'),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              decoration: BoxDecoration(
+                color: tokens.surface,
+                border: Border.all(color: tokens.divider2, width: 0.5),
+                borderRadius: const BorderRadius.all(Radius.circular(6)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 26,
+                    height: 26,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: tokens.surface2,
+                      borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    ),
+                    child: Icon(Icons.description_outlined,
+                        size: 14, color: tokens.text3),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: tokens.text,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (path.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 1),
+                            child: Text(
+                              path,
+                              style: mono(fontSize: 11, color: tokens.text3),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, size: 16, color: tokens.text3),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _MarkdownImage extends StatelessWidget {
