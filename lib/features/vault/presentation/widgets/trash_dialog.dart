@@ -31,6 +31,36 @@ class _TrashDialogState extends State<TrashDialog> {
         _items = _service.list(Directory(widget.vaultRoot));
       });
 
+  Future<void> _confirmEmpty(BuildContext context) async {
+    final items = await _items;
+    if (items.isEmpty || !context.mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Empty trash?'),
+        content: Text(
+          'This permanently deletes ${items.length} '
+          '${items.length == 1 ? "file" : "files"}. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete forever'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    for (final item in items) {
+      await _service.deleteForever(item);
+    }
+    _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
@@ -59,6 +89,15 @@ class _TrashDialogState extends State<TrashDialog> {
                         letterSpacing: 1.0,
                         color: tokens.text3,
                       ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _confirmEmpty(context),
+                    icon: const Icon(Icons.delete_outline, size: 14),
+                    label: const Text('Empty trash'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: tokens.text2,
+                      textStyle: const TextStyle(fontSize: 12),
                     ),
                   ),
                   IconButton(
