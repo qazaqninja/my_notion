@@ -64,13 +64,28 @@ class MoveToTrash extends VaultEvent {
   List<Object?> get props => [ulid];
 }
 
-/// Copy a page to a new .md sibling with a fresh ULID and a `(copy)`
-/// title suffix. Indexer picks it up; [onCreated] receives the new ULID
-/// so the UI can navigate to it.
+/// Copy a page to a new .md with a fresh ULID and a `(copy)` title suffix.
+/// Defaults to the source page's parent folder; pass [targetFolder] to
+/// override (empty string = vault root). Used both for context-menu
+/// "Duplicate" and for "New from template" where the source lives in
+/// `Templates/` and the copy lands at root.
 class DuplicatePage extends VaultEvent {
-  const DuplicatePage(this.ulid, {this.onCreated});
+  const DuplicatePage(
+    this.ulid, {
+    this.targetFolder,
+    this.titleOverride,
+    this.onCreated,
+  });
   final String ulid;
+
+  /// Folder for the duplicate, relative to vault root. `null` = same as
+  /// source. Empty string = vault root.
+  final String? targetFolder;
+
+  /// Use this title instead of "<source title> (copy)".
+  final String? titleOverride;
+
   final void Function(String newUlid)? onCreated;
   @override
-  List<Object?> get props => [ulid];
+  List<Object?> get props => [ulid, targetFolder, titleOverride];
 }

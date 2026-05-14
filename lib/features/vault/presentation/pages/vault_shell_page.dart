@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:drift/drift.dart' as drift;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +19,7 @@ import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../data/exporter.dart';
 import '../../data/html_exporter.dart';
+import '../../data/pdf_exporter.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
@@ -193,6 +195,30 @@ class _VaultShellPageState extends State<VaultShellPage> {
         );
       case 'Toggle theme':
         await themeCubit.cycleMode();
+      case 'Export vault as PDF':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final pickedPath = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save PDF…',
+          fileName: 'vault.pdf',
+          type: FileType.custom,
+          allowedExtensions: const ['pdf'],
+        );
+        if (pickedPath == null) return;
+        try {
+          final n = await const PdfExporter().export(
+            src: Directory(vaultPath),
+            dest: File(pickedPath),
+          );
+          messenger?.showSnackBar(SnackBar(
+            content: Text('Exported $n pages → $pickedPath'),
+            duration: const Duration(seconds: 4),
+          ));
+        } catch (e) {
+          messenger?.showSnackBar(SnackBar(content: Text('PDF export failed: $e')));
+        }
       case 'Export vault as HTML':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
@@ -240,6 +266,62 @@ class _VaultShellPageState extends State<VaultShellPage> {
         } catch (e) {
           messenger?.showSnackBar(SnackBar(content: Text('CSV import failed: $e')));
         }
+      case 'New page from template…':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final db = context.read<QuillDatabase>();
+        final templates = await (db.select(db.pages)
+              ..where((p) => p.relativePath.like('Templates/%') |
+                  p.relativePath.like('Templates\\%')))
+            .get();
+        if (templates.isEmpty) {
+          messenger?.showSnackBar(const SnackBar(
+            content: Text(
+                'No templates yet. Create a Templates/ folder at the vault root and add .md files.'),
+            duration: Duration(seconds: 4),
+          ));
+          return;
+        }
+        if (!context.mounted) return;
+        final picked = await showDialog<String>(
+          context: context,
+          builder: (ctx) {
+            final t = QuillTokens.of(ctx);
+            return SimpleDialog(
+              title: const Text('New page from template'),
+              children: [
+                for (final tpl in templates)
+                  SimpleDialogOption(
+                    onPressed: () => Navigator.of(ctx).pop(tpl.ulid),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(tpl.title,
+                              style: TextStyle(
+                                  fontSize: 13.5, color: t.text)),
+                          Text(tpl.relativePath,
+                              style: TextStyle(
+                                  fontSize: 11, color: t.text3)),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+        if (picked == null) return;
+        if (!context.mounted) return;
+        final router = GoRouter.of(context);
+        vaultBloc.add(DuplicatePage(
+          picked,
+          targetFolder: '',
+          onCreated: (newUlid) => router.go('/editor/$newUlid'),
+        ));
     }
   }
 

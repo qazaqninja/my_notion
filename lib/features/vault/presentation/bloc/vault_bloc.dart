@@ -217,7 +217,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     final root = Directory(loaded.rootPath);
     final src = await _repo.readPage(row.relativePath, root: root);
     final newUlid = _ulids.generate();
-    final newTitle = '${src.title} (copy)';
+    final newTitle = e.titleOverride ?? '${src.title} (copy)';
 
     // Replace id + title entries; keep others.
     final entries = <FrontmatterEntry>[];
@@ -260,7 +260,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       ));
     }
 
-    final folder = p.dirname(src.relativePath);
+    final folder = e.targetFolder ?? p.dirname(src.relativePath);
     final fileName = _safeFileName(newTitle);
     final relativePath =
         folder.isEmpty || folder == '.' ? '$fileName.md' : p.join(folder, '$fileName.md');
