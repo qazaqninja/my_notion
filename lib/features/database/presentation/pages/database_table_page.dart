@@ -53,6 +53,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   Set<String>? _visibleOverride;
 
   String get _wrapPrefKey => 'db.${widget.dbId}.wrap';
+  String get _visiblePrefKey => 'db.${widget.dbId}.visible';
 
   @override
   void initState() {
@@ -62,21 +63,35 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       vault: context.read<VaultRepository>(),
       indexer: context.read<Indexer>(),
     );
-    _restoreWrap();
+    _restorePrefs();
     _load();
   }
 
-  Future<void> _restoreWrap() async {
+  Future<void> _restorePrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final v = prefs.getBool(_wrapPrefKey);
-    if (v == null || !mounted) return;
-    setState(() => _wrap = v);
+    if (!mounted) return;
+    final wrap = prefs.getBool(_wrapPrefKey);
+    final visible = prefs.getStringList(_visiblePrefKey);
+    setState(() {
+      if (wrap != null) _wrap = wrap;
+      if (visible != null) _visibleOverride = visible.toSet();
+    });
   }
 
   Future<void> _setWrap(bool next) async {
     setState(() => _wrap = next);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_wrapPrefKey, next);
+  }
+
+  Future<void> _setVisibleOverride(Set<String>? next) async {
+    setState(() => _visibleOverride = next);
+    final prefs = await SharedPreferences.getInstance();
+    if (next == null) {
+      await prefs.remove(_visiblePrefKey);
+    } else {
+      await prefs.setStringList(_visiblePrefKey, next.toList());
+    }
   }
 
   Future<void> _load() async {
@@ -493,7 +508,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       child: PropertiesPopover(schema: schema, initial: initial),
     );
     if (next == null) return;
-    setState(() => _visibleOverride = next.visible);
+    await _setVisibleOverride(next.visible);
   }
 
   static Color _parseColor(String s) {
