@@ -20,6 +20,7 @@ class SlashEntry {
     this.cursorOffset,
     this.keywords = const [],
     this.action = SlashAction.insertSnippet,
+    this.linePrefix,
   });
 
   final String icon;
@@ -29,6 +30,12 @@ class SlashEntry {
   final int? cursorOffset;
   final List<String> keywords;
   final SlashAction action;
+
+  /// When non-null, picking this entry CONVERTS the current line by
+  /// stripping its existing markdown prefix and prepending this one.
+  /// Inline-style entries (page link, image, inline math) leave this
+  /// null and fall back to plain snippet insertion at the cursor.
+  final String? linePrefix;
 
   /// Where the caret should land after insertion.
   int caretAfterInsert(int insertOffset) =>
@@ -42,6 +49,7 @@ const List<SlashEntry> kSlashEntries = [
     label: 'Heading 1',
     hint: 'H1',
     snippet: '# ',
+    linePrefix: '# ',
     keywords: ['h1', 'title', 'heading'],
   ),
   SlashEntry(
@@ -49,6 +57,7 @@ const List<SlashEntry> kSlashEntries = [
     label: 'Heading 2',
     hint: 'H2',
     snippet: '## ',
+    linePrefix: '## ',
     keywords: ['h2', 'heading'],
   ),
   SlashEntry(
@@ -56,6 +65,7 @@ const List<SlashEntry> kSlashEntries = [
     label: 'Heading 3',
     hint: 'H3',
     snippet: '### ',
+    linePrefix: '### ',
     keywords: ['h3', 'heading'],
   ),
   SlashEntry(
@@ -63,6 +73,7 @@ const List<SlashEntry> kSlashEntries = [
     label: 'Bulleted list',
     hint: '•',
     snippet: '- ',
+    linePrefix: '- ',
     keywords: ['ul', 'bullet', 'list'],
   ),
   SlashEntry(
@@ -70,6 +81,7 @@ const List<SlashEntry> kSlashEntries = [
     label: 'Numbered list',
     hint: '1.',
     snippet: '1. ',
+    linePrefix: '1. ',
     keywords: ['ol', 'ordered', 'list', 'number'],
   ),
   SlashEntry(
@@ -77,6 +89,7 @@ const List<SlashEntry> kSlashEntries = [
     label: 'To-do',
     hint: '☐',
     snippet: '- [ ] ',
+    linePrefix: '- [ ] ',
     keywords: ['todo', 'task', 'checkbox', 'check'],
   ),
   SlashEntry(
@@ -84,6 +97,7 @@ const List<SlashEntry> kSlashEntries = [
     label: 'Quote',
     hint: '> ',
     snippet: '> ',
+    linePrefix: '> ',
     keywords: ['quote', 'blockquote'],
   ),
   SlashEntry(

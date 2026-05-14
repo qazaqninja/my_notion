@@ -291,12 +291,34 @@ class _SourceViewState extends State<SourceView> {
 
     switch (entry.action) {
       case SlashAction.insertSnippet:
-        final newText = text.replaceRange(stripStart, caret, entry.snippet);
-        final newCaret = entry.caretAfterInsert(stripStart);
-        _controller.value = TextEditingValue(
-          text: newText,
-          selection: TextSelection.collapsed(offset: newCaret),
-        );
+        // Convert-in-place: when the entry declares a linePrefix, strip
+        // any existing markdown prefix on the current line and prepend
+        // the new one. Keeps the line's content; just changes its block
+        // type. Matches Notion's slash-on-existing-block behaviour.
+        if (entry.linePrefix != null) {
+          final lineStart = stripStart == 0
+              ? 0
+              : (text.lastIndexOf('\n', stripStart - 1) + 1);
+          final beforeSlash = text.substring(lineStart, stripStart);
+          final stripped = beforeSlash.replaceFirst(
+            RegExp(r'^(#{1,3} |- \[[ xX]\] |- |\* |> |\d+\. )'),
+            '',
+          );
+          final insertion = '${entry.linePrefix}$stripped';
+          final newText = text.replaceRange(lineStart, caret, insertion);
+          final newCaret = lineStart + entry.linePrefix!.length;
+          _controller.value = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: newCaret),
+          );
+        } else {
+          final newText = text.replaceRange(stripStart, caret, entry.snippet);
+          final newCaret = entry.caretAfterInsert(stripStart);
+          _controller.value = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: newCaret),
+          );
+        }
       case SlashAction.pickImage:
         // Strip the `/...` trigger first so the picker dialog opens with the
         // editor in a clean state. The async picker is awaited below.
