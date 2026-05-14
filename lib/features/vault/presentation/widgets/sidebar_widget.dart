@@ -13,6 +13,7 @@ import '../../../../shared/widgets/side_item.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../database/domain/entities/database_schema.dart';
 import '../bloc/vault_bloc.dart';
+import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
 import 'sidebar_search.dart';
 import 'tree_node_widget.dart';
@@ -61,7 +62,13 @@ class SidebarWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SideHead(label: 'Workspace', actionIcon: 'plus'),
+                  SideHead(
+                    label: 'Workspace',
+                    actionIcon: 'plus',
+                    onAction: state is VaultLoaded
+                        ? () => _promptNewPage(context)
+                        : null,
+                  ),
                   TreeRoot(activeUlid: activeUlid),
                   const SideHead(label: 'Databases', actionIcon: 'plus'),
                   if (state is VaultLoaded)
@@ -108,6 +115,39 @@ class SidebarWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _promptNewPage(BuildContext context) async {
+    final controller = TextEditingController();
+    final router = GoRouter.of(context);
+    final bloc = context.read<VaultBloc>();
+    final title = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New page'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Title'),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+    if (title == null || title.trim().isEmpty) return;
+    bloc.add(CreatePage(
+      title: title.trim(),
+      onCreated: (ulid) => router.go('/editor/$ulid'),
+    ));
   }
 
   String _abbreviateHome(String path) {

@@ -7,8 +7,12 @@ import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/ulid/ulid_generator.dart';
 import '../../data/indexer.dart';
 import '../../data/vault_watcher.dart';
+import '../../domain/entities/frontmatter.dart';
+import '../../domain/entities/frontmatter_entry.dart';
+import '../../domain/entities/page.dart';
 import '../../domain/entities/vault_tree.dart';
 import '../../domain/repositories/vault_repository.dart';
 import 'vault_event.dart';
@@ -20,22 +24,26 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     required Indexer indexer,
     required QuillDatabase db,
     VaultWatcher? watcher,
-  })  : _indexer = indexer,
+    UlidGenerator? ulids,
+  })  : _repo = repo,
+        _indexer = indexer,
         _db = db,
         _watcher = watcher ?? VaultWatcher(),
+        _ulids = ulids ?? const UlidGenerator(),
         super(const VaultInitial()) {
-    // ignore: unused_local_variable
-    final _ = repo; // repo passed in for future use cases (M5+)
     on<PickVault>(_onPick);
     on<LoadFromPath>(_onLoad);
     on<ToggleFolder>(_onToggle);
     on<ReindexVault>(_onReindex);
     on<RefreshFromDisk>(_onRefresh);
+    on<CreatePage>(_onCreatePage);
     _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
   }
 
+  final VaultRepository _repo;
   final Indexer _indexer;
   final QuillDatabase _db;
+  final UlidGenerator _ulids;
   final VaultWatcher _watcher;
   StreamSubscription<void>? _watchSub;
 
@@ -116,6 +124,55 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     if (state is! VaultLoaded) return;
     final loaded = state as VaultLoaded;
     add(LoadFromPath(loaded.rootPath));
+  }
+
+  Future<void> _onCreatePage(CreatePage e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final root = Directory(loaded.rootPath);
+    final ulid = _ulids.generate();
+    final safe = _safeFileName(e.title);
+    final relativePath = e.folderPath.isEmpty ? '$safe.md' : p.join(e.folderPath, '$safe.md');
+    final page = Page(
+      ulid: ulid,
+      relativePath: relativePath,
+      title: e.title,
+      frontmatter: Frontmatter(entries: [
+        FrontmatterEntry(
+          key: 'id',
+          rawScalar: ulid,
+          type: FrontmatterType.ulid,
+          value: ulid,
+        ),
+        FrontmatterEntry(
+          key: 'title',
+          rawScalar: e.title,
+          type: FrontmatterType.text,
+          value: e.title,
+        ),
+      ]),
+      body: '',
+      mtimeMs: DateTime.now().millisecondsSinceEpoch,
+    );
+    try {
+      await _repo.writePage(page, root: root);
+      await _indexer.upsertPage(page);
+      final tree = await _buildTree(root);
+      final count = (await _db.select(_db.pages).get()).length;
+      emit(loaded.copyWith(tree: tree, pageCount: count));
+      e.onCreated?.call(ulid);
+    } catch (err) {
+      emit(VaultError('Create failed: $err'));
+      emit(loaded);
+    }
+  }
+
+  String _safeFileName(String title) {
+    final stripped = title
+        .replaceAll(RegExp(r'[\\/<>:"|?*]+'), '-')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return stripped.isEmpty ? 'Untitled' : stripped;
   }
 
   /// In-place refresh. Unlike [LoadFromPath], does NOT emit VaultLoading,

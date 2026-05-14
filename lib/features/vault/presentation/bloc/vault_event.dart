@@ -36,3 +36,19 @@ class ReindexVault extends VaultEvent {
 class RefreshFromDisk extends VaultEvent {
   const RefreshFromDisk();
 }
+
+/// Create a new top-level page in the vault. [folderPath] is relative to
+/// the vault root (empty string for root). The bloc returns the new ULID
+/// via [onCreated] so the UI can navigate to the editor.
+class CreatePage extends VaultEvent {
+  const CreatePage({
+    required this.title,
+    this.folderPath = '',
+    this.onCreated,
+  });
+  final String title;
+  final String folderPath;
+  final void Function(String ulid)? onCreated;
+  @override
+  List<Object?> get props => [title, folderPath];
+}
