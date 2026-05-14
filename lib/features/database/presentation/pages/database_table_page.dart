@@ -363,6 +363,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       schema: viewSchema,
                       rows: filtered,
                       cardFields: activeView?.cardFields,
+                      subGroupBy: _query.subGroupBy,
                     ),
                   ViewType.board => BoardView(
                       schema: viewSchema,

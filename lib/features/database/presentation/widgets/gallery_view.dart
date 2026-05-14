@@ -65,6 +65,7 @@ class GalleryView extends StatefulWidget {
     required this.schema,
     required this.rows,
     this.cardFields,
+    this.subGroupBy,
   });
 
   final DatabaseSchema schema;
@@ -74,6 +75,12 @@ class GalleryView extends StatefulWidget {
   /// view falls back to its legacy stage/arr/owner/updated layout so
   /// existing schemas keep working without an opt-in change.
   final List<String>? cardFields;
+
+  /// When non-null, cards are partitioned into sections by this column's
+  /// value. Each section gets a full-width header band; the cards within
+  /// flow as a Wrap. Empty values land in a `—` section. Mirrors the
+  /// TableView (M177) and BoardView (M86) sub-group behaviour.
+  final String? subGroupBy;
 
   @override
   State<GalleryView> createState() => _GalleryViewState();
@@ -145,24 +152,118 @@ class _GalleryViewState extends State<GalleryView> {
           ),
         ),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(24),
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: m.cardWidth,
-              mainAxisExtent: m.cardHeight,
-              mainAxisSpacing: 14,
-              crossAxisSpacing: 14,
-            ),
-            itemCount: widget.rows.length,
-            itemBuilder: (context, i) => _Card(
-              row: widget.rows[i],
-              schema: widget.schema,
-              metrics: m,
-              cardFields: widget.cardFields,
-            ),
-          ),
+          child: widget.subGroupBy == null
+              ? GridView.builder(
+                  padding: const EdgeInsets.all(24),
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: m.cardWidth,
+                    mainAxisExtent: m.cardHeight,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                  ),
+                  itemCount: widget.rows.length,
+                  itemBuilder: (context, i) => _Card(
+                    row: widget.rows[i],
+                    schema: widget.schema,
+                    metrics: m,
+                    cardFields: widget.cardFields,
+                  ),
+                )
+              : _SubGroupedGallery(
+                  rows: widget.rows,
+                  schema: widget.schema,
+                  metrics: m,
+                  cardFields: widget.cardFields,
+                  subGroupBy: widget.subGroupBy!,
+                ),
         ),
       ],
+    );
+  }
+}
+
+/// Partitions the gallery rows by [subGroupBy] and renders one section
+/// per value: a full-width header band followed by a Wrap of cards.
+/// Order of sections follows first-occurrence in the input; empty
+/// values bucket under `—`.
+class _SubGroupedGallery extends StatelessWidget {
+  const _SubGroupedGallery({
+    required this.rows,
+    required this.schema,
+    required this.metrics,
+    required this.subGroupBy,
+    this.cardFields,
+  });
+
+  final List<DatabasePageRow> rows;
+  final DatabaseSchema schema;
+  final _CardMetrics metrics;
+  final String subGroupBy;
+  final List<String>? cardFields;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final partitions = <String, List<DatabasePageRow>>{};
+    for (final r in rows) {
+      final raw = '${r.cells[subGroupBy] ?? ''}'.trim();
+      final key = raw.isEmpty ? '—' : raw;
+      (partitions[key] ??= []).add(r);
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final entry in partitions.entries) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: tokens.divider2, width: 0.5),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    entry.key,
+                    style: mono(
+                      fontSize: 11,
+                      color: tokens.text2,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${entry.value.length}',
+                    style: mono(fontSize: 11, color: tokens.text3),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              children: [
+                for (final row in entry.value)
+                  SizedBox(
+                    width: metrics.cardWidth,
+                    height: metrics.cardHeight,
+                    child: _Card(
+                      row: row,
+                      schema: schema,
+                      metrics: metrics,
+                      cardFields: cardFields,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 22),
+          ],
+        ],
+      ),
     );
   }
 }

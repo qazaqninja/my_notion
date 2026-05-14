@@ -137,4 +137,63 @@ void main() {
     expect(find.text('priority'), findsNothing);
     expect(find.text('due'), findsOneWidget);
   });
+
+  testWidgets('subGroupBy renders one section per value', (tester) async {
+    const rows = [
+      DatabasePageRow(
+        ulid: '01HQAAA0000000000000000001',
+        title: 'A1',
+        relativePath: 'Projects/A1.md',
+        cells: {'stage': 'todo'},
+      ),
+      DatabasePageRow(
+        ulid: '01HQAAA0000000000000000002',
+        title: 'A2',
+        relativePath: 'Projects/A2.md',
+        cells: {'stage': 'todo'},
+      ),
+      DatabasePageRow(
+        ulid: '01HQAAA0000000000000000003',
+        title: 'B1',
+        relativePath: 'Projects/B1.md',
+        cells: {'stage': 'done'},
+      ),
+    ];
+    await tester.pumpWidget(_wrap(const GalleryView(
+      schema: _schema,
+      rows: rows,
+      subGroupBy: 'stage',
+    )));
+    await tester.pump();
+    // Section headers for both partitions.
+    expect(find.text('todo'), findsAtLeastNWidgets(1));
+    expect(find.text('done'), findsAtLeastNWidgets(1));
+    // Counts shown next to each header.
+    expect(find.text('2'), findsOneWidget); // todo has 2
+    expect(find.text('1'), findsOneWidget); // done has 1
+    // Card titles still rendered.
+    expect(find.text('A1'), findsOneWidget);
+    expect(find.text('A2'), findsOneWidget);
+    expect(find.text('B1'), findsOneWidget);
+  });
+
+  testWidgets('subGroupBy: empty value lands in "—" section',
+      (tester) async {
+    const rows = [
+      DatabasePageRow(
+        ulid: '01HQAAA0000000000000000001',
+        title: 'X',
+        relativePath: 'Projects/X.md',
+        cells: {'stage': ''},
+      ),
+    ];
+    await tester.pumpWidget(_wrap(const GalleryView(
+      schema: _schema,
+      rows: rows,
+      subGroupBy: 'stage',
+    )));
+    await tester.pump();
+    expect(find.text('—'), findsOneWidget);
+    expect(find.text('X'), findsOneWidget);
+  });
 }
