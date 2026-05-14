@@ -209,6 +209,10 @@ class _Card extends StatelessWidget {
     final arr = '${row.cells['arr'] ?? ''}';
     final owner = '${row.cells['owner'] ?? ''}';
     final date = '${row.cells['updated'] ?? ''}';
+    final rawIcon = '${row.cells['icon'] ?? ''}'.trim();
+    final hasEmojiIcon =
+        rawIcon.isNotEmpty && rawIcon.length <= 4 && !rawIcon.contains('/');
+    final displayTitle = hasEmojiIcon ? '$rawIcon  ${row.title}' : row.title;
     return GestureDetector(
       onTap: () => context.go('/editor/${row.ulid}'),
       child: MouseRegion(
@@ -224,7 +228,7 @@ class _Card extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                row.title,
+                displayTitle,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.text, height: 1.35),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
