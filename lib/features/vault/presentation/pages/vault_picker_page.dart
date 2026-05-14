@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../data/seed_templates.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
@@ -54,6 +58,48 @@ class _ReopenLastVaultButtonState extends State<_ReopenLastVaultButton> {
         ),
       ),
     );
+  }
+}
+
+/// Onboarding affordance — creates (or reuses) a sample vault under
+/// the app's documents folder, seeds it with templates + a sample
+/// database, then loads it. Useful first-launch path so new users
+/// don't have to invent a vault folder before they can play.
+class _SampleVaultButton extends StatelessWidget {
+  const _SampleVaultButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return OutlinedButton.icon(
+      onPressed: () => _create(context),
+      icon: QuillIcon('plus', size: 12, color: tokens.text2),
+      label: const Text('Try sample vault'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: tokens.text2,
+        side: BorderSide(color: tokens.divider2, width: 0.5),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(6)),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _create(BuildContext context) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final bloc = context.read<VaultBloc>();
+    try {
+      final docs = await getApplicationDocumentsDirectory();
+      final dir = Directory(p.join(docs.path, 'Quill-Sample'));
+      await dir.create(recursive: true);
+      await const SeedTemplates().install(dir);
+      bloc.add(LoadFromPath(dir.path));
+    } catch (e) {
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Could not create sample vault: $e')),
+      );
+    }
   }
 }
 
@@ -247,6 +293,7 @@ class VaultPickerPage extends StatelessWidget {
                           ),
                         ),
                         const _ReopenLastVaultButton(),
+                        const _SampleVaultButton(),
                       ],
                     ),
                   if (state is VaultError) ...[
