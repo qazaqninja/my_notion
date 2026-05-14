@@ -318,6 +318,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘I', 'Wrap selection in *italic* (source)'),
                 _kbRow(tokens, '⌘⇧X', 'Wrap selection in ~~strikethrough~~ (source)'),
                 _kbRow(tokens, '⌘⇧C', 'Wrap selection in `inline code` (source)'),
+                _kbRow(tokens, '⌘D', 'Duplicate current line (source)'),
                 _kbRow(tokens, '[[ULID]]', 'Wikilink chip'),
                 _kbRow(tokens, '[[ULID#anchor]]', 'Link to heading'),
                 _kbRow(tokens, '![[ULID]]', 'Transclude page body'),

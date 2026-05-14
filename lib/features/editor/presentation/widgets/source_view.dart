@@ -18,6 +18,7 @@ import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/attachment_writer.dart';
 import '../../domain/slash_entries.dart';
+import '../../domain/source_line_ops.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../cubit/slash_menu_cubit.dart';
@@ -245,6 +246,18 @@ class _SourceViewState extends State<SourceView> {
         baseOffset: selStart + (outdent ? -2 : 2).clamp(-selStart + lineStart, delta),
         extentOffset: selEnd + delta,
       ),
+    );
+  }
+
+  /// Duplicate the line under the caret and place the caret at the
+  /// same column on the copy. Cmd+D / Ctrl+D.
+  void _duplicateLine() {
+    final v = _controller.value;
+    final caret = v.selection.isValid ? v.selection.baseOffset : v.text.length;
+    final r = duplicateLineAt(v.text, caret);
+    _controller.value = TextEditingValue(
+      text: r.text,
+      selection: TextSelection.collapsed(offset: r.caret),
     );
   }
 
@@ -584,6 +597,10 @@ class _SourceViewState extends State<SourceView> {
                   const SingleActivator(LogicalKeyboardKey.keyC,
                       control: true, shift: true):
                       () => _wrapSelection('`', '`'),
+                  const SingleActivator(LogicalKeyboardKey.keyD, meta: true):
+                      _duplicateLine,
+                  const SingleActivator(LogicalKeyboardKey.keyD,
+                      control: true): _duplicateLine,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
