@@ -344,7 +344,9 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                 ),
               ),
               Expanded(
-                child: ListView.builder(
+                child: widget.rows.isEmpty
+                    ? _emptyState(tokens)
+                    : ListView.builder(
                   controller: _vertLeft,
                   itemCount: widget.rows.length + 1,
                   itemBuilder: (context, i) {
@@ -477,6 +479,47 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _emptyState(QuillTokens tokens) {
+    return GestureDetector(
+      onTap: widget.onCreateRow,
+      child: MouseRegion(
+        cursor: widget.onCreateRow != null
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'No rows yet',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.text2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              if (widget.onCreateRow != null)
+                Row(
+                  children: [
+                    QuillIcon('plus',
+                        size: 11, strokeWidth: 1.7, color: tokens.accent),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Click to add the first one',
+                      style: TextStyle(fontSize: 12, color: tokens.accent),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
