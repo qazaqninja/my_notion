@@ -100,6 +100,7 @@ class HomePage extends StatelessWidget {
                 ]),
                 if (state is VaultLoaded) ...[
                   const SizedBox(height: 36),
+                  const _UpcomingReminders(),
                   const _RecentlyEdited(),
                 ],
               ],
@@ -154,6 +155,158 @@ class HomePage extends StatelessWidget {
       duration: Duration(seconds: 3),
     ));
   }
+}
+
+/// Shows pages whose frontmatter `reminder:` date is within the next 7
+/// days (or already overdue). Surfaces the M89 reminder badges on the
+/// home page so the user spots upcoming work without opening each
+/// page. Hidden when there's nothing to surface.
+class _UpcomingReminders extends StatefulWidget {
+  const _UpcomingReminders();
+  @override
+  State<_UpcomingReminders> createState() => _UpcomingRemindersState();
+}
+
+class _UpcomingRemindersState extends State<_UpcomingReminders> {
+  late Future<List<_ReminderEntry>> _entries;
+
+  @override
+  void initState() {
+    super.initState();
+    _entries = _load();
+  }
+
+  Future<List<_ReminderEntry>> _load() async {
+    final db = context.read<QuillDatabase>();
+    final rows = await db.select(db.pages).get();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final horizon = today.add(const Duration(days: 7));
+    final out = <_ReminderEntry>[];
+    for (final r in rows) {
+      // Hand-parse `reminder:` from the frontmatter_json blob.
+      final m = RegExp(r'"reminder"\s*:\s*"([^"]+)"')
+          .firstMatch(r.frontmatterJson);
+      if (m == null) continue;
+      final raw = m.group(1)?.trim() ?? '';
+      final due = DateTime.tryParse(raw);
+      if (due == null) continue;
+      final dueDay = DateTime(due.year, due.month, due.day);
+      if (dueDay.isAfter(horizon)) continue;
+      out.add(_ReminderEntry(
+        ulid: r.ulid,
+        title: r.title,
+        relativePath: r.relativePath,
+        due: dueDay,
+      ));
+    }
+    out.sort((a, b) => a.due.compareTo(b.due));
+    return out.take(8).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return FutureBuilder<List<_ReminderEntry>>(
+      future: _entries,
+      builder: (context, snap) {
+        final list = snap.data ?? const [];
+        if (list.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 36),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'UPCOMING REMINDERS',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                  color: tokens.text3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              for (final e in list) _row(e, tokens),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _row(_ReminderEntry e, QuillTokens tokens) {
+    final today = DateTime.now();
+    final todayDay = DateTime(today.year, today.month, today.day);
+    final days = e.due.difference(todayDay).inDays;
+    final overdue = days < 0;
+    final isToday = days == 0;
+    final label = isToday
+        ? 'today'
+        : days == 1
+            ? 'tomorrow'
+            : days > 0
+                ? 'in ${days}d'
+                : '${-days}d overdue';
+    final fg = overdue
+        ? const Color(0xFFCB5A4F)
+        : isToday
+            ? tokens.accent
+            : tokens.text2;
+    return GestureDetector(
+      onTap: () => context.go('/editor/${e.ulid}'),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: tokens.divider, width: 0.5),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.notifications_active_outlined,
+                  size: 12, color: fg),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  e.title,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.text,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(label, style: mono(fontSize: 11, color: fg)),
+              const SizedBox(width: 12),
+              Text(
+                e.relativePath,
+                style: mono(fontSize: 11, color: tokens.text3),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReminderEntry {
+  const _ReminderEntry({
+    required this.ulid,
+    required this.title,
+    required this.relativePath,
+    required this.due,
+  });
+  final String ulid;
+  final String title;
+  final String relativePath;
+  final DateTime due;
 }
 
 class _RecentlyEdited extends StatefulWidget {
