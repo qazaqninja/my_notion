@@ -324,12 +324,20 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
                   itemIndex: idx,
                   body: body,
                   onBodyChange: onBodyChange,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: _ListItem(
-                      raw: b.items![idx],
-                      showUlid: showUlid,
-                      tokens: tokens,
+                  child: _EditableListItem(
+                    key: ValueKey('uli-${b.sourceStart}-$idx-${b.items![idx]}'),
+                    block: b,
+                    itemIndex: idx,
+                    body: body,
+                    onBodyChange: onBodyChange,
+                    isOrdered: false,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: _ListItem(
+                        raw: b.items![idx],
+                        showUlid: showUlid,
+                        tokens: tokens,
+                      ),
                     ),
                   ),
                 ),
@@ -348,30 +356,38 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
                   itemIndex: idx,
                   body: body,
                   onBodyChange: onBodyChange,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          width: 22,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 1, left: 4),
-                            child: Text(
-                              '${idx + 1}.',
-                              style:
-                                  mono(fontSize: 14, color: tokens.text3),
+                  child: _EditableListItem(
+                    key: ValueKey('oli-${b.sourceStart}-$idx-${b.items![idx]}'),
+                    block: b,
+                    itemIndex: idx,
+                    body: body,
+                    onBodyChange: onBodyChange,
+                    isOrdered: true,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 22,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 1, left: 4),
+                              child: Text(
+                                '${idx + 1}.',
+                                style: mono(
+                                    fontSize: 14, color: tokens.text3),
+                              ),
                             ),
                           ),
-                        ),
-                        Expanded(
-                          child: _ParagraphWithChips(
-                            text: b.items![idx],
-                            showUlid: showUlid,
-                            tokens: tokens,
+                          Expanded(
+                            child: _ParagraphWithChips(
+                              text: b.items![idx],
+                              showUlid: showUlid,
+                              tokens: tokens,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -2811,6 +2827,156 @@ class _ToggleBlockState extends State<_ToggleBlock> {
 }
 
 /// Wraps a rendered block widget. Tapping it swaps the display for an
+/// Tap-to-edit for a single LIST item. Wraps the rendered `_ListItem`
+/// (or numbered row); on tap, swaps in a TextField pre-filled with the
+/// item's text. On commit, replaces `b.items[idx]` and re-emits the
+/// full list source slice via [ListReorder.emit] so prefixes + ol
+/// numbering stay correct.
+class _EditableListItem extends StatefulWidget {
+  const _EditableListItem({
+    super.key,
+    required this.block,
+    required this.itemIndex,
+    required this.body,
+    required this.onBodyChange,
+    required this.isOrdered,
+    required this.child,
+  });
+
+  final _Block block;
+  final int itemIndex;
+  final String body;
+  final ValueChanged<String>? onBodyChange;
+  final bool isOrdered;
+  final Widget child;
+
+  @override
+  State<_EditableListItem> createState() => _EditableListItemState();
+}
+
+class _EditableListItemState extends State<_EditableListItem> {
+  bool _editing = false;
+  late TextEditingController _ctl;
+  final FocusNode _focus = FocusNode();
+
+  String get _item =>
+      widget.block.items != null && widget.itemIndex < widget.block.items!.length
+          ? widget.block.items![widget.itemIndex]
+          : '';
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = TextEditingController(text: _item);
+  }
+
+  @override
+  void didUpdateWidget(_EditableListItem old) {
+    super.didUpdateWidget(old);
+    if (!_editing && _item != _ctl.text) {
+      _ctl.text = _item;
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _start() {
+    if (_editing) return;
+    setState(() => _editing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focus.requestFocus();
+      _ctl.selection =
+          TextSelection(baseOffset: 0, extentOffset: _ctl.text.length);
+    });
+  }
+
+  void _commit() {
+    final next = _ctl.text;
+    setState(() => _editing = false);
+    if (next == _item) return;
+    final cb = widget.onBodyChange;
+    if (cb == null) return;
+    final block = widget.block;
+    final newItems = List<String>.from(block.items ?? const <String>[]);
+    if (widget.itemIndex < 0 || widget.itemIndex >= newItems.length) return;
+    newItems[widget.itemIndex] = next;
+    final newSlice =
+        ListReorder.emit(newItems, isOrdered: widget.isOrdered);
+    final patched = widget.body
+        .replaceRange(block.sourceStart, block.sourceEnd, newSlice);
+    cb(patched);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    if (widget.onBodyChange == null) return widget.child;
+    if (!_editing) {
+      return GestureDetector(
+        onTap: _start,
+        behavior: HitTestBehavior.opaque,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.text,
+          child: widget.child,
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (widget.isOrdered)
+            SizedBox(
+              width: 22,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 1, left: 4),
+                child: Text(
+                  '${widget.itemIndex + 1}.',
+                  style: mono(fontSize: 14, color: tokens.text3),
+                ),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(left: 6, right: 8, top: 2),
+              child: Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: tokens.text2,
+                  borderRadius: const BorderRadius.all(Radius.circular(2)),
+                ),
+              ),
+            ),
+          Expanded(
+            child: TextField(
+              controller: _ctl,
+              focusNode: _focus,
+              onSubmitted: (_) => _commit(),
+              onTapOutside: (_) {
+                if (_editing) _commit();
+              },
+              style: mono(fontSize: 14, color: tokens.text)
+                  .copyWith(height: 1.4),
+              decoration: const InputDecoration(
+                isCollapsed: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 2),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// inline TextField pre-filled with the block's source slice. On commit
 /// (Enter, blur, or tap-outside), the new source is spliced into the
 /// full body and the parent's onBodyChange callback fires.
