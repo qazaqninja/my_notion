@@ -7,6 +7,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
@@ -88,6 +89,7 @@ class _EditorBodyState extends State<_EditorBody> {
         final loaded = state as EditorLoaded;
         final page = loaded.page;
         final crumbs = page.relativePath.split('/');
+        final mobile = isMobileWidth(context);
         return Column(
           children: [
             PageHeader(
@@ -135,7 +137,7 @@ class _EditorBodyState extends State<_EditorBody> {
                 children: [
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 64),
+                      padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 64),
                       child: Center(
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: QuillSpacing.editorMax),
@@ -150,6 +152,11 @@ class _EditorBodyState extends State<_EditorBody> {
                                   key: ValueKey('source-${page.ulid}'),
                                   initialText: page.body,
                                 ),
+                              if (mobile) ...[
+                                const SizedBox(height: 24),
+                                OutlineRail(body: page.body),
+                                BacklinksRail(toUlid: page.ulid),
+                              ],
                               const SizedBox(height: 80),
                             ],
                           ),
@@ -162,7 +169,7 @@ class _EditorBodyState extends State<_EditorBody> {
                       page: page,
                       onClose: () => setState(() => _propertiesOpen = false),
                     )
-                  else
+                  else if (!mobile)
                     Container(
                       width: 248,
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),

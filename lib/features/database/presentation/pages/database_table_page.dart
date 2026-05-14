@@ -8,6 +8,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
@@ -181,11 +182,12 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     final rows = _rows!;
     return Builder(
       builder: (context) {
+        final mobile = isMobileWidth(context);
         return Column(
           children: [
             PageHeader(crumbs: ['Databases', schema.name]),
             Container(
-              padding: const EdgeInsets.fromLTRB(24, 18, 24, 12),
+              padding: EdgeInsets.fromLTRB(mobile ? 12 : 24, 18, mobile ? 12 : 24, 12),
               decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
               ),
@@ -230,51 +232,15 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  Row(children: [
-                    Segment<ViewType>(
-                      value: _currentView,
-                      onChanged: (v) => setState(() => _currentView = v),
-                      options: const [
-                        SegmentOption(value: ViewType.table, label: 'Table', icon: 'table'),
-                        SegmentOption(value: ViewType.gallery, label: 'Gallery', icon: 'gallery'),
-                        SegmentOption(value: ViewType.board, label: 'Board', icon: 'board'),
-                        SegmentOption(value: ViewType.timeline, label: 'Timeline', icon: 'timeline'),
-                      ],
-                    ),
-                    const Spacer(),
-                    _ToolButton(
-                      icon: 'filter',
-                      label: _query.filters.isEmpty
-                          ? 'Filter'
-                          : 'Filter (${_query.filters.length})',
-                      active: _query.filters.isNotEmpty,
-                      onTap: () => _openFilterPopover(context, schema),
-                    ),
-                    const SizedBox(width: 4),
-                    _ToolButton(
-                      icon: 'sort',
-                      label: _query.sorts.isEmpty
-                          ? 'Sort'
-                          : 'Sort (${_query.sorts.length})',
-                      active: _query.sorts.isNotEmpty,
-                      onTap: () => _openSortPopover(context, schema),
-                    ),
-                    const SizedBox(width: 4),
-                    _ToolButton(
-                      icon: 'group',
-                      label: _query.groupBy == null ? 'Group' : 'Group: ${_query.groupBy}',
-                      active: _query.groupBy != null,
-                      onTap: () => _openGroupPopover(context, schema),
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      visualDensity: VisualDensity.compact,
-                      icon: QuillIcon('search', size: 13, color: tokens.text3),
-                      padding: const EdgeInsets.all(4),
-                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                      onPressed: () {},
-                    ),
-                  ]),
+                  if (mobile)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: _toolbarChildren(schema, tokens, mobile: true),
+                    )
+                  else
+                    Row(children: _toolbarChildren(schema, tokens, mobile: false)),
                 ],
               ),
             ),
@@ -332,6 +298,50 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         );
       },
     );
+  }
+
+  List<Widget> _toolbarChildren(DatabaseSchema schema, QuillTokens tokens, {required bool mobile}) {
+    return [
+      Segment<ViewType>(
+        value: _currentView,
+        onChanged: (v) => setState(() => _currentView = v),
+        options: const [
+          SegmentOption(value: ViewType.table, label: 'Table', icon: 'table'),
+          SegmentOption(value: ViewType.gallery, label: 'Gallery', icon: 'gallery'),
+          SegmentOption(value: ViewType.board, label: 'Board', icon: 'board'),
+          SegmentOption(value: ViewType.timeline, label: 'Timeline', icon: 'timeline'),
+        ],
+      ),
+      if (!mobile) const Spacer(),
+      _ToolButton(
+        icon: 'filter',
+        label: _query.filters.isEmpty ? 'Filter' : 'Filter (${_query.filters.length})',
+        active: _query.filters.isNotEmpty,
+        onTap: () => _openFilterPopover(context, schema),
+      ),
+      if (!mobile) const SizedBox(width: 4),
+      _ToolButton(
+        icon: 'sort',
+        label: _query.sorts.isEmpty ? 'Sort' : 'Sort (${_query.sorts.length})',
+        active: _query.sorts.isNotEmpty,
+        onTap: () => _openSortPopover(context, schema),
+      ),
+      if (!mobile) const SizedBox(width: 4),
+      _ToolButton(
+        icon: 'group',
+        label: _query.groupBy == null ? 'Group' : 'Group: ${_query.groupBy}',
+        active: _query.groupBy != null,
+        onTap: () => _openGroupPopover(context, schema),
+      ),
+      if (!mobile) const SizedBox(width: 4),
+      IconButton(
+        visualDensity: VisualDensity.compact,
+        icon: QuillIcon('search', size: 13, color: tokens.text3),
+        padding: const EdgeInsets.all(4),
+        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+        onPressed: () {},
+      ),
+    ];
   }
 
   Future<void> _openFilterPopover(BuildContext ctx, DatabaseSchema schema) async {
