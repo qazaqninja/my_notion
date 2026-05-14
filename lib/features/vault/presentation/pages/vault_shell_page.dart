@@ -28,6 +28,7 @@ import '../../data/quick_capture.dart';
 import '../../data/roam_page_importer.dart';
 import '../../data/text_page_importer.dart';
 import '../../data/trello_database_importer.dart';
+import '../../data/url_bookmark.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
@@ -363,6 +364,53 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  Future<void> _promptAndBookmarkUrl(
+      BuildContext context, String vaultPath) async {
+    final controller = TextEditingController();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final vaultBloc = context.read<VaultBloc>();
+    final router = GoRouter.of(context);
+    final url = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Bookmark a URL'),
+        content: SizedBox(
+          width: 420,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            decoration: const InputDecoration(
+              hintText: 'https://...',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (v) => Navigator.of(ctx).pop(v),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Bookmark'),
+          ),
+        ],
+      ),
+    );
+    if (url == null || url.trim().isEmpty) return;
+    try {
+      final result =
+          await UrlBookmark.capture(url, Directory(vaultPath));
+      vaultBloc.add(const ReindexVault());
+      router.go('/editor/${result.ulid}');
+    } catch (e) {
+      messenger?.showSnackBar(
+          SnackBar(content: Text('Bookmark failed: $e')));
+    }
+  }
+
   Future<void> _openQuickCapture(BuildContext context) async {
     final vaultBloc = context.read<VaultBloc>();
     final state = vaultBloc.state;
@@ -504,6 +552,12 @@ class _VaultShellPageState extends State<VaultShellPage> {
         );
       case 'Quick capture':
         await _openQuickCapture(context);
+      case 'Bookmark a URL':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        await _promptAndBookmarkUrl(context, vaultPath);
       case "Open today's daily note":
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
