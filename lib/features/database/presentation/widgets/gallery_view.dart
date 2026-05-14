@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
@@ -8,6 +11,8 @@ import '../../../../shared/widgets/image_placeholder.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/tag_chip.dart';
+import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
 
@@ -67,7 +72,7 @@ class _Card extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-                child: ImagePlaceholder(label: 'cover · ${row.title.toLowerCase()}', height: 92),
+                child: _coverFor(context, row),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
@@ -115,6 +120,34 @@ class _Card extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Cover image strip for a card. Reads the row's `cover:` frontmatter
+  /// — http(s) URL or vault-relative path — and renders 92px cover-fit.
+  /// Falls back to the existing labelled placeholder.
+  Widget _coverFor(BuildContext context, DatabasePageRow row) {
+    final raw = '${row.cells['cover'] ?? ''}'.trim();
+    if (raw.isEmpty) {
+      return ImagePlaceholder(
+          label: 'cover · ${row.title.toLowerCase()}', height: 92);
+    }
+    final placeholder = ImagePlaceholder(
+        label: 'cover · ${row.title.toLowerCase()}', height: 92);
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return Image.network(raw,
+          height: 92,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => placeholder);
+    }
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return placeholder;
+    final resolved = raw.startsWith('/') ? raw : '${state.rootPath}/$raw';
+    return Image.file(File(resolved),
+        height: 92,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => placeholder);
   }
 
   Widget _rowIcon(DatabasePageRow row, QuillTokens tokens) {
