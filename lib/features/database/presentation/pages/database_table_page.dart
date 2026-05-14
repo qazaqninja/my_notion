@@ -15,11 +15,14 @@ import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
 import '../../data/repositories/database_repository_impl.dart';
+import '../../domain/entities/database_query.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../../domain/usecases/apply_query.dart';
 import '../widgets/board_view.dart';
 import '../widgets/frozen_column_table.dart';
 import '../widgets/gallery_view.dart';
+import '../widgets/query_popovers.dart';
 import '../widgets/timeline_view.dart';
 
 class DatabaseTablePage extends StatefulWidget {
@@ -38,6 +41,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   DatabaseSchema? _schema;
   List<DatabasePageRow>? _rows;
   String? _error;
+  DatabaseQuery _query = const DatabaseQuery();
 
   @override
   void initState() {
@@ -63,7 +67,12 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       setState(() {
         _schema = schema;
         _rows = rows;
-        if (v != null) _currentView = v.type;
+        if (v != null) {
+          _currentView = v.type;
+          if (v.groupBy != null) {
+            _query = _query.copyWith(groupBy: v.groupBy);
+          }
+        }
       });
     } catch (e) {
       if (mounted) setState(() => _error = '$e');
@@ -233,11 +242,30 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       ],
                     ),
                     const Spacer(),
-                    _ToolText(icon: 'filter', label: 'Filter'),
+                    _ToolButton(
+                      icon: 'filter',
+                      label: _query.filters.isEmpty
+                          ? 'Filter'
+                          : 'Filter (${_query.filters.length})',
+                      active: _query.filters.isNotEmpty,
+                      onTap: () => _openFilterPopover(context, schema),
+                    ),
                     const SizedBox(width: 4),
-                    _ToolText(icon: 'sort', label: 'Sort'),
+                    _ToolButton(
+                      icon: 'sort',
+                      label: _query.sorts.isEmpty
+                          ? 'Sort'
+                          : 'Sort (${_query.sorts.length})',
+                      active: _query.sorts.isNotEmpty,
+                      onTap: () => _openSortPopover(context, schema),
+                    ),
                     const SizedBox(width: 4),
-                    _ToolText(icon: 'group', label: 'Group'),
+                    _ToolButton(
+                      icon: 'group',
+                      label: _query.groupBy == null ? 'Group' : 'Group: ${_query.groupBy}',
+                      active: _query.groupBy != null,
+                      onTap: () => _openGroupPopover(context, schema),
+                    ),
                     const SizedBox(width: 4),
                     IconButton(
                       visualDensity: VisualDensity.compact,
@@ -251,22 +279,27 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
               ),
             ),
             Expanded(
-              child: switch (_currentView) {
-                ViewType.table => FrozenColumnTable(
-                    schema: schema,
-                    rows: rows,
-                    onOpenPage: (row) => context.go('/editor/${row.ulid}'),
-                    onEditCell: _editCell,
-                    onCreateRow: _createRow,
-                  ),
-                ViewType.gallery => GalleryView(schema: schema, rows: rows),
-                ViewType.board => BoardView(
-                    schema: schema,
-                    rows: rows,
-                    groupBy: schema.viewById(widget.viewId)?.groupBy,
-                  ),
-                ViewType.timeline => TimelineView(schema: schema, rows: rows),
-              },
+              child: Builder(builder: (context) {
+                final filtered = ApplyQuery.apply(rows, _query, schema);
+                return switch (_currentView) {
+                  ViewType.table => FrozenColumnTable(
+                      schema: schema,
+                      rows: filtered,
+                      onOpenPage: (row) => context.go('/editor/${row.ulid}'),
+                      onEditCell: _editCell,
+                      onCreateRow: _createRow,
+                    ),
+                  ViewType.gallery => GalleryView(schema: schema, rows: filtered),
+                  ViewType.board => BoardView(
+                      schema: schema,
+                      rows: filtered,
+                      groupBy: _query.groupBy ??
+                          schema.viewById(widget.viewId)?.groupBy,
+                    ),
+                  ViewType.timeline =>
+                    TimelineView(schema: schema, rows: filtered),
+                };
+              }),
             ),
             // Footer rollups
             Container(
@@ -274,20 +307,67 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
               decoration: BoxDecoration(
                 border: Border(top: BorderSide(color: tokens.divider, width: 0.5)),
               ),
-              child: Row(
-                children: [
-                  Text(
-                    'count ',
-                    style: mono(fontSize: 11.5, color: tokens.text3),
-                  ),
-                  Text('${rows.length}', style: mono(fontSize: 11.5, color: tokens.text2)),
-                ],
-              ),
+              child: Builder(builder: (context) {
+                final visibleCount =
+                    ApplyQuery.apply(rows, _query, schema).length;
+                return Row(
+                  children: [
+                    Text(
+                      'count ',
+                      style: mono(fontSize: 11.5, color: tokens.text3),
+                    ),
+                    Text('$visibleCount',
+                        style: mono(fontSize: 11.5, color: tokens.text2)),
+                    if (visibleCount != rows.length) ...[
+                      Text(' of ',
+                          style: mono(fontSize: 11.5, color: tokens.text3)),
+                      Text('${rows.length}',
+                          style: mono(fontSize: 11.5, color: tokens.text3)),
+                    ],
+                  ],
+                );
+              }),
             ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _openFilterPopover(BuildContext ctx, DatabaseSchema schema) async {
+    final next = await showQueryPopover<List<FilterRule>>(
+      context: ctx,
+      child: FilterPopover(
+        schema: schema,
+        initial: _query.filters,
+      ),
+    );
+    if (next == null) return;
+    setState(() => _query = _query.copyWith(filters: next));
+  }
+
+  Future<void> _openSortPopover(BuildContext ctx, DatabaseSchema schema) async {
+    final next = await showQueryPopover<List<SortRule>>(
+      context: ctx,
+      child: SortPopover(
+        schema: schema,
+        initial: _query.sorts,
+      ),
+    );
+    if (next == null) return;
+    setState(() => _query = _query.copyWith(sorts: next));
+  }
+
+  Future<void> _openGroupPopover(BuildContext ctx, DatabaseSchema schema) async {
+    final next = await showQueryPopover<GroupPopoverResult>(
+      context: ctx,
+      child: GroupPopover(
+        schema: schema,
+        initial: _query.groupBy,
+      ),
+    );
+    if (next == null) return;
+    setState(() => _query = _query.copyWith(groupBy: next.value));
   }
 
   static Color _parseColor(String s) {
@@ -298,25 +378,57 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   }
 }
 
-class _ToolText extends StatelessWidget {
-  const _ToolText({required this.icon, required this.label});
+class _ToolButton extends StatelessWidget {
+  const _ToolButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+  });
   final String icon;
   final String label;
+  final VoidCallback onTap;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          QuillIcon(icon, size: 13, strokeWidth: 1.7, color: tokens.text3),
-          const SizedBox(width: 5),
-          Text(label, style: TextStyle(fontSize: 12.5, color: tokens.text2)),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: active
+              ? BoxDecoration(
+                  color: tokens.accentTint,
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                )
+              : null,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QuillIcon(
+                icon,
+                size: 13,
+                strokeWidth: 1.7,
+                color: active ? tokens.accent : tokens.text3,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: active ? tokens.accent : tokens.text2,
+                  fontWeight: active ? FontWeight.w500 : FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
+
 
