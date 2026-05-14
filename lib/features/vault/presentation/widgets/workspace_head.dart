@@ -11,31 +11,41 @@ class WorkspaceHead extends StatelessWidget {
     super.key,
     required this.name,
     required this.vaultPath,
+    this.icon,
+    this.onIconTap,
     this.density = WorkspaceDensity.comfy,
   });
 
   final String name;
   final String vaultPath;
+
+  /// Optional emoji / glyph stored in workspace.icon. Renders inside the
+  /// accent square in place of the first-letter fallback when set.
+  final String? icon;
+
+  /// Tap target on the icon square — when set, opens the emoji picker
+  /// so the user can change the workspace icon.
+  final VoidCallback? onIconTap;
   final WorkspaceDensity density;
 
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return Padding(
-      padding: density == WorkspaceDensity.compact
-          ? const EdgeInsets.fromLTRB(12, 10, 12, 8)
-          : const EdgeInsets.fromLTRB(14, 14, 14, 10),
-      child: Row(
-        children: [
-          Container(
-            width: 26,
-            height: 26,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: tokens.accent,
-              borderRadius: const BorderRadius.all(Radius.circular(6)),
-            ),
-            child: Text(
+    final hasIcon = icon != null && icon!.trim().isNotEmpty;
+    final square = Container(
+      width: 26,
+      height: 26,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: hasIcon ? tokens.surface2 : tokens.accent,
+        borderRadius: const BorderRadius.all(Radius.circular(6)),
+      ),
+      child: hasIcon
+          ? Text(
+              icon!,
+              style: TextStyle(fontSize: 15, color: tokens.text),
+            )
+          : Text(
               name.isNotEmpty ? name[0].toLowerCase() : 'q',
               style: mono(
                 fontSize: 13,
@@ -44,7 +54,23 @@ class WorkspaceHead extends StatelessWidget {
                 letterSpacing: -0.5,
               ),
             ),
-          ),
+    );
+    return Padding(
+      padding: density == WorkspaceDensity.compact
+          ? const EdgeInsets.fromLTRB(12, 10, 12, 8)
+          : const EdgeInsets.fromLTRB(14, 14, 14, 10),
+      child: Row(
+        children: [
+          if (onIconTap != null)
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onIconTap,
+                child: square,
+              ),
+            )
+          else
+            square,
           const SizedBox(width: 8),
           Expanded(
             child: Column(

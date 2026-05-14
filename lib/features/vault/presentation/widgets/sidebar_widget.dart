@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'dart:io';
 
 import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/side_head.dart';
 import '../../../../shared/widgets/side_item.dart';
@@ -86,7 +87,14 @@ class _SidebarWidgetState extends State<SidebarWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          WorkspaceHead(name: workspaceName, vaultPath: vaultPath),
+          WorkspaceHead(
+            name: workspaceName,
+            vaultPath: vaultPath,
+            icon: state is VaultLoaded ? state.workspace.icon : null,
+            onIconTap: state is VaultLoaded
+                ? () => _pickWorkspaceIcon(context, state)
+                : null,
+          ),
           const SidebarSearch(),
           Expanded(
             child: SingleChildScrollView(
@@ -169,6 +177,16 @@ class _SidebarWidgetState extends State<SidebarWidget> {
         ],
       ),
     );
+  }
+
+  Future<void> _pickWorkspaceIcon(
+      BuildContext context, VaultLoaded state) async {
+    final picked = await pickEmoji(context);
+    if (picked == null) return;
+    final next = state.workspace.copyWith(icon: picked.isEmpty ? '' : picked);
+    await next.save(Directory(state.rootPath));
+    if (!context.mounted) return;
+    context.read<VaultBloc>().add(const RefreshFromDisk());
   }
 
   Future<void> _promptNewPage(BuildContext context) async {
