@@ -112,8 +112,14 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Responsive width: thumb-friendly full-width minus margin on
+    // narrow viewports, capped at 580px on desktop so the palette
+    // doesn't sprawl across wide monitors.
+    final screenW = MediaQuery.of(context).size.width;
+    final width =
+        screenW < 640 ? (screenW - 16).clamp(280.0, 580.0) : 580.0;
     return Container(
-      width: 580,
+      width: width,
       decoration: BoxDecoration(
         color: tokens.surface,
         border: Border.all(color: tokens.divider2, width: 0.5),
