@@ -37,6 +37,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<ReindexVault>(_onReindex);
     on<RefreshFromDisk>(_onRefresh);
     on<CreatePage>(_onCreatePage);
+    on<MoveToTrash>(_onMoveToTrash);
     _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
   }
 
@@ -163,6 +164,43 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       e.onCreated?.call(ulid);
     } catch (err) {
       emit(VaultError('Create failed: $err'));
+      emit(loaded);
+    }
+  }
+
+  Future<void> _onMoveToTrash(MoveToTrash e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final row = await (_db.select(_db.pages)..where((p) => p.ulid.equals(e.ulid)))
+        .getSingleOrNull();
+    if (row == null) return;
+    final root = Directory(loaded.rootPath);
+    final src = File(p.join(root.path, row.relativePath));
+    if (!await src.exists()) return;
+    try {
+      final now = DateTime.now();
+      final bucket =
+          '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}';
+      final trashDir = Directory(p.join(root.path, '.trash', bucket));
+      await trashDir.create(recursive: true);
+      // Preserve original basename; suffix with timestamp if it collides.
+      final origName = p.basename(row.relativePath);
+      var target = File(p.join(trashDir.path, origName));
+      if (await target.exists()) {
+        final stem = p.basenameWithoutExtension(origName);
+        final ext = p.extension(origName);
+        target = File(p.join(trashDir.path,
+            '$stem-${now.millisecondsSinceEpoch}$ext'));
+      }
+      await src.rename(target.path);
+      // Drop the row from Drift (and its outgoing relations).
+      await (_db.delete(_db.relations)..where((r) => r.fromUlid.equals(e.ulid))).go();
+      await (_db.delete(_db.pages)..where((p) => p.ulid.equals(e.ulid))).go();
+      final tree = await _buildTree(root);
+      final count = (await _db.select(_db.pages).get()).length;
+      emit(loaded.copyWith(tree: tree, pageCount: count));
+    } catch (err) {
+      emit(VaultError('Move to trash failed: $err'));
       emit(loaded);
     }
   }

@@ -111,14 +111,18 @@ class TreeNodeWidget extends StatelessWidget {
       items: const [
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
+        PopupMenuDivider(),
+        PopupMenuItem(value: 'trash', child: Text('Move to trash')),
       ],
     );
     if (!context.mounted) return;
     if (selected == 'reveal') {
       await Reveal.show(p.join(state.rootPath, fl.relativePath));
     } else if (selected == 'copy-ulid') {
-      // Defer clipboard to keep imports minimal — handled inline.
       await _copyUlid(context, fl.ulid);
+    } else if (selected == 'trash') {
+      if (fl.ulid.isEmpty) return;
+      context.read<VaultBloc>().add(MoveToTrash(fl.ulid));
     }
   }
 

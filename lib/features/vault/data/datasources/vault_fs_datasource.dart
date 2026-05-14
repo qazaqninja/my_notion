@@ -21,7 +21,7 @@ class VaultFsDatasource {
   final UlidGenerator ulids;
   final FileSystem fs;
 
-  static const _ignoredDirs = {'.git', '.obsidian', 'node_modules', '_meta', '.dart_tool', '.idea'};
+  static const _ignoredDirs = {'.git', '.obsidian', 'node_modules', '_meta', '.dart_tool', '.idea', '.trash'};
   static const _markdownExt = '.md';
 
   /// Walk [root] recursively, emitting one [Page] per markdown file.

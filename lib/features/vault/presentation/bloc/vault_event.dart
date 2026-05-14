@@ -52,3 +52,14 @@ class CreatePage extends VaultEvent {
   @override
   List<Object?> get props => [title, folderPath];
 }
+
+/// Move a page to `.trash/<YYYY-MM>/<original-name>.md`. The page row is
+/// removed from Drift (the `.trash` folder is in the ignored dirs list,
+/// so a subsequent reindex would also drop it). Restoration is manual —
+/// future work will surface a "Trash" view in settings.
+class MoveToTrash extends VaultEvent {
+  const MoveToTrash(this.ulid);
+  final String ulid;
+  @override
+  List<Object?> get props => [ulid];
+}

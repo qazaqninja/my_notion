@@ -74,7 +74,7 @@ class Indexer {
     for (final entity in dir.listSync()) {
       final name = p.basename(entity.path);
       if (entity is io.Directory) {
-        if (const {'.git', '.obsidian', 'node_modules', '_meta', '.dart_tool', '.idea'}
+        if (const {'.git', '.obsidian', 'node_modules', '_meta', '.dart_tool', '.idea', '.trash'}
             .contains(name)) {
           continue;
         }

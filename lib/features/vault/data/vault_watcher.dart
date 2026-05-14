@@ -30,6 +30,7 @@ class VaultWatcher {
     '.dart_tool',
     '.idea',
     'build',
+    '.trash',
   };
 
   /// Stream of "something changed under root" pings. One ping may
