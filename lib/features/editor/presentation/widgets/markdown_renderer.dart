@@ -128,11 +128,19 @@ class MarkdownRenderer extends StatelessWidget {
         );
       case _BlockKind.paragraph:
         // Standalone image: ![alt](path) on its own line/paragraph.
+        // If the path's extension is non-image (pdf, zip, doc, …), fall
+        // through to render as a download/reveal chip instead.
         final image = _matchStandaloneImage(b.text);
         if (image != null) {
+          if (_isImagePath(image.src)) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: _MarkdownImage(spec: image),
+            );
+          }
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: _MarkdownImage(spec: image),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: _FileAttachment(label: image.alt, src: image.src),
           );
         }
         // Standalone transclusion: ![[ULID]] inlines the target body.
@@ -1267,6 +1275,166 @@ class _MarkdownImage extends StatelessWidget {
           errorBuilder: (_, __, ___) => const _BrokenImageBox());
     }
     return raw;
+  }
+}
+
+bool _isImagePath(String src) {
+  final lower = src.toLowerCase();
+  // Strip query / fragment for URLs.
+  final clean = lower.split(RegExp(r'[?#]')).first;
+  return clean.endsWith('.png') ||
+      clean.endsWith('.jpg') ||
+      clean.endsWith('.jpeg') ||
+      clean.endsWith('.gif') ||
+      clean.endsWith('.webp') ||
+      clean.endsWith('.bmp') ||
+      clean.endsWith('.svg') ||
+      clean.endsWith('.heic') ||
+      clean.endsWith('.avif') ||
+      clean.endsWith('.tiff');
+}
+
+/// File-attachment chip used when a standalone `![label](path)` points at
+/// a non-image extension. Shows icon + filename + size; tapping opens it
+/// in the OS default app via Reveal.openUrl / Reveal.show.
+class _FileAttachment extends StatelessWidget {
+  const _FileAttachment({required this.label, required this.src});
+  final String label;
+  final String src;
+
+  bool get _isUrl => src.startsWith('http://') || src.startsWith('https://');
+
+  String _basename(String path) {
+    final slash = path.lastIndexOf('/');
+    return slash < 0 ? path : path.substring(slash + 1);
+  }
+
+  IconData _iconForExt() {
+    final s = src.toLowerCase().split(RegExp(r'[?#]')).first;
+    if (s.endsWith('.pdf')) return Icons.picture_as_pdf_outlined;
+    if (s.endsWith('.zip') || s.endsWith('.tar') || s.endsWith('.gz')) {
+      return Icons.folder_zip_outlined;
+    }
+    if (s.endsWith('.doc') || s.endsWith('.docx') || s.endsWith('.rtf')) {
+      return Icons.description_outlined;
+    }
+    if (s.endsWith('.xls') || s.endsWith('.xlsx') || s.endsWith('.csv')) {
+      return Icons.table_chart_outlined;
+    }
+    if (s.endsWith('.ppt') || s.endsWith('.pptx') || s.endsWith('.key')) {
+      return Icons.slideshow_outlined;
+    }
+    if (s.endsWith('.mp3') || s.endsWith('.wav') || s.endsWith('.m4a') ||
+        s.endsWith('.flac') || s.endsWith('.ogg')) {
+      return Icons.audiotrack_outlined;
+    }
+    if (s.endsWith('.mp4') || s.endsWith('.mov') || s.endsWith('.webm') ||
+        s.endsWith('.avi') || s.endsWith('.mkv')) {
+      return Icons.movie_outlined;
+    }
+    return Icons.insert_drive_file_outlined;
+  }
+
+  Future<void> _open(BuildContext context) async {
+    if (_isUrl) {
+      await Reveal.openUrl(src);
+      return;
+    }
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return;
+    final resolved = src.startsWith('/') ? src : '${state.rootPath}/$src';
+    await Reveal.show(resolved);
+  }
+
+  Future<int?> _size(BuildContext context) async {
+    if (_isUrl) return null;
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return null;
+    final resolved = src.startsWith('/') ? src : '${state.rootPath}/$src';
+    try {
+      final f = File(resolved);
+      if (!await f.exists()) return null;
+      return await f.length();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static String _fmtBytes(int b) {
+    if (b < 1024) return '${b}B';
+    if (b < 1024 * 1024) return '${(b / 1024).toStringAsFixed(0)}KB';
+    if (b < 1024 * 1024 * 1024) {
+      return '${(b / (1024 * 1024)).toStringAsFixed(1)}MB';
+    }
+    return '${(b / (1024 * 1024 * 1024)).toStringAsFixed(2)}GB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final name = label.trim().isNotEmpty ? label : _basename(src);
+    return GestureDetector(
+      onTap: () => _open(context),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),
+          decoration: BoxDecoration(
+            color: tokens.surface,
+            border: Border.all(color: tokens.divider2, width: 0.5),
+            borderRadius: const BorderRadius.all(Radius.circular(6)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tokens.surface2,
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                ),
+                child: Icon(_iconForExt(), size: 15, color: tokens.text3),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: tokens.text,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    FutureBuilder<int?>(
+                      future: _size(context),
+                      builder: (_, snap) => Text(
+                        snap.data != null
+                            ? '${_basename(src)} · ${_fmtBytes(snap.data!)}'
+                            : _basename(src),
+                        style: mono(fontSize: 11, color: tokens.text3),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                _isUrl ? Icons.open_in_new : Icons.folder_open_outlined,
+                size: 15,
+                color: tokens.text3,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
