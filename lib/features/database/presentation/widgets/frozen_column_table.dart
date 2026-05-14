@@ -131,6 +131,38 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   /// table-page session but isn't persisted to .database.yaml yet.
   final Map<String, double> _widthOverrides = {};
 
+  /// Per-table column order override. When non-null, columns are rendered
+  /// in this sequence (any keys not in the override list are appended at
+  /// the end in their original schema order). Set via long-press-drag on
+  /// column headers.
+  List<String>? _columnOrder;
+
+  List<ColumnDef> _orderedCols() {
+    final source = widget.schema.columns;
+    final override = _columnOrder;
+    if (override == null) return source;
+    final byKey = {for (final c in source) c.key: c};
+    final out = <ColumnDef>[];
+    for (final k in override) {
+      final c = byKey.remove(k);
+      if (c != null) out.add(c);
+    }
+    out.addAll(byKey.values);
+    return out;
+  }
+
+  void _reorder(String dragged, String onto) {
+    final cols = _orderedCols().map((c) => c.key).toList();
+    cols.remove(dragged);
+    final idx = cols.indexOf(onto);
+    if (idx < 0) {
+      cols.add(dragged);
+    } else {
+      cols.insert(idx, dragged);
+    }
+    setState(() => _columnOrder = cols);
+  }
+
   double _widthFor(ColumnDef c) => _widthOverrides[c.key] ?? _widthForType(c.type);
 
   @override
@@ -189,7 +221,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    final cols = widget.schema.columns;
+    final cols = _orderedCols();
     final scrollWidth = cols.fold<double>(0, (a, c) => a + _widthFor(c));
     final depths = _computeDepths();
 
@@ -270,7 +302,48 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                       child: Row(
                         children: [
                           for (final c in cols)
-                            _colHeader(c, tokens, c == cols.last),
+                            DragTarget<String>(
+                              onWillAcceptWithDetails: (d) => d.data != c.key,
+                              onAcceptWithDetails: (d) => _reorder(d.data, c.key),
+                              builder: (context, candidate, _) {
+                                final hovering = candidate.isNotEmpty;
+                                return LongPressDraggable<String>(
+                                  data: c.key,
+                                  delay: const Duration(milliseconds: 200),
+                                  feedback: Material(
+                                    color: Colors.transparent,
+                                    child: Container(
+                                      width: _widthFor(c),
+                                      height: _headerHeight,
+                                      decoration: BoxDecoration(
+                                        color: tokens.surface,
+                                        border: Border.all(
+                                            color: tokens.divider2, width: 0.5),
+                                      ),
+                                      alignment: Alignment.centerLeft,
+                                      padding:
+                                          const EdgeInsets.symmetric(horizontal: 10),
+                                      child: Text(c.key,
+                                          style: mono(
+                                              fontSize: 11.5, color: tokens.text2)),
+                                    ),
+                                  ),
+                                  childWhenDragging: Opacity(
+                                    opacity: 0.3,
+                                    child: _colHeader(c, tokens, c == cols.last),
+                                  ),
+                                  child: Container(
+                                    decoration: hovering
+                                        ? BoxDecoration(
+                                            color: tokens.accentTint,
+                                          )
+                                        : null,
+                                    child:
+                                        _colHeader(c, tokens, c == cols.last),
+                                  ),
+                                );
+                              },
+                            ),
                         ],
                       ),
                     ),
