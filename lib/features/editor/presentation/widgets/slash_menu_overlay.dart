@@ -54,8 +54,13 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cap the panel width to the narrower of 320px or the viewport
+    // width minus a small breathing margin — keeps the menu on-screen
+    // when the editor is narrow (mobile, split-view, narrow window).
+    final screenW = MediaQuery.of(context).size.width;
+    final w = screenW < 360 ? (screenW - 32).clamp(220.0, 320.0) : 320.0;
     return Container(
-      width: 320,
+      width: w,
       decoration: BoxDecoration(
         color: tokens.surface,
         border: Border.all(color: tokens.divider2, width: 0.5),
