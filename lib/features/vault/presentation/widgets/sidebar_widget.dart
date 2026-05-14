@@ -18,6 +18,7 @@ import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
 import 'sidebar_search.dart';
+import 'trash_dialog.dart';
 import 'tree_node_widget.dart';
 import 'workspace_head.dart';
 
@@ -143,6 +144,19 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                         style: TextStyle(fontSize: 11.5, color: tokens.text3),
                       ),
                     ),
+                  if (state is VaultLoaded) ...[
+                    const SideHead(label: 'More'),
+                    SideItem(
+                      icon: 'tag',
+                      label: 'Tags',
+                      onTap: () => context.go('/tags'),
+                    ),
+                    SideItem(
+                      icon: 'trash',
+                      label: 'Trash',
+                      onTap: () => _openTrash(context, state),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -175,6 +189,17 @@ class _SidebarWidgetState extends State<SidebarWidget> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _openTrash(BuildContext context, VaultLoaded state) async {
+    final bloc = context.read<VaultBloc>();
+    await showDialog<void>(
+      context: context,
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: TrashDialog(vaultRoot: state.rootPath),
       ),
     );
   }
