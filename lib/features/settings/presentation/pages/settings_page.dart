@@ -72,6 +72,7 @@ class _SettingsPageState extends State<SettingsPage> {
   String _activeLabel() => switch (_active) {
         'vault' => 'Vault',
         'theme' => 'Appearance',
+        'sidebar' => 'Sidebar',
         'sync' => 'Sync target',
         'git' => 'Git',
         's3' => 'S3 / WebDAV',
@@ -87,6 +88,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (_active == 'export') return _exportPane(tokens);
     if (_active == 'advanced') return _advancedPane(tokens);
     if (_active == 'users') return _usersPane(tokens);
+    if (_active == 'sidebar') return _sidebarPane(tokens);
 
     final state = context.watch<VaultBloc>().state;
     final vaultPath = state is VaultLoaded ? state.rootPath : '(no vault opened)';
@@ -361,6 +363,124 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ],
     );
+  }
+
+  Widget _sidebarPane(QuillTokens tokens) {
+    final state = context.watch<VaultBloc>().state;
+    final loaded = state is VaultLoaded;
+    final order = loaded
+        ? (state.workspace.sidebarOrder ?? _canonicalOrder)
+        : _canonicalOrder;
+    final hidden = loaded
+        ? state.workspace.sidebarHidden.toSet()
+        : <String>{};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Sidebar',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: tokens.text,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: 600,
+          child: Text(
+            'Reorder + hide sidebar sections. Persists to `.quill.yaml` '
+            '`sidebar.order:` / `sidebar.hidden:` so the choice rides '
+            'along with the vault.',
+            style:
+                TextStyle(fontSize: 13.5, color: tokens.text3, height: 1.55),
+          ),
+        ),
+        const SizedBox(height: 28),
+        _sectionLabel(tokens, 'Sections'),
+        if (!loaded)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text('Open a vault to customise its sidebar.',
+                style: TextStyle(fontSize: 13, color: tokens.text3)),
+          )
+        else
+          SizedBox(
+            width: 360,
+            child: Column(
+              children: [
+                for (var i = 0; i < order.length; i++)
+                  _SidebarSectionRow(
+                    id: order[i],
+                    tokens: tokens,
+                    isHidden: hidden.contains(order[i]),
+                    canMoveUp: i > 0,
+                    canMoveDown: i < order.length - 1,
+                    onMoveUp: () => _moveSidebarSection(state, order, i, -1),
+                    onMoveDown: () => _moveSidebarSection(state, order, i, 1),
+                    onToggleHide: () => _toggleSidebarHidden(state, order[i]),
+                  ),
+                const SizedBox(height: 12),
+                _Btn(
+                  label: 'Reset to default',
+                  icon: 'sync',
+                  onTap: () => _resetSidebar(state),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  static const _canonicalOrder = <String>[
+    'favorites',
+    'recent',
+    'workspace',
+    'databases',
+    'more',
+  ];
+
+  Future<void> _moveSidebarSection(
+    VaultLoaded state,
+    List<String> currentOrder,
+    int idx,
+    int delta,
+  ) async {
+    final next = List<String>.from(currentOrder);
+    final newIdx = (idx + delta).clamp(0, next.length - 1);
+    if (newIdx == idx) return;
+    final item = next.removeAt(idx);
+    next.insert(newIdx, item);
+    final updated = state.workspace.copyWith(sidebarOrder: next);
+    await updated.save(Directory(state.rootPath));
+    if (!mounted) return;
+    context.read<VaultBloc>().add(const RefreshFromDisk());
+  }
+
+  Future<void> _toggleSidebarHidden(VaultLoaded state, String id) async {
+    final hidden = state.workspace.sidebarHidden.toSet();
+    if (hidden.contains(id)) {
+      hidden.remove(id);
+    } else {
+      hidden.add(id);
+    }
+    final updated =
+        state.workspace.copyWith(sidebarHidden: hidden.toList());
+    await updated.save(Directory(state.rootPath));
+    if (!mounted) return;
+    context.read<VaultBloc>().add(const RefreshFromDisk());
+  }
+
+  Future<void> _resetSidebar(VaultLoaded state) async {
+    final updated = state.workspace.copyWith(
+      sidebarOrder: const [],
+      sidebarHidden: const [],
+    );
+    await updated.save(Directory(state.rootPath));
+    if (!mounted) return;
+    context.read<VaultBloc>().add(const RefreshFromDisk());
   }
 
   Widget _usersPane(QuillTokens tokens) {
@@ -778,7 +898,11 @@ class _Nav extends StatelessWidget {
   final void Function(String id) onSelect;
 
   static const _groups = [
-    ('Workspace', [('vault', 'Vault', 'folder'), ('theme', 'Appearance', 'eye')]),
+    ('Workspace', [
+      ('vault', 'Vault', 'folder'),
+      ('theme', 'Appearance', 'eye'),
+      ('sidebar', 'Sidebar', 'sidebar'),
+    ]),
     ('Sync', [('sync', 'Sync target', 'sync'), ('git', 'Git', 'git'), ('s3', 'S3 / WebDAV', 'cloud')]),
     ('Access', [('users', 'Users', 'users'), ('perms', 'Permissions', 'lock')]),
     ('Data', [('export', 'Export & Backup', 'export'), ('advanced', 'Advanced', 'gear')]),
@@ -1311,6 +1435,99 @@ class _AddUserFieldState extends State<_AddUserField> {
           child: const Text('Add', style: TextStyle(fontSize: 12.5)),
         ),
       ],
+    );
+  }
+}
+
+/// Settings → Sidebar pane row: one sidebar section with up/down +
+/// hide toggles. Labels are humanised from the canonical id list
+/// ('favorites' → 'Favorites'). Hidden rows still appear in the list
+/// but are dimmed.
+class _SidebarSectionRow extends StatelessWidget {
+  const _SidebarSectionRow({
+    required this.id,
+    required this.tokens,
+    required this.isHidden,
+    required this.canMoveUp,
+    required this.canMoveDown,
+    required this.onMoveUp,
+    required this.onMoveDown,
+    required this.onToggleHide,
+  });
+  final String id;
+  final QuillTokens tokens;
+  final bool isHidden;
+  final bool canMoveUp;
+  final bool canMoveDown;
+  final VoidCallback onMoveUp;
+  final VoidCallback onMoveDown;
+  final VoidCallback onToggleHide;
+
+  String get _label => switch (id) {
+        'favorites' => 'Favorites',
+        'recent' => 'Recent',
+        'workspace' => 'Workspace (tree)',
+        'databases' => 'Databases',
+        'more' => 'More (Tags + Trash)',
+        _ => id,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: tokens.divider, width: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              _label,
+              style: TextStyle(
+                fontSize: 13,
+                color: isHidden ? tokens.text3 : tokens.text,
+                decoration: isHidden
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
+              ),
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(2),
+            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            tooltip: 'Move up',
+            onPressed: canMoveUp ? onMoveUp : null,
+            icon: Icon(Icons.arrow_upward,
+                size: 14,
+                color: canMoveUp ? tokens.text2 : tokens.text3),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(2),
+            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            tooltip: 'Move down',
+            onPressed: canMoveDown ? onMoveDown : null,
+            icon: Icon(Icons.arrow_downward,
+                size: 14,
+                color: canMoveDown ? tokens.text2 : tokens.text3),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(2),
+            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            tooltip: isHidden ? 'Show' : 'Hide',
+            onPressed: onToggleHide,
+            icon: Icon(
+                isHidden ? Icons.visibility_off : Icons.visibility,
+                size: 14,
+                color: isHidden ? tokens.text3 : tokens.text2),
+          ),
+        ],
+      ),
     );
   }
 }
