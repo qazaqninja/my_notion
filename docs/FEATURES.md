@@ -257,7 +257,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Color and background highlights — Inline `<span style>` for colours + `<mark>` (M80) for soft-yellow highlight; callouts for block-level colour.
 - ✅ Emoji picker — M62, `lib/shared/widgets/emoji_picker.dart`. Used by page icons (M26) and workspace icon (M107).
 - ✅ Undo/redo (Cmd+Z) — Native TextField undo in source mode + bloc-level `UndoEdit`/`RedoEdit` (M179): bounded 50-entry stacks, ⌘Z / ⌘⇧Z, every body + frontmatter mutation pushes the prior Page snapshot.
-- ✅ Multi-select blocks — M203, hover-checkbox per block + floating `_SelectionToolbar` (Select all / Copy / Delete / Cancel). Selected blocks gain a left-accent border. Cmd+A / Cmd+Delete keyboard shortcuts still pending; the toolbar covers the common path.
+- ✅ Multi-select blocks — M203, hover-checkbox per block + floating `_SelectionToolbar` (Select all / Copy / Delete / Cancel). Selected blocks gain a left-accent border. M205 adds the ⌘A / ⌘⌫ / Esc keyboard shortcuts and surfaces them in the shortcut help dialog.
 - ✅ Drag to reorder list items — Block-level drag M65; item-within-list drag M174 (`_ListItemDragWrap` + pure `ListReorder` helpers; ordered lists renumber on drop).
 - ✅ Convert between block types in place — Slash menu's linePrefix substitution.
 - ✅ Native print → PDF — M50 via `pdf` + `printing` packages.
