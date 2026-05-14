@@ -71,13 +71,13 @@ class CellRenderer extends StatelessWidget {
               child: Text.rich(
                 TextSpan(children: [
                   TextSpan(
-                      text: parts[0].trim(),
+                      text: _fmtDate(parts[0].trim()),
                       style: mono(fontSize: 12.5, color: tokens.text2)),
                   TextSpan(
                       text: '  →  ',
                       style: TextStyle(fontSize: 12, color: tokens.text3)),
                   TextSpan(
-                      text: parts[1].trim(),
+                      text: _fmtDate(parts[1].trim()),
                       style: mono(fontSize: 12.5, color: tokens.text2)),
                 ]),
               ),
@@ -86,7 +86,8 @@ class CellRenderer extends StatelessWidget {
         }
         return Align(
           alignment: align,
-          child: Text(s, style: mono(fontSize: 12.5, color: tokens.text2)),
+          child: Text(_fmtDate(s),
+              style: mono(fontSize: 12.5, color: tokens.text2)),
         );
       case ColumnType.select:
         return Align(alignment: align, child: TagChip(label: '$v', color: _tagFor('$v')));
@@ -199,6 +200,31 @@ class CellRenderer extends StatelessWidget {
     if (v == 'mid' || v == 'mid-market') return TagColor.gray;
     if (v == 'small') return TagColor.gray;
     return TagColor.gray;
+  }
+
+  /// Pretty date / datetime formatter. Accepts:
+  ///   YYYY-MM-DD                       → "YYYY-MM-DD"
+  ///   YYYY-MM-DDTHH:MM[:SS][Z|±HH:MM]  → "YYYY-MM-DD · HH:MM[tz]"
+  /// Anything that doesn't parse falls back to the raw string.
+  static String _fmtDate(String raw) {
+    final s = raw.trim();
+    if (s.isEmpty) return s;
+    // Bare date.
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(s)) return s;
+    // Date + time, optional Z / ±offset.
+    final m = RegExp(
+            r'^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})(?::\d{2})?(Z|[+\-]\d{2}:?\d{2})?$')
+        .firstMatch(s);
+    if (m != null) {
+      final date = m.group(1)!;
+      final time = m.group(2)!;
+      final tz = m.group(3);
+      final tzSuffix = tz == null
+          ? ''
+          : (tz == 'Z' ? ' UTC' : ' $tz');
+      return '$date · $time$tzSuffix';
+    }
+    return s;
   }
 
   static String _fmtNumber(String raw) {
