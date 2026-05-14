@@ -12,11 +12,18 @@ class CommentsDialog extends StatefulWidget {
     required this.vaultRoot,
     required this.pageUlid,
     required this.defaultAuthor,
+    this.blockId,
   });
 
   final String vaultRoot;
   final String pageUlid;
   final String defaultAuthor;
+
+  /// When set, the dialog scopes to a single block: list filters to
+  /// `c.blockId == blockId`, and new comments are tagged with this
+  /// blockId. Header shows the block's last-6 ULID chars so the user
+  /// knows which anchor they're looking at.
+  final String? blockId;
 
   @override
   State<CommentsDialog> createState() => _CommentsDialogState();
@@ -44,7 +51,11 @@ class _CommentsDialogState extends State<CommentsDialog> {
 
   void _refresh() {
     setState(() {
-      _items = _service.list(Directory(widget.vaultRoot), widget.pageUlid);
+      final blockId = widget.blockId;
+      _items = blockId == null
+          ? _service.list(Directory(widget.vaultRoot), widget.pageUlid)
+          : _service.listForBlock(
+              Directory(widget.vaultRoot), widget.pageUlid, blockId);
     });
   }
 
@@ -58,6 +69,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
           ? widget.defaultAuthor
           : _authorCtl.text.trim(),
       body: body,
+      blockId: widget.blockId,
     );
     _bodyCtl.clear();
     _refresh();
@@ -82,13 +94,34 @@ class _CommentsDialogState extends State<CommentsDialog> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('COMMENTS',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.0,
-                          color: tokens.text3,
-                        )),
+                    child: Row(
+                      children: [
+                        Text('COMMENTS',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.0,
+                              color: tokens.text3,
+                            )),
+                        if (widget.blockId != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: tokens.surface2,
+                              borderRadius:
+                                  const BorderRadius.all(Radius.circular(3)),
+                            ),
+                            child: Text(
+                              'block · ${widget.blockId!.substring(widget.blockId!.length - 6)}',
+                              style: mono(
+                                  fontSize: 10, color: tokens.text2),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
@@ -211,6 +244,26 @@ class _CommentsDialogState extends State<CommentsDialog> {
               const SizedBox(width: 8),
               Text(_relativeTime(c.timestamp),
                   style: mono(fontSize: 11, color: tokens.text3)),
+              // Block-scope badge — only shown when the dialog is in
+              // page scope (no widget.blockId) and the comment itself
+              // is anchored to a block. The header already conveys the
+              // scope when widget.blockId is set.
+              if (widget.blockId == null && c.blockId != null) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: tokens.surface2,
+                    borderRadius:
+                        const BorderRadius.all(Radius.circular(3)),
+                  ),
+                  child: Text(
+                    'block · ${c.blockId!.substring(c.blockId!.length - 6)}',
+                    style: mono(fontSize: 10, color: tokens.text3),
+                  ),
+                ),
+              ],
               const Spacer(),
               IconButton(
                 visualDensity: VisualDensity.compact,
