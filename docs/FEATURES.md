@@ -207,7 +207,7 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Import & Export
 
-- 🚧 Import from: Evernote, Google Docs, Word, CSV, HTML, Markdown, Trello, Asana, Confluence, Quip, Dropbox Paper, Workflowy, Roam, plain text — CSV → database M29. HTML → page M175 (also works for Quip / Dropbox Paper / Google Docs HTML / Confluence storage-format HTML via the generic converter). Markdown + plain text → page M178. OPML / Workflowy outlines → page M189. Roam JSON → multi-page M190. Trello board JSON → database (with board view) M191. Asana CSV → database (with kanban) M192. Evernote .enex → multi-page M193 (XHTML body via M175). Word .docx (OOXML ZIP/XML) still 📋.
+- ✅ Import from: Evernote, Google Docs, Word, CSV, HTML, Markdown, Trello, Asana, Confluence, Quip, Dropbox Paper, Workflowy, Roam, plain text — CSV → database M29. HTML → page M175 (also works for Quip / Dropbox Paper / Google Docs HTML / Confluence storage-format HTML via the generic converter). Markdown + plain text → page M178. OPML / Workflowy outlines → page M189. Roam JSON → multi-page M190. Trello board JSON → database (with board view) M191. Asana CSV → database (with kanban) M192. Evernote .enex → multi-page M193. Word .docx (OOXML ZIP/XML) → page M194.
 - ✅ Export single page or whole workspace — M12.
 - ✅ Export formats: Markdown + CSV, PDF, HTML — Markdown M12, CSV M45, HTML M44, PDF M50. All wired into Settings → Export & Backup (M101).
 - ✅ Include subpages in export — M12.
