@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart' hide Page;
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:printing/printing.dart';
 
 import '../../../../core/platform/reveal.dart';
+import '../../../vault/data/pdf_exporter.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -175,6 +177,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                     tokens, 'note', 'Comments', '',
                     onTap: () => _openComments(context),
                   ),
+                  _actionRow(
+                    tokens, 'export', 'Print…', '',
+                    onTap: () => _printPage(context),
+                  ),
                   _actionRow(tokens, 'trash', 'Move to trash', '⌫'),
                 ],
               ),
@@ -289,6 +295,23 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     messenger?.showSnackBar(
       SnackBar(content: Text('Copied ${widget.page.ulid}'), duration: const Duration(seconds: 2)),
     );
+  }
+
+  Future<void> _printPage(BuildContext context) async {
+    final page = widget.page;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      final bytes = await const PdfExporter().exportSingle(
+        title: page.title,
+        body: page.body,
+      );
+      await Printing.layoutPdf(
+        name: page.title,
+        onLayout: (_) async => Uint8List.fromList(bytes),
+      );
+    } catch (e) {
+      messenger?.showSnackBar(SnackBar(content: Text('Print failed: $e')));
+    }
   }
 
   Future<void> _openComments(BuildContext context) async {

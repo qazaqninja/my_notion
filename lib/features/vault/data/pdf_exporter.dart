@@ -93,6 +93,40 @@ class PdfExporter {
     return pages.length;
   }
 
+  /// Render a single page as a PDF byte buffer. Used by the editor's
+  /// "Print page" action so the system print dialog can lay it out
+  /// without touching the filesystem.
+  Future<List<int>> exportSingle({
+    required String title,
+    required String body,
+    Map<String, String> ulidToTitle = const {},
+  }) async {
+    final doc = pw.Document(title: title, creator: 'Quill');
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.copyWith(
+          marginTop: 48,
+          marginBottom: 48,
+          marginLeft: 56,
+          marginRight: 56,
+        ),
+        theme: _buildTheme(),
+        footer: (ctx) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            '${ctx.pageNumber} / ${ctx.pagesCount}',
+            style: pw.TextStyle(
+              fontSize: 9,
+              color: PdfColor.fromInt(0xff8a8275),
+            ),
+          ),
+        ),
+        build: (ctx) => _buildPage(title, body, ulidToTitle),
+      ),
+    );
+    return doc.save();
+  }
+
   static List<pw.Widget> _buildPage(
     String title,
     String body,
