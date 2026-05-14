@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,6 +11,7 @@ import '../../../../shared/widgets/segment.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../../shared/theme/tag_colors.dart';
+import '../../../vault/data/exporter.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
@@ -175,7 +179,12 @@ class _SettingsPageState extends State<SettingsPage> {
         _SettingRow(
           label: 'Export vault',
           hint: 'Folder of .md files, frontmatter intact. Open it anywhere.',
-          child: _Btn(label: 'Export to folder', icon: 'export', primary: true, onTap: () {}),
+          child: _Btn(
+            label: 'Export to folder',
+            icon: 'export',
+            primary: true,
+            onTap: () => _exportVault(context),
+          ),
         ),
         _SettingRow(
           label: 'Reindex',
@@ -194,6 +203,30 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _exportVault(BuildContext context) async {
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return;
+    final dest = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Export vault to…',
+    );
+    if (dest == null) return;
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final n = await const VaultExporter().export(
+        src: Directory(state.rootPath),
+        dest: Directory(dest),
+      );
+      messenger.showSnackBar(
+        SnackBar(content: Text('Exported $n files to $dest'), duration: const Duration(seconds: 4)),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
+    }
   }
 
   Widget _sectionLabel(QuillTokens tokens, String label) {
