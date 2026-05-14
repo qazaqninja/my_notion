@@ -11,7 +11,10 @@ import '../../../vault/presentation/widgets/page_header.dart';
 import '../../data/repositories/database_repository_impl.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../widgets/board_view.dart';
 import '../widgets/frozen_column_table.dart';
+import '../widgets/gallery_view.dart';
+import '../widgets/timeline_view.dart';
 
 class DatabaseTablePage extends StatefulWidget {
   const DatabaseTablePage({super.key, required this.dbId, this.viewId});
@@ -145,13 +148,20 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
               ),
             ),
             Expanded(
-              child: _currentView == ViewType.table
-                  ? FrozenColumnTable(
-                      schema: schema,
-                      rows: data.rows,
-                      onOpenPage: (row) => context.go('/editor/${row.ulid}'),
-                    )
-                  : _PlaceholderView(viewType: _currentView, tokens: tokens),
+              child: switch (_currentView) {
+                ViewType.table => FrozenColumnTable(
+                    schema: schema,
+                    rows: data.rows,
+                    onOpenPage: (row) => context.go('/editor/${row.ulid}'),
+                  ),
+                ViewType.gallery => GalleryView(schema: schema, rows: data.rows),
+                ViewType.board => BoardView(
+                    schema: schema,
+                    rows: data.rows,
+                    groupBy: schema.viewById(widget.viewId)?.groupBy,
+                  ),
+                ViewType.timeline => TimelineView(schema: schema, rows: data.rows),
+              },
             ),
             // Footer rollups
             Container(
@@ -211,25 +221,3 @@ class _ToolText extends StatelessWidget {
   }
 }
 
-class _PlaceholderView extends StatelessWidget {
-  const _PlaceholderView({required this.viewType, required this.tokens});
-  final ViewType viewType;
-  final QuillTokens tokens;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          QuillIcon('database', size: 32, color: tokens.text3),
-          const SizedBox(height: 12),
-          Text(
-            '${viewType.name} view lands in M8',
-            style: TextStyle(fontSize: 14, color: tokens.text2),
-          ),
-        ],
-      ),
-    );
-  }
-}
