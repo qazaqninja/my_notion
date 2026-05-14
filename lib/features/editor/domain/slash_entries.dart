@@ -265,6 +265,22 @@ const List<SlashEntry> kSlashEntries = [
     cursorOffset: 2, // start of inner text
     keywords: ['highlight', 'mark', 'yellow', 'emphasis'],
   ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Subscript',
+    hint: '~x~',
+    snippet: '~sub~',
+    cursorOffset: 1,
+    keywords: ['subscript', 'sub', 'chemistry', 'math'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Superscript',
+    hint: '^x^',
+    snippet: '^sup^',
+    cursorOffset: 1,
+    keywords: ['superscript', 'sup', 'exponent', 'power', 'math'],
+  ),
 ];
 
 /// Filter the catalog by [query] (case-insensitive). Empty query returns all.

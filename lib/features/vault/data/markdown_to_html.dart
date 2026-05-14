@@ -269,6 +269,17 @@ String _inline(String s) {
     RegExp(r'~~([^~\n]+)~~'),
     (m) => '<del>${m.group(1)}</del>',
   );
+  // Subscript ~text~ (Pandoc). Only single `~`s; the strikethrough
+  // pass above has already consumed `~~…~~`.
+  s = s.replaceAllMapped(
+    RegExp(r'(?<!~)~([^~\n]+)~(?!~)'),
+    (m) => '<sub>${m.group(1)}</sub>',
+  );
+  // Superscript ^text^ (Pandoc).
+  s = s.replaceAllMapped(
+    RegExp(r'\^([^\^\n]+)\^'),
+    (m) => '<sup>${m.group(1)}</sup>',
+  );
   // Highlight  ==text==
   s = s.replaceAllMapped(
     RegExp(r'==([^=\n]+)=='),

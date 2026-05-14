@@ -4010,6 +4010,45 @@ List<InlineSpan> _buildSpans(
         }
       }
     }
+    // Subscript: ~text~ (single ~), Pandoc convention. Requires the
+    // inner not to contain '~' or '\n' so it can't be greedy across
+    // multiple subscripts on one line.
+    if (c == '~' && (i + 1 >= n || text[i + 1] != '~')) {
+      final end = text.indexOf('~', i + 1);
+      if (end != -1 && end > i + 1) {
+        final inner = text.substring(i + 1, end);
+        if (!inner.contains('\n') && !inner.contains('~') && inner.isNotEmpty) {
+          flushPlain(i);
+          out.add(TextSpan(
+            text: inner,
+            style: const TextStyle(
+                fontSize: 10.5, fontFeatures: [FontFeature.subscripts()]),
+          ));
+          i = end + 1;
+          committed = i;
+          continue;
+        }
+      }
+    }
+    // Superscript: ^text^, Pandoc convention. Same single-line / no-
+    // inner-`^` guard as subscript.
+    if (c == '^') {
+      final end = text.indexOf('^', i + 1);
+      if (end != -1 && end > i + 1) {
+        final inner = text.substring(i + 1, end);
+        if (!inner.contains('\n') && !inner.contains('^') && inner.isNotEmpty) {
+          flushPlain(i);
+          out.add(TextSpan(
+            text: inner,
+            style: const TextStyle(
+                fontSize: 10.5, fontFeatures: [FontFeature.superscripts()]),
+          ));
+          i = end + 1;
+          committed = i;
+          continue;
+        }
+      }
+    }
     // Highlight: ==text== (mark)
     if (c == '=' && i + 1 < n && text[i + 1] == '=') {
       final end = text.indexOf('==', i + 2);

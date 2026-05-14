@@ -71,6 +71,22 @@ void main() {
       expect(html, contains('<mark>highlight this</mark>'));
     });
 
+    test('subscript ~text~ → <sub>', () {
+      final html = markdownToHtml('Water is H~2~O.');
+      expect(html, contains('H<sub>2</sub>O'));
+    });
+
+    test('superscript ^text^ → <sup>', () {
+      final html = markdownToHtml('E = mc^2^.');
+      expect(html, contains('mc<sup>2</sup>'));
+    });
+
+    test('strikethrough wins over subscript for the same `~~`', () {
+      final html = markdownToHtml('~~struck~~ vs ~sub~');
+      expect(html, contains('<del>struck</del>'));
+      expect(html, contains('<sub>sub</sub>'));
+    });
+
     test('escapes HTML in fenced code', () {
       final html = markdownToHtml('```\n<script>\n```');
       expect(html, contains('&lt;script&gt;'));
