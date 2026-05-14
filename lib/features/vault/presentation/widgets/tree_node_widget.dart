@@ -290,10 +290,20 @@ class TreeRoot extends StatelessWidget {
         ? _filterNodes(state.tree.topLevel, q)
         : state.tree.topLevel;
     // When filtering, expand every visible folder so matches are reachable
-    // without manual clicking.
-    final expanded = activeFilter
-        ? _allFolderPaths(visible)
-        : state.expandedFolders;
+    // without manual clicking. Otherwise, union the user's expandedFolders
+    // with the ancestor folder paths of the active page so navigating
+    // anywhere auto-reveals the source in the tree.
+    final Set<String> expanded;
+    if (activeFilter) {
+      expanded = _allFolderPaths(visible);
+    } else if (activeUlid != null) {
+      expanded = {
+        ...state.expandedFolders,
+        ..._ancestorsOf(state.tree.topLevel, activeUlid!),
+      };
+    } else {
+      expanded = state.expandedFolders;
+    }
 
     return DragTarget<String>(
       onWillAcceptWithDetails: (_) => true,
@@ -368,6 +378,31 @@ class TreeRoot extends StatelessWidget {
       }
     }
     return out;
+  }
+
+  /// Folder paths that should be open so the file with [activeUlid]
+  /// is visible in the tree. Returns an empty set when the ULID isn't
+  /// found (the page might be in trash or pre-index).
+  static Set<String> _ancestorsOf(List<VaultNode> nodes, String activeUlid) {
+    final stack = <String>[];
+    Set<String>? hit;
+    void walk(List<VaultNode> level) {
+      if (hit != null) return;
+      for (final n in level) {
+        if (n is VaultFile && n.ulid == activeUlid) {
+          hit = {...stack};
+          return;
+        }
+        if (n is VaultFolder) {
+          stack.add(n.relativePath);
+          walk(n.children);
+          if (hit != null) return;
+          stack.removeLast();
+        }
+      }
+    }
+    walk(nodes);
+    return hit ?? const {};
   }
 
   static Set<String> _allFolderPaths(List<VaultNode> nodes) {
