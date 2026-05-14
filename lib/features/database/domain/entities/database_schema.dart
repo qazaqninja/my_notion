@@ -19,6 +19,7 @@ class ColumnDef {
     this.options = const [],
     this.targetDatabase,
     this.formula,
+    this.isParent = false,
   });
 
   final String key;
@@ -29,6 +30,12 @@ class ColumnDef {
   /// For [ColumnType.formula]: the source expression to evaluate per row.
   /// Read from `.database.yaml`'s `schema.<key>.formula:` field.
   final String? formula;
+
+  /// For [ColumnType.relation]: marks this column as the parent pointer
+  /// for sub-items (one column per database). The table view computes
+  /// each row's depth via parent walk and indents the title.
+  /// Declared as `is_parent: true` in `.database.yaml`.
+  final bool isParent;
 }
 
 enum ViewType { table, gallery, board, timeline, calendar, chart }

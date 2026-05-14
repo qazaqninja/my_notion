@@ -156,11 +156,42 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     super.dispose();
   }
 
+  /// Per-ULID indent depth derived from the schema's `is_parent` column
+  /// (if any). Top-level rows are depth 0; each parent walk adds 1.
+  Map<String, int> _computeDepths() {
+    final parentKey = widget.schema.columns
+        .where((c) => c.isParent)
+        .map((c) => c.key)
+        .firstOrNull;
+    if (parentKey == null) return const {};
+    final byUlid = {for (final r in widget.rows) r.ulid: r};
+    final out = <String, int>{};
+    int walk(String ulid, Set<String> seen) {
+      if (out.containsKey(ulid)) return out[ulid]!;
+      if (!seen.add(ulid)) return 0; // cycle guard
+      final row = byUlid[ulid];
+      if (row == null) return 0;
+      final parent = '${row.cells[parentKey] ?? ''}'.trim();
+      if (parent.isEmpty || parent == ulid || !byUlid.containsKey(parent)) {
+        out[ulid] = 0;
+        return 0;
+      }
+      final d = walk(parent, seen) + 1;
+      out[ulid] = d;
+      return d;
+    }
+    for (final r in widget.rows) {
+      walk(r.ulid, <String>{});
+    }
+    return out;
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final cols = widget.schema.columns;
     final scrollWidth = cols.fold<double>(0, (a, c) => a + _widthFor(c));
+    final depths = _computeDepths();
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -216,7 +247,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                       );
                     }
                     final row = widget.rows[i];
-                    return _titleRow(row, tokens);
+                    return _titleRow(row, tokens, depths[row.ulid] ?? 0);
                   },
                 ),
               ),
@@ -283,15 +314,19 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     );
   }
 
-  Widget _titleRow(DatabasePageRow row, QuillTokens tokens) {
+  Widget _titleRow(DatabasePageRow row, QuillTokens tokens, int depth) {
     return GestureDetector(
       onTap: () => widget.onOpenPage(row),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
           constraints: BoxConstraints(minHeight: _rowHeight),
-          padding:
-              EdgeInsets.fromLTRB(10, widget.wrap ? 8 : 0, 10, widget.wrap ? 8 : 0),
+          padding: EdgeInsets.fromLTRB(
+            10 + depth * 14.0,
+            widget.wrap ? 8 : 0,
+            10,
+            widget.wrap ? 8 : 0,
+          ),
           decoration: BoxDecoration(
             border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
           ),
@@ -299,6 +334,12 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
             crossAxisAlignment:
                 widget.wrap ? CrossAxisAlignment.start : CrossAxisAlignment.center,
             children: [
+              if (depth > 0)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Icon(Icons.subdirectory_arrow_right,
+                      size: 11, color: tokens.text3),
+                ),
               Padding(
                 padding: EdgeInsets.only(top: widget.wrap ? 2 : 0),
                 child: QuillIcon('file-md',

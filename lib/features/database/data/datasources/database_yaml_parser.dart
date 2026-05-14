@@ -61,12 +61,14 @@ class DatabaseYamlParser {
     }
     final target = def['target_database'];
     final formula = def['formula'];
+    final isParent = def['is_parent'] == true;
     return ColumnDef(
       key: key,
       type: type,
       options: options,
       targetDatabase: target != null ? '$target' : null,
       formula: formula != null ? '$formula' : null,
+      isParent: isParent,
     );
   }
 
