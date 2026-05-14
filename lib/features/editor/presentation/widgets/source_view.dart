@@ -275,6 +275,16 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp(deleteLineAt);
   }
 
+  /// Select the current line (between the surrounding newlines). Cmd+L.
+  void _selectCurrentLine() {
+    final v = _controller.value;
+    final caret = v.selection.isValid ? v.selection.baseOffset : v.text.length;
+    final r = lineRangeAt(v.text, caret);
+    _controller.value = v.copyWith(
+      selection: TextSelection(baseOffset: r.start, extentOffset: r.end),
+    );
+  }
+
   void _applyLineOp(LineOpResult Function(String text, int caret) op) {
     final v = _controller.value;
     final caret = v.selection.isValid ? v.selection.baseOffset : v.text.length;
@@ -637,6 +647,10 @@ class _SourceViewState extends State<SourceView> {
                       meta: true, shift: true): _deleteLine,
                   const SingleActivator(LogicalKeyboardKey.keyK,
                       control: true, shift: true): _deleteLine,
+                  const SingleActivator(LogicalKeyboardKey.keyL, meta: true):
+                      _selectCurrentLine,
+                  const SingleActivator(LogicalKeyboardKey.keyL,
+                      control: true): _selectCurrentLine,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):

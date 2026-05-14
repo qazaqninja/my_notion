@@ -114,6 +114,18 @@ LineOpResult toggleCommentLine(String text, int caret) {
   return LineOpResult(text: newText, caret: newCaret);
 }
 
+/// Return the half-open `[start, end)` byte offsets of the line
+/// containing [caret]. The line excludes the trailing '\n'. Empty
+/// strings return `(0, 0)`.
+({int start, int end}) lineRangeAt(String text, int caret) {
+  if (caret < 0) caret = 0;
+  if (caret > text.length) caret = text.length;
+  final start = caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
+  final nextNl = text.indexOf('\n', caret);
+  final end = nextNl == -1 ? text.length : nextNl;
+  return (start: start, end: end);
+}
+
 /// Delete the entire line containing [caret] and place the caret on
 /// the line that takes its place at the same column. For a middle line
 /// the caret moves down to the following line; for the final line it

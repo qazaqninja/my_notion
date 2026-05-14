@@ -191,4 +191,30 @@ void main() {
       expect(r.caret, 0);
     });
   });
+
+  group('lineRangeAt', () {
+    test('returns bounds of the line under the caret', () {
+      final r = lineRangeAt('aaa\nbbb\nccc', 5); // on "bbb"
+      expect(r.start, 4);
+      expect(r.end, 7);
+    });
+
+    test('first line — start 0, end before \\n', () {
+      final r = lineRangeAt('hello\nworld', 2);
+      expect(r.start, 0);
+      expect(r.end, 5);
+    });
+
+    test('final line without trailing newline — end = text.length', () {
+      final r = lineRangeAt('a\nbb', 3);
+      expect(r.start, 2);
+      expect(r.end, 4);
+    });
+
+    test('empty text → (0, 0)', () {
+      final r = lineRangeAt('', 0);
+      expect(r.start, 0);
+      expect(r.end, 0);
+    });
+  });
 }
