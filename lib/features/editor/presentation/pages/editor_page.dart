@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
@@ -86,10 +87,88 @@ class _EditorBodyState extends State<_EditorBody> {
   final ScrollController _scroll = ScrollController();
   bool _anchorJumped = false;
 
+  // Find-in-page state (M85). Visible only when _findOpen; matches are
+  // (lineIdx) entries into the body, recomputed on every query change.
+  bool _findOpen = false;
+  final TextEditingController _findCtl = TextEditingController();
+  final FocusNode _findFocus = FocusNode();
+  List<int> _findMatches = const [];
+  int _findCursor = 0;
+
   @override
   void dispose() {
     _scroll.dispose();
+    _findCtl.dispose();
+    _findFocus.dispose();
     super.dispose();
+  }
+
+  void _openFind() {
+    setState(() => _findOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _findFocus.requestFocus();
+      _findCtl.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _findCtl.text.length,
+      );
+    });
+  }
+
+  void _closeFind() {
+    setState(() {
+      _findOpen = false;
+      _findMatches = const [];
+      _findCursor = 0;
+    });
+  }
+
+  void _recomputeFind(String body) {
+    final q = _findCtl.text.trim();
+    if (q.isEmpty) {
+      setState(() {
+        _findMatches = const [];
+        _findCursor = 0;
+      });
+      return;
+    }
+    final lower = body.toLowerCase();
+    final needle = q.toLowerCase();
+    final lines = body.split('\n');
+    final hits = <int>[];
+    int searchFrom = 0;
+    while (true) {
+      final idx = lower.indexOf(needle, searchFrom);
+      if (idx < 0) break;
+      // Convert byte offset to line index.
+      final before = body.substring(0, idx);
+      final lineIdx = '\n'.allMatches(before).length;
+      if (hits.isEmpty || hits.last != lineIdx) hits.add(lineIdx);
+      searchFrom = idx + needle.length;
+    }
+    setState(() {
+      _findMatches = hits;
+      _findCursor = hits.isEmpty ? 0 : 0;
+    });
+    if (hits.isNotEmpty) _scrollToMatch(lines.length);
+  }
+
+  void _step(int delta, String body) {
+    if (_findMatches.isEmpty) return;
+    final next = (_findCursor + delta) % _findMatches.length;
+    setState(() => _findCursor = next < 0 ? next + _findMatches.length : next);
+    _scrollToMatch(body.split('\n').length);
+  }
+
+  void _scrollToMatch(int totalLines) {
+    if (_findMatches.isEmpty || !_scroll.hasClients) return;
+    final lineIdx = _findMatches[_findCursor];
+    final frac = totalLines == 0 ? 0.0 : lineIdx / totalLines;
+    final pos = _scroll.position;
+    final target = (pos.maxScrollExtent * frac)
+        .clamp(pos.minScrollExtent, pos.maxScrollExtent);
+    pos.animateTo(target,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOut);
   }
 
   /// After the body lays out, scroll to the heading line whose slug
@@ -212,7 +291,19 @@ class _EditorBodyState extends State<_EditorBody> {
         final crumbs = page.relativePath.split('/');
         final mobile = isMobileWidth(context);
         final locked = EditorBloc.isLocked(loaded);
-        return Column(
+        return CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.keyF, meta: true): () =>
+                _openFind(),
+            const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
+                _openFind(),
+            const SingleActivator(LogicalKeyboardKey.escape): () {
+              if (_findOpen) _closeFind();
+            },
+          },
+          child: Focus(
+            autofocus: true,
+            child: Column(
           children: [
             PageHeader(
               crumbs: crumbs,
@@ -402,9 +493,116 @@ class _EditorBodyState extends State<_EditorBody> {
                 ],
               ),
             ),
+            if (_findOpen)
+              _FindBar(
+                controller: _findCtl,
+                focus: _findFocus,
+                matches: _findMatches.length,
+                cursor:
+                    _findMatches.isEmpty ? 0 : _findCursor + 1,
+                onChanged: (_) => _recomputeFind(page.body),
+                onNext: () => _step(1, page.body),
+                onPrev: () => _step(-1, page.body),
+                onClose: _closeFind,
+              ),
           ],
-        );
+        ),
+      ),
+    );
       },
+    );
+  }
+}
+
+/// Find-in-page bar shown at the bottom of the editor when Cmd+F is
+/// invoked. Live-updates match count as the user types and offers
+/// prev/next arrows that scroll the editor to the matching line.
+class _FindBar extends StatelessWidget {
+  const _FindBar({
+    required this.controller,
+    required this.focus,
+    required this.matches,
+    required this.cursor,
+    required this.onChanged,
+    required this.onPrev,
+    required this.onNext,
+    required this.onClose,
+  });
+
+  final TextEditingController controller;
+  final FocusNode focus;
+  final int matches;
+  final int cursor;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        border: Border(top: BorderSide(color: tokens.divider, width: 0.5)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.search, size: 14, color: tokens.text3),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              focusNode: focus,
+              onChanged: onChanged,
+              onSubmitted: (_) => onNext(),
+              style: TextStyle(fontSize: 13, color: tokens.text),
+              decoration: InputDecoration(
+                isCollapsed: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                border: InputBorder.none,
+                hintText: 'Find in page…',
+                hintStyle: TextStyle(fontSize: 12.5, color: tokens.text3),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            matches == 0
+                ? 'no matches'
+                : '$cursor / $matches',
+            style: mono(fontSize: 11.5, color: tokens.text3),
+          ),
+          const SizedBox(width: 6),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+            onPressed: matches == 0 ? null : onPrev,
+            icon: Icon(Icons.keyboard_arrow_up,
+                size: 16, color: tokens.text2),
+            tooltip: 'Previous',
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+            onPressed: matches == 0 ? null : onNext,
+            icon: Icon(Icons.keyboard_arrow_down,
+                size: 16, color: tokens.text2),
+            tooltip: 'Next',
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+            onPressed: onClose,
+            icon: Icon(Icons.close, size: 14, color: tokens.text3),
+            tooltip: 'Close (Esc)',
+          ),
+        ],
+      ),
     );
   }
 }
