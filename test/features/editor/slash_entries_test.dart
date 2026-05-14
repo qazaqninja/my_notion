@@ -52,6 +52,16 @@ void main() {
       final em = out.firstWhere((e) => e.label == 'Emoji…');
       expect(em.action, SlashAction.pickEmoji);
     });
+
+    test('Lorem ipsum entry inserts three placeholder paragraphs', () {
+      final out = filterSlashEntries('lorem');
+      expect(out, isNotEmpty);
+      final lipsum = out.firstWhere((e) => e.label == 'Lorem ipsum');
+      // Three paragraphs separated by blank lines.
+      expect(
+          '\n\n'.allMatches(lipsum.snippet).length, greaterThanOrEqualTo(2));
+      expect(lipsum.snippet, startsWith('Lorem ipsum dolor'));
+    });
   });
 
   group('SlashEntry.caretAfterInsert', () {
