@@ -47,8 +47,8 @@ If your feature wants to store something new, the answer is almost always "add a
 - 🔮 Public page sharing via web link — Requires hosting backend.
 - 🚫 Custom page URLs / domains (paid) — Quill is a desktop app, not a publishing platform.
 - 🚫 Page analytics (views, visitors) — Same reason.
-- 📋 Wiki mode (turn page into a wiki with owners and verification) — Frontmatter `wiki: true`, `owners: [...]`, `verified: <date>`. Render badge in editor header.
-- 📋 Breadcrumb navigation — Derive from the file's path within the vault. Render at the top of `editor_page.dart`.
+- ✅ Wiki mode (turn page into a wiki with owners and verification) — M159, frontmatter `wiki: true`, `owners: [...]`, `verified: <date>`. Editor PageHeader renders a colour-coded pill with owners + verified tooltip; flips to "wiki · stale" past 90 days.
+- ✅ Breadcrumb navigation — PageHeader splits `page.relativePath` on `/` (M5+), `editor_page.dart:406`.
 - ✅ Backlinks (auto-tracked references to a page) — M5, `lib/features/editor/presentation/widgets/backlinks_rail.dart`. Powered by `relations` table.
 
 ## Block Editor
