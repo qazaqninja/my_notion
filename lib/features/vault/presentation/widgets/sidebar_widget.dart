@@ -104,59 +104,8 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (state is VaultLoaded &&
-                      state.workspace.favorites.isNotEmpty) ...[
-                    const SideHead(label: 'Favorites'),
-                    _FavoritesList(
-                      ulids: state.workspace.favorites,
-                      activeUlid: _activeUlid,
-                      rebuildKey: '${state.rootPath}-${state.workspace.favorites.length}',
-                    ),
-                  ],
-                  if (state is VaultLoaded) ...[
-                    const SideHead(label: 'Recent'),
-                    _RecentList(
-                      rebuildKey: '${state.rootPath}-${state.pageCount}',
-                      activeUlid: _activeUlid,
-                    ),
-                  ],
-                  SideHead(
-                    label: 'Workspace',
-                    actionIcon: 'plus',
-                    onAction: state is VaultLoaded
-                        ? () => _promptNewPage(context)
-                        : null,
-                  ),
-                  if (state is VaultLoaded)
-                    _TreeFilterField(controller: _treeFilter),
-                  TreeRoot(
-                    activeUlid: _activeUlid,
-                    filter: _treeFilter.text.trim(),
-                  ),
-                  const SideHead(label: 'Databases', actionIcon: 'plus'),
-                  if (state is VaultLoaded)
-                    _DatabasesList(rebuildKey: state.rootPath)
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: Text(
-                        'No vault opened',
-                        style: TextStyle(fontSize: 11.5, color: tokens.text3),
-                      ),
-                    ),
-                  if (state is VaultLoaded) ...[
-                    const SideHead(label: 'More'),
-                    SideItem(
-                      icon: 'tag',
-                      label: 'Tags',
-                      onTap: () => context.go('/tags'),
-                    ),
-                    SideItem(
-                      icon: 'trash',
-                      label: 'Trash',
-                      onTap: () => _openTrash(context, state),
-                    ),
-                  ],
+                  for (final id in _resolveSidebarOrder(state))
+                    ..._renderSection(id, state, tokens, context),
                 ],
               ),
             ),
@@ -191,6 +140,120 @@ class _SidebarWidgetState extends State<SidebarWidget> {
         ],
       ),
     );
+  }
+
+  static const _canonicalSidebarOrder = <String>[
+    'favorites',
+    'recent',
+    'workspace',
+    'databases',
+    'more',
+  ];
+
+  /// Apply the workspace's `sidebar.order:` + `sidebar.hidden:` to the
+  /// canonical list. Unknown ids in `order:` are skipped; canonical ids
+  /// not mentioned in `order:` are appended in their original sequence.
+  /// Hidden ids are then filtered out.
+  List<String> _resolveSidebarOrder(VaultState state) {
+    final ws = state is VaultLoaded ? state.workspace : null;
+    final order = ws?.sidebarOrder;
+    final hidden = (ws?.sidebarHidden ?? const <String>[]).toSet();
+    var seq = <String>[];
+    if (order == null || order.isEmpty) {
+      seq = List.of(_canonicalSidebarOrder);
+    } else {
+      for (final id in order) {
+        if (_canonicalSidebarOrder.contains(id) && !seq.contains(id)) {
+          seq.add(id);
+        }
+      }
+      for (final id in _canonicalSidebarOrder) {
+        if (!seq.contains(id)) seq.add(id);
+      }
+    }
+    return [for (final id in seq) if (!hidden.contains(id)) id];
+  }
+
+  List<Widget> _renderSection(
+    String id,
+    VaultState state,
+    QuillTokens tokens,
+    BuildContext context,
+  ) {
+    switch (id) {
+      case 'favorites':
+        if (state is VaultLoaded && state.workspace.favorites.isNotEmpty) {
+          return [
+            const SideHead(label: 'Favorites'),
+            _FavoritesList(
+              ulids: state.workspace.favorites,
+              activeUlid: _activeUlid,
+              rebuildKey:
+                  '${state.rootPath}-${state.workspace.favorites.length}',
+            ),
+          ];
+        }
+        return const [];
+      case 'recent':
+        if (state is VaultLoaded) {
+          return [
+            const SideHead(label: 'Recent'),
+            _RecentList(
+              rebuildKey: '${state.rootPath}-${state.pageCount}',
+              activeUlid: _activeUlid,
+            ),
+          ];
+        }
+        return const [];
+      case 'workspace':
+        return [
+          SideHead(
+            label: 'Workspace',
+            actionIcon: 'plus',
+            onAction:
+                state is VaultLoaded ? () => _promptNewPage(context) : null,
+          ),
+          if (state is VaultLoaded)
+            _TreeFilterField(controller: _treeFilter),
+          TreeRoot(
+            activeUlid: _activeUlid,
+            filter: _treeFilter.text.trim(),
+          ),
+        ];
+      case 'databases':
+        return [
+          const SideHead(label: 'Databases', actionIcon: 'plus'),
+          if (state is VaultLoaded)
+            _DatabasesList(rebuildKey: state.rootPath)
+          else
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Text(
+                'No vault opened',
+                style: TextStyle(fontSize: 11.5, color: tokens.text3),
+              ),
+            ),
+        ];
+      case 'more':
+        if (state is VaultLoaded) {
+          return [
+            const SideHead(label: 'More'),
+            SideItem(
+              icon: 'tag',
+              label: 'Tags',
+              onTap: () => context.go('/tags'),
+            ),
+            SideItem(
+              icon: 'trash',
+              label: 'Trash',
+              onTap: () => _openTrash(context, state),
+            ),
+          ];
+        }
+        return const [];
+    }
+    return const [];
   }
 
   Future<void> _openTrash(BuildContext context, VaultLoaded state) async {

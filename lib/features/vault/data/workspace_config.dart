@@ -12,6 +12,8 @@ class WorkspaceConfig {
     this.name,
     this.icon,
     this.favorites = const [],
+    this.sidebarOrder,
+    this.sidebarHidden = const [],
   });
 
   /// Display name override. When null, the sidebar derives from the
@@ -24,15 +26,31 @@ class WorkspaceConfig {
   /// Pinned page ULIDs in user-chosen order.
   final List<String> favorites;
 
+  /// Sidebar section order override. When non-null, the sidebar renders
+  /// sections in this sequence (unknown names ignored; missing names
+  /// appended at the end in their canonical order).
+  /// Read from `.quill.yaml`'s `sidebar.order: [...]`. Valid section
+  /// names: `favorites`, `recent`, `workspace`, `databases`, `more`.
+  final List<String>? sidebarOrder;
+
+  /// Sidebar section names that the user has chosen to hide. Same
+  /// vocabulary as [sidebarOrder]. Read from
+  /// `.quill.yaml`'s `sidebar.hidden: [...]`.
+  final List<String> sidebarHidden;
+
   WorkspaceConfig copyWith({
     String? name,
     String? icon,
     List<String>? favorites,
+    List<String>? sidebarOrder,
+    List<String>? sidebarHidden,
   }) {
     return WorkspaceConfig(
       name: name ?? this.name,
       icon: icon ?? this.icon,
       favorites: favorites ?? this.favorites,
+      sidebarOrder: sidebarOrder ?? this.sidebarOrder,
+      sidebarHidden: sidebarHidden ?? this.sidebarHidden,
     );
   }
 
@@ -56,7 +74,26 @@ class WorkspaceConfig {
         if (favs is YamlList)
           for (final f in favs) '$f',
       ];
-      return WorkspaceConfig(name: name, icon: icon, favorites: favorites);
+      List<String>? sidebarOrder;
+      List<String> sidebarHidden = const [];
+      final sb = doc['sidebar'];
+      if (sb is YamlMap) {
+        final order = sb['order'];
+        if (order is YamlList) {
+          sidebarOrder = [for (final s in order) '$s'];
+        }
+        final hidden = sb['hidden'];
+        if (hidden is YamlList) {
+          sidebarHidden = [for (final s in hidden) '$s'];
+        }
+      }
+      return WorkspaceConfig(
+        name: name,
+        icon: icon,
+        favorites: favorites,
+        sidebarOrder: sidebarOrder,
+        sidebarHidden: sidebarHidden,
+      );
     } catch (_) {
       return const WorkspaceConfig();
     }
@@ -76,6 +113,24 @@ class WorkspaceConfig {
       buf.writeln('favorites:');
       for (final f in favorites) {
         buf.writeln('  - $f');
+      }
+    }
+    final hasSidebar =
+        (sidebarOrder != null && sidebarOrder!.isNotEmpty) ||
+            sidebarHidden.isNotEmpty;
+    if (hasSidebar) {
+      buf.writeln('sidebar:');
+      if (sidebarOrder != null && sidebarOrder!.isNotEmpty) {
+        buf.writeln('  order:');
+        for (final s in sidebarOrder!) {
+          buf.writeln('    - $s');
+        }
+      }
+      if (sidebarHidden.isNotEmpty) {
+        buf.writeln('  hidden:');
+        for (final s in sidebarHidden) {
+          buf.writeln('    - $s');
+        }
       }
     }
     final file = File(p.join(vaultRoot.path, '.quill.yaml'));

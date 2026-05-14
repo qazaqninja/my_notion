@@ -65,4 +65,54 @@ favorites:
     expect(cfg.name, isNull);
     expect(cfg.icon, isNull);
   });
+
+  group('sidebar customization', () {
+    test('reads sidebar.order list', () async {
+      await File(p.join(tmp.path, '.quill.yaml')).writeAsString('''
+sidebar:
+  order:
+    - workspace
+    - favorites
+    - more
+    - databases
+    - recent
+''');
+      final cfg = await WorkspaceConfig.load(tmp);
+      expect(cfg.sidebarOrder,
+          equals(['workspace', 'favorites', 'more', 'databases', 'recent']));
+    });
+
+    test('reads sidebar.hidden list', () async {
+      await File(p.join(tmp.path, '.quill.yaml')).writeAsString('''
+sidebar:
+  hidden:
+    - recent
+    - more
+''');
+      final cfg = await WorkspaceConfig.load(tmp);
+      expect(cfg.sidebarHidden, equals(['recent', 'more']));
+    });
+
+    test('save round-trips sidebar fields', () async {
+      const cfg = WorkspaceConfig(
+        sidebarOrder: ['workspace', 'favorites', 'databases'],
+        sidebarHidden: ['recent'],
+      );
+      await cfg.save(tmp);
+      final reloaded = await WorkspaceConfig.load(tmp);
+      expect(reloaded.sidebarOrder,
+          equals(['workspace', 'favorites', 'databases']));
+      expect(reloaded.sidebarHidden, equals(['recent']));
+    });
+
+    test('missing sidebar block → null / empty defaults', () async {
+      await File(p.join(tmp.path, '.quill.yaml')).writeAsString('''
+workspace:
+  name: bare
+''');
+      final cfg = await WorkspaceConfig.load(tmp);
+      expect(cfg.sidebarOrder, isNull);
+      expect(cfg.sidebarHidden, isEmpty);
+    });
+  });
 }
