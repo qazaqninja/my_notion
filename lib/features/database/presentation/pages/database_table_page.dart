@@ -348,6 +348,15 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                         : activeView!.visible!.toSet());
                 final viewSchema = schema.filterColumns(visibleKeys);
                 return switch (_currentView) {
+                  // On mobile the frozen-column + horizontal-scroll
+                  // table is awkward — drop down to the compact list
+                  // rendering automatically. Other views are already
+                  // mobile-friendly.
+                  ViewType.table when mobile => DatabaseListView(
+                      schema: viewSchema,
+                      rows: filtered,
+                      subGroupBy: _query.subGroupBy,
+                    ),
                   ViewType.table => FrozenColumnTable(
                       schema: viewSchema,
                       rows: filtered,
