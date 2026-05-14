@@ -108,7 +108,7 @@ If your feature wants to store something new, the answer is almost always "add a
   - ✅ formula — M31, Pratt parser + evaluator subset of Notion formula v2.
   - ✅ rollup — M168, `type: rollup` columns with `relation:` + `target:` + `agg: sum|avg|min|max|count|list`. Pure RollupCompute runs before ApplyQuery so filters/sorts can use rollup values.
   - ✅ created time — `createdTime` column type added in earlier milestone; reads `created_at:` frontmatter.
-  - 🚧 created by, last edited by, person — M169 ships the `person` column type (with `user`/`owner`/`assignee`/`created_by`/`last_edited_by` aliases) + PersonChip widget rendering a coloured initial avatar + name. Auto-stamping `created_by:` / `last_edited_by:` on save needs an identity model — still 📋. Full multi-user is 🔮.
+  - ✅ created by, last edited by, person — M169 person column + PersonChip widget; M172 `.quill.yaml` `users:` list + EditorBloc auto-stamps `created_by:` (once) and `last_edited_by:` (every save) with `WorkspaceConfig.currentUserName`. Full server-side multi-user is 🔮.
   - ✅ button — M70 `:::button` fence renders inside any page (including row pages).
 - ✅ Sub-items (parent/child rows) — Parent relation column + depth indent (frozen_column_table.dart). M166 adds the chevron toggle on rows that have children + a visible-rows filter that hides descendants of collapsed parents.
 - ✅ Dependencies between rows — M163, frontmatter `depends_on: [[ULID]], …`. Timeline view shows a "↳ N" pill in the frozen column with tooltip, plus L-shaped connector arrows between bars.
@@ -172,7 +172,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Mentions of people, pages, dates — Pages via `[[ULID]]` + anchor variant (M79). Date pills via inline `@YYYY-MM-DD` (M83 relative-time variants). People mentions 🔮.
 - 🔮 Guest access (per-page) — Needs auth.
 - 🔮 Share permissions (full access, edit, comment, read, no access) — Same.
-- 🚧 Workspace member management — Settings page has a stub section (M11). Local user list 📋; server-side 🔮.
+- 🚧 Workspace member management — Settings page has a stub section (M11). Local user list ✅ via `.quill.yaml` `users:` (M172). Server-side identity / invites / permissions are 🔮.
 - 🔮 Groups / permission groups (paid) — Same.
 - ✅ Page-level permissions — M170, frontmatter `permissions: read_only` / `read-only` / `readonly` / `locked` makes the page read-only (case-insensitive). Other values (`private`, `team_only`) are documentation-only — full multi-user enforcement is 🔮.
 - 🔮 Suggest edits / suggestion mode (newer feature) — Needs collaborative branch/PR model.
