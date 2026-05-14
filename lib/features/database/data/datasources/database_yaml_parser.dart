@@ -89,6 +89,8 @@ class DatabaseYamlParser {
         'formula' => ColumnType.formula,
         'checkbox' => ColumnType.checkbox,
         'file' => ColumnType.file,
+        'created_time' || 'created' => ColumnType.createdTime,
+        'last_edited_time' || 'edited_time' || 'modified' => ColumnType.lastEditedTime,
         _ => ColumnType.text,
       };
 

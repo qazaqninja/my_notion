@@ -8,6 +8,8 @@ class DatabasePageRow {
     required this.title,
     required this.relativePath,
     required this.cells,
+    this.mtimeMs = 0,
+    this.createdAt,
   });
 
   final String ulid;
@@ -17,12 +19,29 @@ class DatabasePageRow {
   /// frontmatter values keyed by column key, in raw form.
   final Map<String, dynamic> cells;
 
-  DatabasePageRow copyWith({Map<String, dynamic>? cells, String? title}) {
+  /// File modification time in millis-since-epoch — drives the
+  /// `last_edited_time` column type.
+  final int mtimeMs;
+
+  /// Optional explicit creation timestamp, sourced from the page's
+  /// frontmatter `created_at:` field when present. Drives the
+  /// `created_time` column type; when null, the cell renderer falls back
+  /// to [mtimeMs].
+  final String? createdAt;
+
+  DatabasePageRow copyWith({
+    Map<String, dynamic>? cells,
+    String? title,
+    int? mtimeMs,
+    String? createdAt,
+  }) {
     return DatabasePageRow(
       ulid: ulid,
       title: title ?? this.title,
       relativePath: relativePath,
       cells: cells ?? this.cells,
+      mtimeMs: mtimeMs ?? this.mtimeMs,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }

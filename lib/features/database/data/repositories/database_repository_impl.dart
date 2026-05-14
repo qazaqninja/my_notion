@@ -62,8 +62,27 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
           title: row.title,
           relativePath: row.relativePath,
           cells: _decodeCells(row.frontmatterJson),
+          mtimeMs: row.mtimeMs,
+          createdAt: _stringCell(row.frontmatterJson, 'created_at'),
         ),
     ];
+  }
+
+  static String? _stringCell(String fmJson, String key) {
+    if (fmJson.isEmpty) return null;
+    try {
+      final decoded = jsonDecode(fmJson);
+      if (decoded is! Map<String, dynamic>) return null;
+      final entries = decoded['entries'];
+      if (entries is! List) return null;
+      for (final e in entries) {
+        if (e is Map<String, dynamic> && e['key'] == key) {
+          final raw = e['rawScalar']?.toString();
+          return (raw == null || raw.isEmpty) ? null : raw;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 
   @override
@@ -198,6 +217,8 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
       case ColumnType.relation:
       case ColumnType.formula:
       case ColumnType.file:
+      case ColumnType.createdTime:
+      case ColumnType.lastEditedTime:
         return (s, s);
     }
   }
@@ -212,6 +233,11 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         ColumnType.formula => FrontmatterType.formula,
         ColumnType.file => FrontmatterType.file,
         ColumnType.checkbox => FrontmatterType.checkbox,
+        // The two timestamp types are derived metadata — they're never
+        // written back to frontmatter, so they're treated as plain text
+        // if a value flows through this path (defensive fallback).
+        ColumnType.createdTime => FrontmatterType.text,
+        ColumnType.lastEditedTime => FrontmatterType.text,
       };
 
   static Map<String, dynamic> _cellsFromEntries(List<FrontmatterEntry> entries) {

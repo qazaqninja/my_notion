@@ -147,8 +147,14 @@ class _SourceViewState extends State<SourceView> {
   Rect? _caretRect() {
     final box = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
     if (box == null) return null;
-    final origin = box.localToGlobal(Offset.zero);
-    return Rect.fromLTWH(origin.dx, origin.dy + box.size.height - 20, 320, 0);
+    // Stack-local coords. The Container is the Stack's first unpositioned
+    // child (alignment defaults to topStart), so its top-left in Stack
+    // space is (0, 0). Anchor the popover just below the field — the
+    // overlay adds +4 padding internally, so we land 4-8px under the
+    // bordered box edge. Caret-level precision would require a
+    // RenderEditable probe; field-bottom is good enough and keeps the
+    // popover on-screen.
+    return Rect.fromLTWH(40, box.size.height, 320, 0);
   }
 
   /// When the relation picker OR slash menu is open, intercept
@@ -214,11 +220,24 @@ class _SourceViewState extends State<SourceView> {
     final triggerOffset = _slashTriggerStart;
     if (triggerOffset == null) return;
     final stripStart = triggerOffset - 1;
+    final text = _controller.text;
+    final caret = _controller.selection.start;
+
+    // CRITICAL: clear trigger state BEFORE mutating the controller. The
+    // controller's listener fires synchronously when we assign `.value`,
+    // re-entering `_onChanged`. If `_slashTriggerStart` is still set, the
+    // listener tries to re-evaluate the slash menu against the spliced
+    // text — for snippets without space/newline (e.g. `[[`) the slash
+    // stays open AND the relation picker also opens, intercepting all
+    // keyboard input until the user blindly clicks somewhere safe.
+    // Also clear the relation-picker trigger so the same snippet (`[[`)
+    // doesn't get caught by it.
+    _slashTriggerStart = null;
+    _triggerStart = null;
+    _slash.dismiss();
 
     switch (entry.action) {
       case SlashAction.insertSnippet:
-        final text = _controller.text;
-        final caret = _controller.selection.start;
         final newText = text.replaceRange(stripStart, caret, entry.snippet);
         final newCaret = entry.caretAfterInsert(stripStart);
         _controller.value = TextEditingValue(
@@ -228,21 +247,13 @@ class _SourceViewState extends State<SourceView> {
       case SlashAction.pickImage:
         // Strip the `/...` trigger first so the picker dialog opens with the
         // editor in a clean state. The async picker is awaited below.
-        final text = _controller.text;
-        final caret = _controller.selection.start;
         final cleared = text.replaceRange(stripStart, caret, '');
         _controller.value = TextEditingValue(
           text: cleared,
           selection: TextSelection.collapsed(offset: stripStart),
         );
-        _slashTriggerStart = null;
-        _slash.dismiss();
         await _pickAndInsertImage(stripStart);
-        return;
     }
-
-    _slashTriggerStart = null;
-    _slash.dismiss();
   }
 
   Future<void> _pickAndInsertImage(int insertAt) async {
@@ -282,12 +293,13 @@ class _SourceViewState extends State<SourceView> {
     final insertion = '[[${result.ulid}]]';
     final newText = text.replaceRange(start - 2, caret, insertion);
     final newCaret = start - 2 + insertion.length;
+    // Reset before mutating the controller — see _onSlashPick for why.
+    _triggerStart = null;
+    _picker.dismiss();
     _controller.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: newCaret),
     );
-    _triggerStart = null;
-    _picker.dismiss();
   }
 
   @override

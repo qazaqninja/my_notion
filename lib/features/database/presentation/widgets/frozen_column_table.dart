@@ -20,6 +20,8 @@ double _widthForType(ColumnType t) => switch (t) {
       ColumnType.checkbox => 60,
       ColumnType.formula => 130,
       ColumnType.file => 130,
+      ColumnType.createdTime => 130,
+      ColumnType.lastEditedTime => 130,
     };
 
 String _iconForType(ColumnType t) => switch (t) {
@@ -32,6 +34,8 @@ String _iconForType(ColumnType t) => switch (t) {
       ColumnType.checkbox => 'checksquare',
       ColumnType.formula => 'code',
       ColumnType.file => 'file',
+      ColumnType.createdTime => 'calendar',
+      ColumnType.lastEditedTime => 'calendar',
     };
 
 const double _rowHeight = 36;
@@ -320,6 +324,12 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       value = evaluateFormula(c.formula!, row.cells);
       if (value is FormulaError) value = value.toString();
     }
+    if (c.type == ColumnType.lastEditedTime) {
+      value = row.mtimeMs > 0 ? row.mtimeMs : null;
+    }
+    if (c.type == ColumnType.createdTime) {
+      value = row.createdAt ?? (row.mtimeMs > 0 ? row.mtimeMs : null);
+    }
     final isLast = widget.schema.columns.last == c;
     final editable = widget.onEditCell != null && _isEditable(c.type) && c.key != 'health';
     final align = c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft;
@@ -443,6 +453,8 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       case ColumnType.relation:
       case ColumnType.formula:
       case ColumnType.file:
+      case ColumnType.createdTime:
+      case ColumnType.lastEditedTime:
         return false;
     }
   }

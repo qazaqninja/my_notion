@@ -85,6 +85,8 @@ List<FilterOp> filterOpsForType(ColumnType t) {
         FilterOp.isNotEmpty,
       ];
     case ColumnType.date:
+    case ColumnType.createdTime:
+    case ColumnType.lastEditedTime:
       return const [
         FilterOp.equals,
         FilterOp.notEquals,

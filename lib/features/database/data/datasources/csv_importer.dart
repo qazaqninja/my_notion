@@ -164,6 +164,8 @@ class CsvImporter {
       case ColumnType.relation:
       case ColumnType.formula:
       case ColumnType.file:
+      case ColumnType.createdTime:
+      case ColumnType.lastEditedTime:
         return FrontmatterEntry(
           key: c.key,
           rawScalar: v,
@@ -275,6 +277,8 @@ class CsvImporter {
         ColumnType.formula => 'formula',
         ColumnType.checkbox => 'checkbox',
         ColumnType.file => 'file',
+        ColumnType.createdTime => 'created_time',
+        ColumnType.lastEditedTime => 'last_edited_time',
         ColumnType.text => 'text',
       };
 }

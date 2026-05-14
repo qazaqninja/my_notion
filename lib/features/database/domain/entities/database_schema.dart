@@ -1,4 +1,16 @@
-enum ColumnType { text, number, date, select, multi, relation, formula, checkbox, file }
+enum ColumnType {
+  text,
+  number,
+  date,
+  select,
+  multi,
+  relation,
+  formula,
+  checkbox,
+  file,
+  createdTime,
+  lastEditedTime,
+}
 
 class ColumnDef {
   const ColumnDef({

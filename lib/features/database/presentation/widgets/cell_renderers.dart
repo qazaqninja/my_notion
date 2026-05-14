@@ -93,8 +93,33 @@ class CellRenderer extends StatelessWidget {
           alignment: align,
           child: Text('$v', style: mono(fontSize: 12, color: tokens.text2)),
         );
+      case ColumnType.createdTime:
+      case ColumnType.lastEditedTime:
+        return Align(
+          alignment: align,
+          child: Text(
+            _formatTimestamp(v),
+            style: mono(fontSize: 12, color: tokens.text3),
+          ),
+        );
     }
   }
+
+  static String _formatTimestamp(dynamic v) {
+    if (v == null) return '—';
+    // Numeric (millis since epoch).
+    if (v is num) {
+      final dt = DateTime.fromMillisecondsSinceEpoch(v.toInt()).toLocal();
+      return _yyyymmdd(dt);
+    }
+    // ISO string (frontmatter `created_at:` etc).
+    final dt = DateTime.tryParse('$v'.trim());
+    if (dt != null) return _yyyymmdd(dt);
+    return '$v';
+  }
+
+  static String _yyyymmdd(DateTime dt) =>
+      '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
   static List<String> _parseList(dynamic v) {
     if (v is List) return v.map((e) => '$e').toList();
