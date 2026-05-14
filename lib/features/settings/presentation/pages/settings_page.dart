@@ -82,6 +82,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _content(QuillTokens tokens) {
     if (_active == 'theme') return _appearancePane(tokens);
     if (_active == 'export') return _exportPane(tokens);
+    if (_active == 'advanced') return _advancedPane(tokens);
 
     final state = context.watch<VaultBloc>().state;
     final vaultPath = state is VaultLoaded ? state.rootPath : '(no vault opened)';
@@ -274,6 +275,76 @@ class _SettingsPageState extends State<SettingsPage> {
         SnackBar(content: Text('Export failed: $e')),
       );
     }
+  }
+
+  Widget _advancedPane(QuillTokens tokens) {
+    final state = context.watch<VaultBloc>().state;
+    final loaded = state is VaultLoaded;
+    final pageCount = loaded ? state.pageCount : 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Advanced',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: tokens.text,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: 600,
+          child: Text(
+            'Operations on the drift cache. The .md files on disk stay '
+            'authoritative — anything here can be re-derived from them.',
+            style: TextStyle(
+                fontSize: 13.5, color: tokens.text3, height: 1.55),
+          ),
+        ),
+        const SizedBox(height: 28),
+        _sectionLabel(tokens, 'Cache'),
+        _SettingRow(
+          label: 'Pages indexed',
+          hint: 'Total rows in the SQLite cache.',
+          child: Text(
+            '$pageCount',
+            style: mono(fontSize: 14, color: tokens.text),
+          ),
+        ),
+        _SettingRow(
+          label: 'Reindex',
+          hint: 'Wipe and rebuild the SQLite cache from disk.',
+          child: _Btn(
+            label: 'Reindex now',
+            icon: 'sync',
+            primary: true,
+            onTap: !loaded
+                ? null
+                : () {
+                    context.read<VaultBloc>().add(const ReindexVault());
+                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                      const SnackBar(content: Text('Reindexing vault…')),
+                    );
+                  },
+          ),
+        ),
+        _SettingRow(
+          label: 'Refresh from disk',
+          hint: 'Re-read changed files without dropping the cache.',
+          child: _Btn(
+            label: 'Refresh',
+            icon: 'sync',
+            onTap: !loaded
+                ? null
+                : () => context
+                    .read<VaultBloc>()
+                    .add(const RefreshFromDisk()),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _exportPane(QuillTokens tokens) {
