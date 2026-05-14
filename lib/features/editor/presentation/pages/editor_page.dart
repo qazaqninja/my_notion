@@ -456,7 +456,7 @@ class _EditorBodyState extends State<_EditorBody> {
                                 ),
                               if (mobile) ...[
                                 const SizedBox(height: 24),
-                                OutlineRail(body: page.body),
+                                OutlineRail(body: page.body, scroll: _scroll),
                                 BacklinksRail(toUlid: page.ulid),
                               ],
                               const SizedBox(height: 20),
@@ -485,7 +485,7 @@ class _EditorBodyState extends State<_EditorBody> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            OutlineRail(body: page.body),
+                            OutlineRail(body: page.body, scroll: _scroll),
                             BacklinksRail(toUlid: page.ulid),
                           ],
                         ),
