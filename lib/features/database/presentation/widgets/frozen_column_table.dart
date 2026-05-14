@@ -105,6 +105,7 @@ class FrozenColumnTable extends StatefulWidget {
     this.onEditCell,
     this.onCreateRow,
     this.onDuplicateRow,
+    this.onTrashRow,
     this.wrap = false,
     this.persistKey,
     this.subGroupBy,
@@ -127,6 +128,13 @@ class FrozenColumnTable extends StatefulWidget {
   /// Optional duplicate-row callback. When set, the row context menu
   /// gains a Duplicate item.
   final void Function(DatabasePageRow row)? onDuplicateRow;
+
+  /// Optional "move row to trash" callback. When set, the row context
+  /// menu gains a "Move to trash" item that calls back with the row.
+  /// Implementation usually dispatches `MoveToTrash(row.ulid)` to the
+  /// VaultBloc; left to the parent so the context menu has no direct
+  /// dependency on the bloc layer.
+  final void Function(DatabasePageRow row)? onTrashRow;
 
   /// When set, cells in editable types become click-to-edit.
   final Future<void> Function(DatabasePageRow row, ColumnDef column, Object? newValue)? onEditCell;
@@ -657,18 +665,31 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       ),
       items: [
         const PopupMenuItem(value: 'open', child: Text('Open page')),
+        const PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
         const PopupMenuItem(
             value: 'copy-link', child: Text('Copy [[link]]')),
         if (widget.onDuplicateRow != null)
           const PopupMenuItem(value: 'duplicate', child: Text('Duplicate row')),
+        if (widget.onTrashRow != null) ...[
+          const PopupMenuDivider(),
+          const PopupMenuItem(value: 'trash', child: Text('Move to trash')),
+        ],
       ],
     );
     if (action == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
     switch (action) {
       case 'open':
         widget.onOpenPage(row);
+      case 'copy-ulid':
+        await Clipboard.setData(ClipboardData(text: row.ulid));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text('Copied ${row.ulid}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       case 'copy-link':
-        final messenger = ScaffoldMessenger.maybeOf(context);
         await Clipboard.setData(ClipboardData(text: '[[${row.ulid}]]'));
         messenger?.showSnackBar(
           SnackBar(
@@ -678,6 +699,8 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
         );
       case 'duplicate':
         widget.onDuplicateRow?.call(row);
+      case 'trash':
+        widget.onTrashRow?.call(row);
     }
   }
 

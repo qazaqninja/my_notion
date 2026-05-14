@@ -41,7 +41,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Page history / version history — M30, `lib/features/editor/data/page_history.dart` shells out to `git log -z` + `git show <sha>:<file>` when vault is a git repo. File context menu has "Page history".
 - ✅ Page locking — Frontmatter `locked: true`; `EditorBloc.isLocked` toggles read-only mode; lock icon in PageHeader.
 - ✅ Favorites / pinning — Pin via context menu; persists to `<vault>/.quill.yaml` `favorites: [...]`; Favorites section in sidebar.
-- ✅ Trash with restore — M28 + M61, file context menu → "Move to trash" renames to `.trash/<YYYY-MM>/...`; "Show trash" command palette entry opens a dialog with restore / delete-forever per row.
+- ✅ Trash with restore — M28 + M61, file context menu → "Move to trash" renames to `.trash/<YYYY-MM>/...`; "Show trash" command palette entry opens a dialog with restore / delete-forever per row. M247 extends the database table row context menu with "Copy ULID" + "Move to trash" alongside the existing Open / Copy [[link]] / Duplicate entries.
 - ✅ Page comments (general thread) — M69, `<vault>/.quill/comments/<page-ulid>.yaml` sidecar; properties-panel "Comments" action opens a dialog. Block-anchored comments shipped M180–M186.
 - ✅ Page mentions (@page-name) — M5/M6 (`[[ULID]]` source format) + source_view.dart already opens the relation picker on a boundary `@` (line 136). Pick replaces the `@`-trigger with `[[ULID]]`, which the renderer shows as a clickable chip.
 - 🔮 Public page sharing via web link — Requires hosting backend.

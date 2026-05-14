@@ -228,6 +228,34 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     }
   }
 
+  Future<void> _trashRow(DatabasePageRow row) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Move row to trash?'),
+        content: Text(
+            'The .md file moves to .trash/<YYYY-MM>/. You can restore '
+            'it from the Trash dialog later.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style:
+                TextButton.styleFrom(foregroundColor: const Color(0xFFCB5A4F)),
+            child: const Text('Move to trash'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    if (!context.mounted) return;
+    context.read<VaultBloc>().add(MoveToTrash(row.ulid));
+    setState(() => _rows = _rows?.where((r) => r.ulid != row.ulid).toList());
+  }
+
   void _duplicateRow(DatabasePageRow row) {
     final schema = _schema;
     if (schema == null) return;
@@ -441,6 +469,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       onEditCell: schema.locked ? null : _editCell,
                       onCreateRow: schema.locked ? null : _createRow,
                       onDuplicateRow: schema.locked ? null : _duplicateRow,
+                      onTrashRow: schema.locked ? null : _trashRow,
                       wrap: _wrap,
                       persistKey: widget.dbId,
                       subGroupBy: _query.subGroupBy,
