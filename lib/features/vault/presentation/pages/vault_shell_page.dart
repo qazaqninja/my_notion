@@ -21,6 +21,7 @@ import '../../../database/data/datasources/csv_importer.dart';
 import '../../data/html_page_importer.dart';
 import '../../data/opml_page_importer.dart';
 import '../../data/asana_csv_importer.dart';
+import '../../data/daily_note.dart';
 import '../../data/docx_page_importer.dart';
 import '../../data/enex_page_importer.dart';
 import '../../data/quick_capture.dart';
@@ -496,6 +497,23 @@ class _VaultShellPageState extends State<VaultShellPage> {
         );
       case 'Quick capture':
         await _openQuickCapture(context);
+      case "Open today's daily note":
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        try {
+          final result =
+              await DailyNote.openTodaysNote(Directory(vaultPath));
+          if (!result.alreadyExisted) {
+            vaultBloc.add(const ReindexVault());
+          }
+          if (!context.mounted) return;
+          GoRouter.of(context).go('/editor/${result.ulid}');
+        } catch (e) {
+          messenger?.showSnackBar(
+              SnackBar(content: Text('Daily note failed: $e')));
+        }
       case 'Toggle theme':
         await themeCubit.cycleMode();
       case 'Toggle compact mode':

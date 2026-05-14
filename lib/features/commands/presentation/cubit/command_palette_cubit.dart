@@ -201,6 +201,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
 
   static const _baseActions = <CommandEntry>[
     CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'Quick capture', hint: '⌘.'),
+    CommandEntry(group: CommandGroup.actions, icon: 'calendar', label: "Open today's daily note", hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'reveal', label: 'Reveal vault in Finder', hint: '⌘⇧R'),
     CommandEntry(group: CommandGroup.actions, icon: 'export', label: 'Export vault to folder', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'sync', label: 'Reindex vault', hint: '⌘R'),
