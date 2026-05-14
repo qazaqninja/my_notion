@@ -17,6 +17,7 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/data/daily_note.dart';
+import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/data/pdf_exporter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
@@ -284,6 +285,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
         PopupMenuItem(value: 'history', child: Text('Page history…')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
+        PopupMenuItem(value: 'export-html', child: Text('Export as .html…')),
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
         PopupMenuDivider(),
         PopupMenuItem(value: 'trash', child: Text('Move to trash')),
@@ -314,6 +316,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _showPageHistory(context, loaded);
       case 'export-md':
         await _exportPageAsMarkdown(context, loaded);
+      case 'export-html':
+        await _exportPageAsHtml(context, loaded);
       case 'print-page':
         await _printPage(context, loaded);
       case 'duplicate':
@@ -390,6 +394,36 @@ class _EditorBodyState extends State<_EditorBody> {
       );
     } catch (e) {
       messenger?.showSnackBar(SnackBar(content: Text('Print failed: $e')));
+    }
+  }
+
+  Future<void> _exportPageAsHtml(
+      BuildContext context, EditorLoaded loaded) async {
+    final safeName = loaded.page.title
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+        .trim();
+    final picked = await FilePicker.platform.saveFile(
+      dialogTitle: 'Export page as HTML…',
+      fileName: '${safeName.isEmpty ? 'page' : safeName}.html',
+      type: FileType.custom,
+      allowedExtensions: const ['html'],
+    );
+    if (picked == null) return;
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      final html = HtmlExporter.renderStandalonePage(
+        title: loaded.page.title,
+        body: loaded.page.body,
+      );
+      await File(picked).writeAsString(html);
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Exported to $picked')),
+      );
+    } catch (e) {
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
     }
   }
 

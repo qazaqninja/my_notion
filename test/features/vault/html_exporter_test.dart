@@ -104,4 +104,38 @@ void main() {
     await src.delete(recursive: true);
     await dest.delete(recursive: true);
   });
+
+  group('HtmlExporter.renderStandalonePage', () {
+    test('contains title, body and embedded CSS', () {
+      final html = HtmlExporter.renderStandalonePage(
+        title: 'Test',
+        body: '# Heading\n\nBody text.',
+      );
+      expect(html, contains('<title>Test</title>'));
+      expect(html, contains('class="page-title">Test</h1>'));
+      expect(html, contains('<h1>Heading</h1>'));
+      expect(html, contains('<p>Body text.</p>'));
+      // CSS inlined inside <style> tags rather than via stylesheet ref.
+      expect(html, contains('<style>'));
+      expect(html, contains('body { font:'));
+      expect(html, isNot(contains('rel="stylesheet"')));
+    });
+
+    test('downgrades wikilinks to non-link spans (no broken hrefs)', () {
+      final html = HtmlExporter.renderStandalonePage(
+        title: 'P',
+        body: 'See [[01HX0V9R5N6E8L3P7Q8S9U2X4B]].',
+      );
+      expect(html, contains('<span class="wikilink">'));
+      expect(html, isNot(contains('href="01HX0V9R5N6E8L3P7Q8S9U2X4B.html"')));
+    });
+
+    test('escapes < > & " in title attribute', () {
+      final html = HtmlExporter.renderStandalonePage(
+        title: 'A & B <c> "d"',
+        body: 'x',
+      );
+      expect(html, contains('<title>A &amp; B &lt;c&gt; &quot;d&quot;</title>'));
+    });
+  });
 }

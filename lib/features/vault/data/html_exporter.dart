@@ -108,6 +108,45 @@ $body
 ''';
   }
 
+  /// Renders a single page as a fully self-contained HTML document with
+  /// the site CSS inlined. Used by the editor's "Export as .html…" kebab
+  /// action so the produced file works offline without a sibling stylesheet.
+  /// Wikilinks are downgraded to non-link `<span class="wikilink">` pills
+  /// since their `<ULID>.html` siblings don't exist in a single-file export.
+  static String renderStandalonePage({
+    required String title,
+    required String body,
+  }) {
+    var html = markdownToHtml(body);
+    html = html.replaceAllMapped(
+      RegExp(r'<a class="wikilink" href="[0-9A-Z]{26}\.html">([^<]+)</a>'),
+      (m) => '<span class="wikilink">${m.group(1)}</span>',
+    );
+    return '''<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${_escapeAttr(title)}</title>
+<style>
+$_kSiteCss</style>
+</head>
+<body>
+<main>
+<h1 class="page-title">${_escapeAttr(title)}</h1>
+$html
+</main>
+</body>
+</html>
+''';
+  }
+
+  static String _escapeAttr(String s) => s
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
+
   static const _kSiteCss = '''
 body { font: 16px/1.6 -apple-system, system-ui, sans-serif; color: #2a2825;
        background: #faf7f0; margin: 0; }
