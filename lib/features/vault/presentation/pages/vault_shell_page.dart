@@ -296,6 +296,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘⇧P', 'Toggle properties panel'),
                 _kbRow(tokens, '⌘⌥R', 'Reveal current page in Finder'),
                 _kbRow(tokens, '⌘⇧W', 'Toggle full-width page'),
+                _kbRow(tokens, '⌘⇧D', 'Pin / unpin current page'),
                 _kbRow(tokens, '⌘Z', 'Undo last edit'),
                 _kbRow(tokens, '⌘⇧Z', 'Redo'),
                 _kbRow(tokens, '⌘A', 'Select all blocks (rendered mode)'),

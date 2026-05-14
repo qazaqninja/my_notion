@@ -393,6 +393,23 @@ class _EditorBodyState extends State<_EditorBody> {
     }
   }
 
+  void _togglePin(BuildContext context, EditorLoaded loaded) {
+    final vault = context.read<VaultBloc>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final ulid = loaded.page.ulid;
+    if (ulid.isEmpty) return;
+    final state = vault.state;
+    final wasPinned = state is VaultLoaded
+        ? state.workspace.favorites.contains(ulid)
+        : false;
+    vault.add(ToggleFavorite(ulid));
+    messenger?.showSnackBar(SnackBar(
+      content:
+          Text(wasPinned ? 'Unpinned from favorites' : 'Pinned to favorites'),
+      duration: const Duration(seconds: 2),
+    ));
+  }
+
   void _toggleFullWidth(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
     final fm = loaded.page.frontmatter;
@@ -485,6 +502,12 @@ class _EditorBodyState extends State<_EditorBody> {
             const SingleActivator(LogicalKeyboardKey.keyW,
                 control: true, shift: true): () =>
                 _toggleFullWidth(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyD,
+                meta: true, shift: true): () =>
+                _togglePin(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyD,
+                control: true, shift: true): () =>
+                _togglePin(context, loaded),
             // Cmd+Z / Ctrl+Z → undo last bloc-level edit. Native
             // TextField undo still wins inside text fields because the
             // field intercepts the keystroke before this Shortcuts
