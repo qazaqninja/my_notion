@@ -100,6 +100,7 @@ class HomePage extends StatelessWidget {
                 ]),
                 if (state is VaultLoaded) ...[
                   const SizedBox(height: 36),
+                  _Pinboard(favorites: state.workspace.favorites),
                   const _UpcomingReminders(),
                   const _RecentlyEdited(),
                 ],
@@ -155,6 +156,163 @@ class HomePage extends StatelessWidget {
       duration: Duration(seconds: 3),
     ));
   }
+}
+
+/// Tile grid of the user's pinned pages (`.quill.yaml` `favorites:`).
+/// Each tile shows the page title + relative path; tapping opens the
+/// editor. Hidden when no favorites are pinned. Rendered above
+/// "Upcoming reminders" and "Recently edited" so the user's chosen
+/// pages get the top slot.
+class _Pinboard extends StatefulWidget {
+  const _Pinboard({required this.favorites});
+  final List<String> favorites;
+
+  @override
+  State<_Pinboard> createState() => _PinboardState();
+}
+
+class _PinboardState extends State<_Pinboard> {
+  late Future<List<_PinEntry>> _entries;
+
+  @override
+  void initState() {
+    super.initState();
+    _entries = _load();
+  }
+
+  @override
+  void didUpdateWidget(_Pinboard old) {
+    super.didUpdateWidget(old);
+    if (!_sameList(old.favorites, widget.favorites)) {
+      _entries = _load();
+    }
+  }
+
+  static bool _sameList(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
+
+  Future<List<_PinEntry>> _load() async {
+    if (widget.favorites.isEmpty) return const [];
+    final db = context.read<QuillDatabase>();
+    final ulidSet = widget.favorites.toSet();
+    final rows = await (db.select(db.pages)
+          ..where((p) => p.ulid.isIn(ulidSet.toList())))
+        .get();
+    final byUlid = {for (final r in rows) r.ulid: r};
+    return [
+      for (final u in widget.favorites)
+        if (byUlid[u] != null)
+          _PinEntry(
+            ulid: u,
+            title: byUlid[u]!.title,
+            relativePath: byUlid[u]!.relativePath,
+          ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return FutureBuilder<List<_PinEntry>>(
+      future: _entries,
+      builder: (context, snap) {
+        final list = snap.data ?? const [];
+        if (list.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 36),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PINBOARD',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                  color: tokens.text3,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final e in list)
+                    GestureDetector(
+                      onTap: () => context.go('/editor/${e.ulid}'),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: Container(
+                          width: 220,
+                          padding:
+                              const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                          decoration: BoxDecoration(
+                            color: tokens.surface,
+                            border: Border.all(
+                                color: tokens.divider2, width: 0.5),
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(6)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  QuillIcon('star',
+                                      size: 12,
+                                      strokeWidth: 1.7,
+                                      color: tokens.accent),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      e.title,
+                                      style: TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: tokens.text,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                e.relativePath,
+                                style: mono(
+                                    fontSize: 11, color: tokens.text3),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PinEntry {
+  const _PinEntry({
+    required this.ulid,
+    required this.title,
+    required this.relativePath,
+  });
+  final String ulid;
+  final String title;
+  final String relativePath;
 }
 
 /// Shows pages whose frontmatter `reminder:` date is within the next 7
