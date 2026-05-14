@@ -101,6 +101,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
               setState(() => _sidebarCollapsed = !_sidebarCollapsed),
           const SingleActivator(LogicalKeyboardKey.backslash, control: true): () =>
               setState(() => _sidebarCollapsed = !_sidebarCollapsed),
+          const SingleActivator(LogicalKeyboardKey.bracketLeft, meta: true): () =>
+              _navigateBack(context),
+          const SingleActivator(LogicalKeyboardKey.bracketLeft, control: true): () =>
+              _navigateBack(context),
         },
         child: Focus(
           focusNode: _rootFocus,
@@ -177,6 +181,13 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  void _navigateBack(BuildContext context) {
+    final router = GoRouter.of(context);
+    if (router.canPop()) {
+      router.pop();
+    }
+  }
+
   Future<void> _showShortcuts(BuildContext context) async {
     if (!context.mounted) return;
     final tokens = QuillTokens.of(context);
@@ -206,6 +217,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘R', 'Reindex vault'),
                 _kbRow(tokens, '⌘⇧R', 'Reveal vault in Finder'),
                 _kbRow(tokens, '⌘\\', 'Toggle sidebar'),
+                _kbRow(tokens, '⌘[', 'Back'),
                 _kbRow(tokens, '?', 'This shortcut list'),
                 const SizedBox(height: 10),
                 _kbSection(tokens, 'Editor'),
