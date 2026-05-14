@@ -374,12 +374,31 @@ class _EditableCellState extends State<_EditableCell> {
       widget.onCommit(on ? 'false' : 'true');
       return;
     }
+    if (widget.column.type == ColumnType.date) {
+      _pickDate();
+      return;
+    }
     setState(() => _editing = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focus.requestFocus();
       _ctl.selection =
           TextSelection(baseOffset: 0, extentOffset: _ctl.text.length);
     });
+  }
+
+  Future<void> _pickDate() async {
+    final initial = DateTime.tryParse('${widget.value ?? ''}'.trim()) ??
+        DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null) return;
+    final iso =
+        '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+    await widget.onCommit(iso);
   }
 
   Future<void> _commit() async {
