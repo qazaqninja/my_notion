@@ -211,7 +211,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
             label: 'Workspace',
             actionIcon: 'plus',
             onAction:
-                state is VaultLoaded ? () => _promptNewPage(context) : null,
+                state is VaultLoaded ? () => _promptNewAtRoot(context) : null,
           ),
           if (state is VaultLoaded)
             _TreeFilterField(controller: _treeFilter),
@@ -275,6 +275,62 @@ class _SidebarWidgetState extends State<SidebarWidget> {
     await next.save(Directory(state.rootPath));
     if (!context.mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
+  }
+
+  Future<void> _promptNewAtRoot(BuildContext context) async {
+    final kind = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return SimpleDialog(
+          title: const Text('New at vault root'),
+          children: [
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, 'page'),
+              child: const Text('New page'),
+            ),
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, 'folder'),
+              child: const Text('New folder'),
+            ),
+          ],
+        );
+      },
+    );
+    if (kind == null || !context.mounted) return;
+    if (kind == 'page') {
+      await _promptNewPage(context);
+    } else if (kind == 'folder') {
+      await _promptNewFolderAtRoot(context);
+    }
+  }
+
+  Future<void> _promptNewFolderAtRoot(BuildContext context) async {
+    final controller = TextEditingController();
+    final bloc = context.read<VaultBloc>();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New folder'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Folder name'),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+    if (name == null || name.trim().isEmpty) return;
+    bloc.add(CreateFolder(parentFolder: '', name: name.trim()));
   }
 
   Future<void> _promptNewPage(BuildContext context) async {
