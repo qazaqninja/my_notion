@@ -88,6 +88,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
           const SingleActivator(LogicalKeyboardKey.keyR, control: true, shift: true): () {
             _invokeAction(context, 'Reveal vault in Finder');
           },
+          const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () =>
+              _newPage(context),
+          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
+              _newPage(context),
         },
         child: Focus(
           focusNode: _rootFocus,
@@ -140,6 +144,41 @@ class _VaultShellPageState extends State<VaultShellPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _newPage(BuildContext context) async {
+    final vaultBloc = context.read<VaultBloc>();
+    if (vaultBloc.state is! VaultLoaded) return;
+    final router = GoRouter.of(context);
+    final controller = TextEditingController();
+    final title = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New page'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Title'),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.of(ctx).pop(controller.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+    if (title == null || title.trim().isEmpty) return;
+    vaultBloc.add(CreatePage(
+      title: title.trim(),
+      onCreated: (ulid) => router.go('/editor/$ulid'),
+    ));
   }
 
   Future<void> _invokeAction(BuildContext context, String label) async {
