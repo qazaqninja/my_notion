@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/page_icon.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
@@ -69,6 +70,34 @@ bool _isFullWidth(dynamic frontmatter) {
 
 class _EditorBodyState extends State<_EditorBody> {
   bool _propertiesOpen = false;
+
+  Future<void> _pickIcon(BuildContext context, EditorLoaded loaded) async {
+    final bloc = context.read<EditorBloc>();
+    final picked = await pickEmoji(context);
+    if (picked == null) return; // dismissed without choosing
+    final fm = loaded.page.frontmatter;
+    final existing = fm.find('icon');
+    if (picked.isEmpty) {
+      // "Clear" — remove the icon entry entirely.
+      if (existing != null) {
+        bloc.add(const RemoveFrontmatterField('icon'));
+      }
+      return;
+    }
+    if (existing == null) {
+      bloc.add(AddFrontmatterField(FrontmatterEntry(
+        key: 'icon',
+        rawScalar: picked,
+        type: FrontmatterType.text,
+        value: picked,
+      )));
+    } else {
+      bloc.add(EditFrontmatterField(
+        'icon',
+        existing.copyWith(rawScalar: picked, value: picked),
+      ));
+    }
+  }
 
   void _toggleLock(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
@@ -227,16 +256,27 @@ class _EditorBodyState extends State<_EditorBody> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 22, right: 12),
-                                    child: PageIcon(
-                                      iconValue: page.frontmatter.get('icon') is String
-                                          ? page.frontmatter.get('icon') as String
-                                          : null,
-                                      size: 28,
-                                      vaultRoot: context.read<VaultBloc>().state is VaultLoaded
-                                          ? (context.read<VaultBloc>().state as VaultLoaded).rootPath
-                                          : null,
+                                  GestureDetector(
+                                    onTap: locked
+                                        ? null
+                                        : () => _pickIcon(context, loaded),
+                                    child: MouseRegion(
+                                      cursor: locked
+                                          ? SystemMouseCursors.basic
+                                          : SystemMouseCursors.click,
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 22, right: 12),
+                                        child: PageIcon(
+                                          iconValue: page.frontmatter.get('icon') is String
+                                              ? page.frontmatter.get('icon') as String
+                                              : null,
+                                          size: 28,
+                                          vaultRoot: context.read<VaultBloc>().state is VaultLoaded
+                                              ? (context.read<VaultBloc>().state as VaultLoaded).rootPath
+                                              : null,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   Expanded(child: PageTitleField(title: page.title)),
