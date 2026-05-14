@@ -340,6 +340,20 @@ class _SourceViewState extends State<SourceView> {
           selection:
               TextSelection.collapsed(offset: stripStart + snippet.length),
         );
+      case SlashAction.insertTimestamp:
+        final now = DateTime.now();
+        final yyyy = now.year.toString().padLeft(4, '0');
+        final mm = now.month.toString().padLeft(2, '0');
+        final dd = now.day.toString().padLeft(2, '0');
+        final hh = now.hour.toString().padLeft(2, '0');
+        final mi = now.minute.toString().padLeft(2, '0');
+        final snippet = '$yyyy-$mm-$dd $hh:$mi';
+        final newText = text.replaceRange(stripStart, caret, snippet);
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection:
+              TextSelection.collapsed(offset: stripStart + snippet.length),
+        );
     }
   }
 

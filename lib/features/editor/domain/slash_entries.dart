@@ -1,6 +1,6 @@
 /// Some entries trigger an async UI flow (file picker, etc.) rather than
 /// inserting a literal snippet. The source view dispatches based on [action].
-enum SlashAction { insertSnippet, pickImage, insertToday }
+enum SlashAction { insertSnippet, pickImage, insertToday, insertTimestamp }
 
 /// Entries shown by the slash command menu. Each entry carries:
 /// - [icon]: QuillIcon name
@@ -205,6 +205,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '@today',
     action: SlashAction.insertToday,
     keywords: ['today', 'date', 'now', '@'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Current time',
+    hint: '@now',
+    action: SlashAction.insertTimestamp,
+    keywords: ['now', 'time', 'timestamp', 'date'],
   ),
 ];
 
