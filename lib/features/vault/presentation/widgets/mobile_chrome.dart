@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 
 /// Bottom tab bar — matches `mobile.jsx`'s TabBar (Home / Editor / Bases /
 /// Search).
@@ -13,6 +15,8 @@ class MobileTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final route = GoRouterState.of(context).matchedLocation;
+    // Mobile editor pane uses /home as its idle/landing surface.
+    void goHome() => context.go('/home');
     return Container(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
       decoration: BoxDecoration(
@@ -21,10 +25,37 @@ class MobileTabBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Tab(icon: 'home', label: 'Home', active: route == '/home', onTap: () => context.go('/home')),
-          _Tab(icon: 'file-md', label: 'Editor', active: route.startsWith('/editor')),
-          _Tab(icon: 'database', label: 'Bases', active: route.startsWith('/db')),
-          _Tab(icon: 'search', label: 'Search', active: false),
+          _Tab(
+            icon: 'home',
+            label: 'Home',
+            active: route == '/home',
+            onTap: goHome,
+          ),
+          _Tab(
+            icon: 'file-md',
+            label: 'Editor',
+            active: route.startsWith('/editor'),
+            onTap: route.startsWith('/editor') ? null : goHome,
+          ),
+          _Tab(
+            icon: 'database',
+            label: 'Bases',
+            active: route.startsWith('/db'),
+            onTap: () {
+              // Open the palette filtered to databases — picking one
+              // navigates to /db/<id>. Cheap discovery without needing
+              // a dedicated "all databases" page yet.
+              final cubit = context.read<CommandPaletteCubit>();
+              cubit.open();
+              cubit.setQuery('database ');
+            },
+          ),
+          _Tab(
+            icon: 'search',
+            label: 'Search',
+            active: false,
+            onTap: () => context.read<CommandPaletteCubit>().open(),
+          ),
         ],
       ),
     );
