@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'accent.dart';
 import 'quill_tokens.dart';
@@ -77,10 +76,8 @@ ThemeData makeTheme(Brightness brightness, AccentKey accentKey) {
   final isDark = brightness == Brightness.dark;
   final base = isDark ? ThemeData.dark(useMaterial3: true) : ThemeData.light(useMaterial3: true);
 
-  final interTheme = GoogleFonts.interTextTheme(base.textTheme).apply(
-    bodyColor: tokens.text,
-    displayColor: tokens.text,
-  );
+  final interTheme = base.textTheme
+      .apply(fontFamily: 'Inter', bodyColor: tokens.text, displayColor: tokens.text);
 
   return base.copyWith(
     brightness: brightness,
@@ -105,7 +102,8 @@ ThemeData makeTheme(Brightness brightness, AccentKey accentKey) {
 /// Convenience for monospace fonts — design uses JetBrains Mono for ULIDs,
 /// file paths, frontmatter keys, code blocks, cell numbers, and Kbd chips.
 TextStyle mono({double? fontSize, FontWeight? fontWeight, Color? color, double? letterSpacing}) {
-  return GoogleFonts.jetBrainsMono(
+  return TextStyle(
+    fontFamily: 'JetBrainsMono',
     fontSize: fontSize,
     fontWeight: fontWeight,
     color: color,
