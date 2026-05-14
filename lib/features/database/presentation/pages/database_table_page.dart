@@ -15,6 +15,7 @@ import '../../../../shared/widgets/segment.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
 import '../../data/datasources/csv_exporter.dart';
@@ -147,6 +148,26 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         SnackBar(content: Text('Cell update failed: $e')),
       );
     }
+  }
+
+  void _duplicateRow(DatabasePageRow row) {
+    final schema = _schema;
+    if (schema == null) return;
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    context.read<VaultBloc>().add(DuplicatePage(
+          row.ulid,
+          targetFolder: schema.folderPath,
+          onCreated: (newUlid) {
+            messenger?.showSnackBar(
+              const SnackBar(
+                content: Text('Row duplicated'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+            router.go('/editor/$newUlid');
+          },
+        ));
   }
 
   Future<void> _createRow() async {
@@ -302,6 +323,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       onOpenPage: (row) => context.go('/editor/${row.ulid}'),
                       onEditCell: _editCell,
                       onCreateRow: _createRow,
+                      onDuplicateRow: _duplicateRow,
                       wrap: _wrap,
                       persistKey: widget.dbId,
                     ),

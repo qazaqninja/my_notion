@@ -100,6 +100,7 @@ class FrozenColumnTable extends StatefulWidget {
     required this.onOpenPage,
     this.onEditCell,
     this.onCreateRow,
+    this.onDuplicateRow,
     this.wrap = false,
     this.persistKey,
   });
@@ -107,6 +108,10 @@ class FrozenColumnTable extends StatefulWidget {
   final DatabaseSchema schema;
   final List<DatabasePageRow> rows;
   final void Function(DatabasePageRow row) onOpenPage;
+
+  /// Optional duplicate-row callback. When set, the row context menu
+  /// gains a Duplicate item.
+  final void Function(DatabasePageRow row)? onDuplicateRow;
 
   /// When set, cells in editable types become click-to-edit.
   final Future<void> Function(DatabasePageRow row, ColumnDef column, Object? newValue)? onEditCell;
@@ -485,10 +490,12 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
         globalPos.dx,
         0,
       ),
-      items: const [
-        PopupMenuItem(value: 'open', child: Text('Open page')),
-        PopupMenuItem(value: 'copy-link',
-            child: Text('Copy [[link]]')),
+      items: [
+        const PopupMenuItem(value: 'open', child: Text('Open page')),
+        const PopupMenuItem(
+            value: 'copy-link', child: Text('Copy [[link]]')),
+        if (widget.onDuplicateRow != null)
+          const PopupMenuItem(value: 'duplicate', child: Text('Duplicate row')),
       ],
     );
     if (action == null || !context.mounted) return;
@@ -504,6 +511,8 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
             duration: const Duration(seconds: 2),
           ),
         );
+      case 'duplicate':
+        widget.onDuplicateRow?.call(row);
     }
   }
 
