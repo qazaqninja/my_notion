@@ -29,3 +29,10 @@ class ToggleFolder extends VaultEvent {
 class ReindexVault extends VaultEvent {
   const ReindexVault();
 }
+
+/// Fired by the [VaultWatcher] when external changes are detected on disk.
+/// Triggers an in-place reindex that keeps the same [VaultLoaded] state
+/// (no `VaultLoading` flash) and preserves expandedFolders.
+class RefreshFromDisk extends VaultEvent {
+  const RefreshFromDisk();
+}

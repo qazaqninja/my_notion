@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -7,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../data/indexer.dart';
+import '../../data/vault_watcher.dart';
 import '../../domain/entities/vault_tree.dart';
 import '../../domain/repositories/vault_repository.dart';
 import 'vault_event.dart';
@@ -17,8 +19,10 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     required VaultRepository repo,
     required Indexer indexer,
     required QuillDatabase db,
+    VaultWatcher? watcher,
   })  : _indexer = indexer,
         _db = db,
+        _watcher = watcher ?? VaultWatcher(),
         super(const VaultInitial()) {
     // ignore: unused_local_variable
     final _ = repo; // repo passed in for future use cases (M5+)
@@ -26,10 +30,21 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<LoadFromPath>(_onLoad);
     on<ToggleFolder>(_onToggle);
     on<ReindexVault>(_onReindex);
+    on<RefreshFromDisk>(_onRefresh);
+    _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
   }
 
   final Indexer _indexer;
   final QuillDatabase _db;
+  final VaultWatcher _watcher;
+  StreamSubscription<void>? _watchSub;
+
+  @override
+  Future<void> close() async {
+    await _watchSub?.cancel();
+    await _watcher.dispose();
+    return super.close();
+  }
 
   static const _prefVaultPath = 'vault.path';
 
@@ -64,6 +79,8 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         expandedFolders: _expandTopLevel(tree),
         pageCount: count,
       ));
+      // (Re-)start the watcher pointed at the freshly-loaded vault.
+      await _watcher.watch(dir);
     } catch (err, _) {
       // If we hit a PathAccessException during an auto-restore, the saved
       // path is no longer accessible to the sandbox (the security-scoped
@@ -99,6 +116,24 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     if (state is! VaultLoaded) return;
     final loaded = state as VaultLoaded;
     add(LoadFromPath(loaded.rootPath));
+  }
+
+  /// In-place refresh. Unlike [LoadFromPath], does NOT emit VaultLoading,
+  /// keeps expandedFolders, and is robust to transient FS errors (e.g. a
+  /// half-rendered rename event from the watcher).
+  Future<void> _onRefresh(RefreshFromDisk e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final dir = Directory(loaded.rootPath);
+    if (!dir.existsSync()) return;
+    try {
+      await _indexer.reindex(dir);
+      final tree = await _buildTree(dir);
+      final count = (await _db.select(_db.pages).get()).length;
+      emit(loaded.copyWith(tree: tree, pageCount: count));
+    } catch (_) {
+      // Swallow — the next watcher tick (or manual reindex) will retry.
+    }
   }
 
   /// Tries to restore the last-opened vault. Returns false if none stored.
