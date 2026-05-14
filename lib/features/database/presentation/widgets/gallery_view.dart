@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/image_placeholder.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/segment.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
@@ -16,8 +18,48 @@ import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
 
+enum GalleryCardSize { small, medium, large }
+
+class _CardMetrics {
+  const _CardMetrics({
+    required this.cardWidth,
+    required this.cardHeight,
+    required this.coverHeight,
+    required this.titleSize,
+  });
+  final double cardWidth;
+  final double cardHeight;
+  final double coverHeight;
+  final double titleSize;
+
+  static const _small = _CardMetrics(
+    cardWidth: 180,
+    cardHeight: 150,
+    coverHeight: 60,
+    titleSize: 12.5,
+  );
+  static const _medium = _CardMetrics(
+    cardWidth: 260,
+    cardHeight: 220,
+    coverHeight: 92,
+    titleSize: 13.5,
+  );
+  static const _large = _CardMetrics(
+    cardWidth: 340,
+    cardHeight: 300,
+    coverHeight: 140,
+    titleSize: 14.5,
+  );
+
+  static _CardMetrics forSize(GalleryCardSize s) => switch (s) {
+        GalleryCardSize.small => _small,
+        GalleryCardSize.medium => _medium,
+        GalleryCardSize.large => _large,
+      };
+}
+
 /// Card-grid view of a database. Matches `altviews.jsx:46-95`.
-class GalleryView extends StatelessWidget {
+class GalleryView extends StatefulWidget {
   const GalleryView({
     super.key,
     required this.schema,
@@ -28,25 +70,105 @@ class GalleryView extends StatelessWidget {
   final List<DatabasePageRow> rows;
 
   @override
+  State<GalleryView> createState() => _GalleryViewState();
+}
+
+class _GalleryViewState extends State<GalleryView> {
+  GalleryCardSize _size = GalleryCardSize.medium;
+
+  String get _prefsKey => 'gallery.cardSize.${widget.schema.id}';
+
+  @override
+  void initState() {
+    super.initState();
+    _hydrate();
+  }
+
+  Future<void> _hydrate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (!mounted) return;
+    setState(() {
+      _size = switch (raw) {
+        'small' => GalleryCardSize.small,
+        'large' => GalleryCardSize.large,
+        _ => GalleryCardSize.medium,
+      };
+    });
+  }
+
+  Future<void> _setSize(GalleryCardSize next) async {
+    setState(() => _size = next);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, next.name);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(24),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 260,
-        mainAxisExtent: 220,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-      ),
-      itemCount: rows.length,
-      itemBuilder: (context, i) => _Card(row: rows[i], schema: schema),
+    final tokens = QuillTokens.of(context);
+    final m = _CardMetrics.forSize(_size);
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+          child: Row(
+            children: [
+              const Spacer(),
+              Text('Card size',
+                  style: TextStyle(fontSize: 11, color: tokens.text3)),
+              const SizedBox(width: 8),
+              Segment<GalleryCardSize>(
+                value: _size,
+                onChanged: (next) => _setSize(next),
+                options: const [
+                  SegmentOption(
+                      value: GalleryCardSize.small,
+                      label: 'S',
+                      icon: 'gallery'),
+                  SegmentOption(
+                      value: GalleryCardSize.medium,
+                      label: 'M',
+                      icon: 'gallery'),
+                  SegmentOption(
+                      value: GalleryCardSize.large,
+                      label: 'L',
+                      icon: 'gallery'),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(24),
+            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: m.cardWidth,
+              mainAxisExtent: m.cardHeight,
+              mainAxisSpacing: 14,
+              crossAxisSpacing: 14,
+            ),
+            itemCount: widget.rows.length,
+            itemBuilder: (context, i) => _Card(
+              row: widget.rows[i],
+              schema: widget.schema,
+              metrics: m,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
 class _Card extends StatelessWidget {
-  const _Card({required this.row, required this.schema});
+  const _Card({
+    required this.row,
+    required this.schema,
+    required this.metrics,
+  });
   final DatabasePageRow row;
   final DatabaseSchema schema;
+  final _CardMetrics metrics;
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +194,7 @@ class _Card extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-                child: _coverFor(context, row),
+                child: _coverFor(context, row, metrics.coverHeight),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 11),
@@ -86,7 +208,7 @@ class _Card extends StatelessWidget {
                         child: Text(
                           row.title,
                           style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: metrics.titleSize,
                             fontWeight: FontWeight.w600,
                             color: tokens.text,
                           ),
@@ -123,19 +245,19 @@ class _Card extends StatelessWidget {
   }
 
   /// Cover image strip for a card. Reads the row's `cover:` frontmatter
-  /// — http(s) URL or vault-relative path — and renders 92px cover-fit.
-  /// Falls back to the existing labelled placeholder.
-  Widget _coverFor(BuildContext context, DatabasePageRow row) {
+  /// — http(s) URL or vault-relative path — and renders [height]px
+  /// cover-fit. Falls back to the existing labelled placeholder.
+  Widget _coverFor(BuildContext context, DatabasePageRow row, double height) {
     final raw = '${row.cells['cover'] ?? ''}'.trim();
     if (raw.isEmpty) {
       return ImagePlaceholder(
-          label: 'cover · ${row.title.toLowerCase()}', height: 92);
+          label: 'cover · ${row.title.toLowerCase()}', height: height);
     }
     final placeholder = ImagePlaceholder(
-        label: 'cover · ${row.title.toLowerCase()}', height: 92);
+        label: 'cover · ${row.title.toLowerCase()}', height: height);
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
       return Image.network(raw,
-          height: 92,
+          height: height,
           width: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => placeholder);
@@ -144,7 +266,7 @@ class _Card extends StatelessWidget {
     if (state is! VaultLoaded) return placeholder;
     final resolved = raw.startsWith('/') ? raw : '${state.rootPath}/$raw';
     return Image.file(File(resolved),
-        height: 92,
+        height: height,
         width: double.infinity,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => placeholder);
