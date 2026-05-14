@@ -10,6 +10,7 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../../shared/widgets/status_dot.dart';
+import '../../../../shared/widgets/person_chip.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../../shared/theme/accent.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
@@ -18,6 +19,7 @@ import '../../../../shared/theme/theme_cubit.dart';
 import '../../../vault/data/exporter.dart';
 import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/pdf_exporter.dart';
+import '../../../vault/data/workspace_config.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
@@ -84,6 +86,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (_active == 'theme') return _appearancePane(tokens);
     if (_active == 'export') return _exportPane(tokens);
     if (_active == 'advanced') return _advancedPane(tokens);
+    if (_active == 'users') return _usersPane(tokens);
 
     final state = context.watch<VaultBloc>().state;
     final vaultPath = state is VaultLoaded ? state.rootPath : '(no vault opened)';
@@ -358,6 +361,92 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ],
     );
+  }
+
+  Widget _usersPane(QuillTokens tokens) {
+    final state = context.watch<VaultBloc>().state;
+    final loaded = state is VaultLoaded;
+    final users = loaded ? state.workspace.users : const <WorkspaceUser>[];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Users',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: tokens.text,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: 600,
+          child: Text(
+            'Names referenced by `person` columns + auto-stamped into '
+            '`created_by:` and `last_edited_by:` on save. Stored in '
+            '.quill.yaml `users:` — no network, no identity provider.',
+            style:
+                TextStyle(fontSize: 13.5, color: tokens.text3, height: 1.55),
+          ),
+        ),
+        const SizedBox(height: 28),
+        _sectionLabel(tokens, 'Local users'),
+        if (!loaded)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'Open a vault to manage its users.',
+              style: TextStyle(fontSize: 13, color: tokens.text3),
+            ),
+          )
+        else ...[
+          for (final u in users)
+            _UserRow(
+              user: u,
+              tokens: tokens,
+              onSetDefault: () => _setDefaultUser(state, u.name),
+              onRemove: () => _removeUser(state, u.name),
+            ),
+          const SizedBox(height: 12),
+          _AddUserField(onAdd: (name) => _addUser(state, name)),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _addUser(VaultLoaded state, String rawName) async {
+    final name = rawName.trim();
+    if (name.isEmpty) return;
+    if (state.workspace.users.any((u) => u.name == name)) return;
+    final next = state.workspace.copyWith(users: [
+      ...state.workspace.users,
+      WorkspaceUser(name: name),
+    ]);
+    await next.save(Directory(state.rootPath));
+    if (!mounted) return;
+    context.read<VaultBloc>().add(const RefreshFromDisk());
+  }
+
+  Future<void> _removeUser(VaultLoaded state, String name) async {
+    final next = state.workspace.copyWith(
+      users: [for (final u in state.workspace.users) if (u.name != name) u],
+    );
+    await next.save(Directory(state.rootPath));
+    if (!mounted) return;
+    context.read<VaultBloc>().add(const RefreshFromDisk());
+  }
+
+  Future<void> _setDefaultUser(VaultLoaded state, String name) async {
+    final next = state.workspace.copyWith(
+      users: [
+        for (final u in state.workspace.users)
+          u.copyWith(isDefault: u.name == name),
+      ],
+    );
+    await next.save(Directory(state.rootPath));
+    if (!mounted) return;
+    context.read<VaultBloc>().add(const RefreshFromDisk());
   }
 
   Widget _exportPane(QuillTokens tokens) {
@@ -1081,6 +1170,147 @@ class _MemberRow extends StatelessWidget {
           TagChip(label: role, color: color),
         ],
       ),
+    );
+  }
+}
+
+/// One user row in the Settings → Users pane. Avatar + name + "default"
+/// pill if the user is marked default; trailing buttons to flip the
+/// default flag and to remove the user.
+class _UserRow extends StatelessWidget {
+  const _UserRow({
+    required this.user,
+    required this.tokens,
+    required this.onSetDefault,
+    required this.onRemove,
+  });
+  final WorkspaceUser user;
+  final QuillTokens tokens;
+  final VoidCallback onSetDefault;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: tokens.divider, width: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          PersonChip(name: user.name),
+          if (user.email != null) ...[
+            const SizedBox(width: 10),
+            Text(user.email!,
+                style: mono(fontSize: 11, color: tokens.text3)),
+          ],
+          const Spacer(),
+          if (user.isDefault)
+            Container(
+              margin: const EdgeInsets.only(right: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: tokens.accent.withValues(alpha: 0.16),
+                borderRadius:
+                    const BorderRadius.all(Radius.circular(3)),
+              ),
+              child: Text(
+                'default',
+                style: mono(fontSize: 10, color: tokens.accent),
+              ),
+            )
+          else
+            TextButton(
+              onPressed: onSetDefault,
+              style: TextButton.styleFrom(
+                foregroundColor: tokens.text2,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                visualDensity: VisualDensity.compact,
+              ),
+              child: const Text('Make default',
+                  style: TextStyle(fontSize: 11.5)),
+            ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(2),
+            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+            tooltip: 'Remove',
+            onPressed: onRemove,
+            icon: Icon(Icons.close, size: 14, color: tokens.text3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddUserField extends StatefulWidget {
+  const _AddUserField({required this.onAdd});
+  final void Function(String name) onAdd;
+
+  @override
+  State<_AddUserField> createState() => _AddUserFieldState();
+}
+
+class _AddUserFieldState extends State<_AddUserField> {
+  final _ctl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _ctl.text.trim();
+    if (name.isEmpty) return;
+    widget.onAdd(name);
+    _ctl.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return Row(
+      children: [
+        SizedBox(
+          width: 240,
+          child: TextField(
+            controller: _ctl,
+            onSubmitted: (_) => _submit(),
+            style: TextStyle(fontSize: 13, color: tokens.text),
+            decoration: InputDecoration(
+              isCollapsed: true,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              hintText: 'Add a user…',
+              hintStyle: TextStyle(fontSize: 12.5, color: tokens.text3),
+              border: OutlineInputBorder(
+                borderSide: BorderSide(color: tokens.divider2),
+                borderRadius: const BorderRadius.all(Radius.circular(4)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: tokens.divider2),
+                borderRadius: const BorderRadius.all(Radius.circular(4)),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        TextButton(
+          onPressed: _submit,
+          style: TextButton.styleFrom(
+            foregroundColor: tokens.accent,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          ),
+          child: const Text('Add', style: TextStyle(fontSize: 12.5)),
+        ),
+      ],
     );
   }
 }
