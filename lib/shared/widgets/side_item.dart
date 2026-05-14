@@ -125,18 +125,22 @@ class _SideItemState extends State<SideItem> {
                 const SizedBox(width: 6),
               ],
               Expanded(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: fs,
-                    fontWeight:
-                        widget.active ? FontWeight.w500 : FontWeight.w400,
-                    height: 1.3,
+                child: Tooltip(
+                  message: widget.label,
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: fs,
+                      fontWeight:
+                          widget.active ? FontWeight.w500 : FontWeight.w400,
+                      height: 1.3,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    softWrap: false,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  softWrap: false,
                 ),
               ),
               if (_hover && widget.trailingOnHover != null)
