@@ -288,6 +288,8 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'export-html', child: Text('Export as .html…')),
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
         PopupMenuDivider(),
+        PopupMenuItem(value: 'set-reminder', child: Text('Set reminder…')),
+        PopupMenuDivider(),
         PopupMenuItem(value: 'trash', child: Text('Move to trash')),
         PopupMenuItem(value: 'reindex', child: Text('Reindex vault')),
       ],
@@ -320,6 +322,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _exportPageAsHtml(context, loaded);
       case 'print-page':
         await _printPage(context, loaded);
+      case 'set-reminder':
+        await _setReminder(context, loaded);
       case 'duplicate':
         final router = GoRouter.of(context);
         context.read<VaultBloc>().add(DuplicatePage(
@@ -395,6 +399,48 @@ class _EditorBodyState extends State<_EditorBody> {
     } catch (e) {
       messenger?.showSnackBar(SnackBar(content: Text('Print failed: $e')));
     }
+  }
+
+  Future<void> _setReminder(
+      BuildContext context, EditorLoaded loaded) async {
+    final fm = loaded.page.frontmatter;
+    final existing = fm.find('reminder');
+    final now = DateTime.now();
+    DateTime initial = DateTime(now.year, now.month, now.day);
+    if (existing != null) {
+      final parsed = DateTime.tryParse(existing.rawScalar);
+      if (parsed != null) initial = parsed;
+    }
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 5),
+      helpText: 'Set page reminder',
+    );
+    if (picked == null) return;
+    if (!context.mounted) return;
+    final iso =
+        '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+    final bloc = context.read<EditorBloc>();
+    if (existing == null) {
+      bloc.add(AddFrontmatterField(FrontmatterEntry(
+        key: 'reminder',
+        rawScalar: iso,
+        type: FrontmatterType.date,
+        value: iso,
+      )));
+    } else {
+      bloc.add(EditFrontmatterField(
+        'reminder',
+        existing.copyWith(rawScalar: iso, value: iso),
+      ));
+    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      SnackBar(content: Text('Reminder set for $iso'),
+          duration: const Duration(seconds: 2)),
+    );
   }
 
   Future<void> _exportPageAsHtml(

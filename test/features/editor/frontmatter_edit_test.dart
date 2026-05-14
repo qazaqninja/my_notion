@@ -138,5 +138,31 @@ void main() {
       final parsed = FrontmatterParser.parse(raw);
       expect(parsed.frontmatter.get('count'), equals(42));
     });
+
+    test('reminder date — added as ISO YYYY-MM-DD round-trips', () {
+      final original = Frontmatter(entries: const [
+        FrontmatterEntry(
+            key: 'id',
+            rawScalar: '01HX0V9R5N6E8L3P7Q8S9U2X4B',
+            type: FrontmatterType.ulid,
+            value: '01HX0V9R5N6E8L3P7Q8S9U2X4B'),
+        FrontmatterEntry(
+            key: 'title', rawScalar: 'P', type: FrontmatterType.text, value: 'P'),
+      ]);
+      final mutated = Frontmatter(entries: [
+        ...original.entries,
+        const FrontmatterEntry(
+            key: 'reminder',
+            rawScalar: '2026-06-01',
+            type: FrontmatterType.date,
+            value: '2026-06-01'),
+      ]);
+      final raw =
+          FrontmatterParser.serialise(ParsedMarkdown(frontmatter: mutated, body: ''));
+      expect(raw, contains('reminder: 2026-06-01'));
+      final parsed = FrontmatterParser.parse(raw);
+      expect(parsed.frontmatter.keys, equals(['id', 'title', 'reminder']));
+      expect(parsed.frontmatter.get('reminder'), equals('2026-06-01'));
+    });
   });
 }
