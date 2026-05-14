@@ -130,6 +130,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
               context.go('/settings'),
           const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
               context.go('/settings'),
+          const SingleActivator(LogicalKeyboardKey.keyH, meta: true): () =>
+              context.go('/home'),
+          const SingleActivator(LogicalKeyboardKey.keyH, control: true): () =>
+              context.go('/home'),
         },
         child: Focus(
           focusNode: _rootFocus,
@@ -257,6 +261,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘\\', 'Toggle sidebar'),
                 _kbRow(tokens, '⌘[', 'Back'),
                 _kbRow(tokens, '⌘,', 'Settings'),
+                _kbRow(tokens, '⌘H', 'Home'),
                 _kbRow(tokens, '?', 'This shortcut list'),
                 const SizedBox(height: 10),
                 _kbSection(tokens, 'Editor'),
