@@ -12,6 +12,7 @@ import '../../../../shared/widgets/segment.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../../shared/theme/accent.dart';
+import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../vault/data/exporter.dart';
@@ -137,6 +138,12 @@ class _SettingsPageState extends State<SettingsPage> {
             label: 'Workspace name',
             hint: 'Override the folder name in the sidebar header.',
             child: _WorkspaceNameField(state: state),
+          ),
+        if (state is VaultLoaded)
+          _SettingRow(
+            label: 'Workspace icon',
+            hint: 'Renders in the sidebar header. Tap to pick.',
+            child: _WorkspaceIconButton(state: state),
           ),
         _SettingRow(
           label: 'Vault stats',
@@ -552,6 +559,50 @@ class _SettingsPageState extends State<SettingsPage> {
           fontWeight: FontWeight.w600,
           letterSpacing: 1.0,
           color: tokens.text3,
+        ),
+      ),
+    );
+  }
+}
+
+/// Square button that opens the emoji picker to change
+/// .quill.yaml's workspace.icon. Mirrors the sidebar's WorkspaceHead
+/// affordance from M107 but lives here so users browsing settings can
+/// find it too.
+class _WorkspaceIconButton extends StatelessWidget {
+  const _WorkspaceIconButton({required this.state});
+  final VaultLoaded state;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final icon = state.workspace.icon;
+    final hasIcon = icon != null && icon.trim().isNotEmpty;
+    return GestureDetector(
+      onTap: () async {
+        final picked = await pickEmoji(context);
+        if (picked == null) return;
+        final next =
+            state.workspace.copyWith(icon: picked.isEmpty ? '' : picked);
+        await next.save(Directory(state.rootPath));
+        if (!context.mounted) return;
+        context.read<VaultBloc>().add(const RefreshFromDisk());
+      },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: hasIcon ? tokens.surface2 : tokens.accent,
+            border: Border.all(color: tokens.divider2, width: 0.5),
+            borderRadius: const BorderRadius.all(Radius.circular(6)),
+          ),
+          child: hasIcon
+              ? Text(icon, style: const TextStyle(fontSize: 18))
+              : Icon(Icons.tag_faces_outlined,
+                  size: 16, color: Colors.white),
         ),
       ),
     );
