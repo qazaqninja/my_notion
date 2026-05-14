@@ -667,7 +667,10 @@ class _EditorBodyState extends State<_EditorBody> {
                                 BacklinksRail(toUlid: page.ulid),
                               ],
                               const SizedBox(height: 20),
-                              _PageFooter(body: page.body),
+                              _PageFooter(
+                                body: page.body,
+                                goal: _readGoal(page.frontmatter.get('goal')),
+                              ),
                               const SizedBox(height: 60),
                             ],
                           ),
@@ -996,13 +999,29 @@ class _ReminderBadge extends StatelessWidget {
   }
 }
 
+/// Parse a frontmatter `goal:` value into a positive int word count.
+/// Returns null when the value is missing, non-numeric, or zero —
+/// the footer then skips the progress bar entirely.
+int? _readGoal(Object? raw) {
+  if (raw == null) return null;
+  final n = raw is num ? raw.toInt() : int.tryParse('$raw'.trim());
+  if (n == null || n <= 0) return null;
+  return n;
+}
+
 /// Tiny dim row at the bottom of the editor: word count, character
-/// count, reading-time estimate. Hidden if the body is empty so empty
-/// pages don't show "0 words · 0 chars · 1 min".
+/// count, reading-time estimate. When the page's frontmatter declares
+/// a `goal:` word count, also renders a progress bar + `<words>/<goal>`
+/// pill (accent fill, green when met). Hidden if the body is empty so
+/// empty pages don't show "0 words · 0 chars · 1 min".
 class _PageFooter extends StatelessWidget {
-  const _PageFooter({required this.body});
+  const _PageFooter({required this.body, this.goal});
 
   final String body;
+
+  /// Optional word-count goal from frontmatter `goal:`. When non-null,
+  /// the footer surfaces progress against this target.
+  final int? goal;
 
   @override
   Widget build(BuildContext context) {
@@ -1016,18 +1035,53 @@ class _PageFooter extends StatelessWidget {
     final chars = body.length;
     // 220wpm is a common silent-reading midpoint.
     final mins = (words / 220).ceil().clamp(1, 999);
+    final g = goal;
     return Padding(
       padding: const EdgeInsets.only(top: 12),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('$words words',
-              style: mono(fontSize: 11, color: tokens.text3)),
-          Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
-          Text('$chars chars',
-              style: mono(fontSize: 11, color: tokens.text3)),
-          Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
-          Text('~$mins min read',
-              style: mono(fontSize: 11, color: tokens.text3)),
+          Row(
+            children: [
+              Text('$words words',
+                  style: mono(fontSize: 11, color: tokens.text3)),
+              Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
+              Text('$chars chars',
+                  style: mono(fontSize: 11, color: tokens.text3)),
+              Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
+              Text('~$mins min read',
+                  style: mono(fontSize: 11, color: tokens.text3)),
+              if (g != null) ...[
+                Text('  ·  ',
+                    style: TextStyle(fontSize: 11, color: tokens.text3)),
+                Text('$words / $g goal',
+                    style: mono(
+                        fontSize: 11,
+                        color: words >= g
+                            ? const Color(0xFF5A8F6E)
+                            : tokens.text3)),
+              ],
+            ],
+          ),
+          if (g != null) ...[
+            const SizedBox(height: 6),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.all(Radius.circular(2)),
+                child: LinearProgressIndicator(
+                  value: (words / g).clamp(0.0, 1.0),
+                  minHeight: 4,
+                  backgroundColor: tokens.surface2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    words >= g
+                        ? const Color(0xFF5A8F6E)
+                        : tokens.accent,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
