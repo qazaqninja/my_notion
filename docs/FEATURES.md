@@ -108,7 +108,7 @@ If your feature wants to store something new, the answer is almost always "add a
   - ✅ formula — M31, Pratt parser + evaluator subset of Notion formula v2.
   - ✅ rollup — M168, `type: rollup` columns with `relation:` + `target:` + `agg: sum|avg|min|max|count|list`. Pure RollupCompute runs before ApplyQuery so filters/sorts can use rollup values.
   - ✅ created time — `createdTime` column type added in earlier milestone; reads `created_at:` frontmatter.
-  - 📋 created by, last edited by, person — Requires a user identity model. v1: read from `.quill.yaml` users list. Full multi-user is 🔮.
+  - 🚧 created by, last edited by, person — M169 ships the `person` column type (with `user`/`owner`/`assignee`/`created_by`/`last_edited_by` aliases) + PersonChip widget rendering a coloured initial avatar + name. Auto-stamping `created_by:` / `last_edited_by:` on save needs an identity model — still 📋. Full multi-user is 🔮.
   - ✅ button — M70 `:::button` fence renders inside any page (including row pages).
 - ✅ Sub-items (parent/child rows) — Parent relation column + depth indent (frozen_column_table.dart). M166 adds the chevron toggle on rows that have children + a visible-rows filter that hides descendants of collapsed parents.
 - ✅ Dependencies between rows — M163, frontmatter `depends_on: [[ULID]], …`. Timeline view shows a "↳ N" pill in the frozen column with tooltip, plus L-shaped connector arrows between bars.
