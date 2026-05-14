@@ -20,6 +20,7 @@ import '../../../commands/presentation/widgets/command_palette_overlay.dart';
 import '../../../database/data/datasources/csv_importer.dart';
 import '../../data/html_page_importer.dart';
 import '../../data/opml_page_importer.dart';
+import '../../data/asana_csv_importer.dart';
 import '../../data/roam_page_importer.dart';
 import '../../data/text_page_importer.dart';
 import '../../data/trello_database_importer.dart';
@@ -532,6 +533,33 @@ class _VaultShellPageState extends State<VaultShellPage> {
         } catch (e) {
           messenger?.showSnackBar(
               SnackBar(content: Text('HTML import failed: $e')));
+        }
+      case 'Import Asana CSV as database':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final asanaPick = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: const ['csv'],
+        );
+        if (asanaPick == null || asanaPick.files.isEmpty) return;
+        final asanaPath = asanaPick.files.first.path;
+        if (asanaPath == null) return;
+        try {
+          final summary = await AsanaCsvImporter.importTo(
+            File(asanaPath),
+            Directory(vaultPath),
+          );
+          vaultBloc.add(const ReindexVault());
+          messenger?.showSnackBar(SnackBar(
+            content: Text(
+                'Imported ${summary.tasks.length} tasks → ${summary.folder}/'),
+            duration: const Duration(seconds: 4),
+          ));
+        } catch (e) {
+          messenger?.showSnackBar(
+              SnackBar(content: Text('Asana import failed: $e')));
         }
       case 'Import Trello board as database':
         if (vaultPath == null) {
