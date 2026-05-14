@@ -293,14 +293,23 @@ class _Group extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
-            child: Text(
-              label.toUpperCase(),
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.0,
-                color: tokens.text3,
-              ),
+            child: Row(
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: tokens.text3,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${children.length}',
+                  style: mono(fontSize: 10.5, color: tokens.text3),
+                ),
+              ],
             ),
           ),
           ...children,
