@@ -295,7 +295,10 @@ class HealthCell extends StatelessWidget {
 }
 
 /// Clickable chip for a file/media cell value. URLs open externally,
-/// vault-relative paths shell out to Reveal.show.
+/// vault-relative paths shell out to Reveal.show. Image extensions
+/// (png/jpg/etc.) render a 22px-square thumbnail instead of the
+/// icon-and-text chip so a `files` column ends up looking like a
+/// micro-gallery row.
 class _FileChip extends StatelessWidget {
   const _FileChip({required this.value});
   final String value;
@@ -303,11 +306,20 @@ class _FileChip extends StatelessWidget {
   bool get _isUrl =>
       value.startsWith('http://') || value.startsWith('https://');
 
+  bool get _isImage {
+    final lower = value.toLowerCase().split(RegExp(r'[?#]')).first;
+    return lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.bmp');
+  }
+
   String get _label {
     if (_isUrl) {
       return Uri.tryParse(value)?.host ?? value;
     }
-    // For paths, show the basename.
     final slash = value.lastIndexOf('/');
     return slash < 0 ? value : value.substring(slash + 1);
   }
@@ -325,16 +337,58 @@ class _FileChip extends StatelessWidget {
       } catch (_) {}
       return;
     }
-    // Vault-relative path. Resolve via the vault root from VaultBloc.
     final state = context.read<VaultBloc>().state;
     if (state is! VaultLoaded) return;
     final resolved = value.startsWith('/') ? value : '${state.rootPath}/$value';
     await Reveal.show(resolved);
   }
 
+  Widget _thumb(BuildContext context, QuillTokens tokens) {
+    final fallback = Container(
+      width: 22,
+      height: 22,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: tokens.surface2,
+        borderRadius: const BorderRadius.all(Radius.circular(3)),
+      ),
+      child: Icon(Icons.image_outlined, size: 12, color: tokens.text3),
+    );
+    if (_isUrl) {
+      return ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(3)),
+        child: Image.network(value,
+            width: 22,
+            height: 22,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => fallback),
+      );
+    }
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return fallback;
+    final resolved = value.startsWith('/') ? value : '${state.rootPath}/$value';
+    return ClipRRect(
+      borderRadius: const BorderRadius.all(Radius.circular(3)),
+      child: Image.file(File(resolved),
+          width: 22,
+          height: 22,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => fallback),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
+    if (_isImage) {
+      return GestureDetector(
+        onTap: () => _open(context),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: _thumb(context, tokens),
+        ),
+      );
+    }
     return GestureDetector(
       onTap: () => _open(context),
       child: MouseRegion(
