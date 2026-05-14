@@ -251,27 +251,36 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
             Expanded(
               child: Builder(builder: (context) {
                 final filtered = ApplyQuery.apply(rows, _query, schema);
+                // Honour `views[].visible:` — restrict columns shown by
+                // table/gallery/etc. ApplyQuery already ran on the full
+                // schema so filter/sort/group can reference hidden cols.
+                final activeView = schema.viewById(widget.viewId);
+                final viewSchema = schema.filterColumns(
+                  activeView?.visible == null
+                      ? null
+                      : activeView!.visible!.toSet(),
+                );
                 return switch (_currentView) {
                   ViewType.table => FrozenColumnTable(
-                      schema: schema,
+                      schema: viewSchema,
                       rows: filtered,
                       onOpenPage: (row) => context.go('/editor/${row.ulid}'),
                       onEditCell: _editCell,
                       onCreateRow: _createRow,
                     ),
-                  ViewType.gallery => GalleryView(schema: schema, rows: filtered),
+                  ViewType.gallery =>
+                    GalleryView(schema: viewSchema, rows: filtered),
                   ViewType.board => BoardView(
-                      schema: schema,
+                      schema: viewSchema,
                       rows: filtered,
-                      groupBy: _query.groupBy ??
-                          schema.viewById(widget.viewId)?.groupBy,
+                      groupBy: _query.groupBy ?? activeView?.groupBy,
                     ),
                   ViewType.timeline =>
-                    TimelineView(schema: schema, rows: filtered),
+                    TimelineView(schema: viewSchema, rows: filtered),
                   ViewType.calendar =>
-                    CalendarView(schema: schema, rows: filtered),
+                    CalendarView(schema: viewSchema, rows: filtered),
                   ViewType.chart =>
-                    ChartView(schema: schema, rows: filtered),
+                    ChartView(schema: viewSchema, rows: filtered),
                 };
               }),
             ),
