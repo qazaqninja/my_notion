@@ -88,9 +88,13 @@ class TreeNodeWidget extends StatelessWidget {
       final pinned = state is VaultLoaded &&
           n.ulid.isNotEmpty &&
           state.workspace.favorites.contains(n.ulid);
+      // When the page's frontmatter declares an emoji `icon:`, use that
+      // as a glyph in place of the generic file-md icon.
+      final emoji = n.icon;
       final inner = SideItem(
         level: level,
-        icon: 'file-md',
+        icon: emoji == null ? 'file-md' : null,
+        emojiIcon: emoji,
         label: n.name,
         active: n.ulid == activeUlid && n.ulid.isNotEmpty,
         onTap: () => n.ulid.isNotEmpty ? context.go('/editor/${n.ulid}') : null,

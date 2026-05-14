@@ -22,6 +22,7 @@ class SideItem extends StatefulWidget {
     this.density = SideDensity.comfy,
     this.icon,
     this.glyph,
+    this.emojiIcon,
     required this.label,
     this.count,
     this.chevron = SideChevron.none,
@@ -37,6 +38,11 @@ class SideItem extends StatefulWidget {
   final SideDensity density;
   final String? icon;
   final SideItemGlyph? glyph;
+
+  /// Emoji rendered in place of the standard icon. Takes precedence
+  /// over [icon] / [glyph]. No background chip — emojis already carry
+  /// their own colour.
+  final String? emojiIcon;
   final String label;
   final int? count;
   final SideChevron chevron;
@@ -105,7 +111,19 @@ class _SideItemState extends State<SideItem> {
                 )
               else
                 const SizedBox(width: 14),
-              if (widget.glyph != null) ...[
+              if (widget.emojiIcon != null) ...[
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: Center(
+                    child: Text(
+                      widget.emojiIcon!,
+                      style: const TextStyle(fontSize: 12, height: 1),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ] else if (widget.glyph != null) ...[
                 Container(
                   width: 14,
                   height: 14,

@@ -19,8 +19,14 @@ class VaultFile extends VaultNode {
     required super.name,
     required super.relativePath,
     required this.ulid,
+    this.icon,
   });
   final String ulid;
+
+  /// Optional `icon:` value from the page's frontmatter. Currently only
+  /// emoji glyphs are surfaced in the sidebar (paths / URLs require an
+  /// async image load which isn't worth the cost for a 13px row).
+  final String? icon;
 }
 
 /// Recursive tree mirroring the on-disk structure. The root is implicit

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -447,6 +448,22 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   Future<VaultTree> _buildTree(Directory root) async {
     final pageRows = await _db.select(_db.pages).get();
     final ulidByPath = {for (final p in pageRows) p.relativePath: p.ulid};
+    // Collect frontmatter `icon:` values for surfacing in the sidebar.
+    // Skip non-emoji icons (anything that looks like a path or URL) so
+    // we don't try to render an image in a 13px row.
+    final iconByPath = <String, String>{};
+    for (final row in pageRows) {
+      if (row.frontmatterJson.isEmpty) continue;
+      try {
+        final m = jsonDecode(row.frontmatterJson);
+        if (m is Map && m['icon'] is String) {
+          final s = (m['icon'] as String).trim();
+          if (s.isNotEmpty && !s.contains('/') && !s.startsWith('http')) {
+            iconByPath[row.relativePath] = s;
+          }
+        }
+      } catch (_) {/* ignore malformed cached frontmatter */}
+    }
 
     Future<List<VaultNode>> walk(Directory dir) async {
       final entries = dir.listSync()..sort((a, b) {
@@ -468,7 +485,12 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
           nodes.add(VaultFolder(name: name, relativePath: rel, children: children));
         } else if (e is File && p.extension(e.path) == '.md') {
           final ulid = ulidByPath[rel] ?? '';
-          nodes.add(VaultFile(name: name, relativePath: rel, ulid: ulid));
+          nodes.add(VaultFile(
+            name: name,
+            relativePath: rel,
+            ulid: ulid,
+            icon: iconByPath[rel],
+          ));
         }
       }
       return nodes;
