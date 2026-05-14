@@ -442,6 +442,21 @@ class _EditorBodyState extends State<_EditorBody> {
             const SingleActivator(LogicalKeyboardKey.keyR,
                 control: true, alt: true): () =>
                 _revealCurrentPage(context, loaded),
+            // Cmd+Z / Ctrl+Z → undo last bloc-level edit. Native
+            // TextField undo still wins inside text fields because the
+            // field intercepts the keystroke before this Shortcuts
+            // sees it; the binding fires when no field has focus.
+            const SingleActivator(LogicalKeyboardKey.keyZ, meta: true): () =>
+                context.read<EditorBloc>().add(const UndoEdit()),
+            const SingleActivator(LogicalKeyboardKey.keyZ,
+                control: true): () =>
+                context.read<EditorBloc>().add(const UndoEdit()),
+            const SingleActivator(LogicalKeyboardKey.keyZ,
+                meta: true, shift: true): () =>
+                context.read<EditorBloc>().add(const RedoEdit()),
+            const SingleActivator(LogicalKeyboardKey.keyZ,
+                control: true, shift: true): () =>
+                context.read<EditorBloc>().add(const RedoEdit()),
           },
           child: Focus(
             autofocus: true,

@@ -68,3 +68,16 @@ class ReplaceFrontmatterYaml extends EditorEvent {
   @override
   List<Object?> get props => [rawYaml];
 }
+
+/// Pop the most recent edit off the undo stack and restore the page
+/// to that state. No-op when the stack is empty.
+class UndoEdit extends EditorEvent {
+  const UndoEdit();
+}
+
+/// Re-apply the most recent undone edit. No-op when there's nothing to
+/// redo (i.e. `_redo` is empty, or the user made a fresh edit after an
+/// undo — that clears the redo stack to prevent branching history).
+class RedoEdit extends EditorEvent {
+  const RedoEdit();
+}

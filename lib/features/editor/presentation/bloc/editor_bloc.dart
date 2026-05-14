@@ -8,6 +8,7 @@ import '../../../../core/markdown/frontmatter_parser.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/entities/frontmatter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
+import '../../../vault/domain/entities/page.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 import 'editor_event.dart';
 import 'editor_state.dart';
@@ -29,6 +30,8 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     on<AddFrontmatterField>(_onAddField);
     on<RemoveFrontmatterField>(_onRemoveField);
     on<ReplaceFrontmatterYaml>(_onReplaceYaml);
+    on<UndoEdit>(_onUndo);
+    on<RedoEdit>(_onRedo);
   }
 
   final VaultRepository _repo;
@@ -49,6 +52,20 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
   /// `.quill.yaml`'s `users:` list via WorkspaceConfig.currentUserName.
   String? _currentUser;
   void setCurrentUser(String? name) => _currentUser = name;
+
+  /// Bounded undo/redo stacks of page snapshots. Every mutating event
+  /// pushes the pre-mutation page onto `_undo` and clears `_redo` so the
+  /// user can't fork the history. Cap at [_undoLimit] entries so a long
+  /// editing session doesn't grow without bound.
+  final List<Page> _undo = <Page>[];
+  final List<Page> _redo = <Page>[];
+  static const _undoLimit = 50;
+
+  void _pushUndo(Page snapshot) {
+    _undo.add(snapshot);
+    if (_undo.length > _undoLimit) _undo.removeAt(0);
+    _redo.clear();
+  }
 
   Future<void> _onOpen(OpenEditor e, Emitter<EditorState> emit) async {
     emit(EditorLoading(e.ulid));
@@ -94,10 +111,40 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     final loaded = state as EditorLoaded;
     if (isLocked(loaded)) return;
     if (loaded.page.body == e.body) return;
+    _pushUndo(loaded.page);
     final updated = loaded.page.copyWith(body: e.body);
     emit(loaded.copyWith(page: updated, dirty: true));
     _scheduleSave();
   }
+
+  Future<void> _onUndo(UndoEdit e, Emitter<EditorState> emit) async {
+    if (state is! EditorLoaded || _undo.isEmpty) return;
+    final loaded = state as EditorLoaded;
+    if (isLocked(loaded)) return;
+    final snapshot = _undo.removeLast();
+    _redo.add(loaded.page);
+    if (_redo.length > _undoLimit) _redo.removeAt(0);
+    emit(loaded.copyWith(page: snapshot, dirty: true));
+    _scheduleSave();
+  }
+
+  Future<void> _onRedo(RedoEdit e, Emitter<EditorState> emit) async {
+    if (state is! EditorLoaded || _redo.isEmpty) return;
+    final loaded = state as EditorLoaded;
+    if (isLocked(loaded)) return;
+    final snapshot = _redo.removeLast();
+    _undo.add(loaded.page);
+    if (_undo.length > _undoLimit) _undo.removeAt(0);
+    emit(loaded.copyWith(page: snapshot, dirty: true));
+    _scheduleSave();
+  }
+
+  /// True when there's an undo entry available — used by the shell to
+  /// dim the keyboard-shortcut chip.
+  bool get canUndo => _undo.isNotEmpty;
+
+  /// True when redo has at least one entry available.
+  bool get canRedo => _redo.isNotEmpty;
 
   Future<void> _onToggleMode(ToggleEditorMode e, Emitter<EditorState> emit) async {
     if (state is! EditorLoaded) return;
@@ -262,6 +309,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     List<FrontmatterEntry> entries,
     Emitter<EditorState> emit,
   ) {
+    _pushUndo(loaded.page);
     final fm = Frontmatter(entries: entries);
     // Keep Page.title in sync with frontmatter['title'] so the in-memory
     // entity matches what a fresh read would produce.
