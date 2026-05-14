@@ -302,7 +302,9 @@ class _EditorBodyState extends State<_EditorBody> {
                                 OutlineRail(body: page.body),
                                 BacklinksRail(toUlid: page.ulid),
                               ],
-                              const SizedBox(height: 80),
+                              const SizedBox(height: 20),
+                              _PageFooter(body: page.body),
+                              const SizedBox(height: 60),
                             ],
                           ),
                         ),
@@ -340,3 +342,42 @@ class _EditorBodyState extends State<_EditorBody> {
     );
   }
 }
+
+/// Tiny dim row at the bottom of the editor: word count, character
+/// count, reading-time estimate. Hidden if the body is empty so empty
+/// pages don't show "0 words · 0 chars · 1 min".
+class _PageFooter extends StatelessWidget {
+  const _PageFooter({required this.body});
+
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final stripped = body.replaceAll(RegExp(r'```[\s\S]*?```'), ' ');
+    final words = stripped
+        .split(RegExp(r'\s+'))
+        .where((w) => w.isNotEmpty)
+        .length;
+    if (words == 0) return const SizedBox.shrink();
+    final chars = body.length;
+    // 220wpm is a common silent-reading midpoint.
+    final mins = (words / 220).ceil().clamp(1, 999);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        children: [
+          Text('$words words',
+              style: mono(fontSize: 11, color: tokens.text3)),
+          Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
+          Text('$chars chars',
+              style: mono(fontSize: 11, color: tokens.text3)),
+          Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
+          Text('~$mins min read',
+              style: mono(fontSize: 11, color: tokens.text3)),
+        ],
+      ),
+    );
+  }
+}
+
