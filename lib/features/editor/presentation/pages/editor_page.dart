@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:printing/printing.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/platform/reveal.dart';
@@ -15,6 +16,7 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/data/indexer.dart';
+import '../../../vault/data/pdf_exporter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 // ignore: unused_import — Indexer used via context.read
@@ -277,6 +279,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
+        PopupMenuItem(value: 'print-page', child: Text('Print page…')),
         PopupMenuDivider(),
         PopupMenuItem(value: 'reindex', child: Text('Reindex vault')),
       ],
@@ -303,12 +306,30 @@ class _EditorBodyState extends State<_EditorBody> {
         }
       case 'export-md':
         await _exportPageAsMarkdown(context, loaded);
+      case 'print-page':
+        await _printPage(context, loaded);
       case 'reindex':
         if (!context.mounted) return;
         context.read<VaultBloc>().add(const ReindexVault());
         messenger?.showSnackBar(
           const SnackBar(content: Text('Reindexing vault…')),
         );
+    }
+  }
+
+  Future<void> _printPage(BuildContext context, EditorLoaded loaded) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      final bytes = await const PdfExporter().exportSingle(
+        title: loaded.page.title,
+        body: loaded.page.body,
+      );
+      await Printing.layoutPdf(
+        name: loaded.page.title,
+        onLayout: (_) async => Uint8List.fromList(bytes),
+      );
+    } catch (e) {
+      messenger?.showSnackBar(SnackBar(content: Text('Print failed: $e')));
     }
   }
 
