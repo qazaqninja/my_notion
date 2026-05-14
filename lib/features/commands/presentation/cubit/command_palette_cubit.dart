@@ -164,8 +164,22 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
             title: r.title,
             relativePath: r.relativePath,
             snippet: '',
+            emojiIcon: _emojiFromJson(r.frontmatterJson),
           ),
     ];
+  }
+
+  static String? _emojiFromJson(String json) {
+    if (json.isEmpty) return null;
+    try {
+      final m = jsonDecode(json);
+      if (m is Map && m['icon'] is String) {
+        final s = (m['icon'] as String).trim();
+        if (s.isEmpty || s.contains('/') || s.startsWith('http')) return null;
+        return s;
+      }
+    } catch (_) {/* ignore */}
+    return null;
   }
 
   Future<List<PageSearchResult>> _filterByTag(

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
@@ -8,11 +10,31 @@ class PageSearchResult {
     required this.title,
     required this.relativePath,
     required this.snippet,
+    this.emojiIcon,
   });
   final String ulid;
   final String title;
   final String relativePath;
   final String snippet;
+
+  /// Plain-emoji `icon:` from the page's frontmatter when one is set.
+  /// Asset paths and URLs are surfaced as null so the caller falls
+  /// back to its default glyph (a 13px palette row can't render an
+  /// async-loaded image).
+  final String? emojiIcon;
+}
+
+String? _pageEmojiFromFrontmatter(String json) {
+  if (json.isEmpty) return null;
+  try {
+    final m = jsonDecode(json);
+    if (m is Map && m['icon'] is String) {
+      final s = (m['icon'] as String).trim();
+      if (s.isEmpty || s.contains('/') || s.startsWith('http')) return null;
+      return s;
+    }
+  } catch (_) {/* ignore malformed */}
+  return null;
 }
 
 /// FTS5-backed search across all indexed pages. When [query] is empty,
@@ -35,6 +57,7 @@ class SearchPages {
             title: r.title,
             relativePath: r.relativePath,
             snippet: _firstLine(r.bodyText),
+            emojiIcon: _pageEmojiFromFrontmatter(r.frontmatterJson),
           ),
       ];
     }
@@ -64,6 +87,8 @@ class SearchPages {
           title: r.read<String>('title'),
           relativePath: r.read<String>('relative_path'),
           snippet: _firstLine(r.read<String>('body_text')),
+          emojiIcon:
+              _pageEmojiFromFrontmatter(r.read<String>('frontmatter_json')),
         ),
     ];
   }

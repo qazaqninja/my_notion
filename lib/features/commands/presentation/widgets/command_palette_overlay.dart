@@ -183,6 +183,7 @@ class _Panel extends StatelessWidget {
                           _ResultRow(
                             tokens: tokens,
                             icon: 'file-md',
+                            emojiIcon: state.pages[i].emojiIcon,
                             label: state.pages[i].title,
                             hint: state.pages[i].relativePath,
                             selected: state.selectedIndex == i,
@@ -333,6 +334,7 @@ class _ResultRow extends StatelessWidget {
     required this.hint,
     required this.selected,
     required this.onTap,
+    this.emojiIcon,
   });
 
   final QuillTokens tokens;
@@ -341,6 +343,9 @@ class _ResultRow extends StatelessWidget {
   final String hint;
   final bool selected;
   final VoidCallback onTap;
+
+  /// Plain-emoji glyph rendered in place of [icon] when non-null.
+  final String? emojiIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +363,18 @@ class _ResultRow extends StatelessWidget {
           ),
           child: Row(
             children: [
-              QuillIcon(icon, size: 14, strokeWidth: 1.7, color: tokens.text2),
+              if (emojiIcon != null)
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: Center(
+                    child: Text(emojiIcon!,
+                        style: const TextStyle(fontSize: 13, height: 1)),
+                  ),
+                )
+              else
+                QuillIcon(icon,
+                    size: 14, strokeWidth: 1.7, color: tokens.text2),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
