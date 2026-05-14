@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/platform/reveal.dart';
@@ -46,10 +47,29 @@ class _VaultShellPageState extends State<VaultShellPage> {
   CommandPaletteCubit? _palette;
   final FocusNode _rootFocus = FocusNode(skipTraversal: true);
   bool _sidebarCollapsed = false;
+  double _sidebarWidth = 260;
+  static const double _minSidebar = 180;
+  static const double _maxSidebar = 420;
+  static const String _prefSidebarWidth = 'sidebar.width';
 
   @override
   void initState() {
     super.initState();
+    _restoreSidebarWidth();
+  }
+
+  Future<void> _restoreSidebarWidth() async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getDouble(_prefSidebarWidth);
+    if (v == null || !mounted) return;
+    setState(() {
+      _sidebarWidth = v.clamp(_minSidebar, _maxSidebar);
+    });
+  }
+
+  Future<void> _saveSidebarWidth(double w) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_prefSidebarWidth, w);
   }
 
   CommandPaletteCubit _cubit(BuildContext context) {
@@ -120,8 +140,21 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 children: [
                   Row(
                     children: [
-                      if (!_sidebarCollapsed)
-                        SidebarWidget(activeUlid: widget.activeUlid),
+                      if (!_sidebarCollapsed) ...[
+                        SidebarWidget(
+                          activeUlid: widget.activeUlid,
+                          width: _sidebarWidth,
+                        ),
+                        _SidebarDragHandle(
+                          onDrag: (dx) {
+                            setState(() {
+                              _sidebarWidth = (_sidebarWidth + dx)
+                                  .clamp(_minSidebar, _maxSidebar);
+                            });
+                          },
+                          onDragEnd: () => _saveSidebarWidth(_sidebarWidth),
+                        ),
+                      ],
                       Expanded(child: widget.child),
                     ],
                   ),
@@ -654,6 +687,29 @@ class _VaultShellPageState extends State<VaultShellPage> {
         context.read<CommandPaletteCubit>().dismiss();
         _invokeAction(context, a.label);
       },
+    );
+  }
+}
+
+/// 4-px wide drag strip between the sidebar and the body. Cursor
+/// flips to resizeColumn on hover; dragging horizontally tells the
+/// parent to grow/shrink the sidebar width. The strip is otherwise
+/// transparent so the visual divider stays on the SidebarWidget.
+class _SidebarDragHandle extends StatelessWidget {
+  const _SidebarDragHandle({required this.onDrag, required this.onDragEnd});
+  final void Function(double dx) onDrag;
+  final VoidCallback onDragEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragUpdate: (d) => onDrag(d.delta.dx),
+        onHorizontalDragEnd: (_) => onDragEnd(),
+        child: const SizedBox(width: 4, height: double.infinity),
+      ),
     );
   }
 }
