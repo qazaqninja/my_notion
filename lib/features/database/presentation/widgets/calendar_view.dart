@@ -15,10 +15,22 @@ import '../../domain/repositories/database_repository.dart';
 /// [ColumnType.date] (and a fallback to common names like `updated`,
 /// `date`, `due`, `scheduled` if no typed date column exists).
 class CalendarView extends StatefulWidget {
-  const CalendarView({super.key, required this.schema, required this.rows});
+  const CalendarView({
+    super.key,
+    required this.schema,
+    required this.rows,
+    this.subGroupBy,
+  });
 
   final DatabaseSchema schema;
   final List<DatabasePageRow> rows;
+
+  /// When non-null, the leading dot beside each row (and the day-cell
+  /// markers) is coloured by a deterministic hash of the row's value
+  /// for this column. Empty values get a neutral grey. Doesn't move
+  /// rows around — just adds visual differentiation. Mirrors the
+  /// other views' sub-group plumbing without re-shaping the grid.
+  final String? subGroupBy;
 
   @override
   State<CalendarView> createState() => _CalendarViewState();
@@ -59,6 +71,32 @@ class _CalendarViewState extends State<CalendarView> {
     if (trimmed.isEmpty) return null;
     return DateTime.tryParse(trimmed);
   }
+
+  /// Stable colour from sub-group value. Empty/null → neutral grey;
+  /// any other value gets one of eight muted hues (same palette
+  /// PersonChip uses, so the colours feel consistent across the app).
+  Color _subgroupColor(DatabasePageRow row, Color fallback) {
+    final key = widget.subGroupBy;
+    if (key == null) return fallback;
+    final raw = '${row.cells[key] ?? ''}'.trim();
+    if (raw.isEmpty) return const Color(0xFF8C8C8C);
+    var h = 0;
+    for (final code in raw.codeUnits) {
+      h = (h * 31 + code) & 0x7fffffff;
+    }
+    return _palette[h % _palette.length];
+  }
+
+  static const _palette = <Color>[
+    Color(0xFF5A8F6E),
+    Color(0xFF5A82B4),
+    Color(0xFFB46F4F),
+    Color(0xFF8B5FA8),
+    Color(0xFFB39342),
+    Color(0xFF4F8FA4),
+    Color(0xFF9C5A6A),
+    Color(0xFF6B8E7F),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +192,36 @@ class _CalendarViewState extends State<CalendarView> {
             weekdayStyle: TextStyle(fontSize: 11, color: tokens.text3),
             weekendStyle: TextStyle(fontSize: 11, color: tokens.text3),
           ),
+          calendarBuilders: widget.subGroupBy == null
+              ? const CalendarBuilders()
+              : CalendarBuilders(
+                  markerBuilder: (context, day, events) {
+                    if (events.isEmpty) return null;
+                    final rows = events.cast<DatabasePageRow>();
+                    final shown = rows.take(4).toList();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (final r in shown)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 1),
+                              child: Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: _subgroupColor(r, tokens.accent),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
         ),
         Expanded(
           child: selectedRows.isEmpty
@@ -193,7 +261,7 @@ class _CalendarViewState extends State<CalendarView> {
                                 width: 6,
                                 height: 6,
                                 decoration: BoxDecoration(
-                                  color: tokens.accent,
+                                  color: _subgroupColor(r, tokens.accent),
                                   shape: BoxShape.circle,
                                 ),
                               ),

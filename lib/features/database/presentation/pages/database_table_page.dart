@@ -378,7 +378,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       subGroupBy: _query.subGroupBy,
                     ),
                   ViewType.calendar =>
-                    CalendarView(schema: viewSchema, rows: filtered),
+                    CalendarView(
+                      schema: viewSchema,
+                      rows: filtered,
+                      subGroupBy: _query.subGroupBy,
+                    ),
                   ViewType.chart =>
                     ChartView(schema: viewSchema, rows: filtered),
                   ViewType.list => DatabaseListView(
