@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -255,6 +256,8 @@ class _EditorBodyState extends State<_EditorBody> {
       items: const [
         PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
         PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
+        PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
+        PopupMenuDivider(),
         PopupMenuItem(value: 'reindex', child: Text('Reindex vault')),
       ],
     );
@@ -273,12 +276,45 @@ class _EditorBodyState extends State<_EditorBody> {
           SnackBar(content: Text('Copied [[$ulid]]'),
               duration: const Duration(seconds: 2)),
         );
+      case 'export-md':
+        await _exportPageAsMarkdown(context, loaded);
       case 'reindex':
         if (!context.mounted) return;
         context.read<VaultBloc>().add(const ReindexVault());
         messenger?.showSnackBar(
           const SnackBar(content: Text('Reindexing vault…')),
         );
+    }
+  }
+
+  Future<void> _exportPageAsMarkdown(
+      BuildContext context, EditorLoaded loaded) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final relPath = loaded.page.relativePath;
+    final source = File('${vault.rootPath}/$relPath');
+    if (!await source.exists()) return;
+    final safeName = loaded.page.title
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+        .trim();
+    final picked = await FilePicker.platform.saveFile(
+      dialogTitle: 'Export page as Markdown…',
+      fileName: '${safeName.isEmpty ? 'page' : safeName}.md',
+      type: FileType.custom,
+      allowedExtensions: const ['md'],
+    );
+    if (picked == null) return;
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      await source.copy(picked);
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Exported to $picked')),
+      );
+    } catch (e) {
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
     }
   }
 
