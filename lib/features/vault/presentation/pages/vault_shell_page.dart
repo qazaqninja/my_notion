@@ -127,6 +127,12 @@ class _VaultShellPageState extends State<VaultShellPage> {
               _newPage(context),
           const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
               _newPage(context),
+          const SingleActivator(LogicalKeyboardKey.keyN,
+              meta: true, shift: true): () =>
+              _invokeAction(context, "Open today's daily note"),
+          const SingleActivator(LogicalKeyboardKey.keyN,
+              control: true, shift: true): () =>
+              _invokeAction(context, "Open today's daily note"),
           const SingleActivator(LogicalKeyboardKey.slash, shift: true): () =>
               _showShortcuts(context),
           const SingleActivator(LogicalKeyboardKey.backslash, meta: true): () =>
@@ -281,6 +287,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbSection(tokens, 'Workspace'),
                 _kbRow(tokens, '⌘K', 'Open command palette'),
                 _kbRow(tokens, '⌘N', 'New page'),
+                _kbRow(tokens, '⌘⇧N', "Open today's daily note"),
                 _kbRow(tokens, '⌘R', 'Reindex vault'),
                 _kbRow(tokens, '⌘⇧R', 'Reveal vault in Finder'),
                 _kbRow(tokens, '⌘\\', 'Toggle sidebar'),
