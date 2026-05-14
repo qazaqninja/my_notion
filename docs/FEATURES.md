@@ -256,7 +256,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - 📋 Mermaid diagrams in code blocks — Render fenced ```mermaid blocks via `flutter_mermaid` or a webview fallback.
 - ✅ Color and background highlights — Inline `<span style>` for colours + `<mark>` (M80) for soft-yellow highlight; callouts for block-level colour.
 - ✅ Emoji picker — M62, `lib/shared/widgets/emoji_picker.dart`. Used by page icons (M26) and workspace icon (M107).
-- 🚧 Undo/redo (Cmd+Z) — `TextField` provides native undo in source mode. Block-level undo arrives with the editable block model.
+- ✅ Undo/redo (Cmd+Z) — Native TextField undo in source mode + bloc-level `UndoEdit`/`RedoEdit` (M179): bounded 50-entry stacks, ⌘Z / ⌘⇧Z, every body + frontmatter mutation pushes the prior Page snapshot.
 - 📋 Multi-select blocks (Shift+click, Cmd+A) — Block model dependency.
 - ✅ Drag to reorder list items — Block-level drag M65; item-within-list drag M174 (`_ListItemDragWrap` + pure `ListReorder` helpers; ordered lists renumber on drop).
 - ✅ Convert between block types in place — Slash menu's linePrefix substitution.
