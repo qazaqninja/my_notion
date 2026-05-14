@@ -15,6 +15,7 @@ import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
+import 'comments_dialog.dart';
 
 enum PropertiesView { fields, yaml }
 
@@ -170,6 +171,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                     tokens, 'export', 'Export .md', '',
                     onTap: () => _revealPage(context),
                   ),
+                  _actionRow(
+                    tokens, 'note', 'Comments', '',
+                    onTap: () => _openComments(context),
+                  ),
                   _actionRow(tokens, 'trash', 'Move to trash', '⌫'),
                 ],
               ),
@@ -283,6 +288,19 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     await ClipboardSetter.set(widget.page.ulid);
     messenger?.showSnackBar(
       SnackBar(content: Text('Copied ${widget.page.ulid}'), duration: const Duration(seconds: 2)),
+    );
+  }
+
+  Future<void> _openComments(BuildContext context) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => CommentsDialog(
+        vaultRoot: vault.rootPath,
+        pageUlid: widget.page.ulid,
+        defaultAuthor: 'You',
+      ),
     );
   }
 
