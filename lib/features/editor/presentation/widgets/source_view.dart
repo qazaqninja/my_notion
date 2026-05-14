@@ -353,6 +353,33 @@ class _SourceViewState extends State<SourceView> {
       }
     }
 
+    // Smart-Enter continuation for list lines (only when no picker is
+    // intercepting). Shift+Enter keeps the platform's plain-newline
+    // behaviour for users who want to break out of the list.
+    if (!_slash.state.open &&
+        !_picker.state.open &&
+        (key == LogicalKeyboardKey.enter ||
+            key == LogicalKeyboardKey.numpadEnter) &&
+        !HardwareKeyboard.instance.isShiftPressed) {
+      final v = _controller.value;
+      final caret = v.selection.isValid
+          ? v.selection.baseOffset
+          : v.text.length;
+      // Only fire when there's no active selection — replacing a
+      // selection with a list-continuation is more surprising than
+      // useful.
+      if (v.selection.baseOffset == v.selection.extentOffset) {
+        final r = continueListAtNewline(v.text, caret);
+        if (r != null) {
+          _controller.value = TextEditingValue(
+            text: r.text,
+            selection: TextSelection.collapsed(offset: r.caret),
+          );
+          return KeyEventResult.handled;
+        }
+      }
+    }
+
     if (!_picker.state.open) return KeyEventResult.ignored;
     if (key == LogicalKeyboardKey.arrowDown) {
       _picker.move(1);

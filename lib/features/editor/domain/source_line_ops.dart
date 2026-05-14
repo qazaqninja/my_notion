@@ -114,6 +114,53 @@ LineOpResult toggleCommentLine(String text, int caret) {
   return LineOpResult(text: newText, caret: newCaret);
 }
 
+/// Smart-Enter continuation for markdown list lines. Inspect the
+/// portion of the current line BEFORE [caret]; if it's a recognised
+/// list item (`- `, `* `, `<n>. `, `- [ ] `, `- [x] `), return the
+/// transformation that:
+///   * inserts `\n<indent><next-marker>` after the caret when the body
+///     is non-empty (continue the list), or
+///   * strips the marker from the current line and replaces it with a
+///     bare `\n` when the body is empty (terminate the list — the
+///     standard "press Enter on an empty bullet to exit" UX).
+/// Returns `null` when the line doesn't match any known list pattern;
+/// callers should fall through to the platform's default Enter
+/// behaviour in that case.
+///
+/// Notes:
+/// * Ordered-list numbering auto-increments by 1 — re-numbering
+///   subsequent items is not done here.
+/// * `- [x] ` continues as `- [ ] ` (fresh unchecked todo).
+LineOpResult? continueListAtNewline(String text, int caret) {
+  if (caret < 0) caret = 0;
+  if (caret > text.length) caret = text.length;
+  final lineStart =
+      caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
+  final upToCaret = text.substring(lineStart, caret);
+  // Order matters: `- [ ] ` before `- ` so the alternation matches the
+  // longest first.
+  final re = RegExp(r'^(\s*)(- \[ \] |- \[x\] |- |\* |(\d+)\. )(.*)$');
+  final m = re.firstMatch(upToCaret);
+  if (m == null) return null;
+  final indent = m.group(1)!;
+  final marker = m.group(2)!;
+  final num = m.group(3);
+  final body = m.group(4)!;
+  if (body.isEmpty) {
+    // Strip the marker and the indent from the current line, then drop
+    // a fresh newline. Net effect: the cursor lands on the next empty
+    // line with no list marker — list terminated.
+    final newText = text.replaceRange(lineStart, caret, '\n');
+    return LineOpResult(text: newText, caret: lineStart + 1);
+  }
+  final nextMarker = marker == '- [x] '
+      ? '- [ ] '
+      : (num == null ? marker : '${int.parse(num) + 1}. ');
+  final insertion = '\n$indent$nextMarker';
+  final newText = text.replaceRange(caret, caret, insertion);
+  return LineOpResult(text: newText, caret: caret + insertion.length);
+}
+
 /// Return the half-open `[start, end)` byte offsets of the line
 /// containing [caret]. The line excludes the trailing '\n'. Empty
 /// strings return `(0, 0)`.

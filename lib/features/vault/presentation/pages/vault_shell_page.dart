@@ -324,6 +324,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘/', 'Toggle HTML comment on current line (source)'),
                 _kbRow(tokens, '⌘⇧K', 'Delete current line (source)'),
                 _kbRow(tokens, '⌘L', 'Select current line (source)'),
+                _kbRow(tokens, '↵', 'Continue list / increment number (source). ⇧↵ to break out.'),
                 _kbRow(tokens, '[[ULID]]', 'Wikilink chip'),
                 _kbRow(tokens, '[[ULID#anchor]]', 'Link to heading'),
                 _kbRow(tokens, '![[ULID]]', 'Transclude page body'),

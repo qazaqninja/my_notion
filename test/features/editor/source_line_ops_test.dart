@@ -217,4 +217,62 @@ void main() {
       expect(r.end, 0);
     });
   });
+
+  group('continueListAtNewline', () {
+    test('continues `- ` bullet at end of an item', () {
+      final r = continueListAtNewline('- one', 5);
+      expect(r, isNotNull);
+      expect(r!.text, '- one\n- ');
+      expect(r.caret, 8);
+    });
+
+    test('continues `1. ` ordered list and increments number', () {
+      final r = continueListAtNewline('1. first', 8);
+      expect(r, isNotNull);
+      expect(r!.text, '1. first\n2. ');
+      expect(r.caret, 12);
+    });
+
+    test('continues 9. → 10. (multi-digit)', () {
+      final r = continueListAtNewline('9. ninth', 8);
+      expect(r!.text, '9. ninth\n10. ');
+      expect(r.caret, 13);
+    });
+
+    test('continues `* ` star bullet', () {
+      final r = continueListAtNewline('* a', 3);
+      expect(r!.text, '* a\n* ');
+    });
+
+    test('continues `- [ ] ` todo as another unchecked todo', () {
+      final r = continueListAtNewline('- [ ] task', 10);
+      expect(r!.text, '- [ ] task\n- [ ] ');
+    });
+
+    test('continues `- [x] ` checked todo as a fresh `- [ ] `', () {
+      final r = continueListAtNewline('- [x] done', 10);
+      expect(r!.text, '- [x] done\n- [ ] ');
+    });
+
+    test('preserves indentation for nested items', () {
+      final r = continueListAtNewline('  - nested', 10);
+      expect(r!.text, '  - nested\n  - ');
+    });
+
+    test('terminates the list when the current item is empty', () {
+      // "  - " with caret at end (offset 4): body is empty.
+      final r = continueListAtNewline('  - ', 4);
+      expect(r, isNotNull);
+      expect(r!.text, '\n');
+      expect(r.caret, 1);
+    });
+
+    test('returns null for a plain non-list line', () {
+      expect(continueListAtNewline('hello world', 5), isNull);
+    });
+
+    test('returns null for a heading line', () {
+      expect(continueListAtNewline('## Heading', 5), isNull);
+    });
+  });
 }
