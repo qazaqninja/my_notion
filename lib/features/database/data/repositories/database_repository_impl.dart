@@ -123,6 +123,26 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
     final ulid = _ulids.generate();
     final fileName = _safeFileName(title);
     final relativePath = p.join(schema.folderPath, '$fileName.md');
+
+    // Seed cell entries from the optional row template — frontmatter
+    // values copied verbatim (sans id / title which the new row
+    // replaces). Falls back to empty placeholders per declared column.
+    final templateEntries = <String, FrontmatterEntry>{};
+    String templateBody = '';
+    if (schema.rowTemplate != null && schema.rowTemplate!.isNotEmpty) {
+      try {
+        final tplPage =
+            await _vault.readPage(schema.rowTemplate!, root: vaultRoot);
+        for (final e in tplPage.frontmatter.entries) {
+          if (e.key == 'id' || e.key == 'title') continue;
+          templateEntries[e.key] = e;
+        }
+        templateBody = tplPage.body;
+      } catch (_) {
+        // Missing/unreadable template = no seeding. Don't fail the create.
+      }
+    }
+
     final entries = <FrontmatterEntry>[
       FrontmatterEntry(
         key: 'id',
@@ -138,19 +158,23 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
       ),
       for (final c in schema.columns)
         if (c.key != 'id' && c.key != 'title')
-          FrontmatterEntry(
-            key: c.key,
-            rawScalar: '',
-            type: _columnToFrontmatterType(c.type),
-            value: null,
-          ),
+          templateEntries.remove(c.key) ??
+              FrontmatterEntry(
+                key: c.key,
+                rawScalar: '',
+                type: _columnToFrontmatterType(c.type),
+                value: null,
+              ),
+      // Any leftover template entries that aren't declared in the schema —
+      // keep them so the template can carry extras (e.g. `tags`).
+      ...templateEntries.values,
     ];
     final page = Page(
       ulid: ulid,
       relativePath: relativePath,
       title: title,
       frontmatter: Frontmatter(entries: entries),
-      body: '',
+      body: templateBody,
       mtimeMs: DateTime.now().millisecondsSinceEpoch,
     );
     await _vault.writePage(page, root: vaultRoot);

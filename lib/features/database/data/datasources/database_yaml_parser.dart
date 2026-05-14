@@ -37,6 +37,7 @@ class DatabaseYamlParser {
       }
     }
 
+    final rowTemplate = doc['row_template'];
     return DatabaseSchema(
       id: id,
       name: name,
@@ -47,6 +48,7 @@ class DatabaseYamlParser {
       views: views.isEmpty
           ? [const DatabaseView(id: 'all', name: 'All', type: ViewType.table)]
           : views,
+      rowTemplate: rowTemplate != null ? '$rowTemplate' : null,
     );
   }
 

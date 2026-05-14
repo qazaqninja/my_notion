@@ -129,6 +129,40 @@ void main() {
     );
     expect(p.basename(row.relativePath), equals('Bad-Name-Here-.md'));
   });
+
+  test('createRow with row_template copies frontmatter + body', () async {
+    // Seed: a template page at vault root.
+    final tplPath = p.join(tmp.path, 'Customer-Template.md');
+    await File(tplPath).writeAsString('---\nid: 01HX0V9R5N6E8L3P7Q8S9U2X4B\ntitle: Template\nstage: pilot\narr: 0\nowner: Diego\n---\n\n## Onboarding\n\n- [ ] Kickoff call\n');
+    await indexer.reindex(tmp);
+
+    // Build a schema with a row_template field — note we re-parse from
+    // the fixture's .database.yaml after appending the template ref.
+    final dbYamlPath = p.join(tmp.path, 'Operations/Customers/.database.yaml');
+    final existing = await File(dbYamlPath).readAsString();
+    await File(dbYamlPath).writeAsString(
+        '$existing\nrow_template: Customer-Template.md\n');
+    await indexer.reindex(tmp);
+
+    final schema = (await dbRepo.listDatabases()).first;
+    expect(schema.rowTemplate, equals('Customer-Template.md'));
+
+    final row = await dbRepo.createRow(
+      schema: schema,
+      title: 'NewCust',
+      vaultRoot: tmp,
+    );
+
+    final raw =
+        await File(p.join(tmp.path, row.relativePath)).readAsString();
+    expect(raw, contains('## Onboarding'));
+    expect(raw, contains('Kickoff call'));
+    expect(raw, contains('stage: pilot'));
+    expect(raw, contains('owner: Diego'));
+    // id + title overridden.
+    expect(raw, contains('title: NewCust'));
+    expect(raw, contains('id: ${row.ulid}'));
+  });
 }
 
 Future<void> _copyDir(Directory src, Directory dst) async {

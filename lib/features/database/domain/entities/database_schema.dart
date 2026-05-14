@@ -69,6 +69,7 @@ class DatabaseSchema {
     required this.folderPath,
     required this.columns,
     required this.views,
+    this.rowTemplate,
   });
 
   final String id;
@@ -78,6 +79,11 @@ class DatabaseSchema {
   final String folderPath;
   final List<ColumnDef> columns;
   final List<DatabaseView> views;
+
+  /// Optional vault-relative path to a .md whose frontmatter is copied
+  /// (sans id/title) into every new row. Declared as
+  /// `row_template: Templates/Customer.md` in `.database.yaml`.
+  final String? rowTemplate;
 
   DatabaseView? viewById(String? id) {
     if (id == null) return views.isEmpty ? null : views.first;
@@ -100,6 +106,7 @@ class DatabaseSchema {
       color: color,
       folderPath: folderPath,
       views: views,
+      rowTemplate: rowTemplate,
       columns: [
         for (final c in columns)
           if (allowed.contains(c.key)) c,
