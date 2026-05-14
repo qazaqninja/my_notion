@@ -492,6 +492,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         messenger?.showSnackBar(
           const SnackBar(content: Text('Reindexing vault…')),
         );
+      case 'Quick capture':
+        await _openQuickCapture(context);
       case 'Toggle theme':
         await themeCubit.cycleMode();
       case 'Toggle compact mode':
