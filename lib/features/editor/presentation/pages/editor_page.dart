@@ -300,6 +300,10 @@ class _EditorBodyState extends State<_EditorBody> {
             const SingleActivator(LogicalKeyboardKey.escape): () {
               if (_findOpen) _closeFind();
             },
+            const SingleActivator(LogicalKeyboardKey.keyL,
+                meta: true, shift: true): () => _toggleLock(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyL,
+                control: true, shift: true): () => _toggleLock(context, loaded),
           },
           child: Focus(
             autofocus: true,

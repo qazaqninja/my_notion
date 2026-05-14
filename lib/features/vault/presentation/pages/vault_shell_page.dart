@@ -210,6 +210,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 const SizedBox(height: 10),
                 _kbSection(tokens, 'Editor'),
                 _kbRow(tokens, '⌘F', 'Find in page'),
+                _kbRow(tokens, '⌘⇧L', 'Toggle page lock'),
                 _kbRow(tokens, 'Esc', 'Close find / dialogs'),
                 _kbRow(tokens, '/', 'Open slash menu (source mode)'),
                 _kbRow(tokens, '[[ULID]]', 'Wikilink chip'),
