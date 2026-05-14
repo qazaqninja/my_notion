@@ -220,6 +220,14 @@ class MarkdownRenderer extends StatelessWidget {
             ),
           ),
         );
+      case _BlockKind.toc:
+        return _renderToc(context, tokens);
+      case _BlockKind.toggle:
+        return _ToggleBlock(
+          rawText: b.text,
+          showUlid: showUlid,
+          tokens: tokens,
+        );
       case _BlockKind.table:
         final rows = b.tableRows ?? const <List<String>>[];
         if (rows.isEmpty) return const SizedBox.shrink();
@@ -261,6 +269,62 @@ class MarkdownRenderer extends StatelessWidget {
           ),
         );
     }
+  }
+
+  Widget _renderToc(BuildContext context, QuillTokens tokens) {
+    final headings = <(int, String)>[];
+    for (final line in body.split('\n')) {
+      if (line.startsWith('### ')) {
+        headings.add((3, line.substring(4)));
+      } else if (line.startsWith('## ')) {
+        headings.add((2, line.substring(3)));
+      } else if (line.startsWith('# ')) {
+        headings.add((1, line.substring(2)));
+      }
+    }
+    if (headings.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          'Table of contents · (no headings yet — start a line with #)',
+          style: TextStyle(fontSize: 12, color: tokens.text3),
+        ),
+      );
+    }
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        border: Border.all(color: tokens.divider2, width: 0.5),
+        borderRadius: const BorderRadius.all(Radius.circular(6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('TABLE OF CONTENTS',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.0,
+                color: tokens.text3,
+              )),
+          const SizedBox(height: 6),
+          for (final (lvl, t) in headings)
+            Padding(
+              padding: EdgeInsets.only(left: (lvl - 1) * 14.0, top: 3),
+              child: Text(
+                t,
+                style: TextStyle(
+                  fontSize: lvl == 1 ? 14 : (lvl == 2 ? 13 : 12.5),
+                  fontWeight: lvl == 1 ? FontWeight.w600 : FontWeight.w500,
+                  color: tokens.text2,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   /// GFM-admonition style callouts: `> [!NOTE]\n> body` etc. The first
@@ -377,6 +441,50 @@ class MarkdownRenderer extends StatelessWidget {
     while (i < lines.length) {
       final start = offsetFor(i);
       final line = lines[i];
+
+      // Table of contents: a line consisting only of `[toc]` or `[[toc]]`.
+      if (line.trim().toLowerCase() == '[toc]' ||
+          line.trim().toLowerCase() == '[[toc]]') {
+        i++;
+        out.add(_Block(
+          kind: _BlockKind.toc,
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
+        continue;
+      }
+
+      // Toggle (collapsible) block — HTML <details>…</details>.
+      if (line.trim().startsWith('<details>')) {
+        var summary = '';
+        // Look for inline summary on the same line.
+        final inlineSummary = RegExp(r'<summary>(.*?)</summary>').firstMatch(line);
+        if (inlineSummary != null) summary = inlineSummary.group(1) ?? '';
+        final buf = StringBuffer();
+        i++;
+        while (i < lines.length && !lines[i].trim().contains('</details>')) {
+          if (summary.isEmpty) {
+            final m =
+                RegExp(r'<summary>(.*?)</summary>').firstMatch(lines[i]);
+            if (m != null) {
+              summary = m.group(1) ?? '';
+              i++;
+              continue;
+            }
+          }
+          if (buf.isNotEmpty) buf.write('\n');
+          buf.write(lines[i]);
+          i++;
+        }
+        if (i < lines.length) i++; // skip </details>
+        out.add(_Block(
+          kind: _BlockKind.toggle,
+          text: '$summary\n${buf.toString()}',
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
+        continue;
+      }
 
       // Code fence
       if (line.startsWith('```')) {
@@ -586,7 +694,10 @@ class MarkdownRenderer extends StatelessWidget {
       line.trim() == '***' ||
       line.trim() == '___' ||
       RegExp(r'^\d+\.\s').hasMatch(line) ||
-      (line.contains('|') && line.trim().startsWith('|'));
+      (line.contains('|') && line.trim().startsWith('|')) ||
+      line.trim().toLowerCase() == '[toc]' ||
+      line.trim().toLowerCase() == '[[toc]]' ||
+      line.trim().startsWith('<details>');
 }
 
 /// If [text] is JUST an image — `![alt](path)` with nothing else — return
@@ -781,7 +892,21 @@ class _Block {
       );
 }
 
-enum _BlockKind { h1, h2, h3, paragraph, ul, ol, code, math, quote, hr, table }
+enum _BlockKind {
+  h1,
+  h2,
+  h3,
+  paragraph,
+  ul,
+  ol,
+  code,
+  math,
+  quote,
+  hr,
+  table,
+  toc,
+  toggle,
+}
 
 List<String> _splitTableRow(String line) {
   var s = line.trim();
@@ -876,6 +1001,77 @@ class _ListItem extends StatelessWidget {
               _ParagraphWithChips(text: raw, showUlid: showUlid, tokens: tokens),
         ),
       ],
+    );
+  }
+}
+
+/// Toggle / collapsible block. First line of [rawText] is the summary,
+/// the rest is the body (rendered via nested MarkdownRenderer-light —
+/// uses _ParagraphWithChips for inline emphasis & wikilinks).
+class _ToggleBlock extends StatefulWidget {
+  const _ToggleBlock({
+    required this.rawText,
+    required this.showUlid,
+    required this.tokens,
+  });
+  final String rawText;
+  final bool showUlid;
+  final QuillTokens tokens;
+
+  @override
+  State<_ToggleBlock> createState() => _ToggleBlockState();
+}
+
+class _ToggleBlockState extends State<_ToggleBlock> {
+  bool _open = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = widget.rawText.split('\n');
+    final summary = parts.isNotEmpty ? parts.first : '';
+    final body = parts.length > 1 ? parts.sublist(1).join('\n').trim() : '';
+    final tokens = widget.tokens;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () => setState(() => _open = !_open),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6, top: 2),
+                    child: Transform.rotate(
+                      angle: _open ? 1.5708 : 0,
+                      child: Icon(Icons.chevron_right,
+                          size: 16, color: tokens.text3),
+                    ),
+                  ),
+                  Expanded(
+                    child: _ParagraphWithChips(
+                      text: summary.isEmpty ? 'Toggle' : summary,
+                      showUlid: widget.showUlid,
+                      tokens: tokens,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_open && body.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 4, 0, 4),
+              child: _ParagraphWithChips(
+                text: body,
+                showUlid: widget.showUlid,
+                tokens: tokens,
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

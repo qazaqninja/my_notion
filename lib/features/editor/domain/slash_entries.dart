@@ -145,6 +145,21 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.pickImage,
     keywords: ['image', 'picture', 'photo', 'upload'],
   ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Table of contents',
+    hint: 'toc',
+    snippet: '[toc]\n',
+    keywords: ['toc', 'contents', 'outline', 'index'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Toggle (collapsible)',
+    hint: '⌄',
+    snippet: '<details><summary>Summary</summary>\nBody\n</details>\n',
+    cursorOffset: 19, // inside summary
+    keywords: ['toggle', 'collapse', 'details', 'expand'],
+  ),
 ];
 
 /// Filter the catalog by [query] (case-insensitive). Empty query returns all.

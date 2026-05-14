@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:drift/drift.dart' show Value;
+
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../data/indexer.dart';
@@ -38,6 +40,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<RefreshFromDisk>(_onRefresh);
     on<CreatePage>(_onCreatePage);
     on<MoveToTrash>(_onMoveToTrash);
+    on<DuplicatePage>(_onDuplicate);
     _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
   }
 
@@ -201,6 +204,89 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       emit(loaded.copyWith(tree: tree, pageCount: count));
     } catch (err) {
       emit(VaultError('Move to trash failed: $err'));
+      emit(loaded);
+    }
+  }
+
+  Future<void> _onDuplicate(DuplicatePage e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final row = await (_db.select(_db.pages)..where((p) => p.ulid.equals(e.ulid)))
+        .getSingleOrNull();
+    if (row == null) return;
+    final root = Directory(loaded.rootPath);
+    final src = await _repo.readPage(row.relativePath, root: root);
+    final newUlid = _ulids.generate();
+    final newTitle = '${src.title} (copy)';
+
+    // Replace id + title entries; keep others.
+    final entries = <FrontmatterEntry>[];
+    for (final ent in src.frontmatter.entries) {
+      if (ent.key == 'id') {
+        entries.add(FrontmatterEntry(
+          key: 'id',
+          rawScalar: newUlid,
+          type: FrontmatterType.ulid,
+          value: newUlid,
+        ));
+      } else if (ent.key == 'title') {
+        entries.add(FrontmatterEntry(
+          key: 'title',
+          rawScalar: newTitle,
+          type: FrontmatterType.text,
+          value: newTitle,
+        ));
+      } else {
+        entries.add(ent);
+      }
+    }
+    if (!entries.any((x) => x.key == 'id')) {
+      entries.insert(
+        0,
+        FrontmatterEntry(
+          key: 'id',
+          rawScalar: newUlid,
+          type: FrontmatterType.ulid,
+          value: newUlid,
+        ),
+      );
+    }
+    if (!entries.any((x) => x.key == 'title')) {
+      entries.add(FrontmatterEntry(
+        key: 'title',
+        rawScalar: newTitle,
+        type: FrontmatterType.text,
+        value: newTitle,
+      ));
+    }
+
+    final folder = p.dirname(src.relativePath);
+    final fileName = _safeFileName(newTitle);
+    final relativePath =
+        folder.isEmpty || folder == '.' ? '$fileName.md' : p.join(folder, '$fileName.md');
+    final next = Page(
+      ulid: newUlid,
+      relativePath: relativePath,
+      title: newTitle,
+      frontmatter: Frontmatter(entries: entries),
+      body: src.body,
+      mtimeMs: DateTime.now().millisecondsSinceEpoch,
+    );
+    try {
+      await _repo.writePage(next, root: root);
+      await _indexer.upsertPage(next);
+      // If the source was inside a database folder, the copy is too —
+      // preserve database_id.
+      if (row.databaseId != null) {
+        await (_db.update(_db.pages)..where((row) => row.ulid.equals(newUlid)))
+            .write(PagesCompanion(databaseId: Value(row.databaseId)));
+      }
+      final tree = await _buildTree(root);
+      final count = (await _db.select(_db.pages).get()).length;
+      emit(loaded.copyWith(tree: tree, pageCount: count));
+      e.onCreated?.call(newUlid);
+    } catch (err) {
+      emit(VaultError('Duplicate failed: $err'));
       emit(loaded);
     }
   }

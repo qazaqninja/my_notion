@@ -63,3 +63,14 @@ class MoveToTrash extends VaultEvent {
   @override
   List<Object?> get props => [ulid];
 }
+
+/// Copy a page to a new .md sibling with a fresh ULID and a `(copy)`
+/// title suffix. Indexer picks it up; [onCreated] receives the new ULID
+/// so the UI can navigate to it.
+class DuplicatePage extends VaultEvent {
+  const DuplicatePage(this.ulid, {this.onCreated});
+  final String ulid;
+  final void Function(String newUlid)? onCreated;
+  @override
+  List<Object?> get props => [ulid];
+}

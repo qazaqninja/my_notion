@@ -112,6 +112,7 @@ class TreeNodeWidget extends StatelessWidget {
       items: const [
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
+        PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
         PopupMenuItem(value: 'history', child: Text('Page history')),
         PopupMenuDivider(),
         PopupMenuItem(value: 'trash', child: Text('Move to trash')),
@@ -130,6 +131,13 @@ class TreeNodeWidget extends StatelessWidget {
           relativePath: fl.relativePath,
         ),
       );
+    } else if (selected == 'duplicate') {
+      if (fl.ulid.isEmpty) return;
+      final router = GoRouter.of(context);
+      context.read<VaultBloc>().add(DuplicatePage(
+            fl.ulid,
+            onCreated: (newUlid) => router.go('/editor/$newUlid'),
+          ));
     } else if (selected == 'trash') {
       if (fl.ulid.isEmpty) return;
       context.read<VaultBloc>().add(MoveToTrash(fl.ulid));
