@@ -1,0 +1,37 @@
+id: 01HX0DBCUSTOMERSAAAAAAAAAA
+name: Customers
+icon: C
+color: '#6B8E7F'
+schema:
+  stage:
+    type: select
+    options: [closed-won, expanding, churn-risk, pilot, evaluation]
+  health:
+    type: select
+    options: [green, yellow, red]
+  arr:
+    type: number
+  owner:
+    type: text
+  industry:
+    type: text
+  size:
+    type: select
+    options: [small, mid, ent]
+  seats:
+    type: number
+  tags:
+    type: multi
+  updated:
+    type: date
+views:
+  - id: all
+    name: All
+    type: table
+  - id: by-stage
+    name: By Stage
+    type: board
+    group_by: stage
+  - id: gallery
+    name: Gallery
+    type: gallery

@@ -1,0 +1,201 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
+import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/relation_chip.dart';
+import '../../../../shared/widgets/status_dot.dart';
+import '../../../../shared/widgets/tag_chip.dart';
+import '../../domain/entities/database_schema.dart';
+
+/// Render a single cell value. Each branch matches the design's
+/// type-specific rendering in `database.jsx`.
+class CellRenderer extends StatelessWidget {
+  const CellRenderer({
+    super.key,
+    required this.column,
+    required this.value,
+    this.align = Alignment.centerLeft,
+  });
+
+  final ColumnDef column;
+  final dynamic value;
+  final Alignment align;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final v = value;
+    if (v == null || (v is String && v.isEmpty)) {
+      return Align(
+        alignment: align,
+        child: Text('—', style: TextStyle(fontSize: 12, color: tokens.text3)),
+      );
+    }
+
+    switch (column.type) {
+      case ColumnType.text:
+        return Align(
+          alignment: align,
+          child: Text(
+            '$v',
+            style: TextStyle(fontSize: 13, color: tokens.text),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        );
+      case ColumnType.number:
+        return Align(
+          alignment: align,
+          child: Text(_fmtNumber('$v'), style: mono(fontSize: 13, color: tokens.text)),
+        );
+      case ColumnType.date:
+        return Align(
+          alignment: align,
+          child: Text('$v', style: mono(fontSize: 12.5, color: tokens.text2)),
+        );
+      case ColumnType.select:
+        return Align(alignment: align, child: TagChip(label: '$v', color: _tagFor('$v')));
+      case ColumnType.multi:
+        final values = _parseList(v);
+        final palette = [
+          TagColor.blue, TagColor.green, TagColor.orange,
+          TagColor.purple, TagColor.pink, TagColor.yellow,
+        ];
+        return Align(
+          alignment: align,
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              for (int i = 0; i < values.length; i++)
+                TagChip(label: values[i], color: palette[i % palette.length]),
+            ],
+          ),
+        );
+      case ColumnType.relation:
+        return Align(alignment: align, child: _Relation(ulid: '$v'));
+      case ColumnType.checkbox:
+        final on = '$v'.toLowerCase() == 'true';
+        return Align(
+          alignment: align,
+          child: Icon(
+            on ? Icons.check_box_outlined : Icons.check_box_outline_blank,
+            size: 14,
+            color: tokens.text3,
+          ),
+        );
+      case ColumnType.formula:
+      case ColumnType.file:
+        return Align(
+          alignment: align,
+          child: Text('$v', style: mono(fontSize: 12, color: tokens.text2)),
+        );
+    }
+  }
+
+  static List<String> _parseList(dynamic v) {
+    if (v is List) return v.map((e) => '$e').toList();
+    final s = '$v'.trim();
+    if (s.startsWith('[') && s.endsWith(']')) {
+      return s
+          .substring(1, s.length - 1)
+          .split(',')
+          .map((part) => _stripQuotes(part.trim()))
+          .where((part) => part.isNotEmpty)
+          .toList();
+    }
+    return [s];
+  }
+
+  static String _stripQuotes(String s) {
+    if (s.length < 2) return s;
+    final first = s[0];
+    final last = s[s.length - 1];
+    if ((first == '"' || first == "'") && first == last) {
+      return s.substring(1, s.length - 1);
+    }
+    return s;
+  }
+
+  static TagColor _tagFor(String value) {
+    final v = value.toLowerCase();
+    if (v.contains('won') || v.contains('expand') || v == 'green') return TagColor.green;
+    if (v.contains('churn') || v == 'red') return TagColor.red;
+    if (v.contains('pilot') || v == 'blue') return TagColor.blue;
+    if (v.contains('eval') || v == 'yellow') return TagColor.yellow;
+    if (v.contains('negot') || v == 'orange') return TagColor.orange;
+    if (v == 'ent' || v == 'enterprise') return TagColor.purple;
+    if (v == 'mid' || v == 'mid-market') return TagColor.gray;
+    if (v == 'small') return TagColor.gray;
+    return TagColor.gray;
+  }
+
+  static String _fmtNumber(String raw) {
+    final s = raw.replaceAll(',', '');
+    final n = num.tryParse(s);
+    if (n == null) return raw;
+    // Format with thousands separator for large numbers; prepend $ for amounts.
+    final isMoney = n >= 1000;
+    final formatted = _withSeparators(n);
+    return isMoney && !raw.contains('\$') ? '\$$formatted' : formatted;
+  }
+
+  static String _withSeparators(num n) {
+    final s = n.toString();
+    final idx = s.indexOf('.');
+    final intPart = idx == -1 ? s : s.substring(0, idx);
+    final frac = idx == -1 ? '' : s.substring(idx);
+    final buf = StringBuffer();
+    for (int i = 0; i < intPart.length; i++) {
+      if (i > 0 && (intPart.length - i) % 3 == 0) buf.write(',');
+      buf.write(intPart[i]);
+    }
+    return '$buf$frac';
+  }
+}
+
+class _Relation extends StatelessWidget {
+  const _Relation({required this.ulid});
+  final String ulid;
+
+  @override
+  Widget build(BuildContext context) {
+    final db = context.read<QuillDatabase>();
+    return FutureBuilder(
+      future: (db.select(db.pages)..where((p) => p.ulid.equals(ulid))).getSingleOrNull(),
+      builder: (context, snap) {
+        final title = snap.data?.title ?? '…${ulid.length >= 6 ? ulid.substring(ulid.length - 6) : ulid}';
+        return RelationChip(label: title, ulid: ulid, icon: 'file-md');
+      },
+    );
+  }
+}
+
+/// Health-style status dot — exposed separately because the design's "health"
+/// column uses a dot + colour name, not a Tag chip.
+class HealthCell extends StatelessWidget {
+  const HealthCell({super.key, required this.value});
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final color = switch (value.toLowerCase()) {
+      'green' => StatusDotColor.green,
+      'yellow' => StatusDotColor.yellow,
+      'red' => StatusDotColor.red,
+      _ => StatusDotColor.gray,
+    };
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        StatusDot(color: color),
+        const SizedBox(width: 6),
+        Text(value, style: TextStyle(fontSize: 12, color: tokens.text2)),
+      ],
+    );
+  }
+}

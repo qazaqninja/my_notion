@@ -2,11 +2,16 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/side_head.dart';
+import '../../../../shared/widgets/side_item.dart';
+import '../../../database/data/repositories/database_repository_impl.dart';
+import '../../../database/domain/entities/database_schema.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_state.dart';
 import 'sidebar_search.dart';
@@ -59,21 +64,13 @@ class SidebarWidget extends StatelessWidget {
                   const SideHead(label: 'Workspace', actionIcon: 'plus'),
                   TreeRoot(activeUlid: activeUlid),
                   const SideHead(label: 'Databases', actionIcon: 'plus'),
-                  // Databases section will surface .database.yaml folders in M7.
-                  // For now, placeholder when none.
-                  if (state is VaultLoaded && state.tree.topLevel.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: Text(
-                        'No databases yet',
-                        style: TextStyle(fontSize: 12, color: tokens.text3),
-                      ),
-                    )
+                  if (state is VaultLoaded)
+                    _DatabasesList(rebuildKey: state.rootPath)
                   else
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: Text(
-                        'No databases configured yet',
+                        'No vault opened',
                         style: TextStyle(fontSize: 11.5, color: tokens.text3),
                       ),
                     ),
@@ -116,5 +113,53 @@ class SidebarWidget extends StatelessWidget {
       return '~${path.substring(home.length)}';
     }
     return path;
+  }
+}
+
+class _DatabasesList extends StatelessWidget {
+  const _DatabasesList({required this.rebuildKey});
+  final String rebuildKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final repo = DatabaseRepositoryImpl(context.read<QuillDatabase>());
+    return FutureBuilder<List<DatabaseSchema>>(
+      key: ValueKey('dbs-$rebuildKey'),
+      future: repo.listDatabases(),
+      builder: (context, snap) {
+        final dbs = snap.data ?? const [];
+        if (dbs.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Text(
+              'No databases yet',
+              style: TextStyle(fontSize: 11.5, color: tokens.text3),
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final db in dbs)
+              SideItem(
+                glyph: SideItemGlyph(
+                  color: _parseColor(db.color),
+                  letter: db.icon.isNotEmpty ? db.icon.substring(0, 1) : 'D',
+                ),
+                label: db.name,
+                onTap: () => context.go('/db/${db.id}'),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  static Color _parseColor(String s) {
+    var hex = s.replaceAll('#', '');
+    if (hex.length == 6) hex = 'FF$hex';
+    final v = int.tryParse(hex, radix: 16);
+    return Color(v ?? 0xFF6B8E7F);
   }
 }

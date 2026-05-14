@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/db/quill_database.dart' hide Page;
+import 'features/database/presentation/pages/database_table_page.dart';
 import 'features/editor/presentation/pages/editor_page.dart';
 import 'features/vault/data/indexer.dart';
 import 'features/vault/data/repositories/vault_repository_impl.dart';
@@ -119,6 +120,25 @@ GoRouter _buildRouter(VaultBloc vault) {
               key: ValueKey(state.pathParameters['ulid']),
               ulid: state.pathParameters['ulid']!,
             ),
+          ),
+          GoRoute(
+            path: '/db/:dbId',
+            builder: (context, state) => DatabaseTablePage(
+              key: ValueKey('db-${state.pathParameters['dbId']}'),
+              dbId: state.pathParameters['dbId']!,
+            ),
+            routes: [
+              GoRoute(
+                path: ':viewId',
+                builder: (context, state) => DatabaseTablePage(
+                  key: ValueKey(
+                    'db-${state.pathParameters['dbId']}-${state.pathParameters['viewId']}',
+                  ),
+                  dbId: state.pathParameters['dbId']!,
+                  viewId: state.pathParameters['viewId'],
+                ),
+              ),
+            ],
           ),
         ],
       ),
