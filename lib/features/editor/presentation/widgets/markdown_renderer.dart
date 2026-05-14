@@ -49,18 +49,30 @@ class MarkdownRenderer extends StatelessWidget {
   }
 
   Widget _wrapBlock(BuildContext context, QuillTokens tokens, _Block b) {
-    final inner = _renderBlock(context, tokens, b);
+    var inner = _renderBlock(context, tokens, b);
     if (onBodyChange == null) return inner;
-    // Only paragraph + headings are tap-to-edit in this MVP; lists,
-    // tables, code, math, etc. still require source-mode toggle.
+
+    // Tap-to-edit for simple text blocks.
     final editable = b.kind == _BlockKind.paragraph ||
         b.kind == _BlockKind.h1 ||
         b.kind == _BlockKind.h2 ||
         b.kind == _BlockKind.h3 ||
         b.kind == _BlockKind.quote;
-    if (!editable) return inner;
-    return _EditableBlock(
-      key: ValueKey('blk-${b.sourceStart}-${b.sourceEnd}'),
+    if (editable) {
+      inner = _EditableBlock(
+        key: ValueKey('blk-${b.sourceStart}-${b.sourceEnd}'),
+        block: b,
+        body: body,
+        onBodyChange: onBodyChange!,
+        child: inner,
+      );
+    }
+
+    // Drag-to-reorder for ALL block kinds. The drag handle is rendered
+    // by _BlockDragWrap on the left margin; the block content itself is
+    // unchanged. DragTarget logic decides where the dragged block lands.
+    if (b.kind == _BlockKind.hr) return inner; // hr is decorative-only.
+    return _BlockDragWrap(
       block: b,
       body: body,
       onBodyChange: onBodyChange!,
@@ -1102,6 +1114,150 @@ class _ListItem extends StatelessWidget {
     );
   }
 }
+
+/// Wraps a rendered block with a hover-revealed drag handle (left
+/// margin) and a DragTarget that, on accept, splices the dragged
+/// block's source slice in front of this one. Reordering uses the
+/// existing `(sourceStart, sourceEnd)` ranges from M40; the produced
+/// new body is dispatched via [onBodyChange].
+class _BlockDragWrap extends StatefulWidget {
+  const _BlockDragWrap({
+    required this.block,
+    required this.body,
+    required this.onBodyChange,
+    required this.child,
+  });
+
+  final _Block block;
+  final String body;
+  final ValueChanged<String> onBodyChange;
+  final Widget child;
+
+  @override
+  State<_BlockDragWrap> createState() => _BlockDragWrapState();
+}
+
+class _BlockDragWrapState extends State<_BlockDragWrap> {
+  bool _hover = false;
+
+  /// Move the source slice `[dragStart..dragEnd)` (plus its trailing
+  /// newline, if any) so it lands immediately before `targetStart`.
+  /// Returns the new body string. No-op when dragging onto itself.
+  static String _move(
+      String body, int dragStart, int dragEnd, int targetStart) {
+    if (dragStart == targetStart) return body;
+    // Include the trailing newline of the dragged block so consecutive
+    // blocks stay separated by exactly one \n.
+    final dragEndIncl =
+        (dragEnd < body.length && body[dragEnd] == '\n') ? dragEnd + 1 : dragEnd;
+    final piece = body.substring(dragStart, dragEndIncl);
+    final withoutPiece =
+        body.substring(0, dragStart) + body.substring(dragEndIncl);
+    final adjusted = targetStart > dragStart
+        ? targetStart - piece.length
+        : targetStart;
+    return withoutPiece.substring(0, adjusted) +
+        piece +
+        withoutPiece.substring(adjusted);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return DragTarget<List<int>>(
+      onWillAcceptWithDetails: (d) =>
+          d.data[0] != widget.block.sourceStart, // not self
+      onAcceptWithDetails: (d) {
+        final next = _move(
+          widget.body,
+          d.data[0], // dragStart
+          d.data[1], // dragEnd
+          widget.block.sourceStart,
+        );
+        widget.onBodyChange(next);
+      },
+      builder: (context, candidate, _) {
+        final hovering = candidate.isNotEmpty;
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hover = true),
+          onExit: (_) => setState(() => _hover = false),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (hovering)
+                Container(
+                  height: 2,
+                  color: tokens.accent,
+                  margin: const EdgeInsets.symmetric(vertical: 1),
+                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    child: _hover
+                        ? LongPressDraggable<List<int>>(
+                            data: [
+                              widget.block.sourceStart,
+                              widget.block.sourceEnd,
+                            ],
+                            delay: const Duration(milliseconds: 150),
+                            feedback: Material(
+                              color: Colors.transparent,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: tokens.surface,
+                                  border: Border.all(
+                                      color: tokens.divider2, width: 0.5),
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(4)),
+                                ),
+                                child: Text(
+                                  _blockKindLabel(widget.block.kind),
+                                  style: TextStyle(
+                                      fontSize: 12, color: tokens.text2),
+                                ),
+                              ),
+                            ),
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.grab,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Icon(Icons.drag_indicator,
+                                    size: 14, color: tokens.text3),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  Expanded(child: widget.child),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+String _blockKindLabel(_BlockKind k) => switch (k) {
+      _BlockKind.h1 => 'Heading 1',
+      _BlockKind.h2 => 'Heading 2',
+      _BlockKind.h3 => 'Heading 3',
+      _BlockKind.paragraph => 'Paragraph',
+      _BlockKind.ul => 'List',
+      _BlockKind.ol => 'Numbered list',
+      _BlockKind.code => 'Code',
+      _BlockKind.math => 'Math',
+      _BlockKind.quote => 'Quote',
+      _BlockKind.table => 'Table',
+      _BlockKind.toc => 'Contents',
+      _BlockKind.toggle => 'Toggle',
+      _BlockKind.hr => 'Divider',
+    };
 
 /// Toggle / collapsible block. First line of [rawText] is the summary,
 /// the rest is the body (rendered via nested MarkdownRenderer-light —
