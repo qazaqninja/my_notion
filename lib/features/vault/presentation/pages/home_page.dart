@@ -1,7 +1,9 @@
+import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -90,6 +92,10 @@ class HomePage extends StatelessWidget {
                     onTap: () => context.go('/settings'),
                   ),
                 ]),
+                if (state is VaultLoaded) ...[
+                  const SizedBox(height: 36),
+                  const _RecentlyEdited(),
+                ],
               ],
             ),
           ),
@@ -97,6 +103,139 @@ class HomePage extends StatelessWidget {
       ],
     );
   }
+}
+
+class _RecentlyEdited extends StatefulWidget {
+  const _RecentlyEdited();
+
+  @override
+  State<_RecentlyEdited> createState() => _RecentlyEditedState();
+}
+
+class _RecentlyEditedState extends State<_RecentlyEdited> {
+  late Future<List<_RecentEntry>> _entries;
+
+  @override
+  void initState() {
+    super.initState();
+    _entries = _load();
+  }
+
+  Future<List<_RecentEntry>> _load() async {
+    final db = context.read<QuillDatabase>();
+    final rows = await (db.select(db.pages)
+          ..orderBy([(p) =>
+              OrderingTerm(expression: p.mtimeMs, mode: OrderingMode.desc)])
+          ..limit(5))
+        .get();
+    return [
+      for (final r in rows)
+        _RecentEntry(
+          ulid: r.ulid,
+          title: r.title,
+          relativePath: r.relativePath,
+          mtime: r.mtimeMs,
+        ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return FutureBuilder<List<_RecentEntry>>(
+      future: _entries,
+      builder: (context, snap) {
+        final list = snap.data ?? const [];
+        if (list.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'RECENTLY EDITED',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.0,
+                color: tokens.text3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            for (final e in list)
+              GestureDetector(
+                onTap: () => context.go('/editor/${e.ulid}'),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: tokens.divider, width: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        QuillIcon('file-md',
+                            size: 13, strokeWidth: 1.7, color: tokens.text3),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            e.title,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w500,
+                              color: tokens.text,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            e.relativePath,
+                            textAlign: TextAlign.right,
+                            style: mono(fontSize: 11, color: tokens.text3),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          _ago(e.mtime),
+                          style: mono(fontSize: 11, color: tokens.text3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  static String _ago(int mtimeMs) {
+    final secs =
+        ((DateTime.now().millisecondsSinceEpoch - mtimeMs) ~/ 1000)
+            .clamp(0, 1 << 30);
+    if (secs < 60) return 'just now';
+    if (secs < 3600) return '${secs ~/ 60}m';
+    if (secs < 86400) return '${secs ~/ 3600}h';
+    return '${secs ~/ 86400}d';
+  }
+}
+
+class _RecentEntry {
+  const _RecentEntry({
+    required this.ulid,
+    required this.title,
+    required this.relativePath,
+    required this.mtime,
+  });
+  final String ulid;
+  final String title;
+  final String relativePath;
+  final int mtime;
 }
 
 class _Tile extends StatelessWidget {
