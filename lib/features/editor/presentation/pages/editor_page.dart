@@ -552,6 +552,7 @@ class _EditorBodyState extends State<_EditorBody> {
                       style: mono(fontSize: 11, color: tokens.text3),
                     ),
                   ),
+                  _PinButton(pageUlid: page.ulid, onTap: () => _togglePin(context, loaded)),
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     onPressed: () => _toggleLock(context, loaded),
@@ -914,6 +915,36 @@ class _EmptyPageHint extends StatelessWidget {
 /// pivots colour by how stale the verification is. Tooltip lists the
 /// owners + verified-at line so editors can see who owns the page at
 /// a glance.
+/// Star icon shown in the editor's PageHeader actions row. Reads the
+/// current vault's `favorites:` list to render the fill state, and
+/// delegates the toggle back to the editor via [onTap]. Mirrors the
+/// ⌘⇧D shortcut so users have a click target too.
+class _PinButton extends StatelessWidget {
+  const _PinButton({required this.pageUlid, required this.onTap});
+  final String pageUlid;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final state = context.watch<VaultBloc>().state;
+    final pinned = state is VaultLoaded &&
+        state.workspace.favorites.contains(pageUlid);
+    return IconButton(
+      visualDensity: VisualDensity.compact,
+      padding: const EdgeInsets.all(4),
+      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      tooltip: pinned ? 'Unpin from favorites (⌘⇧D)' : 'Pin to favorites (⌘⇧D)',
+      onPressed: onTap,
+      icon: Icon(
+        pinned ? Icons.star : Icons.star_outline,
+        size: 15,
+        color: pinned ? tokens.accent : tokens.text3,
+      ),
+    );
+  }
+}
+
 class _WikiBadge extends StatelessWidget {
   const _WikiBadge({required this.page});
   final dynamic page;
