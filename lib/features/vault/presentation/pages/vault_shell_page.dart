@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../commands/presentation/widgets/command_palette_overlay.dart';
@@ -338,7 +339,106 @@ class _VaultShellPageState extends State<VaultShellPage> {
           targetFolder: '',
           onCreated: (newUlid) => router.go('/editor/$newUlid'),
         ));
+      case 'Vault stats':
+        if (!context.mounted) return;
+        await _showVaultStats(context);
     }
+  }
+
+  Future<void> _showVaultStats(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    final databases = await db.select(db.databases).get();
+    final relations = await db.select(db.relations).get();
+    final totalBytes =
+        pages.fold<int>(0, (sum, p) => sum + (p.bodyText.length + p.frontmatterJson.length).toInt());
+    final largest = [...pages]
+      ..sort((a, b) => b.bodyText.length.compareTo(a.bodyText.length));
+    if (!context.mounted) return;
+    final tokens = QuillTokens.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: tokens.surface,
+        child: SizedBox(
+          width: 420,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('VAULT STATS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1,
+                      color: tokens.text3,
+                    )),
+                const SizedBox(height: 14),
+                _statRow(tokens, 'Pages indexed', '${pages.length}'),
+                _statRow(tokens, 'Databases', '${databases.length}'),
+                _statRow(tokens, 'Relations', '${relations.length}'),
+                _statRow(tokens, 'Approx size',
+                    '${(totalBytes / 1024).toStringAsFixed(1)} KB'),
+                const SizedBox(height: 12),
+                if (largest.isNotEmpty) ...[
+                  Text('LARGEST PAGES',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                        color: tokens.text3,
+                      )),
+                  const SizedBox(height: 6),
+                  for (final p in largest.take(5))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(p.title,
+                                style: TextStyle(
+                                    fontSize: 12, color: tokens.text2),
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          Text('${(p.bodyText.length / 1024).toStringAsFixed(1)} KB',
+                              style: mono(
+                                  fontSize: 11, color: tokens.text3)),
+                        ],
+                      ),
+                    ),
+                ],
+                const SizedBox(height: 14),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statRow(QuillTokens tokens, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: TextStyle(fontSize: 12.5, color: tokens.text2)),
+          ),
+          Text(value,
+              style: mono(fontSize: 12.5, color: tokens.text)),
+        ],
+      ),
+    );
   }
 
   Widget _paletteOverlay(BuildContext context) {
