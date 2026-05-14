@@ -23,6 +23,7 @@ import '../../data/opml_page_importer.dart';
 import '../../data/asana_csv_importer.dart';
 import '../../data/docx_page_importer.dart';
 import '../../data/enex_page_importer.dart';
+import '../../data/quick_capture.dart';
 import '../../data/roam_page_importer.dart';
 import '../../data/text_page_importer.dart';
 import '../../data/trello_database_importer.dart';
@@ -143,6 +144,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
               context.go('/home'),
           const SingleActivator(LogicalKeyboardKey.keyH, control: true): () =>
               context.go('/home'),
+          const SingleActivator(LogicalKeyboardKey.period, meta: true): () =>
+              _openQuickCapture(context),
+          const SingleActivator(LogicalKeyboardKey.period, control: true): () =>
+              _openQuickCapture(context),
         },
         child: Focus(
           focusNode: _rootFocus,
@@ -280,6 +285,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘\\', 'Toggle sidebar'),
                 _kbRow(tokens, '⌘[', 'Back'),
                 _kbRow(tokens, '⌘,', 'Settings'),
+                _kbRow(tokens, '⌘.', 'Quick capture → Inbox/Quick capture.md'),
                 _kbRow(tokens, '⌘H', 'Home'),
                 _kbRow(tokens, '?', 'This shortcut list'),
                 const SizedBox(height: 10),
@@ -345,6 +351,57 @@ class _VaultShellPageState extends State<VaultShellPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _openQuickCapture(BuildContext context) async {
+    final vaultBloc = context.read<VaultBloc>();
+    final state = vaultBloc.state;
+    if (state is! VaultLoaded) return;
+    final controller = TextEditingController();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final text = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Quick capture'),
+        content: SizedBox(
+          width: 420,
+          child: TextField(
+            controller: controller,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 6,
+            decoration: const InputDecoration(
+              hintText: 'Capture a thought — it lands at the top of '
+                  'Inbox/Quick capture.md with a timestamp.',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (v) => Navigator.of(ctx).pop(v),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Capture'),
+          ),
+        ],
+      ),
+    );
+    if (text == null || text.trim().isEmpty) return;
+    try {
+      await QuickCapture.append(text, Directory(state.rootPath));
+      vaultBloc.add(const RefreshFromDisk());
+      messenger?.showSnackBar(const SnackBar(
+        content: Text('Captured → Inbox/Quick capture.md'),
+        duration: Duration(seconds: 2),
+      ));
+    } catch (e) {
+      messenger?.showSnackBar(
+          SnackBar(content: Text('Capture failed: $e')));
+    }
   }
 
   Future<void> _newPage(BuildContext context) async {
