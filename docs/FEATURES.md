@@ -31,8 +31,8 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Pages & Content
 
-- 🚧 Hierarchical nested pages (infinite depth) — Folder tree already renders as page tree (`lib/features/vault/presentation/widgets/sidebar_tree.dart`). Missing: "Create subpage" action and breadcrumb. See Pick-next #3.
-- 🚧 Subpages and page-in-page — Same as above; subpage blocks (inline) are 📋 and depend on the block editor model.
+- ✅ Hierarchical nested pages (infinite depth) — Folder tree renders as page tree (`lib/features/vault/presentation/widgets/tree_node_widget.dart`). "New page here" subpage action via folder context menu + hover plus button (M24). Breadcrumb already in PageHeader.
+- ✅ Subpages and page-in-page — Folder-tree nesting + breadcrumb (above). Inline page cards via standalone `[[ULID]]` paragraphs (`_SubpageCard`); inline transclusion via `![[ULID]]` (`_TranscludedBlock`).
 - ✅ Page icons (emoji, custom upload, Notion gallery) — M26, `lib/shared/widgets/page_icon.dart` renders frontmatter `icon:` (emoji / asset / file / URL). Emoji picker (M62) at `lib/shared/widgets/emoji_picker.dart`. Sidebar row icon (M84) shows the same glyph in db row cells.
 - ✅ Page covers (image upload, URL, Unsplash, gallery) — M26 (editor hero band) + M92 (gallery card thumbnails). Unsplash search would need API integration.
 - ✅ Page templates (built-in and custom) — Pages under `Templates/` surface as "New page from template…" in the command palette (`vault_shell_page.dart`). Duplicate copies the frontmatter + body and regenerates `id:`.

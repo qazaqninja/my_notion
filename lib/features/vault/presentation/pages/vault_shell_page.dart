@@ -19,6 +19,7 @@ import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../commands/presentation/widgets/command_palette_overlay.dart';
 import '../../../database/data/datasources/csv_importer.dart';
 import '../../data/html_page_importer.dart';
+import '../../data/text_page_importer.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
@@ -526,6 +527,36 @@ class _VaultShellPageState extends State<VaultShellPage> {
         } catch (e) {
           messenger?.showSnackBar(
               SnackBar(content: Text('HTML import failed: $e')));
+        }
+      case 'Import text file as page':
+      case 'Import Markdown file as page':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final exts = label == 'Import Markdown file as page'
+            ? const ['md', 'markdown']
+            : const ['txt', 'text'];
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: exts,
+        );
+        if (result == null || result.files.isEmpty) return;
+        final picked = result.files.first.path;
+        if (picked == null) return;
+        try {
+          final summary = await TextPageImporter.importTo(
+            File(picked),
+            Directory(vaultPath),
+          );
+          vaultBloc.add(const ReindexVault());
+          messenger?.showSnackBar(SnackBar(
+            content: Text('Imported → ${summary.relativePath}'),
+            duration: const Duration(seconds: 4),
+          ));
+        } catch (e) {
+          messenger?.showSnackBar(
+              SnackBar(content: Text('Import failed: $e')));
         }
       case 'New page from template…':
         if (vaultPath == null) {
