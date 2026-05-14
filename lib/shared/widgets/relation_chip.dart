@@ -15,6 +15,7 @@ class RelationChip extends StatelessWidget {
     this.icon = 'file-md',
     this.prefix,
     this.onTap,
+    this.tooltip,
   });
 
   final String label;
@@ -24,12 +25,24 @@ class RelationChip extends StatelessWidget {
   final String? prefix;
   final VoidCallback? onTap;
 
+  /// Optional tooltip surfaced on hover. When null, falls back to the
+  /// chip's own label so long titles aren't lost behind ellipsis.
+  final String? tooltip;
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return GestureDetector(
+    final t = tooltip ?? label;
+    return Tooltip(
+      message: t,
+      waitDuration: const Duration(milliseconds: 400),
+      child: GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: MouseRegion(
+        cursor: onTap == null
+            ? SystemMouseCursors.basic
+            : SystemMouseCursors.click,
+        child: Container(
         constraints: const BoxConstraints(maxWidth: 220),
         padding: const EdgeInsets.fromLTRB(6, 1.5, 7, 1.5),
         decoration: BoxDecoration(
@@ -78,6 +91,8 @@ class RelationChip extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    ),
       ),
     );
   }

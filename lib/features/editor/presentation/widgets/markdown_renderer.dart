@@ -3025,11 +3025,18 @@ class _ResolvedChip extends StatelessWidget {
       builder: (context, snap) {
         final base = snap.data?.title ?? '…${ulid.substring(ulid.length - 6)}';
         final title = anchor == null ? base : '$base #$anchor';
+        final relPath = snap.data?.relativePath;
+        final tooltip = relPath == null
+            ? title
+            : anchor == null
+                ? '$title\n$relPath'
+                : '$title\n$relPath #$anchor';
         return RelationChip(
           label: title,
           ulid: ulid,
           showUlid: showUlid,
           icon: 'file-md',
+          tooltip: tooltip,
           onTap: () {
             final route = anchor == null
                 ? '/editor/$ulid'
