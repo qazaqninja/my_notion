@@ -84,6 +84,7 @@ bool _isFullWidth(dynamic frontmatter) {
 
 class _EditorBodyState extends State<_EditorBody> {
   bool _propertiesOpen = false;
+  bool _rightRailHidden = false;
   final ScrollController _scroll = ScrollController();
   bool _anchorJumped = false;
 
@@ -304,6 +305,12 @@ class _EditorBodyState extends State<_EditorBody> {
                 meta: true, shift: true): () => _toggleLock(context, loaded),
             const SingleActivator(LogicalKeyboardKey.keyL,
                 control: true, shift: true): () => _toggleLock(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.backslash,
+                meta: true, shift: true): () => setState(
+                () => _rightRailHidden = !_rightRailHidden),
+            const SingleActivator(LogicalKeyboardKey.backslash,
+                control: true, shift: true): () => setState(
+                () => _rightRailHidden = !_rightRailHidden),
           },
           child: Focus(
             autofocus: true,
@@ -343,6 +350,25 @@ class _EditorBodyState extends State<_EditorBody> {
                       color: locked ? tokens.accent : tokens.text3,
                     ),
                   ),
+                  if (!mobile && !_propertiesOpen)
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => setState(
+                          () => _rightRailHidden = !_rightRailHidden),
+                      padding: const EdgeInsets.all(4),
+                      constraints:
+                          const BoxConstraints(minWidth: 28, minHeight: 28),
+                      tooltip: _rightRailHidden
+                          ? 'Show outline (⌘⇧\\)'
+                          : 'Hide outline (⌘⇧\\)',
+                      icon: Icon(
+                        _rightRailHidden
+                            ? Icons.view_sidebar
+                            : Icons.view_sidebar_outlined,
+                        size: 16,
+                        color: _rightRailHidden ? tokens.accent : tokens.text3,
+                      ),
+                    ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     onPressed: () => setState(() => _propertiesOpen = !_propertiesOpen),
@@ -478,7 +504,7 @@ class _EditorBodyState extends State<_EditorBody> {
                       page: page,
                       onClose: () => setState(() => _propertiesOpen = false),
                     )
-                  else if (!mobile)
+                  else if (!mobile && !_rightRailHidden)
                     Container(
                       width: 248,
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
