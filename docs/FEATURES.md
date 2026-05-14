@@ -278,9 +278,9 @@ Top 10, ordered. Each is sized for one or two milestone commits. The first six m
 
 Cmd/Ctrl + B → wrap selection in `**bold**`. Cmd/Ctrl + I → wrap selection in `*italic*`. Cmd/Ctrl + Shift + X → wrap selection in `~~strikethrough~~`. Cmd/Ctrl + Shift + C → wrap selection in `` `inline code` ``. All four reuse the same `_wrapSelection(pre, post)` helper in `source_view.dart`; if no selection is active the caret lands between the inserted markers.
 
-### Source-mode line ops (M235)
+### Source-mode line ops (M235, M236)
 
-Cmd/Ctrl + D duplicates the line under the caret and keeps the caret at the same column on the copy. The transformation lives in a pure `duplicateLineAt(text, caret)` helper at `lib/features/editor/domain/source_line_ops.dart` and is unit-tested independently of the widget tree (6 cases covering middle / first / final / end-of-line / clamped / empty-text inputs).
+Cmd/Ctrl + D duplicates the line under the caret and keeps the caret at the same column on the copy. Alt + ↑ / Alt + ↓ (M236) swap the current line with the one above / below; the trailing-newline empty line is treated as non-content so the down-swap no-ops at end-of-file. All three transformations live in pure helpers (`duplicateLineAt`, `moveLineUp`, `moveLineDown`) at `lib/features/editor/domain/source_line_ops.dart` and are unit-tested independently of the widget tree (14 cases).
 6. ✅ **Image upload** — Shipped **M27**. Slash menu has "Image"; chosen file copies to `<vault>/attachments/<ULID>.<ext>` via `AttachmentWriter`, splices `![image](...)`. `markdown_renderer.dart` detects standalone `![alt](path)` paragraphs and renders inline. Clipboard paste / drag-drop are still TODO.
 7. ✅ **Formula property type** — Shipped **M31**. `lib/features/database/domain/formula/formula.dart` (lexer + Pratt parser + evaluator). Subset: prop / bare ident, arithmetic, string concat, comparisons, logic, if(), helpers (round, length, upper, lower, contains, format, today, etc.). Rollup still TODO — the syntax parses but execution needs multi-row aggregation at the call site.
 8. ✅ **Calendar + chart views** — Both shipped. Calendar **M33** via `table_calendar` (groups rows by date col onto a month/week grid). Chart **M34** via `fl_chart` (bar chart of row counts grouped by select col, with optional numeric-sum tooltips).

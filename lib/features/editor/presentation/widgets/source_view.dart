@@ -252,9 +252,23 @@ class _SourceViewState extends State<SourceView> {
   /// Duplicate the line under the caret and place the caret at the
   /// same column on the copy. Cmd+D / Ctrl+D.
   void _duplicateLine() {
+    _applyLineOp(duplicateLineAt);
+  }
+
+  /// Move the line under the caret up by one. Alt+↑.
+  void _moveLineUp() {
+    _applyLineOp(moveLineUp);
+  }
+
+  /// Move the line under the caret down by one. Alt+↓.
+  void _moveLineDown() {
+    _applyLineOp(moveLineDown);
+  }
+
+  void _applyLineOp(LineOpResult Function(String text, int caret) op) {
     final v = _controller.value;
     final caret = v.selection.isValid ? v.selection.baseOffset : v.text.length;
-    final r = duplicateLineAt(v.text, caret);
+    final r = op(v.text, caret);
     _controller.value = TextEditingValue(
       text: r.text,
       selection: TextSelection.collapsed(offset: r.caret),
@@ -601,6 +615,10 @@ class _SourceViewState extends State<SourceView> {
                       _duplicateLine,
                   const SingleActivator(LogicalKeyboardKey.keyD,
                       control: true): _duplicateLine,
+                  const SingleActivator(LogicalKeyboardKey.arrowUp, alt: true):
+                      _moveLineUp,
+                  const SingleActivator(LogicalKeyboardKey.arrowDown,
+                      alt: true): _moveLineDown,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
