@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
@@ -272,6 +273,7 @@ class _EditorBodyState extends State<_EditorBody> {
       items: const [
         PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
         PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
+        PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
         PopupMenuDivider(),
         PopupMenuItem(value: 'reindex', child: Text('Reindex vault')),
@@ -292,6 +294,11 @@ class _EditorBodyState extends State<_EditorBody> {
           SnackBar(content: Text('Copied [[$ulid]]'),
               duration: const Duration(seconds: 2)),
         );
+      case 'reveal':
+        final vault = context.read<VaultBloc>().state;
+        if (vault is VaultLoaded) {
+          await Reveal.show('${vault.rootPath}/${loaded.page.relativePath}');
+        }
       case 'export-md':
         await _exportPageAsMarkdown(context, loaded);
       case 'reindex':
