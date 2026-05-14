@@ -596,8 +596,12 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
     int endOf(int upToLine) {
       // upToLine is exclusive; range ends just before its starting offset.
       final v = offsetFor(upToLine);
+      // `lineOffsets` adds +1 per line for a separator \n. When the body
+      // lacks a trailing newline, the final offset overshoots body.length
+      // by 1 — clamp so substring() never goes out of range.
+      if (v > body.length) return body.length;
       // Drop the trailing newline so the slice is the block's own text.
-      return v > 0 && v <= body.length && upToLine > 0 ? v - 1 : v;
+      return upToLine > 0 && v > 0 ? v - 1 : v;
     }
 
     final out = <_Block>[];
@@ -2830,6 +2834,35 @@ List<InlineSpan> _buildSpans(
             child: Text(
               m.group(1) ?? '',
               style: TextStyle(fontSize: 16, color: tokens.text, height: 1.6),
+            ),
+          ),
+        ));
+        i = m.end;
+        committed = i;
+        continue;
+      }
+    }
+
+    // Inline keyboard chip: <kbd>X</kbd>. Renders as a tiny rounded
+    // mono pill with a subtle border — classic shortcut typography.
+    if (c == '<' && text.startsWith('<kbd>', i)) {
+      final m = RegExp(r'<kbd>([^<]*)<\/kbd>').matchAsPrefix(text, i);
+      if (m != null) {
+        flushPlain(i);
+        out.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: BoxDecoration(
+              color: tokens.surface2,
+              border: Border.all(color: tokens.divider2, width: 0.5),
+              borderRadius: const BorderRadius.all(Radius.circular(3)),
+            ),
+            child: Text(
+              m.group(1) ?? '',
+              style: mono(fontSize: 11, color: tokens.text2),
             ),
           ),
         ));
