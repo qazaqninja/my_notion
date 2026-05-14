@@ -21,6 +21,7 @@ import '../../../database/data/datasources/csv_importer.dart';
 import '../../data/html_page_importer.dart';
 import '../../data/opml_page_importer.dart';
 import '../../data/asana_csv_importer.dart';
+import '../../data/enex_page_importer.dart';
 import '../../data/roam_page_importer.dart';
 import '../../data/text_page_importer.dart';
 import '../../data/trello_database_importer.dart';
@@ -533,6 +534,33 @@ class _VaultShellPageState extends State<VaultShellPage> {
         } catch (e) {
           messenger?.showSnackBar(
               SnackBar(content: Text('HTML import failed: $e')));
+        }
+      case 'Import Evernote .enex notebook':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final enexPick = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: const ['enex', 'xml'],
+        );
+        if (enexPick == null || enexPick.files.isEmpty) return;
+        final enexPath = enexPick.files.first.path;
+        if (enexPath == null) return;
+        try {
+          final summary = await EnexPageImporter.importTo(
+            File(enexPath),
+            Directory(vaultPath),
+          );
+          vaultBloc.add(const ReindexVault());
+          messenger?.showSnackBar(SnackBar(
+            content: Text(
+                'Imported ${summary.notes.length} notes → ${summary.folder}/'),
+            duration: const Duration(seconds: 4),
+          ));
+        } catch (e) {
+          messenger?.showSnackBar(
+              SnackBar(content: Text('Evernote import failed: $e')));
         }
       case 'Import Asana CSV as database':
         if (vaultPath == null) {
