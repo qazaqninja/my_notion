@@ -29,6 +29,14 @@ void main() {
       expect(out.where((e) => e.label.startsWith('Heading')).length, 3);
     });
 
+    test('ranks label-prefix matches before substring matches', () {
+      // "co" prefixes "Code block" and "Two columns" has "columns" keyword;
+      // the code block entry should rank above it.
+      final out = filterSlashEntries('co');
+      expect(out, isNotEmpty);
+      expect(out.first.label, 'Code block');
+    });
+
     test('Button entry is present and inserts a :::button fence', () {
       final out = filterSlashEntries('button');
       expect(out, isNotEmpty);

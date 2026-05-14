@@ -216,13 +216,38 @@ const List<SlashEntry> kSlashEntries = [
 ];
 
 /// Filter the catalog by [query] (case-insensitive). Empty query returns all.
+/// Score an entry by how strongly it matches [q]. Higher = better.
+/// Returns null when the entry doesn't match at all.
+///   3 — label starts with q
+///   2 — keyword equals q, OR keyword starts with q
+///   1 — label or any keyword contains q
+int? _scoreEntry(SlashEntry e, String q) {
+  final lbl = e.label.toLowerCase();
+  if (lbl.startsWith(q)) return 3;
+  for (final k in e.keywords) {
+    if (k == q || k.startsWith(q)) return 2;
+  }
+  if (lbl.contains(q)) return 1;
+  for (final k in e.keywords) {
+    if (k.contains(q)) return 1;
+  }
+  return null;
+}
+
 List<SlashEntry> filterSlashEntries(String query) {
   if (query.isEmpty) return kSlashEntries;
   final q = query.toLowerCase();
-  return [
-    for (final e in kSlashEntries)
-      if (e.label.toLowerCase().contains(q) ||
-          e.keywords.any((k) => k.contains(q)))
-        e,
-  ];
+  // Score every entry then return the best matches first. Stable sort
+  // preserves catalog order within a score bucket.
+  final scored = <(int, int, SlashEntry)>[];
+  for (var i = 0; i < kSlashEntries.length; i++) {
+    final score = _scoreEntry(kSlashEntries[i], q);
+    if (score != null) scored.add((score, i, kSlashEntries[i]));
+  }
+  scored.sort((a, b) {
+    final c = b.$1.compareTo(a.$1);
+    if (c != 0) return c;
+    return a.$2.compareTo(b.$2);
+  });
+  return [for (final t in scored) t.$3];
 }
