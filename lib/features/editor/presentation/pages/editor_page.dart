@@ -393,6 +393,27 @@ class _EditorBodyState extends State<_EditorBody> {
     }
   }
 
+  void _toggleFullWidth(BuildContext context, EditorLoaded loaded) {
+    final bloc = context.read<EditorBloc>();
+    final fm = loaded.page.frontmatter;
+    final wasFull = _isFullWidth(fm);
+    final existing = fm.find('full_width');
+    final next = wasFull ? 'false' : 'true';
+    if (existing == null) {
+      bloc.add(AddFrontmatterField(FrontmatterEntry(
+        key: 'full_width',
+        rawScalar: next,
+        type: FrontmatterType.checkbox,
+        value: !wasFull,
+      )));
+    } else {
+      bloc.add(EditFrontmatterField(
+        'full_width',
+        existing.copyWith(rawScalar: next, value: !wasFull),
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
@@ -458,6 +479,12 @@ class _EditorBodyState extends State<_EditorBody> {
             const SingleActivator(LogicalKeyboardKey.keyR,
                 control: true, alt: true): () =>
                 _revealCurrentPage(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyW,
+                meta: true, shift: true): () =>
+                _toggleFullWidth(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyW,
+                control: true, shift: true): () =>
+                _toggleFullWidth(context, loaded),
             // Cmd+Z / Ctrl+Z → undo last bloc-level edit. Native
             // TextField undo still wins inside text fields because the
             // field intercepts the keystroke before this Shortcuts
