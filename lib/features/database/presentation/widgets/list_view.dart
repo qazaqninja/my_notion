@@ -17,10 +17,16 @@ class DatabaseListView extends StatelessWidget {
     super.key,
     required this.schema,
     required this.rows,
+    this.subGroupBy,
   });
 
   final DatabaseSchema schema;
   final List<DatabasePageRow> rows;
+
+  /// When non-null, a divider band is inserted between rows whose value
+  /// for this column differs. Empty values bucket under `—`. Mirrors
+  /// the BoardView / TableView / GalleryView sub-group behaviour.
+  final String? subGroupBy;
 
   @override
   Widget build(BuildContext context) {
@@ -34,10 +40,95 @@ class DatabaseListView extends StatelessWidget {
         ),
       );
     }
+    final entries = _buildEntries();
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      itemCount: rows.length,
-      itemBuilder: (context, i) => _Row(row: rows[i], schema: schema),
+      itemCount: entries.length,
+      itemBuilder: (context, i) {
+        final e = entries[i];
+        return e.row != null
+            ? _Row(row: e.row!, schema: schema)
+            : _SectionHeader(label: e.label!, count: e.count, tokens: tokens);
+      },
+    );
+  }
+
+  List<_ListEntry> _buildEntries() {
+    if (subGroupBy == null) {
+      return [for (final r in rows) _ListEntry.row(r)];
+    }
+    final out = <_ListEntry>[];
+    String? lastKey;
+    int sectionCount = 0;
+    int sectionHeaderIdx = -1;
+    for (final r in rows) {
+      final raw = '${r.cells[subGroupBy] ?? ''}'.trim();
+      final key = raw.isEmpty ? '—' : raw;
+      if (key != lastKey) {
+        if (sectionHeaderIdx >= 0) {
+          out[sectionHeaderIdx] = out[sectionHeaderIdx].withCount(sectionCount);
+        }
+        sectionHeaderIdx = out.length;
+        out.add(_ListEntry.header(key, 0));
+        sectionCount = 0;
+        lastKey = key;
+      }
+      out.add(_ListEntry.row(r));
+      sectionCount += 1;
+    }
+    if (sectionHeaderIdx >= 0) {
+      out[sectionHeaderIdx] = out[sectionHeaderIdx].withCount(sectionCount);
+    }
+    return out;
+  }
+}
+
+class _ListEntry {
+  const _ListEntry._({this.row, this.label, this.count = 0});
+  factory _ListEntry.row(DatabasePageRow row) => _ListEntry._(row: row);
+  factory _ListEntry.header(String label, int count) =>
+      _ListEntry._(label: label, count: count);
+  final DatabasePageRow? row;
+  final String? label;
+  final int count;
+  _ListEntry withCount(int c) =>
+      _ListEntry._(row: row, label: label, count: c);
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({
+    required this.label,
+    required this.count,
+    required this.tokens,
+  });
+  final String label;
+  final int count;
+  final QuillTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 14, 24, 6),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: tokens.divider2, width: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            label,
+            style: mono(
+              fontSize: 11,
+              color: tokens.text2,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text('$count', style: mono(fontSize: 11, color: tokens.text3)),
+        ],
+      ),
     );
   }
 }
