@@ -53,7 +53,7 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Block Editor
 
-- 🚧 Block-based editing (everything is a block) — Tap-to-edit M40 (paragraphs / headings / blockquotes), M176 (list items with auto-renumber), M198 (code + math via per-block source mode). Tables still need a table-aware editor; hr is decorative. Full block-level cursor nav still needs super_editor.
+- 🚧 Block-based editing (everything is a block) — Tap-to-edit M40 (paragraphs / headings / blockquotes), M176 (list items with auto-renumber), M198 (code + math), M199 (tables — all via per-block source mode). hr is decorative-only. Full block-level cursor nav still needs super_editor.
 - ✅ **Slash command menu (/)** — M23+. 19 entries including all block types, image picker, button (M70), inline database (M78), today's date (M103).
 - ✅ Drag and drop blocks — M65, `_BlockDragWrap` on every block. Hover-revealed handle on the left margin; drop reorders via source-offset splicing.
 - ✅ Multi-column layouts — M66, `:::cols` / `:::col` / `:::` fence.
@@ -253,7 +253,7 @@ If your feature wants to store something new, the answer is almost always "add a
 ## Misc
 
 - ✅ Math/equation rendering (LaTeX via KaTeX) — M32, `flutter_math_fork`.
-- 📋 Mermaid diagrams in code blocks — Render fenced ```mermaid blocks via `flutter_mermaid` or a webview fallback.
+- 🚧 Mermaid diagrams in code blocks — M200 styles fenced ```mermaid blocks with an accent border / pill / "rendering needs a viewer" hint, source remains selectable for paste into mermaid.live. Native Flutter rendering needs `flutter_mermaid` or a webview.
 - ✅ Color and background highlights — Inline `<span style>` for colours + `<mark>` (M80) for soft-yellow highlight; callouts for block-level colour.
 - ✅ Emoji picker — M62, `lib/shared/widgets/emoji_picker.dart`. Used by page icons (M26) and workspace icon (M107).
 - ✅ Undo/redo (Cmd+Z) — Native TextField undo in source mode + bloc-level `UndoEdit`/`RedoEdit` (M179): bounded 50-entry stacks, ⌘Z / ⌘⇧Z, every body + frontmatter mutation pushes the prior Page snapshot.
@@ -269,10 +269,10 @@ If your feature wants to store something new, the answer is almost always "add a
 Top 10, ordered. Each is sized for one or two milestone commits. The first six mirror `CLAUDE.md`'s "What is NOT implemented" list; the next four come from this reconciliation.
 
 1. ✅ **Slash command menu (`/`)** — Shipped **M23**. Files: `lib/features/editor/{domain/slash_entries,presentation/cubit/slash_menu_cubit,presentation/widgets/slash_menu_overlay}.dart` + hook in `source_view.dart`. 13 entries.
-2. 🚧 **WYSIWYG editing** — MVP M40 (paragraph / heading / blockquote tap-to-edit) extended M176 (list items, ul + ol with auto-renumber) and M198 (code + math via per-block source mode). Each `_Block` carries a `(sourceStart, sourceEnd)` range; `_EditableBlock` / `_EditableListItem` swap the rendered widget for a TextField on tap, splice the new source via `ListReorder.emit` (renumbers ol) and dispatch `onBodyChange`. Tables still need a table-aware editor; hr is decorative. True `super_editor` integration with a markdown serializer remains future work for users who want block-level cursor navigation and drag-drop reordering.
+2. 🚧 **WYSIWYG editing** — MVP M40 (paragraph / heading / blockquote tap-to-edit) extended M176 (list items, ul + ol with auto-renumber), M198 (code + math), M199 (tables — all via per-block source mode). Each `_Block` carries a `(sourceStart, sourceEnd)` range; `_EditableBlock` / `_EditableListItem` swap the rendered widget for a TextField on tap, splice the new source via `ListReorder.emit` (renumbers ol) and dispatch `onBodyChange`. hr is decorative. True `super_editor` integration with a markdown serializer remains future work for users who want block-level cursor navigation and drag-drop reordering.
 3. ✅ **Page hierarchy UX** — Shipped **M24**. Right-click / long-press on tree rows opens a context menu (folders get "New page here" + "Reveal", files get "Reveal" + "Copy ULID" + "Move to trash"). Folders also have a hover `+` icon for new subpages. Editor breadcrumbs already render via `PageHeader`.
 4. ✅ **Page icons + covers** — Shipped **M26**. `lib/shared/widgets/page_icon.dart` renders `icon:` (emoji / asset / file / URL) and `cover:` as a hero band. Sidebar tree icons are deferred (would require extending VaultFile + the indexer).
-5. 🚧 **Math (KaTeX) + Mermaid** — Math shipped **M32** via `flutter_math_fork` (pure Dart). `$$ ... $$` blocks render in `markdown_renderer.dart`; the slash menu inserts the snippet. Mermaid still deferred (needs webview).
+5. 🚧 **Math (KaTeX) + Mermaid** — Math shipped **M32** via `flutter_math_fork` (pure Dart). `$$ ... $$` blocks render in `markdown_renderer.dart`; the slash menu inserts the snippet. Mermaid blocks get a styled placeholder card (M200); native rendering still needs `flutter_mermaid` or a webview.
 6. ✅ **Image upload** — Shipped **M27**. Slash menu has "Image"; chosen file copies to `<vault>/attachments/<ULID>.<ext>` via `AttachmentWriter`, splices `![image](...)`. `markdown_renderer.dart` detects standalone `![alt](path)` paragraphs and renders inline. Clipboard paste / drag-drop are still TODO.
 7. ✅ **Formula property type** — Shipped **M31**. `lib/features/database/domain/formula/formula.dart` (lexer + Pratt parser + evaluator). Subset: prop / bare ident, arithmetic, string concat, comparisons, logic, if(), helpers (round, length, upper, lower, contains, format, today, etc.). Rollup still TODO — the syntax parses but execution needs multi-row aggregation at the call site.
 8. ✅ **Calendar + chart views** — Both shipped. Calendar **M33** via `table_calendar` (groups rows by date col onto a month/week grid). Chart **M34** via `fl_chart` (bar chart of row counts grouped by select col, with optional numeric-sum tooltips).
