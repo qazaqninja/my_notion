@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,7 @@ import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
+import '../../data/datasources/csv_exporter.dart';
 import '../../data/repositories/database_repository_impl.dart';
 import '../../domain/entities/database_query.dart';
 import '../../domain/entities/database_schema.dart';
@@ -344,12 +346,39 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       if (!mobile) const SizedBox(width: 4),
       IconButton(
         visualDensity: VisualDensity.compact,
-        icon: QuillIcon('search', size: 13, color: tokens.text3),
+        icon: QuillIcon('export', size: 13, color: tokens.text3),
         padding: const EdgeInsets.all(4),
         constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-        onPressed: () {},
+        onPressed: () => _exportCsv(schema),
+        tooltip: 'Export CSV',
       ),
     ];
+  }
+
+  Future<void> _exportCsv(DatabaseSchema schema) async {
+    final rows = _rows;
+    if (rows == null) return;
+    final filtered = ApplyQuery.apply(rows, _query, schema);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final picked = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save CSV…',
+      fileName: '${schema.name}.csv',
+      type: FileType.custom,
+      allowedExtensions: const ['csv'],
+    );
+    if (picked == null) return;
+    try {
+      final n = await const CsvExporter().export(
+        destination: File(picked),
+        schema: schema,
+        rows: filtered,
+      );
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Exported $n rows → $picked')),
+      );
+    } catch (e) {
+      messenger?.showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
   }
 
   Future<void> _openFilterPopover(BuildContext ctx, DatabaseSchema schema) async {
