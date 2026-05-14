@@ -106,7 +106,7 @@ If your feature wants to store something new, the answer is almost always "add a
   - ✅ last edited time — file `mtime`.
   - ✅ files & media — M87, image thumbnails + chip fallback for non-image extensions.
   - ✅ formula — M31, Pratt parser + evaluator subset of Notion formula v2.
-  - 📋 rollup — Aggregate over related rows. Formula evaluator can host the helpers; needs multi-row aggregation at the call site.
+  - ✅ rollup — M168, `type: rollup` columns with `relation:` + `target:` + `agg: sum|avg|min|max|count|list`. Pure RollupCompute runs before ApplyQuery so filters/sorts can use rollup values.
   - ✅ created time — `createdTime` column type added in earlier milestone; reads `created_at:` frontmatter.
   - 📋 created by, last edited by, person — Requires a user identity model. v1: read from `.quill.yaml` users list. Full multi-user is 🔮.
   - ✅ button — M70 `:::button` fence renders inside any page (including row pages).
@@ -128,7 +128,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Linked database views — M88 extends `:::db` with `view:` + `limit:` props inside the fence.
 - ✅ Database mentions / inline databases — M78 + M88, `:::db <folder>` fence with optional view config.
 - 🚧 Relations between databases (one-way and two-way) — One-way ✅ via `[[ULID]]`. Two-way 📋.
-- 📋 Rollups (aggregate from related rows) — See formula.
+- ✅ Rollups (aggregate from related rows) — M168, see the `rollup` bullet in the column-type list above.
 - ✅ Formulas (Notion formula language v2) — M31.
 - ✅ Buttons inside rows that trigger actions — M70.
 - 🔮 Automations (no-code rules: when X changes, do Y) — Requires backend daemon.
