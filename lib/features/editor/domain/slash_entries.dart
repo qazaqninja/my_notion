@@ -182,6 +182,15 @@ const List<SlashEntry> kSlashEntries = [
     cursorOffset: 8, // start of "Left column"
     keywords: ['column', 'columns', 'cols', 'layout', 'side', 'two'],
   ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Button',
+    hint: '⏵',
+    snippet:
+        ':::button\nlabel: Click me\naction: url\nvalue: https://example.com\n:::\n',
+    cursorOffset: 17, // start of label text after "label: "
+    keywords: ['button', 'action', 'link', 'url', 'click'],
+  ),
 ];
 
 /// Filter the catalog by [query] (case-insensitive). Empty query returns all.

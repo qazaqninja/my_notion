@@ -39,4 +39,29 @@ class Reveal {
       return false;
     }
   }
+
+  /// Open a URL (or any URI handler the OS knows) in the user's default app.
+  /// Used by button blocks and bookmark cards. Mirrors [show] but doesn't
+  /// pass `-R` since there's nothing to highlight.
+  static Future<bool> openUrl(String url) async {
+    if (url.isEmpty) return false;
+    try {
+      if (Platform.isMacOS) {
+        final r = await Process.run('open', [url]);
+        return r.exitCode == 0;
+      }
+      if (Platform.isLinux) {
+        final r = await Process.run('xdg-open', [url]);
+        return r.exitCode == 0;
+      }
+      if (Platform.isWindows) {
+        final r =
+            await Process.run('cmd.exe', ['/c', 'start', '', url]);
+        return r.exitCode == 0 || r.exitCode == 1;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
 }

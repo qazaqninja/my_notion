@@ -28,6 +28,15 @@ void main() {
       // Three headings, plus other labels containing 'h'.
       expect(out.where((e) => e.label.startsWith('Heading')).length, 3);
     });
+
+    test('Button entry is present and inserts a :::button fence', () {
+      final out = filterSlashEntries('button');
+      expect(out, isNotEmpty);
+      final btn = out.firstWhere((e) => e.label == 'Button');
+      expect(btn.snippet, startsWith(':::button'));
+      expect(btn.snippet, contains('action:'));
+      expect(btn.snippet, endsWith(':::\n'));
+    });
   });
 
   group('SlashEntry.caretAfterInsert', () {

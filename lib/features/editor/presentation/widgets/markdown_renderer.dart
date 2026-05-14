@@ -2,10 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/relation_chip.dart';
@@ -273,6 +276,11 @@ class MarkdownRenderer extends StatelessWidget {
             ],
           ),
         );
+      case _BlockKind.button:
+        return _ButtonBlock(
+          props: b.props ?? const {},
+          tokens: tokens,
+        );
       case _BlockKind.toc:
         return _renderToc(context, tokens);
       case _BlockKind.toggle:
@@ -515,6 +523,38 @@ class MarkdownRenderer extends StatelessWidget {
         out.add(_Block(
           kind: _BlockKind.columns,
           columns: cols.map((c) => c.toString()).toList(),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
+        continue;
+      }
+
+      // Button block: `:::button` opens, `:::` closes. Body is YAML-ish
+      // `key: value` lines — `label`, `action` (url|copy|reveal|page),
+      // `value`. Anything else is ignored.
+      if (line.trim() == ':::button') {
+        final props = <String, String>{};
+        i++;
+        while (i < lines.length && lines[i].trim() != ':::') {
+          final ln = lines[i];
+          final idx = ln.indexOf(':');
+          if (idx > 0) {
+            final key = ln.substring(0, idx).trim();
+            var val = ln.substring(idx + 1).trim();
+            // Strip surrounding quotes for ergonomic typing.
+            if (val.length >= 2 &&
+                ((val.startsWith('"') && val.endsWith('"')) ||
+                    (val.startsWith("'") && val.endsWith("'")))) {
+              val = val.substring(1, val.length - 1);
+            }
+            if (key.isNotEmpty) props[key] = val;
+          }
+          i++;
+        }
+        if (i < lines.length) i++; // skip closing :::
+        out.add(_Block(
+          kind: _BlockKind.button,
+          props: props,
           sourceStart: start,
           sourceEnd: endOf(i),
         ));
@@ -777,7 +817,8 @@ class MarkdownRenderer extends StatelessWidget {
       line.trim().toLowerCase() == '[toc]' ||
       line.trim().toLowerCase() == '[[toc]]' ||
       line.trim().startsWith('<details>') ||
-      line.trim() == ':::cols';
+      line.trim() == ':::cols' ||
+      line.trim() == ':::button';
 }
 
 /// If [text] is JUST an image — `![alt](path)` with nothing else — return
@@ -1162,6 +1203,7 @@ class _Block {
     this.items,
     this.tableRows,
     this.columns,
+    this.props,
     this.sourceStart = 0,
     this.sourceEnd = 0,
   });
@@ -1173,6 +1215,10 @@ class _Block {
   /// For [_BlockKind.columns]: one raw markdown string per column.
   /// Rendered by nested MarkdownRenderers.
   final List<String>? columns;
+
+  /// For [_BlockKind.button]: `key: value` pairs from inside the
+  /// `:::button` fence. Known keys: label, action, value.
+  final Map<String, String>? props;
 
   /// `[sourceStart, sourceEnd)` is the half-open range in the full body
   /// that produced this block. Used for tap-to-edit splicing.
@@ -1204,6 +1250,7 @@ enum _BlockKind {
   toc,
   toggle,
   columns,
+  button,
 }
 
 List<String> _splitTableRow(String line) {
@@ -1358,6 +1405,129 @@ class _TocLink extends StatelessWidget {
   }
 }
 
+/// Button block — `:::button` fence. Renders a clickable pill that
+/// performs one of: url / copy / reveal / page-link. Authored as
+///
+/// :::button
+/// label: Visit homepage
+/// action: url
+/// value: https://example.com
+/// :::
+///
+/// Stays a plain markdown container fence, so Obsidian / GitHub
+/// render the YAML lines verbatim (gracefully) and we keep the
+/// byte-identical round-trip.
+class _ButtonBlock extends StatefulWidget {
+  const _ButtonBlock({required this.props, required this.tokens});
+
+  final Map<String, String> props;
+  final QuillTokens tokens;
+
+  @override
+  State<_ButtonBlock> createState() => _ButtonBlockState();
+}
+
+class _ButtonBlockState extends State<_ButtonBlock> {
+  String? _flash;
+
+  Future<void> _run(BuildContext context) async {
+    final action = (widget.props['action'] ?? 'url').toLowerCase();
+    final value = widget.props['value'] ?? '';
+    switch (action) {
+      case 'url':
+        await Reveal.openUrl(value);
+        _toast('Opened $value');
+        break;
+      case 'copy':
+        await Clipboard.setData(ClipboardData(text: value));
+        _toast('Copied');
+        break;
+      case 'reveal':
+        final vault = context.read<VaultBloc>().state;
+        final root = vault is VaultLoaded ? vault.rootPath : null;
+        final path = value.startsWith('/') || root == null
+            ? value
+            : '$root/$value';
+        await Reveal.show(path);
+        _toast('Revealed');
+        break;
+      case 'page':
+        if (value.isNotEmpty) {
+          if (!context.mounted) return;
+          context.go('/editor/$value');
+        }
+        break;
+      default:
+        _toast('Unknown action: $action');
+    }
+  }
+
+  void _toast(String msg) {
+    setState(() => _flash = msg);
+    Future.delayed(const Duration(milliseconds: 1100), () {
+      if (mounted) setState(() => _flash = null);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = widget.tokens;
+    final label = widget.props['label']?.trim().isNotEmpty == true
+        ? widget.props['label']!
+        : 'Button';
+    final action = (widget.props['action'] ?? 'url').toLowerCase();
+    final icon = switch (action) {
+      'copy' => Icons.copy,
+      'reveal' => Icons.folder_open,
+      'page' => Icons.link,
+      _ => Icons.open_in_new,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => _run(context),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _flash != null ? tokens.surface2 : tokens.accent,
+                borderRadius: const BorderRadius.all(Radius.circular(6)),
+                border: Border.all(
+                  color: _flash != null ? tokens.divider2 : tokens.accent,
+                  width: 0.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon,
+                      size: 14,
+                      color:
+                          _flash != null ? tokens.text2 : Colors.white),
+                  const SizedBox(width: 8),
+                  Text(
+                    _flash ?? label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: _flash != null ? tokens.text2 : Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Wraps a rendered block with a hover-revealed drag handle (left
 /// margin) and a DragTarget that, on accept, splices the dragged
 /// block's source slice in front of this one. Reordering uses the
@@ -1500,6 +1670,7 @@ String _blockKindLabel(_BlockKind k) => switch (k) {
       _BlockKind.toc => 'Contents',
       _BlockKind.toggle => 'Toggle',
       _BlockKind.columns => 'Columns',
+      _BlockKind.button => 'Button',
       _BlockKind.hr => 'Divider',
     };
 
