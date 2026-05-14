@@ -102,6 +102,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'export', label: 'Export vault as PDF', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'New page from template…', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'hash', label: 'Vault stats', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'Install built-in templates', hint: ''),
   ];
 
   static List<CommandEntry> _filterActions(List<CommandEntry> all, String q) {

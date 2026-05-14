@@ -19,6 +19,7 @@ import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../data/exporter.dart';
+import '../../data/seed_templates.dart';
 import '../../data/html_exporter.dart';
 import '../../data/pdf_exporter.dart';
 import '../bloc/vault_bloc.dart';
@@ -467,6 +468,26 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Vault stats':
         if (!context.mounted) return;
         await _showVaultStats(context);
+      case 'Install built-in templates':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        try {
+          final n = await const SeedTemplates().install(Directory(vaultPath));
+          messenger?.showSnackBar(SnackBar(
+            content: Text(
+              n == 0
+                  ? 'Templates already installed.'
+                  : 'Installed $n templates → Templates/',
+            ),
+            duration: const Duration(seconds: 4),
+          ));
+          vaultBloc.add(const RefreshFromDisk());
+        } catch (e) {
+          messenger?.showSnackBar(SnackBar(
+              content: Text('Could not install templates: $e')));
+        }
     }
   }
 
