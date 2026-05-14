@@ -1,15 +1,34 @@
 import 'dart:convert';
+import 'dart:io' as io;
 
 import 'package:drift/drift.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/ulid/ulid_generator.dart';
+import '../../../vault/data/indexer.dart';
+import '../../../vault/domain/entities/frontmatter.dart';
+import '../../../vault/domain/entities/frontmatter_entry.dart';
+import '../../../vault/domain/entities/page.dart';
+import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
 import '../datasources/database_yaml_parser.dart';
 
 class DatabaseRepositoryImpl implements DatabaseRepository {
-  DatabaseRepositoryImpl(this._db);
+  DatabaseRepositoryImpl(
+    this._db, {
+    VaultRepository? vault,
+    Indexer? indexer,
+    UlidGenerator? ulids,
+  })  : _vault = vault,
+        _indexer = indexer,
+        _ulids = ulids ?? const UlidGenerator();
+
   final QuillDatabase _db;
+  final VaultRepository? _vault;
+  final Indexer? _indexer;
+  final UlidGenerator _ulids;
 
   @override
   Future<List<DatabaseSchema>> listDatabases() async {
@@ -45,6 +64,167 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
           cells: _decodeCells(row.frontmatterJson),
         ),
     ];
+  }
+
+  @override
+  Future<DatabasePageRow> updateCell({
+    required String ulid,
+    required ColumnDef column,
+    required Object? newValue,
+    required io.Directory vaultRoot,
+  }) async {
+    if (_vault == null || _indexer == null) {
+      throw StateError('updateCell requires vault + indexer wiring');
+    }
+    final row = await (_db.select(_db.pages)..where((p) => p.ulid.equals(ulid)))
+        .getSingleOrNull();
+    if (row == null) throw StateError('Page not found: $ulid');
+    final page = await _vault.readPage(row.relativePath, root: vaultRoot);
+    final next = _writeCellEntry(page.frontmatter, column, newValue);
+    final updated = page.copyWith(frontmatter: next);
+    await _vault.writePage(updated, root: vaultRoot);
+    await _indexer.upsertPage(updated);
+    return DatabasePageRow(
+      ulid: updated.ulid,
+      title: updated.title,
+      relativePath: updated.relativePath,
+      cells: _cellsFromEntries(updated.frontmatter.entries),
+    );
+  }
+
+  @override
+  Future<DatabasePageRow> createRow({
+    required DatabaseSchema schema,
+    required String title,
+    required io.Directory vaultRoot,
+  }) async {
+    if (_vault == null || _indexer == null) {
+      throw StateError('createRow requires vault + indexer wiring');
+    }
+    final ulid = _ulids.generate();
+    final fileName = _safeFileName(title);
+    final relativePath = p.join(schema.folderPath, '$fileName.md');
+    final entries = <FrontmatterEntry>[
+      FrontmatterEntry(
+        key: 'id',
+        rawScalar: ulid,
+        type: FrontmatterType.ulid,
+        value: ulid,
+      ),
+      FrontmatterEntry(
+        key: 'title',
+        rawScalar: title,
+        type: FrontmatterType.text,
+        value: title,
+      ),
+      for (final c in schema.columns)
+        if (c.key != 'id' && c.key != 'title')
+          FrontmatterEntry(
+            key: c.key,
+            rawScalar: '',
+            type: _columnToFrontmatterType(c.type),
+            value: null,
+          ),
+    ];
+    final page = Page(
+      ulid: ulid,
+      relativePath: relativePath,
+      title: title,
+      frontmatter: Frontmatter(entries: entries),
+      body: '',
+      mtimeMs: DateTime.now().millisecondsSinceEpoch,
+    );
+    await _vault.writePage(page, root: vaultRoot);
+    await _indexer.upsertPage(page);
+    // Set databaseId on the freshly inserted row.
+    await (_db.update(_db.pages)..where((row) => row.ulid.equals(ulid)))
+        .write(PagesCompanion(databaseId: Value(schema.id)));
+    return DatabasePageRow(
+      ulid: ulid,
+      title: title,
+      relativePath: relativePath,
+      cells: _cellsFromEntries(entries),
+    );
+  }
+
+  /// Builds the next Frontmatter with [column].key set to [newValue].
+  /// Preserves declared order; appends if the key is new.
+  static Frontmatter _writeCellEntry(
+    Frontmatter fm,
+    ColumnDef column,
+    Object? newValue,
+  ) {
+    final fmType = _columnToFrontmatterType(column.type);
+    final (raw, parsed) = _rawAndValueFor(column.type, newValue);
+    final entry = FrontmatterEntry(
+      key: column.key,
+      rawScalar: raw,
+      type: fmType,
+      value: parsed,
+    );
+    final next = <FrontmatterEntry>[];
+    bool replaced = false;
+    for (final e in fm.entries) {
+      if (e.key == column.key) {
+        next.add(entry);
+        replaced = true;
+      } else {
+        next.add(e);
+      }
+    }
+    if (!replaced) next.add(entry);
+    return Frontmatter(entries: next);
+  }
+
+  static (String, Object?) _rawAndValueFor(ColumnType t, Object? v) {
+    if (v == null) return ('', null);
+    final s = v is String ? v : '$v';
+    switch (t) {
+      case ColumnType.number:
+        final n = num.tryParse(s.trim());
+        return (n?.toString() ?? s, n ?? s);
+      case ColumnType.checkbox:
+        final b = s.trim().toLowerCase() == 'true';
+        return (b ? 'true' : 'false', b);
+      case ColumnType.multi:
+        final parts = [
+          for (final p in s.split(','))
+            if (p.trim().isNotEmpty) p.trim(),
+        ];
+        return ('[${parts.join(', ')}]', parts);
+      case ColumnType.text:
+      case ColumnType.date:
+      case ColumnType.select:
+      case ColumnType.relation:
+      case ColumnType.formula:
+      case ColumnType.file:
+        return (s, s);
+    }
+  }
+
+  static FrontmatterType _columnToFrontmatterType(ColumnType t) => switch (t) {
+        ColumnType.text => FrontmatterType.text,
+        ColumnType.number => FrontmatterType.number,
+        ColumnType.date => FrontmatterType.date,
+        ColumnType.select => FrontmatterType.select,
+        ColumnType.multi => FrontmatterType.multi,
+        ColumnType.relation => FrontmatterType.relation,
+        ColumnType.formula => FrontmatterType.formula,
+        ColumnType.file => FrontmatterType.file,
+        ColumnType.checkbox => FrontmatterType.checkbox,
+      };
+
+  static Map<String, dynamic> _cellsFromEntries(List<FrontmatterEntry> entries) {
+    return {for (final e in entries) e.key: e.rawScalar};
+  }
+
+  static String _safeFileName(String title) {
+    // Strip path separators and reserved characters; collapse spaces.
+    final stripped = title
+        .replaceAll(RegExp(r'[\\/<>:"|?*]+'), '-')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return stripped.isEmpty ? 'Untitled' : stripped;
   }
 
   Map<String, dynamic> _decodeCells(String fmJson) {

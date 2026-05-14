@@ -43,11 +43,19 @@ class FrozenColumnTable extends StatefulWidget {
     required this.schema,
     required this.rows,
     required this.onOpenPage,
+    this.onEditCell,
+    this.onCreateRow,
   });
 
   final DatabaseSchema schema;
   final List<DatabasePageRow> rows;
   final void Function(DatabasePageRow row) onOpenPage;
+
+  /// When set, cells in editable types become click-to-edit.
+  final Future<void> Function(DatabasePageRow row, ColumnDef column, Object? newValue)? onEditCell;
+
+  /// When set, the trailing "+ New" row becomes interactive.
+  final VoidCallback? onCreateRow;
 
   @override
   State<FrozenColumnTable> createState() => _FrozenColumnTableState();
@@ -118,16 +126,25 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                   itemCount: widget.rows.length + 1,
                   itemBuilder: (context, i) {
                     if (i == widget.rows.length) {
-                      return Container(
-                        height: _rowHeight,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        alignment: Alignment.centerLeft,
-                        child: Row(
-                          children: [
-                            QuillIcon('plus', size: 12, strokeWidth: 1.7, color: tokens.text3),
-                            const SizedBox(width: 5),
-                            Text('New', style: TextStyle(fontSize: 12.5, color: tokens.text3)),
-                          ],
+                      final enabled = widget.onCreateRow != null;
+                      return GestureDetector(
+                        onTap: enabled ? widget.onCreateRow : null,
+                        child: MouseRegion(
+                          cursor: enabled
+                              ? SystemMouseCursors.click
+                              : SystemMouseCursors.basic,
+                          child: Container(
+                            height: _rowHeight,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              children: [
+                                QuillIcon('plus', size: 12, strokeWidth: 1.7, color: tokens.text3),
+                                const SizedBox(width: 5),
+                                Text('New', style: TextStyle(fontSize: 12.5, color: tokens.text3)),
+                              ],
+                            ),
+                          ),
                         ),
                       );
                     }
@@ -248,20 +265,172 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   Widget _scrollCell(DatabasePageRow row, ColumnDef c, QuillTokens tokens) {
     final value = row.cells[c.key];
     final isLast = widget.schema.columns.last == c;
+    final editable = widget.onEditCell != null && _isEditable(c.type) && c.key != 'health';
+    final align = c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft;
+    Widget rendered = c.key == 'health'
+        ? HealthCell(value: '$value')
+        : CellRenderer(column: c, value: value, align: align);
+    if (editable) {
+      rendered = _EditableCell(
+        key: ValueKey('${row.ulid}-${c.key}'),
+        column: c,
+        value: value,
+        align: align,
+        onCommit: (v) => widget.onEditCell!(row, c, v),
+        child: rendered,
+      );
+    }
     return Container(
       width: _widthForType(c.type),
       padding: const EdgeInsets.symmetric(horizontal: 10),
-      alignment: c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: align,
       decoration: BoxDecoration(
         border: isLast ? null : Border(right: BorderSide(color: tokens.divider, width: 0.5)),
       ),
-      child: c.key == 'health'
-          ? HealthCell(value: '$value')
-          : CellRenderer(
-              column: c,
-              value: value,
-              align: c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft,
-            ),
+      child: rendered,
+    );
+  }
+
+  static bool _isEditable(ColumnType t) {
+    switch (t) {
+      case ColumnType.text:
+      case ColumnType.number:
+      case ColumnType.date:
+      case ColumnType.select:
+      case ColumnType.multi:
+      case ColumnType.checkbox:
+        return true;
+      case ColumnType.relation:
+      case ColumnType.formula:
+      case ColumnType.file:
+        return false;
+    }
+  }
+}
+
+/// Wraps a cell renderer with click-to-edit. Text/number/date/select/multi
+/// swap to a TextField on click; checkbox toggles in place on click.
+class _EditableCell extends StatefulWidget {
+  const _EditableCell({
+    super.key,
+    required this.column,
+    required this.value,
+    required this.align,
+    required this.onCommit,
+    required this.child,
+  });
+
+  final ColumnDef column;
+  final Object? value;
+  final Alignment align;
+  final Future<void> Function(Object? newValue) onCommit;
+  final Widget child;
+
+  @override
+  State<_EditableCell> createState() => _EditableCellState();
+}
+
+class _EditableCellState extends State<_EditableCell> {
+  bool _editing = false;
+  final FocusNode _focus = FocusNode();
+  late TextEditingController _ctl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = TextEditingController(text: _initialText());
+  }
+
+  @override
+  void didUpdateWidget(_EditableCell old) {
+    super.didUpdateWidget(old);
+    if (!_editing && _initialText() != _ctl.text) {
+      _ctl.text = _initialText();
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  String _initialText() {
+    final v = widget.value;
+    if (v == null) return '';
+    if (v is List) return v.join(', ');
+    return '$v';
+  }
+
+  void _start() {
+    if (widget.column.type == ColumnType.checkbox) {
+      final on = '${widget.value}'.toLowerCase() == 'true';
+      widget.onCommit(on ? 'false' : 'true');
+      return;
+    }
+    setState(() => _editing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focus.requestFocus();
+      _ctl.selection =
+          TextSelection(baseOffset: 0, extentOffset: _ctl.text.length);
+    });
+  }
+
+  Future<void> _commit() async {
+    final next = _ctl.text;
+    if (next == _initialText()) {
+      setState(() => _editing = false);
+      return;
+    }
+    setState(() => _editing = false);
+    await widget.onCommit(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    if (!_editing) {
+      return GestureDetector(
+        onTap: _start,
+        behavior: HitTestBehavior.opaque,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.cell,
+          child: SizedBox(
+            width: double.infinity,
+            height: _rowHeight - 2,
+            child: Align(alignment: widget.align, child: widget.child),
+          ),
+        ),
+      );
+    }
+    return Focus(
+      onKeyEvent: (_, event) {
+        if (event.logicalKey.keyLabel == 'Escape') {
+          _ctl.text = _initialText();
+          setState(() => _editing = false);
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: TextField(
+        controller: _ctl,
+        focusNode: _focus,
+        onSubmitted: (_) => _commit(),
+        onTapOutside: (_) => _commit(),
+        style: widget.column.type == ColumnType.number ||
+                widget.column.type == ColumnType.date
+            ? mono(fontSize: 13, color: tokens.text)
+            : TextStyle(fontSize: 13, color: tokens.text),
+        decoration: const InputDecoration(
+          isCollapsed: true,
+          contentPadding: EdgeInsets.symmetric(vertical: 4),
+          border: InputBorder.none,
+        ),
+        textAlign: widget.column.type == ColumnType.number
+            ? TextAlign.right
+            : TextAlign.left,
+      ),
     );
   }
 }

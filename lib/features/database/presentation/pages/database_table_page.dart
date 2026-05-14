@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,10 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/segment.dart';
+import '../../../vault/data/indexer.dart';
+import '../../../vault/domain/repositories/vault_repository.dart';
+import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
 import '../../data/repositories/database_repository_impl.dart';
 import '../../domain/entities/database_schema.dart';
@@ -27,48 +33,145 @@ class DatabaseTablePage extends StatefulWidget {
 }
 
 class _DatabaseTablePageState extends State<DatabaseTablePage> {
-  late final Future<_DbData> _future;
   late final DatabaseRepository _repo;
   ViewType _currentView = ViewType.table;
+  DatabaseSchema? _schema;
+  List<DatabasePageRow>? _rows;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _repo = DatabaseRepositoryImpl(context.read<QuillDatabase>());
-    _future = _load();
+    _repo = DatabaseRepositoryImpl(
+      context.read<QuillDatabase>(),
+      vault: context.read<VaultRepository>(),
+      indexer: context.read<Indexer>(),
+    );
+    _load();
   }
 
-  Future<_DbData> _load() async {
-    final schema = await _repo.getDatabase(widget.dbId);
-    if (schema == null) return const _DbData(schema: null, rows: []);
-    final rows = await _repo.getRows(widget.dbId);
-    final v = schema.viewById(widget.viewId);
-    if (v != null) _currentView = v.type;
-    return _DbData(schema: schema, rows: rows);
+  Future<void> _load() async {
+    try {
+      final schema = await _repo.getDatabase(widget.dbId);
+      if (schema == null) {
+        if (mounted) setState(() => _error = 'Database not found');
+        return;
+      }
+      final rows = await _repo.getRows(widget.dbId);
+      final v = schema.viewById(widget.viewId);
+      if (!mounted) return;
+      setState(() {
+        _schema = schema;
+        _rows = rows;
+        if (v != null) _currentView = v.type;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = '$e');
+    }
+  }
+
+  Directory? _vaultRoot() {
+    final s = context.read<VaultBloc>().state;
+    return s is VaultLoaded ? Directory(s.rootPath) : null;
+  }
+
+  Future<void> _editCell(DatabasePageRow row, ColumnDef column, Object? value) async {
+    final root = _vaultRoot();
+    if (root == null) return;
+    try {
+      final updated = await _repo.updateCell(
+        ulid: row.ulid,
+        column: column,
+        newValue: value,
+        vaultRoot: root,
+      );
+      if (!mounted) return;
+      setState(() {
+        _rows = [
+          for (final r in _rows ?? const <DatabasePageRow>[])
+            if (r.ulid == row.ulid) updated else r,
+        ];
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Cell update failed: $e')),
+      );
+    }
+  }
+
+  Future<void> _createRow() async {
+    final root = _vaultRoot();
+    final schema = _schema;
+    if (root == null || schema == null) return;
+    final title = await _promptForTitle();
+    if (title == null || title.trim().isEmpty) return;
+    try {
+      final row = await _repo.createRow(
+        schema: schema,
+        title: title.trim(),
+        vaultRoot: root,
+      );
+      if (!mounted) return;
+      setState(() => _rows = [...?_rows, row]);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Create failed: $e')),
+      );
+    }
+  }
+
+  Future<String?> _promptForTitle() async {
+    final controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New page'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Title'),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return FutureBuilder<_DbData>(
-      future: _future,
-      builder: (context, snap) {
-        if (!snap.hasData) {
-          return Center(
-            child: SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(strokeWidth: 1.5, color: tokens.text2),
-            ),
-          );
-        }
-        final data = snap.data!;
-        final schema = data.schema;
-        if (schema == null) {
-          return Center(
-            child: Text('Database not found', style: TextStyle(color: tokens.text2)),
-          );
-        }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_error!, style: TextStyle(color: tokens.text2)),
+        ),
+      );
+    }
+    if (_schema == null || _rows == null) {
+      return Center(
+        child: SizedBox(
+          width: 14,
+          height: 14,
+          child: CircularProgressIndicator(strokeWidth: 1.5, color: tokens.text2),
+        ),
+      );
+    }
+    final schema = _schema!;
+    final rows = _rows!;
+    return Builder(
+      builder: (context) {
         return Column(
           children: [
             PageHeader(crumbs: ['Databases', schema.name]),
@@ -113,7 +216,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                   Padding(
                     padding: const EdgeInsets.only(left: 32),
                     child: Text(
-                      '${data.rows.length} pages · ${schema.folderPath}/',
+                      '${rows.length} pages · ${schema.folderPath}/',
                       style: mono(fontSize: 12, color: tokens.text3),
                     ),
                   ),
@@ -151,16 +254,18 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
               child: switch (_currentView) {
                 ViewType.table => FrozenColumnTable(
                     schema: schema,
-                    rows: data.rows,
+                    rows: rows,
                     onOpenPage: (row) => context.go('/editor/${row.ulid}'),
+                    onEditCell: _editCell,
+                    onCreateRow: _createRow,
                   ),
-                ViewType.gallery => GalleryView(schema: schema, rows: data.rows),
+                ViewType.gallery => GalleryView(schema: schema, rows: rows),
                 ViewType.board => BoardView(
                     schema: schema,
-                    rows: data.rows,
+                    rows: rows,
                     groupBy: schema.viewById(widget.viewId)?.groupBy,
                   ),
-                ViewType.timeline => TimelineView(schema: schema, rows: data.rows),
+                ViewType.timeline => TimelineView(schema: schema, rows: rows),
               },
             ),
             // Footer rollups
@@ -175,7 +280,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                     'count ',
                     style: mono(fontSize: 11.5, color: tokens.text3),
                   ),
-                  Text('${data.rows.length}', style: mono(fontSize: 11.5, color: tokens.text2)),
+                  Text('${rows.length}', style: mono(fontSize: 11.5, color: tokens.text2)),
                 ],
               ),
             ),
@@ -191,12 +296,6 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     final v = int.tryParse(hex, radix: 16);
     return Color(v ?? 0xFF6B8E7F);
   }
-}
-
-class _DbData {
-  const _DbData({required this.schema, required this.rows});
-  final DatabaseSchema? schema;
-  final List<DatabasePageRow> rows;
 }
 
 class _ToolText extends StatelessWidget {
