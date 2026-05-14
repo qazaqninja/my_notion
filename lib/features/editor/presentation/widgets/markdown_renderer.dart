@@ -2990,6 +2990,31 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                         ),
                       ),
                     ),
+                  if (_hover)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, top: 4),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: _deleteBlock,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: tokens.surface,
+                              border: Border.all(
+                                  color: tokens.divider2, width: 0.5),
+                              borderRadius: const BorderRadius.all(
+                                  Radius.circular(4)),
+                            ),
+                            child: Icon(
+                              Icons.delete_outline,
+                              size: 12,
+                              color: const Color(0xFFCB5A4F),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -2997,6 +3022,18 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
         );
       },
     );
+  }
+
+  /// Splice the block's source range out of the body. Includes any
+  /// trailing newline so consecutive blocks stay separated by a single
+  /// \n after the delete.
+  void _deleteBlock() {
+    final body = widget.body;
+    final start = widget.block.sourceStart;
+    var end = widget.block.sourceEnd;
+    if (end < body.length && body[end] == '\n') end += 1;
+    final next = body.replaceRange(start, end, '');
+    widget.onBodyChange(next);
   }
 }
 
