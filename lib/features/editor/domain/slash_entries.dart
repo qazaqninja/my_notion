@@ -1,19 +1,25 @@
+/// Some entries trigger an async UI flow (file picker, etc.) rather than
+/// inserting a literal snippet. The source view dispatches based on [action].
+enum SlashAction { insertSnippet, pickImage }
+
 /// Entries shown by the slash command menu. Each entry carries:
 /// - [icon]: QuillIcon name
 /// - [label]: shown bold in the row
 /// - [hint]: shown right-aligned (e.g. "H1", "→")
 /// - [keywords]: extra strings the query matches against
-/// - [snippet]: the markdown to splice at the cursor
+/// - [snippet]: the markdown to splice at the cursor (for snippet entries)
 /// - [cursorOffset]: caret position inside [snippet] after splice; defaults
 ///   to end of snippet
+/// - [action]: defaults to insertSnippet
 class SlashEntry {
   const SlashEntry({
     required this.icon,
     required this.label,
     required this.hint,
-    required this.snippet,
+    this.snippet = '',
     this.cursorOffset,
     this.keywords = const [],
+    this.action = SlashAction.insertSnippet,
   });
 
   final String icon;
@@ -22,6 +28,7 @@ class SlashEntry {
   final String snippet;
   final int? cursorOffset;
   final List<String> keywords;
+  final SlashAction action;
 
   /// Where the caret should land after insertion.
   int caretAfterInsert(int insertOffset) =>
@@ -130,6 +137,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[[',
     snippet: '[[',
     keywords: ['link', 'page', 'wikilink', 'relation', 'mention'],
+  ),
+  SlashEntry(
+    icon: 'file',
+    label: 'Image',
+    hint: '![',
+    action: SlashAction.pickImage,
+    keywords: ['image', 'picture', 'photo', 'upload'],
   ),
 ];
 

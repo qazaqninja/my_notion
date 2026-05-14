@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,6 +8,8 @@ import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/relation_chip.dart';
+import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_state.dart';
 
 /// Hand-rolled block-level markdown renderer. Matches the design's
 /// `editor.jsx` Block component shape-for-shape: h1/h2/h3, paragraph
@@ -76,6 +80,14 @@ class MarkdownRenderer extends StatelessWidget {
           ),
         );
       case _BlockKind.paragraph:
+        // Standalone image: ![alt](path) on its own line/paragraph.
+        final image = _matchStandaloneImage(b.text);
+        if (image != null) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: _MarkdownImage(alt: image.$1, src: image.$2),
+          );
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 14),
           child: _ParagraphWithChips(text: b.text, showUlid: showUlid, tokens: tokens),
@@ -210,6 +222,82 @@ class MarkdownRenderer extends StatelessWidget {
       line.startsWith('### ') ||
       line.startsWith('- ') ||
       line.startsWith('* ');
+}
+
+/// If [text] is JUST an image — `![alt](path)` with nothing else — return
+/// (alt, path). Otherwise null. We render standalone images as Image widgets
+/// rather than inline (which would need RichText with WidgetSpans).
+(String, String)? _matchStandaloneImage(String text) {
+  final trimmed = text.trim();
+  final m = RegExp(r'^!\[([^\]]*)\]\(([^)]+)\)$').firstMatch(trimmed);
+  if (m == null) return null;
+  return (m.group(1) ?? '', m.group(2) ?? '');
+}
+
+class _MarkdownImage extends StatelessWidget {
+  const _MarkdownImage({required this.alt, required this.src});
+  final String alt;
+  final String src;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final vault = context.read<VaultBloc>().state;
+    final vaultRoot = vault is VaultLoaded ? vault.rootPath : null;
+    final image = _buildImage(src, vaultRoot);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+          child: image,
+        ),
+        if (alt.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              alt,
+              style: TextStyle(fontSize: 11.5, color: tokens.text3),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildImage(String src, String? vaultRoot) {
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      return Image.network(src,
+          errorBuilder: (_, __, ___) => const _BrokenImageBox());
+    }
+    if (src.startsWith('/')) {
+      return Image.file(File(src),
+          errorBuilder: (_, __, ___) => const _BrokenImageBox());
+    }
+    if (vaultRoot == null) return const _BrokenImageBox();
+    return Image.file(File('$vaultRoot/$src'),
+        errorBuilder: (_, __, ___) => const _BrokenImageBox());
+  }
+}
+
+class _BrokenImageBox extends StatelessWidget {
+  const _BrokenImageBox();
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return Container(
+      width: 240,
+      height: 120,
+      decoration: BoxDecoration(
+        color: tokens.surface2,
+        border: Border.all(color: tokens.divider2, width: 0.5),
+      ),
+      child: Center(
+        child: Text('image not found',
+            style: TextStyle(fontSize: 11.5, color: tokens.text3)),
+      ),
+    );
+  }
 }
 
 class _Block {

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +11,9 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../relations/presentation/cubit/relation_picker_cubit.dart';
 import '../../../relations/presentation/widgets/relation_picker_overlay.dart';
+import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_state.dart';
+import '../../domain/attachment_writer.dart';
 import '../../domain/slash_entries.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
@@ -204,21 +210,68 @@ class _SourceViewState extends State<SourceView> {
     return KeyEventResult.ignored;
   }
 
-  void _onSlashPick(SlashEntry entry) {
+  Future<void> _onSlashPick(SlashEntry entry) async {
     final triggerOffset = _slashTriggerStart;
     if (triggerOffset == null) return;
-    final text = _controller.text;
-    final caret = _controller.selection.start;
-    // Strip the `/` itself plus any chars typed after it.
     final stripStart = triggerOffset - 1;
-    final newText = text.replaceRange(stripStart, caret, entry.snippet);
-    final newCaret = entry.caretAfterInsert(stripStart);
-    _controller.value = TextEditingValue(
-      text: newText,
-      selection: TextSelection.collapsed(offset: newCaret),
-    );
+
+    switch (entry.action) {
+      case SlashAction.insertSnippet:
+        final text = _controller.text;
+        final caret = _controller.selection.start;
+        final newText = text.replaceRange(stripStart, caret, entry.snippet);
+        final newCaret = entry.caretAfterInsert(stripStart);
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: newCaret),
+        );
+      case SlashAction.pickImage:
+        // Strip the `/...` trigger first so the picker dialog opens with the
+        // editor in a clean state. The async picker is awaited below.
+        final text = _controller.text;
+        final caret = _controller.selection.start;
+        final cleared = text.replaceRange(stripStart, caret, '');
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart),
+        );
+        _slashTriggerStart = null;
+        _slash.dismiss();
+        await _pickAndInsertImage(stripStart);
+        return;
+    }
+
     _slashTriggerStart = null;
     _slash.dismiss();
+  }
+
+  Future<void> _pickAndInsertImage(int insertAt) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final picked = result.files.first;
+    if (picked.path == null) return;
+    try {
+      final relative = await const AttachmentWriter().copy(
+        source: File(picked.path!),
+        vaultRoot: Directory(vault.rootPath),
+      );
+      final snippet = '![image]($relative)';
+      final text = _controller.text;
+      final at = insertAt.clamp(0, text.length);
+      final newText = text.replaceRange(at, at, snippet);
+      _controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: at + snippet.length),
+      );
+    } catch (e) {
+      messenger?.showSnackBar(SnackBar(content: Text('Image copy failed: $e')));
+    }
   }
 
   void _onPick(PageSearchResult result) {
