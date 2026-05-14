@@ -27,6 +27,7 @@ class RelationPickerOverlay extends StatelessWidget {
       builder: (context, state) {
         if (!state.open) return const SizedBox.shrink();
         return Stack(
+          clipBehavior: Clip.none,
           children: [
             // Backdrop — tap to dismiss
             Positioned.fill(

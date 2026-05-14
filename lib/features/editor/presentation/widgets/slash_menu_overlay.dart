@@ -23,6 +23,7 @@ class SlashMenuOverlay extends StatelessWidget {
       builder: (context, state) {
         if (!state.open) return const SizedBox.shrink();
         return Stack(
+          clipBehavior: Clip.none,
           children: [
             Positioned.fill(
               child: GestureDetector(
