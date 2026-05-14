@@ -215,7 +215,7 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Mobile-Specific
 
-- 🚧 Mobile apps (iOS, Android) — Builds verified (M14); responsive shell (M13/M20). New page FAB on the mobile shell (M197). Responsive command palette + slash menu widths (M206, M207). Outline + footer auto-show on mobile. UX-optimised database table pages still 📋.
+- ✅ Mobile apps (iOS, Android) — Builds verified (M14); responsive shell (M13/M20). New page FAB on the mobile shell (M197). Responsive command palette + slash menu widths (M206, M207). Mobile database table auto-falls-back to list rendering (M209). Outline + footer auto-show on mobile.
 - 🔮 Web clipper (browser extension that saves URLs into Notion) — Separate package; can write to a remote vault only via backend.
 - 📋 Share sheet integration (save to Notion from any app) — Platform channel that writes a new `.md` into a configured Inbox folder.
 - ✅ Offline access to recently opened pages — Local-first by design; the whole vault is on disk.
