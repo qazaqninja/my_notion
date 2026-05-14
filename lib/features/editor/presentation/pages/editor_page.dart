@@ -21,6 +21,7 @@ import '../widgets/backlinks_rail.dart';
 import '../widgets/frontmatter_card.dart';
 import '../widgets/markdown_renderer.dart';
 import '../widgets/outline_rail.dart';
+import '../widgets/properties_panel.dart';
 import '../widgets/source_view.dart';
 
 class EditorPage extends StatelessWidget {
@@ -49,8 +50,15 @@ class EditorPage extends StatelessWidget {
   }
 }
 
-class _EditorBody extends StatelessWidget {
+class _EditorBody extends StatefulWidget {
   const _EditorBody();
+
+  @override
+  State<_EditorBody> createState() => _EditorBodyState();
+}
+
+class _EditorBodyState extends State<_EditorBody> {
+  bool _propertiesOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -105,10 +113,11 @@ class _EditorBody extends StatelessWidget {
                     ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    onPressed: () {},
+                    onPressed: () => setState(() => _propertiesOpen = !_propertiesOpen),
                     padding: const EdgeInsets.all(4),
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    icon: QuillIcon('panel', size: 16, strokeWidth: 1.7, color: tokens.text3),
+                    icon: QuillIcon('panel', size: 16, strokeWidth: 1.7,
+                        color: _propertiesOpen ? tokens.accent : tokens.text3),
                   ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
@@ -148,22 +157,28 @@ class _EditorBody extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    width: 248,
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                    decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: tokens.divider, width: 0.5)),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          OutlineRail(body: page.body),
-                          BacklinksRail(toUlid: page.ulid),
-                        ],
+                  if (_propertiesOpen)
+                    PropertiesPanel(
+                      page: page,
+                      onClose: () => setState(() => _propertiesOpen = false),
+                    )
+                  else
+                    Container(
+                      width: 248,
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                      decoration: BoxDecoration(
+                        border: Border(left: BorderSide(color: tokens.divider, width: 0.5)),
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            OutlineRail(body: page.body),
+                            BacklinksRail(toUlid: page.ulid),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
