@@ -183,12 +183,14 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
 
   String get _widthsKey => 'db.${widget.persistKey}.widths';
   String get _orderKey => 'db.${widget.persistKey}.colOrder';
+  String get _aggsKey => 'db.${widget.persistKey}.aggs';
 
   Future<void> _restorePersisted() async {
     if (widget.persistKey == null) return;
     final prefs = await SharedPreferences.getInstance();
     final widthsStr = prefs.getStringList(_widthsKey);
     final order = prefs.getStringList(_orderKey);
+    final aggsStr = prefs.getStringList(_aggsKey);
     if (!mounted) return;
     setState(() {
       if (widthsStr != null) {
@@ -202,6 +204,21 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
         }
       }
       if (order != null && order.isNotEmpty) _columnOrder = order;
+      if (aggsStr != null) {
+        _aggs.clear();
+        for (final entry in aggsStr) {
+          final idx = entry.indexOf('=');
+          if (idx <= 0) continue;
+          final k = entry.substring(0, idx);
+          final v = entry.substring(idx + 1);
+          for (final agg in _Agg.values) {
+            if (agg.name == v) {
+              _aggs[k] = agg;
+              break;
+            }
+          }
+        }
+      }
     });
   }
 
@@ -225,6 +242,20 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       await prefs.remove(_orderKey);
     } else {
       await prefs.setStringList(_orderKey, _columnOrder!);
+    }
+  }
+
+  Future<void> _persistAggs() async {
+    if (widget.persistKey == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = [
+      for (final e in _aggs.entries)
+        if (e.value != _Agg.none) '${e.key}=${e.value.name}',
+    ];
+    if (encoded.isEmpty) {
+      await prefs.remove(_aggsKey);
+    } else {
+      await prefs.setStringList(_aggsKey, encoded);
     }
   }
 
@@ -638,9 +669,12 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     final isNumeric = c.type == ColumnType.number;
     final value = isNumeric ? _aggNumeric(c.key, agg) : (agg == _Agg.count ? widget.rows.length : null);
     return GestureDetector(
-      onTap: () => setState(() {
-        _aggs[c.key] = isNumeric ? agg.cycleNumeric() : agg.cycleText();
-      }),
+      onTap: () {
+        setState(() {
+          _aggs[c.key] = isNumeric ? agg.cycleNumeric() : agg.cycleText();
+        });
+        _persistAggs();
+      },
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
