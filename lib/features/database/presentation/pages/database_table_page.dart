@@ -372,7 +372,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       subGroupBy: _query.subGroupBy,
                     ),
                   ViewType.timeline =>
-                    TimelineView(schema: viewSchema, rows: filtered),
+                    TimelineView(
+                      schema: viewSchema,
+                      rows: filtered,
+                      subGroupBy: _query.subGroupBy,
+                    ),
                   ViewType.calendar =>
                     CalendarView(schema: viewSchema, rows: filtered),
                   ViewType.chart =>

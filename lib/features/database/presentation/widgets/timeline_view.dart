@@ -14,10 +14,21 @@ import '../../domain/repositories/database_repository.dart';
 /// When a database adds typed date-range columns later, this becomes the
 /// place to plug them in.
 class TimelineView extends StatelessWidget {
-  const TimelineView({super.key, required this.schema, required this.rows});
+  const TimelineView({
+    super.key,
+    required this.schema,
+    required this.rows,
+    this.subGroupBy,
+  });
 
   final DatabaseSchema schema;
   final List<DatabasePageRow> rows;
+
+  /// When non-null, the timeline emits a 22px header band between rows
+  /// whose value differs (empty → `—`). The dependency-arrow overlay is
+  /// suppressed in sub-group mode because the painter's y-coords are
+  /// row-index based and dividers would shift them out of register.
+  final String? subGroupBy;
 
   static const int _weeks = 12;
   static const double _weekW = 80;
@@ -82,6 +93,49 @@ class TimelineView extends StatelessWidget {
       }
     }
 
+    // Build the entry list — with sub-group dividers interleaved when
+    // widget.subGroupBy is set, otherwise pure rows.
+    final children = <Widget>[];
+    children.add(_RulerHeader(origin: origin, tokens: tokens));
+    if (subGroupBy != null) {
+      String? lastKey;
+      for (var i = 0; i < rows.length; i++) {
+        final raw = '${rows[i].cells[subGroupBy] ?? ''}'.trim();
+        final key = raw.isEmpty ? '—' : raw;
+        if (key != lastKey) {
+          children.add(_SubgroupBand(label: key, tokens: tokens));
+          lastKey = key;
+        }
+        children.add(_Row(
+          row: rows[i],
+          origin: origin,
+          tokens: tokens,
+          depCount: depCount[i],
+          depTitles: depTitles[i],
+        ));
+      }
+    } else {
+      for (var i = 0; i < rows.length; i++) {
+        children.add(_Row(
+          row: rows[i],
+          origin: origin,
+          tokens: tokens,
+          depCount: depCount[i],
+          depTitles: depTitles[i],
+        ));
+      }
+    }
+    if (todayWeek >= 0 && todayWeek <= _weeks) {
+      children.add(_TodayLine(
+        weekOffset: todayWeek,
+        count: rows.length,
+        tokens: tokens,
+      ));
+    }
+    // Dependency arrows: only drawn when not sub-grouped — see the
+    // class doc for why.
+    final showDeps = subGroupBy == null && deps.isNotEmpty;
+
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
@@ -92,24 +146,9 @@ class TimelineView extends StatelessWidget {
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _RulerHeader(origin: origin, tokens: tokens),
-                  for (var i = 0; i < rows.length; i++)
-                    _Row(
-                      row: rows[i],
-                      origin: origin,
-                      tokens: tokens,
-                      depCount: depCount[i],
-                      depTitles: depTitles[i],
-                    ),
-                  if (todayWeek >= 0 && todayWeek <= _weeks)
-                    _TodayLine(
-                        weekOffset: todayWeek,
-                        count: rows.length,
-                        tokens: tokens),
-                ],
+                children: children,
               ),
-              if (deps.isNotEmpty)
+              if (showDeps)
                 Positioned.fill(
                   child: IgnorePointer(
                     child: CustomPaint(
@@ -346,6 +385,43 @@ class _Row extends StatelessWidget {
     if (s.contains('eval')) return const Color(0xFFB39342);
     if (s.contains('negot')) return const Color(0xFFB46F4F);
     return tokens.accent;
+  }
+}
+
+/// Full-width band that splits the timeline rows into sub-group
+/// sections. Sits between two `_Row`s; renders the group label in
+/// mono uppercase letterSpacing in the frozen column gutter and
+/// continues the band across the full timeline track for visual
+/// continuity with the row dividers.
+class _SubgroupBand extends StatelessWidget {
+  const _SubgroupBand({required this.label, required this.tokens});
+  final String label;
+  final QuillTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 22,
+      decoration: BoxDecoration(
+        color: tokens.surface2,
+        border: Border(
+          bottom: BorderSide(color: tokens.divider2, width: 0.5),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        label,
+        style: mono(
+          fontSize: 11,
+          color: tokens.text2,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+      ),
+    );
   }
 }
 

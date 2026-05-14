@@ -110,4 +110,31 @@ void main() {
     await tester.pumpWidget(_wrap(TimelineView(schema: _schema, rows: rows)));
     expect(find.textContaining('↳'), findsNothing);
   });
+
+  testWidgets('subGroupBy emits a band when value changes', (tester) async {
+    final rows = [
+      const DatabasePageRow(
+        ulid: '01HQAAA0000000000000000001',
+        title: 'A',
+        relativePath: 'Projects/A.md',
+        cells: {'updated': '2026-05-01', 'stage': 'todo'},
+      ),
+      const DatabasePageRow(
+        ulid: '01HQAAA0000000000000000002',
+        title: 'B',
+        relativePath: 'Projects/B.md',
+        cells: {'updated': '2026-05-08', 'stage': 'done'},
+      ),
+    ];
+    await tester.pumpWidget(_wrap(TimelineView(
+      schema: _schema,
+      rows: rows,
+      subGroupBy: 'stage',
+    )));
+    // The band labels are visible somewhere on screen (the timeline's
+    // long horizontal scroll may push other text off-screen, so allow
+    // at-least-one match).
+    expect(find.text('todo'), findsAtLeastNWidgets(1));
+    expect(find.text('done'), findsAtLeastNWidgets(1));
+  });
 }
