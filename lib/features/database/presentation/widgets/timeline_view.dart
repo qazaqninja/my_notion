@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../domain/entities/database_schema.dart';
@@ -50,24 +51,97 @@ class TimelineView extends StatelessWidget {
     final today = DateTime.now();
     final todayWeek = today.difference(origin).inDays / 7.0;
 
+    // Pre-compute dependency edges: for each row index, the indices
+    // of rows it depends on. Both ends must have a parsable date to
+    // be drawn — undated dependencies fall back to the badge only.
+    final ulidIdx = <String, int>{
+      for (var i = 0; i < rows.length; i++) rows[i].ulid: i,
+    };
+    final deps = <_DepEdge>[];
+    final depCount = List<int>.filled(rows.length, 0);
+    final depTitles = List<List<String>>.generate(rows.length, (_) => []);
+    for (var i = 0; i < rows.length; i++) {
+      final raw = rows[i].cells['depends_on'];
+      if (raw == null) continue;
+      final ulids = _parseDepUlids(raw);
+      for (final u in ulids) {
+        final j = ulidIdx[u];
+        if (j == null) continue;
+        depCount[i] += 1;
+        depTitles[i].add(rows[j].title);
+        final from = _parseDate('${rows[j].cells['updated'] ?? ''}');
+        final to = _parseDate('${rows[i].cells['updated'] ?? ''}');
+        if (from != null && to != null) {
+          deps.add(_DepEdge(
+            fromIdx: j,
+            toIdx: i,
+            fromStartWeek: from.difference(origin).inDays / 7.0,
+            toStartWeek: to.difference(origin).inDays / 7.0,
+          ));
+        }
+      }
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: SizedBox(
           width: _frozenW + trackW + 24,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Stack(
             children: [
-              _RulerHeader(origin: origin, tokens: tokens),
-              for (final row in rows) _Row(row: row, origin: origin, tokens: tokens),
-              if (todayWeek >= 0 && todayWeek <= _weeks)
-                _TodayLine(weekOffset: todayWeek, count: rows.length, tokens: tokens),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _RulerHeader(origin: origin, tokens: tokens),
+                  for (var i = 0; i < rows.length; i++)
+                    _Row(
+                      row: rows[i],
+                      origin: origin,
+                      tokens: tokens,
+                      depCount: depCount[i],
+                      depTitles: depTitles[i],
+                    ),
+                  if (todayWeek >= 0 && todayWeek <= _weeks)
+                    _TodayLine(
+                        weekOffset: todayWeek,
+                        count: rows.length,
+                        tokens: tokens),
+                ],
+              ),
+              if (deps.isNotEmpty)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: _DependencyPainter(
+                        deps: deps,
+                        rulerHeight: 32,
+                        rowHeight: _rowH,
+                        frozenWidth: _frozenW,
+                        weekWidth: _weekW,
+                        weeks: _weeks,
+                        color: tokens.text3.withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  static List<String> _parseDepUlids(dynamic raw) {
+    final out = <String>{};
+    if (raw is List) {
+      for (final item in raw) {
+        out.addAll(WikilinkParser.find('$item').map((w) => w.ulid));
+      }
+    } else {
+      out.addAll(WikilinkParser.find('$raw').map((w) => w.ulid));
+    }
+    return out.toList();
   }
 
   static DateTime? _parseDate(String s) {
@@ -131,10 +205,18 @@ class _RulerHeader extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.row, required this.origin, required this.tokens});
+  const _Row({
+    required this.row,
+    required this.origin,
+    required this.tokens,
+    this.depCount = 0,
+    this.depTitles = const [],
+  });
   final DatabasePageRow row;
   final DateTime origin;
   final QuillTokens tokens;
+  final int depCount;
+  final List<String> depTitles;
 
   @override
   Widget build(BuildContext context) {
@@ -188,6 +270,24 @@ class _Row extends StatelessWidget {
                       maxLines: 1,
                     ),
                   ),
+                  if (depCount > 0)
+                    Tooltip(
+                      message: 'Depends on:\n• ${depTitles.join("\n• ")}',
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: tokens.surface2,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(3)),
+                        ),
+                        child: Text(
+                          '↳ $depCount',
+                          style: mono(fontSize: 10, color: tokens.text3),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -270,4 +370,88 @@ class _TodayLine extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// A drawn arrow from an upstream row's bar to a dependent row's bar.
+class _DepEdge {
+  const _DepEdge({
+    required this.fromIdx,
+    required this.toIdx,
+    required this.fromStartWeek,
+    required this.toStartWeek,
+  });
+  final int fromIdx;
+  final int toIdx;
+  final double fromStartWeek;
+  final double toStartWeek;
+}
+
+class _DependencyPainter extends CustomPainter {
+  _DependencyPainter({
+    required this.deps,
+    required this.rulerHeight,
+    required this.rowHeight,
+    required this.frozenWidth,
+    required this.weekWidth,
+    required this.weeks,
+    required this.color,
+  });
+
+  final List<_DepEdge> deps;
+  final double rulerHeight;
+  final double rowHeight;
+  final double frozenWidth;
+  final double weekWidth;
+  final int weeks;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round;
+    final fillPaint = Paint()..color = color;
+    for (final e in deps) {
+      // Upstream bar end (right edge), dependent bar start (left edge).
+      // Bars are inset 6px and (weekW - 12) wide; offset to bar centre Y.
+      final fromX = frozenWidth + (e.fromStartWeek + 1) * weekWidth - 6;
+      final toX = frozenWidth + e.toStartWeek * weekWidth + 6;
+      final fromY = rulerHeight + e.fromIdx * rowHeight + rowHeight / 2;
+      final toY = rulerHeight + e.toIdx * rowHeight + rowHeight / 2;
+      // Skip edges that land off-canvas to keep the picture clean.
+      if (fromX < frozenWidth - 4 || fromX > frozenWidth + weeks * weekWidth) {
+        continue;
+      }
+      if (toX < frozenWidth - 4 || toX > frozenWidth + weeks * weekWidth) {
+        continue;
+      }
+      // L-shaped connector: horizontal out from upstream, vertical to
+      // dependent's row, then horizontal into dependent's bar.
+      final midX = (fromX + toX) / 2;
+      final path = Path()
+        ..moveTo(fromX, fromY)
+        ..lineTo(midX, fromY)
+        ..lineTo(midX, toY)
+        ..lineTo(toX, toY);
+      canvas.drawPath(path, paint);
+      // Tiny arrowhead at the dependent end.
+      final arrow = Path()
+        ..moveTo(toX, toY)
+        ..lineTo(toX - 5, toY - 3)
+        ..lineTo(toX - 5, toY + 3)
+        ..close();
+      canvas.drawPath(arrow, fillPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DependencyPainter old) =>
+      old.deps != deps ||
+      old.rulerHeight != rulerHeight ||
+      old.rowHeight != rowHeight ||
+      old.frozenWidth != frozenWidth ||
+      old.weekWidth != weekWidth ||
+      old.color != color;
 }
