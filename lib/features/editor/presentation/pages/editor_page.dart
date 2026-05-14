@@ -399,6 +399,12 @@ class _EditorBodyState extends State<_EditorBody> {
                 _toggleEditorMode(context, loaded),
             const SingleActivator(LogicalKeyboardKey.keyE, control: true): () =>
                 _toggleEditorMode(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyP,
+                meta: true, shift: true): () => setState(
+                () => _propertiesOpen = !_propertiesOpen),
+            const SingleActivator(LogicalKeyboardKey.keyP,
+                control: true, shift: true): () => setState(
+                () => _propertiesOpen = !_propertiesOpen),
           },
           child: Focus(
             autofocus: true,
