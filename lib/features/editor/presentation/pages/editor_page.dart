@@ -318,6 +318,13 @@ class _EditorBodyState extends State<_EditorBody> {
     }
   }
 
+  void _toggleEditorMode(BuildContext context, EditorLoaded loaded) {
+    final next = loaded.mode == EditorMode.rendered
+        ? EditorMode.source
+        : EditorMode.rendered;
+    context.read<EditorBloc>().add(ToggleEditorMode(next));
+  }
+
   void _toggleLock(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
     final wasLocked = EditorBloc.isLocked(loaded);
@@ -388,6 +395,10 @@ class _EditorBodyState extends State<_EditorBody> {
             const SingleActivator(LogicalKeyboardKey.backslash,
                 control: true, shift: true): () => setState(
                 () => _rightRailHidden = !_rightRailHidden),
+            const SingleActivator(LogicalKeyboardKey.keyE, meta: true): () =>
+                _toggleEditorMode(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyE, control: true): () =>
+                _toggleEditorMode(context, loaded),
           },
           child: Focus(
             autofocus: true,
