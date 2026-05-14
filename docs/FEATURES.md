@@ -116,7 +116,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Filters (single and compound with AND/OR logic) — M19.
 - ✅ Sorts (multi-level) — M19.
 - ✅ Grouping (by any property) — M19.
-- 🚧 Sub-grouping — M86 BoardView, M177 TableView, M183 GalleryView, M184 ListView, M187 TimelineView (full-width band; dependency arrows suppressed in sub-group mode). Calendar / Chart still 📋.
+- 🚧 Sub-grouping — M86 BoardView, M177 TableView, M183 GalleryView, M184 ListView, M187 TimelineView, M195 CalendarView (color-coded day markers + leading row dots from a stable hash of the sub-group value). Chart still 📋.
 - ✅ Hide/show properties per view — M72, Properties popover; persists per-database (M96).
 - ✅ Reorder properties — Long-press-drag column headers (M63); persistence per-database in SharedPreferences (M97).
 - ✅ Property width adjustment — Resize handle on the right edge (M56); persisted per-database in SharedPreferences (M97).
@@ -149,7 +149,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Timeline view (Gantt-style) — M8.
 - ✅ Chart view (bar, line, donut) — M34 via `fl_chart`.
 - ✅ View-specific filters, sorts, properties — Property selection via Properties popover (M72) + per-database persistence (M96).
-- 🚧 Group and sub-group per view — Group ✅. Sub-group BoardView M86, TableView M177, GalleryView M183, ListView M184, TimelineView M187. Calendar / Chart 📋.
+- 🚧 Group and sub-group per view — Group ✅. Sub-group BoardView M86, TableView M177, GalleryView M183, ListView M184, TimelineView M187, CalendarView M195. Chart 📋.
 - ✅ Customize card size, preview image, fields shown — Cover images M92, card-size S/M/L M165 (per-database persisted), configurable fields M167 via `views[].card_fields: [...]` (renderer special-cases stage/status/priority → TagChip, arr/mrr/revenue → $k, ISO date → mono pill).
 
 ## Search & Navigation
