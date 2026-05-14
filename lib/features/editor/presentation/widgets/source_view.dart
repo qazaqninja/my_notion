@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -173,16 +174,36 @@ class _SourceViewState extends State<SourceView> {
   }
 
   Rect? _caretRect() {
-    final box = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
-    if (box == null) return null;
-    // Stack-local coords. The Container is the Stack's first unpositioned
-    // child (alignment defaults to topStart), so its top-left in Stack
-    // space is (0, 0). Anchor the popover just below the field — the
-    // overlay adds +4 padding internally, so we land 4-8px under the
-    // bordered box edge. Caret-level precision would require a
-    // RenderEditable probe; field-bottom is good enough and keeps the
-    // popover on-screen.
-    return Rect.fromLTWH(40, box.size.height, 320, 0);
+    final fieldBox = _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (fieldBox == null) return null;
+
+    // Walk the field's descendants to find the TextField's RenderEditable.
+    RenderEditable? editable;
+    void visit(RenderObject node) {
+      if (editable != null) return;
+      if (node is RenderEditable) {
+        editable = node;
+        return;
+      }
+      node.visitChildren(visit);
+    }
+    fieldBox.visitChildren(visit);
+
+    if (editable == null) {
+      // Fallback: anchor near the top of the field rather than the bottom
+      // so a misaligned popover at least stays in viewport.
+      return Rect.fromLTWH(40, 24, 320, 0);
+    }
+
+    final caret = _controller.selection.extent;
+    final localCaret = editable!.getLocalRectForCaret(caret);
+    final caretInField =
+        editable!.localToGlobal(localCaret.bottomLeft, ancestor: fieldBox);
+
+    // Clamp x so the 320-wide panel doesn't run off the right side.
+    final maxX = (fieldBox.size.width - 320).clamp(0.0, double.infinity);
+    final x = caretInField.dx.clamp(0.0, maxX);
+    return Rect.fromLTWH(x, caretInField.dy, 320, 0);
   }
 
   /// When the relation picker OR slash menu is open, intercept
@@ -210,6 +231,10 @@ class _SourceViewState extends State<SourceView> {
           _onSlashPick(selected);
           return KeyEventResult.handled;
         }
+        // No match — dismiss instead of letting Enter inject a newline.
+        _slashTriggerStart = null;
+        _slash.dismiss();
+        return KeyEventResult.handled;
       }
       if (key == LogicalKeyboardKey.escape) {
         _slashTriggerStart = null;

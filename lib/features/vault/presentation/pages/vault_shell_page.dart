@@ -195,6 +195,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         );
       case 'Toggle theme':
         await themeCubit.cycleMode();
+      case 'Toggle compact mode':
+        await themeCubit.toggleCompact();
       case 'Export vault as PDF':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));

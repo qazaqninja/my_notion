@@ -78,6 +78,17 @@ class _QuillAppState extends State<QuillApp> {
                 darkTheme: makeTheme(Brightness.dark, themeState.accent),
                 themeMode: themeState.mode,
                 routerConfig: _router,
+                builder: (context, child) {
+                  final mq = MediaQuery.of(context);
+                  return MediaQuery(
+                    data: mq.copyWith(
+                      textScaler: themeState.compact
+                          ? const TextScaler.linear(0.92)
+                          : mq.textScaler,
+                    ),
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                },
               );
             },
           ),

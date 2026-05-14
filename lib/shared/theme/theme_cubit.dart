@@ -6,17 +6,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'accent.dart';
 
 class ThemeState extends Equatable {
-  const ThemeState({required this.mode, required this.accent});
+  const ThemeState({
+    required this.mode,
+    required this.accent,
+    this.compact = false,
+  });
 
   final ThemeMode mode;
   final AccentKey accent;
 
-  ThemeState copyWith({ThemeMode? mode, AccentKey? accent}) {
-    return ThemeState(mode: mode ?? this.mode, accent: accent ?? this.accent);
+  /// When true, the global text scale is shrunk to ~0.92× so the UI fits
+  /// more content per viewport. Matches Notion's "small text" toggle.
+  final bool compact;
+
+  ThemeState copyWith({ThemeMode? mode, AccentKey? accent, bool? compact}) {
+    return ThemeState(
+      mode: mode ?? this.mode,
+      accent: accent ?? this.accent,
+      compact: compact ?? this.compact,
+    );
   }
 
   @override
-  List<Object?> get props => [mode, accent];
+  List<Object?> get props => [mode, accent, compact];
 }
 
 class ThemeCubit extends Cubit<ThemeState> {
@@ -24,11 +36,13 @@ class ThemeCubit extends Cubit<ThemeState> {
 
   static const _modeKey = 'theme.mode';
   static const _accentKey = 'theme.accent';
+  static const _compactKey = 'theme.compact';
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final modeName = prefs.getString(_modeKey);
     final accentName = prefs.getString(_accentKey);
+    final compact = prefs.getBool(_compactKey) ?? false;
     emit(ThemeState(
       mode: ThemeMode.values.firstWhere(
         (m) => m.name == modeName,
@@ -38,6 +52,7 @@ class ThemeCubit extends Cubit<ThemeState> {
         (a) => a.name == accentName,
         orElse: () => AccentKey.sage,
       ),
+      compact: compact,
     ));
   }
 
@@ -52,6 +67,14 @@ class ThemeCubit extends Cubit<ThemeState> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_accentKey, accent.name);
   }
+
+  Future<void> setCompact(bool value) async {
+    emit(state.copyWith(compact: value));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_compactKey, value);
+  }
+
+  Future<void> toggleCompact() => setCompact(!state.compact);
 
   Future<void> toggleAccent() {
     final next = state.accent == AccentKey.sage ? AccentKey.terracotta : AccentKey.sage;
