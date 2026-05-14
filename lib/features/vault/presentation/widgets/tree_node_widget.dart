@@ -84,6 +84,10 @@ class TreeNodeWidget extends StatelessWidget {
       );
     }
     if (n is VaultFile) {
+      final state = context.watch<VaultBloc>().state;
+      final pinned = state is VaultLoaded &&
+          n.ulid.isNotEmpty &&
+          state.workspace.favorites.contains(n.ulid);
       final inner = SideItem(
         level: level,
         icon: 'file-md',
@@ -91,6 +95,14 @@ class TreeNodeWidget extends StatelessWidget {
         active: n.ulid == activeUlid && n.ulid.isNotEmpty,
         onTap: () => n.ulid.isNotEmpty ? context.go('/editor/${n.ulid}') : null,
         onSecondaryTap: (pos) => _showFileMenu(context, n, pos),
+        alwaysTrailing: pinned
+            ? Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(Icons.star,
+                    size: 11,
+                    color: QuillTokens.of(context).accent.withValues(alpha: 0.85)),
+              )
+            : null,
       );
       if (n.ulid.isEmpty) return inner;
       return Draggable<String>(

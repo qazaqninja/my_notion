@@ -31,6 +31,7 @@ class SideItem extends StatefulWidget {
     this.onTap,
     this.onSecondaryTap,
     this.trailingOnHover,
+    this.alwaysTrailing,
   });
 
   final SideDensity density;
@@ -50,6 +51,11 @@ class SideItem extends StatefulWidget {
   /// Widget shown on hover (or always on touch platforms) at the trailing
   /// edge. Replaces the count badge if both are set.
   final Widget? trailingOnHover;
+
+  /// Widget shown at the trailing edge whether or not the row is being
+  /// hovered. Rendered to the LEFT of any hover- or count- driven
+  /// trailing widget so it doesn't get swapped out on hover.
+  final Widget? alwaysTrailing;
 
   @override
   State<SideItem> createState() => _SideItemState();
@@ -143,6 +149,7 @@ class _SideItemState extends State<SideItem> {
                   ),
                 ),
               ),
+              if (widget.alwaysTrailing != null) widget.alwaysTrailing!,
               if (_hover && widget.trailingOnHover != null)
                 widget.trailingOnHover!
               else if (widget.count != null)
