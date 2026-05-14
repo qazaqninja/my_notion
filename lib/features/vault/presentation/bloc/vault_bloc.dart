@@ -65,9 +65,23 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         pageCount: count,
       ));
     } catch (err, _) {
-      emit(VaultError('Failed to index: $err'));
+      // If we hit a PathAccessException during an auto-restore, the saved
+      // path is no longer accessible to the sandbox (the security-scoped
+      // bookmark didn't survive). Clear it and fall back to the picker
+      // silently rather than nagging with a stale error.
+      if (_isAutoRestoring && err.toString().contains('PathAccessException')) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_prefVaultPath);
+        emit(const VaultInitial());
+      } else {
+        emit(VaultError('Failed to index: $err'));
+      }
+    } finally {
+      _isAutoRestoring = false;
     }
   }
+
+  bool _isAutoRestoring = false;
 
   Future<void> _onToggle(ToggleFolder e, Emitter<VaultState> emit) async {
     if (state is! VaultLoaded) return;
@@ -88,11 +102,17 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   }
 
   /// Tries to restore the last-opened vault. Returns false if none stored.
+  /// On failure, the saved path is cleared and the picker is shown again
+  /// (rather than displaying a stale error from an inaccessible path).
   Future<bool> tryRestore() async {
     final prefs = await SharedPreferences.getInstance();
     final last = prefs.getString(_prefVaultPath);
     if (last == null || last.isEmpty) return false;
-    if (!Directory(last).existsSync()) return false;
+    if (!Directory(last).existsSync()) {
+      await prefs.remove(_prefVaultPath);
+      return false;
+    }
+    _isAutoRestoring = true;
     add(LoadFromPath(last));
     return true;
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -61,6 +62,7 @@ class HomePage extends StatelessWidget {
                     icon: 'gear',
                     title: '/lab',
                     subtitle: 'Component sheet for the design system.',
+                    onTap: () => context.go('/lab'),
                   ),
                 ]),
               ],
@@ -73,38 +75,51 @@ class HomePage extends StatelessWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.tokens, required this.icon, required this.title, required this.subtitle});
+  const _Tile({
+    required this.tokens,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    this.onTap,
+  });
   final QuillTokens tokens;
   final String icon;
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: tokens.surface,
-          border: Border.all(color: tokens.divider2, width: 0.5),
-          borderRadius: const BorderRadius.all(Radius.circular(6)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            QuillIcon(icon, size: 16, color: tokens.text2),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: tokens.text),
+      child: MouseRegion(
+        cursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: tokens.surface,
+              border: Border.all(color: tokens.divider2, width: 0.5),
+              borderRadius: const BorderRadius.all(Radius.circular(6)),
             ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: mono(fontSize: 11, color: tokens.text3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                QuillIcon(icon, size: 16, color: tokens.text2),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: tokens.text),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: mono(fontSize: 11, color: tokens.text3),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
