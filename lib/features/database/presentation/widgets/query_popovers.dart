@@ -621,3 +621,175 @@ class _PopoverShell extends StatelessWidget {
   }
 }
 
+/// Toggle column visibility per-view. Title is always shown (not in
+/// the list). The popover pops a `Set<String>?` of visible column keys
+/// or null if the user picks "Show all" → equivalent to no override.
+class PropertiesPopover extends StatefulWidget {
+  const PropertiesPopover({
+    super.key,
+    required this.schema,
+    required this.initial,
+  });
+
+  final DatabaseSchema schema;
+  final Set<String>? initial;
+
+  @override
+  State<PropertiesPopover> createState() => _PropertiesPopoverState();
+}
+
+class _PropertiesPopoverState extends State<PropertiesPopover> {
+  late Set<String> _visible;
+
+  @override
+  void initState() {
+    super.initState();
+    _visible = widget.initial != null
+        ? {...widget.initial!}
+        : {
+            for (final c in widget.schema.columns)
+              if (c.key != 'id') c.key,
+          };
+  }
+
+  void _toggle(String key) {
+    setState(() {
+      if (_visible.contains(key)) {
+        _visible.remove(key);
+      } else {
+        _visible.add(key);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final togglable = [
+      for (final c in widget.schema.columns)
+        if (c.key != 'id' && c.key != 'title') c,
+    ];
+    return _PopoverShell(
+      title: 'Properties',
+      tokens: tokens,
+      footer: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop((visible: null)),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Text('Show all',
+                    style: TextStyle(fontSize: 12, color: tokens.text2)),
+              ),
+            ),
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop((visible: _visible)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: tokens.accent,
+                borderRadius: const BorderRadius.all(Radius.circular(5)),
+              ),
+              child: const Text(
+                'Apply',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _PropertyRow(
+            label: 'title',
+            visible: true,
+            locked: true,
+            onTap: () {},
+          ),
+          for (final c in togglable)
+            _PropertyRow(
+              label: c.key,
+              visible: _visible.contains(c.key),
+              locked: false,
+              onTap: () => _toggle(c.key),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+typedef PropertiesPopoverResult = ({Set<String>? visible});
+
+class _PropertyRow extends StatelessWidget {
+  const _PropertyRow({
+    required this.label,
+    required this.visible,
+    required this.locked,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool visible;
+  final bool locked;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return GestureDetector(
+      onTap: locked ? null : onTap,
+      child: MouseRegion(
+        cursor: locked ? SystemMouseCursors.basic : SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+          child: Row(
+            children: [
+              Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: visible ? tokens.accent : Colors.transparent,
+                  border: Border.all(
+                      color:
+                          visible ? tokens.accent : tokens.divider2,
+                      width: 1),
+                  borderRadius: const BorderRadius.all(Radius.circular(3)),
+                ),
+                child: visible
+                    ? const Center(
+                        child:
+                            Icon(Icons.check, size: 11, color: Colors.white),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  style: mono(
+                    fontSize: 12.5,
+                    color: locked ? tokens.text3 : tokens.text2,
+                  ),
+                ),
+              ),
+              if (locked)
+                Text('always shown',
+                    style: TextStyle(fontSize: 11, color: tokens.text3)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -49,6 +49,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   String? _error;
   DatabaseQuery _query = const DatabaseQuery();
   bool _wrap = false;
+  Set<String>? _visibleOverride;
 
   @override
   void initState() {
@@ -257,11 +258,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                 // table/gallery/etc. ApplyQuery already ran on the full
                 // schema so filter/sort/group can reference hidden cols.
                 final activeView = schema.viewById(widget.viewId);
-                final viewSchema = schema.filterColumns(
-                  activeView?.visible == null
-                      ? null
-                      : activeView!.visible!.toSet(),
-                );
+                final visibleKeys = _visibleOverride ??
+                    (activeView?.visible == null
+                        ? null
+                        : activeView!.visible!.toSet());
+                final viewSchema = schema.filterColumns(visibleKeys);
                 return switch (_currentView) {
                   ViewType.table => FrozenColumnTable(
                       schema: viewSchema,
@@ -359,6 +360,15 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         onTap: () => _openGroupPopover(context, schema),
       ),
       if (!mobile) const SizedBox(width: 4),
+      _ToolButton(
+        icon: 'settings',
+        label: _visibleOverride == null
+            ? 'Properties'
+            : 'Properties (${_visibleOverride!.length + 1})',
+        active: _visibleOverride != null,
+        onTap: () => _openPropertiesPopover(context, schema),
+      ),
+      if (!mobile) const SizedBox(width: 4),
       IconButton(
         visualDensity: VisualDensity.compact,
         icon: Icon(
@@ -443,6 +453,21 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     );
     if (next == null) return;
     setState(() => _query = _query.copyWith(groupBy: next.value));
+  }
+
+  Future<void> _openPropertiesPopover(
+      BuildContext ctx, DatabaseSchema schema) async {
+    final activeView = schema.viewById(widget.viewId);
+    final initial = _visibleOverride ??
+        (activeView?.visible == null
+            ? null
+            : activeView!.visible!.toSet());
+    final next = await showQueryPopover<PropertiesPopoverResult>(
+      context: ctx,
+      child: PropertiesPopover(schema: schema, initial: initial),
+    );
+    if (next == null) return;
+    setState(() => _visibleOverride = next.visible);
   }
 
   static Color _parseColor(String s) {
