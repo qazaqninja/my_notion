@@ -132,6 +132,12 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
+        if (state is VaultLoaded)
+          _SettingRow(
+            label: 'Workspace name',
+            hint: 'Override the folder name in the sidebar header.',
+            child: _WorkspaceNameField(state: state),
+          ),
         _SettingRow(
           label: 'Vault stats',
           hint: 'Read directly from disk.',
@@ -546,6 +552,80 @@ class _SettingsPageState extends State<SettingsPage> {
           fontWeight: FontWeight.w600,
           letterSpacing: 1.0,
           color: tokens.text3,
+        ),
+      ),
+    );
+  }
+}
+
+/// TextField that edits .quill.yaml's workspace.name on commit (focus
+/// loss or Enter). Clearing the field removes the override so the
+/// sidebar falls back to the folder basename.
+class _WorkspaceNameField extends StatefulWidget {
+  const _WorkspaceNameField({required this.state});
+  final VaultLoaded state;
+
+  @override
+  State<_WorkspaceNameField> createState() => _WorkspaceNameFieldState();
+}
+
+class _WorkspaceNameFieldState extends State<_WorkspaceNameField> {
+  late final TextEditingController _ctl;
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = TextEditingController(text: widget.state.workspace.name ?? '');
+    _focus.addListener(() {
+      if (!_focus.hasFocus) _commit();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _commit() async {
+    final trimmed = _ctl.text.trim();
+    final current = widget.state.workspace.name ?? '';
+    if (trimmed == current) return;
+    final next = widget.state.workspace.copyWith(
+      name: trimmed.isEmpty ? '' : trimmed,
+    );
+    await next.save(Directory(widget.state.rootPath));
+    if (!mounted) return;
+    context.read<VaultBloc>().add(const RefreshFromDisk());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return SizedBox(
+      width: 300,
+      child: TextField(
+        controller: _ctl,
+        focusNode: _focus,
+        onSubmitted: (_) => _commit(),
+        style: TextStyle(fontSize: 13, color: tokens.text),
+        decoration: InputDecoration(
+          isCollapsed: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: tokens.divider2),
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: tokens.divider2),
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+          ),
+          hintText:
+              widget.state.rootPath.split('/').last.replaceAll('_', ' '),
+          hintStyle: TextStyle(fontSize: 13, color: tokens.text3),
         ),
       ),
     );
