@@ -37,7 +37,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Page covers (image upload, URL, Unsplash, gallery) — M26 (editor hero band) + M92 (gallery card thumbnails). Unsplash search would need API integration.
 - ✅ Page templates (built-in and custom) — Pages under `Templates/` surface as "New page from template…" in the command palette (`vault_shell_page.dart`). Duplicate copies the frontmatter + body and regenerates `id:`.
 - ✅ Duplicate page (with or without subpages) — `DuplicatePage` event in `vault_bloc.dart`; context-menu entry on every file in the sidebar.
-- ✅ Move page to another location — M55, drag a tree node onto a folder → `MovePage` event. Wikilinks survive since they use ULIDs.
+- ✅ Move page to another location — M55, drag a tree node onto a folder → `MovePage` event. Wikilinks survive since they use ULIDs. M231 adds a "Move to folder…" entry to the editor kebab — opens a `SimpleDialog` with every folder in the vault tree so users can relocate the open page without leaving the editor (useful on mobile where drag/drop is awkward).
 - ✅ Page history / version history — M30, `lib/features/editor/data/page_history.dart` shells out to `git log -z` + `git show <sha>:<file>` when vault is a git repo. File context menu has "Page history".
 - ✅ Page locking — Frontmatter `locked: true`; `EditorBloc.isLocked` toggles read-only mode; lock icon in PageHeader.
 - ✅ Favorites / pinning — Pin via context menu; persists to `<vault>/.quill.yaml` `favorites: [...]`; Favorites section in sidebar.

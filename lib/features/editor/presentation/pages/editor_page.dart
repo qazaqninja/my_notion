@@ -21,6 +21,7 @@ import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/data/pdf_exporter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
+import '../../../vault/domain/entities/vault_tree.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 // ignore: unused_import — Indexer used via context.read
 import '../../../vault/presentation/bloc/vault_bloc.dart';
@@ -283,6 +284,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
+        PopupMenuItem(value: 'move', child: Text('Move to folder…')),
         PopupMenuItem(value: 'history', child: Text('Page history…')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
         PopupMenuItem(value: 'export-html', child: Text('Export as .html…')),
@@ -324,6 +326,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _printPage(context, loaded);
       case 'set-reminder':
         await _setReminder(context, loaded);
+      case 'move':
+        await _moveToFolder(context, loaded);
       case 'duplicate':
         final router = GoRouter.of(context);
         context.read<VaultBloc>().add(DuplicatePage(
@@ -399,6 +403,65 @@ class _EditorBodyState extends State<_EditorBody> {
     } catch (e) {
       messenger?.showSnackBar(SnackBar(content: Text('Print failed: $e')));
     }
+  }
+
+  Future<void> _moveToFolder(
+      BuildContext context, EditorLoaded loaded) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final folders = <String>{};
+    void walk(VaultNode n) {
+      if (n is VaultFolder) {
+        folders.add(n.relativePath);
+        for (final c in n.children) {
+          walk(c);
+        }
+      }
+    }
+    for (final n in vault.tree.topLevel) {
+      walk(n);
+    }
+    final sorted = folders.toList()..sort();
+    // Drop the folder the page is already in — moving there is a no-op.
+    final currentFolder = loaded.page.relativePath.contains('/')
+        ? loaded.page.relativePath
+            .substring(0, loaded.page.relativePath.lastIndexOf('/'))
+        : '';
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final tokens = QuillTokens.of(ctx);
+        return SimpleDialog(
+          title: const Text('Move to folder'),
+          children: [
+            if (currentFolder != '')
+              SimpleDialogOption(
+                onPressed: () => Navigator.pop(ctx, ''),
+                child: Text('(vault root)',
+                    style: TextStyle(color: tokens.text2)),
+              ),
+            for (final f in sorted)
+              if (f != currentFolder)
+                SimpleDialogOption(
+                  onPressed: () => Navigator.pop(ctx, f),
+                  child: Text(f),
+                ),
+          ],
+        );
+      },
+    );
+    if (picked == null) return;
+    if (!context.mounted) return;
+    context.read<VaultBloc>().add(
+        MovePage(ulid: loaded.page.ulid, targetFolder: picked));
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      SnackBar(
+          content: Text(picked.isEmpty
+              ? 'Moved to vault root'
+              : 'Moved to $picked'),
+          duration: const Duration(seconds: 2)),
+    );
   }
 
   Future<void> _setReminder(
