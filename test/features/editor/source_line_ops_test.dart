@@ -323,4 +323,42 @@ void main() {
       expect(backspaceListMarker('hello', 5), isNull);
     });
   });
+
+  group('joinLineWithNext', () {
+    test('joins two plain lines with a single space', () {
+      final r = joinLineWithNext('hello\nworld', 2);
+      expect(r.text, 'hello world');
+      expect(r.caret, 5); // at the inserted space
+    });
+
+    test('strips leading whitespace from the next line', () {
+      final r = joinLineWithNext('one\n    two', 1);
+      expect(r.text, 'one two');
+    });
+
+    test('strips a continuation list marker (just spaces) — kept simple', () {
+      // We only strip whitespace, not list markers — keeping the helper
+      // conservative. List markers join through as visible text.
+      final r = joinLineWithNext('- a\n- b', 3);
+      expect(r.text, '- a - b');
+    });
+
+    test("doesn't double-space when current line already ends in space",
+        () {
+      final r = joinLineWithNext('end \nstart', 4);
+      expect(r.text, 'end start');
+    });
+
+    test('no-op on the final content line', () {
+      final r = joinLineWithNext('only', 2);
+      expect(r.text, 'only');
+      expect(r.caret, 2);
+    });
+
+    test('joins onto an empty next line — collapses to just the current line',
+        () {
+      final r = joinLineWithNext('hello\n', 5);
+      expect(r.text, 'hello ');
+    });
+  });
 }

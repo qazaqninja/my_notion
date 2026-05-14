@@ -161,6 +161,37 @@ LineOpResult? continueListAtNewline(String text, int caret) {
   return LineOpResult(text: newText, caret: caret + insertion.length);
 }
 
+/// Join the line containing [caret] with the line below. The trailing
+/// '\n' is replaced with a single space, and any leading whitespace
+/// (including a continuation list marker) on the next line is stripped
+/// so the join reads as flowing prose. Caret lands at the join point
+/// (where the space now sits). No-op on the final content line.
+LineOpResult joinLineWithNext(String text, int caret) {
+  if (caret < 0) caret = 0;
+  if (caret > text.length) caret = text.length;
+  final nextNl = text.indexOf('\n', caret);
+  if (nextNl == -1) return LineOpResult(text: text, caret: caret);
+  // End of current line:
+  final endOfCurrent = nextNl;
+  // Skip the '\n' and any leading whitespace on the next line.
+  var startOfNext = nextNl + 1;
+  while (startOfNext < text.length &&
+      (text[startOfNext] == ' ' || text[startOfNext] == '\t')) {
+    startOfNext++;
+  }
+  // If the current line ends without a trailing space, insert one as the
+  // separator. If it already ends in whitespace, no separator needed.
+  final endsInWs =
+      endOfCurrent > 0 && (text[endOfCurrent - 1] == ' ' ||
+              text[endOfCurrent - 1] == '\t');
+  final separator = endsInWs ? '' : ' ';
+  final newText =
+      text.replaceRange(endOfCurrent, startOfNext, separator);
+  // Caret lands at the original end-of-current — which is the inserted
+  // space (or the join point when no space was needed).
+  return LineOpResult(text: newText, caret: endOfCurrent);
+}
+
 /// Backspace handling for list lines. If [caret] sits at the end of an
 /// otherwise-empty list marker (e.g. `- `, `1. `, `- [ ] `), strip the
 /// marker but keep the leading indent — the standard "backspace at the

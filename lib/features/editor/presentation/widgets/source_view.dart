@@ -276,6 +276,11 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp(deleteLineAt);
   }
 
+  /// Join the current line with the next. Cmd+J / Ctrl+J.
+  void _joinLines() {
+    _applyLineOp(joinLineWithNext);
+  }
+
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
     final v = _controller.value;
@@ -724,6 +729,10 @@ class _SourceViewState extends State<SourceView> {
                       _selectCurrentLine,
                   const SingleActivator(LogicalKeyboardKey.keyL,
                       control: true): _selectCurrentLine,
+                  const SingleActivator(LogicalKeyboardKey.keyJ, meta: true):
+                      _joinLines,
+                  const SingleActivator(LogicalKeyboardKey.keyJ,
+                      control: true): _joinLines,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
