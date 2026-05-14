@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
-import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/relation_chip.dart';
@@ -102,28 +101,69 @@ class MarkdownRenderer extends StatelessWidget {
               for (final item in b.items!)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
+                  child: _ListItem(
+                    raw: item,
+                    showUlid: showUlid,
+                    tokens: tokens,
+                  ),
+                ),
+            ],
+          ),
+        );
+      case _BlockKind.ol:
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (int idx = 0; idx < b.items!.length; idx++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 9, right: 10, left: 4),
-                        child: Container(
-                          width: 4,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: tokens.text2,
-                            shape: BoxShape.circle,
+                      SizedBox(
+                        width: 22,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 1, left: 4),
+                          child: Text(
+                            '${idx + 1}.',
+                            style: mono(fontSize: 14, color: tokens.text3),
                           ),
                         ),
                       ),
                       Expanded(
-                        child: _ParagraphWithChips(text: item, showUlid: showUlid, tokens: tokens),
+                        child: _ParagraphWithChips(
+                          text: b.items![idx],
+                          showUlid: showUlid,
+                          tokens: tokens,
+                        ),
                       ),
                     ],
                   ),
                 ),
             ],
           ),
+        );
+      case _BlockKind.quote:
+        return Container(
+          margin: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.fromLTRB(14, 6, 8, 6),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: tokens.accent, width: 3),
+            ),
+          ),
+          child: _ParagraphWithChips(
+            text: b.text,
+            showUlid: showUlid,
+            tokens: tokens,
+          ),
+        );
+      case _BlockKind.hr:
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Container(height: 0.5, color: tokens.divider2),
         );
       case _BlockKind.code:
         return Container(
@@ -225,7 +265,27 @@ class MarkdownRenderer extends StatelessWidget {
         continue;
       }
 
-      // Unordered list
+      // Blockquote (one or more contiguous `> ` lines)
+      if (line.startsWith('> ') || line == '>') {
+        final buf = StringBuffer();
+        while (i < lines.length &&
+            (lines[i].startsWith('> ') || lines[i] == '>')) {
+          if (buf.isNotEmpty) buf.write('\n');
+          buf.write(lines[i] == '>' ? '' : lines[i].substring(2));
+          i++;
+        }
+        out.add(_Block(kind: _BlockKind.quote, text: buf.toString()));
+        continue;
+      }
+
+      // Horizontal rule
+      if (line.trim() == '---' || line.trim() == '***' || line.trim() == '___') {
+        out.add(_Block(kind: _BlockKind.hr));
+        i++;
+        continue;
+      }
+
+      // Unordered list (with optional checkbox)
       if (line.startsWith('- ') || line.startsWith('* ')) {
         final items = <String>[];
         while (i < lines.length && (lines[i].startsWith('- ') || lines[i].startsWith('* '))) {
@@ -233,6 +293,17 @@ class MarkdownRenderer extends StatelessWidget {
           i++;
         }
         out.add(_Block(kind: _BlockKind.ul, items: items));
+        continue;
+      }
+
+      // Ordered list (digits followed by `. `)
+      if (RegExp(r'^\d+\.\s').hasMatch(line)) {
+        final items = <String>[];
+        while (i < lines.length && RegExp(r'^\d+\.\s').hasMatch(lines[i])) {
+          items.add(lines[i].replaceFirst(RegExp(r'^\d+\.\s'), ''));
+          i++;
+        }
+        out.add(_Block(kind: _BlockKind.ol, items: items));
         continue;
       }
 
@@ -265,7 +336,13 @@ class MarkdownRenderer extends StatelessWidget {
       line.startsWith('## ') ||
       line.startsWith('### ') ||
       line.startsWith('- ') ||
-      line.startsWith('* ');
+      line.startsWith('* ') ||
+      line.startsWith('> ') ||
+      line == '>' ||
+      line.trim() == '---' ||
+      line.trim() == '***' ||
+      line.trim() == '___' ||
+      RegExp(r'^\d+\.\s').hasMatch(line);
 }
 
 /// If [text] is JUST an image — `![alt](path)` with nothing else — return
@@ -351,10 +428,11 @@ class _Block {
   final List<String>? items;
 }
 
-enum _BlockKind { h1, h2, h3, paragraph, ul, code, math }
+enum _BlockKind { h1, h2, h3, paragraph, ul, ol, code, math, quote, hr }
 
-/// Render a paragraph with `[[ULID]]` segments turned into [RelationChip]s.
-/// Titles are resolved from drift's `pages` table at build time.
+/// Render a paragraph with inline emphasis (bold/italic/strike/code),
+/// `[[ULID]]` chips, and inline image references. Uses `RichText` with
+/// `WidgetSpan`s for the non-text bits.
 class _ParagraphWithChips extends StatelessWidget {
   const _ParagraphWithChips({required this.text, required this.showUlid, required this.tokens});
 
@@ -364,42 +442,198 @@ class _ParagraphWithChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final links = WikilinkParser.find(text);
-    if (links.isEmpty) {
-      return SelectableText(
-        text,
-        style: TextStyle(fontSize: 16, color: tokens.text, height: 1.6),
-      );
-    }
-    // Build a row of plain Text and RelationChip widgets interleaved.
-    final spans = <Widget>[];
-    int cursor = 0;
-    for (final link in links) {
-      if (link.start > cursor) {
-        spans.add(_segText(text.substring(cursor, link.start), tokens));
-      }
-      spans.add(
-        _ResolvedChip(ulid: link.ulid, showUlid: showUlid),
-      );
-      cursor = link.end;
-    }
-    if (cursor < text.length) {
-      spans.add(_segText(text.substring(cursor), tokens));
-    }
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 2,
-      runSpacing: 4,
-      children: spans,
+    final base = TextStyle(fontSize: 16, color: tokens.text, height: 1.6);
+    final spans = _buildSpans(text, base, tokens, showUlid);
+    return SelectableText.rich(
+      TextSpan(style: base, children: spans),
     );
+  }
+}
+
+class _ListItem extends StatelessWidget {
+  const _ListItem({
+    required this.raw,
+    required this.showUlid,
+    required this.tokens,
+  });
+  final String raw;
+  final bool showUlid;
+  final QuillTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    // Tappable checkbox if `[ ]` / `[x]` prefix.
+    final m = RegExp(r'^\[([ xX])\]\s+').firstMatch(raw);
+    if (m != null) {
+      final checked = m.group(1)!.toLowerCase() == 'x';
+      final rest = raw.substring(m.end);
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 5, right: 10, left: 4),
+            child: Icon(
+              checked
+                  ? Icons.check_box_outlined
+                  : Icons.check_box_outline_blank,
+              size: 16,
+              color: checked ? tokens.accent : tokens.text3,
+            ),
+          ),
+          Expanded(
+            child: DefaultTextStyle.merge(
+              style: TextStyle(
+                decoration:
+                    checked ? TextDecoration.lineThrough : TextDecoration.none,
+                color: checked ? tokens.text3 : tokens.text,
+              ),
+              child: _ParagraphWithChips(
+                text: rest,
+                showUlid: showUlid,
+                tokens: tokens,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 9, right: 10, left: 4),
+          child: Container(
+            width: 4,
+            height: 4,
+            decoration: BoxDecoration(
+              color: tokens.text2,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        Expanded(
+          child:
+              _ParagraphWithChips(text: raw, showUlid: showUlid, tokens: tokens),
+        ),
+      ],
+    );
+  }
+}
+
+/// Inline tokenizer: produces TextSpan/WidgetSpan list for a paragraph.
+/// Handles `**bold**`, `*italic*` / `_italic_`, `~~strike~~`, `` `code` ``,
+/// and `[[ULID]]` wikilink chips. Unmatched delimiters are emitted as plain
+/// text so we don't accidentally swallow `2 * 3`.
+List<InlineSpan> _buildSpans(
+  String text,
+  TextStyle base,
+  QuillTokens tokens,
+  bool showUlid,
+) {
+  final out = <InlineSpan>[];
+  var committed = 0; // last position written to `out`
+  var i = 0;
+  final n = text.length;
+
+  void flushPlain(int upto) {
+    if (upto > committed) {
+      out.add(TextSpan(text: text.substring(committed, upto)));
+    }
+    committed = upto;
   }
 
-  Widget _segText(String s, QuillTokens t) {
-    return Text(
-      s,
-      style: TextStyle(fontSize: 16, color: t.text, height: 1.6),
-    );
+  while (i < n) {
+    // Wikilink chip — [[ULID]]
+    if (text[i] == '[' && i + 1 < n && text[i + 1] == '[') {
+      final m = RegExp(r'\[\[([0-9A-HJKMNP-TV-Z]{26})\]\]')
+          .matchAsPrefix(text, i);
+      if (m != null) {
+        flushPlain(i);
+        out.add(WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: _ResolvedChip(ulid: m.group(1)!, showUlid: showUlid),
+        ));
+        i = m.end;
+        committed = i;
+        continue;
+      }
+    }
+    final c = text[i];
+    // Inline code: `text`
+    if (c == '`') {
+      final end = text.indexOf('`', i + 1);
+      if (end != -1 && end > i + 1 && !text.substring(i + 1, end).contains('\n')) {
+        flushPlain(i);
+        out.add(TextSpan(
+          text: text.substring(i + 1, end),
+          style: mono(fontSize: 13.5, color: tokens.text).copyWith(
+            backgroundColor: tokens.surface2,
+          ),
+        ));
+        i = end + 1;
+        committed = i;
+        continue;
+      }
+    }
+    // Bold: **text**
+    if (c == '*' && i + 1 < n && text[i + 1] == '*') {
+      final end = text.indexOf('**', i + 2);
+      if (end != -1 && end > i + 2) {
+        final inner = text.substring(i + 2, end);
+        if (!inner.contains('\n')) {
+          flushPlain(i);
+          out.add(TextSpan(
+            text: inner,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ));
+          i = end + 2;
+          committed = i;
+          continue;
+        }
+      }
+    }
+    // Italic: *text* or _text_ (single delim)
+    if (c == '*' || c == '_') {
+      final end = text.indexOf(c, i + 1);
+      if (end != -1 && end > i + 1) {
+        final inner = text.substring(i + 1, end);
+        // Require non-space inner edges to avoid swallowing `2 * 3`.
+        if (!inner.contains('\n') &&
+            inner.isNotEmpty &&
+            inner[0] != ' ' &&
+            inner[inner.length - 1] != ' ') {
+          flushPlain(i);
+          out.add(TextSpan(
+            text: inner,
+            style: const TextStyle(fontStyle: FontStyle.italic),
+          ));
+          i = end + 1;
+          committed = i;
+          continue;
+        }
+      }
+    }
+    // Strikethrough: ~~text~~
+    if (c == '~' && i + 1 < n && text[i + 1] == '~') {
+      final end = text.indexOf('~~', i + 2);
+      if (end != -1 && end > i + 2) {
+        final inner = text.substring(i + 2, end);
+        if (!inner.contains('\n')) {
+          flushPlain(i);
+          out.add(TextSpan(
+            text: inner,
+            style: const TextStyle(decoration: TextDecoration.lineThrough),
+          ));
+          i = end + 2;
+          committed = i;
+          continue;
+        }
+      }
+    }
+    i++;
   }
+  flushPlain(n);
+  return out;
 }
 
 class _ResolvedChip extends StatelessWidget {
