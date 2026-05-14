@@ -38,6 +38,10 @@ class _SourceViewState extends State<SourceView> {
   late final SlashMenuCubit _slash;
   final GlobalKey _fieldKey = GlobalKey();
   int? _triggerStart;
+
+  /// Number of characters the trigger sequence occupies. `[[` → 2, `@` → 1.
+  /// Used by [_onPick] to know how much prefix to strip when splicing.
+  int _triggerLen = 2;
   int? _slashTriggerStart;
 
   @override
@@ -120,8 +124,28 @@ class _SourceViewState extends State<SourceView> {
       // Detect a freshly-typed `[[` ending at the caret.
       if (caret >= 2 && text.substring(caret - 2, caret) == '[[') {
         _triggerStart = caret;
+        _triggerLen = 2;
         final rect = _caretRect() ?? Rect.zero;
         _picker.openAt(anchor: rect, sourceOffset: caret - 2);
+        return;
+      }
+      // Detect a freshly-typed `@` at start-of-line or after whitespace.
+      // Requires the previous boundary to be empty / newline / whitespace
+      // so we don't fire on emails like `foo@bar.com`.
+      if (caret >= 1 && text[caret - 1] == '@') {
+        final prev = caret >= 2 ? text[caret - 2] : '';
+        final boundary = prev.isEmpty ||
+            prev == '\n' ||
+            prev == ' ' ||
+            prev == '\t' ||
+            prev == '(' ||
+            prev == '[';
+        if (boundary) {
+          _triggerStart = caret;
+          _triggerLen = 1;
+          final rect = _caretRect() ?? Rect.zero;
+          _picker.openAt(anchor: rect, sourceOffset: caret - 1);
+        }
       }
       return;
     }
@@ -133,10 +157,14 @@ class _SourceViewState extends State<SourceView> {
       _triggerStart = null;
       return;
     }
-    // If anything between the `[[` and caret looks like a hard boundary
-    // (newline, `]`), close.
     final between = text.substring(start, caret);
-    if (between.contains('\n') || between.contains(']')) {
+    // Trigger-specific close boundaries:
+    //   `[[`: close on newline or `]` (since the user likely typed `]]`)
+    //   `@` : close on newline or whitespace (Notion-style mention scope)
+    final closes = _triggerLen == 2
+        ? (between.contains('\n') || between.contains(']'))
+        : (between.contains('\n') || between.contains(' ') || between.contains('\t'));
+    if (closes) {
       _picker.dismiss();
       _triggerStart = null;
       return;
@@ -291,10 +319,12 @@ class _SourceViewState extends State<SourceView> {
     final text = _controller.text;
     final caret = _controller.selection.start;
     final insertion = '[[${result.ulid}]]';
-    final newText = text.replaceRange(start - 2, caret, insertion);
-    final newCaret = start - 2 + insertion.length;
+    final stripStart = start - _triggerLen;
+    final newText = text.replaceRange(stripStart, caret, insertion);
+    final newCaret = stripStart + insertion.length;
     // Reset before mutating the controller — see _onSlashPick for why.
     _triggerStart = null;
+    _triggerLen = 2;
     _picker.dismiss();
     _controller.value = TextEditingValue(
       text: newText,
