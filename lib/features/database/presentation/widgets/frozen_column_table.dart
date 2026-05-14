@@ -37,6 +37,54 @@ String _iconForType(ColumnType t) => switch (t) {
 const double _rowHeight = 36;
 const double _headerHeight = 30;
 const double _titleColWidth = 220;
+const double _footerHeight = 26;
+
+enum _Agg { none, count, sum, avg, min, max }
+
+extension _AggExt on _Agg {
+  String label(num? v) {
+    final n = v == null ? '—' : _fmt(v);
+    return switch (this) {
+      _Agg.none => '',
+      _Agg.count => 'count $n',
+      _Agg.sum => 'sum $n',
+      _Agg.avg => 'avg $n',
+      _Agg.min => 'min $n',
+      _Agg.max => 'max $n',
+    };
+  }
+
+  _Agg cycleNumeric() => switch (this) {
+        _Agg.none => _Agg.count,
+        _Agg.count => _Agg.sum,
+        _Agg.sum => _Agg.avg,
+        _Agg.avg => _Agg.min,
+        _Agg.min => _Agg.max,
+        _Agg.max => _Agg.none,
+      };
+
+  _Agg cycleText() => switch (this) {
+        _Agg.none => _Agg.count,
+        _Agg.count => _Agg.none,
+        _ => _Agg.count,
+      };
+}
+
+String _fmt(num n) {
+  if (n is int) return _withSep(n);
+  if (n == n.truncate()) return _withSep(n.toInt());
+  return n.toStringAsFixed(2);
+}
+
+String _withSep(int n) {
+  final s = n.toString();
+  final buf = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0 && s[i - 1] != '-') buf.write(',');
+    buf.write(s[i]);
+  }
+  return buf.toString();
+}
 
 class FrozenColumnTable extends StatefulWidget {
   const FrozenColumnTable({
@@ -66,6 +114,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   final ScrollController _vertLeft = ScrollController();
   final ScrollController _vertRight = ScrollController();
   bool _syncing = false;
+  final Map<String, _Agg> _aggs = {};
 
   @override
   void initState() {
@@ -154,6 +203,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                   },
                 ),
               ),
+              _titleFooter(tokens),
             ],
           ),
         ),
@@ -200,6 +250,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                         },
                       ),
                     ),
+                    _scrollFooter(cols, tokens),
                   ],
                 ),
               ),
@@ -294,6 +345,90 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       ),
       child: rendered,
     );
+  }
+
+  Widget _titleFooter(QuillTokens tokens) {
+    return Container(
+      height: _footerHeight,
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: tokens.divider, width: 0.5)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      alignment: Alignment.centerLeft,
+      child: Text('count ${widget.rows.length}',
+          style: mono(fontSize: 11, color: tokens.text3)),
+    );
+  }
+
+  Widget _scrollFooter(List<ColumnDef> cols, QuillTokens tokens) {
+    return Container(
+      height: _footerHeight,
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: tokens.divider, width: 0.5)),
+      ),
+      child: Row(
+        children: [
+          for (final c in cols) _footerCell(c, tokens, c == cols.last),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerCell(ColumnDef c, QuillTokens tokens, bool isLast) {
+    final agg = _aggs[c.key] ?? _Agg.none;
+    final isNumeric = c.type == ColumnType.number;
+    final value = isNumeric ? _aggNumeric(c.key, agg) : (agg == _Agg.count ? widget.rows.length : null);
+    return GestureDetector(
+      onTap: () => setState(() {
+        _aggs[c.key] = isNumeric ? agg.cycleNumeric() : agg.cycleText();
+      }),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          width: _widthForType(c.type),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          alignment: c.type == ColumnType.number
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
+          decoration: BoxDecoration(
+            border: isLast
+                ? null
+                : Border(right: BorderSide(color: tokens.divider, width: 0.5)),
+          ),
+          child: Text(
+            agg == _Agg.none ? 'calc' : agg.label(value),
+            style: mono(
+              fontSize: 11,
+              color: agg == _Agg.none ? tokens.text3 : tokens.text2,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ),
+    );
+  }
+
+  num? _aggNumeric(String key, _Agg op) {
+    if (op == _Agg.none) return null;
+    if (op == _Agg.count) return widget.rows.length;
+    final values = <num>[];
+    for (final r in widget.rows) {
+      final v = num.tryParse('${r.cells[key] ?? ''}');
+      if (v != null) values.add(v);
+    }
+    if (values.isEmpty) return null;
+    switch (op) {
+      case _Agg.sum:
+        return values.fold<num>(0, (a, b) => a + b);
+      case _Agg.avg:
+        return values.fold<num>(0, (a, b) => a + b) / values.length;
+      case _Agg.min:
+        return values.reduce((a, b) => a < b ? a : b);
+      case _Agg.max:
+        return values.reduce((a, b) => a > b ? a : b);
+      default:
+        return null;
+    }
   }
 
   static bool _isEditable(ColumnType t) {
