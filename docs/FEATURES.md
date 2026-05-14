@@ -277,7 +277,7 @@ Top 10, ordered. Each is sized for one or two milestone commits. The first six m
 7. **Formula + rollup property types** — Implement a Notion formula v2 subset (`prop()`, arithmetic, conditionals, basic string/date helpers) and rollup-over-relation. New file `lib/features/database/domain/formula/evaluator.dart`. Renderer extension in `cell_renderers.dart`. 2 days.
 8. **Calendar + chart views** — Calendar: `table_calendar` package, project rows by their date property. Chart: `fl_chart` for bar/line/donut over a chosen grouping. Both slot into `database_table_page.dart`'s view switcher. 1.5 days.
 9. ✅ **Trash with restore** — Shipped **M28**. File context menu has "Move to trash"; renames to `.trash/<YYYY-MM>/<basename>.md` with collision avoidance. `.trash` is in `_ignoredDirs` across `VaultFsDatasource`, `Indexer`, and `VaultWatcher`. Restore is manual today (drag back from OS file browser); a dedicated Trash route is bonus work.
-10. **Page version history** — Detect `.git/` at vault root; if present, shell out to git for `log` / `show <sha>:<file>`. Fallback: `.history/<ULID>/<ts>.md` snapshots on save. UI: side panel in editor. 1.5 days.
+10. ✅ **Page version history** — Shipped **M30**. `lib/features/editor/data/page_history.dart` shells out to `git log -z` + `git show <sha>:<file>`. File context menu has "Page history" → opens a dialog with commit list + content viewer. The `.history/<ULID>/` fallback for non-git vaults is still TODO; a "Restore this version" button is also bonus work.
 
 **Recently-shipped extras** (not in original top-10):
 
