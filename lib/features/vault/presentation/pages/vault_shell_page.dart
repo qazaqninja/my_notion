@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/platform/reveal.dart';
+import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -554,6 +555,13 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Browse all databases':
         if (!context.mounted) return;
         GoRouter.of(context).go('/databases');
+      case 'New database…':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        if (!context.mounted) return;
+        await _createDatabase(context, Directory(vaultPath));
       case 'Install built-in templates':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
@@ -575,6 +583,85 @@ class _VaultShellPageState extends State<VaultShellPage> {
               content: Text('Could not install templates: $e')));
         }
     }
+  }
+
+  Future<void> _createDatabase(
+      BuildContext context, Directory vaultRoot) async {
+    final ctl = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New database'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Quill creates a folder under your vault and seeds it with a '
+              'minimal .database.yaml. Each .md inside the folder becomes '
+              'a row.',
+              style: TextStyle(fontSize: 12.5),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctl,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Database name',
+              ),
+              onSubmitted: (v) => Navigator.of(ctx).pop(v),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(ctl.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+    if (name == null || name.trim().isEmpty) return;
+    final safe = name.trim().replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    final folder = Directory('${vaultRoot.path}/$safe');
+    if (await folder.exists()) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Folder already exists: $safe')),
+      );
+      return;
+    }
+    final ulids = const UlidGenerator();
+    final id = ulids.generate();
+    final yaml = '''id: $id
+name: $name
+icon: 📊
+color: "#6B8E7F"
+schema:
+  status:
+    type: select
+    options: [todo, doing, done]
+  notes:
+    type: text
+views:
+  - id: main
+    name: All
+    type: table
+''';
+    await folder.create(recursive: true);
+    await File('${folder.path}/.database.yaml').writeAsString(yaml);
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    context.read<VaultBloc>().add(const ReindexVault());
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text('Created database: $safe'),
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   Future<void> _showVaultStats(BuildContext context) async {
