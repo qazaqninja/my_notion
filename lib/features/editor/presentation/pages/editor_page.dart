@@ -17,6 +17,7 @@ import '../../../vault/domain/entities/frontmatter_entry.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 // ignore: unused_import — Indexer used via context.read
 import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
 import '../bloc/editor_bloc.dart';
@@ -241,6 +242,46 @@ class _EditorBodyState extends State<_EditorBody> {
     }
   }
 
+  Future<void> _showPageMenu(BuildContext context, EditorLoaded loaded) async {
+    final box = context.findRenderObject() as RenderBox?;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (box == null || overlay == null) return;
+    final pos = box.localToGlobal(box.size.bottomLeft(Offset.zero),
+        ancestor: overlay);
+    final ulid = loaded.page.ulid;
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(pos.dx, pos.dy, pos.dx, 0),
+      items: const [
+        PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
+        PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
+        PopupMenuItem(value: 'reindex', child: Text('Reindex vault')),
+      ],
+    );
+    if (action == null || !context.mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    switch (action) {
+      case 'copy-ulid':
+        await Clipboard.setData(ClipboardData(text: ulid));
+        messenger?.showSnackBar(
+          SnackBar(content: Text('Copied $ulid'),
+              duration: const Duration(seconds: 2)),
+        );
+      case 'copy-link':
+        await Clipboard.setData(ClipboardData(text: '[[$ulid]]'));
+        messenger?.showSnackBar(
+          SnackBar(content: Text('Copied [[$ulid]]'),
+              duration: const Duration(seconds: 2)),
+        );
+      case 'reindex':
+        if (!context.mounted) return;
+        context.read<VaultBloc>().add(const ReindexVault());
+        messenger?.showSnackBar(
+          const SnackBar(content: Text('Reindexing vault…')),
+        );
+    }
+  }
+
   void _toggleLock(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
     final wasLocked = EditorBloc.isLocked(loaded);
@@ -377,12 +418,16 @@ class _EditorBodyState extends State<_EditorBody> {
                     icon: QuillIcon('panel', size: 16, strokeWidth: 1.7,
                         color: _propertiesOpen ? tokens.accent : tokens.text3),
                   ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () {},
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    icon: QuillIcon('kebab-h', size: 16, strokeWidth: 1.7, color: tokens.text3),
+                  Builder(
+                    builder: (kebabCtx) => IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => _showPageMenu(kebabCtx, loaded),
+                      padding: const EdgeInsets.all(4),
+                      constraints:
+                          const BoxConstraints(minWidth: 28, minHeight: 28),
+                      icon: QuillIcon('kebab-h',
+                          size: 16, strokeWidth: 1.7, color: tokens.text3),
+                    ),
                   ),
                 ],
               ),
