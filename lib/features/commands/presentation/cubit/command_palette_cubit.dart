@@ -95,6 +95,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'export', label: 'Export vault to folder', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'sync', label: 'Reindex vault', hint: '⌘R'),
     CommandEntry(group: CommandGroup.actions, icon: 'eye', label: 'Toggle theme', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'table', label: 'Import CSV as database', hint: ''),
   ];
 
   static List<CommandEntry> _filterActions(List<CommandEntry> all, String q) {
