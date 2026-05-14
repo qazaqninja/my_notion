@@ -1,6 +1,6 @@
 /// Some entries trigger an async UI flow (file picker, etc.) rather than
 /// inserting a literal snippet. The source view dispatches based on [action].
-enum SlashAction { insertSnippet, pickImage }
+enum SlashAction { insertSnippet, pickImage, insertToday }
 
 /// Entries shown by the slash command menu. Each entry carries:
 /// - [icon]: QuillIcon name
@@ -198,6 +198,13 @@ const List<SlashEntry> kSlashEntries = [
     snippet: ':::db Customers\nview: main\nlimit: 10\n:::\n',
     cursorOffset: 6, // after ":::db " ready for folder name
     keywords: ['db', 'database', 'inline', 'table', 'embed', 'view'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: "Today's date",
+    hint: '@today',
+    action: SlashAction.insertToday,
+    keywords: ['today', 'date', 'now', '@'],
   ),
 ];
 

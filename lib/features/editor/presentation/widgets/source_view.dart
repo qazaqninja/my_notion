@@ -328,6 +328,18 @@ class _SourceViewState extends State<SourceView> {
           selection: TextSelection.collapsed(offset: stripStart),
         );
         await _pickAndInsertImage(stripStart);
+      case SlashAction.insertToday:
+        final today = DateTime.now();
+        final yyyy = today.year.toString().padLeft(4, '0');
+        final mm = today.month.toString().padLeft(2, '0');
+        final dd = today.day.toString().padLeft(2, '0');
+        final snippet = '@$yyyy-$mm-$dd';
+        final newText = text.replaceRange(stripStart, caret, snippet);
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection:
+              TextSelection.collapsed(offset: stripStart + snippet.length),
+        );
     }
   }
 
@@ -411,19 +423,28 @@ class _SourceViewState extends State<SourceView> {
               ),
             ),
           ),
-          RelationPickerOverlay(
-            onPick: _onPick,
-            onDismiss: () {
-              _triggerStart = null;
-              _picker.dismiss();
-            },
+          // Positioned.fill bounds the overlay Stack to the field's box,
+          // so its inner Stack (Positioned-only children) can compute a
+          // finite size. clipBehavior: Clip.none on the inner Stack lets
+          // the panel render outside the field bounds if the caret is
+          // near the bottom.
+          Positioned.fill(
+            child: RelationPickerOverlay(
+              onPick: _onPick,
+              onDismiss: () {
+                _triggerStart = null;
+                _picker.dismiss();
+              },
+            ),
           ),
-          SlashMenuOverlay(
-            onPick: _onSlashPick,
-            onDismiss: () {
-              _slashTriggerStart = null;
-              _slash.dismiss();
-            },
+          Positioned.fill(
+            child: SlashMenuOverlay(
+              onPick: _onSlashPick,
+              onDismiss: () {
+                _slashTriggerStart = null;
+                _slash.dismiss();
+              },
+            ),
           ),
         ],
       ),
