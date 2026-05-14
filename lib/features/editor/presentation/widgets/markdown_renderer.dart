@@ -17,6 +17,7 @@ import '../../../database/domain/entities/database_schema.dart';
 import '../../../database/domain/repositories/database_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
+import '../../data/block_id.dart';
 import '../../data/list_reorder.dart';
 
 /// Hand-rolled block-level markdown renderer. Matches the design's
@@ -965,9 +966,11 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       // Heading
       if (line.startsWith('### ')) {
         i++;
+        final (text, id) = BlockId.split(line.substring(4));
         out.add(_Block(
           kind: _BlockKind.h3,
-          text: line.substring(4),
+          text: text,
+          blockId: id,
           sourceStart: start,
           sourceEnd: endOf(i),
         ));
@@ -975,9 +978,11 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       }
       if (line.startsWith('## ')) {
         i++;
+        final (text, id) = BlockId.split(line.substring(3));
         out.add(_Block(
           kind: _BlockKind.h2,
-          text: line.substring(3),
+          text: text,
+          blockId: id,
           sourceStart: start,
           sourceEnd: endOf(i),
         ));
@@ -985,9 +990,11 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       }
       if (line.startsWith('# ')) {
         i++;
+        final (text, id) = BlockId.split(line.substring(2));
         out.add(_Block(
           kind: _BlockKind.h1,
-          text: line.substring(2),
+          text: text,
+          blockId: id,
           sourceStart: start,
           sourceEnd: endOf(i),
         ));
@@ -1071,9 +1078,11 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
         buf.write(n);
         i++;
       }
+      final (text, id) = BlockId.split(buf.toString());
       out.add(_Block(
         kind: _BlockKind.paragraph,
-        text: buf.toString(),
+        text: text,
+        blockId: id,
         sourceStart: start,
         sourceEnd: endOf(i),
       ));
@@ -1773,11 +1782,17 @@ class _Block {
     this.props,
     this.sourceStart = 0,
     this.sourceEnd = 0,
+    this.blockId,
   });
   final _BlockKind kind;
   final String text;
   final List<String>? items;
   final List<List<String>>? tableRows;
+
+  /// Persistent Obsidian-style block ID parsed from a trailing
+  /// `^<ULID>` suffix. Null when the block has no anchor; the comments
+  /// service uses this to filter `block_id:` entries to this block.
+  final String? blockId;
 
   /// For [_BlockKind.columns]: one raw markdown string per column.
   /// Rendered by nested MarkdownRenderers.
@@ -1799,6 +1814,7 @@ class _Block {
         tableRows: tableRows,
         sourceStart: start,
         sourceEnd: end,
+        blockId: blockId,
       );
 }
 
