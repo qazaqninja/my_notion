@@ -25,7 +25,7 @@ import '../../../vault/presentation/bloc/vault_state.dart';
 /// More elaborate markdown (tables, blockquotes, inline emphasis) is
 /// deferred; the design didn't surface them and we can extend later
 /// without breaking the contract.
-class MarkdownRenderer extends StatelessWidget {
+class MarkdownRenderer extends StatefulWidget {
   const MarkdownRenderer({
     super.key,
     required this.body,
@@ -43,13 +43,68 @@ class MarkdownRenderer extends StatelessWidget {
   final ValueChanged<String>? onBodyChange;
 
   @override
+  State<MarkdownRenderer> createState() => _MarkdownRendererState();
+}
+
+class _MarkdownRendererState extends State<MarkdownRenderer> {
+  /// Source-start offsets of headings the user has collapsed via the
+  /// click target rendered on each heading row. Body edits reset the
+  /// set since offsets shift; we re-create the renderer key on edits
+  /// so that's automatic.
+  final Set<int> _collapsed = <int>{};
+
+  String get body => widget.body;
+  bool get showUlid => widget.showUlid;
+  ValueChanged<String>? get onBodyChange => widget.onBodyChange;
+
+  void _toggleCollapsed(int sourceStart) {
+    setState(() {
+      if (_collapsed.contains(sourceStart)) {
+        _collapsed.remove(sourceStart);
+      } else {
+        _collapsed.add(sourceStart);
+      }
+    });
+  }
+
+  int? _headingLevel(_BlockKind k) => switch (k) {
+        _BlockKind.h1 => 1,
+        _BlockKind.h2 => 2,
+        _BlockKind.h3 => 3,
+        _ => null,
+      };
+
+  @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final blocks = _splitBlocks(body);
+    // Pre-compute which block indices are hidden under a collapsed
+    // heading. A heading collapses everything until the next heading
+    // at the same level or higher (lower number).
+    final hidden = <int>{};
+    int? activeLevel;
+    int? activeStart;
+    for (var i = 0; i < blocks.length; i++) {
+      final b = blocks[i];
+      final level = _headingLevel(b.kind);
+      if (level != null) {
+        if (activeLevel != null && level <= activeLevel) {
+          activeLevel = null;
+          activeStart = null;
+        }
+        if (_collapsed.contains(b.sourceStart)) {
+          activeLevel = level;
+          activeStart = b.sourceStart;
+        }
+        continue;
+      }
+      if (activeStart != null) hidden.add(i);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (final b in blocks) _wrapBlock(context, tokens, b),
+        for (var i = 0; i < blocks.length; i++)
+          if (!hidden.contains(i)) _wrapBlock(context, tokens, blocks[i]),
       ],
     );
   }
@@ -86,48 +141,93 @@ class MarkdownRenderer extends StatelessWidget {
     );
   }
 
+  Widget _heading(
+    _Block b,
+    QuillTokens tokens, {
+    required double fontSize,
+    required EdgeInsets padding,
+    required double letterSpacing,
+    required double height,
+    required FontWeight weight,
+  }) {
+    final collapsed = _collapsed.contains(b.sourceStart);
+    return Padding(
+      padding: padding,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          // IconButton claims the gesture arena, so the chevron toggles
+          // collapse without falling through to the surrounding
+          // _EditableBlock GestureDetector (tap-to-edit).
+          SizedBox(
+            width: fontSize,
+            height: fontSize,
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              constraints: BoxConstraints.tight(Size.square(fontSize)),
+              splashRadius: fontSize * 0.7,
+              onPressed: () => _toggleCollapsed(b.sourceStart),
+              tooltip: collapsed ? 'Expand section' : 'Collapse section',
+              icon: Icon(
+                collapsed
+                    ? Icons.chevron_right
+                    : Icons.keyboard_arrow_down,
+                size: fontSize * 0.75,
+                color: tokens.text3,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              b.text,
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: weight,
+                color: tokens.text,
+                letterSpacing: letterSpacing,
+                height: height,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _renderBlock(BuildContext context, QuillTokens tokens, _Block b) {
     switch (b.kind) {
       case _BlockKind.h1:
-        return Padding(
+        return _heading(
+          b,
+          tokens,
+          fontSize: 30,
           padding: const EdgeInsets.fromLTRB(0, 32, 0, 12),
-          child: Text(
-            b.text,
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              color: tokens.text,
-              letterSpacing: -0.5,
-              height: 1.2,
-            ),
-          ),
+          letterSpacing: -0.5,
+          height: 1.2,
+          weight: FontWeight.w700,
         );
       case _BlockKind.h2:
-        return Padding(
+        return _heading(
+          b,
+          tokens,
+          fontSize: 19,
           padding: const EdgeInsets.fromLTRB(0, 28, 0, 8),
-          child: Text(
-            b.text,
-            style: TextStyle(
-              fontSize: 19,
-              fontWeight: FontWeight.w600,
-              color: tokens.text,
-              letterSpacing: -0.2,
-              height: 1.3,
-            ),
-          ),
+          letterSpacing: -0.2,
+          height: 1.3,
+          weight: FontWeight.w600,
         );
       case _BlockKind.h3:
-        return Padding(
+        return _heading(
+          b,
+          tokens,
+          fontSize: 16,
           padding: const EdgeInsets.fromLTRB(0, 22, 0, 6),
-          child: Text(
-            b.text,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: tokens.text,
-              height: 1.3,
-            ),
-          ),
+          letterSpacing: 0,
+          height: 1.3,
+          weight: FontWeight.w600,
         );
       case _BlockKind.paragraph:
         // Standalone image: ![alt](path) on its own line/paragraph.
