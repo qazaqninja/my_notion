@@ -195,9 +195,9 @@ const List<SlashEntry> kSlashEntries = [
     icon: 'table',
     label: 'Inline database',
     hint: '⫼',
-    snippet: ':::db Customers\n:::\n',
+    snippet: ':::db Customers\nview: main\nlimit: 10\n:::\n',
     cursorOffset: 6, // after ":::db " ready for folder name
-    keywords: ['db', 'database', 'inline', 'table', 'embed'],
+    keywords: ['db', 'database', 'inline', 'table', 'embed', 'view'],
   ),
 ];
 

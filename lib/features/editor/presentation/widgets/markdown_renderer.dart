@@ -393,7 +393,10 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
           tokens: tokens,
         );
       case _BlockKind.dbEmbed:
-        return _DatabaseEmbedBlock(folder: b.text);
+        return _DatabaseEmbedBlock(
+          folder: b.text,
+          props: b.props ?? const {},
+        );
       case _BlockKind.toc:
         return _renderToc(context, tokens);
       case _BlockKind.toggle:
@@ -643,20 +646,33 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       }
 
       // Inline database embed: `:::db <folder>` opens, `:::` closes.
-      // Body is currently ignored; future syntax can supply view config
-      // (visible columns, sort, filter) inside the fence.
+      // Body lines accept `key: value` config (M89): view, limit.
       if (line.trim().startsWith(':::db ') || line.trim() == ':::db') {
         final folder = line.trim().length > 5
             ? line.trim().substring(5).trim()
             : '';
+        final props = <String, String>{};
         i++;
         while (i < lines.length && lines[i].trim() != ':::') {
+          final ln = lines[i];
+          final idx = ln.indexOf(':');
+          if (idx > 0) {
+            final key = ln.substring(0, idx).trim();
+            var val = ln.substring(idx + 1).trim();
+            if (val.length >= 2 &&
+                ((val.startsWith('"') && val.endsWith('"')) ||
+                    (val.startsWith("'") && val.endsWith("'")))) {
+              val = val.substring(1, val.length - 1);
+            }
+            if (key.isNotEmpty) props[key] = val;
+          }
           i++;
         }
         if (i < lines.length) i++; // skip closing :::
         out.add(_Block(
           kind: _BlockKind.dbEmbed,
           text: folder,
+          props: props,
           sourceStart: start,
           sourceEnd: endOf(i),
         ));
@@ -1953,8 +1969,17 @@ class _ButtonBlockState extends State<_ButtonBlock> {
 /// page. Folder is matched against `databases.folderPath` exactly,
 /// or falls back to a case-insensitive name match for ergonomics.
 class _DatabaseEmbedBlock extends StatefulWidget {
-  const _DatabaseEmbedBlock({required this.folder});
+  const _DatabaseEmbedBlock({
+    required this.folder,
+    this.props = const {},
+  });
   final String folder;
+
+  /// `key: value` pairs from inside the fence. Recognised keys:
+  ///   view  — match views[].id or .name; honours that view's
+  ///           visible[] column list when rendering the preview
+  ///   limit — row cap, default 10
+  final Map<String, String> props;
 
   @override
   State<_DatabaseEmbedBlock> createState() => _DatabaseEmbedBlockState();
@@ -1972,9 +1997,18 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
   @override
   void didUpdateWidget(_DatabaseEmbedBlock old) {
     super.didUpdateWidget(old);
-    if (old.folder != widget.folder) {
+    if (old.folder != widget.folder ||
+        !_propsEqual(old.props, widget.props)) {
       _data = _load();
     }
+  }
+
+  static bool _propsEqual(Map<String, String> a, Map<String, String> b) {
+    if (a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (b[e.key] != e.value) return false;
+    }
+    return true;
   }
 
   Future<_EmbedData?> _load() async {
@@ -1999,7 +2033,26 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
     }
     if (hit == null) return null;
     final rows = await repo.getRows(hit.id);
-    return _EmbedData(schema: hit, rows: rows);
+
+    // Honour `view: <id|name>` by filtering columns to that view's
+    // visible[] list. Falls back silently when the view name isn't
+    // found or has no visible[] declared.
+    var scoped = hit;
+    final viewKey = widget.props['view']?.trim() ?? '';
+    if (viewKey.isNotEmpty) {
+      DatabaseView? v;
+      for (final candidate in hit.views) {
+        if (candidate.id == viewKey ||
+            candidate.name.toLowerCase() == viewKey.toLowerCase()) {
+          v = candidate;
+          break;
+        }
+      }
+      if (v != null && v.visible != null) {
+        scoped = hit.filterColumns(v.visible!.toSet());
+      }
+    }
+    return _EmbedData(schema: scoped, rows: rows, fullSchema: hit);
   }
 
   @override
@@ -2037,7 +2090,8 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
               ),
               onOpen: null);
         }
-        final rows = data.rows.take(10).toList();
+        final limit = int.tryParse(widget.props['limit'] ?? '') ?? 10;
+        final rows = data.rows.take(limit.clamp(1, 100)).toList();
         return _shell(tokens,
             title: '${data.schema.icon}  ${data.schema.name}',
             subtitle: '${data.rows.length} rows',
@@ -2170,8 +2224,18 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
 }
 
 class _EmbedData {
-  const _EmbedData({required this.schema, required this.rows});
+  const _EmbedData({
+    required this.schema,
+    required this.rows,
+    this.fullSchema,
+  });
+
+  /// May be column-filtered if `view: …` was specified in the fence.
   final DatabaseSchema schema;
+
+  /// Untouched schema; used for the row-count display in the header.
+  final DatabaseSchema? fullSchema;
+
   final List<DatabasePageRow> rows;
 }
 
