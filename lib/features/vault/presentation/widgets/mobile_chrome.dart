@@ -1,7 +1,9 @@
+import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
@@ -10,6 +12,21 @@ import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 /// Search).
 class MobileTabBar extends StatelessWidget {
   const MobileTabBar({super.key});
+
+  static Future<void> _openMostRecent(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final row = await (db.select(db.pages)
+          ..orderBy([(p) =>
+              OrderingTerm(expression: p.mtimeMs, mode: OrderingMode.desc)])
+          ..limit(1))
+        .getSingleOrNull();
+    if (!context.mounted) return;
+    if (row == null) {
+      context.go('/home');
+    } else {
+      context.go('/editor/${row.ulid}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +52,9 @@ class MobileTabBar extends StatelessWidget {
             icon: 'file-md',
             label: 'Editor',
             active: route.startsWith('/editor'),
-            onTap: route.startsWith('/editor') ? null : goHome,
+            onTap: route.startsWith('/editor')
+                ? null
+                : () => _openMostRecent(context),
           ),
           _Tab(
             icon: 'database',
