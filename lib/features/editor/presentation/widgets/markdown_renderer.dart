@@ -17,6 +17,7 @@ import '../../../database/domain/entities/database_schema.dart';
 import '../../../database/domain/repositories/database_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
+import '../../data/list_reorder.dart';
 
 /// Hand-rolled block-level markdown renderer. Matches the design's
 /// `editor.jsx` Block component shape-for-shape: h1/h2/h3, paragraph
@@ -317,13 +318,19 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              for (final item in b.items!)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: _ListItem(
-                    raw: item,
-                    showUlid: showUlid,
-                    tokens: tokens,
+              for (int idx = 0; idx < b.items!.length; idx++)
+                _ListItemDragWrap(
+                  block: b,
+                  itemIndex: idx,
+                  body: body,
+                  onBodyChange: onBodyChange,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: _ListItem(
+                      raw: b.items![idx],
+                      showUlid: showUlid,
+                      tokens: tokens,
+                    ),
                   ),
                 ),
             ],
@@ -336,29 +343,36 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               for (int idx = 0; idx < b.items!.length; idx++)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 22,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 1, left: 4),
-                          child: Text(
-                            '${idx + 1}.',
-                            style: mono(fontSize: 14, color: tokens.text3),
+                _ListItemDragWrap(
+                  block: b,
+                  itemIndex: idx,
+                  body: body,
+                  onBodyChange: onBodyChange,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 22,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 1, left: 4),
+                            child: Text(
+                              '${idx + 1}.',
+                              style:
+                                  mono(fontSize: 14, color: tokens.text3),
+                            ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: _ParagraphWithChips(
-                          text: b.items![idx],
-                          showUlid: showUlid,
-                          tokens: tokens,
+                        Expanded(
+                          child: _ParagraphWithChips(
+                            text: b.items![idx],
+                            showUlid: showUlid,
+                            tokens: tokens,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
             ],
@@ -2455,6 +2469,126 @@ class _EmbedData {
   final DatabaseSchema? fullSchema;
 
   final List<DatabasePageRow> rows;
+}
+
+/// Drag-to-reorder a single list item within its parent block. Carries
+/// the block's source range + the item index, mirroring [_BlockDragWrap]
+/// at one level deeper. On drop, the parent list's items are reordered
+/// and the source slice is re-emitted with the correct `- ` or `N. `
+/// prefix.
+class _ListItemDragWrap extends StatefulWidget {
+  const _ListItemDragWrap({
+    required this.block,
+    required this.itemIndex,
+    required this.body,
+    required this.onBodyChange,
+    required this.child,
+  });
+
+  final _Block block;
+  final int itemIndex;
+  final String body;
+  final ValueChanged<String>? onBodyChange;
+  final Widget child;
+
+  @override
+  State<_ListItemDragWrap> createState() => _ListItemDragWrapState();
+}
+
+class _ListItemDragWrapState extends State<_ListItemDragWrap> {
+  bool _hover = false;
+
+  void _onDrop(int sourceIndex) {
+    final cb = widget.onBodyChange;
+    if (cb == null) return;
+    final block = widget.block;
+    final items = block.items ?? const <String>[];
+    final newSlice = ListReorder.reorderSource(
+      items,
+      sourceIndex,
+      widget.itemIndex,
+      isOrdered: block.kind == _BlockKind.ol,
+    );
+    final next = widget.body
+        .replaceRange(block.sourceStart, block.sourceEnd, newSlice);
+    cb(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    if (widget.onBodyChange == null) return widget.child;
+    return DragTarget<List<int>>(
+      onWillAcceptWithDetails: (d) =>
+          d.data[0] == widget.block.sourceStart &&
+          d.data[1] != widget.itemIndex,
+      onAcceptWithDetails: (d) => _onDrop(d.data[1]),
+      builder: (context, candidate, _) {
+        final hovering = candidate.isNotEmpty;
+        return MouseRegion(
+          onEnter: (_) => setState(() => _hover = true),
+          onExit: (_) => setState(() => _hover = false),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (hovering)
+                Container(
+                  height: 2,
+                  color: tokens.accent,
+                  margin: const EdgeInsets.symmetric(vertical: 1),
+                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    child: _hover
+                        ? LongPressDraggable<List<int>>(
+                            data: [
+                              widget.block.sourceStart,
+                              widget.itemIndex,
+                            ],
+                            delay: const Duration(milliseconds: 150),
+                            feedback: Material(
+                              color: Colors.transparent,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: tokens.surface,
+                                  border: Border.all(
+                                      color: tokens.divider2,
+                                      width: 0.5),
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(4)),
+                                ),
+                                child: Text(
+                                  'item ${widget.itemIndex + 1}',
+                                  style: TextStyle(
+                                      fontSize: 11, color: tokens.text2),
+                                ),
+                              ),
+                            ),
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.grab,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Icon(Icons.drag_indicator,
+                                    size: 12, color: tokens.text3),
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  Expanded(child: widget.child),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 /// Wraps a rendered block with a hover-revealed drag handle (left
