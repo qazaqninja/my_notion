@@ -61,9 +61,32 @@ class CellRenderer extends StatelessWidget {
           child: Text(_fmtNumber('$v'), style: mono(fontSize: 13, color: tokens.text)),
         );
       case ColumnType.date:
+        final s = '$v';
+        // Date range: YYYY-MM-DD..YYYY-MM-DD renders with an arrow.
+        if (s.contains('..')) {
+          final parts = s.split('..');
+          if (parts.length == 2) {
+            return Align(
+              alignment: align,
+              child: Text.rich(
+                TextSpan(children: [
+                  TextSpan(
+                      text: parts[0].trim(),
+                      style: mono(fontSize: 12.5, color: tokens.text2)),
+                  TextSpan(
+                      text: '  →  ',
+                      style: TextStyle(fontSize: 12, color: tokens.text3)),
+                  TextSpan(
+                      text: parts[1].trim(),
+                      style: mono(fontSize: 12.5, color: tokens.text2)),
+                ]),
+              ),
+            );
+          }
+        }
         return Align(
           alignment: align,
-          child: Text('$v', style: mono(fontSize: 12.5, color: tokens.text2)),
+          child: Text(s, style: mono(fontSize: 12.5, color: tokens.text2)),
         );
       case ColumnType.select:
         return Align(alignment: align, child: TagChip(label: '$v', color: _tagFor('$v')));
