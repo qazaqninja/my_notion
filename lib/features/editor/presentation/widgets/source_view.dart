@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
@@ -100,6 +101,39 @@ class _SourceViewState extends State<SourceView> {
     return Rect.fromLTWH(origin.dx, origin.dy + box.size.height - 20, 320, 0);
   }
 
+  /// When the relation picker overlay is open, intercept ↑ / ↓ / ↵ / esc
+  /// to drive selection without losing keyboard focus on the TextField.
+  KeyEventResult _onKeyEvent(FocusNode _, KeyEvent event) {
+    if (!_picker.state.open) return KeyEventResult.ignored;
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowDown) {
+      _picker.move(1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      _picker.move(-1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
+      final selected = _picker.state.selectedResult;
+      if (selected != null) {
+        _onPick(selected);
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      _triggerStart = null;
+      _picker.dismiss();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
   void _onPick(PageSearchResult result) {
     final start = _triggerStart;
     if (start == null) return;
@@ -133,13 +167,16 @@ class _SourceViewState extends State<SourceView> {
               border: Border.all(color: tokens.divider2, width: 0.5),
               borderRadius: const BorderRadius.all(Radius.circular(6)),
             ),
-            child: TextField(
-              controller: _controller,
-              focusNode: _focus,
-              maxLines: null,
-              minLines: 8,
-              decoration: const InputDecoration.collapsed(hintText: ''),
-              style: mono(fontSize: 13.5, color: tokens.text).copyWith(height: 1.65),
+            child: Focus(
+              onKeyEvent: _onKeyEvent,
+              child: TextField(
+                controller: _controller,
+                focusNode: _focus,
+                maxLines: null,
+                minLines: 8,
+                decoration: const InputDecoration.collapsed(hintText: ''),
+                style: mono(fontSize: 13.5, color: tokens.text).copyWith(height: 1.65),
+              ),
             ),
           ),
           RelationPickerOverlay(

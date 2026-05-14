@@ -1,15 +1,24 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/theme_cubit.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../commands/presentation/widgets/command_palette_overlay.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
+import '../../data/exporter.dart';
+import '../bloc/vault_bloc.dart';
+import '../bloc/vault_event.dart';
+import '../bloc/vault_state.dart';
 import '../widgets/mobile_chrome.dart';
 import '../widgets/sidebar_widget.dart';
 
@@ -60,6 +69,18 @@ class _VaultShellPageState extends State<VaultShellPage> {
           },
           const SingleActivator(LogicalKeyboardKey.keyK, control: true): () {
             _cubit(context).open();
+          },
+          const SingleActivator(LogicalKeyboardKey.keyR, meta: true): () {
+            _invokeAction(context, 'Reindex vault');
+          },
+          const SingleActivator(LogicalKeyboardKey.keyR, control: true): () {
+            _invokeAction(context, 'Reindex vault');
+          },
+          const SingleActivator(LogicalKeyboardKey.keyR, meta: true, shift: true): () {
+            _invokeAction(context, 'Reveal vault in Finder');
+          },
+          const SingleActivator(LogicalKeyboardKey.keyR, control: true, shift: true): () {
+            _invokeAction(context, 'Reveal vault in Finder');
           },
         },
         child: Focus(
@@ -115,6 +136,64 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  Future<void> _invokeAction(BuildContext context, String label) async {
+    final vaultBloc = context.read<VaultBloc>();
+    final themeCubit = context.read<ThemeCubit>();
+    final vaultState = vaultBloc.state;
+    final vaultPath = vaultState is VaultLoaded ? vaultState.rootPath : null;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+
+    switch (label) {
+      case 'Reveal vault in Finder':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(
+            const SnackBar(content: Text('No vault open')),
+          );
+          return;
+        }
+        final ok = await Reveal.show(vaultPath);
+        if (!ok) {
+          messenger?.showSnackBar(
+            SnackBar(content: Text('Could not open $vaultPath')),
+          );
+        }
+      case 'Export vault to folder':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(
+            const SnackBar(content: Text('No vault open')),
+          );
+          return;
+        }
+        final dest = await FilePicker.platform.getDirectoryPath(
+          dialogTitle: 'Export vault to…',
+        );
+        if (dest == null) return;
+        try {
+          final n = await const VaultExporter().export(
+            src: Directory(vaultPath),
+            dest: Directory(dest),
+          );
+          messenger?.showSnackBar(
+            SnackBar(
+              content: Text('Exported $n files to $dest'),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        } catch (e) {
+          messenger?.showSnackBar(
+            SnackBar(content: Text('Export failed: $e')),
+          );
+        }
+      case 'Reindex vault':
+        vaultBloc.add(const ReindexVault());
+        messenger?.showSnackBar(
+          const SnackBar(content: Text('Reindexing vault…')),
+        );
+      case 'Toggle theme':
+        await themeCubit.cycleMode();
+    }
+  }
+
   Widget _paletteOverlay(BuildContext context) {
     return CommandPaletteOverlay(
       onPickPage: (p) {
@@ -127,6 +206,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
       },
       onInvokeAction: (a) {
         context.read<CommandPaletteCubit>().dismiss();
+        _invokeAction(context, a.label);
       },
     );
   }

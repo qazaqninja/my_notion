@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -112,7 +113,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 context.read<VaultBloc>().add(const PickVault());
               }),
               const SizedBox(width: 8),
-              _Btn(label: 'Reveal', icon: 'reveal', onTap: () {}),
+              _Btn(
+                label: 'Reveal',
+                icon: 'reveal',
+                onTap: () {
+                  if (vaultPath.startsWith('(')) return;
+                  Reveal.show(vaultPath);
+                },
+              ),
             ],
           ),
         ),
