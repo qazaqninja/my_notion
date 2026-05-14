@@ -79,4 +79,61 @@ void main() {
     final r = await svc.list(tmp, pageUlid);
     expect(r.single.body, 'has "double" and \\ backslash');
   });
+
+  group('block-level comments', () {
+    const blockA = '01HZBLOCKAAAAAAAAAAAAAAAAA';
+    const blockB = '01HZBLOCKBBBBBBBBBBBBBBBBB';
+
+    test('add with blockId persists it', () async {
+      await svc.add(tmp, pageUlid,
+          author: 'Alice', body: 'about block A', blockId: blockA);
+      final r = (await svc.list(tmp, pageUlid)).single;
+      expect(r.blockId, blockA);
+      expect(r.body, 'about block A');
+    });
+
+    test('listForBlock filters by blockId', () async {
+      await svc.add(tmp, pageUlid, author: 'A', body: 'page-level');
+      await svc.add(tmp, pageUlid,
+          author: 'A', body: 'on A', blockId: blockA);
+      await svc.add(tmp, pageUlid,
+          author: 'A', body: 'on B', blockId: blockB);
+      await svc.add(tmp, pageUlid,
+          author: 'A', body: 'on A again', blockId: blockA);
+      final onA = await svc.listForBlock(tmp, pageUlid, blockA);
+      expect(onA.map((c) => c.body), ['on A', 'on A again']);
+      final onB = await svc.listForBlock(tmp, pageUlid, blockB);
+      expect(onB.single.body, 'on B');
+      final pageLevel = (await svc.list(tmp, pageUlid))
+          .where((c) => c.blockId == null)
+          .toList();
+      expect(pageLevel.single.body, 'page-level');
+    });
+
+    test('blockId survives save/load round-trip', () async {
+      await svc.add(tmp, pageUlid,
+          author: 'A', body: 'first', blockId: blockA);
+      await svc.add(tmp, pageUlid, author: 'A', body: 'second'); // no blockId
+      final reloaded = await svc.list(tmp, pageUlid);
+      expect(reloaded.first.blockId, blockA);
+      expect(reloaded[1].blockId, isNull);
+    });
+
+    test('old sidecars without block_id still load (back-compat)',
+        () async {
+      // Hand-write a sidecar that pre-dates the block-id field.
+      final f =
+          File('${tmp.path}/.quill/comments/$pageUlid.yaml');
+      await f.parent.create(recursive: true);
+      await f.writeAsString('''
+- id: 01HZOLD000000000000000000A
+  author: "Bob"
+  at: 2026-01-01T00:00:00.000Z
+  body: "ancient comment"
+''');
+      final r = (await svc.list(tmp, pageUlid)).single;
+      expect(r.body, 'ancient comment');
+      expect(r.blockId, isNull);
+    });
+  });
 }

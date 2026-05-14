@@ -14,6 +14,7 @@ class PageComment {
     required this.body,
     required this.timestamp,
     this.resolved = false,
+    this.blockId,
   });
 
   /// Stable ULID for this comment — lets the UI track edits/deletes.
@@ -23,12 +24,19 @@ class PageComment {
   final DateTime timestamp;
   final bool resolved;
 
-  PageComment copyWith({String? body, bool? resolved}) => PageComment(
+  /// When non-null, this comment is anchored to a block whose source
+  /// ends with ` ^<blockId>`. Page-level comments leave it null.
+  /// Surfaced to the UI as a small "block" pill in the threads dialog.
+  final String? blockId;
+
+  PageComment copyWith({String? body, bool? resolved, String? blockId}) =>
+      PageComment(
         id: id,
         author: author,
         body: body ?? this.body,
         timestamp: timestamp,
         resolved: resolved ?? this.resolved,
+        blockId: blockId ?? this.blockId,
       );
 }
 
@@ -49,6 +57,7 @@ class CommentsService {
       final out = <PageComment>[];
       for (final node in doc) {
         if (node is! YamlMap) continue;
+        final rawBlockId = node['block_id'];
         out.add(PageComment(
           id: '${node['id'] ?? ulids.generate()}',
           author: '${node['author'] ?? ''}',
@@ -56,6 +65,9 @@ class CommentsService {
           timestamp:
               DateTime.tryParse('${node['at'] ?? ''}') ?? DateTime.now(),
           resolved: node['resolved'] == true,
+          blockId: rawBlockId != null && '$rawBlockId'.trim().isNotEmpty
+              ? '$rawBlockId'.trim()
+              : null,
         ));
       }
       return out;
@@ -69,6 +81,7 @@ class CommentsService {
     String pageUlid, {
     required String author,
     required String body,
+    String? blockId,
   }) async {
     final existing = await list(vaultRoot, pageUlid);
     final next = [
@@ -78,9 +91,22 @@ class CommentsService {
         author: author,
         body: body,
         timestamp: DateTime.now(),
+        blockId: blockId,
       ),
     ];
     await _save(vaultRoot, pageUlid, next);
+  }
+
+  /// Comments anchored to a specific block — empty when [blockId] has
+  /// no matches. Useful for the inline "block comments" affordance in
+  /// the renderer.
+  Future<List<PageComment>> listForBlock(
+    Directory vaultRoot,
+    String pageUlid,
+    String blockId,
+  ) async {
+    final all = await list(vaultRoot, pageUlid);
+    return [for (final c in all) if (c.blockId == blockId) c];
   }
 
   Future<void> delete(
@@ -116,6 +142,7 @@ class CommentsService {
       buf.writeln('  author: ${_yamlQuote(c.author)}');
       buf.writeln('  at: ${c.timestamp.toUtc().toIso8601String()}');
       if (c.resolved) buf.writeln('  resolved: true');
+      if (c.blockId != null) buf.writeln('  block_id: ${c.blockId}');
       buf.writeln('  body: ${_yamlQuote(c.body)}');
     }
     await file.writeAsString(buf.toString());
