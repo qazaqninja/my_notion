@@ -568,7 +568,9 @@ class _EditorBodyState extends State<_EditorBody> {
                                 ],
                               ),
                               FrontmatterCard(frontmatter: page.frontmatter),
-                              if (loaded.mode == EditorMode.rendered)
+                              if (loaded.mode == EditorMode.rendered) ...[
+                                if (page.body.trim().isEmpty)
+                                  _EmptyPageHint(locked: locked),
                                 MarkdownRenderer(
                                   body: page.body,
                                   onBodyChange: locked
@@ -576,7 +578,8 @@ class _EditorBodyState extends State<_EditorBody> {
                                       : (next) => context
                                           .read<EditorBloc>()
                                           .add(EditBody(next)),
-                                )
+                                ),
+                              ]
                               else
                                 SourceView(
                                   key: ValueKey('source-${page.ulid}'),
@@ -729,6 +732,47 @@ class _FindBar extends StatelessWidget {
             onPressed: onClose,
             icon: Icon(Icons.close, size: 14, color: tokens.text3),
             tooltip: 'Close (Esc)',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Friendly hint shown above the renderer when the page's body is
+/// empty. Coaches the user toward source mode or slash menu without
+/// taking screen real estate when the page has content.
+class _EmptyPageHint extends StatelessWidget {
+  const _EmptyPageHint({required this.locked});
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            locked ? 'This page is locked.' : 'Empty page',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: tokens.text2,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            locked
+                ? 'Click the lock icon (or press ⌘⇧L) to enable editing.'
+                : 'Switch to Source (⌘E) to start typing, or use the '
+                    'command palette (⌘K) to find what you need.',
+            style: TextStyle(
+              fontSize: 13,
+              color: tokens.text3,
+              height: 1.55,
+            ),
           ),
         ],
       ),
