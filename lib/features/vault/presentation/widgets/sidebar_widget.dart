@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -62,6 +63,13 @@ class SidebarWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (state is VaultLoaded) ...[
+                    const SideHead(label: 'Recent'),
+                    _RecentList(
+                      rebuildKey: '${state.rootPath}-${state.pageCount}',
+                      activeUlid: activeUlid,
+                    ),
+                  ],
                   SideHead(
                     label: 'Workspace',
                     actionIcon: 'plus',
@@ -204,5 +212,53 @@ class _DatabasesList extends StatelessWidget {
     if (hex.length == 6) hex = 'FF$hex';
     final v = int.tryParse(hex, radix: 16);
     return Color(v ?? 0xFF6B8E7F);
+  }
+}
+
+/// Top-N most-recently-edited pages, sourced from drift's pages.mtime_ms.
+/// No persistence needed — drift is the source of truth (and reflects
+/// external edits via the M16 file watcher).
+class _RecentList extends StatelessWidget {
+  const _RecentList({required this.rebuildKey, this.activeUlid});
+  final String rebuildKey;
+  final String? activeUlid;
+
+  static const int _limit = 5;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final db = context.read<QuillDatabase>();
+    return FutureBuilder(
+      key: ValueKey('recent-$rebuildKey'),
+      future: (db.select(db.pages)
+            ..orderBy([(p) => OrderingTerm.desc(p.mtimeMs)])
+            ..limit(_limit))
+          .get(),
+      builder: (context, snap) {
+        final rows = snap.data ?? const [];
+        if (rows.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Text(
+              'No recent pages',
+              style: TextStyle(fontSize: 11.5, color: tokens.text3),
+            ),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final r in rows)
+              SideItem(
+                icon: 'file-md',
+                label: r.title,
+                active: r.ulid == activeUlid,
+                onTap: () => context.go('/editor/${r.ulid}'),
+              ),
+          ],
+        );
+      },
+    );
   }
 }
