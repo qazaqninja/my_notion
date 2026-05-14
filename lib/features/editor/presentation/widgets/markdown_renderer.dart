@@ -2039,25 +2039,54 @@ class _CodeBlockState extends State<_CodeBlock> {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final hasLang = widget.language != null && widget.language!.isNotEmpty;
+    final isMermaid =
+        hasLang && widget.language!.toLowerCase() == 'mermaid';
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: tokens.isDark
-              ? const Color(0xFF101010)
-              : const Color(0xFFF0EDE6),
-          border: Border.all(color: tokens.divider2, width: 0.5),
+          color: isMermaid
+              ? tokens.accent.withValues(alpha: 0.06)
+              : (tokens.isDark
+                  ? const Color(0xFF101010)
+                  : const Color(0xFFF0EDE6)),
+          border: Border.all(
+            color: isMermaid
+                ? tokens.accent.withValues(alpha: 0.35)
+                : tokens.divider2,
+            width: 0.5,
+          ),
           borderRadius: const BorderRadius.all(Radius.circular(4)),
         ),
         child: Stack(
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(14, hasLang ? 22 : 12, 14, 12),
-              child: SelectableText(
-                widget.text,
-                style: mono(fontSize: 12.5, color: tokens.text2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SelectableText(
+                    widget.text,
+                    style: mono(fontSize: 12.5, color: tokens.text2),
+                  ),
+                  if (isMermaid) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            size: 11, color: tokens.text3),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Mermaid source · rendering needs a viewer',
+                          style: TextStyle(
+                              fontSize: 10.5, color: tokens.text3),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ),
             if (hasLang)
@@ -2065,8 +2094,10 @@ class _CodeBlockState extends State<_CodeBlock> {
                 top: 6,
                 left: 10,
                 child: Text(
-                  widget.language!,
-                  style: mono(fontSize: 10, color: tokens.text3),
+                  isMermaid ? 'mermaid · diagram' : widget.language!,
+                  style: mono(
+                      fontSize: 10,
+                      color: isMermaid ? tokens.accent : tokens.text3),
                 ),
               ),
             if (_hover || _copied)
