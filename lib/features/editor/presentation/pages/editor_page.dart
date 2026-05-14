@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
@@ -278,9 +279,11 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
         PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
+        PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
         PopupMenuDivider(),
+        PopupMenuItem(value: 'trash', child: Text('Move to trash')),
         PopupMenuItem(value: 'reindex', child: Text('Reindex vault')),
       ],
     );
@@ -308,6 +311,45 @@ class _EditorBodyState extends State<_EditorBody> {
         await _exportPageAsMarkdown(context, loaded);
       case 'print-page':
         await _printPage(context, loaded);
+      case 'duplicate':
+        final router = GoRouter.of(context);
+        context.read<VaultBloc>().add(DuplicatePage(
+              ulid,
+              onCreated: (newUlid) {
+                messenger?.showSnackBar(
+                  const SnackBar(
+                    content: Text('Page duplicated'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                router.go('/editor/$newUlid');
+              },
+            ));
+      case 'trash':
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Move to trash?'),
+            content: Text(
+                'The .md file moves to .trash/<YYYY-MM>/${loaded.page.relativePath}. '
+                'You can restore it from the Trash dialog later.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style:
+                    TextButton.styleFrom(foregroundColor: const Color(0xFFCB5A4F)),
+                child: const Text('Move to trash'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed != true || !context.mounted) return;
+        context.read<VaultBloc>().add(MoveToTrash(ulid));
+        GoRouter.of(context).go('/home');
       case 'reindex':
         if (!context.mounted) return;
         context.read<VaultBloc>().add(const ReindexVault());
