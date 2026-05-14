@@ -258,7 +258,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Emoji picker — M62, `lib/shared/widgets/emoji_picker.dart`. Used by page icons (M26) and workspace icon (M107).
 - 🚧 Undo/redo (Cmd+Z) — `TextField` provides native undo in source mode. Block-level undo arrives with the editable block model.
 - 📋 Multi-select blocks (Shift+click, Cmd+A) — Block model dependency.
-- 🚧 Drag to reorder list items — Block-level drag is shipped (M65); item-within-list drag still 📋.
+- ✅ Drag to reorder list items — Block-level drag M65; item-within-list drag M174 (`_ListItemDragWrap` + pure `ListReorder` helpers; ordered lists renumber on drop).
 - ✅ Convert between block types in place — Slash menu's linePrefix substitution.
 - ✅ Native print → PDF — M50 via `pdf` + `printing` packages.
 
