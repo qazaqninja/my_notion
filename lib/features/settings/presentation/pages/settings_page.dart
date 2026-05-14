@@ -11,7 +11,9 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/tag_chip.dart';
+import '../../../../shared/theme/accent.dart';
 import '../../../../shared/theme/tag_colors.dart';
+import '../../../../shared/theme/theme_cubit.dart';
 import '../../../vault/data/exporter.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
@@ -76,6 +78,8 @@ class _SettingsPageState extends State<SettingsPage> {
       };
 
   Widget _content(QuillTokens tokens) {
+    if (_active == 'theme') return _appearancePane(tokens);
+
     final state = context.watch<VaultBloc>().state;
     final vaultPath = state is VaultLoaded ? state.rootPath : '(no vault opened)';
     final pageCount = state is VaultLoaded ? state.pageCount : 0;
@@ -267,6 +271,87 @@ class _SettingsPageState extends State<SettingsPage> {
         SnackBar(content: Text('Export failed: $e')),
       );
     }
+  }
+
+  Widget _appearancePane(QuillTokens tokens) {
+    final themeState = context.watch<ThemeCubit>().state;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Appearance',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: tokens.text,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: 600,
+          child: Text(
+            'Theme, density, and accent. Preferences are stored locally '
+            'and apply to every workspace.',
+            style: TextStyle(
+                fontSize: 13.5, color: tokens.text3, height: 1.55),
+          ),
+        ),
+        const SizedBox(height: 28),
+        _sectionLabel(tokens, 'Theme'),
+        _SettingRow(
+          label: 'Mode',
+          hint: 'System follows your OS setting.',
+          child: Wrap(
+            spacing: 8,
+            children: [
+              for (final m in ThemeMode.values)
+                _Btn(
+                  label: switch (m) {
+                    ThemeMode.light => 'Light',
+                    ThemeMode.dark => 'Dark',
+                    ThemeMode.system => 'System',
+                  },
+                  primary: themeState.mode == m,
+                  onTap: () => context.read<ThemeCubit>().setMode(m),
+                ),
+            ],
+          ),
+        ),
+        _SettingRow(
+          label: 'Compact mode',
+          hint: 'Tighter text scale across the editor.',
+          child: _Btn(
+            label: themeState.compact ? 'On' : 'Off',
+            primary: themeState.compact,
+            onTap: () => context.read<ThemeCubit>().toggleCompact(),
+          ),
+        ),
+        const SizedBox(height: 20),
+        _sectionLabel(tokens, 'Accent'),
+        _SettingRow(
+          label: 'Color',
+          hint: 'Picks the link/active hue.',
+          child: Wrap(
+            spacing: 8,
+            children: [
+              _Btn(
+                label: 'Sage',
+                primary: themeState.accent == AccentKey.sage,
+                onTap: () =>
+                    context.read<ThemeCubit>().setAccent(AccentKey.sage),
+              ),
+              _Btn(
+                label: 'Terracotta',
+                primary: themeState.accent == AccentKey.terracotta,
+                onTap: () =>
+                    context.read<ThemeCubit>().setAccent(AccentKey.terracotta),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _sectionLabel(QuillTokens tokens, String label) {
