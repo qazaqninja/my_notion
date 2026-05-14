@@ -70,7 +70,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Math equations (KaTeX) — block and inline — M32 via `flutter_math_fork`. `$inline$` and `$$block$$` both render.
 - ✅ Tables (simple, non-database) — GFM pipe tables render in `markdown_renderer.dart`.
 - ✅ Synced blocks (edit in one place, updates everywhere) — M67, `![[ULID]]` transclusion. Cycle-safe up to maxDepth = 3.
-- 🚧 Block-level comments — Page-level M69. Block-id storage M180/M181: `PageComment.blockId` field on the sidecar + Obsidian-style ` ^<ULID>` parsing/append helpers. Renderer hover affordance to attach a comment to a block still 📋.
+- 🚧 Block-level comments — Page-level M69. Block-id storage M180/M181 + renderer-side `^<ULID>` suffix stripping M182. Hover affordance to attach a comment + the threads viewer per block still 📋.
 - ✅ Block links (link to a specific block) — M79, `[[ULID#heading-slug]]`. Slug derived from heading text; editor page scrolls to the target heading on load.
 - ✅ Turn block into another block type — Slash menu (M23+) converts the current line via `linePrefix` substitution.
 - ✅ Text color and background color — Inline `<span style="color:…;background-color:…">` round-trips through the renderer; `<mark>` (M80) gives a soft-yellow highlight pill.
