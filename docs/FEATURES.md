@@ -174,7 +174,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - 🔮 Share permissions (full access, edit, comment, read, no access) — Same.
 - 🚧 Workspace member management — Settings page has a stub section (M11). Local user list 📋; server-side 🔮.
 - 🔮 Groups / permission groups (paid) — Same.
-- 📋 Page-level permissions — Frontmatter `permissions:` block, enforced by `EditorBloc` for the local user.
+- ✅ Page-level permissions — M170, frontmatter `permissions: read_only` / `read-only` / `readonly` / `locked` makes the page read-only (case-insensitive). Other values (`private`, `team_only`) are documentation-only — full multi-user enforcement is 🔮.
 - 🔮 Suggest edits / suggestion mode (newer feature) — Needs collaborative branch/PR model.
 
 ## Formatting & Writing
@@ -192,7 +192,7 @@ If your feature wants to store something new, the answer is almost always "add a
 
 - ✅ Light, dark, system theme — M0+; settings UI in M100.
 - ✅ Custom emojis (via picker) — M62 emoji picker; works for both page icons (M26) and workspace icon (M107).
-- 🚧 Sidebar customization — Filter (M90), collapse (M109), favorites pinning. Reorderable sections still 📋.
+- ✅ Sidebar customization — Filter (M90), collapse (M109), favorites pinning, reorderable + hideable sections via `.quill.yaml` `sidebar.order:` / `sidebar.hidden:` (M171).
 - ✅ Compact mode / small text toggle — M57 + M100 settings UI.
 - ✅ Font choice (default, serif, mono) per page — M160, frontmatter `font: serif | mono | default`. MarkdownRenderer wraps the body in DefaultTextStyle.merge with Georgia / JetBrainsMono.
 - ✅ Full-width page toggle — M46 frontmatter `full_width: true`.
