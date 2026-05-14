@@ -181,8 +181,8 @@ If your feature wants to store something new, the answer is almost always "add a
 
 - ✅ Markdown shortcuts (# for heading, ** for bold, etc.) — Native to source-mode editing.
 - ✅ Equation editor — M32 inline + block via `flutter_math_fork`.
-- 🚧 Mention dates (creates reminders) — Date pills render (M83). M89 surfaces a `reminder:` frontmatter badge in PageHeader. Native notification dispatch 📋 (needs `flutter_local_notifications`).
-- 📋 Reminders (with notifications) — `flutter_local_notifications`; M89 has the visual badge.
+- 🚧 Mention dates (creates reminders) — Date pills render (M83). M89 surfaces a `reminder:` frontmatter badge in PageHeader. M211 lists upcoming reminders on the home page (7-day window, overdue → red). Native OS notification dispatch still 📋 (needs `flutter_local_notifications`).
+- 🚧 Reminders (with notifications) — M89 surfaces a per-page badge; M211 surfaces an in-app "Upcoming reminders" list on the home page (7-day window). OS notifications still need `flutter_local_notifications` + per-platform setup.
 - ✅ Date with time and time zones — M82, ISO `YYYY-MM-DDTHH:MM[(Z|±HH:MM)]` formatted as `YYYY-MM-DD · HH:MM tz` in DB cells.
 - ✅ Date ranges — M74, `YYYY-MM-DD..YYYY-MM-DD` renders with arrow.
 - 🔮 Mention people (notifies them) — Notifications require backend.
