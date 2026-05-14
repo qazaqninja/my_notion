@@ -384,7 +384,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       subGroupBy: _query.subGroupBy,
                     ),
                   ViewType.chart =>
-                    ChartView(schema: viewSchema, rows: filtered),
+                    ChartView(
+                      schema: viewSchema,
+                      rows: filtered,
+                      subGroupBy: _query.subGroupBy,
+                    ),
                   ViewType.list => DatabaseListView(
                       schema: viewSchema,
                       rows: filtered,
