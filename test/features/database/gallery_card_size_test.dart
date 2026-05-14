@@ -87,4 +87,54 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString('gallery.cardSize.proj'), 'large');
   });
+
+  testWidgets('custom cardFields renders labelled rows', (tester) async {
+    const rows = [
+      DatabasePageRow(
+        ulid: '01HQAAA0000000000000000001',
+        title: 'A',
+        relativePath: 'Projects/A.md',
+        cells: {
+          'priority': 'High',
+          'due': '2026-06-01',
+          'notes': 'hello world',
+        },
+      ),
+    ];
+    await tester.pumpWidget(_wrap(const GalleryView(
+      schema: _schema,
+      rows: rows,
+      cardFields: ['priority', 'due', 'notes'],
+    )));
+    await tester.pump();
+    expect(find.text('priority'), findsOneWidget);
+    expect(find.text('due'), findsOneWidget);
+    expect(find.text('notes'), findsOneWidget);
+    expect(find.text('hello world'), findsOneWidget);
+    expect(find.text('2026-06-01'), findsOneWidget);
+  });
+
+  testWidgets('cardFields skips empty + title cells', (tester) async {
+    const rows = [
+      DatabasePageRow(
+        ulid: '01HQAAA0000000000000000001',
+        title: 'A',
+        relativePath: 'Projects/A.md',
+        cells: {
+          'priority': '',
+          'due': '2026-06-01',
+        },
+      ),
+    ];
+    await tester.pumpWidget(_wrap(const GalleryView(
+      schema: _schema,
+      rows: rows,
+      cardFields: ['title', 'priority', 'due'],
+    )));
+    await tester.pump();
+    // `priority` empty → label not shown; `title` is always skipped from
+    // the body since it's already the heading.
+    expect(find.text('priority'), findsNothing);
+    expect(find.text('due'), findsOneWidget);
+  });
 }

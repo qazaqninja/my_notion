@@ -122,6 +122,41 @@ schema:
       expect(s.locked, isFalse);
     });
 
+    test('reads views[].card_fields list', () {
+      final s = DatabaseYamlParser.parse(
+        '''
+id: db
+name: T
+schema:
+  title: {type: text}
+  priority: {type: text}
+  due: {type: date}
+views:
+  - id: cards
+    type: gallery
+    card_fields: [priority, due]
+''',
+        folderPath: 'x',
+      )!;
+      expect(s.views.first.cardFields, equals(['priority', 'due']));
+    });
+
+    test('card_fields is null when absent', () {
+      final s = DatabaseYamlParser.parse(
+        '''
+id: db
+name: T
+schema:
+  title: {type: text}
+views:
+  - id: cards
+    type: gallery
+''',
+        folderPath: 'x',
+      )!;
+      expect(s.views.first.cardFields, isNull);
+    });
+
     test('filterColumns preserves locked flag', () {
       final s = DatabaseYamlParser.parse(
         '''

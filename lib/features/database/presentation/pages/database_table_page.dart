@@ -355,8 +355,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       wrap: _wrap,
                       persistKey: widget.dbId,
                     ),
-                  ViewType.gallery =>
-                    GalleryView(schema: viewSchema, rows: filtered),
+                  ViewType.gallery => GalleryView(
+                      schema: viewSchema,
+                      rows: filtered,
+                      cardFields: activeView?.cardFields,
+                    ),
                   ViewType.board => BoardView(
                       schema: viewSchema,
                       rows: filtered,

@@ -47,6 +47,7 @@ class DatabaseView {
     required this.type,
     this.groupBy,
     this.visible,
+    this.cardFields,
   });
 
   final String id;
@@ -58,6 +59,13 @@ class DatabaseView {
   /// Title is always shown regardless (it's the page identifier).
   /// Read from `.database.yaml`'s `views[].visible: [...]` list.
   final List<String>? visible;
+
+  /// For gallery / board card-style views: which cell keys to surface
+  /// on the card body (in order). Read from
+  /// `.database.yaml`'s `views[].card_fields: [...]` list.  When null,
+  /// the view falls back to the hard-coded stage / arr / owner /
+  /// updated set so existing schemas keep working.
+  final List<String>? cardFields;
 }
 
 class DatabaseSchema {

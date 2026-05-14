@@ -64,10 +64,16 @@ class GalleryView extends StatefulWidget {
     super.key,
     required this.schema,
     required this.rows,
+    this.cardFields,
   });
 
   final DatabaseSchema schema;
   final List<DatabasePageRow> rows;
+
+  /// Column keys to surface on the card body, in order. When null, the
+  /// view falls back to its legacy stage/arr/owner/updated layout so
+  /// existing schemas keep working without an opt-in change.
+  final List<String>? cardFields;
 
   @override
   State<GalleryView> createState() => _GalleryViewState();
@@ -152,6 +158,7 @@ class _GalleryViewState extends State<GalleryView> {
               row: widget.rows[i],
               schema: widget.schema,
               metrics: m,
+              cardFields: widget.cardFields,
             ),
           ),
         ),
@@ -165,19 +172,17 @@ class _Card extends StatelessWidget {
     required this.row,
     required this.schema,
     required this.metrics,
+    this.cardFields,
   });
   final DatabasePageRow row;
   final DatabaseSchema schema;
   final _CardMetrics metrics;
+  final List<String>? cardFields;
 
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    final stage = '${row.cells['stage'] ?? ''}';
     final health = '${row.cells['health'] ?? ''}';
-    final arr = '${row.cells['arr'] ?? ''}';
-    final owner = '${row.cells['owner'] ?? ''}';
-    final last = '${row.cells['updated'] ?? ''}';
 
     return GestureDetector(
       onTap: () => context.go('/editor/${row.ulid}'),
@@ -219,21 +224,7 @@ class _Card extends StatelessWidget {
                       if (health.isNotEmpty) StatusDot(color: _dotColor(health)),
                     ]),
                     const SizedBox(height: 8),
-                    Row(children: [
-                      if (stage.isNotEmpty) TagChip(label: stage, color: _stageColor(stage)),
-                      const SizedBox(width: 6),
-                      if (arr.isNotEmpty && arr != '0')
-                        Text(_kFmt(arr), style: mono(fontSize: 11.5, color: tokens.text3)),
-                    ]),
-                    const SizedBox(height: 8),
-                    Row(children: [
-                      Text(
-                        owner,
-                        style: TextStyle(fontSize: 11.5, color: tokens.text3),
-                      ),
-                      const Spacer(),
-                      Text(last, style: mono(fontSize: 11, color: tokens.text3)),
-                    ]),
+                    ..._cardBodyRows(tokens),
                   ],
                 ),
               ),
@@ -242,6 +233,81 @@ class _Card extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Build the body rows for the card. If [cardFields] is provided, walk
+  /// the list in order and render each value via [_renderCell]; otherwise
+  /// fall back to the legacy stage/arr/owner/updated two-row layout for
+  /// schemas that haven't opted into custom fields.
+  List<Widget> _cardBodyRows(QuillTokens tokens) {
+    final fields = cardFields;
+    if (fields != null) {
+      final widgets = <Widget>[];
+      for (final key in fields) {
+        if (key == 'title' || key == 'health') continue;
+        final raw = '${row.cells[key] ?? ''}'.trim();
+        if (raw.isEmpty) continue;
+        widgets.add(Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(children: [
+            SizedBox(
+              width: 56,
+              child: Text(key,
+                  style: mono(fontSize: 10.5, color: tokens.text3),
+                  overflow: TextOverflow.ellipsis),
+            ),
+            const SizedBox(width: 6),
+            Expanded(child: _renderCell(key, raw, tokens)),
+          ]),
+        ));
+      }
+      return widgets;
+    }
+    // Legacy layout.
+    final stage = '${row.cells['stage'] ?? ''}';
+    final arr = '${row.cells['arr'] ?? ''}';
+    final owner = '${row.cells['owner'] ?? ''}';
+    final last = '${row.cells['updated'] ?? ''}';
+    return [
+      Row(children: [
+        if (stage.isNotEmpty)
+          TagChip(label: stage, color: _stageColor(stage)),
+        const SizedBox(width: 6),
+        if (arr.isNotEmpty && arr != '0')
+          Text(_kFmt(arr), style: mono(fontSize: 11.5, color: tokens.text3)),
+      ]),
+      const SizedBox(height: 8),
+      Row(children: [
+        Text(owner,
+            style: TextStyle(fontSize: 11.5, color: tokens.text3)),
+        const Spacer(),
+        Text(last, style: mono(fontSize: 11, color: tokens.text3)),
+      ]),
+    ];
+  }
+
+  /// Render a single field on the card. Recognises a handful of
+  /// "special" keys (stage / status / arr / date-shaped) and falls back
+  /// to plain text for everything else.
+  Widget _renderCell(String key, String raw, QuillTokens tokens) {
+    final lower = key.toLowerCase();
+    if (lower == 'stage' || lower == 'status' || lower == 'priority') {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: TagChip(label: raw, color: _stageColor(raw)),
+      );
+    }
+    if (lower == 'arr' || lower == 'mrr' || lower == 'revenue') {
+      return Text(_kFmt(raw),
+          style: mono(fontSize: 11.5, color: tokens.text3));
+    }
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(raw)) {
+      return Text(raw, style: mono(fontSize: 11, color: tokens.text3));
+    }
+    return Text(raw,
+        style: TextStyle(fontSize: 11.5, color: tokens.text2),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1);
   }
 
   /// Cover image strip for a card. Reads the row's `cover:` frontmatter

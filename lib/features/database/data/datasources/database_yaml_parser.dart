@@ -83,12 +83,18 @@ class DatabaseYamlParser {
     if (v is YamlList) {
       visible = [for (final k in v) '$k'];
     }
+    List<String>? cardFields;
+    final cf = m['card_fields'];
+    if (cf is YamlList) {
+      cardFields = [for (final k in cf) '$k'];
+    }
     return DatabaseView(
       id: '${m['id'] ?? m['name'] ?? 'view'}',
       name: '${m['name'] ?? 'View'}',
       type: _viewType('${m['type'] ?? 'table'}'),
       groupBy: m['group_by'] != null ? '${m['group_by']}' : null,
       visible: visible,
+      cardFields: cardFields,
     );
   }
 
