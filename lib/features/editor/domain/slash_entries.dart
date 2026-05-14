@@ -174,6 +174,14 @@ const List<SlashEntry> kSlashEntries = [
     cursorOffset: 19, // inside summary
     keywords: ['toggle', 'collapse', 'details', 'expand'],
   ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Two columns',
+    hint: '⫶⫶',
+    snippet: ':::cols\nLeft column\n:::col\nRight column\n:::\n',
+    cursorOffset: 8, // start of "Left column"
+    keywords: ['column', 'columns', 'cols', 'layout', 'side', 'two'],
+  ),
 ];
 
 /// Filter the catalog by [query] (case-insensitive). Empty query returns all.

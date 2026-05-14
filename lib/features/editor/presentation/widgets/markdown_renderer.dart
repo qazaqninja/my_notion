@@ -241,6 +241,30 @@ class MarkdownRenderer extends StatelessWidget {
             ),
           ),
         );
+      case _BlockKind.columns:
+        final raw = b.columns ?? const <String>[];
+        if (raw.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (int j = 0; j < raw.length; j++) ...[
+                Expanded(
+                  child: MarkdownRenderer(
+                    body: raw[j],
+                    showUlid: showUlid,
+                    // Nested columns are read-only — editing them via
+                    // tap-to-edit would need source-offset bookkeeping
+                    // across the nested string boundary. Source-mode
+                    // toggle is the escape hatch.
+                  ),
+                ),
+                if (j != raw.length - 1) const SizedBox(width: 18),
+              ],
+            ],
+          ),
+        );
       case _BlockKind.toc:
         return _renderToc(context, tokens);
       case _BlockKind.toggle:
@@ -462,6 +486,35 @@ class MarkdownRenderer extends StatelessWidget {
     while (i < lines.length) {
       final start = offsetFor(i);
       final line = lines[i];
+
+      // Multi-column container: `:::cols` opens; `:::col` (or `:::`)
+      // separates columns; `:::` on its own line closes.
+      if (line.trim() == ':::cols') {
+        final cols = <StringBuffer>[StringBuffer()];
+        i++;
+        while (i < lines.length) {
+          final t = lines[i].trim();
+          if (t == ':::') {
+            i++;
+            break;
+          }
+          if (t == ':::col') {
+            cols.add(StringBuffer());
+            i++;
+            continue;
+          }
+          if (cols.last.isNotEmpty) cols.last.write('\n');
+          cols.last.write(lines[i]);
+          i++;
+        }
+        out.add(_Block(
+          kind: _BlockKind.columns,
+          columns: cols.map((c) => c.toString()).toList(),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
+        continue;
+      }
 
       // Table of contents: a line consisting only of `[toc]` or `[[toc]]`.
       if (line.trim().toLowerCase() == '[toc]' ||
@@ -718,7 +771,8 @@ class MarkdownRenderer extends StatelessWidget {
       (line.contains('|') && line.trim().startsWith('|')) ||
       line.trim().toLowerCase() == '[toc]' ||
       line.trim().toLowerCase() == '[[toc]]' ||
-      line.trim().startsWith('<details>');
+      line.trim().startsWith('<details>') ||
+      line.trim() == ':::cols';
 }
 
 /// If [text] is JUST an image — `![alt](path)` with nothing else — return
@@ -979,6 +1033,7 @@ class _Block {
     this.text = '',
     this.items,
     this.tableRows,
+    this.columns,
     this.sourceStart = 0,
     this.sourceEnd = 0,
   });
@@ -986,6 +1041,10 @@ class _Block {
   final String text;
   final List<String>? items;
   final List<List<String>>? tableRows;
+
+  /// For [_BlockKind.columns]: one raw markdown string per column.
+  /// Rendered by nested MarkdownRenderers.
+  final List<String>? columns;
 
   /// `[sourceStart, sourceEnd)` is the half-open range in the full body
   /// that produced this block. Used for tap-to-edit splicing.
@@ -1016,6 +1075,7 @@ enum _BlockKind {
   table,
   toc,
   toggle,
+  columns,
 }
 
 List<String> _splitTableRow(String line) {
@@ -1256,6 +1316,7 @@ String _blockKindLabel(_BlockKind k) => switch (k) {
       _BlockKind.table => 'Table',
       _BlockKind.toc => 'Contents',
       _BlockKind.toggle => 'Toggle',
+      _BlockKind.columns => 'Columns',
       _BlockKind.hr => 'Divider',
     };
 
