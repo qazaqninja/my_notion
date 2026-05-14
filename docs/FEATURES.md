@@ -110,7 +110,7 @@ If your feature wants to store something new, the answer is almost always "add a
   - ✅ created time — `createdTime` column type added in earlier milestone; reads `created_at:` frontmatter.
   - 📋 created by, last edited by, person — Requires a user identity model. v1: read from `.quill.yaml` users list. Full multi-user is 🔮.
   - ✅ button — M70 `:::button` fence renders inside any page (including row pages).
-- 🚧 Sub-items (parent/child rows) — Parent relation column + depth indent in `frozen_column_table.dart`; full sub-row expansion UI 📋.
+- ✅ Sub-items (parent/child rows) — Parent relation column + depth indent (frozen_column_table.dart). M166 adds the chevron toggle on rows that have children + a visible-rows filter that hides descendants of collapsed parents.
 - ✅ Dependencies between rows — M163, frontmatter `depends_on: [[ULID]], …`. Timeline view shows a "↳ N" pill in the frozen column with tooltip, plus L-shaped connector arrows between bars.
 - ✅ Database templates (per-database row templates) — `row_template:` in schema; `createRow` copies the template's frontmatter + body.
 - ✅ Filters (single and compound with AND/OR logic) — M19.
@@ -150,7 +150,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Chart view (bar, line, donut) — M34 via `fl_chart`.
 - ✅ View-specific filters, sorts, properties — Property selection via Properties popover (M72) + per-database persistence (M96).
 - 🚧 Group and sub-group per view — Group ✅. Sub-group in BoardView ✅ (M86), other views 📋.
-- 🚧 Customize card size, preview image, fields shown — Cover images shipped M92; size/field configurability 📋.
+- 🚧 Customize card size, preview image, fields shown — Cover images M92, card-size S/M/L M165 (persisted per-database in SharedPreferences). Configurable card fields still 📋 — currently hard-coded to stage / arr / owner / updated.
 
 ## Search & Navigation
 
