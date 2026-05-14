@@ -8,6 +8,7 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/formula/formula.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../../domain/row_display.dart';
 import 'cell_renderers.dart';
 
 /// Width per column type. Centralised so the title-column on the left and
@@ -791,11 +792,11 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   /// default `file-md` chrome. Longer values (asset paths, URLs) are
   /// ignored here — those are full-page concerns rendered by PageIcon.
   Widget _rowIcon(DatabasePageRow row, QuillTokens tokens) {
-    final raw = '${row.cells['icon'] ?? ''}'.trim();
-    if (raw.isNotEmpty && raw.length <= 4 && !raw.contains('/')) {
+    final emoji = rowIconString(row);
+    if (emoji != null) {
       return SizedBox(
         width: 14,
-        child: Text(raw,
+        child: Text(emoji,
             style: TextStyle(fontSize: 13, color: tokens.text),
             textAlign: TextAlign.center),
       );

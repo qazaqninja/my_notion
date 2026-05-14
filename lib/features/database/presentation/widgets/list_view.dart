@@ -7,6 +7,7 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../../domain/row_display.dart';
 
 /// Compact one-line-per-row view of a database. Mirrors `altviews.jsx`'s
 /// list pattern: icon + title (left), trailing comma-joined secondary
@@ -212,11 +213,11 @@ class _Row extends StatelessWidget {
   }
 
   Widget _rowIcon(DatabasePageRow row, QuillTokens tokens) {
-    final raw = '${row.cells['icon'] ?? ''}'.trim();
-    if (raw.isNotEmpty && raw.length <= 4 && !raw.contains('/')) {
+    final emoji = rowIconString(row);
+    if (emoji != null) {
       return SizedBox(
         width: 14,
-        child: Text(raw,
+        child: Text(emoji,
             style: TextStyle(fontSize: 13, color: tokens.text),
             textAlign: TextAlign.center),
       );

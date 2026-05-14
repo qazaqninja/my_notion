@@ -1,5 +1,15 @@
 import 'repositories/database_repository.dart';
 
+/// Plain-emoji `icon:` cell value for [row], or `null` when no plain
+/// emoji is present (empty, asset paths, URLs, overly-long values).
+/// Used by every view that has its own dedicated icon slot (gallery /
+/// list / table) so the gating stays consistent across them.
+String? rowIconString(DatabasePageRow row) {
+  final raw = '${row.cells['icon'] ?? ''}'.trim();
+  if (raw.isEmpty || raw.length > 4 || raw.contains('/')) return null;
+  return raw;
+}
+
 /// Prepend the row's `icon:` cell to the title when it's a plain emoji
 /// glyph. Returns the bare title otherwise.
 ///
@@ -8,7 +18,6 @@ import 'repositories/database_repository.dart';
 /// Mirrors the gating in M253–M257: paths / URLs return the unchanged
 /// title because we can't async-load an image into a 12–22px row.
 String displayTitle(DatabasePageRow row) {
-  final raw = '${row.cells['icon'] ?? ''}'.trim();
-  if (raw.isEmpty || raw.length > 4 || raw.contains('/')) return row.title;
-  return '$raw  ${row.title}';
+  final emoji = rowIconString(row);
+  return emoji == null ? row.title : '$emoji  ${row.title}';
 }

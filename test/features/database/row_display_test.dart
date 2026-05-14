@@ -52,4 +52,23 @@ void main() {
       );
     });
   });
+
+  group('rowIconString', () {
+    test('returns the emoji when present', () {
+      expect(rowIconString(_row(title: 'X', cells: {'icon': '🚀'})), '🚀');
+    });
+
+    test('returns null when no icon cell', () {
+      expect(rowIconString(_row(title: 'X')), isNull);
+    });
+
+    test('returns null for asset / URL / long / whitespace inputs', () {
+      expect(rowIconString(_row(title: 'X', cells: {'icon': 'a/b'})), isNull);
+      expect(rowIconString(_row(title: 'X', cells: {'icon': 'http://x'})),
+          isNull);
+      expect(rowIconString(_row(title: 'X', cells: {'icon': 'tooooolong'})),
+          isNull);
+      expect(rowIconString(_row(title: 'X', cells: {'icon': '   '})), isNull);
+    });
+  });
 }

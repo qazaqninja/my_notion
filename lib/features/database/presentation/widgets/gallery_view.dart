@@ -17,6 +17,7 @@ import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../../domain/row_display.dart';
 
 enum GalleryCardSize { small, medium, large }
 
@@ -440,11 +441,11 @@ class _Card extends StatelessWidget {
   }
 
   Widget _rowIcon(DatabasePageRow row, QuillTokens tokens) {
-    final raw = '${row.cells['icon'] ?? ''}'.trim();
-    if (raw.isNotEmpty && raw.length <= 4 && !raw.contains('/')) {
+    final emoji = rowIconString(row);
+    if (emoji != null) {
       return SizedBox(
         width: 14,
-        child: Text(raw,
+        child: Text(emoji,
             style: TextStyle(fontSize: 12, color: tokens.text),
             textAlign: TextAlign.center),
       );
