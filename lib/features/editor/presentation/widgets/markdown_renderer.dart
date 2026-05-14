@@ -335,7 +335,10 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
           child: Container(height: 0.5, color: tokens.divider2),
         );
       case _BlockKind.code:
-        return _CodeBlock(text: b.text);
+        return _CodeBlock(
+          text: b.text,
+          language: b.props?['lang'],
+        );
       case _BlockKind.math:
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -745,6 +748,7 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
 
       // Code fence
       if (line.startsWith('```')) {
+        final lang = line.substring(3).trim();
         final buf = StringBuffer();
         i++;
         while (i < lines.length && !lines[i].startsWith('```')) {
@@ -756,6 +760,7 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
         out.add(_Block(
           kind: _BlockKind.code,
           text: buf.toString(),
+          props: lang.isEmpty ? null : {'lang': lang},
           sourceStart: start,
           sourceEnd: endOf(i),
         ));
@@ -1828,12 +1833,14 @@ class _TocLink extends StatelessWidget {
   }
 }
 
-/// Fenced code block with a hover-revealed copy button. The
-/// language hint (line after the opening ```) is not parsed yet
-/// — text content shows monospace without syntax highlighting.
+/// Fenced code block with a hover-revealed copy button and an
+/// optional language label in the top-left corner. The text content
+/// renders monospace; syntax highlighting is deferred (the existing
+/// `flutter_highlight` dep can plug in later).
 class _CodeBlock extends StatefulWidget {
-  const _CodeBlock({required this.text});
+  const _CodeBlock({required this.text, this.language});
   final String text;
+  final String? language;
 
   @override
   State<_CodeBlock> createState() => _CodeBlockState();
@@ -1854,6 +1861,7 @@ class _CodeBlockState extends State<_CodeBlock> {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
+    final hasLang = widget.language != null && widget.language!.isNotEmpty;
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
@@ -1869,12 +1877,21 @@ class _CodeBlockState extends State<_CodeBlock> {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              padding: EdgeInsets.fromLTRB(14, hasLang ? 22 : 12, 14, 12),
               child: SelectableText(
                 widget.text,
                 style: mono(fontSize: 12.5, color: tokens.text2),
               ),
             ),
+            if (hasLang)
+              Positioned(
+                top: 6,
+                left: 10,
+                child: Text(
+                  widget.language!,
+                  style: mono(fontSize: 10, color: tokens.text3),
+                ),
+              ),
             if (_hover || _copied)
               Positioned(
                 top: 6,
