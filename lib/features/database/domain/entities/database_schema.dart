@@ -70,6 +70,7 @@ class DatabaseSchema {
     required this.columns,
     required this.views,
     this.rowTemplate,
+    this.locked = false,
   });
 
   final String id;
@@ -84,6 +85,13 @@ class DatabaseSchema {
   /// (sans id/title) into every new row. Declared as
   /// `row_template: Templates/Customer.md` in `.database.yaml`.
   final String? rowTemplate;
+
+  /// When true the table view becomes read-only — Add row, cell edits,
+  /// column resize/reorder, and delete-row all become no-ops and the
+  /// page header shows a lock badge. Set via `locked: true` in
+  /// `.database.yaml`. Useful for reference databases that shouldn't
+  /// drift after they've been curated.
+  final bool locked;
 
   DatabaseView? viewById(String? id) {
     if (id == null) return views.isEmpty ? null : views.first;
@@ -107,6 +115,7 @@ class DatabaseSchema {
       folderPath: folderPath,
       views: views,
       rowTemplate: rowTemplate,
+      locked: locked,
       columns: [
         for (final c in columns)
           if (allowed.contains(c.key)) c,

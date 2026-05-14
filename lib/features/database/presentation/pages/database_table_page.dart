@@ -282,6 +282,34 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                         letterSpacing: -0.3,
                       ),
                     ),
+                    if (schema.locked) ...[
+                      const SizedBox(width: 10),
+                      Tooltip(
+                        message:
+                            'Database is locked — set locked: false in '
+                            '${schema.folderPath}/.database.yaml to edit.',
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: tokens.surface2,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(4)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.lock_outline,
+                                  size: 11, color: tokens.text2),
+                              const SizedBox(width: 4),
+                              Text('locked',
+                                  style: TextStyle(
+                                      fontSize: 11, color: tokens.text2)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ]),
                   const SizedBox(height: 2),
                   Padding(
@@ -321,9 +349,9 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       schema: viewSchema,
                       rows: filtered,
                       onOpenPage: (row) => context.go('/editor/${row.ulid}'),
-                      onEditCell: _editCell,
-                      onCreateRow: _createRow,
-                      onDuplicateRow: _duplicateRow,
+                      onEditCell: schema.locked ? null : _editCell,
+                      onCreateRow: schema.locked ? null : _createRow,
+                      onDuplicateRow: schema.locked ? null : _duplicateRow,
                       wrap: _wrap,
                       persistKey: widget.dbId,
                     ),

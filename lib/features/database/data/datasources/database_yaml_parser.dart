@@ -38,6 +38,8 @@ class DatabaseYamlParser {
     }
 
     final rowTemplate = doc['row_template'];
+    final locked = doc['locked'] == true ||
+        '${doc['locked'] ?? ''}'.trim().toLowerCase() == 'true';
     return DatabaseSchema(
       id: id,
       name: name,
@@ -49,6 +51,7 @@ class DatabaseYamlParser {
           ? [const DatabaseView(id: 'all', name: 'All', type: ViewType.table)]
           : views,
       rowTemplate: rowTemplate != null ? '$rowTemplate' : null,
+      locked: locked,
     );
   }
 

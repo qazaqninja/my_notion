@@ -93,6 +93,52 @@ schema:
       );
     });
 
+    test('reads locked: true', () {
+      final s = DatabaseYamlParser.parse(
+        '''
+id: db
+name: Locked
+locked: true
+schema:
+  title:
+    type: text
+''',
+        folderPath: 'x',
+      )!;
+      expect(s.locked, isTrue);
+    });
+
+    test('locked defaults to false when absent', () {
+      final s = DatabaseYamlParser.parse(
+        '''
+id: db
+name: Open
+schema:
+  title:
+    type: text
+''',
+        folderPath: 'x',
+      )!;
+      expect(s.locked, isFalse);
+    });
+
+    test('filterColumns preserves locked flag', () {
+      final s = DatabaseYamlParser.parse(
+        '''
+id: db
+name: Locked
+locked: true
+schema:
+  title:
+    type: text
+  extra:
+    type: text
+''',
+        folderPath: 'x',
+      )!;
+      expect(s.filterColumns({'title'}).locked, isTrue);
+    });
+
     test('parses list view type', () {
       final s = DatabaseYamlParser.parse(
         '''
