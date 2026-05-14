@@ -105,6 +105,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'Install built-in templates', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'database', label: 'Browse all databases', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'New database…', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'tag', label: 'Browse tags', hint: ''),
   ];
 
   static List<CommandEntry> _filterActions(List<CommandEntry> all, String q) {

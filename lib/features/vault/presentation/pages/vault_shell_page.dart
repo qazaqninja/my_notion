@@ -555,6 +555,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Browse all databases':
         if (!context.mounted) return;
         GoRouter.of(context).go('/databases');
+      case 'Browse tags':
+        if (!context.mounted) return;
+        GoRouter.of(context).go('/tags');
       case 'New database…':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
