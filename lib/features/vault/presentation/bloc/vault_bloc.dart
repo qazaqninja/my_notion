@@ -1,0 +1,142 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/db/quill_database.dart' hide Page;
+import '../../data/indexer.dart';
+import '../../domain/entities/vault_tree.dart';
+import '../../domain/repositories/vault_repository.dart';
+import 'vault_event.dart';
+import 'vault_state.dart';
+
+class VaultBloc extends Bloc<VaultEvent, VaultState> {
+  VaultBloc({
+    required VaultRepository repo,
+    required Indexer indexer,
+    required QuillDatabase db,
+  })  : _indexer = indexer,
+        _db = db,
+        super(const VaultInitial()) {
+    // ignore: unused_local_variable
+    final _ = repo; // repo passed in for future use cases (M5+)
+    on<PickVault>(_onPick);
+    on<LoadFromPath>(_onLoad);
+    on<ToggleFolder>(_onToggle);
+    on<ReindexVault>(_onReindex);
+  }
+
+  final Indexer _indexer;
+  final QuillDatabase _db;
+
+  static const _prefVaultPath = 'vault.path';
+
+  Future<void> _onPick(PickVault e, Emitter<VaultState> emit) async {
+    emit(const VaultPicking());
+    final selected = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: 'Choose your vault folder',
+    );
+    if (selected == null) {
+      emit(const VaultInitial());
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefVaultPath, selected);
+    add(LoadFromPath(selected));
+  }
+
+  Future<void> _onLoad(LoadFromPath e, Emitter<VaultState> emit) async {
+    final dir = Directory(e.path);
+    if (!dir.existsSync()) {
+      emit(VaultError('Vault not found: ${e.path}'));
+      return;
+    }
+    emit(VaultLoading(rootPath: e.path));
+    try {
+      await _indexer.reindex(dir);
+      final tree = await _buildTree(dir);
+      final count = (await _db.select(_db.pages).get()).length;
+      emit(VaultLoaded(
+        rootPath: e.path,
+        tree: tree,
+        expandedFolders: _expandTopLevel(tree),
+        pageCount: count,
+      ));
+    } catch (err, _) {
+      emit(VaultError('Failed to index: $err'));
+    }
+  }
+
+  Future<void> _onToggle(ToggleFolder e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final next = Set<String>.of(loaded.expandedFolders);
+    if (next.contains(e.relativePath)) {
+      next.remove(e.relativePath);
+    } else {
+      next.add(e.relativePath);
+    }
+    emit(loaded.copyWith(expandedFolders: next));
+  }
+
+  Future<void> _onReindex(ReindexVault e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    add(LoadFromPath(loaded.rootPath));
+  }
+
+  /// Tries to restore the last-opened vault. Returns false if none stored.
+  Future<bool> tryRestore() async {
+    final prefs = await SharedPreferences.getInstance();
+    final last = prefs.getString(_prefVaultPath);
+    if (last == null || last.isEmpty) return false;
+    if (!Directory(last).existsSync()) return false;
+    add(LoadFromPath(last));
+    return true;
+  }
+
+  /// Build the on-disk tree by walking once and collecting page ULIDs from
+  /// the freshly-indexed Drift cache (cheap lookup by relativePath).
+  Future<VaultTree> _buildTree(Directory root) async {
+    final pageRows = await _db.select(_db.pages).get();
+    final ulidByPath = {for (final p in pageRows) p.relativePath: p.ulid};
+
+    Future<List<VaultNode>> walk(Directory dir) async {
+      final entries = dir.listSync()..sort((a, b) {
+        final ad = a is Directory;
+        final bd = b is Directory;
+        if (ad != bd) return ad ? -1 : 1; // folders first
+        return p.basename(a.path).toLowerCase().compareTo(p.basename(b.path).toLowerCase());
+      });
+      final nodes = <VaultNode>[];
+      for (final e in entries) {
+        final name = p.basename(e.path);
+        if (name.startsWith('.')) continue;
+        if (const {'node_modules', '_meta'}.contains(name)) continue;
+        final rel = p.relative(e.path, from: root.path);
+        if (e is Directory) {
+          final children = await walk(e);
+          // Only include folders with content (or always — the design shows
+          // empty folders too, so keep them).
+          nodes.add(VaultFolder(name: name, relativePath: rel, children: children));
+        } else if (e is File && p.extension(e.path) == '.md') {
+          final ulid = ulidByPath[rel] ?? '';
+          nodes.add(VaultFile(name: name, relativePath: rel, ulid: ulid));
+        }
+      }
+      return nodes;
+    }
+
+    final topLevel = await walk(root);
+    return VaultTree(topLevel: topLevel);
+  }
+
+  Set<String> _expandTopLevel(VaultTree tree) {
+    return {
+      for (final n in tree.topLevel)
+        if (n is VaultFolder) n.relativePath,
+    };
+  }
+}

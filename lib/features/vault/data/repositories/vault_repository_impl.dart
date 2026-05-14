@@ -12,6 +12,10 @@ class VaultRepositoryImpl implements VaultRepository {
   VaultRepositoryImpl(this._ds);
   final VaultFsDatasource _ds;
 
+  /// The underlying datasource. Exposed so the indexer (which lives in
+  /// `data/`) can share the same file-system abstraction.
+  VaultFsDatasource get datasource => _ds;
+
   /// Production wiring — local filesystem + real ULID generator.
   factory VaultRepositoryImpl.local() =>
       VaultRepositoryImpl(VaultFsDatasource(ulids: const UlidGenerator(), fs: const LocalFileSystem()));
