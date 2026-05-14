@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
@@ -125,6 +126,14 @@ class MarkdownRenderer extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: _SubpageCard(ulid: ulid),
+          );
+        }
+        // Standalone URL: render as a bookmark card.
+        final url = _matchStandaloneUrl(b.text);
+        if (url != null) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: _BookmarkCard(url: url),
           );
         }
         return Padding(
@@ -718,6 +727,95 @@ String? _matchStandaloneWikilink(String text) {
   return m?.group(1);
 }
 
+/// If [text] is JUST a URL on its own line, return it. Used for
+/// rendering bookmark cards.
+String? _matchStandaloneUrl(String text) {
+  final trimmed = text.trim();
+  final m =
+      RegExp(r'^(https?://[^\s\<\>\[\]\(\)]+)$').firstMatch(trimmed);
+  return m?.group(1);
+}
+
+/// Bookmark card for a standalone URL.
+class _BookmarkCard extends StatelessWidget {
+  const _BookmarkCard({required this.url});
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final host = Uri.tryParse(url)?.host ?? url;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        border: Border.all(color: tokens.divider2, width: 0.5),
+        borderRadius: const BorderRadius.all(Radius.circular(6)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: tokens.surface2,
+              borderRadius: const BorderRadius.all(Radius.circular(4)),
+            ),
+            child: Icon(Icons.link, size: 14, color: tokens.text3),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  host,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.text,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  url,
+                  style: mono(fontSize: 11, color: tokens.text3),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(2),
+            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            onPressed: () => _openExternal(url),
+            icon: Icon(Icons.open_in_new, size: 14, color: tokens.text3),
+            tooltip: 'Open in browser',
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Future<void> _openExternal(String url) async {
+    // Use the cross-platform shell-out path (Reveal.show works for files;
+    // for URLs we go via `open` / `xdg-open` / `start` directly).
+    try {
+      if (Platform.isMacOS) {
+        await Process.run('open', [url]);
+      } else if (Platform.isLinux) {
+        await Process.run('xdg-open', [url]);
+      } else if (Platform.isWindows) {
+        await Process.run('cmd', ['/c', 'start', '', url]);
+      }
+    } catch (_) {}
+  }
+}
+
 /// Sub-page card. Looks up the page's title and icon from drift and
 /// renders a clickable Notion-style row with icon + title + path.
 class _SubpageCard extends StatelessWidget {
@@ -1229,6 +1327,27 @@ List<InlineSpan> _buildSpans(
     }
     final c = text[i];
     // Inline code: `text`
+    // Inline URL: http(s)://… up to a whitespace or closing bracket.
+    if (c == 'h' &&
+        (text.startsWith('http://', i) || text.startsWith('https://', i))) {
+      final m = RegExp(r'https?://[^\s\<\>\[\]\(\)]+').matchAsPrefix(text, i);
+      if (m != null) {
+        flushPlain(i);
+        final url = m.group(0)!;
+        out.add(TextSpan(
+          text: url,
+          style: TextStyle(
+            color: tokens.accent,
+            decoration: TextDecoration.underline,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => _BookmarkCard._openExternal(url),
+        ));
+        i = m.end;
+        committed = i;
+        continue;
+      }
+    }
     if (c == '`') {
       final end = text.indexOf('`', i + 1);
       if (end != -1 && end > i + 1 && !text.substring(i + 1, end).contains('\n')) {
