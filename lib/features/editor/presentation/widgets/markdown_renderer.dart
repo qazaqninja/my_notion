@@ -181,6 +181,46 @@ class MarkdownRenderer extends StatelessWidget {
             ),
           ),
         );
+      case _BlockKind.table:
+        final rows = b.tableRows ?? const <List<String>>[];
+        if (rows.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: tokens.divider2, width: 0.5),
+                borderRadius: const BorderRadius.all(Radius.circular(4)),
+              ),
+              child: Table(
+                defaultColumnWidth: const IntrinsicColumnWidth(),
+                border: TableBorder.symmetric(
+                  inside: BorderSide(color: tokens.divider, width: 0.5),
+                ),
+                children: [
+                  for (int r = 0; r < rows.length; r++)
+                    TableRow(
+                      decoration: r == 0
+                          ? BoxDecoration(color: tokens.surface2)
+                          : null,
+                      children: [
+                        for (final cell in rows[r])
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+                            child: _ParagraphWithChips(
+                              text: cell,
+                              showUlid: showUlid,
+                              tokens: tokens,
+                            ),
+                          ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
     }
   }
 
@@ -294,6 +334,22 @@ class MarkdownRenderer extends StatelessWidget {
         }
         out.add(_Block(kind: _BlockKind.code, text: buf.toString()));
         if (i < lines.length) i++; // skip closing ```
+        continue;
+      }
+
+      // GFM pipe table: a line with `|`, followed by a separator row
+      // `| --- | --- |`. Greedy: collect all subsequent `|` lines.
+      if (line.contains('|') &&
+          i + 1 < lines.length &&
+          RegExp(r'^\s*\|?[\s\-:|]+\|[\s\-:|]+\s*$').hasMatch(lines[i + 1])) {
+        final rows = <List<String>>[_splitTableRow(line)];
+        i += 2; // skip header + separator
+        while (i < lines.length && lines[i].trim().contains('|')) {
+          if (lines[i].trim().isEmpty) break;
+          rows.add(_splitTableRow(lines[i]));
+          i++;
+        }
+        out.add(_Block(kind: _BlockKind.table, tableRows: rows));
         continue;
       }
 
@@ -418,7 +474,8 @@ class MarkdownRenderer extends StatelessWidget {
       line.trim() == '---' ||
       line.trim() == '***' ||
       line.trim() == '___' ||
-      RegExp(r'^\d+\.\s').hasMatch(line);
+      RegExp(r'^\d+\.\s').hasMatch(line) ||
+      (line.contains('|') && line.trim().startsWith('|'));
 }
 
 /// If [text] is JUST an image — `![alt](path)` with nothing else — return
@@ -498,13 +555,21 @@ class _BrokenImageBox extends StatelessWidget {
 }
 
 class _Block {
-  const _Block({required this.kind, this.text = '', this.items});
+  const _Block({required this.kind, this.text = '', this.items, this.tableRows});
   final _BlockKind kind;
   final String text;
   final List<String>? items;
+  final List<List<String>>? tableRows;
 }
 
-enum _BlockKind { h1, h2, h3, paragraph, ul, ol, code, math, quote, hr }
+enum _BlockKind { h1, h2, h3, paragraph, ul, ol, code, math, quote, hr, table }
+
+List<String> _splitTableRow(String line) {
+  var s = line.trim();
+  if (s.startsWith('|')) s = s.substring(1);
+  if (s.endsWith('|')) s = s.substring(0, s.length - 1);
+  return s.split('|').map((c) => c.trim()).toList();
+}
 
 /// Render a paragraph with inline emphasis (bold/italic/strike/code),
 /// `[[ULID]]` chips, and inline image references. Uses `RichText` with
