@@ -42,7 +42,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Page locking — Frontmatter `locked: true`; `EditorBloc.isLocked` toggles read-only mode; lock icon in PageHeader.
 - ✅ Favorites / pinning — Pin via context menu; persists to `<vault>/.quill.yaml` `favorites: [...]`; Favorites section in sidebar.
 - ✅ Trash with restore — M28 + M61, file context menu → "Move to trash" renames to `.trash/<YYYY-MM>/...`; "Show trash" command palette entry opens a dialog with restore / delete-forever per row.
-- ✅ Page comments (general thread) — M69, `<vault>/.quill/comments/<page-ulid>.yaml` sidecar; properties-panel "Comments" action opens a dialog. Inline (range-scoped) comments still 📋 — need block ids first.
+- ✅ Page comments (general thread) — M69, `<vault>/.quill/comments/<page-ulid>.yaml` sidecar; properties-panel "Comments" action opens a dialog. Block-anchored comments shipped M180–M186.
 - ✅ Page mentions (@page-name) — M5/M6 (`[[ULID]]` source format) + source_view.dart already opens the relation picker on a boundary `@` (line 136). Pick replaces the `@`-trigger with `[[ULID]]`, which the renderer shows as a clickable chip.
 - 🔮 Public page sharing via web link — Requires hosting backend.
 - 🚫 Custom page URLs / domains (paid) — Quill is a desktop app, not a publishing platform.
@@ -70,7 +70,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Math equations (KaTeX) — block and inline — M32 via `flutter_math_fork`. `$inline$` and `$$block$$` both render.
 - ✅ Tables (simple, non-database) — GFM pipe tables render in `markdown_renderer.dart`.
 - ✅ Synced blocks (edit in one place, updates everywhere) — M67, `![[ULID]]` transclusion. Cycle-safe up to maxDepth = 3.
-- 🚧 Block-level comments — Page-level M69. Block-id storage M180/M181 + renderer-side `^<ULID>` suffix stripping M182. `CommentsDialog` scopes via optional `blockId:` param + per-row block badge (M185). Renderer hover affordance to open the scoped dialog still 📋.
+- ✅ Block-level comments — Page-level M69. Block-id storage M180/M181, renderer-side `^<ULID>` suffix stripping M182, `CommentsDialog` blockId scope + per-row block badge M185, hover comment chip on rendered blocks M186 (auto-mints + splices a ULID if absent; opens scoped dialog).
 - ✅ Block links (link to a specific block) — M79, `[[ULID#heading-slug]]`. Slug derived from heading text; editor page scrolls to the target heading on load.
 - ✅ Turn block into another block type — Slash menu (M23+) converts the current line via `linePrefix` substitution.
 - ✅ Text color and background color — Inline `<span style="color:…;background-color:…">` round-trips through the renderer; `<mark>` (M80) gives a soft-yellow highlight pill.
@@ -166,7 +166,7 @@ If your feature wants to store something new, the answer is almost always "add a
 
 - 🔮 Real-time multiplayer editing — Needs CRDT layer + backend.
 - 🔮 Cursor presence (see others typing) — Same.
-- 🚧 Inline comments on text selection — Block-id plumbing M180/M181; page-level shipped M69. UI surface still 📋.
+- ✅ Inline comments on text selection — Block-level M180–M186 is the closest analogue: each rendered block (paragraph / heading) can carry its own anchored thread. True character-range inline comments (mid-paragraph highlights) are out of scope for v1.
 - ✅ Page comments (general thread) — M69 sidecar at `<vault>/.quill/comments/<page-ulid>.yaml`; "Comments" action in properties panel.
 - ✅ Comment resolution — `resolved: true` field on each comment; M69 toggle in the dialog.
 - ✅ Mentions of people, pages, dates — Pages via `[[ULID]]` + anchor variant (M79). Date pills via inline `@YYYY-MM-DD` (M83 relative-time variants). People mentions 🔮.
