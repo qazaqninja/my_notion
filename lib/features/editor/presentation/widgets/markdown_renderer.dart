@@ -31,10 +31,16 @@ class MarkdownRenderer extends StatefulWidget {
     required this.body,
     this.showUlid = false,
     this.onBodyChange,
+    this.font,
   });
 
   final String body;
   final bool showUlid;
+
+  /// Per-page font override from frontmatter. Accepts `default` (or null
+  /// — the theme default), `serif`, or `mono`. Anything else is ignored
+  /// and the renderer falls back to the theme.
+  final String? font;
 
   /// When supplied, paragraph + heading blocks become tap-to-edit:
   /// clicking swaps the rendered widget for an inline TextField; on
@@ -100,13 +106,38 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       }
       if (activeStart != null) hidden.add(i);
     }
-    return Column(
+    final column = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (var i = 0; i < blocks.length; i++)
           if (!hidden.contains(i)) _wrapBlock(context, tokens, blocks[i]),
       ],
     );
+    final fontOverride = _fontOverride(widget.font);
+    if (fontOverride == null) return column;
+    return DefaultTextStyle.merge(style: fontOverride, child: column);
+  }
+
+  /// Maps the frontmatter `font:` value to a TextStyle override. The
+  /// merge target is `DefaultTextStyle`, so we only need the family +
+  /// fallback set — colour, size, and weight come from each block's
+  /// own style.
+  static TextStyle? _fontOverride(String? raw) {
+    final f = raw?.trim().toLowerCase();
+    if (f == null || f.isEmpty || f == 'default' || f == 'sans' ||
+        f == 'sans-serif') {
+      return null;
+    }
+    if (f == 'serif' || f == 'georgia') {
+      return const TextStyle(
+        fontFamily: 'Georgia',
+        fontFamilyFallback: ['Times New Roman', 'Charter', 'serif'],
+      );
+    }
+    if (f == 'mono' || f == 'monospace') {
+      return const TextStyle(fontFamily: 'JetBrainsMono');
+    }
+    return null;
   }
 
   Widget _wrapBlock(BuildContext context, QuillTokens tokens, _Block b) {

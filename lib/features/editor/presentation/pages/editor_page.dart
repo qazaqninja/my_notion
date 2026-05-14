@@ -611,6 +611,7 @@ class _EditorBodyState extends State<_EditorBody> {
                                   _EmptyPageHint(locked: locked),
                                 MarkdownRenderer(
                                   body: page.body,
+                                  font: page.frontmatter.get('font')?.toString(),
                                   onBodyChange: locked
                                       ? null
                                       : (next) => context
