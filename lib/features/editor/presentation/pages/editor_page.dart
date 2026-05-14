@@ -341,6 +341,13 @@ class _EditorBodyState extends State<_EditorBody> {
     }
   }
 
+  Future<void> _revealCurrentPage(
+      BuildContext context, EditorLoaded loaded) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    await Reveal.show('${vault.rootPath}/${loaded.page.relativePath}');
+  }
+
   void _toggleEditorMode(BuildContext context, EditorLoaded loaded) {
     final next = loaded.mode == EditorMode.rendered
         ? EditorMode.source
@@ -428,6 +435,12 @@ class _EditorBodyState extends State<_EditorBody> {
             const SingleActivator(LogicalKeyboardKey.keyP,
                 control: true, shift: true): () => setState(
                 () => _propertiesOpen = !_propertiesOpen),
+            const SingleActivator(LogicalKeyboardKey.keyR,
+                meta: true, alt: true): () =>
+                _revealCurrentPage(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyR,
+                control: true, alt: true): () =>
+                _revealCurrentPage(context, loaded),
           },
           child: Focus(
             autofocus: true,

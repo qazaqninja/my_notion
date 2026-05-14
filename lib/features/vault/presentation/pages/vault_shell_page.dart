@@ -269,6 +269,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘⇧L', 'Toggle page lock'),
                 _kbRow(tokens, '⌘E', 'Toggle rendered / source'),
                 _kbRow(tokens, '⌘⇧P', 'Toggle properties panel'),
+                _kbRow(tokens, '⌘⌥R', 'Reveal current page in Finder'),
                 _kbRow(tokens, '⌘⇧\\', 'Toggle outline rail'),
                 _kbRow(tokens, 'Esc', 'Close find / dialogs'),
                 _kbRow(tokens, '/', 'Open slash menu (source mode)'),
