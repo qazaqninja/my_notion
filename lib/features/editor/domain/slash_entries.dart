@@ -124,6 +124,14 @@ const List<SlashEntry> kSlashEntries = [
   ),
   SlashEntry(
     icon: 'code',
+    label: 'Mermaid diagram',
+    hint: '```mermaid',
+    snippet: '```mermaid\ngraph TD\n  A[Start] --> B[End]\n```\n',
+    cursorOffset: 18, // inside the diagram body
+    keywords: ['mermaid', 'diagram', 'flowchart', 'graph', 'chart'],
+  ),
+  SlashEntry(
+    icon: 'code',
     label: 'Inline math',
     hint: r'$x$',
     snippet: r'$$',
