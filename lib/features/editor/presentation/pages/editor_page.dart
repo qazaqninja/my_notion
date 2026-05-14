@@ -31,6 +31,7 @@ import '../bloc/editor_state.dart';
 import '../widgets/backlinks_rail.dart';
 import '../widgets/comments_dialog.dart';
 import '../widgets/frontmatter_card.dart';
+import '../widgets/page_history_dialog.dart';
 import '../widgets/markdown_renderer.dart';
 import '../widgets/outline_rail.dart';
 import '../widgets/page_title_field.dart';
@@ -280,6 +281,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
+        PopupMenuItem(value: 'history', child: Text('Page history…')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
         PopupMenuDivider(),
@@ -307,6 +309,8 @@ class _EditorBodyState extends State<_EditorBody> {
         if (vault is VaultLoaded) {
           await Reveal.show('${vault.rootPath}/${loaded.page.relativePath}');
         }
+      case 'history':
+        await _showPageHistory(context, loaded);
       case 'export-md':
         await _exportPageAsMarkdown(context, loaded);
       case 'print-page':
@@ -357,6 +361,19 @@ class _EditorBodyState extends State<_EditorBody> {
           const SnackBar(content: Text('Reindexing vault…')),
         );
     }
+  }
+
+  Future<void> _showPageHistory(
+      BuildContext context, EditorLoaded loaded) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => PageHistoryDialog(
+        vaultRoot: vault.rootPath,
+        relativePath: loaded.page.relativePath,
+      ),
+    );
   }
 
   Future<void> _printPage(BuildContext context, EditorLoaded loaded) async {
