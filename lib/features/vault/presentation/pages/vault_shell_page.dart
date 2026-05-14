@@ -77,6 +77,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
     return _palette ??= CommandPaletteCubit(
       searchPages: SearchPages(context.read<QuillDatabase>()),
       dbRepo: DatabaseRepositoryImpl(context.read<QuillDatabase>()),
+      db: context.read<QuillDatabase>(),
     );
   }
 

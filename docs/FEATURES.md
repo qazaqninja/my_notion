@@ -43,7 +43,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Favorites / pinning — Pin via context menu; persists to `<vault>/.quill.yaml` `favorites: [...]`; Favorites section in sidebar.
 - ✅ Trash with restore — M28 + M61, file context menu → "Move to trash" renames to `.trash/<YYYY-MM>/...`; "Show trash" command palette entry opens a dialog with restore / delete-forever per row.
 - ✅ Page comments (general thread) — M69, `<vault>/.quill/comments/<page-ulid>.yaml` sidecar; properties-panel "Comments" action opens a dialog. Inline (range-scoped) comments still 📋 — need block ids first.
-- 🚧 Page mentions (@page-name) — `[[ULID]]` works (M5/M6). The `@` UX sugar to open the same picker is 📋. M103 added "Today's date" but not page mention.
+- ✅ Page mentions (@page-name) — M5/M6 (`[[ULID]]` source format) + source_view.dart already opens the relation picker on a boundary `@` (line 136). Pick replaces the `@`-trigger with `[[ULID]]`, which the renderer shows as a clickable chip.
 - 🔮 Public page sharing via web link — Requires hosting backend.
 - 🚫 Custom page URLs / domains (paid) — Quill is a desktop app, not a publishing platform.
 - 🚫 Page analytics (views, visitors) — Same reason.

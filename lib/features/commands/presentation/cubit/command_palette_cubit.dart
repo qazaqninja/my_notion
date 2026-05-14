@@ -1,10 +1,15 @@
+import 'dart:convert';
+
+import 'package:drift/drift.dart' show OrderingMode, OrderingTerm;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../database/domain/entities/database_schema.dart';
 import '../../../database/domain/repositories/database_repository.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../domain/command_entry.dart';
+import '../../domain/command_filter.dart';
 
 class CommandPaletteState extends Equatable {
   const CommandPaletteState({
@@ -57,13 +62,18 @@ class CommandPaletteState extends Equatable {
 }
 
 class CommandPaletteCubit extends Cubit<CommandPaletteState> {
-  CommandPaletteCubit({required SearchPages searchPages, required DatabaseRepository dbRepo})
-      : _search = searchPages,
+  CommandPaletteCubit({
+    required SearchPages searchPages,
+    required DatabaseRepository dbRepo,
+    required QuillDatabase db,
+  })  : _search = searchPages,
         _dbRepo = dbRepo,
+        _db = db,
         super(CommandPaletteState.closed);
 
   final SearchPages _search;
   final DatabaseRepository _dbRepo;
+  final QuillDatabase _db;
 
   Future<void> open() async {
     emit(state.copyWith(open: true, query: '', selectedIndex: 0));
@@ -77,17 +87,116 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
   }
 
   Future<void> _refresh(String q) async {
-    final pages = await _search(q, limit: 8);
+    final filter = CommandFilter.parse(q);
+    final term = filter.term;
+
+    // Page results — varies by scope.
+    var pages = const <PageSearchResult>[];
+    switch (filter.scope) {
+      case CommandFilterScope.none:
+      case CommandFilterScope.tag:
+        pages = await _search(term, limit: 24);
+        break;
+      case CommandFilterScope.path:
+        // Walk all pages, filter by relativePath prefix. For empty
+        // term, list all (cap at 24 by mtime).
+        pages = await _pagesByPathPrefix(term, limit: 24);
+        break;
+      case CommandFilterScope.db:
+        // Database-only scope; no page results.
+        break;
+    }
+
+    // Tag scope: post-filter by frontmatter tags.
+    if (filter.scope == CommandFilterScope.tag && term.isNotEmpty) {
+      pages = await _filterByTag(pages, term);
+    }
+
+    // Cap pages to the usual 8 only when we didn't fan out for path/tag.
+    if (filter.scope == CommandFilterScope.none) {
+      pages = pages.take(8).toList();
+    } else {
+      pages = pages.take(12).toList();
+    }
+
+    // Database list — db scope filters by name; others show all but only
+    // when the query is empty so the user sees them as a reference.
     final allDbs = await _dbRepo.listDatabases();
-    final databases = q.isEmpty
-        ? allDbs
-        : allDbs
-            .where((d) => d.name.toLowerCase().contains(q.toLowerCase()))
-            .toList();
-    final actions = _filterActions(_baseActions, q);
+    final databases = switch (filter.scope) {
+      CommandFilterScope.db => term.isEmpty
+          ? allDbs
+          : allDbs
+              .where((d) => d.name.toLowerCase().contains(term.toLowerCase()))
+              .toList(),
+      CommandFilterScope.none => q.isEmpty
+          ? allDbs
+          : allDbs
+              .where((d) => d.name.toLowerCase().contains(q.toLowerCase()))
+              .toList(),
+      _ => const <DatabaseSchema>[],
+    };
+
+    // Actions: only when not in a scoped query — scoped queries are
+    // about navigation, not running commands.
+    final actions = filter.scope == CommandFilterScope.none
+        ? _filterActions(_baseActions, q)
+        : const <CommandEntry>[];
+
     if (state.query == q) {
       emit(state.copyWith(pages: pages, databases: databases, actions: actions));
     }
+  }
+
+  Future<List<PageSearchResult>> _pagesByPathPrefix(
+      String prefix, {required int limit}) async {
+    final query = _db.select(_db.pages)
+      ..orderBy([
+        (p) => OrderingTerm(expression: p.mtimeMs, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    final rows = await query.get();
+    final lp = prefix.toLowerCase();
+    return [
+      for (final r in rows)
+        if (prefix.isEmpty || r.relativePath.toLowerCase().startsWith(lp))
+          PageSearchResult(
+            ulid: r.ulid,
+            title: r.title,
+            relativePath: r.relativePath,
+            snippet: '',
+          ),
+    ];
+  }
+
+  Future<List<PageSearchResult>> _filterByTag(
+      List<PageSearchResult> pages, String tag) async {
+    if (pages.isEmpty) return pages;
+    final t = tag.toLowerCase();
+    final out = <PageSearchResult>[];
+    for (final p in pages) {
+      final row = await (_db.select(_db.pages)
+            ..where((x) => x.ulid.equals(p.ulid))
+            ..limit(1))
+          .getSingleOrNull();
+      if (row == null) continue;
+      final tags = _readTags(row.frontmatterJson);
+      if (tags.any((s) => s.toLowerCase() == t)) out.add(p);
+    }
+    return out;
+  }
+
+  static List<String> _readTags(String json) {
+    if (json.isEmpty) return const [];
+    try {
+      final m = jsonDecode(json);
+      if (m is! Map) return const [];
+      final raw = m['tags'];
+      if (raw is List) {
+        return [for (final t in raw) '$t'];
+      }
+      if (raw is String) return [raw];
+    } catch (_) {/* fall through */}
+    return const [];
   }
 
   static const _baseActions = <CommandEntry>[
