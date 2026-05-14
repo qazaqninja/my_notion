@@ -97,60 +97,60 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Databases
 
-- ✅ Database creation (full-page or inline) — Full-page via `.database.yaml` discovery (M7). Inline (`%%db ...%%` block inside a page) is 📋.
-- ✅ Multiple views per database (table, board, list, gallery, calendar, timeline) — M7+M8 cover table, board, gallery, timeline. List 📋 (table minus columns). Calendar 📋 (Pick-next #8).
+- ✅ Database creation (full-page or inline) — Full-page via `.database.yaml` discovery (M7); inline embed via `:::db <folder>` fence (M78).
+- ✅ Multiple views per database (table, board, list, gallery, calendar, timeline) — All six shipped (table M7, board M8, list M71, gallery M8, calendar M33, timeline M8) + chart (M34).
 - Property types:
   - ✅ text, number, select, multi-select, status, date, checkbox, URL, email, phone — In `cell_renderers.dart`.
   - ✅ relation — `[[ULID]]` resolved at render via `title_resolver`.
   - ✅ ID — ULID.
-  - ✅ last edited time — file `mtime` (deliberately excluded from reindex idempotency snapshots).
-  - 📋 files & media — Pick-next item.
-  - 📋 formula — Pick-next #7. Implement a Notion formula v2 subset (`prop("x")`, arithmetic, conditionals, string/date helpers).
-  - 📋 rollup — Pick-next #7. Aggregate over related rows.
-  - 📋 created time — Use `ctime` where available; otherwise `created:` frontmatter set on first write.
+  - ✅ last edited time — file `mtime`.
+  - ✅ files & media — M87, image thumbnails + chip fallback for non-image extensions.
+  - ✅ formula — M31, Pratt parser + evaluator subset of Notion formula v2.
+  - 📋 rollup — Aggregate over related rows. Formula evaluator can host the helpers; needs multi-row aggregation at the call site.
+  - ✅ created time — `createdTime` column type added in earlier milestone; reads `created_at:` frontmatter.
   - 📋 created by, last edited by, person — Requires a user identity model. v1: read from `.quill.yaml` users list. Full multi-user is 🔮.
-  - 📋 button — Custom fenced ```button block inside the row page.
-- 📋 Sub-items (parent/child rows) — Schema field `parent: <relation-to-self>`; tree expansion in `frozen_column_table.dart`.
+  - ✅ button — M70 `:::button` fence renders inside any page (including row pages).
+- 🚧 Sub-items (parent/child rows) — Parent relation column + depth indent in `frozen_column_table.dart`; full sub-row expansion UI 📋.
 - 📋 Dependencies between rows — Used in timeline view; add `depends_on:` relation.
-- 📋 Database templates (per-database row templates) — Schema `row_template: <path>`; copy on "New row".
-- ✅ Filters (single and compound with AND/OR logic) — M19, `query_popovers.dart` + `apply_query.dart`.
+- ✅ Database templates (per-database row templates) — `row_template:` in schema; `createRow` copies the template's frontmatter + body.
+- ✅ Filters (single and compound with AND/OR logic) — M19.
 - ✅ Sorts (multi-level) — M19.
 - ✅ Grouping (by any property) — M19.
-- 📋 Sub-grouping — Extend `apply_query.dart`.
-- 📋 Hide/show properties per view — Schema `views[].visible: [...]`.
-- 📋 Reorder properties — Drag handle in table header.
-- 📋 Property width adjustment — Persist to `.database.yaml`.
-- ✅ Frozen columns in table view — M7, `frozen_column_table.dart`.
-- 📋 Calculations per column (sum, average, count, min, max, range, etc.) — Footer row in `frozen_column_table.dart`.
-- 📋 Wrap cells / unwrap — Table view setting.
-- ✅ Open row as a full page — Clicking a row navigates to the underlying `.md` page (table page → editor page).
-- 📋 Row icons and covers — Frontmatter `icon:` / `cover:` like pages.
-- 📋 Linked database views — A page-level block that references another database with its own view config.
-- 📋 Database mentions / inline databases — Same.
-- 🚧 Relations between databases (one-way and two-way) — One-way ✅ via `[[ULID]]`. Two-way 📋 — indexer auto-creates the reverse relation row.
+- 🚧 Sub-grouping — M86 ships sub-group dividers in BoardView; other views still 📋.
+- ✅ Hide/show properties per view — M72, Properties popover; persists per-database (M96).
+- 🚧 Reorder properties — Long-press-drag column headers (M63); persistence per-database in SharedPreferences (M97).
+- ✅ Property width adjustment — Resize handle on the right edge (M56); persisted per-database in SharedPreferences (M97).
+- ✅ Frozen columns in table view — M7.
+- ✅ Calculations per column (sum, average, count, min, max, range, etc.) — M43 footer row.
+- ✅ Wrap cells / unwrap — Toggle in toolbar; persists per-database (M95).
+- ✅ Open row as a full page — Click a row → /editor/<ulid>.
+- ✅ Row icons and covers — M84 table/list/gallery read `icon:` frontmatter; M92 gallery cards render `cover:`.
+- ✅ Linked database views — M88 extends `:::db` with `view:` + `limit:` props inside the fence.
+- ✅ Database mentions / inline databases — M78 + M88, `:::db <folder>` fence with optional view config.
+- 🚧 Relations between databases (one-way and two-way) — One-way ✅ via `[[ULID]]`. Two-way 📋.
 - 📋 Rollups (aggregate from related rows) — See formula.
-- 📋 Formulas (Notion formula language v2) — Pick-next #7.
-- 📋 Buttons inside rows that trigger actions — See button property type.
-- 🔮 Automations (no-code rules: when X changes, do Y) — Requires backend daemon (file-watch-only is insufficient because rules need to run on remote edits too).
+- ✅ Formulas (Notion formula language v2) — M31.
+- ✅ Buttons inside rows that trigger actions — M70.
+- 🔮 Automations (no-code rules: when X changes, do Y) — Requires backend daemon.
 - 📋 Database locking — Schema `locked: true`.
-- 📋 CSV import — `lib/features/vault/data/datasources/` — add a converter that writes one `.md` per row + a `.database.yaml`.
-- 📋 CSV export — Inverse of import. Reuse for "Include databases in export".
-- ✅ Markdown export (with subpages and database CSVs) — M12. Currently exports row pages; CSV emission is 📋 (see CSV export).
-- 📋 HTML export — Reuse `markdown_renderer.dart` → HTML serializer.
-- 📋 PDF export — `printing` / `pdf` packages.
+- ✅ CSV import — M29.
+- ✅ CSV export — M45.
+- ✅ Markdown export (with subpages) — M12.
+- ✅ HTML export — M44 `HtmlExporter`.
+- ✅ PDF export — M50 `PdfExporter`.
 
 ## Views
 
 - ✅ Table view — M7.
 - ✅ Board (Kanban) view — M8.
-- 📋 List view — Table view minus columns; trivial.
-- ✅ Gallery view (card grid) — M8.
-- 📋 Calendar view — Pick-next #8.
+- ✅ List view — M71, compact one-line-per-row.
+- ✅ Gallery view (card grid) — M8 + M92 cover images.
+- ✅ Calendar view — M33 via `table_calendar`.
 - ✅ Timeline view (Gantt-style) — M8.
-- 📋 Chart view (bar, line, donut) — Pick-next #8. `fl_chart` package.
-- 🚧 View-specific filters, sorts, properties — Filters/sorts persist per view ✅. Property selection 📋.
-- 🚧 Group and sub-group per view — Group ✅. Sub-group 📋.
-- 📋 Customize card size, preview image, fields shown — Schema additions on the `views[]` entry.
+- ✅ Chart view (bar, line, donut) — M34 via `fl_chart`.
+- ✅ View-specific filters, sorts, properties — Property selection via Properties popover (M72) + per-database persistence (M96).
+- 🚧 Group and sub-group per view — Group ✅. Sub-group in BoardView ✅ (M86), other views 📋.
+- 🚧 Customize card size, preview image, fields shown — Cover images shipped M92; size/field configurability 📋.
 
 ## Search & Navigation
 
