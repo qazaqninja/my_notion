@@ -126,6 +126,65 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     return s is VaultLoaded ? Directory(s.rootPath) : null;
   }
 
+  /// Right-click on a column header opens a context menu with quick
+  /// actions: sort asc / desc / clear, group / ungroup, hide column.
+  Future<void> _showColumnContextMenu(
+      String columnKey, Offset globalPosition) async {
+    final overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (overlay == null) return;
+    final isGrouped = _query.groupBy == columnKey;
+    final isHidden =
+        _visibleOverride != null && !_visibleOverride!.contains(columnKey);
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(globalPosition.dx, globalPosition.dy, 1, 1),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        const PopupMenuItem(value: 'sort-asc', child: Text('Sort ascending')),
+        const PopupMenuItem(value: 'sort-desc', child: Text('Sort descending')),
+        const PopupMenuItem(value: 'sort-clear', child: Text('Clear sort')),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+            value: 'group',
+            child: Text(isGrouped ? 'Ungroup' : 'Group by this column')),
+        const PopupMenuItem(
+            value: 'filter', child: Text('Filter by this column…')),
+        const PopupMenuDivider(),
+        if (!isHidden && columnKey != 'title')
+          const PopupMenuItem(value: 'hide', child: Text('Hide column')),
+      ],
+    );
+    if (action == null) return;
+    switch (action) {
+      case 'sort-asc':
+        setState(() => _query = _query.copyWith(
+              sorts: [SortRule(columnKey: columnKey, ascending: true)],
+            ));
+      case 'sort-desc':
+        setState(() => _query = _query.copyWith(
+              sorts: [SortRule(columnKey: columnKey, ascending: false)],
+            ));
+      case 'sort-clear':
+        setState(() => _query = _query.copyWith(sorts: const []));
+      case 'group':
+        setState(() => _query =
+            _query.copyWith(groupBy: isGrouped ? null : columnKey));
+      case 'filter':
+        if (!mounted || _schema == null) return;
+        if (!context.mounted) return;
+        await _openFilterPopover(context, _schema!);
+      case 'hide':
+        setState(() {
+          final current = _visibleOverride ??
+              {for (final c in (_schema?.columns ?? const [])) c.key};
+          _visibleOverride = {...current}..remove(columnKey);
+        });
+    }
+  }
+
   /// Click cycles `<col>` through asc → desc → off and replaces any prior
   /// sort on a different column. Only one sort is held at a time — multi-
   /// column sort is shift-click or the popover (not wired yet).
@@ -392,6 +451,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                           ? true
                           : _query.sorts.first.ascending,
                       onColumnHeaderTap: _cycleSort,
+                      onColumnHeaderSecondaryTap: _showColumnContextMenu,
                     ),
                   ViewType.gallery => GalleryView(
                       schema: viewSchema,

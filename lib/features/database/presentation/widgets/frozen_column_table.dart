@@ -111,6 +111,7 @@ class FrozenColumnTable extends StatefulWidget {
     this.sortColumn,
     this.sortAscending = true,
     this.onColumnHeaderTap,
+    this.onColumnHeaderSecondaryTap,
   });
 
   final DatabaseSchema schema;
@@ -153,6 +154,12 @@ class FrozenColumnTable extends StatefulWidget {
   /// not the resize handle). Receives the column key; the parent chooses
   /// what to do (typically cycle asc → desc → none).
   final void Function(String columnKey)? onColumnHeaderTap;
+
+  /// Called when the user right-clicks / long-presses a column header.
+  /// Receives the column key plus the global tap position so the parent
+  /// can anchor a context menu.
+  final void Function(String columnKey, Offset globalPosition)?
+      onColumnHeaderSecondaryTap;
 
   @override
   State<FrozenColumnTable> createState() => _FrozenColumnTableState();
@@ -784,6 +791,10 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
           onTap: widget.onColumnHeaderTap == null
               ? null
               : () => widget.onColumnHeaderTap!(c.key),
+          onSecondaryTapDown: widget.onColumnHeaderSecondaryTap == null
+              ? null
+              : (d) => widget.onColumnHeaderSecondaryTap!(
+                  c.key, d.globalPosition),
           child: Container(
             width: _widthFor(c),
             padding: const EdgeInsets.symmetric(horizontal: 10),
