@@ -206,6 +206,46 @@ class _SourceViewState extends State<SourceView> {
     return Rect.fromLTWH(x, caretInField.dy, 320, 0);
   }
 
+  /// Tab / Shift-Tab on the current selection. Indents or outdents
+  /// every line touched by the selection (or the line under the caret
+  /// when there's no range). Uses two spaces — the same width the
+  /// renderer treats as a nested-list indent.
+  void _indentSelection(bool outdent) {
+    final v = _controller.value;
+    final sel = v.selection;
+    if (!sel.isValid) return;
+    final text = v.text;
+    final selStart = sel.start.clamp(0, text.length);
+    final selEnd = sel.end.clamp(0, text.length);
+    final lineStart = selStart == 0
+        ? 0
+        : (text.lastIndexOf('\n', selStart - 1) + 1);
+    var lineEndExclusive = text.indexOf('\n', selEnd);
+    if (lineEndExclusive < 0) lineEndExclusive = text.length;
+    final block = text.substring(lineStart, lineEndExclusive);
+    const indent = '  ';
+    final newBlock = block
+        .split('\n')
+        .map((line) {
+          if (outdent) {
+            if (line.startsWith(indent)) return line.substring(indent.length);
+            if (line.startsWith(' ')) return line.substring(1);
+            return line;
+          }
+          return '$indent$line';
+        })
+        .join('\n');
+    final delta = newBlock.length - block.length;
+    final newText = text.replaceRange(lineStart, lineEndExclusive, newBlock);
+    _controller.value = v.copyWith(
+      text: newText,
+      selection: TextSelection(
+        baseOffset: selStart + (outdent ? -2 : 2).clamp(-selStart + lineStart, delta),
+        extentOffset: selEnd + delta,
+      ),
+    );
+  }
+
   /// Wrap the current selection (or insert two markers and place the
   /// caret between them) with [pre]/[post]. Cmd+B → **bold**, Cmd+I →
   /// *italic*.
@@ -458,6 +498,10 @@ class _SourceViewState extends State<SourceView> {
                       () => _wrapSelection('*', '*'),
                   const SingleActivator(LogicalKeyboardKey.keyI, control: true):
                       () => _wrapSelection('*', '*'),
+                  const SingleActivator(LogicalKeyboardKey.tab): () =>
+                      _indentSelection(false),
+                  const SingleActivator(LogicalKeyboardKey.tab, shift: true):
+                      () => _indentSelection(true),
                 },
                 child: TextField(
                   controller: _controller,
