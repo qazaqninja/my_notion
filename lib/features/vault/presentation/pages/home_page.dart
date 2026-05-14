@@ -7,7 +7,9 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../bloc/vault_bloc.dart';
+import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
 import '../widgets/page_header.dart';
 
@@ -50,6 +52,8 @@ class HomePage extends StatelessWidget {
                     icon: 'search',
                     title: 'Search & open',
                     subtitle: 'Cmd+K to find any page or database.',
+                    onTap: () =>
+                        context.read<CommandPaletteCubit>().open(),
                   ),
                   const SizedBox(width: 16),
                   _Tile(
@@ -75,6 +79,7 @@ class HomePage extends StatelessWidget {
                     icon: 'plus',
                     title: 'New page',
                     subtitle: 'Cmd+N — title prompt, then a fresh .md.',
+                    onTap: () => _promptNewPage(context),
                   ),
                   const SizedBox(width: 16),
                   _Tile(
@@ -82,6 +87,7 @@ class HomePage extends StatelessWidget {
                     icon: 'note',
                     title: 'Keyboard map',
                     subtitle: 'Press ? to list every shortcut.',
+                    onTap: () => _showShortcuts(context),
                   ),
                   const SizedBox(width: 16),
                   _Tile(
@@ -102,6 +108,51 @@ class HomePage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _promptNewPage(BuildContext context) async {
+    final vaultBloc = context.read<VaultBloc>();
+    if (vaultBloc.state is! VaultLoaded) return;
+    final router = GoRouter.of(context);
+    final controller = TextEditingController();
+    final title = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New page'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(hintText: 'Title'),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+    if (title == null || title.trim().isEmpty) return;
+    vaultBloc.add(CreatePage(
+      title: title.trim(),
+      onCreated: (ulid) => router.go('/editor/$ulid'),
+    ));
+  }
+
+  Future<void> _showShortcuts(BuildContext context) async {
+    // Dispatch the shortcut help via the shell's `?` handler — we
+    // can't reach the shell's private method from here, so we just
+    // show a friendly hint and let the user press `?` themselves.
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(const SnackBar(
+      content: Text('Press ? for the full keyboard shortcut list.'),
+      duration: Duration(seconds: 3),
+    ));
   }
 }
 
