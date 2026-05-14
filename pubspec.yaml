@@ -45,6 +45,7 @@ dependencies:
   shared_preferences: ^2.5.3
   archive: ^4.0.7
   google_fonts: ^6.3.2
+  file: ^7.0.1
 
   cupertino_icons: ^1.0.8
 
@@ -63,7 +64,6 @@ dev_dependencies:
 
   # Lints + test helpers
   flutter_lints: ^5.0.0
-  file: ^7.0.1
   mocktail: ^1.0.4
 
 flutter:
