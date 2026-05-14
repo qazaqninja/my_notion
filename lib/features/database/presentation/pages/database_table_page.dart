@@ -278,6 +278,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       schema: viewSchema,
                       rows: filtered,
                       groupBy: _query.groupBy ?? activeView?.groupBy,
+                      subGroupBy: _query.subGroupBy,
                     ),
                   ViewType.timeline =>
                     TimelineView(schema: viewSchema, rows: filtered),
@@ -355,7 +356,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       if (!mobile) const SizedBox(width: 4),
       _ToolButton(
         icon: 'group',
-        label: _query.groupBy == null ? 'Group' : 'Group: ${_query.groupBy}',
+        label: _query.groupBy == null
+            ? 'Group'
+            : _query.subGroupBy == null
+                ? 'Group: ${_query.groupBy}'
+                : 'Group: ${_query.groupBy} › ${_query.subGroupBy}',
         active: _query.groupBy != null,
         onTap: () => _openGroupPopover(context, schema),
       ),
@@ -449,10 +454,14 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       child: GroupPopover(
         schema: schema,
         initial: _query.groupBy,
+        initialSub: _query.subGroupBy,
       ),
     );
     if (next == null) return;
-    setState(() => _query = _query.copyWith(groupBy: next.value));
+    setState(() => _query = _query.copyWith(
+          groupBy: next.value,
+          subGroupBy: next.sub,
+        ));
   }
 
   Future<void> _openPropertiesPopover(

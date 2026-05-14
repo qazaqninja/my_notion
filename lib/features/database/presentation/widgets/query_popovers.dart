@@ -9,7 +9,7 @@ import '../../domain/entities/database_schema.dart';
 /// Result of the Group popover. The record encoding lets the parent
 /// distinguish "user cancelled" (null result) from "user picked None"
 /// (a non-null record with a null `value`).
-typedef GroupPopoverResult = ({String? value});
+typedef GroupPopoverResult = ({String? value, String? sub});
 
 /// Shows a popover anchored to the toolbar. Returns whatever the popover
 /// pops with, or null if dismissed via backdrop tap.
@@ -429,11 +429,17 @@ class _SortRow extends StatelessWidget {
   }
 }
 
-/// Group selector. Single column selection — None or one of the columns.
+/// Group selector — primary + optional secondary sub-group column.
 class GroupPopover extends StatefulWidget {
-  const GroupPopover({super.key, required this.schema, required this.initial});
+  const GroupPopover({
+    super.key,
+    required this.schema,
+    required this.initial,
+    this.initialSub,
+  });
   final DatabaseSchema schema;
   final String? initial;
+  final String? initialSub;
 
   @override
   State<GroupPopover> createState() => _GroupPopoverState();
@@ -441,11 +447,13 @@ class GroupPopover extends StatefulWidget {
 
 class _GroupPopoverState extends State<GroupPopover> {
   String? _selected;
+  String? _sub;
 
   @override
   void initState() {
     super.initState();
     _selected = widget.initial;
+    _sub = widget.initialSub;
   }
 
   @override
@@ -458,7 +466,8 @@ class _GroupPopoverState extends State<GroupPopover> {
         children: [
           const Spacer(),
           GestureDetector(
-            onTap: () => Navigator.of(context).pop((value: null)),
+            onTap: () =>
+                Navigator.of(context).pop((value: null, sub: null)),
             child: Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -467,7 +476,8 @@ class _GroupPopoverState extends State<GroupPopover> {
             ),
           ),
           GestureDetector(
-            onTap: () => Navigator.of(context).pop((value: _selected)),
+            onTap: () => Navigator.of(context)
+                .pop((value: _selected, sub: _sub)),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
@@ -485,15 +495,47 @@ class _GroupPopoverState extends State<GroupPopover> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text('PRIMARY',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                  color: tokens.text3,
+                )),
+          ),
           for (final c in widget.schema.columns)
             if (c.key != 'id')
               _GroupRow(
                 label: c.key,
                 selected: _selected == c.key,
-                onTap: () =>
-                    setState(() => _selected = _selected == c.key ? null : c.key),
+                onTap: () => setState(() => _selected =
+                    _selected == c.key ? null : c.key),
               ),
+          if (_selected != null) ...[
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 4),
+              child: Text('SUB-GROUP',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: tokens.text3,
+                  )),
+            ),
+            for (final c in widget.schema.columns)
+              if (c.key != 'id' && c.key != _selected)
+                _GroupRow(
+                  label: c.key,
+                  selected: _sub == c.key,
+                  onTap: () =>
+                      setState(() => _sub = _sub == c.key ? null : c.key),
+                ),
+          ],
         ],
       ),
     );

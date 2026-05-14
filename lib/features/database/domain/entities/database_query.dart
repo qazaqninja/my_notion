@@ -46,16 +46,22 @@ class DatabaseQuery {
     this.filters = const [],
     this.sorts = const [],
     this.groupBy,
+    this.subGroupBy,
   });
 
   final List<FilterRule> filters;
   final List<SortRule> sorts;
   final String? groupBy;
 
+  /// Optional 2nd-level grouping. Honoured by BoardView (renders
+  /// section dividers within each column) and ApplyQuery.group2.
+  final String? subGroupBy;
+
   DatabaseQuery copyWith({
     List<FilterRule>? filters,
     List<SortRule>? sorts,
     Object? groupBy = _sentinel,
+    Object? subGroupBy = _sentinel,
   }) {
     return DatabaseQuery(
       filters: filters ?? this.filters,
@@ -63,6 +69,9 @@ class DatabaseQuery {
       groupBy: identical(groupBy, _sentinel)
           ? this.groupBy
           : groupBy as String?,
+      subGroupBy: identical(subGroupBy, _sentinel)
+          ? this.subGroupBy
+          : subGroupBy as String?,
     );
   }
 

@@ -16,6 +16,7 @@ class BoardView extends StatelessWidget {
     required this.schema,
     required this.rows,
     required this.groupBy,
+    this.subGroupBy,
   });
 
   final DatabaseSchema schema;
@@ -24,6 +25,10 @@ class BoardView extends StatelessWidget {
   /// Column key to group by. If null, groups everything into a single
   /// "All" column.
   final String? groupBy;
+
+  /// Optional secondary grouping rendered as section dividers within
+  /// each column.
+  final String? subGroupBy;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +47,7 @@ class BoardView extends StatelessWidget {
               label: entry.key,
               rows: entry.value,
               groupKey: groupKey,
+              subGroupBy: subGroupBy,
             ),
             const SizedBox(width: 14),
           ],
@@ -86,16 +92,31 @@ class _Column extends StatelessWidget {
     required this.label,
     required this.rows,
     required this.groupKey,
+    this.subGroupBy,
   });
 
   final DatabaseSchema schema;
   final String label;
   final List<DatabasePageRow> rows;
   final String? groupKey;
+  final String? subGroupBy;
+
+  /// Partition rows into sub-groups, preserving input order within each.
+  Map<String, List<DatabasePageRow>> _subGroups() {
+    if (subGroupBy == null) return {'': rows};
+    final out = <String, List<DatabasePageRow>>{};
+    for (final r in rows) {
+      final raw = '${r.cells[subGroupBy] ?? ''}';
+      final key = raw.trim().isEmpty ? '—' : raw;
+      (out[key] ??= []).add(r);
+    }
+    return out;
+  }
 
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
+    final subs = _subGroups();
     return SizedBox(
       width: 264,
       child: Column(
@@ -117,9 +138,35 @@ class _Column extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          for (final row in rows) ...[
-            _Card(row: row, schema: schema),
-            const SizedBox(height: 6),
+          for (final sub in subs.entries) ...[
+            if (subGroupBy != null) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(2, 8, 2, 4),
+                child: Row(
+                  children: [
+                    Container(width: 2, height: 10, color: tokens.divider2),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        sub.key,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
+                          color: tokens.text3,
+                        ),
+                      ),
+                    ),
+                    Text('${sub.value.length}',
+                        style: mono(fontSize: 10.5, color: tokens.text3)),
+                  ],
+                ),
+              ),
+            ],
+            for (final row in sub.value) ...[
+              _Card(row: row, schema: schema),
+              const SizedBox(height: 6),
+            ],
           ],
           GestureDetector(
             onTap: () {},
