@@ -25,6 +25,7 @@ import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
 import '../widgets/mobile_chrome.dart';
 import '../widgets/sidebar_widget.dart';
+import '../widgets/trash_dialog.dart';
 
 /// Desktop shell — sidebar on the left, child route content on the right,
 /// ⌘K / Ctrl+K command palette on top.
@@ -197,6 +198,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await themeCubit.cycleMode();
       case 'Toggle compact mode':
         await themeCubit.toggleCompact();
+      case 'Show trash':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        if (!context.mounted) return;
+        await showDialog(
+          context: context,
+          builder: (_) => BlocProvider.value(
+            value: vaultBloc,
+            child: TrashDialog(vaultRoot: vaultPath),
+          ),
+        );
       case 'Export vault as PDF':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
