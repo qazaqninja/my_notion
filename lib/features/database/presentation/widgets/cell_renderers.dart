@@ -46,10 +46,21 @@ class CellRenderer extends StatelessWidget {
 
     switch (column.type) {
       case ColumnType.text:
+        final s = '$v';
+        // Auto-link URLs and email addresses so a text-typed cell that
+        // happens to hold one becomes clickable. Matches Notion-style
+        // smart cells.
+        final url = _autoLink(s);
+        if (url != null) {
+          return Align(
+            alignment: align,
+            child: _LinkCell(label: s, target: url, wrap: wrap),
+          );
+        }
         return Align(
           alignment: align,
           child: Text(
-            '$v',
+            s,
             style: TextStyle(fontSize: 13, color: tokens.text, height: 1.4),
             overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
             maxLines: wrap ? null : 1,
@@ -202,6 +213,22 @@ class CellRenderer extends StatelessWidget {
     return TagColor.gray;
   }
 
+  /// Detect a URL, email, or tel: target in a plain text cell. Returns
+  /// the canonical href when matched; null otherwise.
+  static String? _autoLink(String s) {
+    final t = s.trim();
+    if (t.isEmpty) return null;
+    if (t.startsWith('http://') || t.startsWith('https://')) return t;
+    if (RegExp(r'^[\w\.\-]+@[\w\.\-]+\.[a-zA-Z]{2,}$').hasMatch(t)) {
+      return 'mailto:$t';
+    }
+    if (RegExp(r'^\+?[\d\s\-\(\)]{7,}$').hasMatch(t) &&
+        RegExp(r'\d').allMatches(t).length >= 7) {
+      return 'tel:${t.replaceAll(RegExp(r'\s'), '')}';
+    }
+    return null;
+  }
+
   /// Pretty date / datetime formatter. Accepts:
   ///   YYYY-MM-DD                       → "YYYY-MM-DD"
   ///   YYYY-MM-DDTHH:MM[:SS][Z|±HH:MM]  → "YYYY-MM-DD · HH:MM[tz]"
@@ -290,6 +317,42 @@ class HealthCell extends StatelessWidget {
         const SizedBox(width: 6),
         Text(value, style: TextStyle(fontSize: 12, color: tokens.text2)),
       ],
+    );
+  }
+}
+
+/// Underlined accent text that opens the link on tap. Used by text
+/// cells whose value smells like a URL / email / phone (M122).
+class _LinkCell extends StatelessWidget {
+  const _LinkCell({
+    required this.label,
+    required this.target,
+    required this.wrap,
+  });
+  final String label;
+  final String target;
+  final bool wrap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => Reveal.openUrl(target),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: tokens.accent,
+            decoration: TextDecoration.underline,
+            decorationColor: tokens.accent.withValues(alpha: 0.5),
+          ),
+          overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+          maxLines: wrap ? null : 1,
+        ),
+      ),
     );
   }
 }
