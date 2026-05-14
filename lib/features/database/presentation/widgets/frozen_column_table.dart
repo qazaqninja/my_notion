@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -99,6 +100,7 @@ class FrozenColumnTable extends StatefulWidget {
     this.onEditCell,
     this.onCreateRow,
     this.wrap = false,
+    this.persistKey,
   });
 
   final DatabaseSchema schema;
@@ -116,6 +118,11 @@ class FrozenColumnTable extends StatefulWidget {
 
   /// When set, the trailing "+ New" row becomes interactive.
   final VoidCallback? onCreateRow;
+
+  /// SharedPreferences scope for per-instance state (column widths,
+  /// column order). Conventionally the database id; if null the table
+  /// keeps state in memory only.
+  final String? persistKey;
 
   @override
   State<FrozenColumnTable> createState() => _FrozenColumnTableState();
@@ -161,6 +168,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       cols.insert(idx, dragged);
     }
     setState(() => _columnOrder = cols);
+    _persistOrder();
   }
 
   double _widthFor(ColumnDef c) => _widthOverrides[c.key] ?? _widthForType(c.type);
@@ -170,6 +178,54 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     super.initState();
     _vertLeft.addListener(() => _sync(_vertLeft, _vertRight));
     _vertRight.addListener(() => _sync(_vertRight, _vertLeft));
+    _restorePersisted();
+  }
+
+  String get _widthsKey => 'db.${widget.persistKey}.widths';
+  String get _orderKey => 'db.${widget.persistKey}.colOrder';
+
+  Future<void> _restorePersisted() async {
+    if (widget.persistKey == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final widthsStr = prefs.getStringList(_widthsKey);
+    final order = prefs.getStringList(_orderKey);
+    if (!mounted) return;
+    setState(() {
+      if (widthsStr != null) {
+        _widthOverrides.clear();
+        for (final entry in widthsStr) {
+          final idx = entry.indexOf('=');
+          if (idx <= 0) continue;
+          final k = entry.substring(0, idx);
+          final v = double.tryParse(entry.substring(idx + 1));
+          if (v != null) _widthOverrides[k] = v;
+        }
+      }
+      if (order != null && order.isNotEmpty) _columnOrder = order;
+    });
+  }
+
+  Future<void> _persistWidths() async {
+    if (widget.persistKey == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = [
+      for (final e in _widthOverrides.entries) '${e.key}=${e.value}',
+    ];
+    if (encoded.isEmpty) {
+      await prefs.remove(_widthsKey);
+    } else {
+      await prefs.setStringList(_widthsKey, encoded);
+    }
+  }
+
+  Future<void> _persistOrder() async {
+    if (widget.persistKey == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (_columnOrder == null) {
+      await prefs.remove(_orderKey);
+    } else {
+      await prefs.setStringList(_orderKey, _columnOrder!);
+    }
   }
 
   void _sync(ScrollController src, ScrollController dst) {
@@ -499,9 +555,11 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                       (current + d.delta.dx).clamp(56.0, 720.0);
                 });
               },
-              onDoubleTap: () => setState(() {
-                _widthOverrides.remove(c.key);
-              }),
+              onHorizontalDragEnd: (_) => _persistWidths(),
+              onDoubleTap: () {
+                setState(() => _widthOverrides.remove(c.key));
+                _persistWidths();
+              },
             ),
           ),
         ),

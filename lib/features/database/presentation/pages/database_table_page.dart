@@ -303,6 +303,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       onEditCell: _editCell,
                       onCreateRow: _createRow,
                       wrap: _wrap,
+                      persistKey: widget.dbId,
                     ),
                   ViewType.gallery =>
                     GalleryView(schema: viewSchema, rows: filtered),
