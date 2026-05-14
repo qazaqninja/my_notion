@@ -172,7 +172,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Mentions of people, pages, dates — Pages via `[[ULID]]` + anchor variant (M79). Date pills via inline `@YYYY-MM-DD` (M83 relative-time variants). People mentions 🔮.
 - 🔮 Guest access (per-page) — Needs auth.
 - 🔮 Share permissions (full access, edit, comment, read, no access) — Same.
-- 🚧 Workspace member management — Settings page has a stub section (M11). Local user list ✅ via `.quill.yaml` `users:` (M172). Server-side identity / invites / permissions are 🔮.
+- 🚧 Workspace member management — Settings → Users pane (M188) lists `.quill.yaml` `users:`, lets the user add / remove / toggle the default. Server-side identity / invites / per-page ACLs remain 🔮.
 - 🔮 Groups / permission groups (paid) — Same.
 - ✅ Page-level permissions — M170, frontmatter `permissions: read_only` / `read-only` / `readonly` / `locked` makes the page read-only (case-insensitive). Other values (`private`, `team_only`) are documentation-only — full multi-user enforcement is 🔮.
 - 🔮 Suggest edits / suggestion mode (newer feature) — Needs collaborative branch/PR model.
