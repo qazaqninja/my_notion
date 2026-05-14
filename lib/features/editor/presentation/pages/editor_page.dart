@@ -459,6 +459,7 @@ class _EditorBodyState extends State<_EditorBody> {
               actions: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  _WikiBadge(page: page),
                   _ReminderBadge(page: page),
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -814,6 +815,86 @@ class _EmptyPageHint extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Badge surfaced in the page header when the frontmatter carries
+/// `wiki: true`. Reads `owners:` (list) + `verified:` (ISO date) and
+/// pivots colour by how stale the verification is. Tooltip lists the
+/// owners + verified-at line so editors can see who owns the page at
+/// a glance.
+class _WikiBadge extends StatelessWidget {
+  const _WikiBadge({required this.page});
+  final dynamic page;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final wiki = page.frontmatter.get('wiki');
+    final isWiki = wiki == true || '$wiki'.trim() == 'true';
+    if (!isWiki) return const SizedBox.shrink();
+    final owners = _readList(page.frontmatter.get('owners'));
+    final verifiedRaw = page.frontmatter.get('verified');
+    final verified = verifiedRaw == null
+        ? null
+        : DateTime.tryParse('$verifiedRaw'.trim());
+    final days = verified == null
+        ? null
+        : DateTime.now().difference(verified).inDays;
+    final stale = days != null && days > 90;
+    final fresh = days != null && days <= 14;
+    final fg = stale
+        ? const Color(0xFFCB5A4F)
+        : fresh
+            ? tokens.accent
+            : tokens.text2;
+    final bg = stale
+        ? const Color(0xFFCB5A4F).withValues(alpha: 0.16)
+        : fresh
+            ? tokens.accent.withValues(alpha: 0.16)
+            : tokens.surface2;
+    final label = verified == null
+        ? 'wiki'
+        : stale
+            ? 'wiki · stale'
+            : 'wiki';
+    final tooltip = [
+      if (owners.isNotEmpty) 'Owners: ${owners.join(", ")}',
+      if (verified != null)
+        'Verified ${verified.toIso8601String().substring(0, 10)}'
+            '${days == 0 ? " (today)" : days == 1 ? " (1 day ago)" : " ($days days ago)"}',
+    ].join('\n');
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Tooltip(
+        message: tooltip.isEmpty ? 'Wiki page' : tooltip,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.menu_book_outlined, size: 11, color: fg),
+              const SizedBox(width: 4),
+              Text(label, style: TextStyle(fontSize: 11, color: fg)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static List<String> _readList(dynamic raw) {
+    if (raw == null) return const [];
+    if (raw is List) {
+      return raw.map((e) => '$e'.trim()).where((s) => s.isNotEmpty).toList();
+    }
+    final s = '$raw'.trim();
+    if (s.isEmpty) return const [];
+    return [s];
   }
 }
 
