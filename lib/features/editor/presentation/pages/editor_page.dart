@@ -61,6 +61,12 @@ class _EditorBody extends StatefulWidget {
   State<_EditorBody> createState() => _EditorBodyState();
 }
 
+bool _isFullWidth(dynamic frontmatter) {
+  final v = frontmatter.get('full_width');
+  if (v == true) return true;
+  return '${v ?? ''}'.toLowerCase() == 'true';
+}
+
 class _EditorBodyState extends State<_EditorBody> {
   bool _propertiesOpen = false;
 
@@ -177,7 +183,11 @@ class _EditorBodyState extends State<_EditorBody> {
                       padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 64),
                       child: Center(
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: QuillSpacing.editorMax),
+                          constraints: BoxConstraints(
+                            maxWidth: _isFullWidth(page.frontmatter)
+                                ? double.infinity
+                                : QuillSpacing.editorMax,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
