@@ -335,19 +335,7 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
           child: Container(height: 0.5, color: tokens.divider2),
         );
       case _BlockKind.code:
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 12),
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-          decoration: BoxDecoration(
-            color: tokens.isDark ? const Color(0xFF101010) : const Color(0xFFF0EDE6),
-            border: Border.all(color: tokens.divider2, width: 0.5),
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
-          ),
-          child: SelectableText(
-            b.text,
-            style: mono(fontSize: 12.5, color: tokens.text2),
-          ),
-        );
+        return _CodeBlock(text: b.text);
       case _BlockKind.math:
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1834,6 +1822,108 @@ class _TocLink extends StatelessWidget {
               decoration: TextDecoration.none,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Fenced code block with a hover-revealed copy button. The
+/// language hint (line after the opening ```) is not parsed yet
+/// — text content shows monospace without syntax highlighting.
+class _CodeBlock extends StatefulWidget {
+  const _CodeBlock({required this.text});
+  final String text;
+
+  @override
+  State<_CodeBlock> createState() => _CodeBlockState();
+}
+
+class _CodeBlockState extends State<_CodeBlock> {
+  bool _hover = false;
+  bool _copied = false;
+
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.text));
+    setState(() => _copied = true);
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: tokens.isDark
+              ? const Color(0xFF101010)
+              : const Color(0xFFF0EDE6),
+          border: Border.all(color: tokens.divider2, width: 0.5),
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+        ),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              child: SelectableText(
+                widget.text,
+                style: mono(fontSize: 12.5, color: tokens.text2),
+              ),
+            ),
+            if (_hover || _copied)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 120),
+                  opacity: 1,
+                  child: GestureDetector(
+                    onTap: _copy,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: tokens.surface,
+                          border: Border.all(
+                              color: tokens.divider2, width: 0.5),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _copied ? Icons.check : Icons.copy,
+                              size: 11,
+                              color: _copied
+                                  ? tokens.accent
+                                  : tokens.text3,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _copied ? 'copied' : 'copy',
+                              style: mono(
+                                fontSize: 10.5,
+                                color: _copied
+                                    ? tokens.accent
+                                    : tokens.text3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
