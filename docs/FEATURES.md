@@ -155,7 +155,7 @@ If your feature wants to store something new, the answer is almost always "add a
 ## Search & Navigation
 
 - ✅ Global search (Cmd/Ctrl + P) — M25, ⌘K palette runs FTS5 `MATCH` against `pages_fts` for non-command queries; M85 adds in-page Cmd+F.
-- ✅ Quick find with filters (by author, date, in page) — In-page filter via Cmd+F (M85). Cross-vault chips `db:`, `tag:`, `in:` / `path:` / `folder:` (with optional `@` prefix) in Cmd+K (M164).
+- ✅ Quick find with filters (by author, date, in page) — In-page filter via Cmd+F (M85). M249 adds ⌘G / ⌘⇧G to step to next / previous match without leaving the keyboard. Cross-vault chips `db:`, `tag:`, `in:` / `path:` / `folder:` (with optional `@` prefix) in Cmd+K (M164).
 - ✅ Recent pages — Sidebar Recent section reads drift by `mtime`.
 - ✅ Sidebar with workspaces, favorites, private, shared, teamspaces — Vault tree ✅. Favorites ✅. Sidebar filter (M90), workspace icon picker (M107). Private/shared/teamspaces 🔮.
 - 🔮 Teamspaces (group pages by team) — Multi-user concept.

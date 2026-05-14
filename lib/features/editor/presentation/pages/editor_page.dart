@@ -761,6 +761,20 @@ class _EditorBodyState extends State<_EditorBody> {
                 _openFind(),
             const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
                 _openFind(),
+            const SingleActivator(LogicalKeyboardKey.keyG, meta: true): () {
+              if (_findOpen) _step(1, page.body);
+            },
+            const SingleActivator(LogicalKeyboardKey.keyG, control: true): () {
+              if (_findOpen) _step(1, page.body);
+            },
+            const SingleActivator(LogicalKeyboardKey.keyG,
+                meta: true, shift: true): () {
+              if (_findOpen) _step(-1, page.body);
+            },
+            const SingleActivator(LogicalKeyboardKey.keyG,
+                control: true, shift: true): () {
+              if (_findOpen) _step(-1, page.body);
+            },
             const SingleActivator(LogicalKeyboardKey.escape): () {
               if (_findOpen) _closeFind();
             },

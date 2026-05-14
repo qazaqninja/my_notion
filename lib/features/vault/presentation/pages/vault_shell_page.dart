@@ -300,6 +300,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 const SizedBox(height: 10),
                 _kbSection(tokens, 'Editor'),
                 _kbRow(tokens, '⌘F', 'Find in page'),
+                _kbRow(tokens, '⌘G', 'Find next match'),
+                _kbRow(tokens, '⌘⇧G', 'Find previous match'),
                 _kbRow(tokens, '⌘⇧L', 'Toggle page lock'),
                 _kbRow(tokens, '⌘E', 'Toggle rendered / source'),
                 _kbRow(tokens, '⌘⇧P', 'Toggle properties panel'),
