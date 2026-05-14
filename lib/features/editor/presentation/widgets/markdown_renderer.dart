@@ -1405,6 +1405,35 @@ class _MarkdownImage extends StatelessWidget {
   }
 }
 
+/// Turn an ISO date string into a short relative label. Returns null
+/// when the date doesn't parse. Examples:
+///   today's date           → "today"
+///   yesterday              → "1d ago"
+///   1–6 days earlier       → "Nd ago"
+///   ≥7 days earlier        → "overdue Nd"
+///   tomorrow               → "in 1d"
+///   N days in the future   → "in Nd"
+///   ≥365 days in either dir→ "in Ny" / "Ny ago"
+String? _relativeDateLabel(String iso) {
+  final target = DateTime.tryParse(iso);
+  if (target == null) return null;
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final t = DateTime(target.year, target.month, target.day);
+  final days = t.difference(today).inDays;
+  if (days == 0) return 'today';
+  if (days == 1) return 'in 1d';
+  if (days == -1) return '1d ago';
+  if (days > 0) {
+    if (days < 365) return 'in ${days}d';
+    return 'in ${(days / 365).floor()}y';
+  }
+  final ago = -days;
+  if (ago < 7) return '${ago}d ago';
+  if (ago < 365) return 'overdue ${ago}d';
+  return '${(ago / 365).floor()}y ago';
+}
+
 bool _isImagePath(String src) {
   final lower = src.toLowerCase();
   // Strip query / fragment for URLs.
@@ -2654,23 +2683,46 @@ List<InlineSpan> _buildSpans(
         if (m != null) {
           flushPlain(i);
           final dateStr = m.group(1)!;
+          final rel = _relativeDateLabel(dateStr);
+          final isOverdue = rel != null && rel.startsWith('overdue');
+          final isToday = rel == 'today';
+          final pillBg = isOverdue
+              ? const Color(0xFFCB5A4F).withValues(alpha: 0.18)
+              : isToday
+                  ? tokens.accent.withValues(alpha: 0.18)
+                  : tokens.surface2;
+          final pillFg = isOverdue
+              ? const Color(0xFFCB5A4F)
+              : isToday
+                  ? tokens.accent
+                  : tokens.text2;
           out.add(WidgetSpan(
             alignment: PlaceholderAlignment.middle,
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
-                color: tokens.surface2,
+                color: pillBg,
                 borderRadius: const BorderRadius.all(Radius.circular(3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.calendar_today_outlined,
-                      size: 11, color: tokens.text3),
+                      size: 11,
+                      color:
+                          isOverdue || isToday ? pillFg : tokens.text3),
                   const SizedBox(width: 4),
                   Text(dateStr,
-                      style: mono(fontSize: 11.5, color: tokens.text2)),
+                      style: mono(fontSize: 11.5, color: pillFg)),
+                  if (rel != null) ...[
+                    const SizedBox(width: 4),
+                    Text('· $rel',
+                        style: TextStyle(
+                            fontSize: 10.5,
+                            color: pillFg.withValues(
+                                alpha: isOverdue || isToday ? 0.85 : 0.7))),
+                  ],
                 ],
               ),
             ),
