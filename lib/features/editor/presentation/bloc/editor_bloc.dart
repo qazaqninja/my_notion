@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_parser.dart';
 import '../../../vault/data/indexer.dart';
+import '../../../vault/domain/entities/frontmatter.dart';
+import '../../../vault/domain/entities/frontmatter_entry.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 import 'editor_event.dart';
 import 'editor_state.dart';
@@ -22,6 +25,10 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     on<EditBody>(_onEditBody);
     on<ToggleEditorMode>(_onToggleMode);
     on<SaveNow>(_onSave);
+    on<EditFrontmatterField>(_onEditField);
+    on<AddFrontmatterField>(_onAddField);
+    on<RemoveFrontmatterField>(_onRemoveField);
+    on<ReplaceFrontmatterYaml>(_onReplaceYaml);
   }
 
   final VaultRepository _repo;
@@ -90,6 +97,79 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
   void _scheduleSave() {
     _saveDebounce?.cancel();
     _saveDebounce = Timer(_saveDebounceDuration, () => add(const SaveNow()));
+  }
+
+  Future<void> _onEditField(EditFrontmatterField e, Emitter<EditorState> emit) async {
+    if (state is! EditorLoaded) return;
+    final loaded = state as EditorLoaded;
+    final entries = loaded.page.frontmatter.entries;
+    final i = entries.indexWhere((x) => x.key == e.key);
+    if (i < 0) return;
+    final next = List.of(entries);
+    next[i] = e.newEntry;
+    _emitFrontmatter(loaded, next, emit);
+  }
+
+  Future<void> _onAddField(AddFrontmatterField e, Emitter<EditorState> emit) async {
+    if (state is! EditorLoaded) return;
+    final loaded = state as EditorLoaded;
+    final entries = loaded.page.frontmatter.entries;
+    if (entries.any((x) => x.key == e.entry.key)) return; // duplicate key
+    final next = [...entries, e.entry];
+    _emitFrontmatter(loaded, next, emit);
+  }
+
+  Future<void> _onRemoveField(RemoveFrontmatterField e, Emitter<EditorState> emit) async {
+    if (state is! EditorLoaded) return;
+    if (e.key == 'id') return; // protected
+    final loaded = state as EditorLoaded;
+    final next = [
+      for (final x in loaded.page.frontmatter.entries)
+        if (x.key != e.key) x,
+    ];
+    if (next.length == loaded.page.frontmatter.entries.length) return;
+    _emitFrontmatter(loaded, next, emit);
+  }
+
+  Future<void> _onReplaceYaml(ReplaceFrontmatterYaml e, Emitter<EditorState> emit) async {
+    if (state is! EditorLoaded) return;
+    final loaded = state as EditorLoaded;
+    // Wrap in delimiters so the parser reuses its proven path. The body is
+    // empty — we only care about the frontmatter side.
+    final wrapped = '---\n${e.rawYaml.endsWith('\n') ? e.rawYaml : '${e.rawYaml}\n'}---\n';
+    final parsed = FrontmatterParser.parse(wrapped);
+    if (parsed.frontmatter.isEmpty && e.rawYaml.trim().isNotEmpty) {
+      emit(const EditorError('Invalid YAML'));
+      // Restore the previous state so the user can keep editing.
+      emit(loaded);
+      return;
+    }
+    // Preserve the page id even if the user removed it from the YAML.
+    final currentId = loaded.page.frontmatter.id;
+    final hasId = parsed.frontmatter.entries.any((x) => x.key == 'id');
+    final entries = hasId || currentId == null
+        ? parsed.frontmatter.entries
+        : [
+            FrontmatterEntry(
+              key: 'id',
+              rawScalar: currentId,
+              type: FrontmatterType.ulid,
+              value: currentId,
+            ),
+            ...parsed.frontmatter.entries,
+          ];
+    _emitFrontmatter(loaded, entries, emit);
+  }
+
+  void _emitFrontmatter(
+    EditorLoaded loaded,
+    List<FrontmatterEntry> entries,
+    Emitter<EditorState> emit,
+  ) {
+    final fm = Frontmatter(entries: entries);
+    final updated = loaded.page.copyWith(frontmatter: fm);
+    emit(loaded.copyWith(page: updated, dirty: true));
+    _scheduleSave();
   }
 
   @override

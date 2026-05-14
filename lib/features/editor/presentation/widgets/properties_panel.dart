@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart' hide Page;
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
-import '../../../../shared/widgets/frontmatter_row.dart' as fr;
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/relation_chip.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/domain/entities/frontmatter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart' as fe;
 import '../../../vault/domain/entities/page.dart';
+import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_state.dart';
+import '../bloc/editor_bloc.dart';
+import '../bloc/editor_event.dart';
 
 enum PropertiesView { fields, yaml }
 
@@ -30,6 +36,7 @@ class PropertiesPanel extends StatefulWidget {
 
 class _PropertiesPanelState extends State<PropertiesPanel> {
   PropertiesView _view = PropertiesView.fields;
+  bool _addingField = false;
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +121,9 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                 const Spacer(),
                 IconButton(
                   visualDensity: VisualDensity.compact,
-                  onPressed: () {},
+                  onPressed: _view == PropertiesView.fields
+                      ? () => setState(() => _addingField = true)
+                      : null,
                   padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                   icon: QuillIcon('plus', size: 14, strokeWidth: 1.7, color: tokens.text3),
@@ -149,9 +158,18 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                   const SizedBox(height: 18),
                   Container(height: 0.5, color: tokens.divider),
                   const SizedBox(height: 8),
-                  _actionRow(tokens, 'reveal', 'Reveal in Finder', '⌘⇧R'),
-                  _actionRow(tokens, 'link', 'Copy ULID link', '⌘L'),
-                  _actionRow(tokens, 'export', 'Export .md', ''),
+                  _actionRow(
+                    tokens, 'reveal', 'Reveal in Finder', '⌘⇧R',
+                    onTap: () => _revealPage(context),
+                  ),
+                  _actionRow(
+                    tokens, 'link', 'Copy ULID link', '⌘L',
+                    onTap: () => _copyUlid(context),
+                  ),
+                  _actionRow(
+                    tokens, 'export', 'Export .md', '',
+                    onTap: () => _revealPage(context),
+                  ),
                   _actionRow(tokens, 'trash', 'Move to trash', '⌫'),
                 ],
               ),
@@ -166,23 +184,37 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final entries = widget.page.frontmatter.entries
         .where((e) => e.key != 'id')
         .toList();
-    if (entries.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Text(
-          'No frontmatter on this page',
-          style: TextStyle(fontSize: 13, color: tokens.text3),
-        ),
-      );
-    }
     return Column(
       children: [
+        if (entries.isEmpty && !_addingField)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Text(
+              'No frontmatter on this page',
+              style: TextStyle(fontSize: 13, color: tokens.text3),
+            ),
+          ),
         for (final entry in entries)
-          fr.FrontmatterRow(
-            fieldKey: entry.key,
-            type: _mapType(entry.type),
-            value: entry.value ?? entry.rawScalar,
-            dense: true,
+          _EditableFrontmatterRow(
+            key: ValueKey('fm-${entry.key}'),
+            entry: entry,
+            onChange: (next) => context
+                .read<EditorBloc>()
+                .add(EditFrontmatterField(entry.key, next)),
+            onRemove: () => context
+                .read<EditorBloc>()
+                .add(RemoveFrontmatterField(entry.key)),
+          ),
+        if (_addingField)
+          _AddFieldForm(
+            existingKeys: widget.page.frontmatter.keys.toSet(),
+            onCancel: () => setState(() => _addingField = false),
+            onAdd: (newEntry) {
+              context
+                  .read<EditorBloc>()
+                  .add(AddFrontmatterField(newEntry));
+              setState(() => _addingField = false);
+            },
           ),
       ],
     );
@@ -190,18 +222,12 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
 
   Widget _yamlBody(QuillTokens tokens) {
     final raw = widget.page.frontmatter.rawYaml ?? _regenerate(widget.page.frontmatter);
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: tokens.bg,
-        border: Border.all(color: tokens.divider2, width: 0.5),
-        borderRadius: const BorderRadius.all(Radius.circular(5)),
-      ),
-      child: SelectableText(
-        raw,
-        style: mono(fontSize: 12.5, color: tokens.text2).copyWith(height: 1.6),
-      ),
+    return _YamlEditor(
+      key: ValueKey('yaml-${widget.page.ulid}-${raw.hashCode}'),
+      initial: raw,
+      onSave: (text) => context
+          .read<EditorBloc>()
+          .add(ReplaceFrontmatterYaml(text)),
     );
   }
 
@@ -241,9 +267,34 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     );
   }
 
-  Widget _actionRow(QuillTokens tokens, String icon, String label, String hint) {
+  Future<void> _revealPage(BuildContext context) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final abs = '${vault.rootPath}/${widget.page.relativePath}';
+    await Reveal.show(abs);
+  }
+
+  Future<void> _copyUlid(BuildContext context) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    // Copy via the system clipboard channel.
+    // Using `Clipboard.setData` from package:flutter/services.
+    // (Local import here keeps the rest of the file uncluttered.)
+    // ignore: prefer_const_constructors
+    await ClipboardSetter.set(widget.page.ulid);
+    messenger?.showSnackBar(
+      SnackBar(content: Text('Copied ${widget.page.ulid}'), duration: const Duration(seconds: 2)),
+    );
+  }
+
+  Widget _actionRow(
+    QuillTokens tokens,
+    String icon,
+    String label,
+    String hint, {
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap ?? () {},
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Padding(
@@ -267,16 +318,545 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     );
   }
 
-  fr.FrontmatterDisplayType _mapType(fe.FrontmatterType t) => switch (t) {
-        fe.FrontmatterType.ulid => fr.FrontmatterDisplayType.ulid,
-        fe.FrontmatterType.text => fr.FrontmatterDisplayType.text,
-        fe.FrontmatterType.number => fr.FrontmatterDisplayType.number,
-        fe.FrontmatterType.date => fr.FrontmatterDisplayType.date,
-        fe.FrontmatterType.select => fr.FrontmatterDisplayType.select,
-        fe.FrontmatterType.multi => fr.FrontmatterDisplayType.multi,
-        fe.FrontmatterType.relation => fr.FrontmatterDisplayType.relation,
-        fe.FrontmatterType.checkbox => fr.FrontmatterDisplayType.checkbox,
-        fe.FrontmatterType.formula => fr.FrontmatterDisplayType.formula,
-        fe.FrontmatterType.file => fr.FrontmatterDisplayType.file,
-      };
+}
+
+String _iconForType(fe.FrontmatterType t) => switch (t) {
+      fe.FrontmatterType.ulid => 'hash',
+      fe.FrontmatterType.text => 'note',
+      fe.FrontmatterType.number => 'hash',
+      fe.FrontmatterType.date => 'calendar',
+      fe.FrontmatterType.select => 'select',
+      fe.FrontmatterType.multi => 'tag',
+      fe.FrontmatterType.relation => 'link',
+      fe.FrontmatterType.checkbox => 'checksquare',
+      fe.FrontmatterType.formula => 'code',
+      fe.FrontmatterType.file => 'file',
+    };
+
+String _labelForType(fe.FrontmatterType t) => switch (t) {
+      fe.FrontmatterType.ulid => 'ULID',
+      fe.FrontmatterType.text => 'Text',
+      fe.FrontmatterType.number => 'Number',
+      fe.FrontmatterType.date => 'Date',
+      fe.FrontmatterType.select => 'Select',
+      fe.FrontmatterType.multi => 'Multi',
+      fe.FrontmatterType.relation => 'Relation',
+      fe.FrontmatterType.checkbox => 'Checkbox',
+      fe.FrontmatterType.formula => 'Formula',
+      fe.FrontmatterType.file => 'File',
+    };
+
+/// Inline editor row used in the Fields view. Defers to a type-specific
+/// control: TextField for text/number, calendar-shaped TextField for date,
+/// chip-toggle for checkbox, comma-split for multi.
+class _EditableFrontmatterRow extends StatefulWidget {
+  const _EditableFrontmatterRow({
+    super.key,
+    required this.entry,
+    required this.onChange,
+    required this.onRemove,
+  });
+
+  final fe.FrontmatterEntry entry;
+  final void Function(fe.FrontmatterEntry next) onChange;
+  final VoidCallback onRemove;
+
+  @override
+  State<_EditableFrontmatterRow> createState() => _EditableFrontmatterRowState();
+}
+
+class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
+  late final TextEditingController _controller;
+  late final FocusNode _focus;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _initialText());
+    _focus = FocusNode();
+    _focus.addListener(_onFocusLost);
+  }
+
+  @override
+  void didUpdateWidget(_EditableFrontmatterRow old) {
+    super.didUpdateWidget(old);
+    // External update (e.g. YAML edit replaced this entry) — sync the field
+    // unless the user is mid-edit.
+    if (!_focus.hasFocus && _controller.text != _initialText()) {
+      _controller.text = _initialText();
+    }
+  }
+
+  @override
+  void dispose() {
+    _focus.removeListener(_onFocusLost);
+    _focus.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _initialText() {
+    final v = widget.entry.value;
+    if (v is List) return v.join(', ');
+    if (v == null) return widget.entry.rawScalar;
+    return '$v';
+  }
+
+  void _onFocusLost() {
+    if (_focus.hasFocus) return;
+    _commit(_controller.text);
+  }
+
+  void _commit(String text) {
+    final next = _buildNextEntry(text);
+    if (next == widget.entry &&
+        '${next.value}' == '${widget.entry.value}' &&
+        next.rawScalar == widget.entry.rawScalar) {
+      return;
+    }
+    widget.onChange(next);
+  }
+
+  fe.FrontmatterEntry _buildNextEntry(String text) {
+    final type = widget.entry.type;
+    switch (type) {
+      case fe.FrontmatterType.number:
+        final n = num.tryParse(text.trim());
+        return widget.entry.copyWith(
+          rawScalar: n?.toString() ?? text.trim(),
+          value: n ?? text.trim(),
+        );
+      case fe.FrontmatterType.multi:
+        final parts = [
+          for (final s in text.split(','))
+            if (s.trim().isNotEmpty) s.trim(),
+        ];
+        return widget.entry.copyWith(
+          rawScalar: '[${parts.join(', ')}]',
+          value: parts,
+        );
+      case fe.FrontmatterType.checkbox:
+        final b = text.trim().toLowerCase() == 'true';
+        return widget.entry.copyWith(
+          rawScalar: b ? 'true' : 'false',
+          value: b,
+        );
+      case fe.FrontmatterType.text:
+      case fe.FrontmatterType.date:
+      case fe.FrontmatterType.select:
+      case fe.FrontmatterType.ulid:
+      case fe.FrontmatterType.relation:
+      case fe.FrontmatterType.formula:
+      case fe.FrontmatterType.file:
+        return widget.entry.copyWith(rawScalar: text, value: text);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final type = widget.entry.type;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 96,
+            child: Row(
+              children: [
+                QuillIcon(_iconForType(type), size: 12, strokeWidth: 1.7, color: tokens.text3),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    widget.entry.key,
+                    style: mono(fontSize: 12, color: tokens.text3),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: _input(tokens)),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            onPressed: widget.onRemove,
+            padding: const EdgeInsets.all(2),
+            constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+            icon: QuillIcon('x', size: 11, strokeWidth: 1.7, color: tokens.text3),
+            tooltip: 'Remove field',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _input(QuillTokens tokens) {
+    if (widget.entry.type == fe.FrontmatterType.checkbox) {
+      final on = widget.entry.value == true ||
+          widget.entry.rawScalar.toLowerCase() == 'true';
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: () => widget.onChange(widget.entry.copyWith(
+            rawScalar: on ? 'false' : 'true',
+            value: !on,
+          )),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(
+                color: on ? tokens.accent : Colors.transparent,
+                border: Border.all(color: on ? tokens.accent : tokens.divider2, width: 1),
+                borderRadius: const BorderRadius.all(Radius.circular(3)),
+              ),
+              child: on
+                  ? const Center(
+                      child:
+                          Icon(Icons.check, size: 12, color: Colors.white),
+                    )
+                  : null,
+            ),
+          ),
+        ),
+      );
+    }
+    final isMono = widget.entry.type == fe.FrontmatterType.number ||
+        widget.entry.type == fe.FrontmatterType.date ||
+        widget.entry.type == fe.FrontmatterType.ulid;
+    return TextField(
+      controller: _controller,
+      focusNode: _focus,
+      onSubmitted: _commit,
+      style: isMono
+          ? mono(fontSize: 13, color: tokens.text)
+          : TextStyle(fontSize: 13, color: tokens.text, height: 1.5),
+      decoration: InputDecoration(
+        isCollapsed: true,
+        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+        border: InputBorder.none,
+        hintText: switch (widget.entry.type) {
+          fe.FrontmatterType.date => 'YYYY-MM-DD',
+          fe.FrontmatterType.multi => 'comma-separated',
+          _ => '',
+        },
+        hintStyle: TextStyle(fontSize: 12, color: tokens.text3),
+      ),
+    );
+  }
+}
+
+/// Inline form for the "+" button. Picks a key, a type, and an optional
+/// initial value, then dispatches `AddFrontmatterField`.
+class _AddFieldForm extends StatefulWidget {
+  const _AddFieldForm({
+    required this.existingKeys,
+    required this.onAdd,
+    required this.onCancel,
+  });
+
+  final Set<String> existingKeys;
+  final void Function(fe.FrontmatterEntry entry) onAdd;
+  final VoidCallback onCancel;
+
+  @override
+  State<_AddFieldForm> createState() => _AddFieldFormState();
+}
+
+class _AddFieldFormState extends State<_AddFieldForm> {
+  final _keyCtl = TextEditingController();
+  final _valCtl = TextEditingController();
+  fe.FrontmatterType _type = fe.FrontmatterType.text;
+
+  @override
+  void dispose() {
+    _keyCtl.dispose();
+    _valCtl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final key = _keyCtl.text.trim();
+    if (key.isEmpty || widget.existingKeys.contains(key)) return;
+    final text = _valCtl.text;
+    final entry = switch (_type) {
+      fe.FrontmatterType.number => fe.FrontmatterEntry(
+          key: key,
+          rawScalar: text,
+          type: _type,
+          value: num.tryParse(text.trim()) ?? text.trim(),
+        ),
+      fe.FrontmatterType.checkbox => fe.FrontmatterEntry(
+          key: key,
+          rawScalar: text.trim().toLowerCase() == 'true' ? 'true' : 'false',
+          type: _type,
+          value: text.trim().toLowerCase() == 'true',
+        ),
+      fe.FrontmatterType.multi => fe.FrontmatterEntry(
+          key: key,
+          rawScalar:
+              '[${text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).join(', ')}]',
+          type: _type,
+          value: [
+            for (final s in text.split(','))
+              if (s.trim().isNotEmpty) s.trim(),
+          ],
+        ),
+      _ => fe.FrontmatterEntry(
+          key: key, rawScalar: text, type: _type, value: text),
+    };
+    widget.onAdd(entry);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final duplicate = widget.existingKeys.contains(_keyCtl.text.trim());
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: tokens.surface2,
+        border: Border.all(color: tokens.divider2, width: 0.5),
+        borderRadius: const BorderRadius.all(Radius.circular(6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _keyCtl,
+                  autofocus: true,
+                  onChanged: (_) => setState(() {}),
+                  style: mono(fontSize: 12.5, color: tokens.text),
+                  decoration: const InputDecoration(
+                    isCollapsed: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 6),
+                    border: InputBorder.none,
+                    hintText: 'field key',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              _TypeDropdown(
+                value: _type,
+                onChanged: (t) => setState(() => _type = t),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          TextField(
+            controller: _valCtl,
+            onSubmitted: (_) => _submit(),
+            style: TextStyle(fontSize: 13, color: tokens.text),
+            decoration: InputDecoration(
+              isCollapsed: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 6),
+              border: InputBorder.none,
+              hintText: switch (_type) {
+                fe.FrontmatterType.date => 'YYYY-MM-DD',
+                fe.FrontmatterType.checkbox => 'true / false',
+                fe.FrontmatterType.multi => 'a, b, c',
+                _ => 'value',
+              },
+              hintStyle: TextStyle(fontSize: 12, color: tokens.text3),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              if (duplicate)
+                Text('key exists',
+                    style: TextStyle(fontSize: 11.5, color: tokens.text3)),
+              const Spacer(),
+              GestureDetector(
+                onTap: widget.onCancel,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: Text('Cancel',
+                      style: TextStyle(fontSize: 12.5, color: tokens.text2)),
+                ),
+              ),
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: _keyCtl.text.trim().isEmpty || duplicate ? null : _submit,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _keyCtl.text.trim().isEmpty || duplicate
+                        ? tokens.surface
+                        : tokens.accent,
+                    borderRadius: const BorderRadius.all(Radius.circular(5)),
+                  ),
+                  child: Text(
+                    'Add',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: _keyCtl.text.trim().isEmpty || duplicate
+                          ? tokens.text3
+                          : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TypeDropdown extends StatelessWidget {
+  const _TypeDropdown({required this.value, required this.onChanged});
+  final fe.FrontmatterType value;
+  final void Function(fe.FrontmatterType) onChanged;
+
+  static const _editableTypes = [
+    fe.FrontmatterType.text,
+    fe.FrontmatterType.number,
+    fe.FrontmatterType.date,
+    fe.FrontmatterType.select,
+    fe.FrontmatterType.multi,
+    fe.FrontmatterType.checkbox,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return DropdownButton<fe.FrontmatterType>(
+      value: value,
+      onChanged: (v) {
+        if (v != null) onChanged(v);
+      },
+      isDense: true,
+      underline: const SizedBox.shrink(),
+      style: mono(fontSize: 12, color: tokens.text2),
+      items: [
+        for (final t in _editableTypes)
+          DropdownMenuItem(value: t, child: Text(_labelForType(t))),
+      ],
+    );
+  }
+}
+
+/// Editable raw-YAML textarea with Save / Revert.
+class _YamlEditor extends StatefulWidget {
+  const _YamlEditor({super.key, required this.initial, required this.onSave});
+  final String initial;
+  final void Function(String text) onSave;
+
+  @override
+  State<_YamlEditor> createState() => _YamlEditorState();
+}
+
+class _YamlEditorState extends State<_YamlEditor> {
+  late final TextEditingController _ctl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctl = TextEditingController(text: widget.initial);
+  }
+
+  @override
+  void dispose() {
+    _ctl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final dirty = _ctl.text != widget.initial;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: tokens.bg,
+        border: Border.all(color: tokens.divider2, width: 0.5),
+        borderRadius: const BorderRadius.all(Radius.circular(5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              controller: _ctl,
+              maxLines: null,
+              minLines: 4,
+              onChanged: (_) => setState(() {}),
+              style: mono(fontSize: 12.5, color: tokens.text2).copyWith(height: 1.6),
+              decoration: const InputDecoration.collapsed(hintText: ''),
+            ),
+          ),
+          if (dirty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: tokens.divider, width: 0.5)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  GestureDetector(
+                    onTap: () => setState(() => _ctl.text = widget.initial),
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      child: Text('Revert',
+                          style: TextStyle(fontSize: 12, color: tokens.text2)),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () => widget.onSave(_ctl.text),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: tokens.accent,
+                        borderRadius: const BorderRadius.all(Radius.circular(5)),
+                      ),
+                      child: const Text(
+                        'Apply',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Wrapper around `flutter/services` clipboard. Lives here to keep the
+/// import out of the main panel body.
+class ClipboardSetter {
+  static Future<void> set(String text) async {
+    // We deliberately import services only here to avoid pulling it into
+    // every consumer of this file.
+    // ignore: depend_on_referenced_packages
+    await _platformSet(text);
+  }
+
+  static Future<void> _platformSet(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+  }
 }

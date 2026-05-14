@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../vault/domain/entities/frontmatter_entry.dart';
 import 'editor_state.dart';
 
 sealed class EditorEvent extends Equatable {
@@ -31,4 +32,39 @@ class ToggleEditorMode extends EditorEvent {
 
 class SaveNow extends EditorEvent {
   const SaveNow();
+}
+
+/// Replace a single frontmatter entry by key (preserves position).
+class EditFrontmatterField extends EditorEvent {
+  const EditFrontmatterField(this.key, this.newEntry);
+  final String key;
+  final FrontmatterEntry newEntry;
+  @override
+  List<Object?> get props => [key, newEntry];
+}
+
+/// Append a new entry. No-op if [key] already exists.
+class AddFrontmatterField extends EditorEvent {
+  const AddFrontmatterField(this.entry);
+  final FrontmatterEntry entry;
+  @override
+  List<Object?> get props => [entry];
+}
+
+/// Remove the entry with [key]. No-op if absent. The `id` field is protected
+/// (silently ignored) — it's the page identifier and must remain stable.
+class RemoveFrontmatterField extends EditorEvent {
+  const RemoveFrontmatterField(this.key);
+  final String key;
+  @override
+  List<Object?> get props => [key];
+}
+
+/// Replace the entire YAML block. Parses [rawYaml], rebuilds entries, and
+/// merges back into the page. Emits an EditorError if the YAML is invalid.
+class ReplaceFrontmatterYaml extends EditorEvent {
+  const ReplaceFrontmatterYaml(this.rawYaml);
+  final String rawYaml;
+  @override
+  List<Object?> get props => [rawYaml];
 }
