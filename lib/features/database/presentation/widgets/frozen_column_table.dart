@@ -127,6 +127,12 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   bool _syncing = false;
   final Map<String, _Agg> _aggs = {};
 
+  /// Per-column width overrides. Survives view switches within the same
+  /// table-page session but isn't persisted to .database.yaml yet.
+  final Map<String, double> _widthOverrides = {};
+
+  double _widthFor(ColumnDef c) => _widthOverrides[c.key] ?? _widthForType(c.type);
+
   @override
   void initState() {
     super.initState();
@@ -154,7 +160,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final cols = widget.schema.columns;
-    final scrollWidth = cols.fold<double>(0, (a, c) => a + _widthForType(c.type));
+    final scrollWidth = cols.fold<double>(0, (a, c) => a + _widthFor(c));
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -316,25 +322,59 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   }
 
   Widget _colHeader(ColumnDef c, QuillTokens tokens, bool isLast) {
-    return Container(
-      width: _widthForType(c.type),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      alignment: c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft,
-      decoration: BoxDecoration(
-        border: isLast ? null : Border(right: BorderSide(color: tokens.divider, width: 0.5)),
-      ),
-      child: Row(
-        mainAxisAlignment: c.type == ColumnType.number
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        children: [
-          QuillIcon(_iconForType(c.type), size: 11, strokeWidth: 1.7, color: tokens.text3),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(c.key, style: mono(fontSize: 11.5, color: tokens.text3), overflow: TextOverflow.ellipsis),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: _widthFor(c),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          alignment:
+              c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft,
+          decoration: BoxDecoration(
+            border: isLast
+                ? null
+                : Border(right: BorderSide(color: tokens.divider, width: 0.5)),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisAlignment: c.type == ColumnType.number
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+            children: [
+              QuillIcon(_iconForType(c.type),
+                  size: 11, strokeWidth: 1.7, color: tokens.text3),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(c.key,
+                    style: mono(fontSize: 11.5, color: tokens.text3),
+                    overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+        ),
+        // Right-edge drag handle. 6px wide, transparent fill, resize cursor.
+        Positioned(
+          right: -3,
+          top: 0,
+          bottom: 0,
+          width: 6,
+          child: MouseRegion(
+            cursor: SystemMouseCursors.resizeColumn,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragUpdate: (d) {
+                setState(() {
+                  final current = _widthFor(c);
+                  _widthOverrides[c.key] =
+                      (current + d.delta.dx).clamp(56.0, 720.0);
+                });
+              },
+              onDoubleTap: () => setState(() {
+                _widthOverrides.remove(c.key);
+              }),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -367,7 +407,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       );
     }
     return Container(
-      width: _widthForType(c.type),
+      width: _widthFor(c),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       alignment: align,
       decoration: BoxDecoration(
@@ -415,7 +455,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
-          width: _widthForType(c.type),
+          width: _widthFor(c),
           padding: const EdgeInsets.symmetric(horizontal: 10),
           alignment: c.type == ColumnType.number
               ? Alignment.centerRight
