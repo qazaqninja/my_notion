@@ -2930,11 +2930,16 @@ List<InlineSpan> _buildSpans(
       final end = text.indexOf('`', i + 1);
       if (end != -1 && end > i + 1 && !text.substring(i + 1, end).contains('\n')) {
         flushPlain(i);
+        final code = text.substring(i + 1, end);
         out.add(TextSpan(
-          text: text.substring(i + 1, end),
+          text: code,
           style: mono(fontSize: 13.5, color: tokens.text).copyWith(
             backgroundColor: tokens.surface2,
           ),
+          // Click to copy — quick affordance for snippets in notes.
+          recognizer: TapGestureRecognizer()
+            ..onTap = () => Clipboard.setData(ClipboardData(text: code)),
+          mouseCursor: SystemMouseCursors.click,
         ));
         i = end + 1;
         committed = i;
