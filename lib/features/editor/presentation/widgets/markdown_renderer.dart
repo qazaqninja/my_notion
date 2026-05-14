@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/wikilink_parser.dart';
@@ -138,6 +139,21 @@ class MarkdownRenderer extends StatelessWidget {
             style: mono(fontSize: 12.5, color: tokens.text2),
           ),
         );
+      case _BlockKind.math:
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Center(
+            child: Math.tex(
+              b.text,
+              mathStyle: MathStyle.display,
+              textStyle: TextStyle(fontSize: 16, color: tokens.text),
+              onErrorFallback: (err) => Text(
+                b.text,
+                style: mono(fontSize: 12.5, color: tokens.text3),
+              ),
+            ),
+          ),
+        );
     }
   }
 
@@ -162,6 +178,33 @@ class MarkdownRenderer extends StatelessWidget {
         }
         out.add(_Block(kind: _BlockKind.code, text: buf.toString()));
         if (i < lines.length) i++; // skip closing ```
+        continue;
+      }
+
+      // Math fence  $$ ... $$
+      if (line.startsWith(r'$$')) {
+        // Inline same-line form: `$$ x = 1 $$`
+        final stripped = line.substring(2);
+        final closeIdx = stripped.lastIndexOf(r'$$');
+        if (closeIdx >= 0) {
+          out.add(_Block(
+            kind: _BlockKind.math,
+            text: stripped.substring(0, closeIdx).trim(),
+          ));
+          i++;
+          continue;
+        }
+        // Block form: collect until next `$$` line.
+        final buf = StringBuffer();
+        if (stripped.isNotEmpty) buf.write(stripped);
+        i++;
+        while (i < lines.length && !lines[i].trim().startsWith(r'$$')) {
+          if (buf.isNotEmpty) buf.write('\n');
+          buf.write(lines[i]);
+          i++;
+        }
+        out.add(_Block(kind: _BlockKind.math, text: buf.toString().trim()));
+        if (i < lines.length) i++;
         continue;
       }
 
@@ -217,6 +260,7 @@ class MarkdownRenderer extends StatelessWidget {
 
   static bool _isBlockStart(String line) =>
       line.startsWith('```') ||
+      line.startsWith(r'$$') ||
       line.startsWith('# ') ||
       line.startsWith('## ') ||
       line.startsWith('### ') ||
@@ -307,7 +351,7 @@ class _Block {
   final List<String>? items;
 }
 
-enum _BlockKind { h1, h2, h3, paragraph, ul, code }
+enum _BlockKind { h1, h2, h3, paragraph, ul, code, math }
 
 /// Render a paragraph with `[[ULID]]` segments turned into [RelationChip]s.
 /// Titles are resolved from drift's `pages` table at build time.
