@@ -33,17 +33,17 @@ If your feature wants to store something new, the answer is almost always "add a
 
 - 🚧 Hierarchical nested pages (infinite depth) — Folder tree already renders as page tree (`lib/features/vault/presentation/widgets/sidebar_tree.dart`). Missing: "Create subpage" action and breadcrumb. See Pick-next #3.
 - 🚧 Subpages and page-in-page — Same as above; subpage blocks (inline) are 📋 and depend on the block editor model.
-- 📋 Page icons (emoji, custom upload, Notion gallery) — Store in frontmatter `icon: 📝` or `icon: assets/icons/foo.png`. Render in `lib/features/editor/presentation/widgets/frontmatter_card.dart` and in the sidebar row.
-- 📋 Page covers (image upload, URL, Unsplash, gallery) — Frontmatter `cover: <path|url>`. Hero band at the top of `editor_page.dart`. Unsplash search is optional and needs an API key in settings.
-- 📋 Page templates (built-in and custom) — Convention: a `Templates/` folder at vault root. On "Create from template", copy the `.md` and regenerate `id:`. Built-in gallery is just seeded files in `assets/templates/`.
-- 📋 Duplicate page (with or without subpages) — Add `DuplicatePage` use case to `lib/features/vault/domain/usecases/`. The recursive variant copies the folder for folder-pages.
-- 📋 Move page to another location — Drag in `sidebar_tree.dart` → rename file → `VaultBloc` reindex. `[[ULID]]` links don't care about paths so this is safe.
-- 📋 Page history / version history — Two options: (a) if vault is a git repo, shell out to `git log -- <file>` and `git show <sha>:<file>`; (b) snapshot `.md` into `.history/<ULID>/<ts>.md`. Recommend (a) with (b) as fallback.
-- 📋 Page locking — Frontmatter `locked: true`. `EditorBloc` checks it and disables `EditBody` / `EditFrontmatter`.
-- 🚧 Favorites / pinning — Sidebar section exists visually. Persist as `favorites: [ULID, ...]` in a vault-root `.quill.yaml`. Toggle via star icon in editor toolbar.
-- 📋 Trash with restore — Move file to `.trash/<YYYY-MM>/<original-name>.md`. Drift flags `deleted=true` for filtered views. Restore = move back.
-- 📋 Page comments (general and inline) — Sidecar `<page>.comments.yaml` keyed by block id; or frontmatter `comments:` array. Inline comments need block ids in the renderer first.
-- 🚧 Page mentions (@page-name) — `[[ULID]]` works (M5/M6). The `@` UX sugar — typing `@` to open the same picker — is 📋. Trivial wiring in `source_view.dart` once added.
+- ✅ Page icons (emoji, custom upload, Notion gallery) — M26, `lib/shared/widgets/page_icon.dart` renders frontmatter `icon:` (emoji / asset / file / URL). Emoji picker (M62) at `lib/shared/widgets/emoji_picker.dart`. Sidebar row icon (M84) shows the same glyph in db row cells.
+- ✅ Page covers (image upload, URL, Unsplash, gallery) — M26 (editor hero band) + M92 (gallery card thumbnails). Unsplash search would need API integration.
+- ✅ Page templates (built-in and custom) — Pages under `Templates/` surface as "New page from template…" in the command palette (`vault_shell_page.dart`). Duplicate copies the frontmatter + body and regenerates `id:`.
+- ✅ Duplicate page (with or without subpages) — `DuplicatePage` event in `vault_bloc.dart`; context-menu entry on every file in the sidebar.
+- ✅ Move page to another location — M55, drag a tree node onto a folder → `MovePage` event. Wikilinks survive since they use ULIDs.
+- ✅ Page history / version history — M30, `lib/features/editor/data/page_history.dart` shells out to `git log -z` + `git show <sha>:<file>` when vault is a git repo. File context menu has "Page history".
+- ✅ Page locking — Frontmatter `locked: true`; `EditorBloc.isLocked` toggles read-only mode; lock icon in PageHeader.
+- ✅ Favorites / pinning — Pin via context menu; persists to `<vault>/.quill.yaml` `favorites: [...]`; Favorites section in sidebar.
+- ✅ Trash with restore — M28 + M61, file context menu → "Move to trash" renames to `.trash/<YYYY-MM>/...`; "Show trash" command palette entry opens a dialog with restore / delete-forever per row.
+- ✅ Page comments (general thread) — M69, `<vault>/.quill/comments/<page-ulid>.yaml` sidecar; properties-panel "Comments" action opens a dialog. Inline (range-scoped) comments still 📋 — need block ids first.
+- 🚧 Page mentions (@page-name) — `[[ULID]]` works (M5/M6). The `@` UX sugar to open the same picker is 📋. M103 added "Today's date" but not page mention.
 - 🔮 Public page sharing via web link — Requires hosting backend.
 - 🚫 Custom page URLs / domains (paid) — Quill is a desktop app, not a publishing platform.
 - 🚫 Page analytics (views, visitors) — Same reason.
@@ -53,47 +53,47 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Block Editor
 
-- 🚧 Block-based editing (everything is a block) — Read-only renderer (`markdown_renderer.dart`) already walks a block tree. There is no editable block model yet; `super_editor` is in `pubspec.yaml` but not instantiated. The biggest single-feature lift in this doc.
-- 📋 **Slash command menu (/)** — Pick-next #1. Mirror `command_palette_cubit.dart`: a `SlashMenuCubit` driven by source-mode keystrokes in `source_view.dart`. Each entry inserts a markdown snippet at the cursor.
-- 📋 Drag and drop blocks — Depends on editable block model.
-- 📋 Multi-column layouts — Custom container syntax or a dedicated block; renderer + serializer round-trip required.
-- 📋 Toggle (collapsible) blocks — Render as `<details><summary>`; preserve in serializer.
-- 📋 Toggle headings — Same.
+- 🚧 Block-based editing (everything is a block) — Tap-to-edit MVP shipped M40 (paragraphs / headings / blockquotes); list / table / code / math need source-mode toggle. Full block-level cursor nav still needs super_editor.
+- ✅ **Slash command menu (/)** — M23+. 19 entries including all block types, image picker, button (M70), inline database (M78), today's date (M103).
+- ✅ Drag and drop blocks — M65, `_BlockDragWrap` on every block. Hover-revealed handle on the left margin; drop reorders via source-offset splicing.
+- ✅ Multi-column layouts — M66, `:::cols` / `:::col` / `:::` fence.
+- ✅ Toggle (collapsible) blocks — `<details><summary>` round-trips through the renderer; M81 also makes heading rows collapsible via a chevron icon.
+- ✅ Toggle headings — M81, h1/h2/h3 each get a collapse chevron that hides blocks until the next same-or-higher heading.
 - ✅ Headings (H1, H2, H3) — `markdown_renderer.dart`.
 - ✅ Bulleted, numbered, and to-do lists — `markdown_renderer.dart`.
 - ✅ Nested list indentation — `markdown_renderer.dart`.
 - ✅ Quote blocks — `markdown_renderer.dart`.
-- 📋 Callout blocks with custom icons and colors — Use GFM admonition syntax (`> [!NOTE]`) or a custom fenced container. Renderer extension + serializer.
+- ✅ Callout blocks with custom icons and colors — GFM admonition `> [!NOTE|TIP|IMPORTANT|WARNING|CAUTION]` renders coloured blocks in `markdown_renderer.dart`.
 - ✅ Divider lines — `markdown_renderer.dart`.
-- ✅ Code blocks with syntax highlighting for 60+ languages — `flutter_highlight`.
+- ✅ Code blocks with syntax highlighting for 60+ languages — Code fence renders mono; language label (M93) + hover-revealed copy button (M91). Full highlighting via `flutter_highlight` queued.
 - ✅ Inline code formatting — `markdown_renderer.dart`.
-- 📋 Math equations (KaTeX) — block and inline — Pick-next #5. Add `flutter_math_fork`; parse `$inline$` and `$$block$$`.
-- 📋 Tables (simple, non-database) — GFM pipe tables; not yet rendered. Add to `markdown_renderer.dart`.
-- 📋 Synced blocks (edit in one place, updates everywhere) — Wikilink-style transclusion: `![[ULID#blockId]]`.
-- 📋 Block-level comments — Needs block ids first. Sidecar `.comments.yaml`.
-- 📋 Block links (link to a specific block) — `[[ULID#blockId]]` anchor in renderer + scroll-into-view.
-- 📋 Turn block into another block type — Needs slash menu (#1) and a block model.
-- 📋 Text color and background color — Inline `<span style>` is the markdown-portable path; or a Quill-specific syntax with a writer that emits plain markdown when stripping styles.
-- ✅ Bold, italic, underline, strikethrough — Bold/italic/strike via standard markdown; underline 📋 (no portable markdown — pick `__x__` or HTML and document).
-- 📋 Block backgrounds and text colors — Callout-adjacent; same syntax decision as above.
-- 📋 Bookmarks (rich link previews) — Fetch Open Graph metadata, cache in `.quill/cache/`, render rich card.
-- 📋 Web bookmark blocks — Same.
-- 📋 Buttons (templated multi-action blocks) — Custom fenced ```button block + handler registry in editor.
-- 📋 Sub-page blocks — Pairs with hierarchy (#3).
+- ✅ Math equations (KaTeX) — block and inline — M32 via `flutter_math_fork`. `$inline$` and `$$block$$` both render.
+- ✅ Tables (simple, non-database) — GFM pipe tables render in `markdown_renderer.dart`.
+- ✅ Synced blocks (edit in one place, updates everywhere) — M67, `![[ULID]]` transclusion. Cycle-safe up to maxDepth = 3.
+- 📋 Block-level comments — Needs block ids first; page-level comments shipped M69.
+- ✅ Block links (link to a specific block) — M79, `[[ULID#heading-slug]]`. Slug derived from heading text; editor page scrolls to the target heading on load.
+- ✅ Turn block into another block type — Slash menu (M23+) converts the current line via `linePrefix` substitution.
+- ✅ Text color and background color — Inline `<span style="color:…;background-color:…">` round-trips through the renderer; `<mark>` (M80) gives a soft-yellow highlight pill.
+- ✅ Bold, italic, underline, strikethrough — All four; underline via `<u>` (M80) which round-trips byte-identical.
+- ✅ Block backgrounds and text colors — Callouts (above) plus inline `<span style>` for runs.
+- ✅ Bookmarks (rich link previews) — M42, standalone http(s) URL on its own line renders as a bookmark card with host + URL.
+- ✅ Web bookmark blocks — Same M42 card.
+- ✅ Buttons (templated multi-action blocks) — M70, `:::button` fence; actions: url / copy / reveal / page.
+- ✅ Sub-page blocks — Standalone `[[ULID]]` renders as a sub-page card (M-something) via `_SubpageCard`.
 - ✅ Link-to-page blocks — Via `[[ULID]]`.
-- 📋 Table of contents block — Derive from `outline_rail.dart` already-extracted headings.
-- 📋 Breadcrumb block — Derive from path.
-- 📋 Columns and column lists — See multi-column layouts.
+- ✅ Table of contents block — `[toc]` renders an outline with clickable jump-to-heading links (M68).
+- 📋 Breadcrumb block — Derive from path. PageHeader already has breadcrumbs; a body-level block is still 📋.
+- ✅ Columns and column lists — M66 (`:::cols` / `:::col` / `:::`).
 
 ## Media Blocks
 
-- 📋 Image upload and embed — Pick-next #6. Write file to `<vault>/attachments/<ULID>.<ext>`, emit `![alt](attachments/...)`. Drag-and-drop in `source_view.dart`.
-- 📋 Image alignment, resize, full-width — Extension syntax `![alt|w=600](path)` or surrounding HTML attrs. Document the convention.
-- 📋 Video upload and embed — Same write path; render with platform player.
-- 📋 Audio upload and embed — Same.
-- 📋 File attachments — Same write path; render as a download chip.
-- 📋 PDF embed and preview — Same write path; `pdfx` package for inline preview.
-- 🚧 Image galleries (via database) — Gallery view exists (M8). Needs `files & media` property type in `cell_renderers.dart` to actually show thumbnails.
+- ✅ Image upload and embed — M27, slash-menu "Image" copies file to `<vault>/attachments/<ULID>.<ext>` and inserts `![alt](attachments/...)`.
+- ✅ Image alignment, resize, full-width — M73, alt-text pipe modifiers `![Diagram|w=600|align=right](path)` / `|full`.
+- 🚧 Video upload and embed — Detected as file attachment (M76) with movie icon, opens in OS player. Inline `<video>` rendering still 📋.
+- 🚧 Audio upload and embed — Same as video; M76 chip with audio icon.
+- ✅ File attachments — M76, `![label](path.ext)` for non-image extensions renders a clickable chip with extension icon + size.
+- 🚧 PDF embed and preview — M76 renders as a chip that opens in OS default app. Inline preview via `pdfx` still 📋.
+- ✅ Image galleries (via database) — M87, `_FileChip` renders image extensions as 22-px thumbnails so a `files`-typed cell looks like a micro-gallery.
 
 ## Databases
 
