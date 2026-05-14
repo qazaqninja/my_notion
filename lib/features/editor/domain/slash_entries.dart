@@ -191,6 +191,14 @@ const List<SlashEntry> kSlashEntries = [
     cursorOffset: 17, // start of label text after "label: "
     keywords: ['button', 'action', 'link', 'url', 'click'],
   ),
+  SlashEntry(
+    icon: 'table',
+    label: 'Inline database',
+    hint: '⫼',
+    snippet: ':::db Customers\n:::\n',
+    cursorOffset: 6, // after ":::db " ready for folder name
+    keywords: ['db', 'database', 'inline', 'table', 'embed'],
+  ),
 ];
 
 /// Filter the catalog by [query] (case-insensitive). Empty query returns all.

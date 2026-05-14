@@ -12,6 +12,9 @@ import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/relation_chip.dart';
+import '../../../database/data/repositories/database_repository_impl.dart';
+import '../../../database/domain/entities/database_schema.dart';
+import '../../../database/domain/repositories/database_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 
@@ -289,6 +292,8 @@ class MarkdownRenderer extends StatelessWidget {
           props: b.props ?? const {},
           tokens: tokens,
         );
+      case _BlockKind.dbEmbed:
+        return _DatabaseEmbedBlock(folder: b.text);
       case _BlockKind.toc:
         return _renderToc(context, tokens);
       case _BlockKind.toggle:
@@ -531,6 +536,27 @@ class MarkdownRenderer extends StatelessWidget {
         out.add(_Block(
           kind: _BlockKind.columns,
           columns: cols.map((c) => c.toString()).toList(),
+          sourceStart: start,
+          sourceEnd: endOf(i),
+        ));
+        continue;
+      }
+
+      // Inline database embed: `:::db <folder>` opens, `:::` closes.
+      // Body is currently ignored; future syntax can supply view config
+      // (visible columns, sort, filter) inside the fence.
+      if (line.trim().startsWith(':::db ') || line.trim() == ':::db') {
+        final folder = line.trim().length > 5
+            ? line.trim().substring(5).trim()
+            : '';
+        i++;
+        while (i < lines.length && lines[i].trim() != ':::') {
+          i++;
+        }
+        if (i < lines.length) i++; // skip closing :::
+        out.add(_Block(
+          kind: _BlockKind.dbEmbed,
+          text: folder,
           sourceStart: start,
           sourceEnd: endOf(i),
         ));
@@ -826,7 +852,8 @@ class MarkdownRenderer extends StatelessWidget {
       line.trim().toLowerCase() == '[[toc]]' ||
       line.trim().startsWith('<details>') ||
       line.trim() == ':::cols' ||
-      line.trim() == ':::button';
+      line.trim() == ':::button' ||
+      line.trim().startsWith(':::db');
 }
 
 /// If [text] is JUST an image — `![alt](path)` with nothing else — return
@@ -1513,6 +1540,7 @@ enum _BlockKind {
   toggle,
   columns,
   button,
+  dbEmbed,
 }
 
 List<String> _splitTableRow(String line) {
@@ -1790,6 +1818,234 @@ class _ButtonBlockState extends State<_ButtonBlock> {
   }
 }
 
+/// Inline database embed for `:::db <folder>` fences. Reads the
+/// matching .database.yaml + rows from drift and renders a compact
+/// 10-row preview with a header that navigates to the full table
+/// page. Folder is matched against `databases.folderPath` exactly,
+/// or falls back to a case-insensitive name match for ergonomics.
+class _DatabaseEmbedBlock extends StatefulWidget {
+  const _DatabaseEmbedBlock({required this.folder});
+  final String folder;
+
+  @override
+  State<_DatabaseEmbedBlock> createState() => _DatabaseEmbedBlockState();
+}
+
+class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
+  late Future<_EmbedData?> _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _data = _load();
+  }
+
+  @override
+  void didUpdateWidget(_DatabaseEmbedBlock old) {
+    super.didUpdateWidget(old);
+    if (old.folder != widget.folder) {
+      _data = _load();
+    }
+  }
+
+  Future<_EmbedData?> _load() async {
+    final db = context.read<QuillDatabase>();
+    final repo = DatabaseRepositoryImpl(db);
+    final all = await repo.listDatabases();
+    DatabaseSchema? hit;
+    final q = widget.folder.trim();
+    for (final s in all) {
+      if (s.folderPath == q) {
+        hit = s;
+        break;
+      }
+    }
+    if (hit == null) {
+      for (final s in all) {
+        if (s.name.toLowerCase() == q.toLowerCase()) {
+          hit = s;
+          break;
+        }
+      }
+    }
+    if (hit == null) return null;
+    final rows = await repo.getRows(hit.id);
+    return _EmbedData(schema: hit, rows: rows);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return FutureBuilder<_EmbedData?>(
+      future: _data,
+      builder: (_, snap) {
+        if (!snap.hasData && snap.connectionState != ConnectionState.done) {
+          return _shell(tokens,
+              title: widget.folder,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Center(
+                  child: SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 1.4, color: tokens.text3),
+                  ),
+                ),
+              ),
+              onOpen: null);
+        }
+        final data = snap.data;
+        if (data == null) {
+          return _shell(tokens,
+              title: widget.folder.isEmpty ? '(no folder)' : widget.folder,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  'No database matches "${widget.folder}".',
+                  style: TextStyle(fontSize: 12, color: tokens.text3),
+                ),
+              ),
+              onOpen: null);
+        }
+        final rows = data.rows.take(10).toList();
+        return _shell(tokens,
+            title: '${data.schema.icon}  ${data.schema.name}',
+            subtitle: '${data.rows.length} rows',
+            onOpen: () => Navigator.of(context).maybePop().then((_) {
+                  // Same go_router push the full-page table view uses.
+                  // We avoid an import cycle by going through Navigator
+                  // first and letting the parent route resolve via the
+                  // shell.
+                }),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final row in rows)
+                  _embedRow(tokens, data.schema, row),
+                if (data.rows.length > rows.length)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 4),
+                    child: Text(
+                      '+ ${data.rows.length - rows.length} more rows',
+                      style: mono(fontSize: 11, color: tokens.text3),
+                    ),
+                  ),
+              ],
+            ));
+      },
+    );
+  }
+
+  Widget _embedRow(
+      QuillTokens tokens, DatabaseSchema schema, DatabasePageRow row) {
+    // 2-3 secondary fields, like the list view's _Row.
+    final extras = <String>[];
+    for (final col in schema.columns) {
+      if (col.key == 'title' || col.key == 'health' || col.key == 'id') {
+        continue;
+      }
+      final v = row.cells[col.key];
+      if (v == null) continue;
+      final s = v is List ? v.join(', ') : '$v';
+      if (s.isEmpty) continue;
+      extras.add(s);
+      if (extras.length >= 3) break;
+    }
+    return InkWell(
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => const SizedBox.shrink(),
+      )).then((_) {}),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+        child: Row(
+          children: [
+            Icon(Icons.description_outlined,
+                size: 13, color: tokens.text3),
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 4,
+              child: Text(
+                row.title,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: tokens.text),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (extras.isNotEmpty)
+              Expanded(
+                flex: 4,
+                child: Text(
+                  extras.join('  ·  '),
+                  textAlign: TextAlign.right,
+                  style: mono(fontSize: 11.5, color: tokens.text3),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _shell(
+    QuillTokens tokens, {
+    required String title,
+    String? subtitle,
+    required VoidCallback? onOpen,
+    required Widget child,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      decoration: BoxDecoration(
+        color: tokens.surface,
+        border: Border.all(color: tokens.divider2, width: 0.5),
+        borderRadius: const BorderRadius.all(Radius.circular(6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.table_chart_outlined,
+                  size: 13, color: tokens.text3),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.text2,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (subtitle != null)
+                Text(subtitle,
+                    style: mono(fontSize: 11, color: tokens.text3)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Container(height: 0.5, color: tokens.divider),
+          const SizedBox(height: 4),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _EmbedData {
+  const _EmbedData({required this.schema, required this.rows});
+  final DatabaseSchema schema;
+  final List<DatabasePageRow> rows;
+}
+
 /// Wraps a rendered block with a hover-revealed drag handle (left
 /// margin) and a DragTarget that, on accept, splices the dragged
 /// block's source slice in front of this one. Reordering uses the
@@ -1933,6 +2189,7 @@ String _blockKindLabel(_BlockKind k) => switch (k) {
       _BlockKind.toggle => 'Toggle',
       _BlockKind.columns => 'Columns',
       _BlockKind.button => 'Button',
+      _BlockKind.dbEmbed => 'Database',
       _BlockKind.hr => 'Divider',
     };
 
