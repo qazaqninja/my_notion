@@ -70,6 +70,22 @@ class _EditorBody extends StatefulWidget {
   State<_EditorBody> createState() => _EditorBodyState();
 }
 
+/// "saved Xs ago" / "Xm ago" / "Xh ago" / "Xd ago" / "now" — formats a
+/// timestamp from frontmatter mtime to a tiny relative string the page
+/// header can show without a Timer (cached per build is good enough).
+String _relativeMtime(int mtimeMs) {
+  final now = DateTime.now().millisecondsSinceEpoch;
+  final secs = ((now - mtimeMs) ~/ 1000).clamp(0, 1 << 30);
+  if (secs < 5) return 'just now';
+  if (secs < 60) return '${secs}s ago';
+  final mins = secs ~/ 60;
+  if (mins < 60) return '${mins}m ago';
+  final hrs = mins ~/ 60;
+  if (hrs < 24) return '${hrs}h ago';
+  final days = hrs ~/ 24;
+  return '${days}d ago';
+}
+
 /// Heading slug: lowercase, runs of non-word collapsed to `-`, trimmed.
 /// Mirrors the common GFM heading-anchor convention.
 String _slugify(String s) {
@@ -424,14 +440,15 @@ class _EditorBodyState extends State<_EditorBody> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _ReminderBadge(page: page),
-                  if (loaded.dirty)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Text(
-                        loaded.saving ? 'saving…' : 'unsaved',
-                        style: mono(fontSize: 11, color: tokens.text3),
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Text(
+                      loaded.dirty
+                          ? (loaded.saving ? 'saving…' : 'unsaved')
+                          : 'saved ${_relativeMtime(page.mtimeMs)}',
+                      style: mono(fontSize: 11, color: tokens.text3),
                     ),
+                  ),
                   IconButton(
                     visualDensity: VisualDensity.compact,
                     onPressed: () => _toggleLock(context, loaded),
