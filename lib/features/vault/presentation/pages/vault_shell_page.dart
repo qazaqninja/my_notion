@@ -364,6 +364,22 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  Future<void> _openRandomPage(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final router = GoRouter.of(context);
+    final rows = await (db.select(db.pages)).get();
+    if (rows.isEmpty) {
+      messenger?.showSnackBar(const SnackBar(
+        content: Text('No pages to pick from yet.'),
+      ));
+      return;
+    }
+    final pick =
+        rows[(DateTime.now().microsecondsSinceEpoch % rows.length).abs()];
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _promptAndBookmarkUrl(
       BuildContext context, String vaultPath) async {
     final controller = TextEditingController();
@@ -558,6 +574,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
           return;
         }
         await _promptAndBookmarkUrl(context, vaultPath);
+      case 'Open random page':
+        await _openRandomPage(context);
       case "Open today's daily note":
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));

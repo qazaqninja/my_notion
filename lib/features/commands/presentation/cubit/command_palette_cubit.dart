@@ -203,6 +203,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'Quick capture', hint: '⌘.'),
     CommandEntry(group: CommandGroup.actions, icon: 'calendar', label: "Open today's daily note", hint: '⌘⇧N'),
     CommandEntry(group: CommandGroup.actions, icon: 'link', label: 'Bookmark a URL', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'sync', label: 'Open random page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'reveal', label: 'Reveal vault in Finder', hint: '⌘⇧R'),
     CommandEntry(group: CommandGroup.actions, icon: 'export', label: 'Export vault to folder', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'sync', label: 'Reindex vault', hint: '⌘R'),
