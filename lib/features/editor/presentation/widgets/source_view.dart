@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../relations/presentation/cubit/relation_picker_cubit.dart';
 import '../../../relations/presentation/widgets/relation_picker_overlay.dart';
@@ -529,7 +530,28 @@ class _SourceViewState extends State<SourceView> {
           selection:
               TextSelection.collapsed(offset: stripStart + snippet.length),
         );
+      case SlashAction.pickEmoji:
+        // Strip the `/...` trigger first so the picker opens with a
+        // clean caret position.
+        final cleared = text.replaceRange(stripStart, caret, '');
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart),
+        );
+        await _pickAndInsertEmoji(stripStart);
     }
+  }
+
+  Future<void> _pickAndInsertEmoji(int insertAt) async {
+    final picked = await pickEmoji(context);
+    if (picked == null || picked.isEmpty) return;
+    final t = _controller.text;
+    final at = insertAt.clamp(0, t.length);
+    final newText = t.replaceRange(at, at, picked);
+    _controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: at + picked.length),
+    );
   }
 
   Future<void> _insertDailyNoteLink(int insertAt) async {

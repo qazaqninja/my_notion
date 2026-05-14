@@ -45,6 +45,13 @@ void main() {
       expect(btn.snippet, contains('action:'));
       expect(btn.snippet, endsWith(':::\n'));
     });
+
+    test('Emoji entry routes through SlashAction.pickEmoji', () {
+      final out = filterSlashEntries('emoji');
+      expect(out, isNotEmpty);
+      final em = out.firstWhere((e) => e.label == 'Emoji…');
+      expect(em.action, SlashAction.pickEmoji);
+    });
   });
 
   group('SlashEntry.caretAfterInsert', () {

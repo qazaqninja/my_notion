@@ -191,7 +191,7 @@ If your feature wants to store something new, the answer is almost always "add a
 ## Customization
 
 - ✅ Light, dark, system theme — M0+; settings UI in M100.
-- ✅ Custom emojis (via picker) — M62 emoji picker; works for both page icons (M26) and workspace icon (M107).
+- ✅ Custom emojis (via picker) — M62 emoji picker; works for both page icons (M26) and workspace icon (M107). M242 adds an "Emoji…" slash menu entry — the same picker pops over the editor and inserts the chosen glyph at the caret.
 - ✅ Sidebar customization — Filter (M90), collapse (M109), favorites pinning, reorderable + hideable sections via `.quill.yaml` `sidebar.order:` / `sidebar.hidden:` (M171); Settings → Sidebar pane UI for the same (M204).
 - ✅ Compact mode / small text toggle — M57 + M100 settings UI.
 - ✅ Font choice (default, serif, mono) per page — M160, frontmatter `font: serif | mono | default`. MarkdownRenderer wraps the body in DefaultTextStyle.merge with Georgia / JetBrainsMono.
