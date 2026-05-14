@@ -265,6 +265,11 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp(moveLineDown);
   }
 
+  /// Toggle an HTML comment around the line under the caret. Cmd+/.
+  void _toggleComment() {
+    _applyLineOp(toggleCommentLine);
+  }
+
   void _applyLineOp(LineOpResult Function(String text, int caret) op) {
     final v = _controller.value;
     final caret = v.selection.isValid ? v.selection.baseOffset : v.text.length;
@@ -619,6 +624,10 @@ class _SourceViewState extends State<SourceView> {
                       _moveLineUp,
                   const SingleActivator(LogicalKeyboardKey.arrowDown,
                       alt: true): _moveLineDown,
+                  const SingleActivator(LogicalKeyboardKey.slash, meta: true):
+                      _toggleComment,
+                  const SingleActivator(LogicalKeyboardKey.slash,
+                      control: true): _toggleComment,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):

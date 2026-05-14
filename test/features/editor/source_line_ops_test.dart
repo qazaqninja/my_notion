@@ -106,4 +106,46 @@ void main() {
       expect(r.caret, 2); // col 1 on "aaa" which now starts at 1
     });
   });
+
+  group('toggleCommentLine', () {
+    test('wraps a plain line', () {
+      final r = toggleCommentLine('hello', 2);
+      expect(r.text, '<!-- hello -->');
+      expect(r.caret, 7); // shifted right by len("<!-- ") = 5
+    });
+
+    test('unwraps a commented line', () {
+      final r = toggleCommentLine('<!-- hello -->', 7);
+      expect(r.text, 'hello');
+      expect(r.caret, 2); // shifted left by 5
+    });
+
+    test('preserves leading whitespace on wrap and unwrap', () {
+      final w = toggleCommentLine('  body', 4);
+      expect(w.text, '  <!-- body -->');
+      expect(w.caret, 9);
+      final u = toggleCommentLine('  <!-- body -->', 9);
+      expect(u.text, '  body');
+      expect(u.caret, 4);
+    });
+
+    test('caret in leading whitespace does not shift', () {
+      final r = toggleCommentLine('  hello', 1);
+      expect(r.text, '  <!-- hello -->');
+      expect(r.caret, 1);
+    });
+
+    test('operates on the middle line of a multi-line text', () {
+      final r = toggleCommentLine('a\nbody\nc', 3); // caret on 'o' of body
+      expect(r.text, 'a\n<!-- body -->\nc');
+      expect(r.caret, 8); // 'o' shifted right by 5
+    });
+
+    test('round-trips: wrap then unwrap returns the original', () {
+      const original = 'something here';
+      final w = toggleCommentLine(original, 0);
+      final u = toggleCommentLine(w.text, w.caret);
+      expect(u.text, original);
+    });
+  });
 }

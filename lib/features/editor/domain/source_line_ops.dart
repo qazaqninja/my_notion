@@ -65,6 +65,55 @@ LineOpResult moveLineDown(String text, int caret) {
   return LineOpResult(text: newText, caret: newCaret);
 }
 
+/// Toggle an HTML comment around the line containing [caret]. Markdown
+/// renderers treat `<!-- ... -->` as a no-op so this is a portable way
+/// to "comment out" a line without losing it. The caret stays on the
+/// same line and shifts by ±5 (the length of `<!-- `) when on/past the
+/// inserted prefix, so users keep their place naturally.
+LineOpResult toggleCommentLine(String text, int caret) {
+  if (caret < 0) caret = 0;
+  if (caret > text.length) caret = text.length;
+  final lineStart =
+      caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
+  final nextNl = text.indexOf('\n', caret);
+  final lineEnd = nextNl == -1 ? text.length : nextNl;
+  final line = text.substring(lineStart, lineEnd);
+  final leadingWs = line.length - line.trimLeft().length;
+  final commentRe = RegExp(r'^(\s*)<!--\s?(.*?)\s?-->(\s*)$');
+  final match = commentRe.firstMatch(line);
+  final String newLine;
+  final int newCaret;
+  if (match != null) {
+    final lead = match.group(1) ?? '';
+    final inner = match.group(2) ?? '';
+    final trail = match.group(3) ?? '';
+    newLine = '$lead$inner$trail';
+    // Shift caret left by the length of "<!-- " if it sat past the
+    // marker; the trailing " -->" never shifts the caret-on-line
+    // position (it was after content).
+    final col = caret - lineStart;
+    final inserted = lead.length + 5; // "<!-- "
+    if (col <= lead.length) {
+      newCaret = lineStart + col;
+    } else if (col <= inserted) {
+      newCaret = lineStart + lead.length;
+    } else {
+      final shift = 5 + (col > inserted + inner.length ? 4 : 0); // " -->"
+      newCaret = (lineStart + col - shift).clamp(lineStart, lineStart + newLine.length);
+    }
+  } else {
+    final lead = line.substring(0, leadingWs);
+    final rest = line.substring(leadingWs);
+    newLine = '$lead<!-- $rest -->';
+    final col = caret - lineStart;
+    newCaret =
+        col <= leadingWs ? lineStart + col : lineStart + col + 5;
+  }
+  final newText =
+      text.replaceRange(lineStart, lineEnd, newLine);
+  return LineOpResult(text: newText, caret: newCaret);
+}
+
 /// Duplicate the line containing [caret] and place the caret at the
 /// same column on the new line below. If the original line lacks a
 /// trailing newline (i.e. the file ends mid-line), one is inserted
