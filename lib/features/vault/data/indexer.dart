@@ -20,6 +20,17 @@ class Indexer {
   final QuillDatabase _db;
   final VaultFsDatasource _ds;
 
+  /// Wipe the drift cache without rescanning any folder. Used when the
+  /// user closes a workspace via Settings → "Remove from app" so the
+  /// app returns to the picker with no stale rows leaking through.
+  Future<void> clearAll() async {
+    await _db.transaction(() async {
+      await _db.delete(_db.pages).go();
+      await _db.delete(_db.relations).go();
+      await _db.delete(_db.databases).go();
+    });
+  }
+
   Future<void> reindex(io.Directory root) async {
     await _db.transaction(() async {
       await _db.delete(_db.pages).go();

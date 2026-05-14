@@ -109,3 +109,11 @@ class DuplicatePage extends VaultEvent {
   @override
   List<Object?> get props => [ulid, targetFolder, titleOverride];
 }
+
+/// Drop the current vault association: SQLite is wiped, the saved
+/// last-vault preference is cleared, and the state transitions back
+/// to VaultInitial so the picker re-appears. Files on disk are not
+/// touched.
+class CloseVault extends VaultEvent {
+  const CloseVault();
+}

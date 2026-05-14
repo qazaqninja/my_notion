@@ -44,6 +44,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<DuplicatePage>(_onDuplicate);
     on<ToggleFavorite>(_onToggleFavorite);
     on<MovePage>(_onMovePage);
+    on<CloseVault>(_onCloseVault);
     _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
   }
 
@@ -133,6 +134,14 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     if (state is! VaultLoaded) return;
     final loaded = state as VaultLoaded;
     add(LoadFromPath(loaded.rootPath));
+  }
+
+  Future<void> _onCloseVault(CloseVault e, Emitter<VaultState> emit) async {
+    await _watcher.stop();
+    await _indexer.clearAll();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefVaultPath);
+    emit(const VaultInitial());
   }
 
   Future<void> _onCreatePage(CreatePage e, Emitter<VaultState> emit) async {

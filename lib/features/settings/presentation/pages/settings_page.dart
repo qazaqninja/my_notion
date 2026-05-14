@@ -207,10 +207,42 @@ class _SettingsPageState extends State<SettingsPage> {
           label: 'Delete workspace',
           hint: 'The vault folder on disk is untouched.',
           danger: true,
-          child: _Btn(label: 'Remove from app', icon: 'trash', onTap: () {}),
+          child: _Btn(
+            label: 'Remove from app',
+            icon: 'trash',
+            onTap: () => _confirmClose(context),
+          ),
         ),
       ],
     );
+  }
+
+  Future<void> _confirmClose(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove from app?'),
+        content: const Text(
+          'The vault folder on disk is untouched. You can re-open it any '
+          'time from the picker.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    if (!context.mounted) return;
+    context.read<VaultBloc>().add(const CloseVault());
+    // Settings is mounted inside the vault shell; once the bloc transitions
+    // to VaultInitial the shell router will replace it with the picker.
   }
 
   Future<void> _exportVault(BuildContext context) async {
