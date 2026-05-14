@@ -6,6 +6,7 @@ enum SlashAction {
   pickFile,
   insertToday,
   insertTimestamp,
+  insertDailyNoteLink,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -233,6 +234,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '@today',
     action: SlashAction.insertToday,
     keywords: ['today', 'date', 'now', '@'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Today\'s daily note link',
+    hint: '[[…]]',
+    action: SlashAction.insertDailyNoteLink,
+    keywords: ['daily', 'today', 'journal', 'link', 'wikilink'],
   ),
   SlashEntry(
     icon: 'calendar',

@@ -12,7 +12,9 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../relations/presentation/cubit/relation_picker_cubit.dart';
 import '../../../relations/presentation/widgets/relation_picker_overlay.dart';
+import '../../../vault/data/daily_note.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/attachment_writer.dart';
 import '../../domain/slash_entries.dart';
@@ -396,6 +398,13 @@ class _SourceViewState extends State<SourceView> {
           selection: TextSelection.collapsed(offset: stripStart),
         );
         await _pickAndInsertFile(stripStart);
+      case SlashAction.insertDailyNoteLink:
+        final cleared = text.replaceRange(stripStart, caret, '');
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart),
+        );
+        await _insertDailyNoteLink(stripStart);
       case SlashAction.insertToday:
         final today = DateTime.now();
         final yyyy = today.year.toString().padLeft(4, '0');
@@ -422,6 +431,34 @@ class _SourceViewState extends State<SourceView> {
           selection:
               TextSelection.collapsed(offset: stripStart + snippet.length),
         );
+    }
+  }
+
+  Future<void> _insertDailyNoteLink(int insertAt) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    // Capture the bloc before the async gap so we don't reach into
+    // context after awaiting (linter complaint).
+    final vaultBloc = context.read<VaultBloc>();
+    try {
+      final result = await DailyNote.openTodaysNote(
+        Directory(vault.rootPath),
+      );
+      final snippet = '[[${result.ulid}]]';
+      final text = _controller.text;
+      final at = insertAt.clamp(0, text.length);
+      final newText = text.replaceRange(at, at, snippet);
+      _controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: at + snippet.length),
+      );
+      if (!result.alreadyExisted) {
+        vaultBloc.add(const ReindexVault());
+      }
+    } catch (e) {
+      messenger?.showSnackBar(
+          SnackBar(content: Text('Daily note failed: $e')));
     }
   }
 
