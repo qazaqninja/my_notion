@@ -105,6 +105,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
               _navigateBack(context),
           const SingleActivator(LogicalKeyboardKey.bracketLeft, control: true): () =>
               _navigateBack(context),
+          const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
+              context.go('/settings'),
+          const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
+              context.go('/settings'),
         },
         child: Focus(
           focusNode: _rootFocus,
@@ -218,6 +222,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘⇧R', 'Reveal vault in Finder'),
                 _kbRow(tokens, '⌘\\', 'Toggle sidebar'),
                 _kbRow(tokens, '⌘[', 'Back'),
+                _kbRow(tokens, '⌘,', 'Settings'),
                 _kbRow(tokens, '?', 'This shortcut list'),
                 const SizedBox(height: 10),
                 _kbSection(tokens, 'Editor'),
