@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/entities/frontmatter.dart';
@@ -99,16 +100,130 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         .getSingleOrNull();
     if (row == null) throw StateError('Page not found: $ulid');
     final page = await _vault.readPage(row.relativePath, root: vaultRoot);
+    final previousValue = page.frontmatter.get(column.key);
     final next = _writeCellEntry(page.frontmatter, column, newValue);
     final updated = page.copyWith(frontmatter: next);
     await _vault.writePage(updated, root: vaultRoot);
     await _indexer.upsertPage(updated);
+    // Two-way relation propagation: when this column declares an
+    // inverse, diff the old/new ULID sets and mirror the change on
+    // each linked page's inverse column. Self-references are skipped
+    // so a self-pointing row doesn't recurse.
+    if (column.type == ColumnType.relation && column.inverseOf != null) {
+      await _propagateInverse(
+        sourceUlid: ulid,
+        oldValue: previousValue,
+        newValue: newValue,
+        inverseColumn: column.inverseOf!,
+        vaultRoot: vaultRoot,
+      );
+    }
     return DatabasePageRow(
       ulid: updated.ulid,
       title: updated.title,
       relativePath: updated.relativePath,
       cells: _cellsFromEntries(updated.frontmatter.entries),
     );
+  }
+
+  Future<void> _propagateInverse({
+    required String sourceUlid,
+    required dynamic oldValue,
+    required dynamic newValue,
+    required String inverseColumn,
+    required io.Directory vaultRoot,
+  }) async {
+    final vault = _vault;
+    final indexer = _indexer;
+    if (vault == null || indexer == null) return;
+    final oldSet = _ulidsIn(oldValue);
+    final newSet = _ulidsIn(newValue);
+    final added = newSet.difference(oldSet);
+    final removed = oldSet.difference(newSet);
+    if (added.isEmpty && removed.isEmpty) return;
+    for (final linkedUlid in {...added, ...removed}) {
+      if (linkedUlid == sourceUlid) continue;
+      final linkedRow = await (_db.select(_db.pages)
+            ..where((p) => p.ulid.equals(linkedUlid)))
+          .getSingleOrNull();
+      if (linkedRow == null) continue;
+      final linked =
+          await vault.readPage(linkedRow.relativePath, root: vaultRoot);
+      final mutated = _mirrorRelation(
+        linked.frontmatter,
+        inverseColumn,
+        addUlid: added.contains(linkedUlid) ? sourceUlid : null,
+        removeUlid: removed.contains(linkedUlid) ? sourceUlid : null,
+      );
+      if (identical(mutated, linked.frontmatter)) continue;
+      final saved = linked.copyWith(frontmatter: mutated);
+      await vault.writePage(saved, root: vaultRoot);
+      await indexer.upsertPage(saved);
+    }
+  }
+
+  static Set<String> _ulidsIn(dynamic v) {
+    if (v == null) return const {};
+    final out = <String>{};
+    if (v is List) {
+      for (final item in v) {
+        out.addAll(WikilinkParser.find('$item').map((w) => w.ulid));
+      }
+    } else {
+      out.addAll(WikilinkParser.find('$v').map((w) => w.ulid));
+    }
+    return out;
+  }
+
+  /// Public test entry-point for the inverse-relation rewriter — see
+  /// `_mirrorRelation` for the contract. Exposed so it's exercisable
+  /// without filesystem + Drift setup.
+  static Frontmatter mirrorRelation(
+    Frontmatter fm,
+    String key, {
+    String? addUlid,
+    String? removeUlid,
+  }) =>
+      _mirrorRelation(fm, key, addUlid: addUlid, removeUlid: removeUlid);
+
+  /// Mutate [fm]'s [key] entry to add or remove a `[[ULID]]` wikilink.
+  /// Always re-emits the entry as a YAML flow-list to keep the round-
+  /// trip deterministic. Idempotent — adding a ULID already present
+  /// or removing one that isn't there returns the original frontmatter.
+  static Frontmatter _mirrorRelation(
+    Frontmatter fm,
+    String key, {
+    String? addUlid,
+    String? removeUlid,
+  }) {
+    final existing = fm.entries.indexWhere((e) => e.key == key);
+    final currentValue = existing >= 0 ? fm.entries[existing].rawScalar : '';
+    final currentSet = _ulidsIn(currentValue);
+    final next = Set<String>.from(currentSet);
+    if (addUlid != null) next.add(addUlid);
+    if (removeUlid != null) next.remove(removeUlid);
+    if (next.length == currentSet.length &&
+        next.containsAll(currentSet) &&
+        currentSet.containsAll(next)) {
+      return fm;
+    }
+    final ordered = next.toList()..sort();
+    final raw = ordered.isEmpty
+        ? ''
+        : '[${ordered.map((u) => '[[$u]]').join(', ')}]';
+    final newEntries = List<FrontmatterEntry>.from(fm.entries);
+    final entry = FrontmatterEntry(
+      key: key,
+      rawScalar: raw,
+      type: FrontmatterType.relation,
+      value: ordered,
+    );
+    if (existing >= 0) {
+      newEntries[existing] = entry;
+    } else if (ordered.isNotEmpty) {
+      newEntries.add(entry);
+    }
+    return Frontmatter(entries: newEntries);
   }
 
   @override

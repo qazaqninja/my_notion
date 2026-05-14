@@ -70,6 +70,7 @@ class DatabaseYamlParser {
     final rollupRelation = def['relation'];
     final rollupTarget = def['target'];
     final rollupAgg = _rollupAgg('${def['agg'] ?? 'sum'}');
+    final inverseOf = def['inverse_of'];
     return ColumnDef(
       key: key,
       type: type,
@@ -80,6 +81,7 @@ class DatabaseYamlParser {
       rollupRelation: rollupRelation != null ? '$rollupRelation' : null,
       rollupTarget: rollupTarget != null ? '$rollupTarget' : null,
       rollupAgg: rollupAgg,
+      inverseOf: inverseOf != null ? '$inverseOf' : null,
     );
   }
 

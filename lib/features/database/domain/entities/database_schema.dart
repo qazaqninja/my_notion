@@ -27,6 +27,7 @@ class ColumnDef {
     this.rollupRelation,
     this.rollupTarget,
     this.rollupAgg = RollupAgg.sum,
+    this.inverseOf,
   });
 
   final String key;
@@ -56,6 +57,18 @@ class ColumnDef {
   /// For [ColumnType.rollup]: which aggregation to apply. Defaults to
   /// `sum`. Read from `.database.yaml`'s `schema.<key>.agg:`.
   final RollupAgg rollupAgg;
+
+  /// For [ColumnType.relation]: declares the column key on the linked
+  /// row that mirrors this relation. When set, writes to this column
+  /// also update the inverse column on every linked page so the
+  /// relation stays bidirectional. Read from `.database.yaml`'s
+  /// `schema.<key>.inverse_of:` field.
+  ///
+  /// Note: the inverse column is treated as a relation on the OTHER
+  /// page regardless of where it lives in the vault — write
+  /// propagation walks ULID-by-ULID and never looks at the linked
+  /// page's database schema.
+  final String? inverseOf;
 }
 
 enum ViewType { table, gallery, board, timeline, calendar, chart, list }

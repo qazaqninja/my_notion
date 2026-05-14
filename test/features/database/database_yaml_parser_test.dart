@@ -93,6 +93,34 @@ schema:
       );
     });
 
+    test('reads inverse_of on relation columns', () {
+      final s = DatabaseYamlParser.parse(
+        '''
+id: db
+name: T
+schema:
+  customer:
+    type: relation
+    inverse_of: deals
+''',
+        folderPath: 'x',
+      )!;
+      expect(s.columns.first.inverseOf, equals('deals'));
+    });
+
+    test('inverse_of is null when absent', () {
+      final s = DatabaseYamlParser.parse(
+        '''
+id: db
+name: T
+schema:
+  customer: {type: relation}
+''',
+        folderPath: 'x',
+      )!;
+      expect(s.columns.first.inverseOf, isNull);
+    });
+
     test('reads locked: true', () {
       final s = DatabaseYamlParser.parse(
         '''
