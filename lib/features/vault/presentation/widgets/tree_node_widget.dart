@@ -134,15 +134,51 @@ class TreeNodeWidget extends StatelessWidget {
       ),
       items: const [
         PopupMenuItem(value: 'subpage', child: Text('New page here')),
+        PopupMenuItem(value: 'subfolder', child: Text('New subfolder…')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
       ],
     );
     if (!context.mounted) return;
     if (selected == 'subpage') {
       await _promptNewSubpage(context, folderPath: f.relativePath);
+    } else if (selected == 'subfolder') {
+      await _promptNewSubfolder(context, parentFolder: f.relativePath);
     } else if (selected == 'reveal') {
       await Reveal.show(p.join(state.rootPath, f.relativePath));
     }
+  }
+
+  Future<void> _promptNewSubfolder(BuildContext context,
+      {required String parentFolder}) async {
+    final controller = TextEditingController();
+    final bloc = context.read<VaultBloc>();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('New subfolder'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+              hintText: parentFolder.isEmpty
+                  ? 'Folder name'
+                  : 'Folder name  ·  in $parentFolder/'),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+    if (name == null || name.trim().isEmpty) return;
+    bloc.add(CreateFolder(parentFolder: parentFolder, name: name.trim()));
   }
 
   Future<void> _showFileMenu(

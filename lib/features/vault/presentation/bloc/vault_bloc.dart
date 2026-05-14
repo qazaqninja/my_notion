@@ -44,6 +44,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<DuplicatePage>(_onDuplicate);
     on<ToggleFavorite>(_onToggleFavorite);
     on<MovePage>(_onMovePage);
+    on<CreateFolder>(_onCreateFolder);
     on<CloseVault>(_onCloseVault);
     _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
   }
@@ -329,6 +330,31 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       emit(loaded.copyWith(workspace: next));
     } catch (err) {
       emit(VaultError('Favorites write failed: $err'));
+      emit(loaded);
+    }
+  }
+
+  Future<void> _onCreateFolder(CreateFolder e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final safe = e.name
+        .trim()
+        .replaceAll(RegExp(r'[\\/<>:"|?*]+'), '-')
+        .replaceAll(RegExp(r'\s+'), ' ');
+    if (safe.isEmpty || safe == '.' || safe == '..') return;
+    final rel = e.parentFolder.isEmpty ? safe : p.join(e.parentFolder, safe);
+    final dir = Directory(p.join(loaded.rootPath, rel));
+    if (await dir.exists()) {
+      emit(VaultError('Folder "$rel" already exists.'));
+      emit(loaded);
+      return;
+    }
+    try {
+      await dir.create(recursive: true);
+      final tree = await _buildTree(Directory(loaded.rootPath));
+      emit(loaded.copyWith(tree: tree));
+    } catch (err) {
+      emit(VaultError('Create folder failed: $err'));
       emit(loaded);
     }
   }

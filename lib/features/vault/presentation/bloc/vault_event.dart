@@ -117,3 +117,19 @@ class DuplicatePage extends VaultEvent {
 class CloseVault extends VaultEvent {
   const CloseVault();
 }
+
+/// Create an empty folder under [parentFolder] (relative to vault root,
+/// empty = root). No .md is written — only the directory. Emits a state
+/// with the new tree so the sidebar picks it up immediately.
+class CreateFolder extends VaultEvent {
+  const CreateFolder({required this.parentFolder, required this.name});
+
+  /// Parent folder, relative to vault root. Empty string = root.
+  final String parentFolder;
+
+  /// Folder name (sanitised by the handler).
+  final String name;
+
+  @override
+  List<Object?> get props => [parentFolder, name];
+}
