@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
@@ -51,6 +52,8 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   bool _wrap = false;
   Set<String>? _visibleOverride;
 
+  String get _wrapPrefKey => 'db.${widget.dbId}.wrap';
+
   @override
   void initState() {
     super.initState();
@@ -59,7 +62,21 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       vault: context.read<VaultRepository>(),
       indexer: context.read<Indexer>(),
     );
+    _restoreWrap();
     _load();
+  }
+
+  Future<void> _restoreWrap() async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getBool(_wrapPrefKey);
+    if (v == null || !mounted) return;
+    setState(() => _wrap = v);
+  }
+
+  Future<void> _setWrap(bool next) async {
+    setState(() => _wrap = next);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_wrapPrefKey, next);
   }
 
   Future<void> _load() async {
@@ -383,7 +400,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         ),
         padding: const EdgeInsets.all(4),
         constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-        onPressed: () => setState(() => _wrap = !_wrap),
+        onPressed: () => _setWrap(!_wrap),
         tooltip: _wrap ? 'Truncate cells' : 'Wrap cells',
       ),
       if (!mobile) const SizedBox(width: 4),
