@@ -12,6 +12,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../data/indexer.dart';
 import '../../data/vault_watcher.dart';
+import '../../data/workspace_config.dart';
 import '../../domain/entities/frontmatter.dart';
 import '../../domain/entities/frontmatter_entry.dart';
 import '../../domain/entities/page.dart';
@@ -85,11 +86,13 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       await _indexer.reindex(dir);
       final tree = await _buildTree(dir);
       final count = (await _db.select(_db.pages).get()).length;
+      final workspace = await WorkspaceConfig.load(dir);
       emit(VaultLoaded(
         rootPath: e.path,
         tree: tree,
         expandedFolders: _expandTopLevel(tree),
         pageCount: count,
+        workspace: workspace,
       ));
       // (Re-)start the watcher pointed at the freshly-loaded vault.
       await _watcher.watch(dir);

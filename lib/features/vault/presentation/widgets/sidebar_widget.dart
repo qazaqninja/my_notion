@@ -33,12 +33,17 @@ class SidebarWidget extends StatelessWidget {
     final state = context.watch<VaultBloc>().state;
 
     final workspaceName = state is VaultLoaded
-        ? p.basename(state.rootPath).isNotEmpty
-            ? p.basename(state.rootPath).replaceAll(RegExp(r'_+'), ' ').replaceFirstMapped(
-                  RegExp(r'^[a-z]'),
-                  (m) => m.group(0)!.toUpperCase(),
-                )
-            : 'Vault'
+        ? (state.workspace.name?.isNotEmpty == true
+            ? state.workspace.name!
+            : p.basename(state.rootPath).isNotEmpty
+                ? p
+                    .basename(state.rootPath)
+                    .replaceAll(RegExp(r'_+'), ' ')
+                    .replaceFirstMapped(
+                      RegExp(r'^[a-z]'),
+                      (m) => m.group(0)!.toUpperCase(),
+                    )
+                : 'Vault')
         : 'Vault';
     final vaultPath = state is VaultLoaded
         ? _abbreviateHome(state.rootPath)
