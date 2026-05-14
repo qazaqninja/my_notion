@@ -210,6 +210,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import HTML file as page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import text file as page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import Markdown file as page', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import OPML outline as page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'export', label: 'Export vault as HTML', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'export', label: 'Export vault as PDF', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'New page from template…', hint: ''),

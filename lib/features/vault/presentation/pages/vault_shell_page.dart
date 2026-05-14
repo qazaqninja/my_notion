@@ -19,6 +19,7 @@ import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../commands/presentation/widgets/command_palette_overlay.dart';
 import '../../../database/data/datasources/csv_importer.dart';
 import '../../data/html_page_importer.dart';
+import '../../data/opml_page_importer.dart';
 import '../../data/text_page_importer.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
@@ -529,6 +530,32 @@ class _VaultShellPageState extends State<VaultShellPage> {
         } catch (e) {
           messenger?.showSnackBar(
               SnackBar(content: Text('HTML import failed: $e')));
+        }
+      case 'Import OPML outline as page':
+        if (vaultPath == null) {
+          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          return;
+        }
+        final opmlPick = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: const ['opml', 'xml'],
+        );
+        if (opmlPick == null || opmlPick.files.isEmpty) return;
+        final opmlPath = opmlPick.files.first.path;
+        if (opmlPath == null) return;
+        try {
+          final summary = await OpmlPageImporter.importTo(
+            File(opmlPath),
+            Directory(vaultPath),
+          );
+          vaultBloc.add(const ReindexVault());
+          messenger?.showSnackBar(SnackBar(
+            content: Text('Imported OPML → ${summary.relativePath}'),
+            duration: const Duration(seconds: 4),
+          ));
+        } catch (e) {
+          messenger?.showSnackBar(
+              SnackBar(content: Text('OPML import failed: $e')));
         }
       case 'Import text file as page':
       case 'Import Markdown file as page':
