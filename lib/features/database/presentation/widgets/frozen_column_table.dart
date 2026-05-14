@@ -150,6 +150,10 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   /// column headers.
   List<String>? _columnOrder;
 
+  /// Set of parent ULIDs whose sub-rows are hidden. Toggled by the
+  /// chevron beside each parent row in the title column.
+  final Set<String> _collapsedParents = <String>{};
+
   List<ColumnDef> _orderedCols() {
     final source = widget.schema.columns;
     final override = _columnOrder;
@@ -281,6 +285,52 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     super.dispose();
   }
 
+  /// ULIDs that appear as a parent for at least one other row, derived
+  /// from the schema's `is_parent` column. Drives the chevron toggle in
+  /// the title column.
+  Set<String> _computeParentsWithChildren() {
+    final parentKey = widget.schema.columns
+        .where((c) => c.isParent)
+        .map((c) => c.key)
+        .firstOrNull;
+    if (parentKey == null) return const {};
+    final out = <String>{};
+    for (final r in widget.rows) {
+      final p = '${r.cells[parentKey] ?? ''}'.trim();
+      if (p.isNotEmpty) out.add(p);
+    }
+    return out;
+  }
+
+  /// Rows whose parent chain is currently collapsed.
+  Set<String> _hiddenByCollapse() {
+    if (_collapsedParents.isEmpty) return const {};
+    final parentKey = widget.schema.columns
+        .where((c) => c.isParent)
+        .map((c) => c.key)
+        .firstOrNull;
+    if (parentKey == null) return const {};
+    final byUlid = {for (final r in widget.rows) r.ulid: r};
+    final hidden = <String>{};
+    bool hasCollapsedAncestor(String ulid) {
+      var cursor = ulid;
+      final seen = <String>{};
+      while (seen.add(cursor)) {
+        final row = byUlid[cursor];
+        if (row == null) return false;
+        final parent = '${row.cells[parentKey] ?? ''}'.trim();
+        if (parent.isEmpty) return false;
+        if (_collapsedParents.contains(parent)) return true;
+        cursor = parent;
+      }
+      return false;
+    }
+    for (final r in widget.rows) {
+      if (hasCollapsedAncestor(r.ulid)) hidden.add(r.ulid);
+    }
+    return hidden;
+  }
+
   /// Per-ULID indent depth derived from the schema's `is_parent` column
   /// (if any). Top-level rows are depth 0; each parent walk adds 1.
   Map<String, int> _computeDepths() {
@@ -317,6 +367,14 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     final cols = _orderedCols();
     final scrollWidth = cols.fold<double>(0, (a, c) => a + _widthFor(c));
     final depths = _computeDepths();
+    final parentsWithChildren = _computeParentsWithChildren();
+    final hiddenUlids = _hiddenByCollapse();
+    final visibleRows = hiddenUlids.isEmpty
+        ? widget.rows
+        : [
+            for (final r in widget.rows)
+              if (!hiddenUlids.contains(r.ulid)) r,
+          ];
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -348,9 +406,9 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                     ? _emptyState(tokens)
                     : ListView.builder(
                   controller: _vertLeft,
-                  itemCount: widget.rows.length + 1,
+                  itemCount: visibleRows.length + 1,
                   itemBuilder: (context, i) {
-                    if (i == widget.rows.length) {
+                    if (i == visibleRows.length) {
                       final enabled = widget.onCreateRow != null;
                       return GestureDetector(
                         onTap: enabled ? widget.onCreateRow : null,
@@ -373,8 +431,13 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                         ),
                       );
                     }
-                    final row = widget.rows[i];
-                    return _titleRow(row, tokens, depths[row.ulid] ?? 0);
+                    final row = visibleRows[i];
+                    return _titleRow(
+                      row,
+                      tokens,
+                      depths[row.ulid] ?? 0,
+                      hasChildren: parentsWithChildren.contains(row.ulid),
+                    );
                   },
                 ),
               ),
@@ -445,13 +508,13 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                     Expanded(
                       child: ListView.builder(
                         controller: _vertRight,
-                        itemCount: widget.rows.length + 1,
+                        itemCount: visibleRows.length + 1,
                         itemBuilder: (context, i) {
-                          if (i == widget.rows.length) {
+                          if (i == visibleRows.length) {
                             return SizedBox(
                                 height: widget.wrap ? _rowHeight : _rowHeight);
                           }
-                          final row = widget.rows[i];
+                          final row = visibleRows[i];
                           return Container(
                             constraints:
                                 BoxConstraints(minHeight: _rowHeight),
@@ -559,7 +622,13 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     }
   }
 
-  Widget _titleRow(DatabasePageRow row, QuillTokens tokens, int depth) {
+  Widget _titleRow(
+    DatabasePageRow row,
+    QuillTokens tokens,
+    int depth, {
+    bool hasChildren = false,
+  }) {
+    final collapsed = _collapsedParents.contains(row.ulid);
     return GestureDetector(
       onTap: () => widget.onOpenPage(row),
       onSecondaryTapUp: (d) =>
@@ -588,6 +657,31 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                   padding: const EdgeInsets.only(right: 4),
                   child: Icon(Icons.subdirectory_arrow_right,
                       size: 11, color: tokens.text3),
+                ),
+              if (hasChildren)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (collapsed) {
+                        _collapsedParents.remove(row.ulid);
+                      } else {
+                        _collapsedParents.add(row.ulid);
+                      }
+                    });
+                  },
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Icon(
+                        collapsed
+                            ? Icons.chevron_right
+                            : Icons.keyboard_arrow_down,
+                        size: 14,
+                        color: tokens.text2,
+                      ),
+                    ),
+                  ),
                 ),
               Padding(
                 padding: EdgeInsets.only(top: widget.wrap ? 2 : 0),
