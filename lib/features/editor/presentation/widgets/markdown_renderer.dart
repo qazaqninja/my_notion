@@ -209,12 +209,33 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
     final inner =
         fontOverride == null ? column : DefaultTextStyle.merge(
             style: fontOverride, child: column);
+    // Wrap in CallbackShortcuts so Cmd+A / Cmd+⌫ / Esc work on the
+    // multi-select toolbar. The renderer doesn't take focus itself —
+    // Shortcuts bubble down from the editor's existing Focus tree.
+    final shortcutted = CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyA, meta: true): () =>
+            _selectAllEditable(blocks),
+        const SingleActivator(LogicalKeyboardKey.keyA, control: true): () =>
+            _selectAllEditable(blocks),
+        const SingleActivator(LogicalKeyboardKey.backspace, meta: true): () {
+          if (_selected.isNotEmpty) _deleteSelected(blocks);
+        },
+        const SingleActivator(LogicalKeyboardKey.backspace, control: true): () {
+          if (_selected.isNotEmpty) _deleteSelected(blocks);
+        },
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          if (_selected.isNotEmpty) _clearSelection();
+        },
+      },
+      child: inner,
+    );
     // Selection toolbar overlays the renderer when the user has marked
     // one or more blocks via the hover checkbox.
-    if (_selected.isEmpty) return inner;
+    if (_selected.isEmpty) return shortcutted;
     return Stack(
       children: [
-        inner,
+        shortcutted,
         Positioned(
           left: 0,
           right: 0,
