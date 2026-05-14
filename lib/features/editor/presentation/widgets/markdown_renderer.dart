@@ -1643,29 +1643,53 @@ class _FileAttachment extends StatelessWidget {
     return slash < 0 ? path : path.substring(slash + 1);
   }
 
-  IconData _iconForExt() {
+  /// Lower-cased extension without query/hash, e.g. "pdf" / "mp4" / "".
+  String _ext() {
     final s = src.toLowerCase().split(RegExp(r'[?#]')).first;
-    if (s.endsWith('.pdf')) return Icons.picture_as_pdf_outlined;
-    if (s.endsWith('.zip') || s.endsWith('.tar') || s.endsWith('.gz')) {
+    final dot = s.lastIndexOf('.');
+    if (dot < 0) return '';
+    return s.substring(dot + 1);
+  }
+
+  bool get _isVideo {
+    const ex = {'mp4', 'mov', 'webm', 'avi', 'mkv'};
+    return ex.contains(_ext());
+  }
+
+  bool get _isAudio {
+    const ex = {'mp3', 'wav', 'm4a', 'flac', 'ogg'};
+    return ex.contains(_ext());
+  }
+
+  bool get _isPdf => _ext() == 'pdf';
+
+  /// Media-type accent colour for the prominent preview band; fallback
+  /// for non-media attachments returns null and the renderer falls
+  /// back to the compact chip layout.
+  Color? _mediaAccent() {
+    if (_isVideo) return const Color(0xFFB46F4F); // terracotta
+    if (_isAudio) return const Color(0xFF5A82B4); // blue
+    if (_isPdf) return const Color(0xFF5A8F6E); // sage
+    return null;
+  }
+
+  IconData _iconForExt() {
+    final s = _ext();
+    if (s == 'pdf') return Icons.picture_as_pdf_outlined;
+    if (s == 'zip' || s == 'tar' || s == 'gz') {
       return Icons.folder_zip_outlined;
     }
-    if (s.endsWith('.doc') || s.endsWith('.docx') || s.endsWith('.rtf')) {
+    if (s == 'doc' || s == 'docx' || s == 'rtf') {
       return Icons.description_outlined;
     }
-    if (s.endsWith('.xls') || s.endsWith('.xlsx') || s.endsWith('.csv')) {
+    if (s == 'xls' || s == 'xlsx' || s == 'csv') {
       return Icons.table_chart_outlined;
     }
-    if (s.endsWith('.ppt') || s.endsWith('.pptx') || s.endsWith('.key')) {
+    if (s == 'ppt' || s == 'pptx' || s == 'key') {
       return Icons.slideshow_outlined;
     }
-    if (s.endsWith('.mp3') || s.endsWith('.wav') || s.endsWith('.m4a') ||
-        s.endsWith('.flac') || s.endsWith('.ogg')) {
-      return Icons.audiotrack_outlined;
-    }
-    if (s.endsWith('.mp4') || s.endsWith('.mov') || s.endsWith('.webm') ||
-        s.endsWith('.avi') || s.endsWith('.mkv')) {
-      return Icons.movie_outlined;
-    }
+    if (_isAudio) return Icons.audiotrack_outlined;
+    if (_isVideo) return Icons.movie_outlined;
     return Icons.insert_drive_file_outlined;
   }
 
@@ -1707,6 +1731,119 @@ class _FileAttachment extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final name = label.trim().isNotEmpty ? label : _basename(src);
+    final accent = _mediaAccent();
+    // Media files (video / audio / pdf) get a taller card with a
+    // play / open affordance so the embed feels more like a real
+    // inline preview than a passing reference. Non-media files keep
+    // the compact chip from M76.
+    if (accent != null) {
+      return GestureDetector(
+        onTap: () => _open(context),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            decoration: BoxDecoration(
+              color: tokens.surface,
+              border: Border.all(color: tokens.divider2, width: 0.5),
+              borderRadius: const BorderRadius.all(Radius.circular(6)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.16),
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(6)),
+                  ),
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: accent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _isAudio
+                                ? Icons.headphones
+                                : _isPdf
+                                    ? Icons.picture_as_pdf_outlined
+                                    : Icons.play_arrow,
+                            size: 22,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 6,
+                        left: 10,
+                        child: Text(
+                          _isVideo
+                              ? 'video'
+                              : _isAudio
+                                  ? 'audio'
+                                  : 'pdf',
+                          style: mono(fontSize: 10, color: accent),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 9),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: tokens.text,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            FutureBuilder<int?>(
+                              future: _size(context),
+                              builder: (_, snap) => Text(
+                                snap.data != null
+                                    ? '${_basename(src)} · ${_fmtBytes(snap.data!)}'
+                                    : _basename(src),
+                                style: mono(
+                                    fontSize: 11, color: tokens.text3),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        _isUrl
+                            ? Icons.open_in_new
+                            : Icons.folder_open_outlined,
+                        size: 15,
+                        color: tokens.text3,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    // Compact chip for everything else.
     return GestureDetector(
       onTap: () => _open(context),
       child: MouseRegion(
