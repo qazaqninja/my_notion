@@ -516,6 +516,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Vault stats':
         if (!context.mounted) return;
         await _showVaultStats(context);
+      case 'Browse all databases':
+        if (!context.mounted) return;
+        GoRouter.of(context).go('/databases');
       case 'Install built-in templates':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));

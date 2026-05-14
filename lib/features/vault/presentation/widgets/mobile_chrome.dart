@@ -41,14 +41,7 @@ class MobileTabBar extends StatelessWidget {
             icon: 'database',
             label: 'Bases',
             active: route.startsWith('/db'),
-            onTap: () {
-              // Open the palette filtered to databases — picking one
-              // navigates to /db/<id>. Cheap discovery without needing
-              // a dedicated "all databases" page yet.
-              final cubit = context.read<CommandPaletteCubit>();
-              cubit.open();
-              cubit.setQuery('database ');
-            },
+            onTap: () => context.go('/databases'),
           ),
           _Tab(
             icon: 'search',

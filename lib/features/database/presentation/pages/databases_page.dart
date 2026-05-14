@@ -1,0 +1,160 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
+import '../../../vault/presentation/widgets/page_header.dart';
+import '../../data/repositories/database_repository_impl.dart';
+import '../../domain/entities/database_schema.dart';
+
+/// Index of every database in the vault. Reached via /databases or the
+/// mobile tab bar's Bases entry. Each row links to `/db/<id>`.
+class DatabasesPage extends StatefulWidget {
+  const DatabasesPage({super.key});
+
+  @override
+  State<DatabasesPage> createState() => _DatabasesPageState();
+}
+
+class _DatabasesPageState extends State<DatabasesPage> {
+  late Future<List<DatabaseSchema>> _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _data = _load();
+  }
+
+  Future<List<DatabaseSchema>> _load() {
+    final repo =
+        DatabaseRepositoryImpl(context.read<QuillDatabase>());
+    return repo.listDatabases();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return Scaffold(
+      backgroundColor: tokens.bg,
+      body: Column(
+        children: [
+          const PageHeader(crumbs: ['Databases']),
+          Expanded(
+            child: FutureBuilder<List<DatabaseSchema>>(
+              future: _data,
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return Center(
+                    child: SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 1.5, color: tokens.text2),
+                    ),
+                  );
+                }
+                final items = snap.data!
+                  ..sort((a, b) => a.name.compareTo(b.name));
+                if (items.isEmpty) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'No databases yet.\n\n'
+                        'Drop a .database.yaml in any folder of the vault '
+                        'to make Quill index it as a database.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 13.5, color: tokens.text3, height: 1.55),
+                      ),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  itemCount: items.length,
+                  itemBuilder: (_, i) => _Row(schema: items[i]),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Row extends StatelessWidget {
+  const _Row({required this.schema});
+  final DatabaseSchema schema;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final iconRaw = schema.icon.trim();
+    final hasGlyphIcon = iconRaw.isNotEmpty && iconRaw.length <= 4;
+    return GestureDetector(
+      onTap: () => context.go('/db/${schema.id}'),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+          decoration: BoxDecoration(
+            color: tokens.surface,
+            border: Border.all(color: tokens.divider2, width: 0.5),
+            borderRadius: const BorderRadius.all(Radius.circular(6)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tokens.surface2,
+                  borderRadius: const BorderRadius.all(Radius.circular(5)),
+                ),
+                child: hasGlyphIcon
+                    ? Text(iconRaw,
+                        style: TextStyle(fontSize: 16, color: tokens.text))
+                    : QuillIcon('database',
+                        size: 14,
+                        strokeWidth: 1.7,
+                        color: tokens.text3),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(schema.name,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: tokens.text,
+                        )),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${schema.folderPath}  ·  '
+                      '${schema.columns.length} columns  ·  '
+                      '${schema.views.length} views',
+                      style: mono(fontSize: 11.5, color: tokens.text3),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, size: 18, color: tokens.text3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
