@@ -16,6 +16,7 @@ import '../../../../shared/widgets/page_icon.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
+import '../../../vault/data/daily_note.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/data/pdf_exporter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
@@ -621,6 +622,7 @@ class _EditorBodyState extends State<_EditorBody> {
               actions: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  _DailyNoteNav(relativePath: page.relativePath),
                   _WikiBadge(page: page),
                   _ReminderBadge(page: page),
                   Padding(
@@ -995,6 +997,84 @@ class _EmptyPageHint extends StatelessWidget {
 /// pivots colour by how stale the verification is. Tooltip lists the
 /// owners + verified-at line so editors can see who owns the page at
 /// a glance.
+/// Previous / next chevron pair shown only when the open page is a
+/// daily note (path matches `Daily/YYYY-MM-DD.md`). Tap navigates to
+/// the prev / next day's daily note, minting it if missing.
+class _DailyNoteNav extends StatelessWidget {
+  const _DailyNoteNav({required this.relativePath});
+  final String relativePath;
+
+  static final _re = RegExp(r'^Daily/(\d{4})-(\d{2})-(\d{2})\.md$');
+
+  DateTime? _parseDate() {
+    final m = _re.firstMatch(relativePath);
+    if (m == null) return null;
+    return DateTime.utc(
+      int.parse(m.group(1)!),
+      int.parse(m.group(2)!),
+      int.parse(m.group(3)!),
+    );
+  }
+
+  Future<void> _go(BuildContext context, DateTime target) async {
+    final vaultBloc = context.read<VaultBloc>();
+    final vault = vaultBloc.state;
+    if (vault is! VaultLoaded) return;
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      final result = await DailyNote.openTodaysNote(
+        Directory(vault.rootPath),
+        now: target,
+      );
+      if (!result.alreadyExisted) {
+        vaultBloc.add(const ReindexVault());
+      }
+      router.go('/editor/${result.ulid}');
+    } catch (e) {
+      messenger?.showSnackBar(
+          SnackBar(content: Text('Daily note nav failed: $e')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final d = _parseDate();
+    if (d == null) return const SizedBox.shrink();
+    final tokens = QuillTokens.of(context);
+    final prev = d.subtract(const Duration(days: 1));
+    final next = d.add(const Duration(days: 1));
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            tooltip:
+                'Previous day · ${prev.toIso8601String().substring(0, 10)}',
+            onPressed: () => _go(context, prev),
+            icon: Icon(Icons.chevron_left,
+                size: 16, color: tokens.text3),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(4),
+            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+            tooltip:
+                'Next day · ${next.toIso8601String().substring(0, 10)}',
+            onPressed: () => _go(context, next),
+            icon: Icon(Icons.chevron_right,
+                size: 16, color: tokens.text3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Star icon shown in the editor's PageHeader actions row. Reads the
 /// current vault's `favorites:` list to render the fill state, and
 /// delegates the toggle back to the editor via [onTap]. Mirrors the
