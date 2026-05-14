@@ -187,6 +187,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Date ranges — M74, `YYYY-MM-DD..YYYY-MM-DD` renders with arrow.
 - 🔮 Mention people (notifies them) — Notifications require backend.
 - ✅ @-mention pages, people, dates — `@` trigger opens the page picker in source mode (same overlay as `[[`); date pill via `@YYYY-MM-DD`; today's date via slash menu (M103). People mentions 🔮.
+- ✅ Word count + reading time per page — PageFooter renders `<n> words · <n> chars · ~<n> min read` below the editor body. M248 adds a "Set word count goal…" entry to the editor kebab — writes `goal: <N>` to frontmatter so the footer's existing progress bar surfaces. Empty input clears the goal.
 
 ## Customization
 
