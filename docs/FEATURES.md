@@ -82,7 +82,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Sub-page blocks — Standalone `[[ULID]]` renders as a sub-page card (M-something) via `_SubpageCard`.
 - ✅ Link-to-page blocks — Via `[[ULID]]`.
 - ✅ Table of contents block — `[toc]` renders an outline with clickable jump-to-heading links (M68).
-- 📋 Breadcrumb block — Derive from path. PageHeader already has breadcrumbs; a body-level block is still 📋.
+- ✅ Breadcrumb block — M162, a line containing `[breadcrumb]` (or `[[breadcrumb]]`) renders the page's vault-relative path inline as mono crumbs. Slash menu entry; relativePath threaded through MarkdownRenderer.
 - ✅ Columns and column lists — M66 (`:::cols` / `:::col` / `:::`).
 
 ## Media Blocks
@@ -111,7 +111,7 @@ If your feature wants to store something new, the answer is almost always "add a
   - 📋 created by, last edited by, person — Requires a user identity model. v1: read from `.quill.yaml` users list. Full multi-user is 🔮.
   - ✅ button — M70 `:::button` fence renders inside any page (including row pages).
 - 🚧 Sub-items (parent/child rows) — Parent relation column + depth indent in `frozen_column_table.dart`; full sub-row expansion UI 📋.
-- 📋 Dependencies between rows — Used in timeline view; add `depends_on:` relation.
+- ✅ Dependencies between rows — M163, frontmatter `depends_on: [[ULID]], …`. Timeline view shows a "↳ N" pill in the frozen column with tooltip, plus L-shaped connector arrows between bars.
 - ✅ Database templates (per-database row templates) — `row_template:` in schema; `createRow` copies the template's frontmatter + body.
 - ✅ Filters (single and compound with AND/OR logic) — M19.
 - ✅ Sorts (multi-level) — M19.
