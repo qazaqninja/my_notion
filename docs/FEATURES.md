@@ -154,22 +154,22 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Search & Navigation
 
-- 🚧 Global search (Cmd/Ctrl + P) — ⌘K palette exists (M9); FTS5 virtual table `pages_fts` is wired in drift schema; the palette doesn't actually `MATCH` against it yet. Wire `command_palette_cubit.dart` to query FTS for non-command queries.
-- 📋 Quick find with filters (by author, date, in page) — Extend palette with filter chips.
-- 🚧 Recent pages — Sidebar surface exists; persistence as `recent: [ULID, ...]` in `.quill.yaml` is 📋.
-- 🚧 Sidebar with workspaces, favorites, private, shared, teamspaces — Vault tree ✅. Favorites 📋. Private/shared/teamspaces 🔮.
+- ✅ Global search (Cmd/Ctrl + P) — M25, ⌘K palette runs FTS5 `MATCH` against `pages_fts` for non-command queries; M85 adds in-page Cmd+F.
+- 🚧 Quick find with filters (by author, date, in page) — In-page filter via Cmd+F (M85). Cross-vault chips (`@db:`, `@tag:`) still 📋.
+- ✅ Recent pages — Sidebar Recent section reads drift by `mtime`.
+- ✅ Sidebar with workspaces, favorites, private, shared, teamspaces — Vault tree ✅. Favorites ✅. Sidebar filter (M90), workspace icon picker (M107). Private/shared/teamspaces 🔮.
 - 🔮 Teamspaces (group pages by team) — Multi-user concept.
-- ✅ Keyboard shortcuts (extensive) — `vault_shell_page.dart` `CallbackShortcuts`; extend there.
+- ✅ Keyboard shortcuts (extensive) — `vault_shell_page.dart` `CallbackShortcuts`; M99 dialog (`?`) lists every binding.
 - ✅ Cmd+K command menu — M9.
 
 ## Collaboration
 
 - 🔮 Real-time multiplayer editing — Needs CRDT layer + backend.
 - 🔮 Cursor presence (see others typing) — Same.
-- 📋 Inline comments on text selection — Local-only v1 via sidecar; notifications 🔮.
-- 📋 Page comments (general thread) — Same.
-- 📋 Comment resolution — Sidecar field.
-- 🚧 Mentions of people, pages, dates — Pages via `[[ULID]]` ✅. People mentions 🔮. Date mentions 📋 (parse `@2026-05-14`).
+- 📋 Inline comments on text selection — Needs block ids first; page-level comments shipped M69.
+- ✅ Page comments (general thread) — M69 sidecar at `<vault>/.quill/comments/<page-ulid>.yaml`; "Comments" action in properties panel.
+- ✅ Comment resolution — `resolved: true` field on each comment; M69 toggle in the dialog.
+- ✅ Mentions of people, pages, dates — Pages via `[[ULID]]` + anchor variant (M79). Date pills via inline `@YYYY-MM-DD` (M83 relative-time variants). People mentions 🔮.
 - 🔮 Guest access (per-page) — Needs auth.
 - 🔮 Share permissions (full access, edit, comment, read, no access) — Same.
 - 🚧 Workspace member management — Settings page has a stub section (M11). Local user list 📋; server-side 🔮.
@@ -180,42 +180,42 @@ If your feature wants to store something new, the answer is almost always "add a
 ## Formatting & Writing
 
 - ✅ Markdown shortcuts (# for heading, ** for bold, etc.) — Native to source-mode editing.
-- 📋 Equation editor — Math support, see Block Editor.
-- 🚧 Mention dates (creates reminders) — Date strings render; reminder creation 📋.
-- 📋 Reminders (with notifications) — `flutter_local_notifications`; store `reminders:` in frontmatter.
-- 🚧 Date with time and time zones — Date property exists; timezone support 📋.
-- 📋 Date ranges — Property type extension.
+- ✅ Equation editor — M32 inline + block via `flutter_math_fork`.
+- 🚧 Mention dates (creates reminders) — Date pills render (M83). M89 surfaces a `reminder:` frontmatter badge in PageHeader. Native notification dispatch 📋 (needs `flutter_local_notifications`).
+- 📋 Reminders (with notifications) — `flutter_local_notifications`; M89 has the visual badge.
+- ✅ Date with time and time zones — M82, ISO `YYYY-MM-DDTHH:MM[(Z|±HH:MM)]` formatted as `YYYY-MM-DD · HH:MM tz` in DB cells.
+- ✅ Date ranges — M74, `YYYY-MM-DD..YYYY-MM-DD` renders with arrow.
 - 🔮 Mention people (notifies them) — Notifications require backend.
-- 🚧 @-mention pages, people, dates — Pages via `[[` ✅; `@`-trigger UX 📋; people 🔮; dates 📋.
+- ✅ @-mention pages, people, dates — `@` trigger opens the page picker in source mode (same overlay as `[[`); date pill via `@YYYY-MM-DD`; today's date via slash menu (M103). People mentions 🔮.
 
 ## Customization
 
-- ✅ Light, dark, system theme — M0+, `theme_cubit.dart`.
-- 📋 Custom emojis (paid) — Frontmatter `icon:` already accepts arbitrary paths/URLs; just expose an emoji picker.
-- 📋 Sidebar customization — Reorderable sections, hideable items.
-- 📋 Compact mode / small text toggle — Theme extension toggle; persist in settings.
-- 📋 Font choice (default, serif, mono) per page — Frontmatter `font:`; renderer reads it. Inter and JetBrains Mono are already vendored.
-- 📋 Full-width page toggle — Frontmatter `full_width: true`; renderer drops the max-width constraint.
+- ✅ Light, dark, system theme — M0+; settings UI in M100.
+- ✅ Custom emojis (via picker) — M62 emoji picker; works for both page icons (M26) and workspace icon (M107).
+- 🚧 Sidebar customization — Filter (M90), collapse (M109), favorites pinning. Reorderable sections still 📋.
+- ✅ Compact mode / small text toggle — M57 + M100 settings UI.
+- 📋 Font choice (default, serif, mono) per page — Frontmatter `font:`; renderer override.
+- ✅ Full-width page toggle — M46 frontmatter `full_width: true`.
 
 ## Templates
 
-- 📋 Built-in template gallery — Seed files in `assets/templates/`; settings entry to import.
-- 📋 Custom page templates — Convention: `Templates/` folder at vault root.
-- 📋 Custom database templates — Schema `row_template:` field.
-- 📋 Template duplication — Trivial once templates exist.
-- 📋 Workspace-level templates — Same.
+- ✅ Built-in template gallery — M106, "Install built-in templates" command writes five curated templates (Meeting / Weekly Review / Decision log / Project plan / Reading notes) into `<vault>/Templates/`.
+- ✅ Custom page templates — Anything dropped under `Templates/` shows in "New page from template…".
+- ✅ Custom database templates — `row_template:` in `.database.yaml` seeds new rows' frontmatter + body.
+- ✅ Template duplication — Reuses DuplicatePage; the "New from template…" flow is a duplicate-then-rename.
+- ✅ Workspace-level templates — Same.
 
 ## Import & Export
 
-- 📋 Import from: Evernote, Google Docs, Word, CSV, HTML, Markdown, Trello, Asana, Confluence, Quip, Dropbox Paper, Workflowy, Roam, plain text — Markdown is trivial (drop the file in the vault). CSV → database is most useful next (see CSV import). The rest are one-off converters in `lib/features/vault/data/datasources/importers/`.
-- ✅ Export single page or whole workspace — M12, `lib/features/vault/data/exporter.dart`.
-- 🚧 Export formats: Markdown + CSV, PDF, HTML — Markdown ✅. CSV/PDF/HTML 📋.
+- 🚧 Import from: Evernote, Google Docs, Word, CSV, HTML, Markdown, Trello, Asana, Confluence, Quip, Dropbox Paper, Workflowy, Roam, plain text — Markdown is trivial (drop the file in the vault). CSV → database shipped M29. The rest are one-off converters still 📋.
+- ✅ Export single page or whole workspace — M12.
+- ✅ Export formats: Markdown + CSV, PDF, HTML — Markdown M12, CSV M45, HTML M44, PDF M50. All wired into Settings → Export & Backup (M101).
 - ✅ Include subpages in export — M12.
-- 🚧 Include databases in export (as CSV) — Row pages are exported as `.md` today. CSV emission 📋.
+- ✅ Include databases in export (as CSV) — M45 CSV exporter.
 
 ## Mobile-Specific
 
-- 🚧 Mobile apps (iOS, Android) — Builds verified (M14); responsive shell (M13/M20). UX-optimized editor and database pages 📋.
+- 🚧 Mobile apps (iOS, Android) — Builds verified (M14); responsive shell (M13/M20). UX-optimised editor and database pages still 📋, though the renderer's outline + footer auto-show on mobile.
 - 🔮 Web clipper (browser extension that saves URLs into Notion) — Separate package; can write to a remote vault only via backend.
 - 📋 Share sheet integration (save to Notion from any app) — Platform channel that writes a new `.md` into a configured Inbox folder.
 - ✅ Offline access to recently opened pages — Local-first by design; the whole vault is on disk.
@@ -223,11 +223,11 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Admin & Workspace
 
-- 🚧 Workspace settings — M11 settings page; most sections are visual stubs.
+- ✅ Workspace settings — M11 → M100 (Appearance) / M101 (Export) / M102 (Advanced). Vault pane has name + path + stats.
 - 🔮 Member directory — Multi-user.
 - 🔮 Roles (owner, member, guest) — Same.
-- 📋 Workspace icon and name — Vault-root `.quill.yaml` fields.
-- ✅ Multiple workspaces per account — Vault switching in the picker.
+- ✅ Workspace icon and name — M107 (icon picker) + M108 (name override) write to `<vault>/.quill.yaml`.
+- ✅ Multiple workspaces per account — Vault switching in the picker; CloseVault (M75) returns to picker.
 - 🚫 Audit log (Enterprise) — Out of v1 scope for a self-hosted single-user app.
 - 🚫 SAML SSO (Enterprise) — Same.
 - 🚫 SCIM provisioning (Enterprise) — Same.
@@ -252,15 +252,15 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Misc
 
-- 📋 Math/equation rendering (LaTeX via KaTeX) — See Block Editor; Pick-next #5.
+- ✅ Math/equation rendering (LaTeX via KaTeX) — M32, `flutter_math_fork`.
 - 📋 Mermaid diagrams in code blocks — Render fenced ```mermaid blocks via `flutter_mermaid` or a webview fallback.
-- 📋 Color and background highlights — See Block Editor text color.
-- 📋 Emoji picker — For `icon:` field and `:emoji:` shortcodes.
+- ✅ Color and background highlights — Inline `<span style>` for colours + `<mark>` (M80) for soft-yellow highlight; callouts for block-level colour.
+- ✅ Emoji picker — M62, `lib/shared/widgets/emoji_picker.dart`. Used by page icons (M26) and workspace icon (M107).
 - 🚧 Undo/redo (Cmd+Z) — `TextField` provides native undo in source mode. Block-level undo arrives with the editable block model.
 - 📋 Multi-select blocks (Shift+click, Cmd+A) — Block model dependency.
-- 📋 Drag to reorder list items — Block model dependency.
-- 📋 Convert between block types in place — Slash menu (#1) does this.
-- 🚫 Print to PDF via browser — Quill isn't a web app. Native print → PDF is 📋 via the `printing` package.
+- 🚧 Drag to reorder list items — Block-level drag is shipped (M65); item-within-list drag still 📋.
+- ✅ Convert between block types in place — Slash menu's linePrefix substitution.
+- ✅ Native print → PDF — M50 via `pdf` + `printing` packages.
 
 ---
 
