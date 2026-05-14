@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
@@ -474,9 +475,45 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     );
   }
 
+  Future<void> _showRowMenu(BuildContext context, DatabasePageRow row,
+      Offset globalPos) async {
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        globalPos.dx,
+        globalPos.dy,
+        globalPos.dx,
+        0,
+      ),
+      items: const [
+        PopupMenuItem(value: 'open', child: Text('Open page')),
+        PopupMenuItem(value: 'copy-link',
+            child: Text('Copy [[link]]')),
+      ],
+    );
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case 'open':
+        widget.onOpenPage(row);
+      case 'copy-link':
+        final messenger = ScaffoldMessenger.maybeOf(context);
+        await Clipboard.setData(ClipboardData(text: '[[${row.ulid}]]'));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text('Copied [[${row.ulid}]]'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+    }
+  }
+
   Widget _titleRow(DatabasePageRow row, QuillTokens tokens, int depth) {
     return GestureDetector(
       onTap: () => widget.onOpenPage(row),
+      onSecondaryTapUp: (d) =>
+          _showRowMenu(context, row, d.globalPosition),
+      onLongPressStart: (d) =>
+          _showRowMenu(context, row, d.globalPosition),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Container(
