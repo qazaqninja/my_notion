@@ -53,7 +53,7 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Block Editor
 
-- 🚧 Block-based editing (everything is a block) — Tap-to-edit MVP shipped M40 (paragraphs / headings / blockquotes); list / table / code / math need source-mode toggle. Full block-level cursor nav still needs super_editor.
+- 🚧 Block-based editing (everything is a block) — Tap-to-edit M40 (paragraphs / headings / blockquotes) + M176 (list items, ul + ol with auto-renumber). Tables / code / math / hr still need source-mode toggle. Full block-level cursor nav still needs super_editor.
 - ✅ **Slash command menu (/)** — M23+. 19 entries including all block types, image picker, button (M70), inline database (M78), today's date (M103).
 - ✅ Drag and drop blocks — M65, `_BlockDragWrap` on every block. Hover-revealed handle on the left margin; drop reorders via source-offset splicing.
 - ✅ Multi-column layouts — M66, `:::cols` / `:::col` / `:::` fence.
@@ -269,7 +269,7 @@ If your feature wants to store something new, the answer is almost always "add a
 Top 10, ordered. Each is sized for one or two milestone commits. The first six mirror `CLAUDE.md`'s "What is NOT implemented" list; the next four come from this reconciliation.
 
 1. ✅ **Slash command menu (`/`)** — Shipped **M23**. Files: `lib/features/editor/{domain/slash_entries,presentation/cubit/slash_menu_cubit,presentation/widgets/slash_menu_overlay}.dart` + hook in `source_view.dart`. 13 entries.
-2. 🚧 **WYSIWYG editing** — Shipped a tractable MVP in **M40**: paragraph / heading / blockquote blocks are tap-to-edit in rendered mode. Each `_Block` carries a `(sourceStart, sourceEnd)` range; `_EditableBlock` swaps the rendered widget for a TextField on tap, splices the new source into the body on commit. Lists / tables / code / math / hr still require Source-mode toggle — true `super_editor` integration with a markdown serializer remains future work for users who want block-level cursor navigation and drag-drop reordering.
+2. 🚧 **WYSIWYG editing** — MVP in **M40** (paragraph / heading / blockquote tap-to-edit) extended in **M176** to list items (ul + ol). Each `_Block` carries a `(sourceStart, sourceEnd)` range; `_EditableBlock` / `_EditableListItem` swap the rendered widget for a TextField on tap, splice the new source via `ListReorder.emit` (renumbers ol) and dispatch `onBodyChange`. Tables / code / math / hr still require Source-mode toggle — true `super_editor` integration with a markdown serializer remains future work for users who want block-level cursor navigation and drag-drop reordering.
 3. ✅ **Page hierarchy UX** — Shipped **M24**. Right-click / long-press on tree rows opens a context menu (folders get "New page here" + "Reveal", files get "Reveal" + "Copy ULID" + "Move to trash"). Folders also have a hover `+` icon for new subpages. Editor breadcrumbs already render via `PageHeader`.
 4. ✅ **Page icons + covers** — Shipped **M26**. `lib/shared/widgets/page_icon.dart` renders `icon:` (emoji / asset / file / URL) and `cover:` as a hero band. Sidebar tree icons are deferred (would require extending VaultFile + the indexer).
 5. 🚧 **Math (KaTeX) + Mermaid** — Math shipped **M32** via `flutter_math_fork` (pure Dart). `$$ ... $$` blocks render in `markdown_renderer.dart`; the slash menu inserts the snippet. Mermaid still deferred (needs webview).
