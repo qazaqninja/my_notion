@@ -126,6 +126,24 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     return s is VaultLoaded ? Directory(s.rootPath) : null;
   }
 
+  /// Click cycles `<col>` through asc → desc → off and replaces any prior
+  /// sort on a different column. Only one sort is held at a time — multi-
+  /// column sort is shift-click or the popover (not wired yet).
+  void _cycleSort(String columnKey) {
+    setState(() {
+      final current = _query.sorts.isEmpty ? null : _query.sorts.first;
+      final List<SortRule> next;
+      if (current == null || current.columnKey != columnKey) {
+        next = [SortRule(columnKey: columnKey, ascending: true)];
+      } else if (current.ascending) {
+        next = [SortRule(columnKey: columnKey, ascending: false)];
+      } else {
+        next = const [];
+      }
+      _query = _query.copyWith(sorts: next);
+    });
+  }
+
   Future<void> _editCell(DatabasePageRow row, ColumnDef column, Object? value) async {
     final root = _vaultRoot();
     if (root == null) return;
@@ -367,6 +385,13 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       wrap: _wrap,
                       persistKey: widget.dbId,
                       subGroupBy: _query.subGroupBy,
+                      sortColumn: _query.sorts.isEmpty
+                          ? null
+                          : _query.sorts.first.columnKey,
+                      sortAscending: _query.sorts.isEmpty
+                          ? true
+                          : _query.sorts.first.ascending,
+                      onColumnHeaderTap: _cycleSort,
                     ),
                   ViewType.gallery => GalleryView(
                       schema: viewSchema,

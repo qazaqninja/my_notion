@@ -114,7 +114,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Dependencies between rows — M163, frontmatter `depends_on: [[ULID]], …`. Timeline view shows a "↳ N" pill in the frozen column with tooltip, plus L-shaped connector arrows between bars.
 - ✅ Database templates (per-database row templates) — `row_template:` in schema; `createRow` copies the template's frontmatter + body.
 - ✅ Filters (single and compound with AND/OR logic) — M19.
-- ✅ Sorts (multi-level) — M19.
+- ✅ Sorts (multi-level) — M19. M245 adds the quick-sort UX: clicking a column header in the table view cycles that column through asc → desc → off, writes through `DatabaseQuery.sorts`, and the header gains a bold name + ▲/▼ glyph while sorted. Multi-column sort is still routed via the future Sort popover.
 - ✅ Grouping (by any property) — M19.
 - ✅ Sub-grouping — M86 BoardView, M177 TableView, M183 GalleryView, M184 ListView, M187 TimelineView, M195 CalendarView, M196 ChartView (stacked bars + legend). All seven views.
 - ✅ Hide/show properties per view — M72, Properties popover; persists per-database (M96).

@@ -108,6 +108,9 @@ class FrozenColumnTable extends StatefulWidget {
     this.wrap = false,
     this.persistKey,
     this.subGroupBy,
+    this.sortColumn,
+    this.sortAscending = true,
+    this.onColumnHeaderTap,
   });
 
   final DatabaseSchema schema;
@@ -140,6 +143,16 @@ class FrozenColumnTable extends StatefulWidget {
   /// column order). Conventionally the database id; if null the table
   /// keeps state in memory only.
   final String? persistKey;
+
+  /// Column currently driving the sort. When set, the header renders a
+  /// ▲ / ▼ indicator next to that column's name.
+  final String? sortColumn;
+  final bool sortAscending;
+
+  /// Called when the user taps a column header (the body of the header,
+  /// not the resize handle). Receives the column key; the parent chooses
+  /// what to do (typically cycle asc → desc → none).
+  final void Function(String columnKey)? onColumnHeaderTap;
 
   @override
   State<FrozenColumnTable> createState() => _FrozenColumnTableState();
@@ -762,33 +775,51 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   }
 
   Widget _colHeader(ColumnDef c, QuillTokens tokens, bool isLast) {
+    final isSorted = widget.sortColumn == c.key;
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          width: _widthFor(c),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          alignment:
-              c.type == ColumnType.number ? Alignment.centerRight : Alignment.centerLeft,
-          decoration: BoxDecoration(
-            border: isLast
-                ? null
-                : Border(right: BorderSide(color: tokens.divider, width: 0.5)),
-          ),
-          child: Row(
-            mainAxisAlignment: c.type == ColumnType.number
-                ? MainAxisAlignment.end
-                : MainAxisAlignment.start,
-            children: [
-              QuillIcon(_iconForType(c.type),
-                  size: 11, strokeWidth: 1.7, color: tokens.text3),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(c.key,
-                    style: mono(fontSize: 11.5, color: tokens.text3),
-                    overflow: TextOverflow.ellipsis),
-              ),
-            ],
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onColumnHeaderTap == null
+              ? null
+              : () => widget.onColumnHeaderTap!(c.key),
+          child: Container(
+            width: _widthFor(c),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            alignment: c.type == ColumnType.number
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            decoration: BoxDecoration(
+              border: isLast
+                  ? null
+                  : Border(
+                      right: BorderSide(color: tokens.divider, width: 0.5)),
+            ),
+            child: Row(
+              mainAxisAlignment: c.type == ColumnType.number
+                  ? MainAxisAlignment.end
+                  : MainAxisAlignment.start,
+              children: [
+                QuillIcon(_iconForType(c.type),
+                    size: 11, strokeWidth: 1.7, color: tokens.text3),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(c.key,
+                      style: mono(
+                          fontSize: 11.5,
+                          color: isSorted ? tokens.text : tokens.text3,
+                          fontWeight:
+                              isSorted ? FontWeight.w600 : FontWeight.normal),
+                      overflow: TextOverflow.ellipsis),
+                ),
+                if (isSorted) ...[
+                  const SizedBox(width: 4),
+                  Text(widget.sortAscending ? '▲' : '▼',
+                      style: TextStyle(fontSize: 9, color: tokens.text2)),
+                ],
+              ],
+            ),
           ),
         ),
         // Right-edge drag handle. 6px wide, transparent fill, resize cursor.
