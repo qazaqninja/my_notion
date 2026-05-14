@@ -127,7 +127,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Row icons and covers — M84 table/list/gallery read `icon:` frontmatter; M92 gallery cards render `cover:`.
 - ✅ Linked database views — M88 extends `:::db` with `view:` + `limit:` props inside the fence.
 - ✅ Database mentions / inline databases — M78 + M88, `:::db <folder>` fence with optional view config.
-- 🚧 Relations between databases (one-way and two-way) — One-way ✅ via `[[ULID]]`. Two-way 📋.
+- ✅ Relations between databases (one-way and two-way) — One-way ✅ via `[[ULID]]`. Two-way ✅ M173 via `inverse_of: <key>` on the relation column; the repo propagates ULID adds/removes to the linked page's inverse column on every updateCell.
 - ✅ Rollups (aggregate from related rows) — M168, see the `rollup` bullet in the column-type list above.
 - ✅ Formulas (Notion formula language v2) — M31.
 - ✅ Buttons inside rows that trigger actions — M70.
