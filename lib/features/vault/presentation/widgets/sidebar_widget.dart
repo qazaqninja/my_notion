@@ -329,7 +329,13 @@ class _SidebarWidgetState extends State<SidebarWidget> {
     final picked = await pickEmoji(context);
     if (picked == null) return;
     final next = state.workspace.copyWith(icon: picked.isEmpty ? '' : picked);
-    await next.save(Directory(state.rootPath));
+    try {
+      await next.save(Directory(state.rootPath));
+    } catch (e) {
+      if (!context.mounted) return;
+      context.toastError('Could not save workspace icon', sub: '$e');
+      return;
+    }
     if (!context.mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
     context.toastSuccess(picked.isEmpty
