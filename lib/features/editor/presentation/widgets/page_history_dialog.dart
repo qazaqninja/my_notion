@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_toast.dart';
 import '../../data/page_history.dart';
 
 /// Modal dialog that lists git commits touching [relativePath] and renders
@@ -235,6 +237,22 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
                                           fontSize: 12, color: tokens.text2),
                                     ),
                                   ),
+                                ),
+                                IconButton(
+                                  visualDensity: VisualDensity.compact,
+                                  onPressed: () async {
+                                    await Clipboard.setData(
+                                        ClipboardData(text: contentSnap.data!));
+                                    if (!context.mounted) return;
+                                    final shaShort =
+                                        _selected?.sha.substring(0, 8) ?? '';
+                                    final len = contentSnap.data!.length;
+                                    context.toastSuccess(
+                                        'Copied $len ${len == 1 ? "char" : "chars"} from $shaShort',
+                                        subMono: true);
+                                  },
+                                  icon: const Icon(Icons.copy, size: 16),
+                                  tooltip: 'Copy contents',
                                 ),
                                 IconButton(
                                   visualDensity: VisualDensity.compact,
