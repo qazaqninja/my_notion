@@ -752,7 +752,7 @@ class _RecentlyEditedState extends State<_RecentlyEdited> {
                         Expanded(
                           flex: 2,
                           child: Text(
-                            e.relativePath,
+                            stripMdExtension(e.relativePath),
                             textAlign: TextAlign.right,
                             style: mono(fontSize: 11, color: tokens.text3),
                             overflow: TextOverflow.ellipsis,
