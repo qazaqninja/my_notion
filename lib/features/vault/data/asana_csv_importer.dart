@@ -68,10 +68,13 @@ class AsanaCsvImporter {
           if (i >= row.length) continue;
           final v = row[i].trim();
           if (v.isEmpty) continue;
-          final key = mapping.keyForIndex(i);
+          final key = _yamlKey(mapping.keyForIndex(i));
           if (mapping.multiIdx.contains(i)) {
             final parts = _splitMulti(v);
-            fmBuf.writeln('$key: [${parts.join(', ')}]');
+            // Quote each list element so commas / colons / brackets in
+            // a tag don't split the flow list (mirrors M689).
+            fmBuf.writeln(
+                '$key: [${parts.map(yamlFlowItem).join(', ')}]');
           } else {
             fmBuf.writeln('$key: ${yamlSafeScalar(v)}');
           }
