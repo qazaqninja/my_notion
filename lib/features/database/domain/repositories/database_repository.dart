@@ -68,6 +68,38 @@ abstract class DatabaseRepository {
     required String title,
     required io.Directory vaultRoot,
   });
+
+  /// Import a CSV file as a new database folder under [vaultRoot]. The
+  /// folder name comes from [folderName] or the CSV basename. Returns a
+  /// summary of what landed; the indexer must be re-run after to pick
+  /// up the new pages.
+  Future<CsvImportResult> importCsv({
+    required io.File source,
+    required io.Directory vaultRoot,
+    String? folderName,
+  });
+
+  /// Export [rows] of [schema] as a CSV file at [destination]. Returns
+  /// the number of rows written.
+  Future<int> exportCsv({
+    required io.File destination,
+    required DatabaseSchema schema,
+    required List<DatabasePageRow> rows,
+  });
+}
+
+/// Outcome of [DatabaseRepository.importCsv]. Exposed at the domain
+/// layer so presentation code never imports data datasources directly
+/// (CA-04 in docs/RULES.md).
+class CsvImportResult {
+  const CsvImportResult({
+    required this.folderPath,
+    required this.rowsWritten,
+    required this.columns,
+  });
+  final String folderPath;
+  final int rowsWritten;
+  final int columns;
 }
 
 /// Thrown when a write operation hits a page whose frontmatter marks it

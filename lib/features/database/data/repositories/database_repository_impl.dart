@@ -16,6 +16,8 @@ import '../../../vault/domain/entities/page.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
+import '../datasources/csv_exporter.dart';
+import '../datasources/csv_importer.dart';
 import '../datasources/database_yaml_parser.dart';
 
 class DatabaseRepositoryImpl implements DatabaseRepository {
@@ -464,6 +466,32 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
     } catch (_) {
       return const {};
     }
+  }
+
+  @override
+  Future<CsvImportResult> importCsv({
+    required io.File source,
+    required io.Directory vaultRoot,
+    String? folderName,
+  }) {
+    return CsvImporter(ulids: _ulids).importTo(
+      source,
+      vaultRoot,
+      folderName: folderName,
+    );
+  }
+
+  @override
+  Future<int> exportCsv({
+    required io.File destination,
+    required DatabaseSchema schema,
+    required List<DatabasePageRow> rows,
+  }) {
+    return const CsvExporter().export(
+      destination: destination,
+      schema: schema,
+      rows: rows,
+    );
   }
 }
 

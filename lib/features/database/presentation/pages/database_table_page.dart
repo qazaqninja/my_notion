@@ -17,7 +17,6 @@ import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
-import '../../data/datasources/csv_exporter.dart';
 import '../../domain/entities/database_query.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
@@ -715,7 +714,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     );
     if (picked == null) return;
     try {
-      final n = await const CsvExporter().export(
+      final n = await _repo.exportCsv(
         destination: File(picked),
         schema: schema,
         rows: filtered,

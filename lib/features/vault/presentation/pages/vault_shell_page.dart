@@ -22,7 +22,6 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../commands/presentation/widgets/command_palette_overlay.dart';
-import '../../../database/data/datasources/csv_importer.dart';
 import '../../data/html_page_importer.dart';
 import '../../data/opml_page_importer.dart';
 import '../../data/asana_csv_importer.dart';
@@ -706,6 +705,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
           context.toastError('No vault open');
           return;
         }
+        final dbRepo = context.read<DatabaseRepository>();
         final result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
           allowedExtensions: const ['csv'],
@@ -714,9 +714,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
         final picked = result.files.first.path;
         if (picked == null) return;
         try {
-          final summary = await const CsvImporter().importTo(
-            File(picked),
-            Directory(vaultPath),
+          final summary = await dbRepo.importCsv(
+            source: File(picked),
+            vaultRoot: Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
           if (context.mounted) {

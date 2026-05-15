@@ -12,6 +12,7 @@ import '../../../vault/domain/entities/frontmatter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
 import '../../../vault/domain/entities/page.dart';
 import '../../domain/entities/database_schema.dart';
+import '../../domain/repositories/database_repository.dart';
 
 /// Imports a CSV file into a new vault database. Creates a folder
 /// `<vaultRoot>/<csvBasename>/`, drops a `.database.yaml` describing the
@@ -305,13 +306,5 @@ class CsvImporter {
       };
 }
 
-class CsvImportResult {
-  const CsvImportResult({
-    required this.folderPath,
-    required this.rowsWritten,
-    required this.columns,
-  });
-  final String folderPath;
-  final int rowsWritten;
-  final int columns;
-}
+// CsvImportResult moved to lib/features/database/domain/repositories/database_repository.dart
+// so it can be re-exported via the abstract DatabaseRepository interface.
