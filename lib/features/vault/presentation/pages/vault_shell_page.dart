@@ -139,6 +139,13 @@ class _VaultShellPageState extends State<VaultShellPage> {
               _invokeAction(context, "Open today's daily note"),
           const SingleActivator(LogicalKeyboardKey.slash, shift: true): () =>
               _showShortcuts(context),
+          // Cmd/Ctrl + ? mirrors `?` but survives inside text fields
+          // (where bare ? is a normal character). Common macOS / VS Code
+          // convention for "show shortcut help".
+          const SingleActivator(LogicalKeyboardKey.slash,
+              shift: true, meta: true): () => _showShortcuts(context),
+          const SingleActivator(LogicalKeyboardKey.slash,
+              shift: true, control: true): () => _showShortcuts(context),
           const SingleActivator(LogicalKeyboardKey.backslash, meta: true): () =>
               setState(() => _sidebarCollapsed = !_sidebarCollapsed),
           const SingleActivator(LogicalKeyboardKey.backslash, control: true): () =>
@@ -304,7 +311,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘.', 'Quick capture → Inbox/Quick capture.md'),
                 _kbRow(tokens, '⌘⇧O', 'Open a random page'),
                 _kbRow(tokens, '⌘H', 'Home'),
-                _kbRow(tokens, '?', 'This shortcut list'),
+                _kbRow(tokens, '? / ⌘?', 'This shortcut list (⌘? works in source mode too)'),
                 const SizedBox(height: 10),
                 _kbSection(tokens, 'Editor'),
                 _kbRow(tokens, '⌘F', 'Find in page'),
