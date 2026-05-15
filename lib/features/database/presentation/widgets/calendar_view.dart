@@ -108,11 +108,28 @@ class _CalendarViewState extends State<CalendarView> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Text(
-            'No date column in this database.\n\nAdd a column with `type: date` '
-            'to .database.yaml to enable the calendar view.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: tokens.text3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QuillIcon('calendar',
+                  size: 24, strokeWidth: 1.4, color: tokens.text3),
+              const SizedBox(height: 10),
+              Text(
+                'No date column',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.text2,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Add a `type: date` column in .database.yaml\nto enable the calendar view.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    fontSize: 12, color: tokens.text3, height: 1.45),
+              ),
+            ],
           ),
         ),
       );
