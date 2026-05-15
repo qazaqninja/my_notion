@@ -203,10 +203,27 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       children: [
         if (entries.isEmpty && !_addingField)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Text(
-              'No frontmatter on this page',
-              style: TextStyle(fontSize: 13, color: tokens.text3),
+            padding: const EdgeInsets.symmetric(vertical: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                QuillIcon('hash',
+                    size: 22, strokeWidth: 1.4, color: tokens.text3),
+                const SizedBox(height: 10),
+                Text(
+                  'No properties yet',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.text2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Click + above to add a field.',
+                  style: TextStyle(fontSize: 12, color: tokens.text3),
+                ),
+              ],
             ),
           ),
         for (final entry in entries)
