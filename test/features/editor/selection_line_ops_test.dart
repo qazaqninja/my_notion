@@ -1353,6 +1353,35 @@ void main() {
     });
   });
 
+  group('toPascalCase / pascalCaseLinesIn', () {
+    test('basic title to Pascal', () {
+      expect(toPascalCase('my cool title'), 'MyCoolTitle');
+    });
+
+    test('snake source converts cleanly', () {
+      expect(toPascalCase('hello_world'), 'HelloWorld');
+    });
+
+    test('numbers stay in their word', () {
+      expect(toPascalCase('v1.2.3 final'), 'V123Final');
+    });
+
+    test('empty / all-punctuation returns empty', () {
+      expect(toPascalCase(''), '');
+      expect(toPascalCase('!!!---'), '');
+    });
+
+    test('single word capitalises first letter', () {
+      expect(toPascalCase('solo'), 'Solo');
+    });
+
+    test('per-line transform skips blanks', () {
+      const text = 'my cool\n\nfoo_bar\n';
+      final r = pascalCaseLinesIn(text, 0, text.length);
+      expect(r.text, 'MyCool\n\nFooBar\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

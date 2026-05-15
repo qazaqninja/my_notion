@@ -137,6 +137,8 @@ enum SlashAction {
   snakeCaseLines,
   /// Convert every selected line to `camelCase`.
   camelCaseLines,
+  /// Convert every selected line to `PascalCase`.
+  pascalCaseLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -671,6 +673,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'aBc',
     action: SlashAction.camelCaseLines,
     keywords: ['camel', 'case', 'lower', 'identifier'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'PascalCase',
+    hint: 'ABc',
+    action: SlashAction.pascalCaseLines,
+    keywords: ['pascal', 'case', 'upper', 'identifier'],
   ),
   SlashEntry(
     icon: 'hash',

@@ -611,6 +611,35 @@ SortLinesResult camelCaseLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Convert a single line into `PascalCase` — like [toCamelCase] but
+/// the first word is also capital-cased.
+///
+///   "my cool title" → "MyCoolTitle"
+///   "hello_world"   → "HelloWorld"
+String toPascalCase(String line) {
+  final words = line
+      .toLowerCase()
+      .split(RegExp(r'[^a-z0-9]+'))
+      .where((w) => w.isNotEmpty)
+      .toList();
+  if (words.isEmpty) return '';
+  final buf = StringBuffer();
+  for (final w in words) {
+    buf
+      ..write(w.substring(0, 1).toUpperCase())
+      ..write(w.substring(1));
+  }
+  return buf.toString();
+}
+
+/// Per-line wrapper for [toPascalCase].
+SortLinesResult pascalCaseLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines) if (l.trim().isEmpty) l else toPascalCase(l),
+      ];
+    });
+
 /// Convert a single line into a URL-safe slug:
 ///
 ///   "My Cool Title!" → "my-cool-title"

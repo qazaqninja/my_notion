@@ -1005,6 +1005,8 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, snakeCaseLinesIn);
       case SlashAction.camelCaseLines:
         _applyLinesTransformAfterSlash(stripStart, caret, camelCaseLinesIn);
+      case SlashAction.pascalCaseLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, pascalCaseLinesIn);
     }
   }
 
