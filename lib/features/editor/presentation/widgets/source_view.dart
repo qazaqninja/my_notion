@@ -866,6 +866,8 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, uppercaseLinesIn);
       case SlashAction.lowercaseSelectedLines:
         _applyLinesTransformAfterSlash(stripStart, caret, lowercaseLinesIn);
+      case SlashAction.titleCaseSelectedLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, titleCaseLinesIn);
     }
   }
 

@@ -464,3 +464,37 @@ SortLinesResult lowercaseLinesIn(String text, int start, int end) =>
     _transformLinesIn(
       text, start, end, (lines) => [for (final l in lines) l.toLowerCase()],
     );
+
+/// Title-case every line in the selected block: capitalise the first
+/// letter of each whitespace-separated word, lowercase the rest. Words
+/// shorter than 4 chars in the middle of a line (and, or, the, of, …)
+/// stay lowercased — the standard English-title heuristic. The first
+/// and last word of a line are always capitalised regardless of length.
+SortLinesResult titleCaseLinesIn(String text, int start, int end) {
+  String titleCaseLine(String line) {
+    const small = {
+      'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'nor', 'of',
+      'on', 'or', 'so', 'the', 'to', 'up', 'yet', 'vs', 'via', 'per',
+    };
+    final words = line.split(' ');
+    if (words.isEmpty) return line;
+    final buf = StringBuffer();
+    for (var i = 0; i < words.length; i++) {
+      if (i > 0) buf.write(' ');
+      final w = words[i];
+      if (w.isEmpty) continue;
+      final lower = w.toLowerCase();
+      final isEdge = i == 0 || i == words.length - 1;
+      if (!isEdge && small.contains(lower)) {
+        buf.write(lower);
+      } else {
+        buf.write(w.substring(0, 1).toUpperCase() + lower.substring(1));
+      }
+    }
+    return buf.toString();
+  }
+
+  return _transformLinesIn(
+    text, start, end, (lines) => [for (final l in lines) titleCaseLine(l)],
+  );
+}

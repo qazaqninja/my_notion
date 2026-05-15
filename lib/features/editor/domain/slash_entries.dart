@@ -25,6 +25,8 @@ enum SlashAction {
   uppercaseSelectedLines,
   /// Lowercase the lines touched by the selection.
   lowercaseSelectedLines,
+  /// Title-case the lines touched by the selection.
+  titleCaseSelectedLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -328,6 +330,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'aaa',
     action: SlashAction.lowercaseSelectedLines,
     keywords: ['lower', 'lowercase', 'case'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Title case selected lines',
+    hint: 'Title Case',
+    action: SlashAction.titleCaseSelectedLines,
+    keywords: ['title', 'case', 'caps', 'capitalize', 'headline'],
   ),
   SlashEntry(
     icon: 'tag',

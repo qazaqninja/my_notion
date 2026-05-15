@@ -137,6 +137,39 @@ void main() {
     });
   });
 
+  group('titleCaseLinesIn', () {
+    test('capitalises every non-small word', () {
+      const text = 'hello world\n';
+      expect(titleCaseLinesIn(text, 0, text.length).text, 'Hello World\n');
+    });
+
+    test('lowercases small words in the middle of a line', () {
+      const text = 'the lord of the rings\n';
+      // First "the" is edge so capitalised; "of" and middle "the" stay lower.
+      expect(
+        titleCaseLinesIn(text, 0, text.length).text,
+        'The Lord of the Rings\n',
+      );
+    });
+
+    test('always capitalises the first and last word', () {
+      const text = 'of mice and men\n';
+      // "of" is the first word, "men" is the last — both capitalise.
+      expect(
+        titleCaseLinesIn(text, 0, text.length).text,
+        'Of Mice and Men\n',
+      );
+    });
+
+    test('preserves blank lines', () {
+      const text = 'hello\n\nworld\n';
+      expect(
+        titleCaseLinesIn(text, 0, text.length).text,
+        'Hello\n\nWorld\n',
+      );
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
