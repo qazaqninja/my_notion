@@ -204,9 +204,15 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text(
-                                    _selected?.sha.substring(0, 8) ?? '',
-                                    style: mono(fontSize: 12, color: tokens.text2),
+                                  child: Tooltip(
+                                    message: _selected?.sha ?? '',
+                                    waitDuration: const Duration(
+                                        milliseconds: 400),
+                                    child: Text(
+                                      _selected?.sha.substring(0, 8) ?? '',
+                                      style: mono(
+                                          fontSize: 12, color: tokens.text2),
+                                    ),
                                   ),
                                 ),
                                 IconButton(
