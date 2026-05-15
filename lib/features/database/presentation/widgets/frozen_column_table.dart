@@ -776,14 +776,22 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                   },
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 4),
-                      child: Icon(
-                        collapsed
-                            ? Icons.chevron_right
-                            : Icons.keyboard_arrow_down,
-                        size: 14,
-                        color: tokens.text2,
+                    child: Tooltip(
+                      message: collapsed
+                          ? 'Expand sub-rows'
+                          : 'Collapse sub-rows',
+                      waitDuration: const Duration(milliseconds: 500),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: AnimatedRotation(
+                          turns: collapsed ? 0 : 0.25,
+                          duration: const Duration(milliseconds: 120),
+                          child: Icon(
+                            Icons.chevron_right,
+                            size: 14,
+                            color: tokens.text2,
+                          ),
+                        ),
                       ),
                     ),
                   ),
