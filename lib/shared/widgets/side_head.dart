@@ -43,13 +43,19 @@ class SideHead extends StatelessWidget {
           ),
           if (count != null) ...[
             const SizedBox(width: 6),
-            Text(
-              '${count!}',
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                color: tokens.text3.withValues(alpha: 0.7),
-                fontFamily: 'JetBrainsMono',
+            Tooltip(
+              message: count == 1
+                  ? '1 item in ${label.toLowerCase()}'
+                  : '${count!} items in ${label.toLowerCase()}',
+              waitDuration: const Duration(milliseconds: 500),
+              child: Text(
+                '${count!}',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w500,
+                  color: tokens.text3.withValues(alpha: 0.7),
+                  fontFamily: 'JetBrainsMono',
+                ),
               ),
             ),
           ],
