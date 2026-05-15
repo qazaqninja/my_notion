@@ -944,16 +944,56 @@ class _Nav extends StatelessWidget {
     );
   }
 
-  Widget _item(QuillTokens tokens, {required String id, required String label, required String icon}) {
-    final isActive = id == active;
-    return GestureDetector(
+  Widget _item(QuillTokens tokens,
+      {required String id, required String label, required String icon}) {
+    return _NavItem(
+      id: id,
+      label: label,
+      icon: icon,
+      active: id == active,
       onTap: () => onSelect(id),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+    );
+  }
+}
+
+class _NavItem extends StatefulWidget {
+  const _NavItem({
+    required this.id,
+    required this.label,
+    required this.icon,
+    required this.active,
+    required this.onTap,
+  });
+
+  final String id;
+  final String label;
+  final String icon;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final isActive = widget.active;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
         child: Container(
           padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
           decoration: BoxDecoration(
-            color: isActive ? tokens.selected : Colors.transparent,
+            color: isActive
+                ? tokens.selected
+                : (_hover ? tokens.hover : Colors.transparent),
             border: Border(
               left: BorderSide(
                 color: isActive ? tokens.accent : Colors.transparent,
@@ -963,15 +1003,22 @@ class _Nav extends StatelessWidget {
           ),
           child: Row(
             children: [
-              QuillIcon(icon, size: 14, strokeWidth: 1.7,
-                  color: isActive ? tokens.text2 : tokens.text3),
+              QuillIcon(widget.icon,
+                  size: 14,
+                  strokeWidth: 1.7,
+                  color: isActive
+                      ? tokens.text2
+                      : (_hover ? tokens.text2 : tokens.text3)),
               const SizedBox(width: 8),
               Text(
-                label,
+                widget.label,
                 style: TextStyle(
                   fontSize: 13.5,
-                  fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
-                  color: isActive ? tokens.text : tokens.text2,
+                  fontWeight:
+                      isActive ? FontWeight.w500 : FontWeight.w400,
+                  color: isActive
+                      ? tokens.text
+                      : (_hover ? tokens.text : tokens.text2),
                 ),
               ),
             ],
