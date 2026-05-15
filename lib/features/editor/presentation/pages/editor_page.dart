@@ -822,6 +822,27 @@ class _EditorBodyState extends State<_EditorBody> {
     );
   }
 
+  void _flushSave(BuildContext context, EditorLoaded loaded) {
+    final bloc = context.read<EditorBloc>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (loaded.dirty) {
+      bloc.add(const SaveNow());
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Saving…'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    } else {
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text('Already saved'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
   void _toggleEditorMode(BuildContext context, EditorLoaded loaded) {
     final next = loaded.mode == EditorMode.rendered
         ? EditorMode.source
@@ -924,6 +945,10 @@ class _EditorBodyState extends State<_EditorBody> {
                 _openFind(),
             const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
                 _openFind(),
+            const SingleActivator(LogicalKeyboardKey.keyS, meta: true): () =>
+                _flushSave(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
+                _flushSave(context, loaded),
             const SingleActivator(LogicalKeyboardKey.keyG, meta: true): () {
               if (_findOpen) _step(1, page.body);
             },

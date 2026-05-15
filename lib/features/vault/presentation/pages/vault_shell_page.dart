@@ -306,6 +306,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 const SizedBox(height: 10),
                 _kbSection(tokens, 'Editor'),
                 _kbRow(tokens, '⌘F', 'Find in page'),
+                _kbRow(tokens, '⌘S', 'Force-save current page (debounced auto-save already runs)'),
                 _kbRow(tokens, '⌘G', 'Find next match'),
                 _kbRow(tokens, '⌘⇧G', 'Find previous match'),
                 _kbRow(tokens, '⌘⇧L', 'Toggle page lock'),
