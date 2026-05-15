@@ -38,6 +38,42 @@ void main() {
         text: 'hi', start: -3, end: 99, label: 'x', url: 'y');
       expect(r.text, '[x](y)');
     });
+
+    test('URL with parentheses gets <angle-bracket> wrap (CommonMark)', () {
+      final r = insertMarkdownLink(
+        text: '',
+        start: 0,
+        end: 0,
+        label: 'Apple',
+        url: 'https://en.wikipedia.org/wiki/Apple_(disambiguation)',
+      );
+      expect(
+        r.text,
+        '[Apple](<https://en.wikipedia.org/wiki/Apple_(disambiguation)>)',
+      );
+    });
+
+    test('label with ] gets backslash-escaped', () {
+      final r = insertMarkdownLink(
+        text: '',
+        start: 0,
+        end: 0,
+        label: 'see [appendix]',
+        url: 'https://example.com',
+      );
+      expect(r.text, r'[see [appendix\]](https://example.com)');
+    });
+
+    test('URL without parens is unwrapped (no <…>)', () {
+      final r = insertMarkdownLink(
+        text: '',
+        start: 0,
+        end: 0,
+        label: 'x',
+        url: 'https://example.com/path',
+      );
+      expect(r.text, '[x](https://example.com/path)');
+    });
   });
 
   group('looksLikeUrl', () {

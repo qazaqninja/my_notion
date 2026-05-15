@@ -16,6 +16,12 @@ class InsertLinkResult {
 /// Empty [label] and empty [url] both stay in the output — the helper
 /// is intentionally tolerant; the caller can decide what to do with
 /// a half-filled prompt.
+///
+/// URLs that contain `(` or `)` (e.g. Wikipedia disambiguations like
+/// `https://en.wikipedia.org/wiki/Apple_(disambiguation)`) are wrapped
+/// in angle brackets `<…>` per CommonMark so the markdown parser can
+/// still find the closing `)`. Labels that contain `]` are escaped
+/// with a backslash for the same reason.
 InsertLinkResult insertMarkdownLink({
   required String text,
   required int start,
@@ -25,7 +31,9 @@ InsertLinkResult insertMarkdownLink({
 }) {
   final a = start.clamp(0, text.length);
   final b = end.clamp(a, text.length);
-  final snippet = '[$label]($url)';
+  final safeLabel = label.replaceAll(']', r'\]');
+  final safeUrl = (url.contains('(') || url.contains(')')) ? '<$url>' : url;
+  final snippet = '[$safeLabel]($safeUrl)';
   final next = text.replaceRange(a, b, snippet);
   return InsertLinkResult(text: next, caret: a + snippet.length);
 }
