@@ -86,6 +86,8 @@ class HomePage extends StatelessWidget {
                     title: 'New page',
                     subtitle: 'Cmd+N — title prompt, then a fresh .md.',
                     onTap: () => _promptNewPage(context),
+                    disabled: state is! VaultLoaded,
+                    disabledReason: 'Open a vault to create pages.',
                   ),
                   const SizedBox(width: 16),
                   _Tile(
@@ -94,6 +96,8 @@ class HomePage extends StatelessWidget {
                     title: "Today's note",
                     subtitle: 'Open or create Daily/<YYYY-MM-DD>.md.',
                     onTap: () => _openDailyNote(context),
+                    disabled: state is! VaultLoaded,
+                    disabledReason: 'Open a vault to use daily notes.',
                   ),
                   const SizedBox(width: 16),
                   _Tile(
@@ -850,12 +854,20 @@ class _Tile extends StatefulWidget {
     required this.title,
     required this.subtitle,
     this.onTap,
+    this.disabled = false,
+    this.disabledReason,
   });
   final QuillTokens tokens;
   final String icon;
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
+
+  /// When true, render the tile as visually muted and ignore taps. Used
+  /// to gate vault-required actions (New page, Today's note) when no
+  /// vault is currently open.
+  final bool disabled;
+  final String? disabledReason;
 
   @override
   State<_Tile> createState() => _TileState();
@@ -867,26 +879,27 @@ class _TileState extends State<_Tile> {
   @override
   Widget build(BuildContext context) {
     final tokens = widget.tokens;
-    return Expanded(
-      child: MouseRegion(
-        cursor: widget.onTap != null
-            ? SystemMouseCursors.click
-            : SystemMouseCursors.basic,
-        onEnter: (_) => setState(() => _hover = true),
-        onExit: (_) => setState(() => _hover = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _hover ? tokens.surface2 : tokens.surface,
-              border: Border.all(
-                color: _hover ? tokens.accent : tokens.divider2,
-                width: 0.5,
-              ),
-              borderRadius: const BorderRadius.all(Radius.circular(6)),
+    final isDisabled = widget.disabled;
+    final canTap = !isDisabled && widget.onTap != null;
+    Widget tile = MouseRegion(
+      cursor: canTap ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: canTap ? (_) => setState(() => _hover = true) : null,
+      onExit: canTap ? (_) => setState(() => _hover = false) : null,
+      child: GestureDetector(
+        onTap: canTap ? widget.onTap : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _hover ? tokens.surface2 : tokens.surface,
+            border: Border.all(
+              color: _hover ? tokens.accent : tokens.divider2,
+              width: 0.5,
             ),
+            borderRadius: const BorderRadius.all(Radius.circular(6)),
+          ),
+          child: Opacity(
+            opacity: isDisabled ? 0.5 : 1.0,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -913,6 +926,10 @@ class _TileState extends State<_Tile> {
         ),
       ),
     );
+    if (isDisabled && widget.disabledReason != null) {
+      tile = Tooltip(message: widget.disabledReason!, child: tile);
+    }
+    return Expanded(child: tile);
   }
 }
 
