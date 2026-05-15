@@ -90,6 +90,7 @@ class _PageTitleFieldState extends State<PageTitleField> {
       height: 1.2,
     );
     if (!_editing) {
+      final isEmpty = widget.title.trim().isEmpty;
       return GestureDetector(
         onTap: _start,
         behavior: HitTestBehavior.opaque,
@@ -97,7 +98,13 @@ class _PageTitleFieldState extends State<PageTitleField> {
           cursor: SystemMouseCursors.text,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(0, 18, 0, 8),
-            child: Text(widget.title, style: style),
+            child: Text(
+              isEmpty ? 'Untitled' : widget.title,
+              style: isEmpty
+                  ? style.copyWith(
+                      color: tokens.text3, fontStyle: FontStyle.italic)
+                  : style,
+            ),
           ),
         ),
       );
