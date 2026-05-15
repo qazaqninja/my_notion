@@ -377,10 +377,14 @@ class _SourceViewState extends State<SourceView> {
     );
   }
 
-  /// Open the "insert link" dialog. ⌘K. Pre-fills the label from the
-  /// current selection (if any) and the URL from the system clipboard
-  /// (when it looks like a URL). On confirm, splices `[label](url)` at
-  /// the selection range. Inert when the page is locked.
+  /// Open the "insert link" dialog. ⌘K. Three modes:
+  /// 1. Caret inside an existing `[label](url)` → EDIT mode; URL field
+  ///    pre-fills with the current URL.
+  /// 2. Non-empty selection → WRAP mode; label = selection, URL from
+  ///    clipboard when clipboard looks like a URL.
+  /// 3. No selection / no surrounding link → INSERT mode; label = "link".
+  ///
+  /// Inert when the page is locked.
   Future<void> _openLinkDialog() async {
     final v = _controller.value;
     final sel = v.selection;
@@ -389,31 +393,55 @@ class _SourceViewState extends State<SourceView> {
     final end = sel.end.clamp(start, v.text.length);
     final selected = v.text.substring(start, end);
 
-    final clip = await Clipboard.getData(Clipboard.kTextPlain);
-    final clipText = clip?.text?.trim() ?? '';
-    final urlSeed = looksLikeUrl(clipText) ? clipText : '';
+    // EDIT mode kicks in only when the user has a collapsed caret
+    // inside an existing link. A non-empty selection always means WRAP.
+    final existing = selected.isEmpty
+        ? findMarkdownLinkAt(v.text, start)
+        : null;
+
+    final String urlSeed;
+    if (existing != null) {
+      urlSeed = existing.url;
+    } else {
+      final clip = await Clipboard.getData(Clipboard.kTextPlain);
+      final clipText = clip?.text?.trim() ?? '';
+      urlSeed = looksLikeUrl(clipText) ? clipText : '';
+    }
 
     if (!mounted) return;
     final url = await showQuillPrompt(
       context,
-      title: 'Insert link',
+      title: existing != null ? 'Edit link' : 'Insert link',
       icon: 'link',
       label: 'URL',
-      hint: selected.isEmpty
-          ? 'The URL gets a "link" label by default.'
-          : 'Wraps the current selection.',
+      hint: existing != null
+          ? 'Editing the link around the caret.'
+          : selected.isEmpty
+              ? 'The URL gets a "link" label by default.'
+              : 'Wraps the current selection.',
       placeholder: 'https://example.com',
       initial: urlSeed,
       mono: true,
-      confirmLabel: 'Insert',
+      confirmLabel: existing != null ? 'Save' : 'Insert',
     );
     if (url == null || url.trim().isEmpty) return;
 
-    final label = selected.isEmpty ? 'link' : selected;
+    final String label;
+    final int replaceStart;
+    final int replaceEnd;
+    if (existing != null) {
+      label = existing.label;
+      replaceStart = existing.start;
+      replaceEnd = existing.end;
+    } else {
+      label = selected.isEmpty ? 'link' : selected;
+      replaceStart = start;
+      replaceEnd = end;
+    }
     final r = insertMarkdownLink(
       text: v.text,
-      start: start,
-      end: end,
+      start: replaceStart,
+      end: replaceEnd,
       label: label,
       url: url.trim(),
     );
