@@ -269,9 +269,13 @@ class _RulerHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 border: Border(left: BorderSide(color: tokens.divider, width: 0.5)),
               ),
-              child: Text(
-                _label(origin, w),
-                style: mono(fontSize: 10.5, color: tokens.text3),
+              child: Tooltip(
+                message: 'Week ${w + 1} · ${_isoLabel(origin, w)}',
+                waitDuration: const Duration(milliseconds: 500),
+                child: Text(
+                  _label(origin, w),
+                  style: mono(fontSize: 10.5, color: tokens.text3),
+                ),
               ),
             ),
         ],
@@ -284,6 +288,11 @@ class _RulerHeader extends StatelessWidget {
     final mm = d.month.toString().padLeft(2, '0');
     final dd = d.day.toString().padLeft(2, '0');
     return '$mm-$dd';
+  }
+
+  String _isoLabel(DateTime origin, int w) {
+    final d = DateTime(origin.year, origin.month, origin.day + w * 7);
+    return d.toIso8601String().split('T').first;
   }
 }
 
