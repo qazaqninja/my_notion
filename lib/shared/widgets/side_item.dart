@@ -104,11 +104,14 @@ class _SideItemState extends State<SideItem> {
               if (widget.chevron != SideChevron.none)
                 SizedBox(
                   width: 14,
-                  child: Transform.rotate(
-                    angle:
-                        widget.chevron == SideChevron.open ? 1.5708 : 0, // 90°
+                  child: AnimatedRotation(
+                    turns:
+                        widget.chevron == SideChevron.open ? 0.25 : 0,
+                    duration: const Duration(milliseconds: 120),
                     child: QuillIcon('caret',
-                        size: 11, strokeWidth: 1.8, color: tokens.text3),
+                        size: 11,
+                        strokeWidth: 1.8,
+                        color: tokens.text3),
                   ),
                 )
               else
