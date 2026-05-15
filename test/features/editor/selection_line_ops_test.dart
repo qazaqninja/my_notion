@@ -1296,6 +1296,63 @@ void main() {
     });
   });
 
+  group('toSnakeCase / snakeCaseLinesIn', () {
+    test('basic title to snake', () {
+      expect(toSnakeCase('My Cool Title'), 'my_cool_title');
+    });
+
+    test('preserves numbers', () {
+      expect(toSnakeCase('v1.2.3 final'), 'v1_2_3_final');
+    });
+
+    test('collapses runs to single underscore', () {
+      expect(toSnakeCase('A — B   C…D'), 'a_b_c_d');
+    });
+
+    test('strips outer punctuation', () {
+      expect(toSnakeCase('  --hello world!!  '), 'hello_world');
+    });
+
+    test('all-punctuation returns empty', () {
+      expect(toSnakeCase('!!!---'), '');
+    });
+
+    test('per-line transform skips blanks', () {
+      const text = 'My Cool\n\nv1.2 final\n';
+      final r = snakeCaseLinesIn(text, 0, text.length);
+      expect(r.text, 'my_cool\n\nv1_2_final\n');
+    });
+  });
+
+  group('toCamelCase / camelCaseLinesIn', () {
+    test('basic title to camel', () {
+      expect(toCamelCase('My Cool Title'), 'myCoolTitle');
+    });
+
+    test('snake source converts cleanly', () {
+      expect(toCamelCase('hello_world'), 'helloWorld');
+    });
+
+    test('numbers stay in their word', () {
+      expect(toCamelCase('v1.2.3 final'), 'v123Final');
+    });
+
+    test('empty / all-punctuation returns empty', () {
+      expect(toCamelCase(''), '');
+      expect(toCamelCase('!!!---'), '');
+    });
+
+    test('single word stays lowercase', () {
+      expect(toCamelCase('Solo'), 'solo');
+    });
+
+    test('per-line transform skips blanks', () {
+      const text = 'My Cool\n\nfoo_bar\n';
+      final r = camelCaseLinesIn(text, 0, text.length);
+      expect(r.text, 'myCool\n\nfooBar\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

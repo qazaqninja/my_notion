@@ -133,6 +133,10 @@ enum SlashAction {
   joinLinesWithComma,
   /// Split each selected line on `,` into multiple lines.
   splitOnComma,
+  /// Convert every selected line to `snake_case`.
+  snakeCaseLines,
+  /// Convert every selected line to `camelCase`.
+  camelCaseLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -653,6 +657,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a, b → a / b',
     action: SlashAction.splitOnComma,
     keywords: ['split', 'comma', 'csv', 'explode', 'separate'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'snake_case',
+    hint: 'a_b_c',
+    action: SlashAction.snakeCaseLines,
+    keywords: ['snake', 'case', 'underscore', 'identifier'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'camelCase',
+    hint: 'aBc',
+    action: SlashAction.camelCaseLines,
+    keywords: ['camel', 'case', 'lower', 'identifier'],
   ),
   SlashEntry(
     icon: 'hash',

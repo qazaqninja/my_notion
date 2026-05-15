@@ -540,6 +540,77 @@ SortLinesResult dedupeLinesIn(String text, int start, int end) =>
 SortLinesResult reverseLinesIn(String text, int start, int end) =>
     _transformLinesIn(text, start, end, (lines) => lines.reversed.toList());
 
+/// Convert a single line into `snake_case` — lowercase ASCII letters
+/// and digits, with non-alphanumeric runs collapsed to a single `_`.
+/// Leading/trailing underscores are trimmed. Empty / all-punctuation
+/// input returns the empty string.
+///
+///   "My Cool Title!"  → "my_cool_title"
+///   "v1.2.3 final"    → "v1_2_3_final"
+String toSnakeCase(String line) {
+  final lower = line.toLowerCase();
+  final buf = StringBuffer();
+  var inUnder = false;
+  for (var i = 0; i < lower.length; i++) {
+    final c = lower.codeUnitAt(i);
+    final isAlnum =
+        (c >= 0x30 && c <= 0x39) || (c >= 0x61 && c <= 0x7a);
+    if (isAlnum) {
+      buf.writeCharCode(c);
+      inUnder = false;
+    } else if (!inUnder) {
+      buf.write('_');
+      inUnder = true;
+    }
+  }
+  var out = buf.toString();
+  if (out.startsWith('_')) out = out.substring(1);
+  if (out.endsWith('_')) out = out.substring(0, out.length - 1);
+  return out;
+}
+
+/// Convert a single line into `camelCase` — lowercase first word,
+/// remaining words have their first ASCII letter uppercased and
+/// the rest lowercased. Non-alphanumeric chars are the word
+/// separators (matching the snake/slug input split rules).
+///
+///   "My Cool Title!"  → "myCoolTitle"
+///   "hello_world"     → "helloWorld"
+///   "v1.2.3 final"    → "v123Final"
+String toCamelCase(String line) {
+  // Split on any run of non-alphanumeric.
+  final words = line
+      .toLowerCase()
+      .split(RegExp(r'[^a-z0-9]+'))
+      .where((w) => w.isNotEmpty)
+      .toList();
+  if (words.isEmpty) return '';
+  final buf = StringBuffer(words.first);
+  for (var i = 1; i < words.length; i++) {
+    final w = words[i];
+    buf
+      ..write(w.substring(0, 1).toUpperCase())
+      ..write(w.substring(1));
+  }
+  return buf.toString();
+}
+
+/// Per-line wrapper for [toSnakeCase].
+SortLinesResult snakeCaseLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines) if (l.trim().isEmpty) l else toSnakeCase(l),
+      ];
+    });
+
+/// Per-line wrapper for [toCamelCase].
+SortLinesResult camelCaseLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines) if (l.trim().isEmpty) l else toCamelCase(l),
+      ];
+    });
+
 /// Convert a single line into a URL-safe slug:
 ///
 ///   "My Cool Title!" → "my-cool-title"

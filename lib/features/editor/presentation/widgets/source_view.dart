@@ -1001,6 +1001,10 @@ class _SourceViewState extends State<SourceView> {
         );
       case SlashAction.splitOnComma:
         _applyLinesTransformAfterSlash(stripStart, caret, splitOnCommaIn);
+      case SlashAction.snakeCaseLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, snakeCaseLinesIn);
+      case SlashAction.camelCaseLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, camelCaseLinesIn);
     }
   }
 
