@@ -1940,11 +1940,13 @@ class _FileAttachment extends StatelessWidget {
 
   /// Media-type accent colour for the prominent preview band; fallback
   /// for non-media attachments returns null and the renderer falls
-  /// back to the compact chip layout.
+  /// back to the compact chip layout. Re-uses the kStage / kCallout
+  /// palette so the editor's media accents stay consistent with the
+  /// rest of the app's coloured surfaces.
   Color? _mediaAccent() {
-    if (_isVideo) return const Color(0xFFB46F4F); // terracotta
-    if (_isAudio) return const Color(0xFF5A82B4); // blue
-    if (_isPdf) return const Color(0xFF5A8F6E); // sage
+    if (_isVideo) return kStageNegot; // terracotta
+    if (_isAudio) return kCalloutInfo; // blue
+    if (_isPdf) return kCalloutTip; // sage
     return null;
   }
 
