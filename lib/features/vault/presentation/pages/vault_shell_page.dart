@@ -1443,18 +1443,23 @@ views:
       ..sort((a, b) => b.value.compareTo(a.value));
     if (!context.mounted) return;
     final tokens = QuillTokens.of(context);
+    final size = MediaQuery.of(context).size;
+    final w = size.width < 460 ? size.width - 32 : 420.0;
+    final maxH = size.height * 0.85;
     await showDialog<void>(
       context: context,
       builder: (_) => Dialog(
         backgroundColor: tokens.surface,
         child: SizedBox(
-          width: 420,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          width: w,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 Text('VAULT STATS',
                     style: TextStyle(
                       fontSize: 11,
@@ -1593,6 +1598,7 @@ views:
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),
