@@ -290,6 +290,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'export-html', child: Text('Export as .html…')),
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
         PopupMenuDivider(),
+        PopupMenuItem(value: 'add-tags', child: Text('Add tags…')),
         PopupMenuItem(value: 'set-reminder', child: Text('Set reminder…')),
         PopupMenuItem(value: 'set-goal', child: Text('Set word count goal…')),
         PopupMenuDivider(),
@@ -325,6 +326,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _exportPageAsHtml(context, loaded);
       case 'print-page':
         await _printPage(context, loaded);
+      case 'add-tags':
+        await _addTags(context, loaded);
       case 'set-reminder':
         await _setReminder(context, loaded);
       case 'set-goal':
@@ -464,6 +467,97 @@ class _EditorBodyState extends State<_EditorBody> {
               ? 'Moved to vault root'
               : 'Moved to $picked'),
           duration: const Duration(seconds: 2)),
+    );
+  }
+
+  Future<void> _addTags(
+      BuildContext context, EditorLoaded loaded) async {
+    final fm = loaded.page.frontmatter;
+    final existing = fm.find('tags');
+    final currentTags = <String>[];
+    if (existing != null) {
+      final v = existing.value;
+      if (v is List) {
+        for (final t in v) {
+          final s = '$t'.trim();
+          if (s.isNotEmpty) currentTags.add(s);
+        }
+      } else if (v is String && v.trim().isNotEmpty) {
+        currentTags.add(v.trim());
+      }
+    }
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add tags'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (currentTags.isNotEmpty) ...[
+              Text(
+                'Current: ${currentTags.join(', ')}',
+                style: const TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+            ],
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'tag1, tag2',
+                helperText: 'Comma-separated. New tags are merged with current.',
+              ),
+              onSubmitted: (v) => Navigator.of(ctx).pop(v),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+    if (result == null) return;
+    final added = <String>[
+      for (final t in result.split(','))
+        if (t.trim().isNotEmpty) t.trim(),
+    ];
+    if (added.isEmpty) return;
+    // Merge + dedupe, preserving order: current first, then new.
+    final merged = <String>[...currentTags];
+    for (final t in added) {
+      if (!merged.contains(t)) merged.add(t);
+    }
+    if (!context.mounted) return;
+    final bloc = context.read<EditorBloc>();
+    final raw = '[${merged.join(', ')}]';
+    if (existing == null) {
+      bloc.add(AddFrontmatterField(FrontmatterEntry(
+        key: 'tags',
+        rawScalar: raw,
+        type: FrontmatterType.multi,
+        value: merged,
+      )));
+    } else {
+      bloc.add(EditFrontmatterField(
+        'tags',
+        existing.copyWith(rawScalar: raw, value: merged),
+      ));
+    }
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text('Tags: ${merged.join(', ')}'),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 

@@ -139,6 +139,26 @@ void main() {
       expect(parsed.frontmatter.get('count'), equals(42));
     });
 
+    test('tags — added as `[a, b, c]` list round-trips', () {
+      final fm = Frontmatter(entries: const [
+        FrontmatterEntry(
+            key: 'id',
+            rawScalar: '01HX0V9R5N6E8L3P7Q8S9U2X4B',
+            type: FrontmatterType.ulid,
+            value: '01HX0V9R5N6E8L3P7Q8S9U2X4B'),
+        FrontmatterEntry(
+            key: 'tags',
+            rawScalar: '[work, ops]',
+            type: FrontmatterType.multi,
+            value: ['work', 'ops']),
+      ]);
+      final raw =
+          FrontmatterParser.serialise(ParsedMarkdown(frontmatter: fm, body: ''));
+      expect(raw, contains('tags: [work, ops]'));
+      final parsed = FrontmatterParser.parse(raw);
+      expect(parsed.frontmatter.get('tags'), equals(['work', 'ops']));
+    });
+
     test('reminder date — added as ISO YYYY-MM-DD round-trips', () {
       final original = Frontmatter(entries: const [
         FrontmatterEntry(
