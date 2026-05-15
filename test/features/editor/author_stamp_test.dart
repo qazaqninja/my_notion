@@ -34,6 +34,9 @@ void main() {
       final out = EditorBloc.stampAuthor(_fmWith({}), 'Alice');
       expect(_read(out, 'last_edited_by'), 'Alice');
       expect(_read(out, 'created_by'), 'Alice');
+      // M317: last_edited_at is also stamped as ISO date.
+      expect(_read(out, 'last_edited_at'),
+          matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
     });
 
     test('preserves an existing created_by, updates last_edited_by', () {

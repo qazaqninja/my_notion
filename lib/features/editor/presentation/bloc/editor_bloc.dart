@@ -188,10 +188,14 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
       _stampAuthor(fm, user);
 
   static Frontmatter _stampAuthor(Frontmatter fm, String user) {
+    final now = DateTime.now();
+    final iso =
+        '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final hasCreatedBy =
         fm.entries.any((x) => x.key == 'created_by' && '${x.value}'.isNotEmpty);
     final next = <FrontmatterEntry>[];
-    var replaced = false;
+    var replacedAuthor = false;
+    var replacedDate = false;
     for (final e in fm.entries) {
       if (e.key == 'last_edited_by') {
         next.add(FrontmatterEntry(
@@ -200,17 +204,33 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
           type: FrontmatterType.text,
           value: user,
         ));
-        replaced = true;
+        replacedAuthor = true;
+      } else if (e.key == 'last_edited_at') {
+        next.add(FrontmatterEntry(
+          key: 'last_edited_at',
+          rawScalar: iso,
+          type: FrontmatterType.date,
+          value: iso,
+        ));
+        replacedDate = true;
       } else {
         next.add(e);
       }
     }
-    if (!replaced) {
+    if (!replacedAuthor) {
       next.add(FrontmatterEntry(
         key: 'last_edited_by',
         rawScalar: user,
         type: FrontmatterType.text,
         value: user,
+      ));
+    }
+    if (!replacedDate) {
+      next.add(FrontmatterEntry(
+        key: 'last_edited_at',
+        rawScalar: iso,
+        type: FrontmatterType.date,
+        value: iso,
       ));
     }
     if (!hasCreatedBy) {
