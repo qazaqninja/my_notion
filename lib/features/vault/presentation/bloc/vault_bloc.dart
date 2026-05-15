@@ -161,6 +161,10 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     final ulid = _ulids.generate();
     final safe = _safeFileName(e.title);
     final relativePath = e.folderPath.isEmpty ? '$safe.md' : p.join(e.folderPath, '$safe.md');
+    final today = DateTime.now();
+    final iso =
+        '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final author = loaded.workspace.currentUserName;
     final page = Page(
       ulid: ulid,
       relativePath: relativePath,
@@ -178,6 +182,19 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
           type: FrontmatterType.text,
           value: e.title,
         ),
+        FrontmatterEntry(
+          key: 'created_at',
+          rawScalar: iso,
+          type: FrontmatterType.date,
+          value: iso,
+        ),
+        if (author != null && author.isNotEmpty)
+          FrontmatterEntry(
+            key: 'created_by',
+            rawScalar: author,
+            type: FrontmatterType.text,
+            value: author,
+          ),
       ]),
       body: '',
       mtimeMs: DateTime.now().millisecondsSinceEpoch,

@@ -49,6 +49,13 @@ void main() {
     final parsed = FrontmatterParser.parse(raw);
     expect(parsed.frontmatter.id, equals(createdUlid));
     expect(parsed.frontmatter.title, equals('Hello world'));
+    // M316: auto-stamped created_at on a freshly created page.
+    final createdAtField = parsed.frontmatter.find('created_at');
+    expect(createdAtField, isNotNull);
+    expect(createdAtField!.rawScalar,
+        matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
+    // No workspace user configured here, so created_by stays absent.
+    expect(parsed.frontmatter.find('created_by'), isNull);
 
     // The new page is in Drift.
     final pages = await db.select(db.pages).get();
