@@ -174,6 +174,8 @@ enum SlashAction {
   /// Convert a block of CSV-shaped lines into a GFM markdown
   /// pipe table.
   csvLinesToMarkdownTable,
+  /// Inverse: convert a GFM pipe-table block back into CSV rows.
+  markdownTableToCsv,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -827,6 +829,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a,b → | a | b |',
     action: SlashAction.csvLinesToMarkdownTable,
     keywords: ['csv', 'table', 'pipe', 'convert', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'table',
+    label: 'Markdown table → CSV',
+    hint: '| a | b | → a,b',
+    action: SlashAction.markdownTableToCsv,
+    keywords: ['csv', 'table', 'pipe', 'extract', 'unmark'],
   ),
   SlashEntry(
     icon: 'hash',

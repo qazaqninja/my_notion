@@ -1092,6 +1092,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, csvLinesToMarkdownTableIn,
         );
+      case SlashAction.markdownTableToCsv:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, markdownTableToCsvLinesIn,
+        );
     }
   }
 

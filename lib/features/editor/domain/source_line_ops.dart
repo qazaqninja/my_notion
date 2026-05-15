@@ -628,6 +628,48 @@ List<String> _padRow(List<String> row, int width) {
   return [...row, for (var i = row.length; i < width; i++) ''];
 }
 
+/// Inverse of [csvLinesToMarkdownTableIn]. Convert a GFM pipe-table
+/// block back into one CSV row per data line. The `| --- | --- |`
+/// divider row is dropped. Each cell is trimmed; the leading and
+/// trailing `|` (and their padding spaces) are stripped.
+///
+///   | apple | banana |
+///   | --- | --- |
+///   | 1 | 2 |
+///
+/// becomes:
+///
+///   apple, banana
+///   1, 2
+SortLinesResult markdownTableToCsvLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final dividerPattern = RegExp(r'^\|?(?:\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?$');
+      return [
+        for (final l in lines)
+          (() {
+            final stripped = l.trim();
+            // Pass through anything that doesn't look like a table row.
+            if (!stripped.startsWith('|') || !stripped.endsWith('|')) {
+              return l;
+            }
+            // Drop the divider entirely.
+            if (dividerPattern.hasMatch(stripped)) return null;
+            // Split on `|`, drop the empty fragments produced by the
+            // leading/trailing pipe, trim each cell.
+            final cells = stripped
+                .substring(1, stripped.length - 1)
+                .split('|')
+                .map((c) => c.trim())
+                .toList();
+            return cells.join(', ');
+          })(),
+      ].whereType<String>().toList();
+    });
+
 /// Convert every line that looks like a bare URL (`http://`,
 /// `https://`, or `www.`) into the markdown link form
 /// `[<url>](<url>)`. Lines that don't match pass through.

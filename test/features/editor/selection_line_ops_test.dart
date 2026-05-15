@@ -1778,6 +1778,42 @@ void main() {
     });
   });
 
+  group('markdownTableToCsvLinesIn', () {
+    test('extracts data rows, drops the divider', () {
+      const text = '| apple | banana |\n'
+          '| --- | --- |\n'
+          '| 1 | 2 |\n'
+          '| 3 | 4 |\n';
+      final r = markdownTableToCsvLinesIn(text, 0, text.length);
+      expect(r.text, 'apple, banana\n1, 2\n3, 4\n');
+    });
+
+    test('round-trip CSV → table → CSV preserves the data', () {
+      const text = 'a, b\n1, 2\n3, 4\n';
+      final asTable = csvLinesToMarkdownTableIn(text, 0, text.length).text;
+      final back = markdownTableToCsvLinesIn(asTable, 0, asTable.length).text;
+      expect(back, text);
+    });
+
+    test('handles colon-aligned dividers (`:---:`, `:---`, `---:`)', () {
+      const text = '| a | b |\n'
+          '|:---:|:---|\n'
+          '| 1 | 2 |\n';
+      final r = markdownTableToCsvLinesIn(text, 0, text.length);
+      expect(r.text, 'a, b\n1, 2\n');
+    });
+
+    test('non-table lines pass through', () {
+      const text = 'just prose\nstill prose\n';
+      final r = markdownTableToCsvLinesIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('empty input is a no-op', () {
+      expect(markdownTableToCsvLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
