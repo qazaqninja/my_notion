@@ -26,6 +26,14 @@ class UrlBookmark {
     if (parsed == null || parsed.host.isEmpty) {
       throw const FormatException('not a URL');
     }
+    // Require http/https — other schemes (file://, mailto:, javascript:,
+    // protocol-relative '//host', etc.) would either fail to render as
+    // a bookmark card (markdown_renderer requires https?://) or be
+    // outright dangerous to autolaunch.
+    final scheme = parsed.scheme.toLowerCase();
+    if (scheme != 'http' && scheme != 'https') {
+      throw const FormatException('only http and https URLs are supported');
+    }
     final folder = Directory(p.join(vaultRoot.path, 'Bookmarks'));
     await folder.create(recursive: true);
     final ulid = _ulids.generate();
