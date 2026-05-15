@@ -277,7 +277,12 @@ class _TrashDialogState extends State<TrashDialog> {
               );
               if (!confirmed || !mounted) return;
               final ok = await _service.deleteForever(item);
-              if (!ok || !mounted) return;
+              if (!mounted) return;
+              if (!ok) {
+                context.toastError('Delete failed',
+                    sub: item.basename, subMono: true);
+                return;
+              }
               context.toastSuccess(
                   item.title.isEmpty
                       ? 'Deleted ${item.basename}'
