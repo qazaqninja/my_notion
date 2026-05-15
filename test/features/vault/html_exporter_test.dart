@@ -97,6 +97,38 @@ void main() {
       expect(html, contains('&lt;script&gt;'));
       expect(html, isNot(contains('<script>')));
     });
+
+    test('XSS: escapes `"` in autolinked URL attribute (M709)', () {
+      // A URL containing '"' would close the href attribute and
+      // inject arbitrary HTML if not escaped.
+      final html = markdownToHtml('See http://evil.example/"><script>alert(1)</script>');
+      expect(html, isNot(contains('<script>')),
+          reason: 'unescaped `"` would let an attacker inject script');
+      expect(html, contains('&quot;'));
+    });
+
+    test('XSS: escapes `"` in standalone-URL bookmark href (M707/M709)', () {
+      // Standalone URL on its own line takes the "bookmark" card path.
+      final html = markdownToHtml('http://evil.example/q="bad');
+      expect(html, isNot(contains('href="http://evil.example/q="bad')));
+      expect(html, contains('&quot;'));
+    });
+
+    test('XSS: escapes `"` in standalone image src (M706/M709)', () {
+      final html = markdownToHtml('![alt](http://evil.example/x.png"><script>)');
+      expect(html, isNot(contains('<script>')));
+      // The src must have its '"' encoded.
+      expect(html, contains('&quot;'));
+    });
+
+    test('XSS: escapes `"` and `<` in code-fence language hint (M708/M709)',
+        () {
+      final html =
+          markdownToHtml('```dart"><script>alert(1)</script>\nx\n```');
+      expect(html, isNot(contains('<script>alert(1)</script>')));
+      // The lang label is interpolated into a class attribute.
+      expect(html, contains('class="lang-dart&quot;&gt;&lt;script&gt;'));
+    });
   });
 
   test('HtmlExporter writes one .html per .md plus index + css', () async {

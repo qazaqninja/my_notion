@@ -251,15 +251,27 @@ String _escape(String s) {
 
 /// Inline pass: bold / italic / strike / code / wikilinks / URLs.
 String _inline(String s) {
-  // Wikilinks first (they're greedy delimiters).
+  // HTML-escape FIRST. Markdown traditionally allows raw HTML inline,
+  // but for the exporter we treat all body text as untrusted and
+  // neutralise '<' / '>' / '&' / '"' before applying markdown
+  // transforms. The transforms emit their own tags (which contain
+  // pre-escaped HTML characters via &lt; etc. that no further pass
+  // can damage). Without this, '<script>alert(1)</script>' in the
+  // body would round-trip into a live script tag in the export —
+  // M709 escaped attributes but text-node XSS through inline HTML
+  // was still wide open.
+  s = _escape(s);
+  // Wikilinks first (they're greedy delimiters). ULIDs are
+  // alphanumeric so the escape pass above never touches them.
   s = s.replaceAllMapped(
     RegExp(r'\[\[([0-9A-Z]{26})\]\]'),
     (m) => '<a class="wikilink" href="${m.group(1)}.html">${m.group(1)}</a>',
   );
-  // Inline code (escape inside).
+  // Inline code. Input is already _escape'd at the top, so re-escaping
+  // the captured content would double-encode it.
   s = s.replaceAllMapped(
     RegExp('`([^`\n]+)`'),
-    (m) => '<code>${_escape(m.group(1)!)}</code>',
+    (m) => '<code>${m.group(1)!}</code>',
   );
   // Bold
   s = s.replaceAllMapped(
@@ -301,14 +313,16 @@ String _inline(String s) {
     RegExp(r'==([^=\n]+)=='),
     (m) => '<mark>${m.group(1)}</mark>',
   );
-  // Bare URLs. The regex already excludes `"`, `<`, `>`, `[`, `]`, `(`,
-  // `)`, but `&` is allowed and would render literally without escape.
+  // Bare URLs. The input has already been _escape'd at the top of
+  // _inline, so the captured URL is already attribute-safe — re-
+  // escaping it would double-encode '&' to '&amp;amp;'. The regex
+  // also excludes '<', '>', '[', ']', '(', ')' so it stops at the
+  // boundary of any markdown / HTML structure.
   s = s.replaceAllMapped(
     RegExp(r'(?<!["=])(https?://[^\s\<\>\[\]\(\)]+)'),
     (m) {
       final url = m.group(1) ?? '';
-      final escaped = _escape(url);
-      return '<a href="$escaped" target="_blank">$escaped</a>';
+      return '<a href="$url" target="_blank">$url</a>';
     },
   );
   return s;
