@@ -29,6 +29,9 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
     required this.chipBorder,
     required this.inputBg,
     required this.inputBorder,
+    required this.danger,
+    required this.dangerTint,
+    required this.success,
   });
 
   final Brightness brightness;
@@ -53,6 +56,17 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
   final Color chipBorder;
   final Color inputBg;
   final Color inputBorder;
+
+  /// Destructive / warning red — used for the "trash" icon, the danger
+  /// pill on the locked-page badge, and the snooze-reminder error chip.
+  final Color danger;
+
+  /// Translucent danger background (~16% alpha) for pill backgrounds.
+  final Color dangerTint;
+
+  /// Positive / success green — used for the unlock chevron and the
+  /// "saved" badge on the editor footer.
+  final Color success;
 
   bool get isDark => brightness == Brightness.dark;
 
@@ -85,6 +99,9 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
     Color? chipBorder,
     Color? inputBg,
     Color? inputBorder,
+    Color? danger,
+    Color? dangerTint,
+    Color? success,
   }) {
     return QuillTokens(
       brightness: brightness ?? this.brightness,
@@ -108,6 +125,9 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
       chipBorder: chipBorder ?? this.chipBorder,
       inputBg: inputBg ?? this.inputBg,
       inputBorder: inputBorder ?? this.inputBorder,
+      danger: danger ?? this.danger,
+      dangerTint: dangerTint ?? this.dangerTint,
+      success: success ?? this.success,
     );
   }
 
@@ -136,6 +156,9 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
       chipBorder: Color.lerp(chipBorder, other.chipBorder, t)!,
       inputBg: Color.lerp(inputBg, other.inputBg, t)!,
       inputBorder: Color.lerp(inputBorder, other.inputBorder, t)!,
+      danger: Color.lerp(danger, other.danger, t)!,
+      dangerTint: Color.lerp(dangerTint, other.dangerTint, t)!,
+      success: Color.lerp(success, other.success, t)!,
     );
   }
 }

@@ -1136,7 +1136,7 @@ class _SettingRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w500,
-                    color: danger ? const Color(0xFFA8584C) : tokens.text,
+                    color: danger ? tokens.danger : tokens.text,
                   ),
                 ),
                 const SizedBox(height: 3),

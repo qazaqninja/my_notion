@@ -1139,7 +1139,7 @@ class _EditorBodyState extends State<_EditorBody> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.warning_amber_outlined,
-                      size: 28, color: const Color(0xFFCB5A4F)),
+                      size: 28, color: tokens.danger),
                   const SizedBox(height: 10),
                   Text(
                     'Could not open page',
@@ -1857,12 +1857,12 @@ class _WikiBadge extends StatelessWidget {
     final stale = days != null && days > 90;
     final fresh = days != null && days <= 14;
     final fg = stale
-        ? const Color(0xFFCB5A4F)
+        ? tokens.danger
         : fresh
             ? tokens.accent
             : tokens.text2;
     final bg = stale
-        ? const Color(0xFFCB5A4F).withValues(alpha: 0.16)
+        ? tokens.dangerTint
         : fresh
             ? tokens.accent.withValues(alpha: 0.16)
             : tokens.surface2;
@@ -1944,12 +1944,12 @@ class _ReminderBadge extends StatelessWidget {
                 ? 'in ${days}d'
                 : '${-days}d ago';
     final fg = overdue
-        ? const Color(0xFFCB5A4F)
+        ? tokens.danger
         : today0
             ? tokens.accent
             : tokens.text2;
     final bg = overdue
-        ? const Color(0xFFCB5A4F).withValues(alpha: 0.16)
+        ? tokens.dangerTint
         : today0
             ? tokens.accent.withValues(alpha: 0.16)
             : tokens.surface2;
@@ -2070,7 +2070,7 @@ class _PageFooter extends StatelessWidget {
                       style: mono(
                           fontSize: 11,
                           color: words >= g
-                              ? const Color(0xFF5A8F6E)
+                              ? tokens.success
                               : tokens.text3)),
                 ],
               ],
@@ -2092,7 +2092,7 @@ class _PageFooter extends StatelessWidget {
                     backgroundColor: tokens.surface2,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       words >= g
-                          ? const Color(0xFF5A8F6E)
+                          ? tokens.success
                           : tokens.accent,
                     ),
                   ),

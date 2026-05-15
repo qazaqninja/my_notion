@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/database_schema.dart';
@@ -31,25 +32,7 @@ class ChartView extends StatelessWidget {
   /// read the colour assignments.
   final String? subGroupBy;
 
-  static const _palette = <Color>[
-    Color(0xFF5A8F6E),
-    Color(0xFF5A82B4),
-    Color(0xFFB46F4F),
-    Color(0xFF8B5FA8),
-    Color(0xFFB39342),
-    Color(0xFF4F8FA4),
-    Color(0xFF9C5A6A),
-    Color(0xFF6B8E7F),
-  ];
-
-  static Color _subColor(String value) {
-    if (value.isEmpty || value == '—') return const Color(0xFF8C8C8C);
-    var h = 0;
-    for (final code in value.codeUnits) {
-      h = (h * 31 + code) & 0x7fffffff;
-    }
-    return _palette[h % _palette.length];
-  }
+  static Color _subColor(String value) => categoricalColor(value);
 
   /// Build a single stacked bar rod for [primaryKey], colouring each
   /// segment by sub-group hash. The bar's `toY` is the total height;

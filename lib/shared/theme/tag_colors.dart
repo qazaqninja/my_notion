@@ -37,3 +37,32 @@ TagPalette tagPalette(Brightness brightness, TagColor color) {
   final map = brightness == Brightness.dark ? _dark : _light;
   return map[color] ?? map[TagColor.gray]!;
 }
+
+/// Shared categorical palette for chart bars, calendar event dots, timeline
+/// bars, etc. Eight muted hues; matches the design's chart colours.
+/// Use [kCategoricalNeutral] for `'—'` / empty / unbucketed values.
+const List<Color> kCategoricalPalette = [
+  Color(0xFF5A8F6E),
+  Color(0xFF5A82B4),
+  Color(0xFFB46F4F),
+  Color(0xFF8B5FA8),
+  Color(0xFFB39342),
+  Color(0xFF4F8FA4),
+  Color(0xFF9C5A6A),
+  Color(0xFF6B8E7F),
+];
+
+const Color kCategoricalNeutral = Color(0xFF8C8C8C);
+
+/// Stable hue assignment for a string label: maps a value to one of the
+/// eight palette colours by hashing. Empty / `'—'` falls back to neutral.
+/// Uses a Java-style 31-multiplier so re-orderings of label characters
+/// produce different colours.
+Color categoricalColor(String value) {
+  if (value.isEmpty || value == '—') return kCategoricalNeutral;
+  var h = 0;
+  for (final code in value.codeUnits) {
+    h = (h * 31 + code) & 0x7fffffff;
+  }
+  return kCategoricalPalette[h % kCategoricalPalette.length];
+}

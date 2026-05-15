@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/database_schema.dart';
@@ -80,25 +81,8 @@ class _CalendarViewState extends State<CalendarView> {
   Color _subgroupColor(DatabasePageRow row, Color fallback) {
     final key = widget.subGroupBy;
     if (key == null) return fallback;
-    final raw = '${row.cells[key] ?? ''}'.trim();
-    if (raw.isEmpty) return const Color(0xFF8C8C8C);
-    var h = 0;
-    for (final code in raw.codeUnits) {
-      h = (h * 31 + code) & 0x7fffffff;
-    }
-    return _palette[h % _palette.length];
+    return categoricalColor('${row.cells[key] ?? ''}'.trim());
   }
-
-  static const _palette = <Color>[
-    Color(0xFF5A8F6E),
-    Color(0xFF5A82B4),
-    Color(0xFFB46F4F),
-    Color(0xFF8B5FA8),
-    Color(0xFFB39342),
-    Color(0xFF4F8FA4),
-    Color(0xFF9C5A6A),
-    Color(0xFF6B8E7F),
-  ];
 
   @override
   Widget build(BuildContext context) {

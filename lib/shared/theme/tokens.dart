@@ -42,6 +42,9 @@ QuillTokens buildTokens(Brightness brightness, AccentKey accentKey) {
       chipBorder: Colors.white.withValues(alpha: 0.10),
       inputBg: Colors.white.withValues(alpha: 0.04),
       inputBorder: Colors.white.withValues(alpha: 0.10),
+      danger: const Color(0xFFCB5A4F),
+      dangerTint: const Color(0xFFCB5A4F).withValues(alpha: 0.16),
+      success: const Color(0xFF5A8F6E),
     );
   }
   return QuillTokens(
@@ -66,6 +69,9 @@ QuillTokens buildTokens(Brightness brightness, AccentKey accentKey) {
     chipBorder: Colors.black.withValues(alpha: 0.06),
     inputBg: Colors.black.withValues(alpha: 0.025),
     inputBorder: Colors.black.withValues(alpha: 0.06),
+    danger: const Color(0xFFCB5A4F),
+    dangerTint: const Color(0xFFCB5A4F).withValues(alpha: 0.16),
+    success: const Color(0xFF5A8F6E),
   );
 }
 
