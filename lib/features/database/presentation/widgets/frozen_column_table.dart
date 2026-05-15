@@ -959,24 +959,30 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       },
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        child: Container(
-          width: _widthFor(c),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          alignment: c.type == ColumnType.number
-              ? Alignment.centerRight
-              : Alignment.centerLeft,
-          decoration: BoxDecoration(
-            border: isLast
-                ? null
-                : Border(right: BorderSide(color: tokens.divider, width: 0.5)),
-          ),
-          child: Text(
-            agg == _Agg.none ? 'calc' : agg.label(value),
-            style: mono(
-              fontSize: 11,
-              color: agg == _Agg.none ? tokens.text3 : tokens.text2,
+        child: Tooltip(
+          message: agg == _Agg.none
+              ? 'Click to cycle aggregations (count, sum, avg, min, max)'
+              : 'Aggregation: ${agg.name} · click to cycle',
+          waitDuration: const Duration(milliseconds: 500),
+          child: Container(
+            width: _widthFor(c),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            alignment: c.type == ColumnType.number
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            decoration: BoxDecoration(
+              border: isLast
+                  ? null
+                  : Border(right: BorderSide(color: tokens.divider, width: 0.5)),
             ),
-            overflow: TextOverflow.ellipsis,
+            child: Text(
+              agg == _Agg.none ? 'calc' : agg.label(value),
+              style: mono(
+                fontSize: 11,
+                color: agg == _Agg.none ? tokens.text3 : tokens.text2,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
       ),
