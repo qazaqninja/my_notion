@@ -268,6 +268,21 @@ class _StatsStripState extends State<_StatsStrip> {
                 ),
               ),
             ],
+            const Spacer(),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => setState(() => _counts = _load()),
+                child: Tooltip(
+                  message: 'Refresh stats',
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Icon(Icons.refresh,
+                        size: 13, color: tokens.text3),
+                  ),
+                ),
+              ),
+            ),
           ],
         );
       },
