@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -1134,6 +1135,15 @@ class _EditableCellState extends State<_EditableCell> {
     final v = widget.value;
     if (v == null) return '';
     if (v is List) return v.join(', ');
+    // For multi columns the stored rawScalar is the bracketed YAML
+    // flow-list form (`[draft, urgent]`). Showing brackets in the
+    // edit field is ugly and confuses users — strip them down to the
+    // plain `draft, urgent` shape. The commit path
+    // (parseMultiValueInput, M783) accepts both shapes so the user
+    // can re-type with or without brackets.
+    if (widget.column.type == ColumnType.multi) {
+      return parseYamlFlowList('$v').join(', ');
+    }
     return '$v';
   }
 
