@@ -312,7 +312,8 @@ class _EditorBodyState extends State<_EditorBody> {
       }
       return;
     }
-    if (existing != null && existing.rawScalar.trim() == picked) {
+    final iconRaw = _yamlSafeScalar(picked);
+    if (existing != null && existing.rawScalar.trim() == iconRaw) {
       if (context.mounted) {
         context.toastInfo('Page icon already $picked');
       }
@@ -321,17 +322,33 @@ class _EditorBodyState extends State<_EditorBody> {
     if (existing == null) {
       bloc.add(AddFrontmatterField(FrontmatterEntry(
         key: 'icon',
-        rawScalar: picked,
+        rawScalar: iconRaw,
         type: FrontmatterType.text,
         value: picked,
       )));
     } else {
       bloc.add(EditFrontmatterField(
         'icon',
-        existing.copyWith(rawScalar: picked, value: picked),
+        existing.copyWith(rawScalar: iconRaw, value: picked),
       ));
     }
     if (context.mounted) context.toastSuccess('Page icon: $picked');
+  }
+
+  /// Wrap a string in double quotes when it contains YAML-unsafe glyphs.
+  /// Mirrors VaultBloc._yamlSafeScalar (M686). The emoji picker accepts
+  /// custom non-ASCII input ≤8 runes, which can include ':' / '#' etc.
+  /// in multi-character "emoji" sequences — so the icon path needs this
+  /// too even though hand-curated emojis are safe.
+  static String _yamlSafeScalar(String value) {
+    if (value.isEmpty) return value;
+    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
+        value.startsWith(' ') ||
+        value.endsWith(' ');
+    if (!needs) return value;
+    final escaped =
+        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    return '"$escaped"';
   }
 
   Future<void> _showPageMenu(BuildContext context, EditorLoaded loaded) async {
