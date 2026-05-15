@@ -134,13 +134,21 @@ class _SectionHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(
-            label,
-            style: mono(
-              fontSize: 11,
-              color: tokens.text2,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
+          Flexible(
+            child: Tooltip(
+              message: 'Sub-group: $label',
+              waitDuration: const Duration(milliseconds: 600),
+              child: Text(
+                label,
+                style: mono(
+                  fontSize: 11,
+                  color: tokens.text2,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
             ),
           ),
           const SizedBox(width: 8),
