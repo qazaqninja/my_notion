@@ -227,7 +227,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
         ];
       case 'databases':
         return [
-          const SideHead(label: 'Databases', actionIcon: 'plus'),
+          _DatabasesHead(rebuildKey: state is VaultLoaded ? state.rootPath : ''),
           if (state is VaultLoaded)
             _DatabasesList(rebuildKey: state.rootPath)
           else
@@ -436,6 +436,28 @@ class _TreeFilterField extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Sidebar section heading for the Databases list. Pulls the count
+/// from drift so the head shows e.g. "DATABASES · 4" alongside the
+/// existing "+" affordance.
+class _DatabasesHead extends StatelessWidget {
+  const _DatabasesHead({required this.rebuildKey});
+  final String rebuildKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final db = context.read<QuillDatabase>();
+    return FutureBuilder<int>(
+      key: ValueKey('dbs-head-$rebuildKey'),
+      future: (db.select(db.databases).get()).then((r) => r.length),
+      builder: (context, snap) => SideHead(
+        label: 'Databases',
+        count: snap.data,
+        actionIcon: 'plus',
       ),
     );
   }
