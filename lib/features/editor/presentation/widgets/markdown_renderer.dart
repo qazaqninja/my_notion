@@ -2058,7 +2058,9 @@ class _FileAttachment extends StatelessWidget {
                                     ? Icons.picture_as_pdf_outlined
                                     : Icons.play_arrow,
                             size: 22,
-                            color: Colors.white,
+                            // M3 onPrimary slot — contrast-guaranteed
+                            // foreground against the saturated media accent.
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -2738,16 +2740,20 @@ class _ButtonBlockState extends State<_ButtonBlock> {
                   children: [
                     Icon(icon,
                         size: 14,
-                        color:
-                            _flash != null ? tokens.text2 : Colors.white),
+                        // M3 onPrimary against the accent button background;
+                        // flashes drop to a quieter token-driven foreground.
+                        color: _flash != null
+                            ? tokens.text2
+                            : Theme.of(context).colorScheme.onPrimary),
                     const SizedBox(width: 8),
                     Text(
                       _flash ?? label,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color:
-                            _flash != null ? tokens.text2 : Colors.white,
+                        color: _flash != null
+                            ? tokens.text2
+                            : Theme.of(context).colorScheme.onPrimary,
                       ),
                     ),
                   ],
