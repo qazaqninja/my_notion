@@ -1382,6 +1382,32 @@ void main() {
     });
   });
 
+  group('toConstantCase / constantCaseLinesIn', () {
+    test('basic title to CONSTANT', () {
+      expect(toConstantCase('my cool title'), 'MY_COOL_TITLE');
+    });
+
+    test('mirrors uppercased snake form', () {
+      expect(toConstantCase('hello-world'), 'HELLO_WORLD');
+      expect(toConstantCase('hello_world'), 'HELLO_WORLD');
+    });
+
+    test('preserves numbers', () {
+      expect(toConstantCase('v1.2.3 final'), 'V1_2_3_FINAL');
+    });
+
+    test('empty / all-punctuation returns empty', () {
+      expect(toConstantCase(''), '');
+      expect(toConstantCase('!!!---'), '');
+    });
+
+    test('per-line transform skips blanks', () {
+      const text = 'my cool\n\nfoo bar\n';
+      final r = constantCaseLinesIn(text, 0, text.length);
+      expect(r.text, 'MY_COOL\n\nFOO_BAR\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

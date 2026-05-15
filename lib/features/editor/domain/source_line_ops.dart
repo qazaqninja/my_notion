@@ -640,6 +640,22 @@ SortLinesResult pascalCaseLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Convert a single line into `CONSTANT_CASE` — the uppercase form of
+/// [toSnakeCase], also known as SCREAMING_SNAKE_CASE. Common for env
+/// var names, top-level constants, and Bash variables.
+///
+///   "my cool title"  → "MY_COOL_TITLE"
+///   "hello-world"    → "HELLO_WORLD"
+String toConstantCase(String line) => toSnakeCase(line).toUpperCase();
+
+/// Per-line wrapper for [toConstantCase].
+SortLinesResult constantCaseLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines) if (l.trim().isEmpty) l else toConstantCase(l),
+      ];
+    });
+
 /// Convert a single line into a URL-safe slug:
 ///
 ///   "My Cool Title!" → "my-cool-title"
