@@ -367,7 +367,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
                       Directory(widget.vaultRoot), widget.pageUlid, c.id);
                   _refresh();
                 },
-                tooltip: 'Delete',
+                tooltip: 'Delete comment',
                 icon: Icon(Icons.close, size: 13, color: tokens.text3),
               ),
             ],
