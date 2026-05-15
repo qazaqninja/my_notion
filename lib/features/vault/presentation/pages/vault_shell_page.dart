@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
@@ -1106,6 +1107,28 @@ views:
         pages.fold<int>(0, (sum, p) => sum + (p.bodyText.length + p.frontmatterJson.length).toInt());
     final largest = [...pages]
       ..sort((a, b) => b.bodyText.length.compareTo(a.bodyText.length));
+    // Aggregate frontmatter `tags:` lists across pages → frequency map.
+    final tagCounts = <String, int>{};
+    for (final p in pages) {
+      if (p.frontmatterJson.isEmpty) continue;
+      try {
+        final m = jsonDecode(p.frontmatterJson);
+        if (m is! Map) continue;
+        final raw = m['tags'];
+        if (raw is List) {
+          for (final t in raw) {
+            final s = '$t'.trim();
+            if (s.isNotEmpty) {
+              tagCounts[s] = (tagCounts[s] ?? 0) + 1;
+            }
+          }
+        } else if (raw is String && raw.trim().isNotEmpty) {
+          tagCounts[raw.trim()] = (tagCounts[raw.trim()] ?? 0) + 1;
+        }
+      } catch (_) {/* malformed cached frontmatter */}
+    }
+    final topTags = tagCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     if (!context.mounted) return;
     final tokens = QuillTokens.of(context);
     await showDialog<void>(
@@ -1155,6 +1178,34 @@ views:
                                 overflow: TextOverflow.ellipsis),
                           ),
                           Text('${(p.bodyText.length / 1024).toStringAsFixed(1)} KB',
+                              style: mono(
+                                  fontSize: 11, color: tokens.text3)),
+                        ],
+                      ),
+                    ),
+                ],
+                if (topTags.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text('TOP TAGS',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                        color: tokens.text3,
+                      )),
+                  const SizedBox(height: 6),
+                  for (final t in topTags.take(8))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text('#${t.key}',
+                                style: mono(
+                                    fontSize: 12, color: tokens.text2),
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          Text('${t.value}',
                               style: mono(
                                   fontSize: 11, color: tokens.text3)),
                         ],
