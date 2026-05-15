@@ -122,7 +122,36 @@ class _SidebarWidgetState extends State<SidebarWidget> {
             ),
             child: Row(
               children: [
-                QuillIcon('sync', size: 12, strokeWidth: 1.7, color: tokens.text3),
+                MouseRegion(
+                  cursor: state is VaultLoaded
+                      ? SystemMouseCursors.click
+                      : SystemMouseCursors.basic,
+                  child: GestureDetector(
+                    onTap: state is VaultLoaded
+                        ? () {
+                            context
+                                .read<VaultBloc>()
+                                .add(const ReindexVault());
+                            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                              const SnackBar(
+                                content: Text('Reindexing vault…'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        : null,
+                    child: Tooltip(
+                      message: state is VaultLoaded
+                          ? 'Reindex vault (⌘R)'
+                          : 'No vault open',
+                      waitDuration: const Duration(milliseconds: 500),
+                      child: QuillIcon('sync',
+                          size: 12,
+                          strokeWidth: 1.7,
+                          color: tokens.text3),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
