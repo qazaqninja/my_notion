@@ -592,8 +592,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
         }
       case 'Toggle theme':
         await themeCubit.cycleMode();
+        if (!context.mounted) return;
+        final modeLabel = switch (themeCubit.state.mode) {
+          ThemeMode.light => 'Light',
+          ThemeMode.dark => 'Dark',
+          ThemeMode.system => 'System',
+        };
+        context.toastSuccess('Theme: $modeLabel');
       case 'Toggle compact mode':
         await themeCubit.toggleCompact();
+        if (!context.mounted) return;
+        context.toastSuccess(themeCubit.state.compact
+            ? 'Compact mode on'
+            : 'Compact mode off');
       case 'Show orphan pages':
         if (!context.mounted) return;
         await _showOrphansDialog(context);
