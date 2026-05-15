@@ -1078,7 +1078,8 @@ views:
     await File('${folder.path}/.database.yaml').writeAsString(yaml);
     if (!context.mounted) return;
     context.read<VaultBloc>().add(const ReindexVault());
-    context.toastSuccess('Created database', sub: safe, subMono: true);
+    context.toastSuccess('Created database "$name"',
+        sub: safe == name ? null : '→ $safe/', subMono: safe != name);
   }
 
   Future<void> _showStaleDialog(BuildContext context) async {
