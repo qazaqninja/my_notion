@@ -1151,7 +1151,9 @@ class _EditorBodyState extends State<_EditorBody> {
                     padding: const EdgeInsets.only(right: 8),
                     child: Tooltip(
                       message: loaded.dirty
-                          ? 'Pending save — press ⌘S to flush now'
+                          ? (loaded.saving
+                              ? 'Saving now…'
+                              : 'Pending save — press ⌘S to flush now')
                           : 'Last saved ${DateTime.fromMillisecondsSinceEpoch(page.mtimeMs).toIso8601String().replaceFirst("T", " · ").substring(0, 18)}',
                       child: Text(
                         loaded.dirty
