@@ -105,27 +105,38 @@ class _FilterPopoverState extends State<FilterPopover> {
           ),
           const Spacer(),
           if (_rules.isNotEmpty)
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(const <FilterRule>[]),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: Text('Clear',
-                    style: TextStyle(fontSize: 12, color: tokens.text2)),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () =>
+                    Navigator.of(context).pop(const <FilterRule>[]),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  child: Text('Clear',
+                      style: TextStyle(fontSize: 12, color: tokens.text2)),
+                ),
               ),
             ),
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(_rules),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: tokens.accent,
-                borderRadius: const BorderRadius.all(Radius.circular(5)),
-              ),
-              child: const Text(
-                'Apply',
-                style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(_rules),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: tokens.accent,
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(5)),
+                ),
+                child: const Text(
+                  'Apply',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white),
+                ),
               ),
             ),
           ),
@@ -308,27 +319,38 @@ class _SortPopoverState extends State<SortPopover> {
           ),
           const Spacer(),
           if (_rules.isNotEmpty)
-            GestureDetector(
-              onTap: () => Navigator.of(context).pop(const <SortRule>[]),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: Text('Clear',
-                    style: TextStyle(fontSize: 12, color: tokens.text2)),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () =>
+                    Navigator.of(context).pop(const <SortRule>[]),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  child: Text('Clear',
+                      style: TextStyle(fontSize: 12, color: tokens.text2)),
+                ),
               ),
             ),
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(_rules),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: tokens.accent,
-                borderRadius: const BorderRadius.all(Radius.circular(5)),
-              ),
-              child: const Text(
-                'Apply',
-                style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(_rules),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: tokens.accent,
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(5)),
+                ),
+                child: const Text(
+                  'Apply',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white),
+                ),
               ),
             ),
           ),
@@ -467,29 +489,39 @@ class _GroupPopoverState extends State<GroupPopover> {
       footer: Row(
         children: [
           const Spacer(),
-          GestureDetector(
-            onTap: () =>
-                Navigator.of(context).pop((value: null, sub: null)),
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              child: Text('None',
-                  style: TextStyle(fontSize: 12, color: tokens.text2)),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () =>
+                  Navigator.of(context).pop((value: null, sub: null)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 4),
+                child: Text('None',
+                    style: TextStyle(fontSize: 12, color: tokens.text2)),
+              ),
             ),
           ),
-          GestureDetector(
-            onTap: () => Navigator.of(context)
-                .pop((value: _selected, sub: _sub)),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: tokens.accent,
-                borderRadius: const BorderRadius.all(Radius.circular(5)),
-              ),
-              child: const Text(
-                'Apply',
-                style: TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context)
+                  .pop((value: _selected, sub: _sub)),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: tokens.accent,
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(5)),
+                ),
+                child: const Text(
+                  'Apply',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white),
+                ),
               ),
             ),
           ),
@@ -732,20 +764,25 @@ class _PropertiesPopoverState extends State<PropertiesPopover> {
             ),
           ),
           const Spacer(),
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop((visible: _visible)),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: tokens.accent,
-                borderRadius: const BorderRadius.all(Radius.circular(5)),
-              ),
-              child: const Text(
-                'Apply',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop((visible: _visible)),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: tokens.accent,
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(5)),
+                ),
+                child: const Text(
+                  'Apply',
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white),
+                ),
               ),
             ),
           ),
