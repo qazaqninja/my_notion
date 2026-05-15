@@ -33,7 +33,7 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     expect(await File(p.join(tmp.path, 'doomed.md')).exists(), isTrue);
-    expect(((await db.select(db.pages).get()).length), 1);
+    expect((await db.select(db.pages).get()).length, 1);
 
     bloc.add(MoveToTrash(createdUlid!));
     // Wait for the move to land and a fresh tree to be emitted.
@@ -52,7 +52,7 @@ void main() {
     final files = await bucket.list().toList();
     expect(files, hasLength(1));
     expect(p.basename(files.first.path), 'doomed.md');
-    expect((await db.select(db.pages).get()), isEmpty);
+    expect(await db.select(db.pages).get(), isEmpty);
 
     await bloc.close();
     await db.close();

@@ -486,7 +486,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
   Future<void> _openRandomPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
-    final rows = await (db.select(db.pages)).get();
+    final rows = await db.select(db.pages).get();
     if (rows.isEmpty) {
       if (context.mounted) context.toastInfo('No pages to pick from yet.');
       return;

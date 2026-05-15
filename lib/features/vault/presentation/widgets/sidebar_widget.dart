@@ -494,7 +494,7 @@ class _DatabasesHead extends StatelessWidget {
     final db = context.read<QuillDatabase>();
     return FutureBuilder<int>(
       key: ValueKey('dbs-head-$rebuildKey'),
-      future: (db.select(db.databases).get()).then((r) => r.length),
+      future: db.select(db.databases).get().then((r) => r.length),
       builder: (context, snap) => SideHead(
         label: 'Databases',
         count: snap.data,
