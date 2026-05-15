@@ -321,6 +321,25 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp((text, caret) => applyLinePrefix(text, caret, '> [!NOTE] '));
   }
 
+  /// Insert a horizontal rule (`\n---\n`) at the caret. Cmd+⇧+-.
+  void _insertHorizontalRule() {
+    final v = _controller.value;
+    final caret =
+        v.selection.isValid ? v.selection.baseOffset : v.text.length;
+    // Make sure the rule sits on its own line. Inspect the chars around
+    // the caret so we don't double up newlines.
+    final before = caret > 0 ? v.text[caret - 1] : '\n';
+    final after = caret < v.text.length ? v.text[caret] : '\n';
+    final prefix = before == '\n' ? '' : '\n';
+    final suffix = after == '\n' ? '' : '\n';
+    final insert = '$prefix---\n$suffix';
+    final newText = v.text.replaceRange(caret, caret, insert);
+    _controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: caret + insert.length),
+    );
+  }
+
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
     final v = _controller.value;
@@ -815,6 +834,10 @@ class _SourceViewState extends State<SourceView> {
                       meta: true, shift: true): _convertToCallout,
                   const SingleActivator(LogicalKeyboardKey.keyM,
                       control: true, shift: true): _convertToCallout,
+                  const SingleActivator(LogicalKeyboardKey.minus,
+                      meta: true, shift: true): _insertHorizontalRule,
+                  const SingleActivator(LogicalKeyboardKey.minus,
+                      control: true, shift: true): _insertHorizontalRule,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
