@@ -288,6 +288,8 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       );
       if (!mounted) return;
       setState(() => _rows = [...?_rows, row]);
+      context.toastSuccess('Created "${row.title}"',
+          sub: 'ULID: ${row.ulid}', subMono: true);
     } catch (e) {
       if (!mounted) return;
       context.toastError('Create failed', sub: '$e');
