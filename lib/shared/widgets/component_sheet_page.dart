@@ -29,11 +29,18 @@ class ComponentSheetPage extends StatelessWidget {
   // Demonstrates light + dark side-by-side regardless of the global theme.
   @override
   Widget build(BuildContext context) {
+    // INTENTIONAL TH-03 deviation: this entire page is a design-tool
+    // preview that always renders against a fixed dark backdrop so
+    // both the light-mode and dark-mode `_ComponentArtboard`s read
+    // against the same wrapper. `Colors.white` / `Colors.white70`
+    // / `Colors.white12` are part of that fixed chrome and must NOT
+    // route through the active theme.
     return Scaffold(
       backgroundColor: kComponentSheetBg,
       appBar: AppBar(
         title: const Text('quill / components'),
         backgroundColor: kComponentSheetBg,
+        // ignore: no_color_literals_in_widgets — see preamble.
         foregroundColor: Colors.white,
         actions: [
           BlocBuilder<ThemeCubit, ThemeState>(
@@ -42,6 +49,7 @@ class ComponentSheetPage extends StatelessWidget {
                 onPressed: () => context.read<ThemeCubit>().toggleAccent(),
                 child: Text(
                   'accent: ${state.accent.label}',
+                  // ignore: no_color_literals_in_widgets — fixed-dark chrome.
                   style: const TextStyle(color: Colors.white70),
                 ),
               );
@@ -59,6 +67,7 @@ class ComponentSheetPage extends StatelessWidget {
                   accent: state.accent,
                 ),
               ),
+              // ignore: no_color_literals_in_widgets — fixed-dark chrome.
               Container(width: 1, color: Colors.white12),
               Expanded(
                 child: _ComponentArtboard(
