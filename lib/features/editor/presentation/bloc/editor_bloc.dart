@@ -190,7 +190,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
                 current.page.frontmatter == inFlightPage.frontmatter);
         emit(current.copyWith(
           saving: false,
-          dirty: stillSame ? false : current.dirty,
+          dirty: !stillSame && current.dirty,
         ));
       }
     } catch (err) {

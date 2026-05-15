@@ -501,9 +501,8 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       sortColumn: _query.sorts.isEmpty
                           ? null
                           : _query.sorts.first.columnKey,
-                      sortAscending: _query.sorts.isEmpty
-                          ? true
-                          : _query.sorts.first.ascending,
+                      sortAscending:
+                          _query.sorts.isEmpty || _query.sorts.first.ascending,
                       onColumnHeaderTap: _cycleSort,
                       onColumnHeaderSecondaryTap: _showColumnContextMenu,
                     ),

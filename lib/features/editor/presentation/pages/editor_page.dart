@@ -1070,9 +1070,8 @@ class _EditorBodyState extends State<_EditorBody> {
     final ulid = loaded.page.ulid;
     if (ulid.isEmpty) return;
     final state = vault.state;
-    final wasPinned = state is VaultLoaded
-        ? state.workspace.favorites.contains(ulid)
-        : false;
+    final wasPinned =
+        state is VaultLoaded && state.workspace.favorites.contains(ulid);
     vault.add(ToggleFavorite(ulid));
     final label = loaded.page.title.isEmpty
         ? loaded.page.relativePath
