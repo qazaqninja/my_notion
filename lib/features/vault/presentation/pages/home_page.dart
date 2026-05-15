@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -211,6 +212,8 @@ class _PinboardState extends State<_Pinboard> {
             ulid: u,
             title: byUlid[u]!.title,
             relativePath: byUlid[u]!.relativePath,
+            emojiIcon:
+                emojiFromFrontmatterJson(byUlid[u]!.frontmatterJson),
           ),
     ];
   }
@@ -264,10 +267,23 @@ class _PinboardState extends State<_Pinboard> {
                             children: [
                               Row(
                                 children: [
-                                  QuillIcon('star',
-                                      size: 12,
-                                      strokeWidth: 1.7,
-                                      color: tokens.accent),
+                                  if (e.emojiIcon != null)
+                                    SizedBox(
+                                      width: 12,
+                                      height: 12,
+                                      child: Center(
+                                        child: Text(
+                                          e.emojiIcon!,
+                                          style: const TextStyle(
+                                              fontSize: 11, height: 1),
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    QuillIcon('star',
+                                        size: 12,
+                                        strokeWidth: 1.7,
+                                        color: tokens.accent),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
@@ -309,10 +325,12 @@ class _PinEntry {
     required this.ulid,
     required this.title,
     required this.relativePath,
+    this.emojiIcon,
   });
   final String ulid;
   final String title;
   final String relativePath;
+  final String? emojiIcon;
 }
 
 /// Shows pages whose frontmatter `reminder:` date is within the next 7
@@ -497,6 +515,7 @@ class _RecentlyEditedState extends State<_RecentlyEdited> {
           title: r.title,
           relativePath: r.relativePath,
           mtime: r.mtimeMs,
+          emojiIcon: emojiFromFrontmatterJson(r.frontmatterJson),
         ),
     ];
   }
@@ -536,8 +555,23 @@ class _RecentlyEditedState extends State<_RecentlyEdited> {
                     ),
                     child: Row(
                       children: [
-                        QuillIcon('file-md',
-                            size: 13, strokeWidth: 1.7, color: tokens.text3),
+                        if (e.emojiIcon != null)
+                          SizedBox(
+                            width: 13,
+                            height: 13,
+                            child: Center(
+                              child: Text(
+                                e.emojiIcon!,
+                                style: const TextStyle(
+                                    fontSize: 12, height: 1),
+                              ),
+                            ),
+                          )
+                        else
+                          QuillIcon('file-md',
+                              size: 13,
+                              strokeWidth: 1.7,
+                              color: tokens.text3),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -593,11 +627,13 @@ class _RecentEntry {
     required this.title,
     required this.relativePath,
     required this.mtime,
+    this.emojiIcon,
   });
   final String ulid;
   final String title;
   final String relativePath;
   final int mtime;
+  final String? emojiIcon;
 }
 
 class _Tile extends StatelessWidget {
