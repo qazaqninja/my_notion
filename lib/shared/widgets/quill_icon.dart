@@ -8,9 +8,12 @@ import 'package:flutter/material.dart';
 Path _parseSvgPath(String d) {
   final path = Path();
   final tokens = _tokenise(d);
-  double cx = 0, cy = 0;
-  double startX = 0, startY = 0;
-  double? lastCtrlX, lastCtrlY;
+  double cx = 0;
+  double cy = 0;
+  double startX = 0;
+  double startY = 0;
+  double? lastCtrlX;
+  double? lastCtrlY;
   String? last;
 
   int i = 0;
@@ -207,17 +210,26 @@ class _PathShape extends _Shape {
 
 class _RectShape extends _Shape {
   const _RectShape({required this.x, required this.y, required this.w, required this.h, this.rx = 0});
-  final double x, y, w, h, rx;
+  final double x;
+  final double y;
+  final double w;
+  final double h;
+  final double rx;
 }
 
 class _CircleShape extends _Shape {
   const _CircleShape({required this.cx, required this.cy, required this.r, super.fill});
-  final double cx, cy, r;
+  final double cx;
+  final double cy;
+  final double r;
 }
 
 class _EllipseShape extends _Shape {
   const _EllipseShape({required this.cx, required this.cy, required this.rx, required this.ry});
-  final double cx, cy, rx, ry;
+  final double cx;
+  final double cy;
+  final double rx;
+  final double ry;
 }
 
 class _Glyph {
