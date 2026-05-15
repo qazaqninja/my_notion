@@ -69,6 +69,14 @@ const Color kCalloutDanger = Color(0xFFCB5A4F);
 /// source of truth across light and dark themes.
 const Color kToastWarn = Color(0xFFB58A3A);
 
+/// Selected-tile fill for the segmented-control widget. Slightly
+/// warmer than `tokens.surface2` and intentionally not equal to any
+/// of the M3 surface tints — the design uses a beige/warm-gray that
+/// reads as a soft "pressed" state on top of the page surface. Live
+/// here rather than QuillTokens because they're a one-widget concern.
+const Color kSegmentSelectedBgDark = Color(0xFF33312D);
+const Color kSegmentSelectedBgLight = Color(0xFFFBFAF6);
+
 /// Status-indicator dot palette — 6 muted hues calibrated for the
 /// 7px-circle `StatusDot` widget. Distinct from the callout palette
 /// (which targets larger, higher-saturation surfaces) so the dots

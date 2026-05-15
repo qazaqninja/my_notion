@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/quill_tokens.dart';
+import '../theme/tag_colors.dart';
 
 /// Renders a single person reference — a coloured initial circle plus
 /// the name. Used by the `person` / `created_by` / `last_edited_by`
@@ -24,7 +25,11 @@ class PersonChip extends StatelessWidget {
     final trimmed = name.trim();
     final initial =
         trimmed.isEmpty ? '?' : trimmed.substring(0, 1).toUpperCase();
-    final colour = _colorFor(trimmed);
+    final colour = categoricalColor(trimmed);
+    // The avatar circle is always coloured (sage/blue/terracotta/…),
+    // so the contrasting initial reads against the saturated fill —
+    // the M3 onPrimary slot is the most semantically correct foreground.
+    final onAvatar = Theme.of(context).colorScheme.onPrimary;
     final avatar = Container(
       width: 16,
       height: 16,
@@ -35,8 +40,8 @@ class PersonChip extends StatelessWidget {
       ),
       child: Text(
         initial,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: onAvatar,
           fontSize: 9,
           fontWeight: FontWeight.w600,
           height: 1,
@@ -72,24 +77,4 @@ class PersonChip extends StatelessWidget {
     );
   }
 
-  /// Stable colour from name hash. Picks one of eight muted hues.
-  static Color _colorFor(String name) {
-    if (name.isEmpty) return const Color(0xFF8C8C8C);
-    var h = 0;
-    for (final code in name.codeUnits) {
-      h = (h * 31 + code) & 0x7fffffff;
-    }
-    return _palette[h % _palette.length];
-  }
-
-  static const _palette = <Color>[
-    Color(0xFF5A8F6E), // sage
-    Color(0xFF5A82B4), // blue
-    Color(0xFFB46F4F), // terracotta
-    Color(0xFF8B5FA8), // plum
-    Color(0xFFB39342), // mustard
-    Color(0xFF4F8FA4), // slate
-    Color(0xFF9C5A6A), // mauve
-    Color(0xFF6B8E7F), // moss
-  ];
 }

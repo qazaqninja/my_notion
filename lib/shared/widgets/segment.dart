@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/quill_tokens.dart';
+import '../theme/tag_colors.dart';
 import 'quill_icon.dart';
 
 class SegmentOption<T> {
@@ -65,14 +66,24 @@ class Segment<T> extends StatelessWidget {
                 padding: pad,
                 decoration: BoxDecoration(
                   color: selected
-                      ? (tokens.isDark ? const Color(0xFF33312D) : const Color(0xFFFBFAF6))
+                      ? (tokens.isDark
+                          ? kSegmentSelectedBgDark
+                          : kSegmentSelectedBgLight)
                       : Colors.transparent,
                   borderRadius: const BorderRadius.all(Radius.circular(5)),
                   border: selected
                       ? Border.all(color: tokens.divider2, width: 0.5)
                       : null,
                   boxShadow: selected
-                      ? [BoxShadow(color: Colors.black.withValues(alpha: 0.04), offset: const Offset(0, 1))]
+                      ? [
+                          BoxShadow(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .shadow
+                                .withValues(alpha: 0.04),
+                            offset: const Offset(0, 1),
+                          ),
+                        ]
                       : null,
                 ),
                 child: Row(
