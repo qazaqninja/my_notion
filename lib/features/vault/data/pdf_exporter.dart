@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../core/markdown/frontmatter_parser.dart';
+import '../../../core/vault_dirs.dart';
 
 /// Walks the vault and emits a single PDF file containing every `.md`
 /// page (frontmatter title as the page heading, body rendered with the
@@ -341,10 +342,7 @@ class PdfExporter {
     for (final entity in dir.listSync()) {
       final name = p.basename(entity.path);
       if (entity is Directory) {
-        if (const {'.git', '.obsidian', 'node_modules', '_meta', '.dart_tool', '.idea', '.trash'}
-            .contains(name)) {
-          continue;
-        }
+        if (kIgnoredVaultDirs.contains(name)) continue;
         yield* _walk(entity);
       } else if (entity is File) {
         yield entity;

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/vault_dirs.dart';
+
 class VaultExporter {
   const VaultExporter();
 
@@ -34,16 +36,7 @@ class VaultExporter {
     return copied;
   }
 
-  static const _ignoredDirs = {
-    '.git',
-    '.obsidian',
-    'node_modules',
-    '_meta',
-    '.dart_tool',
-    '.idea',
-    'build',
-    '.trash',
-  };
+  static const _ignoredDirs = kIgnoredVaultDirs;
 
   Stream<FileSystemEntity> _walk(Directory dir) async* {
     for (final entity in dir.listSync()) {

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../../core/markdown/frontmatter_parser.dart';
+import '../../../core/vault_dirs.dart';
 import 'markdown_to_html.dart';
 
 /// Walks the vault and writes a `.html` for each `.md`, plus a single
@@ -84,19 +85,7 @@ class HtmlExporter {
     for (final entity in dir.listSync()) {
       final name = p.basename(entity.path);
       if (entity is Directory) {
-        // Same ignored set as VaultFsDatasource (M718 sync).
-        if (const {
-          '.git',
-          '.obsidian',
-          'node_modules',
-          '_meta',
-          '.dart_tool',
-          '.idea',
-          'build',
-          '.trash',
-        }.contains(name)) {
-          continue;
-        }
+        if (kIgnoredVaultDirs.contains(name)) continue;
         yield* _walk(entity);
       } else if (entity is File) {
         yield entity;

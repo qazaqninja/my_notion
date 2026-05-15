@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 // Drift's `Page` data class from the `pages` table conflicts with our
 // domain entity — hide it.
 import '../../../core/db/quill_database.dart' hide Page;
+import '../../../core/vault_dirs.dart';
 import '../../../core/markdown/wikilink_parser.dart';
 import '../../database/data/datasources/database_yaml_parser.dart';
 import '../domain/entities/page.dart';
@@ -92,20 +93,7 @@ class Indexer {
     for (final entity in dir.listSync()) {
       final name = p.basename(entity.path);
       if (entity is io.Directory) {
-        // Canonical ignored set — sync with VaultFsDatasource /
-        // VaultExporter / HtmlExporter / VaultWatcher (M718/M719).
-        if (const {
-          '.git',
-          '.obsidian',
-          'node_modules',
-          '_meta',
-          '.dart_tool',
-          '.idea',
-          'build',
-          '.trash',
-        }.contains(name)) {
-          continue;
-        }
+        if (kIgnoredVaultDirs.contains(name)) continue;
         yield* _walkAll(entity);
       } else {
         yield entity;

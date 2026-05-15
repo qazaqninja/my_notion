@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/vault_dirs.dart';
+
 /// Watches a vault directory for external changes (editor, sync clients,
 /// `mv` on the CLI). Emits debounced "something changed" pings rather than
 /// per-file events — consumers reindex from disk on each tick.
@@ -22,16 +24,7 @@ class VaultWatcher {
   Directory? _root;
   final _controller = StreamController<void>.broadcast();
 
-  static const _ignoredDirs = {
-    '.git',
-    '.obsidian',
-    'node_modules',
-    '_meta',
-    '.dart_tool',
-    '.idea',
-    'build',
-    '.trash',
-  };
+  static const _ignoredDirs = kIgnoredVaultDirs;
 
   /// Stream of "something changed under root" pings. One ping may
   /// represent many underlying events that arrived within [debounce].
