@@ -52,4 +52,59 @@ void main() {
     expect(a.relativePath, isNot(b.relativePath));
     expect(a.ulid, isNot(b.ulid));
   });
+
+  test('externally-created daily note without id: gets one persisted (M772)',
+      () async {
+    // A user (or Obsidian, or a sync client) drops a daily file in
+    // place with frontmatter that has no `id:`. The old regex-grep
+    // would mint a fresh ULID on every call and never write it back —
+    // /editor/<ulid> would 404 because the indexer's separately-minted
+    // ULID never matches the one openTodaysNote returned.
+    final folder = Directory(p.join(vault.path, 'Daily'));
+    await folder.create(recursive: true);
+    final file = File(p.join(folder.path, '2026-05-15.md'));
+    await file.writeAsString(
+      '---\ntitle: 2026-05-15\ntags: [daily]\n---\n\n# Things\n',
+    );
+
+    final first = await DailyNote.openTodaysNote(
+      vault,
+      now: DateTime(2026, 5, 15),
+    );
+    expect(first.alreadyExisted, isTrue);
+    expect(first.ulid.length, 26);
+
+    // The id was written back, not just returned in memory.
+    final patched = await file.readAsString();
+    expect(patched, contains('id: ${first.ulid}'),
+        reason: 'ULID must be persisted into the file so the indexer agrees');
+    expect(patched, contains('title: 2026-05-15'),
+        reason: 'pre-existing frontmatter survives');
+    expect(patched, contains('# Things'),
+        reason: 'body content survives');
+
+    // Calling again returns the SAME id (no second mint).
+    final second = await DailyNote.openTodaysNote(
+      vault,
+      now: DateTime(2026, 5, 15),
+    );
+    expect(second.ulid, equals(first.ulid));
+  });
+
+  test('quoted id: in frontmatter resolves cleanly (M772)', () async {
+    final folder = Directory(p.join(vault.path, 'Daily'));
+    await folder.create(recursive: true);
+    final file = File(p.join(folder.path, '2026-05-15.md'));
+    // Quotes survive the YAML parser as part of the rawScalar — the
+    // strict regex would have missed this and minted a fresh ULID.
+    await file.writeAsString(
+      '---\nid: "01HXFOOBARBAZQUXFOOBARBAZQ"\ntitle: 2026-05-15\n---\n',
+    );
+
+    final r = await DailyNote.openTodaysNote(
+      vault,
+      now: DateTime(2026, 5, 15),
+    );
+    expect(r.ulid, equals('01HXFOOBARBAZQUXFOOBARBAZQ'));
+  });
 }

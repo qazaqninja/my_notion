@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/markdown/frontmatter_parser.dart';
 import '../../../core/ulid/ulid_generator.dart';
 
 /// Opens (or creates) today's daily note. Lands at
@@ -28,12 +29,25 @@ class DailyNote {
     final rel = p.join('Daily', '$date.md');
     final file = File(p.join(vaultRoot.path, rel));
     if (await file.exists()) {
-      // Parse existing id from the frontmatter so the caller can
-      // route to /editor/<ulid> without a fresh read of every file.
+      // Parse the existing frontmatter via the YAML-aware parser so
+      // quoted IDs (`id: "01HX..."`) and IDs whose surrounding
+      // whitespace differs from the strict-regex form still resolve.
+      // A regex-grep previously only matched `id: <26-char-ulid>` at
+      // line start; quoted or padded values silently fell through to
+      // _ulids.generate(), so the caller routed to a freshly-minted
+      // ULID that the indexer never produced — /editor/<ulid> 404'd.
       final raw = await file.readAsString();
-      final m = RegExp(r'^id:\s*([A-Z0-9]{26})', multiLine: true)
-          .firstMatch(raw);
-      final id = m?.group(1) ?? _ulids.generate();
+      final parsed = FrontmatterParser.parse(raw);
+      var id = parsed.frontmatter.id;
+      if (id == null || id.isEmpty) {
+        // No id at all — mint one AND persist it back so the indexer
+        // sees the same ULID we just returned. Without the write-back
+        // the indexer would generate its own (different) id on each
+        // reindex, and navigation would fail.
+        id = _ulids.generate();
+        final patched = _injectId(raw, id);
+        await file.writeAsString(patched);
+      }
       return DailyNoteResult(
         ulid: id,
         relativePath: rel,
@@ -62,6 +76,21 @@ class DailyNote {
       alreadyExisted: false,
     );
   }
+}
+
+/// Insert `id: <ulid>` right after the opening `---` fence of an
+/// existing markdown file. Falls back to prepending a complete
+/// frontmatter block when the file has none.
+String _injectId(String raw, String ulid) {
+  final lines = raw.split('\n');
+  if (lines.isNotEmpty && lines.first.trim() == '---') {
+    // Insert immediately after the opening fence so the id is visible
+    // before any other key — matches what fresh `_onCreatePage` writes.
+    return [lines.first, 'id: $ulid', ...lines.skip(1)].join('\n');
+  }
+  // No frontmatter at all — prepend a minimal block and keep the
+  // existing body verbatim.
+  return '---\nid: $ulid\n---\n\n$raw';
 }
 
 class DailyNoteResult {
