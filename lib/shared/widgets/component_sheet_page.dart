@@ -88,7 +88,7 @@ class _ComponentArtboard extends StatelessWidget {
       child: Builder(
         builder: (innerContext) {
           final tokens = QuillTokens.of(innerContext);
-          return Container(
+          return ColoredBox(
             color: tokens.bg,
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(40, 40, 48, 60),

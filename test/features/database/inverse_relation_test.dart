@@ -123,7 +123,7 @@ void main() {
         addUlid: ulidA,
       );
       expect(_read(out, 'customers'), isNotNull);
-      expect(_read(out, 'customers')!, contains(ulidA));
+      expect(_read(out, 'customers'), contains(ulidA));
     });
 
     test('does not create an empty entry when removing from a missing key',

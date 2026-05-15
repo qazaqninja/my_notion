@@ -16,7 +16,7 @@ class ApplyQuery {
     DatabaseQuery query,
     DatabaseSchema schema,
   ) {
-    var out = rows.where((row) => _matchesAll(row, query.filters, schema)).toList();
+    final out = rows.where((row) => _matchesAll(row, query.filters, schema)).toList();
     if (query.sorts.isNotEmpty) {
       out.sort((a, b) {
         for (final s in query.sorts) {
