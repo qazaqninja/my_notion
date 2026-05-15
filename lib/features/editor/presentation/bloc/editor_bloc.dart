@@ -196,6 +196,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     final now = DateTime.now();
     final iso =
         '${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final userRaw = _yamlSafeScalar(user);
     final hasCreatedBy =
         fm.entries.any((x) => x.key == 'created_by' && '${x.value}'.isNotEmpty);
     final next = <FrontmatterEntry>[];
@@ -205,7 +206,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
       if (e.key == 'last_edited_by') {
         next.add(FrontmatterEntry(
           key: 'last_edited_by',
-          rawScalar: user,
+          rawScalar: userRaw,
           type: FrontmatterType.text,
           value: user,
         ));
@@ -225,7 +226,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     if (!replacedAuthor) {
       next.add(FrontmatterEntry(
         key: 'last_edited_by',
-        rawScalar: user,
+        rawScalar: userRaw,
         type: FrontmatterType.text,
         value: user,
       ));
@@ -241,12 +242,27 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     if (!hasCreatedBy) {
       next.add(FrontmatterEntry(
         key: 'created_by',
-        rawScalar: user,
+        rawScalar: userRaw,
         type: FrontmatterType.text,
         value: user,
       ));
     }
     return Frontmatter(entries: next);
+  }
+
+  /// Mirror VaultBloc._yamlSafeScalar (M686): wrap user-typed names in
+  /// double quotes when they contain YAML-unsafe glyphs. The author-
+  /// stamp paths all run with workspace.users entries that the user
+  /// configured via Settings → Users, which accepts any string.
+  static String _yamlSafeScalar(String value) {
+    if (value.isEmpty) return value;
+    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
+        value.startsWith(' ') ||
+        value.endsWith(' ');
+    if (!needs) return value;
+    final escaped =
+        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    return '"$escaped"';
   }
 
   void _scheduleSave() {
