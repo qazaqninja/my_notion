@@ -107,25 +107,36 @@ class _DatabasesPageState extends State<DatabasesPage> {
   }
 }
 
-class _Row extends StatelessWidget {
+class _Row extends StatefulWidget {
   const _Row({required this.schema});
   final DatabaseSchema schema;
 
   @override
+  State<_Row> createState() => _RowState();
+}
+
+class _RowState extends State<_Row> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
+    final schema = widget.schema;
     final iconRaw = schema.icon.trim();
     final hasGlyphIcon = looksLikeEmoji(iconRaw);
-    return GestureDetector(
-      onTap: () => context.go('/db/${schema.id}'),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => context.go('/db/${schema.id}'),
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
           decoration: BoxDecoration(
-            color: tokens.surface,
-            border: Border.all(color: tokens.divider2, width: 0.5),
+            color: _hover ? tokens.surface2 : tokens.surface,
+            border: Border.all(
+                color: _hover ? tokens.accent : tokens.divider2, width: 0.5),
             borderRadius: const BorderRadius.all(Radius.circular(6)),
           ),
           child: Row(
