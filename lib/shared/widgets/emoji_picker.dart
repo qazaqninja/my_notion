@@ -83,11 +83,14 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final items = _filtered();
+    final size = MediaQuery.of(context).size;
+    final w = size.width < 400 ? size.width - 32 : 360.0;
+    final h = size.height < 460 ? size.height - 60 : 420.0;
     return Dialog(
       backgroundColor: tokens.surface,
       child: SizedBox(
-        width: 360,
-        height: 420,
+        width: w,
+        height: h,
         child: Column(
           children: [
             Container(
