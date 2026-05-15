@@ -1300,6 +1300,15 @@ class _ColumnHeaderCellState extends State<_ColumnHeaderCell> {
       child: body,
     );
     if (!hoverable) return body;
+    body = Tooltip(
+      message: widget.isSorted
+          ? (widget.sortAscending
+              ? 'Sorted ascending · click to flip · right-click for options'
+              : 'Sorted descending · click to clear · right-click for options')
+          : 'Click to sort · right-click for options',
+      waitDuration: const Duration(milliseconds: 600),
+      child: body,
+    );
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
