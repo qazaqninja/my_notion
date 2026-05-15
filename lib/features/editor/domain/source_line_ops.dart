@@ -835,6 +835,53 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
+/// Convert every selected line that parses as a non-negative
+/// decimal integer into binary (`0b…`). Negative or non-numeric
+/// lines are left untouched.
+///
+///   `5`   → `0b101`
+///   `255` → `0b11111111`
+SortLinesResult convertDecimalToBinaryLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final n = int.tryParse(l.trim());
+            if (n == null || n < 0) return l;
+            return '0b${n.toRadixString(2)}';
+          })(),
+      ];
+    });
+
+/// Convert every selected line that parses as a binary value
+/// (`0b1010` or bare `1010`-where-all-digits-are-0/1) into decimal.
+/// Non-binary lines are left untouched. Distinguishing bare binary
+/// from bare decimal is undecidable in general (the string `10` could
+/// be either), so this function only converts a bare numeric line
+/// when its decimal interpretation has at least 2 digits — i.e.,
+/// we don't silently rewrite `10` as `2`.
+SortLinesResult convertBinaryToDecimalLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final binPattern = RegExp(r'^0[bB]([01]+)$');
+      return [
+        for (final l in lines)
+          (() {
+            final stripped = l.trim();
+            final m = binPattern.firstMatch(stripped);
+            if (m == null) return l;
+            return int.parse(m.group(1)!, radix: 2).toString();
+          })(),
+      ];
+    });
+
 /// Convert every selected line that parses as a non-negative decimal
 /// integer (any size) into its lowercase hex form prefixed with
 /// `0x`. Non-numeric lines are left untouched.

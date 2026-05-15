@@ -1003,6 +1003,56 @@ void main() {
     });
   });
 
+  group('convertDecimalToBinaryLinesIn / convertBinaryToDecimalLinesIn', () {
+    test('decimal → binary with 0b prefix', () {
+      const text = '5\n255\n0\n';
+      final r = convertDecimalToBinaryLinesIn(text, 0, text.length);
+      expect(r.text, '0b101\n0b11111111\n0b0\n');
+    });
+
+    test('binary → decimal needs 0b prefix', () {
+      const text = '0b101\n0b11111111\n0b0\n';
+      final r = convertBinaryToDecimalLinesIn(text, 0, text.length);
+      expect(r.text, '5\n255\n0\n');
+    });
+
+    test('bare 1s and 0s without 0b prefix stay as-is', () {
+      // 1010 could be decimal 1010 or binary 10 — we leave it alone.
+      const text = '1010\n0101\n';
+      expect(
+        convertBinaryToDecimalLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+
+    test('non-numeric lines stay untouched in both directions', () {
+      const text = 'hello\nworld\n';
+      expect(
+        convertDecimalToBinaryLinesIn(text, 0, text.length).text,
+        text,
+      );
+      expect(
+        convertBinaryToDecimalLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+
+    test('round-trip preserves the numeric values', () {
+      const text = '0\n5\n42\n255\n1024\n';
+      final asBin = convertDecimalToBinaryLinesIn(text, 0, text.length).text;
+      final back = convertBinaryToDecimalLinesIn(asBin, 0, asBin.length).text;
+      expect(back, text);
+    });
+
+    test('negative decimals stay untouched on decimal→binary', () {
+      const text = '-3\n';
+      expect(
+        convertDecimalToBinaryLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

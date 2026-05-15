@@ -104,6 +104,11 @@ enum SlashAction {
   htmlEscape,
   /// HTML-unescape the 5 standard entities on every selected line.
   htmlUnescape,
+  /// Convert decimal integers on every selected line to binary `0b…`.
+  decimalToBinary,
+  /// Convert `0b1010`-prefixed binary on every selected line to
+  /// decimal.
+  binaryToDecimal,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -568,6 +573,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '&lt; → <',
     action: SlashAction.htmlUnescape,
     keywords: ['html', 'unescape', 'entity', 'decode'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Decimal → binary',
+    hint: '5 → 0b101',
+    action: SlashAction.decimalToBinary,
+    keywords: ['binary', 'decimal', 'convert', 'base2', 'bits'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Binary → decimal',
+    hint: '0b101 → 5',
+    action: SlashAction.binaryToDecimal,
+    keywords: ['binary', 'decimal', 'convert', 'base2', 'bits'],
   ),
   SlashEntry(
     icon: 'edit',

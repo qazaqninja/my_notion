@@ -957,6 +957,14 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, htmlEscapeLinesIn);
       case SlashAction.htmlUnescape:
         _applyLinesTransformAfterSlash(stripStart, caret, htmlUnescapeLinesIn);
+      case SlashAction.decimalToBinary:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, convertDecimalToBinaryLinesIn,
+        );
+      case SlashAction.binaryToDecimal:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, convertBinaryToDecimalLinesIn,
+        );
     }
   }
 
