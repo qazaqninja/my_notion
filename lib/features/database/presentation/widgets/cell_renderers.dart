@@ -397,21 +397,30 @@ class _LinkCell extends StatelessWidget {
       waitDuration: const Duration(milliseconds: 500),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: () => Reveal.openUrl(target),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: tokens.accent,
-              decoration: TextDecoration.underline,
-              decorationColor: tokens.accent.withValues(alpha: 0.5),
+        child: Builder(builder: (innerCtx) {
+          return GestureDetector(
+            onTap: () async {
+              final ok = await Reveal.openUrl(target);
+              if (!ok && innerCtx.mounted) {
+                ScaffoldMessenger.maybeOf(innerCtx)?.showSnackBar(
+                  SnackBar(content: Text('Could not open $target')),
+                );
+              }
+            },
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: tokens.accent,
+                decoration: TextDecoration.underline,
+                decorationColor: tokens.accent.withValues(alpha: 0.5),
+              ),
+              overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+              maxLines: wrap ? null : 1,
             ),
-            overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
-            maxLines: wrap ? null : 1,
-          ),
-        ),
+          );
+        }),
       ),
     );
   }
