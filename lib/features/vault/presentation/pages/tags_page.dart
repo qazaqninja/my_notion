@@ -8,6 +8,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/tag_chip.dart';
+import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../widgets/page_header.dart';
 
 /// Aggregates select / multi / tag frontmatter values across every page
@@ -122,18 +123,29 @@ class _TagsPageState extends State<TagsPage> {
                     runSpacing: 10,
                     children: [
                       for (var i = 0; i < entries.length; i++)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            TagChip(
-                              label: entries[i].key,
-                              color: palette[i % palette.length],
+                        MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: GestureDetector(
+                            onTap: () {
+                              final cubit =
+                                  context.read<CommandPaletteCubit>();
+                              cubit.open();
+                              cubit.setQuery('tag:${entries[i].key}');
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TagChip(
+                                  label: entries[i].key,
+                                  color: palette[i % palette.length],
+                                ),
+                                const SizedBox(width: 4),
+                                Text('${entries[i].value}',
+                                    style: mono(
+                                        fontSize: 11, color: tokens.text3)),
+                              ],
                             ),
-                            const SizedBox(width: 4),
-                            Text('${entries[i].value}',
-                                style: mono(
-                                    fontSize: 11, color: tokens.text3)),
-                          ],
+                          ),
                         ),
                     ],
                   ),
