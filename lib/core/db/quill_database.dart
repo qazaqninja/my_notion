@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:meta/meta.dart';
 
 part 'quill_database.g.dart';
 
@@ -135,6 +136,7 @@ class QuillDatabase extends _$QuillDatabase {
 
 /// Stable, byte-comparable snapshot of cache state. Excludes mtime since it
 /// changes between runs on the same files.
+@immutable
 class DatabaseSnapshot {
   const DatabaseSnapshot({required this.pages, required this.relations, required this.databases});
 

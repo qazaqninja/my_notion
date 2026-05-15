@@ -1,8 +1,11 @@
+import 'package:meta/meta.dart';
+
 /// Plain-Dart rectangle used to anchor floating overlays (slash menu,
 /// relation picker) to a source position. Mirrors the shape of
 /// `package:flutter/material.dart` `Rect` so the conversion at the
 /// widget-layer boundary is mechanical, but keeps the bloc/cubit layer
 /// pure Dart per CA-01 in docs/RULES.md.
+@immutable
 class AnchorRect {
   const AnchorRect({
     required this.left,

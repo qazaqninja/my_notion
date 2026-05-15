@@ -1,7 +1,10 @@
+import 'package:meta/meta.dart';
+
 /// `[[ULID]]` or `[[ULID#anchor]]` wikilink locator. ULIDs are
 /// Crockford base32 (`0-9A-HJKMNP-TV-Z`), 26 chars — the renderer's
 /// inline parser uses the same alphabet, so the indexer and renderer
 /// agree on what counts as a link.
+@immutable
 class Wikilink {
   const Wikilink({
     required this.ulid,

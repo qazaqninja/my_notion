@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 /// Display-level type of a frontmatter value, inferred from the raw YAML
 /// scalar shape (and refined by `.database.yaml` schemas later).
 enum FrontmatterType {
@@ -16,6 +18,7 @@ enum FrontmatterType {
 /// One entry in a frontmatter block. [rawScalar] is preserved exactly as it
 /// appeared in YAML so re-serialisation can be byte-identical for unedited
 /// pages. [value] is the parsed Dart value (String, num, bool, List, etc.).
+@immutable
 class FrontmatterEntry {
   const FrontmatterEntry({
     required this.key,
