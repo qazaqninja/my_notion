@@ -6,8 +6,6 @@ import '../theme/tokens.dart';
 import 'quill_icon.dart';
 import 'quill_menu.dart';
 
-const Color _kDangerColor = Color(0xFFA8584C);
-
 /// Center-screen modal surface. Ports `ModalShell` from `modals.jsx:4-30`.
 class QuillModal extends StatelessWidget {
   const QuillModal({
@@ -107,7 +105,7 @@ class QuillModalHeader extends StatelessWidget {
               margin: const EdgeInsets.only(top: 1),
               decoration: BoxDecoration(
                 color: danger
-                    ? _kDangerColor.withValues(alpha: 0.12)
+                    ? tokens.danger.withValues(alpha: 0.12)
                     : tokens.accentTint,
                 borderRadius: const BorderRadius.all(Radius.circular(6)),
               ),
@@ -116,7 +114,7 @@ class QuillModalHeader extends StatelessWidget {
                 icon!,
                 size: 16,
                 strokeWidth: 1.7,
-                color: danger ? _kDangerColor : tokens.accent,
+                color: danger ? tokens.danger : tokens.accent,
               ),
             ),
             const SizedBox(width: 12),
@@ -201,7 +199,7 @@ class QuillPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    final bg = danger ? _kDangerColor : tokens.text;
+    final bg = danger ? tokens.danger : tokens.text;
     final fg = danger ? Colors.white : tokens.bg;
     return InkWell(
       onTap: onPressed,

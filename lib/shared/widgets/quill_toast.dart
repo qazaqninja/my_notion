@@ -6,11 +6,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../theme/quill_tokens.dart';
+import '../theme/tag_colors.dart';
 import 'quill_icon.dart';
-
-const Color _kSuccess = Color(0xFF5A8F6E);
-const Color _kWarn = Color(0xFFB58A3A);
-const Color _kError = Color(0xFFA8584C);
 
 const Duration _kToastDuration = Duration(seconds: 4);
 
@@ -42,11 +39,11 @@ class QuillToastCard extends StatelessWidget {
       case QuillToastKind.info:
         return tokens.accent;
       case QuillToastKind.success:
-        return _kSuccess;
+        return tokens.success;
       case QuillToastKind.warn:
-        return _kWarn;
+        return kToastWarn;
       case QuillToastKind.error:
-        return _kError;
+        return tokens.danger;
     }
   }
 

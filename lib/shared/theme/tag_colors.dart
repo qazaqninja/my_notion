@@ -64,6 +64,11 @@ const Color kCalloutImportant = Color(0xFF8E5CD0);
 const Color kCalloutWarning = Color(0xFFD08F3D);
 const Color kCalloutDanger = Color(0xFFCB5A4F);
 
+/// Toast warning accent. No equivalent in `QuillTokens` because the
+/// warning dot only appears in toast cards — defined here for a single
+/// source of truth across light and dark themes.
+const Color kToastWarn = Color(0xFFB58A3A);
+
 /// Stage / status colours for sales-pipeline-shaped databases. The five
 /// hues match `tokens.jsx:stage` exactly. Used by the timeline-view bar
 /// renderer and any other "deal stage"-like grouping.
