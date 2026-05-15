@@ -762,6 +762,47 @@ SortLinesResult toggleBlockquotePrefixIn(String text, int start, int end) =>
       ];
     });
 
+/// Sentence-case every line in the selected block: lowercase the
+/// whole line, then capitalise the first alphabetic character of
+/// each sentence. Sentence boundaries are the start of a line plus
+/// any `.`, `!`, or `?` followed by whitespace. Pronoun `i` and
+/// contractions starting with `i'` are re-capitalised. Mirrors the
+/// VS Code / Notion "transform to sentence case" gesture.
+SortLinesResult sentenceCaseLinesIn(String text, int start, int end) {
+  String sentenceCase(String line) {
+    final lower = line.toLowerCase();
+    final out = StringBuffer();
+    var capitaliseNext = true;
+    for (var i = 0; i < lower.length; i++) {
+      final c = lower.codeUnitAt(i);
+      final isAlpha = c >= 0x61 && c <= 0x7a;
+      if (isAlpha && capitaliseNext) {
+        out.writeCharCode(c - 0x20);
+        capitaliseNext = false;
+      } else {
+        out.writeCharCode(c);
+        if (c == 0x2e /* . */ || c == 0x21 /* ! */ || c == 0x3f /* ? */) {
+          capitaliseNext = true; // Will fire on the next non-space alpha.
+        } else if (isAlpha || (c >= 0x30 && c <= 0x39)) {
+          capitaliseNext = false;
+        }
+      }
+    }
+    // Re-capitalise pronoun "I" / contractions like "i'm", "i've".
+    return out.toString().replaceAllMapped(
+          RegExp(r"(^|[^a-z])i(?=$|[^a-z])"),
+          (m) => '${m[1]}I',
+        );
+  }
+
+  return _transformLinesIn(
+    text,
+    start,
+    end,
+    (lines) => [for (final l in lines) sentenceCase(l)],
+  );
+}
+
 /// Title-case every line in the selected block: capitalise the first
 /// letter of each whitespace-separated word, lowercase the rest. Words
 /// shorter than 4 chars in the middle of a line (and, or, the, of, …)

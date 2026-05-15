@@ -527,6 +527,58 @@ void main() {
     });
   });
 
+  group('sentenceCaseLinesIn', () {
+    test('lowercases SHOUTING and capitalises the first letter', () {
+      const text = 'HELLO WORLD\n';
+      expect(
+        sentenceCaseLinesIn(text, 0, text.length).text,
+        'Hello world\n',
+      );
+    });
+
+    test('capitalises after a period + space', () {
+      const text = 'hello world. how are you? fine!\n';
+      expect(
+        sentenceCaseLinesIn(text, 0, text.length).text,
+        'Hello world. How are you? Fine!\n',
+      );
+    });
+
+    test('handles MiXeD CaSe sources by lowering first', () {
+      const text = 'aLpHa BeTa\n';
+      expect(
+        sentenceCaseLinesIn(text, 0, text.length).text,
+        'Alpha beta\n',
+      );
+    });
+
+    test('re-capitalises the pronoun I', () {
+      const text = 'whatever i think\n';
+      expect(
+        sentenceCaseLinesIn(text, 0, text.length).text,
+        'Whatever I think\n',
+      );
+    });
+
+    test('preserves blank lines', () {
+      const text = 'hello\n\nworld\n';
+      expect(
+        sentenceCaseLinesIn(text, 0, text.length).text,
+        'Hello\n\nWorld\n',
+      );
+    });
+
+    test('non-alpha first character does not eat the capital', () {
+      // After leading punctuation/whitespace, the next alpha still
+      // gets capitalised.
+      const text = '   hello world\n';
+      expect(
+        sentenceCaseLinesIn(text, 0, text.length).text,
+        '   Hello world\n',
+      );
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

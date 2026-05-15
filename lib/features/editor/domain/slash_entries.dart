@@ -60,6 +60,9 @@ enum SlashAction {
   /// Slugify every line in the selection (e.g. "My Cool Title" →
   /// "my-cool-title"). Useful for generating URL fragments.
   slugifyLines,
+  /// Sentence-case every line in the selection. Lowercases the whole
+  /// line then capitalises the first letter of each sentence.
+  sentenceCaseSelectedLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -426,6 +429,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'Title Case',
     action: SlashAction.titleCaseSelectedLines,
     keywords: ['title', 'case', 'caps', 'capitalize', 'headline'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Sentence case selected lines',
+    hint: 'Aa…',
+    action: SlashAction.sentenceCaseSelectedLines,
+    keywords: ['sentence', 'case', 'lowercase', 'capitalize'],
   ),
   SlashEntry(
     icon: 'link',
