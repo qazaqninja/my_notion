@@ -1370,7 +1370,7 @@ class _FindBar extends StatelessWidget {
             onPressed: matches == 0 ? null : onPrev,
             icon: Icon(Icons.keyboard_arrow_up,
                 size: 16, color: tokens.text2),
-            tooltip: 'Previous',
+            tooltip: 'Previous match (⌘⇧G)',
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
@@ -1379,7 +1379,7 @@ class _FindBar extends StatelessWidget {
             onPressed: matches == 0 ? null : onNext,
             icon: Icon(Icons.keyboard_arrow_down,
                 size: 16, color: tokens.text2),
-            tooltip: 'Next',
+            tooltip: 'Next match (⌘G)',
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
