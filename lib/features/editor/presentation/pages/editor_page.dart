@@ -578,8 +578,15 @@ class _EditorBodyState extends State<_EditorBody> {
     );
     if (picked == null || picked.trim().isEmpty) return;
     if (!context.mounted) return;
+    final newName = picked.trim();
     context.read<VaultBloc>().add(
-        RenamePage(ulid: loaded.page.ulid, newBasename: picked.trim()));
+        RenamePage(ulid: loaded.page.ulid, newBasename: newName));
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('Renamed to $newName.md'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _moveToFolder(
