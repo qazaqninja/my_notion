@@ -965,6 +965,14 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, convertBinaryToDecimalLinesIn,
         );
+      case SlashAction.decimalToOctal:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, convertDecimalToOctalLinesIn,
+        );
+      case SlashAction.octalToDecimal:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, convertOctalToDecimalLinesIn,
+        );
       case SlashAction.zeroPadLines:
         _applyLinesTransformAfterSlash(stripStart, caret, zeroPadLinesIn);
       case SlashAction.padRightLines:

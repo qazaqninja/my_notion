@@ -109,6 +109,10 @@ enum SlashAction {
   /// Convert `0b1010`-prefixed binary on every selected line to
   /// decimal.
   binaryToDecimal,
+  /// Convert decimal integers on every selected line to octal `0o…`.
+  decimalToOctal,
+  /// Convert `0o`-prefixed octal on every selected line to decimal.
+  octalToDecimal,
   /// Left-pad every selected line with `0` so it reaches the
   /// length of the longest line in the block (auto width).
   zeroPadLines,
@@ -626,6 +630,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '0b101 → 5',
     action: SlashAction.binaryToDecimal,
     keywords: ['binary', 'decimal', 'convert', 'base2', 'bits'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Decimal → octal',
+    hint: '8 → 0o10',
+    action: SlashAction.decimalToOctal,
+    keywords: ['octal', 'decimal', 'convert', 'base8'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Octal → decimal',
+    hint: '0o10 → 8',
+    action: SlashAction.octalToDecimal,
+    keywords: ['octal', 'decimal', 'convert', 'base8'],
   ),
   SlashEntry(
     icon: 'edit',

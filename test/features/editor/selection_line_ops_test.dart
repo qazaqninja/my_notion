@@ -1408,6 +1408,54 @@ void main() {
     });
   });
 
+  group('convertDecimalToOctalLinesIn / convertOctalToDecimalLinesIn', () {
+    test('decimal → octal with 0o prefix', () {
+      const text = '8\n64\n0\n';
+      final r = convertDecimalToOctalLinesIn(text, 0, text.length);
+      expect(r.text, '0o10\n0o100\n0o0\n');
+    });
+
+    test('octal → decimal requires 0o prefix', () {
+      const text = '0o10\n0o100\n0o0\n';
+      final r = convertOctalToDecimalLinesIn(text, 0, text.length);
+      expect(r.text, '8\n64\n0\n');
+    });
+
+    test('bare digits without 0o prefix stay as-is on octal→decimal', () {
+      // "10" without 0o is decimal — leave alone, don't silently
+      // reinterpret as octal 8.
+      const text = '10\n';
+      expect(
+        convertOctalToDecimalLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+
+    test('non-octal digits (8, 9) inside 0o prefix are rejected', () {
+      // 0o89 is not valid octal.
+      const text = '0o89\n';
+      expect(
+        convertOctalToDecimalLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+
+    test('round-trip preserves numeric values', () {
+      const text = '0\n7\n64\n4095\n';
+      final asOct = convertDecimalToOctalLinesIn(text, 0, text.length).text;
+      final back = convertOctalToDecimalLinesIn(asOct, 0, asOct.length).text;
+      expect(back, text);
+    });
+
+    test('negative decimals stay untouched on decimal→octal', () {
+      const text = '-5\n';
+      expect(
+        convertDecimalToOctalLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

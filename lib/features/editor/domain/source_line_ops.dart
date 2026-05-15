@@ -1122,6 +1122,50 @@ SortLinesResult zeroPadLinesIn(
     });
 
 /// Convert every selected line that parses as a non-negative
+/// decimal integer into octal (`0o…`). Negative or non-numeric
+/// lines pass through.
+///
+///   `8`   → `0o10`
+///   `64`  → `0o100`
+SortLinesResult convertDecimalToOctalLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final n = int.tryParse(l.trim());
+            if (n == null || n < 0) return l;
+            return '0o${n.toRadixString(8)}';
+          })(),
+      ];
+    });
+
+/// Convert every selected line that parses as octal (`0o…` prefix)
+/// into decimal. Non-octal lines are left untouched. We require the
+/// `0o` prefix to distinguish from decimal — without it, `10` is
+/// ambiguous (decimal 10 or octal 8?).
+SortLinesResult convertOctalToDecimalLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final octPattern = RegExp(r'^0[oO]([0-7]+)$');
+      return [
+        for (final l in lines)
+          (() {
+            final stripped = l.trim();
+            final m = octPattern.firstMatch(stripped);
+            if (m == null) return l;
+            return int.parse(m.group(1)!, radix: 8).toString();
+          })(),
+      ];
+    });
+
+/// Convert every selected line that parses as a non-negative
 /// decimal integer into binary (`0b…`). Negative or non-numeric
 /// lines are left untouched.
 ///
