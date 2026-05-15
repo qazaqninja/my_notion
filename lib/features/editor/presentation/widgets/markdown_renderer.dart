@@ -4035,8 +4035,14 @@ List<InlineSpan> _buildSpans(
   while (i < n) {
     // Wikilink chip — [[ULID]] or [[ULID#anchor]]
     if (text[i] == '[' && i + 1 < n && text[i + 1] == '[') {
+      // Permissive `[0-9A-Z]{26}` matches what WikilinkParser /
+      // markdown_to_html / pdf_exporter use (M778/M779). Real ULIDs
+      // exclude I/L/O/U per Crockford but earlier fixtures and
+      // externally-imported docs include them; without this loose
+      // form the indexer recorded the relation while the renderer
+      // refused to draw the chip — a silent visual mismatch.
       final m = RegExp(
-              r'\[\[([0-9A-HJKMNP-TV-Z]{26})(?:#([a-z0-9][a-z0-9\-]*))?\]\]')
+              r'\[\[([0-9A-Z]{26})(?:#([a-z0-9][a-z0-9\-]*))?\]\]')
           .matchAsPrefix(text, i);
       if (m != null) {
         flushPlain(i);
