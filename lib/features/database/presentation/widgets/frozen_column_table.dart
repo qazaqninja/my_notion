@@ -493,16 +493,30 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                           cursor: enabled
                               ? SystemMouseCursors.click
                               : SystemMouseCursors.basic,
-                          child: Container(
-                            height: _rowHeight,
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              children: [
-                                QuillIcon('plus', size: 12, strokeWidth: 1.7, color: tokens.text3),
-                                const SizedBox(width: 5),
-                                Text('New', style: TextStyle(fontSize: 12.5, color: tokens.text3)),
-                              ],
+                          child: Tooltip(
+                            message: enabled
+                                ? 'Create a new row'
+                                : 'Database is locked — cannot add rows',
+                            waitDuration:
+                                const Duration(milliseconds: 500),
+                            child: Container(
+                              height: _rowHeight,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
+                              alignment: Alignment.centerLeft,
+                              child: Row(
+                                children: [
+                                  QuillIcon('plus',
+                                      size: 12,
+                                      strokeWidth: 1.7,
+                                      color: tokens.text3),
+                                  const SizedBox(width: 5),
+                                  Text('New',
+                                      style: TextStyle(
+                                          fontSize: 12.5,
+                                          color: tokens.text3)),
+                                ],
+                              ),
                             ),
                           ),
                         ),
