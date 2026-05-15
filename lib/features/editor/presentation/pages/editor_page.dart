@@ -1735,6 +1735,12 @@ class _EmptyPageHint extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(
+            locked ? Icons.lock_outline : Icons.edit_outlined,
+            size: 24,
+            color: locked ? tokens.accent : tokens.text3,
+          ),
+          const SizedBox(height: 8),
           Text(
             locked ? 'This page is locked.' : 'Empty page',
             style: TextStyle(
