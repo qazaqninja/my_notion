@@ -45,40 +45,45 @@ class Segment<T> extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: options.map((o) {
           final selected = o.value == value;
-          return GestureDetector(
-            onTap: () => onChanged(o.value),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              padding: pad,
-              decoration: BoxDecoration(
-                color: selected
-                    ? (tokens.isDark ? const Color(0xFF33312D) : const Color(0xFFFBFAF6))
-                    : Colors.transparent,
-                borderRadius: const BorderRadius.all(Radius.circular(5)),
-                border: selected
-                    ? Border.all(color: tokens.divider2, width: 0.5)
-                    : null,
-                boxShadow: selected
-                    ? [BoxShadow(color: Colors.black.withValues(alpha: 0.04), offset: const Offset(0, 1))]
-                    : null,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (o.icon != null) ...[
-                    QuillIcon(o.icon!, size: 13, strokeWidth: 1.7,
-                        color: selected ? tokens.text : tokens.text2),
-                    const SizedBox(width: 5),
-                  ],
-                  Text(
-                    o.label,
-                    style: TextStyle(
-                      color: selected ? tokens.text : tokens.text2,
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.w500,
+          return MouseRegion(
+            cursor: selected
+                ? SystemMouseCursors.basic
+                : SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => onChanged(o.value),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                padding: pad,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? (tokens.isDark ? const Color(0xFF33312D) : const Color(0xFFFBFAF6))
+                      : Colors.transparent,
+                  borderRadius: const BorderRadius.all(Radius.circular(5)),
+                  border: selected
+                      ? Border.all(color: tokens.divider2, width: 0.5)
+                      : null,
+                  boxShadow: selected
+                      ? [BoxShadow(color: Colors.black.withValues(alpha: 0.04), offset: const Offset(0, 1))]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (o.icon != null) ...[
+                      QuillIcon(o.icon!, size: 13, strokeWidth: 1.7,
+                          color: selected ? tokens.text : tokens.text2),
+                      const SizedBox(width: 5),
+                    ],
+                    Text(
+                      o.label,
+                      style: TextStyle(
+                        color: selected ? tokens.text : tokens.text2,
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
