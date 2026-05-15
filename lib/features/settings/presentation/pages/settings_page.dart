@@ -439,7 +439,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final item = next.removeAt(idx);
     next.insert(newIdx, item);
     final updated = state.workspace.copyWith(sidebarOrder: next);
-    await updated.save(Directory(state.rootPath));
+    try {
+      await updated.save(Directory(state.rootPath));
+    } catch (e) {
+      if (!mounted) return;
+      context.toastError('Could not save sidebar order', sub: '$e');
+      return;
+    }
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
   }
@@ -453,7 +459,13 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     final updated =
         state.workspace.copyWith(sidebarHidden: hidden.toList());
-    await updated.save(Directory(state.rootPath));
+    try {
+      await updated.save(Directory(state.rootPath));
+    } catch (e) {
+      if (!mounted) return;
+      context.toastError('Could not save sidebar visibility', sub: '$e');
+      return;
+    }
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
   }
@@ -463,7 +475,13 @@ class _SettingsPageState extends State<SettingsPage> {
       sidebarOrder: const [],
       sidebarHidden: const [],
     );
-    await updated.save(Directory(state.rootPath));
+    try {
+      await updated.save(Directory(state.rootPath));
+    } catch (e) {
+      if (!mounted) return;
+      context.toastError('Could not reset sidebar', sub: '$e');
+      return;
+    }
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
     context.toastSuccess('Sidebar reset to default order');
