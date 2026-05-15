@@ -451,3 +451,16 @@ SortLinesResult trimTrailingWhitespaceIn(String text, int start, int end) =>
       end,
       (lines) => [for (final l in lines) l.replaceFirst(RegExp(r'[ \t]+$'), '')],
     );
+
+/// Uppercase every line in the selected block. Common power-user
+/// transform; mirrors VS Code's "Transform to Uppercase".
+SortLinesResult uppercaseLinesIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text, start, end, (lines) => [for (final l in lines) l.toUpperCase()],
+    );
+
+/// Lowercase every line in the selected block.
+SortLinesResult lowercaseLinesIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text, start, end, (lines) => [for (final l in lines) l.toLowerCase()],
+    );

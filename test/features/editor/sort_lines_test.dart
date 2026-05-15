@@ -111,6 +111,32 @@ void main() {
     });
   });
 
+  group('uppercaseLinesIn / lowercaseLinesIn', () {
+    test('uppercaseLinesIn capitalises every selected line', () {
+      const text = 'hello\nworld\n';
+      expect(uppercaseLinesIn(text, 0, text.length).text, 'HELLO\nWORLD\n');
+    });
+
+    test('lowercaseLinesIn lowercases every selected line', () {
+      const text = 'HELLO\nWorld\n';
+      expect(lowercaseLinesIn(text, 0, text.length).text, 'hello\nworld\n');
+    });
+
+    test('uppercase then lowercase is the lowercase form', () {
+      const text = 'Mixed Case Text\n';
+      final up = uppercaseLinesIn(text, 0, text.length);
+      final down = lowercaseLinesIn(up.text, 0, up.text.length);
+      expect(down.text, 'mixed case text\n');
+    });
+
+    test('partial selection widens to whole lines', () {
+      const text = 'one\ntwo\nthree\n';
+      // Caret inside "two".
+      final r = uppercaseLinesIn(text, 5, 5);
+      expect(r.text, 'one\nTWO\nthree\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

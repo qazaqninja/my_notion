@@ -862,7 +862,29 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart.clamp(0, trimmed.text.length),
           ),
         );
+      case SlashAction.uppercaseSelectedLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, uppercaseLinesIn);
+      case SlashAction.lowercaseSelectedLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, lowercaseLinesIn);
     }
+  }
+
+  /// Strip the slash trigger then apply [op] to the line under the
+  /// caret. Used by the line-transform slash actions.
+  void _applyLinesTransformAfterSlash(
+    int stripStart,
+    int caret,
+    SortLinesResult Function(String, int, int) op,
+  ) {
+    final v = _controller.value;
+    final cleared = v.text.replaceRange(stripStart, caret, '');
+    final r = op(cleared, stripStart, stripStart);
+    _controller.value = TextEditingValue(
+      text: r.text,
+      selection: TextSelection.collapsed(
+        offset: stripStart.clamp(0, r.text.length),
+      ),
+    );
   }
 
   Future<void> _insertRandomPageLink(int insertAt) async {

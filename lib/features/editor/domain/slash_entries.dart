@@ -21,6 +21,10 @@ enum SlashAction {
   /// the entire body when no selection is active). Common cleanup
   /// before committing — many tools reject trailing whitespace.
   trimTrailingWhitespace,
+  /// Uppercase the lines touched by the selection.
+  uppercaseSelectedLines,
+  /// Lowercase the lines touched by the selection.
+  lowercaseSelectedLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -310,6 +314,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'cleanup',
     action: SlashAction.trimTrailingWhitespace,
     keywords: ['trim', 'whitespace', 'cleanup', 'strip', 'tabs'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Uppercase selected lines',
+    hint: 'AAA',
+    action: SlashAction.uppercaseSelectedLines,
+    keywords: ['upper', 'uppercase', 'case', 'capitalize', 'shout'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Lowercase selected lines',
+    hint: 'aaa',
+    action: SlashAction.lowercaseSelectedLines,
+    keywords: ['lower', 'lowercase', 'case'],
   ),
   SlashEntry(
     icon: 'tag',
