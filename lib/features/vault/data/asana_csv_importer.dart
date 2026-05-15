@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/fs/unique_path.dart';
 import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
@@ -45,7 +46,6 @@ class AsanaCsvImporter {
     await File(p.join(folder.path, '.database.yaml'))
         .writeAsString(schemaYaml);
 
-    final usedNames = <String>{};
     final written = <ImportedAsanaTask>[];
     for (final row in dataRows) {
       if (row.every((c) => c.trim().isEmpty)) continue;
@@ -55,8 +55,12 @@ class AsanaCsvImporter {
       if (title.isEmpty) continue;
       try {
         final ulid = _ulids.generate();
-        final safe = _uniqueFilename(usedNames, _safeFileName(title));
-        final rel = p.join(folderName, '$safe.md');
+        final safe = _safeFileName(title);
+        // Intra-batch and pre-existing-file collisions both go through
+        // uniqueRelativePath — duplicate titles within an Asana export
+        // land at ` (2)`, ` (3)` instead of clobbering earlier writes.
+        final rel = await uniqueRelativePath(
+            vaultRoot, p.join(folderName, '$safe.md'));
         final out = File(p.join(vaultRoot.path, rel));
         final body = mapping.notesIdx != null && mapping.notesIdx! < row.length
             ? row[mapping.notesIdx!]
@@ -216,20 +220,6 @@ class AsanaCsvImporter {
     if (s.isEmpty) s = 'Task';
     if (s.length > 100) s = s.substring(0, 100);
     return s;
-  }
-
-  static String _uniqueFilename(Set<String> used, String base) {
-    if (!used.contains(base)) {
-      used.add(base);
-      return base;
-    }
-    var n = 2;
-    while (used.contains('$base ($n)')) {
-      n += 1;
-    }
-    final out = '$base ($n)';
-    used.add(out);
-    return out;
   }
 
   static String _yamlKey(String k) {

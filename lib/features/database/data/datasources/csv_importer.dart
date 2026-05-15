@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../../core/fs/unique_path.dart';
 import '../../../../core/markdown/frontmatter_parser.dart';
 import '../../../../core/markdown/type_inference.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
@@ -72,16 +73,19 @@ class CsvImporter {
     // the whole import — same robustness contract M712/M713 added to
     // the indexer scans.
     int written = 0;
-    final usedNames = <String>{};
     for (final row in dataRows) {
       if (row.every((c) => c.trim().isEmpty)) continue;
       try {
         final title = (titleIdx < row.length ? row[titleIdx] : '').trim();
         final pageUlid = ulids.generate();
-        final safeName = _uniqueFilename(
-          usedNames,
-          title.isEmpty ? pageUlid : title,
-        );
+        // Disambiguate row filenames against the filesystem each
+        // iteration — handles both intra-batch duplicate titles AND
+        // the case where the import re-runs into a folder that
+        // already contains some rows from a previous pass.
+        final base = _sanitizeBase(title.isEmpty ? pageUlid : title);
+        final safeRel = await uniqueRelativePath(
+            folder, '$base.md');
+        final safeName = p.basenameWithoutExtension(safeRel);
         final entries = <FrontmatterEntry>[
           FrontmatterEntry(
             key: 'id',
@@ -122,19 +126,12 @@ class CsvImporter {
 
   // ── helpers ──
 
-  static String _uniqueFilename(Set<String> used, String name) {
+  static String _sanitizeBase(String name) {
     final safe = name
         .replaceAll(RegExp(r'[\\/<>:"|?*]+'), '-')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
-    var candidate = safe.isEmpty ? 'Untitled' : safe;
-    var i = 2;
-    while (used.contains(candidate)) {
-      candidate = '$safe-$i';
-      i++;
-    }
-    used.add(candidate);
-    return candidate;
+    return safe.isEmpty ? 'Untitled' : safe;
   }
 
   static String _yamlKey(String k) {

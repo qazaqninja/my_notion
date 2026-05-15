@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/fs/unique_path.dart';
 import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
@@ -31,13 +32,17 @@ class EnexPageImporter {
     final folder = Directory(p.join(vaultRoot.path, targetFolder));
     await folder.create(recursive: true);
     final imported = p.basename(source.path);
-    final usedNames = <String>{};
     final written = <ImportedEnexNote>[];
     for (final note in notes) {
       try {
         final ulid = _ulids.generate();
-        final safe = _uniqueFilename(usedNames, _safeFileName(note.title));
-        final rel = p.join(targetFolder, '$safe.md');
+        final safe = _safeFileName(note.title);
+        // Intra-batch dedup is handled by uniqueRelativePath probing
+        // the filesystem — each iteration sees what the previous one
+        // just wrote, so duplicate titles within a notebook land at
+        // ` (2)`, ` (3)`, … without a separate usedNames tracker.
+        final rel = await uniqueRelativePath(
+            vaultRoot, p.join(targetFolder, '$safe.md'));
         final out = File(p.join(vaultRoot.path, rel));
         final body = HtmlToMarkdown.convert(note.content);
         final fmBuf = StringBuffer('---\n');
@@ -158,20 +163,6 @@ class EnexPageImporter {
     if (s.isEmpty) s = 'Untitled note';
     if (s.length > 100) s = s.substring(0, 100);
     return s;
-  }
-
-  static String _uniqueFilename(Set<String> used, String base) {
-    if (!used.contains(base)) {
-      used.add(base);
-      return base;
-    }
-    var n = 2;
-    while (used.contains('$base ($n)')) {
-      n += 1;
-    }
-    final out = '$base ($n)';
-    used.add(out);
-    return out;
   }
 
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/fs/unique_path.dart';
 import '../../../core/markdown/frontmatter_parser.dart';
 import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/text/strip_bom.dart';
@@ -54,7 +55,8 @@ class TextPageImporter {
     final safe = _safeFileName(title);
     final folder = Directory(p.join(vaultRoot.path, targetFolder));
     await folder.create(recursive: true);
-    final rel = p.join(targetFolder, '$safe.md');
+    final rel = await uniqueRelativePath(
+        vaultRoot, p.join(targetFolder, '$safe.md'));
     final out = File(p.join(vaultRoot.path, rel));
     final frontmatter = '---\n'
         'id: $ulid\n'
@@ -103,7 +105,8 @@ class TextPageImporter {
     final safe = _safeFileName(title);
     final folder = Directory(p.join(vaultRoot.path, targetFolder));
     await folder.create(recursive: true);
-    final rel = p.join(targetFolder, '$safe.md');
+    final rel = await uniqueRelativePath(
+        vaultRoot, p.join(targetFolder, '$safe.md'));
     final out = File(p.join(vaultRoot.path, rel));
     // Build a fresh frontmatter block (we may have edited entries).
     final fmBuf = StringBuffer('---\n');

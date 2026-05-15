@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/fs/unique_path.dart';
 import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'docx_to_markdown.dart';
@@ -27,7 +28,8 @@ class DocxPageImporter {
     final safe = _safeFileName(title);
     final folder = Directory(p.join(vaultRoot.path, targetFolder));
     await folder.create(recursive: true);
-    final rel = p.join(targetFolder, '$safe.md');
+    final rel = await uniqueRelativePath(
+        vaultRoot, p.join(targetFolder, '$safe.md'));
     final out = File(p.join(vaultRoot.path, rel));
     final imported = p.basename(source.path);
     final fm = '---\n'

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/fs/unique_path.dart';
 import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
@@ -43,7 +44,8 @@ class TrelloDatabaseImporter {
       try {
         final ulid = _ulids.generate();
         final safe = _safeFileName(card.title);
-        final rel = p.join(folderName, '$safe.md');
+        final rel = await uniqueRelativePath(
+            vaultRoot, p.join(folderName, '$safe.md'));
         final out = File(p.join(vaultRoot.path, rel));
         final fmBuf = StringBuffer('---\n');
         fmBuf.writeln('id: $ulid');

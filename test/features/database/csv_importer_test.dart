@@ -153,4 +153,36 @@ void main() {
     expect(parsed.frontmatter.find('title')?.value, equals('Alpha'));
     expect(parsed.frontmatter.get('score'), equals(1));
   });
+
+  test('disambiguates rows with duplicate titles (M774)', () async {
+    // Two rows whose title sanitises to the same filename would have
+    // clobbered each other under the old usedNames+`-2` scheme when
+    // the import re-ran into a folder that already held results from
+    // a previous pass. uniqueRelativePath probes the filesystem so
+    // both intra-batch dupes AND pre-existing files yield ` (2)`.
+    final csv = File(p.join(tmp.path, 'dupes.csv'));
+    await csv.writeAsString(
+      'title,score\n'
+      'Same,1\n'
+      'Same,2\n'
+      'Same,3\n',
+    );
+
+    final result =
+        await const CsvImporter(ulids: UlidGenerator()).importTo(csv, tmp);
+    expect(result.rowsWritten, 3);
+
+    final folder = Directory(result.folderPath);
+    final names = await folder
+        .list()
+        .where((e) => e.path.endsWith('.md'))
+        .map((e) => p.basename(e.path))
+        .toList();
+    names.sort();
+    expect(
+      names,
+      equals(<String>['Same (2).md', 'Same (3).md', 'Same.md']),
+      reason: 'each row lands on a distinct filename, no clobbers',
+    );
+  });
 }
