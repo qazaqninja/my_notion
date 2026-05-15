@@ -328,7 +328,9 @@ class _CommentsDialogState extends State<CommentsDialog> {
                   );
                   _refresh();
                 },
-                tooltip: c.resolved ? 'Reopen' : 'Mark resolved',
+                tooltip: c.resolved
+                    ? 'Reopen this comment'
+                    : 'Mark resolved — strikes through the body',
                 icon: Icon(
                   c.resolved
                       ? Icons.check_circle
