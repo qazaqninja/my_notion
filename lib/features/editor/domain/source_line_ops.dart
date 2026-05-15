@@ -135,8 +135,10 @@ LineOpResult applyLinePrefix(String text, int caret, String prefix) {
   // items still get rewritten cleanly.
   final indentLen = line.length - line.trimLeft().length;
   final body = line.substring(indentLen);
-  final stripRe =
-      RegExp(r'^(#{1,3} |- \[ \] |- \[x\] |- |\* |\d+\. |> )');
+  // Order matters: longer callout pattern must precede the bare `> ` so
+  // alternation doesn't eat only the `> ` and leave `[!KIND] ` behind.
+  final stripRe = RegExp(
+      r'^(> \[!\w+\] |#{1,3} |- \[ \] |- \[x\] |- |\* |\d+\. |> )');
   final m = stripRe.firstMatch(body);
   final stripped = m == null ? body : body.substring(m.end);
   final newLine = '${line.substring(0, indentLen)}$prefix$stripped';

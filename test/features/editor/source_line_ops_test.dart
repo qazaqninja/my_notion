@@ -356,6 +356,24 @@ void main() {
       final r = applyLinePrefix('one\ntwo\nthree', 4, '# ');
       expect(r.text, 'one\n# two\nthree');
     });
+
+    test('strips an existing `> [!KIND] ` callout prefix before reapplying',
+        () {
+      final r = applyLinePrefix('> [!NOTE] body', 12, '');
+      expect(r.text, 'body');
+    });
+
+    test('idempotent for `> [!NOTE] ` — second press doesn\'t stack', () {
+      final once = applyLinePrefix('foo', 1, '> [!NOTE] ');
+      expect(once.text, '> [!NOTE] foo');
+      final twice = applyLinePrefix(once.text, once.caret, '> [!NOTE] ');
+      expect(twice.text, '> [!NOTE] foo');
+    });
+
+    test('callout → heading replaces both prefixes cleanly', () {
+      final r = applyLinePrefix('> [!NOTE] hi', 11, '## ');
+      expect(r.text, '## hi');
+    });
   });
 
   group('joinLineWithNext', () {

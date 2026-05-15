@@ -336,6 +336,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘⇧8', 'Convert current line to - bullet (source)'),
                 _kbRow(tokens, '⌘⇧7', 'Convert current line to 1. numbered (source)'),
                 _kbRow(tokens, '⌘⇧T', 'Convert current line to - [ ] todo (source)'),
+                _kbRow(tokens, '⌘⇧M', 'Convert current line to > [!NOTE] callout (source)'),
                 _kbRow(tokens, '↵', 'Continue list / increment number (source). ⇧↵ to break out.'),
                 _kbRow(tokens, '⌫', 'Strip marker on an empty list item (source).'),
                 _kbRow(tokens, '[[ULID]]', 'Wikilink chip'),

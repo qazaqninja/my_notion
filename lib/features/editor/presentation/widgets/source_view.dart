@@ -315,6 +315,12 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp((text, caret) => applyLinePrefix(text, caret, '- [ ] '));
   }
 
+  /// Convert the current line to a `> [!NOTE] ` callout. Cmd+⇧+M
+  /// (mnemonic: 'M' for admonition / 'memo').
+  void _convertToCallout() {
+    _applyLineOp((text, caret) => applyLinePrefix(text, caret, '> [!NOTE] '));
+  }
+
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
     final v = _controller.value;
@@ -805,6 +811,10 @@ class _SourceViewState extends State<SourceView> {
                       meta: true, shift: true): _convertToTodo,
                   const SingleActivator(LogicalKeyboardKey.keyT,
                       control: true, shift: true): _convertToTodo,
+                  const SingleActivator(LogicalKeyboardKey.keyM,
+                      meta: true, shift: true): _convertToCallout,
+                  const SingleActivator(LogicalKeyboardKey.keyM,
+                      control: true, shift: true): _convertToCallout,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
