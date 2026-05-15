@@ -292,6 +292,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
         PopupMenuDivider(),
         PopupMenuItem(value: 'add-tags', child: Text('Add tags…')),
+        PopupMenuItem(value: 'set-font', child: Text('Set page font…')),
         PopupMenuItem(value: 'set-reminder', child: Text('Set reminder…')),
         PopupMenuItem(value: 'set-goal', child: Text('Set word count goal…')),
         PopupMenuDivider(),
@@ -338,6 +339,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _printPage(context, loaded);
       case 'add-tags':
         await _addTags(context, loaded);
+      case 'set-font':
+        await _setFont(context, loaded);
       case 'set-reminder':
         await _setReminder(context, loaded);
       case 'set-goal':
@@ -478,6 +481,62 @@ class _EditorBodyState extends State<_EditorBody> {
               : 'Moved to $picked'),
           duration: const Duration(seconds: 2)),
     );
+  }
+
+  Future<void> _setFont(
+      BuildContext context, EditorLoaded loaded) async {
+    final fm = loaded.page.frontmatter;
+    final existing = fm.find('font');
+    final current = existing?.rawScalar.trim().toLowerCase() ?? '';
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Page font'),
+        children: [
+          for (final option in const [
+            ('sans', 'Sans-serif (default)'),
+            ('serif', 'Serif (Georgia)'),
+            ('mono', 'Monospace (JetBrainsMono)'),
+          ])
+            SimpleDialogOption(
+              onPressed: () => Navigator.pop(ctx, option.$1),
+              child: Row(
+                children: [
+                  if (current == option.$1 ||
+                      (current.isEmpty && option.$1 == 'sans'))
+                    const Icon(Icons.check, size: 14)
+                  else
+                    const SizedBox(width: 14),
+                  const SizedBox(width: 8),
+                  Text(option.$2),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (picked == null || !context.mounted) return;
+    final bloc = context.read<EditorBloc>();
+    if (picked == 'sans') {
+      // Default — strip the frontmatter entry entirely.
+      if (existing != null) {
+        bloc.add(const RemoveFrontmatterField('font'));
+      }
+      return;
+    }
+    if (existing == null) {
+      bloc.add(AddFrontmatterField(FrontmatterEntry(
+        key: 'font',
+        rawScalar: picked,
+        type: FrontmatterType.text,
+        value: picked,
+      )));
+    } else {
+      bloc.add(EditFrontmatterField(
+        'font',
+        existing.copyWith(rawScalar: picked, value: picked),
+      ));
+    }
   }
 
   Future<void> _addTags(
