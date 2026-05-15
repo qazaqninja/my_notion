@@ -456,10 +456,15 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   }
 
   String _safeFileName(String title) {
-    final stripped = title
+    var stripped = title
         .replaceAll(RegExp(r'[\\/<>:"|?*]+'), '-')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+    // Tolerate users who typed the `.md` extension — strip it so the
+    // caller can re-append cleanly and we don't end up with foo.md.md.
+    if (stripped.toLowerCase().endsWith('.md')) {
+      stripped = stripped.substring(0, stripped.length - 3).trim();
+    }
     return stripped.isEmpty ? 'Untitled' : stripped;
   }
 
