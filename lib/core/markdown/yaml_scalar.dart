@@ -22,17 +22,28 @@ library;
 final _unsafeBlock = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''');
 final _unsafeFlow = RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''');
 
+String _escapeForDoubleQuote(String value) =>
+    value.replaceAll(r'\', r'\\')
+        .replaceAll('"', r'\"')
+        .replaceAll('\n', r'\n')
+        .replaceAll('\r', r'\r')
+        .replaceAll('\t', r'\t');
+
 /// Block-mapping value escape. Returns [value] unchanged when it parses
 /// safely as a YAML plain scalar; otherwise wraps in double quotes
-/// with `\\` / `\"` escaping inside.
+/// with `\\` / `\"` escaping inside, plus `\n` / `\r` / `\t` so a
+/// multi-line value stays on one line (yaml double-quoted scalars
+/// interpret these escapes the same as JSON).
 String yamlSafeScalar(String value) {
   if (value.isEmpty) return value;
   final needs = _unsafeBlock.hasMatch(value) ||
       value.startsWith(' ') ||
-      value.endsWith(' ');
+      value.endsWith(' ') ||
+      value.contains('\n') ||
+      value.contains('\r') ||
+      value.contains('\t');
   if (!needs) return value;
-  final escaped = value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-  return '"$escaped"';
+  return '"${_escapeForDoubleQuote(value)}"';
 }
 
 /// Flow-list element escape — same as [yamlSafeScalar] but also quotes
@@ -42,10 +53,12 @@ String yamlFlowItem(String value) {
   if (value.isEmpty) return '""';
   final needs = _unsafeFlow.hasMatch(value) ||
       value.startsWith(' ') ||
-      value.endsWith(' ');
+      value.endsWith(' ') ||
+      value.contains('\n') ||
+      value.contains('\r') ||
+      value.contains('\t');
   if (!needs) return value;
-  final escaped = value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-  return '"$escaped"';
+  return '"${_escapeForDoubleQuote(value)}"';
 }
 
 final _unsafeKeyGlyphs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*,/\\]''');

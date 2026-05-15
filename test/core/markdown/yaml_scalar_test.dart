@@ -56,6 +56,19 @@ void main() {
             reason: 'round-trip failed for "$original"');
       }
     });
+
+    test('escapes newlines, carriage returns, tabs (M763)', () {
+      // A value containing a literal newline used to slip past the
+      // unsafe-glyph regex and emit 'key: foo\nbar' (two lines) —
+      // YAML would parse key='foo' and treat 'bar' as the next
+      // mapping entry, corrupting the document.
+      final out = yamlSafeScalar('foo\nbar');
+      expect(out, equals(r'"foo\nbar"'));
+      // Round-trip: yaml lib decodes \n inside double-quoted scalars
+      // back to a literal newline.
+      final parsed = loadYaml('value: $out') as YamlMap;
+      expect(parsed['value'], equals('foo\nbar'));
+    });
   });
 
   group('yamlFlowItem', () {
