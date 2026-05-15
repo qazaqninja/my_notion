@@ -392,21 +392,25 @@ class _LinkCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => Reveal.openUrl(target),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.4,
-            color: tokens.accent,
-            decoration: TextDecoration.underline,
-            decorationColor: tokens.accent.withValues(alpha: 0.5),
+    return Tooltip(
+      message: target == label ? target : '$label\n$target',
+      waitDuration: const Duration(milliseconds: 500),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => Reveal.openUrl(target),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: tokens.accent,
+              decoration: TextDecoration.underline,
+              decorationColor: tokens.accent.withValues(alpha: 0.5),
+            ),
+            overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+            maxLines: wrap ? null : 1,
           ),
-          overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
-          maxLines: wrap ? null : 1,
         ),
       ),
     );
