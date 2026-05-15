@@ -99,6 +99,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                   onPressed: widget.onClose,
                   padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  tooltip: 'Close properties panel',
                   icon: QuillIcon('x', size: 14, strokeWidth: 1.7, color: tokens.text3),
                 ),
               ],
@@ -129,6 +130,9 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                       : null,
                   padding: const EdgeInsets.all(4),
                   constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  tooltip: _view == PropertiesView.fields
+                      ? 'Add field'
+                      : 'Switch to Fields view to add',
                   icon: QuillIcon('plus', size: 14, strokeWidth: 1.7, color: tokens.text3),
                 ),
               ],
