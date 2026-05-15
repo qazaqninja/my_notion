@@ -174,7 +174,12 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
       await _indexer.upsertPage(loaded.page);
       emit(loaded.copyWith(saving: false, dirty: false));
     } catch (err) {
+      // Transient — emit the error so listeners can snackbar, then
+      // restore the dirty loaded state so the user doesn't lose their
+      // work. The "dirty" flag stays true so the next debounced save
+      // tries again.
       emit(EditorError('Save failed: $err'));
+      emit(loaded.copyWith(saving: false));
     }
   }
 

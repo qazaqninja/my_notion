@@ -1085,7 +1085,21 @@ class _EditorBodyState extends State<_EditorBody> {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return BlocBuilder<EditorBloc, EditorState>(
+    return BlocConsumer<EditorBloc, EditorState>(
+      // Save-failures emit a transient EditorError before re-emitting
+      // the loaded state. Snackbar the error and let the user keep
+      // editing — the debounced save will retry on the next edit.
+      listenWhen: (prev, next) => next is EditorError,
+      listener: (context, state) {
+        if (state is! EditorError) return;
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(state.message),
+            duration: const Duration(seconds: 4),
+            backgroundColor: const Color(0xFFCB5A4F),
+          ),
+        );
+      },
       builder: (context, state) {
         if (state is EditorLoading || state is EditorIdle) {
           return Center(
