@@ -491,10 +491,24 @@ class TreeRoot extends StatelessWidget {
               if (state.tree.topLevel.isEmpty)
                 Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Text(
-                    'Empty vault',
-                    style: TextStyle(fontSize: 11.5, color: tokens.text3),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Empty vault',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: tokens.text2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Use ⌘N to add a page.',
+                        style: TextStyle(fontSize: 11, color: tokens.text3),
+                      ),
+                    ],
                   ),
                 ),
               if (state.tree.topLevel.isNotEmpty && visible.isEmpty)
