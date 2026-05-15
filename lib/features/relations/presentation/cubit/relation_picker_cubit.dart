@@ -96,5 +96,12 @@ class RelationPickerCubit extends Cubit<RelationPickerState> {
     emit(state.copyWith(selectedIndex: next));
   }
 
+  void setSelection(int index) {
+    if (!state.open || state.results.isEmpty) return;
+    if (index < 0 || index >= state.results.length) return;
+    if (state.selectedIndex == index) return;
+    emit(state.copyWith(selectedIndex: index));
+  }
+
   void dismiss() => emit(RelationPickerState.closed);
 }

@@ -147,6 +147,9 @@ class _Panel extends StatelessWidget {
                     onTap: () => onPick(r),
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,
+                      onEnter: (_) => context
+                          .read<RelationPickerCubit>()
+                          .setSelection(i),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         color: selected ? tokens.hover : Colors.transparent,
