@@ -2540,6 +2540,50 @@ void main() {
     });
   });
 
+  group('percentageOfTotalLinesIn', () {
+    test('basic conversion to percentage', () {
+      const text = '10\n30\n';
+      final r = percentageOfTotalLinesIn(text, 0, text.length);
+      expect(r.text, '25.0%\n75.0%\n');
+    });
+
+    test('decimal places kept to 1', () {
+      const text = '1\n2\n';
+      final r = percentageOfTotalLinesIn(text, 0, text.length);
+      // 1/3 ≈ 0.3333… → 33.3%; 2/3 → 66.7%.
+      expect(r.text, '33.3%\n66.7%\n');
+    });
+
+    test('non-numeric lines pass through', () {
+      const text = '10\nlabel\n30\n';
+      final r = percentageOfTotalLinesIn(text, 0, text.length);
+      expect(r.text, '25.0%\nlabel\n75.0%\n');
+    });
+
+    test('column total of 0 is a no-op (no divide by zero)', () {
+      const text = '5\n-5\n';
+      expect(percentageOfTotalLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(percentageOfTotalLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('sum of percentages equals 100', () {
+      const text = '17\n23\n60\n';
+      final r = percentageOfTotalLinesIn(text, 0, text.length).text;
+      final total = r
+          .split('\n')
+          .where((l) => l.endsWith('%'))
+          .map((l) => double.parse(l.substring(0, l.length - 1)))
+          .reduce((a, b) => a + b);
+      // Rounding may produce 99.9 or 100.1; assert "approximately 100".
+      expect((total - 100).abs() < 0.2, isTrue,
+          reason: 'sum was $total');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

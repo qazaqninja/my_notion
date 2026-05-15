@@ -928,6 +928,36 @@ SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
       return [range.toString()];
     });
 
+/// Replace each numeric line with its share of the column total,
+/// rendered as a percentage with one decimal place (`xx.x%`).
+/// Non-numeric lines pass through. Returns the source unchanged
+/// when the column total is 0 (avoids the divide-by-zero) OR when
+/// no line parses (preserves block structure).
+///
+///   10        25.0%
+///   30   →    75.0%
+SortLinesResult percentageOfTotalLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      double total = 0;
+      var anyNumeric = false;
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v == null) continue;
+        anyNumeric = true;
+        total += v;
+      }
+      if (!anyNumeric || total == 0) return lines;
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            final pct = (v / total) * 100;
+            return '${pct.toStringAsFixed(1)}%';
+          })(),
+      ];
+    });
+
 /// Emit consecutive deltas (`x[i+1] - x[i]`) for every adjacent
 /// pair of parseable numeric lines in the selection. Non-numeric
 /// lines pass through and DO break the pair (so deltas don't span

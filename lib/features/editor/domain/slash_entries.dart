@@ -229,6 +229,9 @@ enum SlashAction {
   cumulativeSumLines,
   /// Emit consecutive deltas for every adjacent numeric pair.
   deltaNumericLines,
+  /// Replace each numeric line with its percentage of the column
+  /// total (`xx.x%`).
+  percentageOfTotalLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1064,6 +1067,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '1 / 5 / 10 → +4 / +5',
     action: SlashAction.deltaNumericLines,
     keywords: ['delta', 'difference', 'diff', 'gap', 'change'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Percentage of total',
+    hint: '10 / 30 → 25% / 75%',
+    action: SlashAction.percentageOfTotalLines,
+    keywords: ['percent', 'percentage', 'share', 'normalize'],
   ),
   SlashEntry(
     icon: 'hash',

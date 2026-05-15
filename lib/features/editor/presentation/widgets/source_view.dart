@@ -1152,6 +1152,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, deltaNumericLinesIn,
         );
+      case SlashAction.percentageOfTotalLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, percentageOfTotalLinesIn,
+        );
     }
   }
 
