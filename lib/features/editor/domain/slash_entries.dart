@@ -293,6 +293,16 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['footnote', 'ref', 'reference', 'citation', 'cite'],
   ),
   SlashEntry(
+    icon: 'note',
+    label: 'Footnote definition',
+    hint: '[^1]: text',
+    snippet: '[^1]: ',
+    // Caret lands right after `[^` so the user can name the marker
+    // before the colon-text.
+    cursorOffset: 2,
+    keywords: ['footnote', 'def', 'definition', 'citation', 'cite'],
+  ),
+  SlashEntry(
     icon: 'edit',
     label: 'Subscript',
     hint: '~x~',
