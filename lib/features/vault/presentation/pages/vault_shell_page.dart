@@ -454,10 +454,12 @@ class _VaultShellPageState extends State<VaultShellPage> {
       mono: true,
       confirmLabel: 'Bookmark',
     );
-    if (url == null || url.isEmpty) return;
+    if (url == null) return;
+    final trimmed = url.trim();
+    if (trimmed.isEmpty) return;
     try {
       final result =
-          await UrlBookmark.capture(url, Directory(vaultPath));
+          await UrlBookmark.capture(trimmed, Directory(vaultPath));
       vaultBloc.add(const ReindexVault());
       if (context.mounted) {
         context.toastSuccess('Bookmarked "${result.title}"',
