@@ -1203,21 +1203,13 @@ views:
                       )),
                   const SizedBox(height: 6),
                   for (final p in largest.take(5))
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(p.title,
-                                style: TextStyle(
-                                    fontSize: 12, color: tokens.text2),
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                          Text('${(p.bodyText.length / 1024).toStringAsFixed(1)} KB',
-                              style: mono(
-                                  fontSize: 11, color: tokens.text3)),
-                        ],
-                      ),
+                    _StatsPageRow(
+                      title: p.title,
+                      trailing:
+                          '${(p.bodyText.length / 1024).toStringAsFixed(1)} KB',
+                      ulid: p.ulid,
+                      mono: true,
+                      tokens: tokens,
                     ),
                 ],
                 if (topTags.isNotEmpty) ...[
@@ -1259,21 +1251,12 @@ views:
                       )),
                   const SizedBox(height: 6),
                   for (final h in hubs.take(5))
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(pageByUlid[h.key]!.title,
-                                style: TextStyle(
-                                    fontSize: 12, color: tokens.text2),
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                          Text('← ${h.value}',
-                              style: mono(
-                                  fontSize: 11, color: tokens.text3)),
-                        ],
-                      ),
+                    _StatsPageRow(
+                      title: pageByUlid[h.key]!.title,
+                      trailing: '← ${h.value}',
+                      ulid: h.key,
+                      mono: true,
+                      tokens: tokens,
                     ),
                 ],
                 if (orphans.isNotEmpty) ...[
@@ -1288,22 +1271,12 @@ views:
                       )),
                   const SizedBox(height: 6),
                   for (final p in orphans.take(5))
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(p.title,
-                                style: TextStyle(
-                                    fontSize: 12, color: tokens.text2),
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                          Text(p.relativePath,
-                              style: mono(
-                                  fontSize: 10.5, color: tokens.text3),
-                              overflow: TextOverflow.ellipsis),
-                        ],
-                      ),
+                    _StatsPageRow(
+                      title: p.title,
+                      trailing: p.relativePath,
+                      ulid: p.ulid,
+                      mono: true,
+                      tokens: tokens,
                     ),
                 ],
                 if (topFolders.length > 1) ...[
@@ -1402,6 +1375,65 @@ class _SidebarDragHandle extends StatelessWidget {
         onHorizontalDragUpdate: (d) => onDrag(d.delta.dx),
         onHorizontalDragEnd: (_) => onDragEnd(),
         child: const SizedBox(width: 4, height: double.infinity),
+      ),
+    );
+  }
+}
+
+/// Row used by `_showVaultStats` for clickable page lists (largest /
+/// most-linked / orphans). Tapping closes the dialog and navigates to
+/// the corresponding editor route. Pulled out into its own widget so
+/// the dialog body stays readable and so the gesture wiring lives in
+/// one place.
+class _StatsPageRow extends StatelessWidget {
+  const _StatsPageRow({
+    required this.title,
+    required this.trailing,
+    required this.ulid,
+    required this.mono,
+    required this.tokens,
+  });
+
+  final String title;
+  final String trailing;
+  final String ulid;
+  final bool mono;
+  final QuillTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        context.go('/editor/$ulid');
+      },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(fontSize: 12, color: tokens.text2),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                trailing,
+                style: mono
+                    ? Theme.of(context).textTheme.bodySmall?.merge(
+                        TextStyle(
+                            fontSize: 11,
+                            color: tokens.text3,
+                            fontFamily: 'JetBrainsMono'))
+                    : TextStyle(fontSize: 11, color: tokens.text3),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
