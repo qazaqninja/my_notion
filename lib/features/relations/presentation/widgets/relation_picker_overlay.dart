@@ -59,8 +59,10 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screen = MediaQuery.of(context).size;
+    final w = screen.width < 420 ? (screen.width - 32).clamp(240.0, 380.0) : 380.0;
     return Container(
-      width: 380,
+      width: w,
       decoration: BoxDecoration(
         color: tokens.surface,
         border: Border.all(color: tokens.divider2, width: 0.5),
@@ -135,7 +137,8 @@ class _Panel extends StatelessWidget {
           else
           Flexible(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 320),
+              constraints: BoxConstraints(
+                  maxHeight: (screen.height * 0.5).clamp(180.0, 320.0)),
               child: ListView.builder(
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: 4),
