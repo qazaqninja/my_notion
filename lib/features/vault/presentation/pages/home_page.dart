@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -100,7 +102,9 @@ class HomePage extends StatelessWidget {
                   ),
                 ]),
                 if (state is VaultLoaded) ...[
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 28),
+                  const _StatsStrip(),
+                  const SizedBox(height: 16),
                   _Pinboard(favorites: state.workspace.favorites),
                   const _UpcomingReminders(),
                   const _RecentlyEdited(),
@@ -164,6 +168,106 @@ class HomePage extends StatelessWidget {
 /// editor. Hidden when no favorites are pinned. Rendered above
 /// "Upcoming reminders" and "Recently edited" so the user's chosen
 /// pages get the top slot.
+/// One-line summary across the home page: page / database / tag / orphan
+/// counts. Lightweight — one drift `count(*)` plus one walk of relations.
+/// Clicking shows nothing today; users get full breakdowns via
+/// "Vault stats" / "Show orphan pages" / etc. in the command palette.
+class _StatsStrip extends StatefulWidget {
+  const _StatsStrip();
+  @override
+  State<_StatsStrip> createState() => _StatsStripState();
+}
+
+class _StatsStripState extends State<_StatsStrip> {
+  late Future<_StripCounts> _counts;
+
+  @override
+  void initState() {
+    super.initState();
+    _counts = _load();
+  }
+
+  Future<_StripCounts> _load() async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    final dbs = await db.select(db.databases).get();
+    final relations = await db.select(db.relations).get();
+    final tagSet = <String>{};
+    final linked = <String>{};
+    for (final r in relations) {
+      linked.add(r.fromUlid);
+      linked.add(r.toUlid);
+    }
+    int orphans = 0;
+    for (final p in pages) {
+      if (!linked.contains(p.ulid)) orphans++;
+      if (p.frontmatterJson.isEmpty) continue;
+      try {
+        final m = jsonDecode(p.frontmatterJson);
+        if (m is Map && m['tags'] is List) {
+          for (final t in (m['tags'] as List)) {
+            final s = '$t'.trim();
+            if (s.isNotEmpty) tagSet.add(s);
+          }
+        }
+      } catch (_) {}
+    }
+    return _StripCounts(
+      pages: pages.length,
+      databases: dbs.length,
+      tags: tagSet.length,
+      orphans: orphans,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return FutureBuilder<_StripCounts>(
+      future: _counts,
+      builder: (context, snap) {
+        if (!snap.hasData) return const SizedBox(height: 18);
+        final c = snap.data!;
+        final pieces = <(String, int, Color?)>[
+          ('pages', c.pages, null),
+          ('databases', c.databases, null),
+          ('tags', c.tags, null),
+          ('orphans', c.orphans,
+              c.orphans == 0 ? null : const Color(0xFFCB5A4F)),
+        ];
+        return Row(
+          children: [
+            for (var i = 0; i < pieces.length; i++) ...[
+              if (i > 0)
+                Text('  ·  ',
+                    style: mono(fontSize: 12, color: tokens.text3)),
+              Text(
+                '${pieces[i].$2} ${pieces[i].$1}',
+                style: mono(
+                    fontSize: 12,
+                    color: pieces[i].$3 ?? tokens.text2),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _StripCounts {
+  const _StripCounts({
+    required this.pages,
+    required this.databases,
+    required this.tags,
+    required this.orphans,
+  });
+  final int pages;
+  final int databases;
+  final int tags;
+  final int orphans;
+}
+
 class _Pinboard extends StatefulWidget {
   const _Pinboard({required this.favorites});
   final List<String> favorites;
