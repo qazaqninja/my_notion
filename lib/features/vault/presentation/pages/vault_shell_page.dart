@@ -754,7 +754,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
           vaultBloc.add(const ReindexVault());
           messenger?.showSnackBar(SnackBar(
             content: Text(
-                'Imported ${summary.rowsWritten} rows · ${summary.columns} cols → ${summary.folderPath.split('/').last}'),
+                'Imported ${summary.rowsWritten} ${summary.rowsWritten == 1 ? 'row' : 'rows'} · ${summary.columns} ${summary.columns == 1 ? 'col' : 'cols'} → ${summary.folderPath.split('/').last}'),
             duration: const Duration(seconds: 4),
           ));
         } catch (e) {
@@ -832,7 +832,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
           vaultBloc.add(const ReindexVault());
           messenger?.showSnackBar(SnackBar(
             content: Text(
-                'Imported ${summary.notes.length} notes → ${summary.folder}/'),
+                'Imported ${summary.notes.length} ${summary.notes.length == 1 ? 'note' : 'notes'} → ${summary.folder}/'),
             duration: const Duration(seconds: 4),
           ));
         } catch (e) {
@@ -859,7 +859,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
           vaultBloc.add(const ReindexVault());
           messenger?.showSnackBar(SnackBar(
             content: Text(
-                'Imported ${summary.tasks.length} tasks → ${summary.folder}/'),
+                'Imported ${summary.tasks.length} ${summary.tasks.length == 1 ? 'task' : 'tasks'} → ${summary.folder}/'),
             duration: const Duration(seconds: 4),
           ));
         } catch (e) {
@@ -886,7 +886,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
           vaultBloc.add(const ReindexVault());
           messenger?.showSnackBar(SnackBar(
             content: Text(
-                'Imported ${summary.cards.length} cards → ${summary.folder}/'),
+                'Imported ${summary.cards.length} ${summary.cards.length == 1 ? 'card' : 'cards'} → ${summary.folder}/'),
             duration: const Duration(seconds: 4),
           ));
         } catch (e) {
@@ -913,7 +913,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
           vaultBloc.add(const ReindexVault());
           messenger?.showSnackBar(SnackBar(
             content: Text(
-                'Imported ${summary.pages.length} pages → ${summary.folder}/'),
+                'Imported ${summary.pages.length} ${summary.pages.length == 1 ? 'page' : 'pages'} → ${summary.folder}/'),
             duration: const Duration(seconds: 4),
           ));
         } catch (e) {
