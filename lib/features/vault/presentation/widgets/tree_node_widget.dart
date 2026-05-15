@@ -153,6 +153,7 @@ class TreeNodeWidget extends StatelessWidget {
         PopupMenuItem(value: 'subpage', child: Text('New page here')),
         PopupMenuItem(value: 'subfolder', child: Text('New subfolder…')),
         PopupMenuItem(value: 'search', child: Text('Search this folder…')),
+        PopupMenuItem(value: 'copy-path', child: Text('Copy folder path')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
       ],
     );
@@ -165,6 +166,15 @@ class TreeNodeWidget extends StatelessWidget {
       final cubit = context.read<CommandPaletteCubit>();
       cubit.open();
       cubit.setQuery('path:${f.relativePath}/');
+    } else if (selected == 'copy-path') {
+      final path = p.join(state.rootPath, f.relativePath);
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      await Clipboard.setData(ClipboardData(text: path));
+      messenger?.showSnackBar(
+        SnackBar(
+            content: Text('Copied $path'),
+            duration: const Duration(seconds: 2)),
+      );
     } else if (selected == 'reveal') {
       await Reveal.show(p.join(state.rootPath, f.relativePath));
     }
