@@ -1437,12 +1437,20 @@ class _TranscludedBlock extends StatelessWidget {
                       children: [
                         Icon(Icons.sync_alt, size: 12, color: tokens.text3),
                         const SizedBox(width: 6),
-                        Text(
-                          'Synced from ${page.title}',
-                          style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              color: tokens.text2),
+                        Expanded(
+                          child: Tooltip(
+                            message: 'Synced from ${page.title}\n${page.relativePath}',
+                            waitDuration: const Duration(milliseconds: 600),
+                            child: Text(
+                              'Synced from ${page.title}',
+                              style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: tokens.text2),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
                         ),
                       ],
                     ),
