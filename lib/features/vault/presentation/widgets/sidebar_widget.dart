@@ -597,10 +597,16 @@ class _FavoritesList extends StatelessWidget {
                         .add(ToggleFavorite(ulid)),
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Icon(Icons.close,
-                            size: 12, color: tokens.text3),
+                      child: Tooltip(
+                        message: 'Remove from favorites',
+                        waitDuration:
+                            const Duration(milliseconds: 500),
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.close,
+                              size: 12, color: tokens.text3),
+                        ),
                       ),
                     ),
                   ),

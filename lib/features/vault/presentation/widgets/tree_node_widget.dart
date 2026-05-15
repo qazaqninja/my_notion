@@ -388,9 +388,14 @@ class _AddSubpageButton extends StatelessWidget {
       onTap: onTap,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: QuillIcon('plus', size: 12, strokeWidth: 1.7, color: tokens.text3),
+        child: Tooltip(
+          message: 'New page in this folder',
+          waitDuration: const Duration(milliseconds: 500),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: QuillIcon('plus',
+                size: 12, strokeWidth: 1.7, color: tokens.text3),
+          ),
         ),
       ),
     );
