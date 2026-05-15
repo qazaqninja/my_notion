@@ -132,8 +132,21 @@ class _Panel extends StatelessWidget {
                   if (state.results.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: Text('No matches',
-                          style: TextStyle(fontSize: 12.5, color: tokens.text3)),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('No blocks match',
+                              style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: tokens.text3,
+                                  fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Try /h1 /code /quote /button /db: …',
+                            style: mono(fontSize: 10.5, color: tokens.text3),
+                          ),
+                        ],
+                      ),
                     ),
                 ],
               ),
