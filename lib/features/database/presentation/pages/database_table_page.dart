@@ -178,14 +178,13 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         if (!context.mounted) return;
         await _openFilterPopover(context, _schema!);
       case 'hide':
-        setState(() {
-          final current = _visibleOverride ??
-              {for (final c in (_schema?.columns ?? const [])) c.key};
-          _visibleOverride = {...current}..remove(columnKey);
-        });
+        final current = _visibleOverride ??
+            {for (final c in (_schema?.columns ?? const [])) c.key};
+        final next = {...current}..remove(columnKey);
+        await _setVisibleOverride(next);
         if (!mounted) return;
         context.toastSuccess('Hid column "$columnKey"',
-            sub: 'Properties to restore');
+            sub: 'Open the Properties popover to show it again');
     }
   }
 
