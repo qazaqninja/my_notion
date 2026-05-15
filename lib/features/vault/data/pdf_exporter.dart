@@ -26,21 +26,29 @@ class PdfExporter {
     }
 
     // Pass 1: build a ULID → title lookup for wikilink resolution.
+    // Per-page robustness — a single .md that fails to read or parse
+    // is logged and skipped rather than aborting the PDF export.
+    // M731–M736 contract for batch exports/imports.
     final ulidToTitle = <String, String>{};
     final pages = <_PageData>[];
     await for (final entity in _walk(src)) {
       if (entity is! File || !entity.path.endsWith('.md')) continue;
-      final raw = await entity.readAsString();
-      final parsed = FrontmatterParser.parse(raw);
-      final title = parsed.frontmatter.title ??
-          p.basenameWithoutExtension(entity.path);
-      final id = parsed.frontmatter.id;
-      if (id != null) ulidToTitle[id] = title;
-      pages.add(_PageData(
-        title: title,
-        body: parsed.body,
-        relativePath: p.relative(entity.path, from: src.path),
-      ));
+      try {
+        final raw = await entity.readAsString();
+        final parsed = FrontmatterParser.parse(raw);
+        final title = parsed.frontmatter.title ??
+            p.basenameWithoutExtension(entity.path);
+        final id = parsed.frontmatter.id;
+        if (id != null) ulidToTitle[id] = title;
+        pages.add(_PageData(
+          title: title,
+          body: parsed.body,
+          relativePath: p.relative(entity.path, from: src.path),
+        ));
+      } catch (e, st) {
+        // ignore: avoid_print
+        print('pdf_exporter: skipping ${entity.path} — $e\n$st');
+      }
     }
 
     // Sort by relative path for deterministic page order.
