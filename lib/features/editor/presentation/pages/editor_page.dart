@@ -1229,7 +1229,12 @@ class _EditorBodyState extends State<_EditorBody> {
                               _PageFooter(
                                 body: page.body,
                                 goal: _readGoal(page.frontmatter.get('goal')),
-                                createdAt: '${page.frontmatter.get('created_at') ?? ''}'.trim(),
+                                createdAt:
+                                    '${page.frontmatter.get('created_at') ?? ''}'.trim(),
+                                createdBy:
+                                    '${page.frontmatter.get('created_by') ?? ''}'.trim(),
+                                lastEditedBy:
+                                    '${page.frontmatter.get('last_edited_by') ?? ''}'.trim(),
                               ),
                               const SizedBox(height: 60),
                             ],
@@ -1683,7 +1688,13 @@ int? _readGoal(Object? raw) {
 /// pill (accent fill, green when met). Hidden if the body is empty so
 /// empty pages don't show "0 words · 0 chars · 1 min".
 class _PageFooter extends StatelessWidget {
-  const _PageFooter({required this.body, this.goal, this.createdAt = ''});
+  const _PageFooter({
+    required this.body,
+    this.goal,
+    this.createdAt = '',
+    this.createdBy = '',
+    this.lastEditedBy = '',
+  });
 
   final String body;
 
@@ -1695,6 +1706,13 @@ class _PageFooter extends StatelessWidget {
   /// surfaced below the word-count line so users can see when they
   /// started a page without opening the properties panel.
   final String createdAt;
+
+  /// `created_by:` author name. Empty when unset.
+  final String createdBy;
+
+  /// `last_edited_by:` author name. Hidden when equal to [createdBy]
+  /// so single-author pages don't render two redundant lines.
+  final String lastEditedBy;
 
   @override
   Widget build(BuildContext context) {
@@ -1755,9 +1773,19 @@ class _PageFooter extends StatelessWidget {
               ),
             ),
           ],
-          if (createdAt.isNotEmpty) ...[
+          if (createdAt.isNotEmpty || createdBy.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text('Created: $createdAt',
+            Text(
+              [
+                if (createdAt.isNotEmpty) 'Created: $createdAt',
+                if (createdBy.isNotEmpty) 'by $createdBy',
+              ].join(' '),
+              style: mono(fontSize: 11, color: tokens.text3),
+            ),
+          ],
+          if (lastEditedBy.isNotEmpty && lastEditedBy != createdBy) ...[
+            const SizedBox(height: 2),
+            Text('Last edited by $lastEditedBy',
                 style: mono(fontSize: 11, color: tokens.text3)),
           ],
         ],
