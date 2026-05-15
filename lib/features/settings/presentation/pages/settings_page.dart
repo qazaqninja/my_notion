@@ -9,6 +9,7 @@ import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/person_chip.dart';
@@ -237,30 +238,16 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _confirmClose(BuildContext context) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Remove from app?'),
-        content: const Text(
-          'The vault folder on disk is untouched. You can re-open it any '
-          'time from the picker.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFCB5A4F),
-            ),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+    final ok = await showQuillConfirm(
+      context,
+      title: 'Remove from app?',
+      sub:
+          'The vault folder on disk is untouched. You can re-open it any time from the picker.',
+      icon: 'trash',
+      confirmLabel: 'Remove',
+      danger: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     if (!context.mounted) return;
     context.read<VaultBloc>().add(const CloseVault());
     // Settings is mounted inside the vault shell; once the bloc transitions
@@ -275,22 +262,20 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     if (dest == null) return;
     if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
     try {
       final n = await const VaultExporter().export(
         src: Directory(state.rootPath),
         dest: Directory(dest),
       );
-      messenger.showSnackBar(
-        SnackBar(
-            content: Text(
-                'Exported $n ${n == 1 ? 'file' : 'files'} to $dest'),
-            duration: const Duration(seconds: 4)),
-      );
+      if (context.mounted) {
+        context.toastSuccess(
+          'Exported $n ${n == 1 ? 'file' : 'files'}',
+          sub: dest,
+          subMono: true,
+        );
+      }
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
-      );
+      if (context.mounted) context.toastError('Export failed', sub: '$e');
     }
   }
 
@@ -341,9 +326,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ? null
                 : () {
                     context.read<VaultBloc>().add(const ReindexVault());
-                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                      const SnackBar(content: Text('Reindexing vault…')),
-                    );
+                    context.toastInfo('Reindexing vault…');
                   },
           ),
         ),
@@ -480,12 +463,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await updated.save(Directory(state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      const SnackBar(
-        content: Text('Sidebar reset to default order'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess('Sidebar reset to default order');
   }
 
   Widget _usersPane(QuillTokens tokens) {
@@ -560,12 +538,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await next.save(Directory(state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('Added user $name'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess('Added user', sub: name);
   }
 
   Future<void> _removeUser(VaultLoaded state, String name) async {
@@ -575,12 +548,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await next.save(Directory(state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('Removed user $name'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess('Removed user', sub: name);
   }
 
   Future<void> _setDefaultUser(VaultLoaded state, String name) async {
@@ -593,12 +561,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await next.save(Directory(state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('Default user: $name'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess('Default user: $name');
   }
 
   Widget _exportPane(QuillTokens tokens) {
@@ -668,19 +631,20 @@ class _SettingsPageState extends State<SettingsPage> {
         .getDirectoryPath(dialogTitle: 'Export HTML to…');
     if (dest == null) return;
     if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
     try {
       final n = await const HtmlExporter().export(
         src: Directory(state.rootPath),
         dest: Directory(dest),
       );
-      messenger.showSnackBar(SnackBar(
-        content: Text(
-            'Exported $n HTML ${n == 1 ? 'file' : 'files'} to $dest'),
-        duration: const Duration(seconds: 4),
-      ));
+      if (context.mounted) {
+        context.toastSuccess(
+          'Exported $n HTML ${n == 1 ? 'file' : 'files'}',
+          sub: dest,
+          subMono: true,
+        );
+      }
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('HTML export failed: $e')));
+      if (context.mounted) context.toastError('HTML export failed', sub: '$e');
     }
   }
 
@@ -695,19 +659,20 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     if (picked == null) return;
     if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
     try {
       final n = await const PdfExporter().export(
         src: Directory(state.rootPath),
         dest: File(picked),
       );
-      messenger.showSnackBar(SnackBar(
-        content: Text(
-            'Exported $n ${n == 1 ? 'page' : 'pages'} to $picked'),
-        duration: const Duration(seconds: 4),
-      ));
+      if (context.mounted) {
+        context.toastSuccess(
+          'Exported $n ${n == 1 ? 'page' : 'pages'}',
+          sub: picked,
+          subMono: true,
+        );
+      }
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('PDF export failed: $e')));
+      if (context.mounted) context.toastError('PDF export failed', sub: '$e');
     }
   }
 
@@ -830,14 +795,9 @@ class _WorkspaceIconButton extends StatelessWidget {
         await next.save(Directory(state.rootPath));
         if (!context.mounted) return;
         context.read<VaultBloc>().add(const RefreshFromDisk());
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(picked.isEmpty
-                ? 'Workspace icon cleared'
-                : 'Workspace icon: $picked'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        context.toastSuccess(picked.isEmpty
+            ? 'Workspace icon cleared'
+            : 'Workspace icon: $picked');
       },
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
@@ -905,14 +865,9 @@ class _WorkspaceNameFieldState extends State<_WorkspaceNameField> {
     await next.save(Directory(widget.state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(trimmed.isEmpty
-            ? 'Workspace name cleared'
-            : 'Workspace name: $trimmed'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess(trimmed.isEmpty
+        ? 'Workspace name cleared'
+        : 'Workspace name: $trimmed');
   }
 
   @override
