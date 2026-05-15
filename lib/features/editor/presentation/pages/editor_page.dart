@@ -1054,7 +1054,13 @@ class _EditorBodyState extends State<_EditorBody> {
       BuildContext context, EditorLoaded loaded) async {
     final vault = context.read<VaultBloc>().state;
     if (vault is! VaultLoaded) return;
-    await Reveal.show('${vault.rootPath}/${loaded.page.relativePath}');
+    final path = '${vault.rootPath}/${loaded.page.relativePath}';
+    final ok = await Reveal.show(path);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Could not reveal $path')),
+      );
+    }
   }
 
   Future<void> _openBlockComments(

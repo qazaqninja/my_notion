@@ -303,7 +303,12 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final vault = context.read<VaultBloc>().state;
     if (vault is! VaultLoaded) return;
     final abs = '${vault.rootPath}/${widget.page.relativePath}';
-    await Reveal.show(abs);
+    final ok = await Reveal.show(abs);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Could not reveal $abs')),
+      );
+    }
   }
 
   Future<void> _copyUlid(BuildContext context) async {
