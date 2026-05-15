@@ -51,8 +51,19 @@ class _TrashDialogState extends State<TrashDialog> {
       if (await _service.deleteForever(item)) deleted++;
     }
     if (!context.mounted) return;
-    context.toastSuccess(
-        'Emptied trash · $deleted ${deleted == 1 ? "file" : "files"}');
+    final failed = items.length - deleted;
+    if (failed > 0) {
+      // Some files couldn't be deleted — permission, locked by
+      // another process, etc. Tell the user how many made it through
+      // and how many didn't, since the dialog count was already
+      // confirmed and they expect a complete cleanup.
+      context.toastWarn(
+          'Emptied $deleted of ${items.length}',
+          sub: '$failed ${failed == 1 ? "file" : "files"} could not be deleted');
+    } else {
+      context.toastSuccess(
+          'Emptied trash · $deleted ${deleted == 1 ? "file" : "files"}');
+    }
     _refresh();
   }
 
