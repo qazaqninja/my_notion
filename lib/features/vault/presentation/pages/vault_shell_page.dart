@@ -107,7 +107,23 @@ class _VaultShellPageState extends State<VaultShellPage> {
     final tokens = QuillTokens.of(context);
     return BlocProvider<CommandPaletteCubit>.value(
       value: _cubit(context),
-      child: CallbackShortcuts(
+      child: BlocListener<VaultBloc, VaultState>(
+        // Global VaultError → snackbar so the bloc's transient
+        // VaultError → VaultLoaded re-emit (Move / Duplicate / Folder
+        // create) doesn't fail silently.
+        listenWhen: (prev, next) => next is VaultError && prev is! VaultError,
+        listener: (context, state) {
+          if (state is! VaultError) return;
+          final messenger = ScaffoldMessenger.maybeOf(context);
+          messenger?.showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              duration: const Duration(seconds: 4),
+              backgroundColor: const Color(0xFFCB5A4F),
+            ),
+          );
+        },
+        child: CallbackShortcuts(
         bindings: {
           const SingleActivator(LogicalKeyboardKey.keyK, meta: true): () {
             _cubit(context).open();
@@ -265,6 +281,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
