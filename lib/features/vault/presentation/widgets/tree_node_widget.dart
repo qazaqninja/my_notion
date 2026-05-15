@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/platform/reveal.dart';
+import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/side_item.dart';
@@ -151,6 +152,7 @@ class TreeNodeWidget extends StatelessWidget {
       items: const [
         PopupMenuItem(value: 'subpage', child: Text('New page here')),
         PopupMenuItem(value: 'subfolder', child: Text('New subfolder…')),
+        PopupMenuItem(value: 'search', child: Text('Search this folder…')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
       ],
     );
@@ -159,6 +161,10 @@ class TreeNodeWidget extends StatelessWidget {
       await _promptNewSubpage(context, folderPath: f.relativePath);
     } else if (selected == 'subfolder') {
       await _promptNewSubfolder(context, parentFolder: f.relativePath);
+    } else if (selected == 'search') {
+      final cubit = context.read<CommandPaletteCubit>();
+      cubit.open();
+      cubit.setQuery('path:${f.relativePath}/');
     } else if (selected == 'reveal') {
       await Reveal.show(p.join(state.rootPath, f.relativePath));
     }
