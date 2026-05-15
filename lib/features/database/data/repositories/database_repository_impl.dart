@@ -100,6 +100,22 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         .getSingleOrNull();
     if (row == null) throw StateError('Page not found: $ulid');
     final page = await _vault.readPage(row.relativePath, root: vaultRoot);
+    // Honour the same locked / permissions: read_only contract that
+    // EditorBloc enforces (editor_bloc.dart:261 / 290). Without this
+    // check, DB cell edits would silently bypass the page lock —
+    // they write directly through readPage / writePage and don't hit
+    // the bloc at all.
+    final lockedVal = page.frontmatter.get('locked');
+    final permVal = '${page.frontmatter.get('permissions')}'.trim().toLowerCase();
+    final isLocked = lockedVal == true ||
+        '$lockedVal'.toLowerCase() == 'true' ||
+        permVal == 'read_only' ||
+        permVal == 'read-only' ||
+        permVal == 'readonly' ||
+        permVal == 'locked';
+    if (isLocked) {
+      throw const PageLockedException();
+    }
     final previousValue = page.frontmatter.get(column.key);
     final next = _writeCellEntry(page.frontmatter, column, newValue);
     final updated = page.copyWith(frontmatter: next);

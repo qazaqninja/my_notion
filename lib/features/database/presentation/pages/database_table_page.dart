@@ -223,6 +223,12 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
             if (r.ulid == row.ulid) updated else r,
         ];
       });
+    } on PageLockedException {
+      if (!mounted) return;
+      context.toastInfo('Row is locked',
+          sub: row.title.isEmpty
+              ? 'Unlock the page (⌘⇧L) to edit cells'
+              : '"${row.title}" — unlock the page (⌘⇧L) to edit cells');
     } catch (e) {
       if (!mounted) return;
       context.toastError('Cell update failed', sub: '$e');

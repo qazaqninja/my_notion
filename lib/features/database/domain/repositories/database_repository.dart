@@ -69,3 +69,14 @@ abstract class DatabaseRepository {
     required io.Directory vaultRoot,
   });
 }
+
+/// Thrown when a write operation hits a page whose frontmatter marks it
+/// `locked: true` or `permissions: read_only`. The EditorBloc silently
+/// drops mutations on locked pages (editor_bloc.dart:261); the
+/// database repo throws this so the UI can show a specific error
+/// rather than a generic 'Cell update failed'.
+class PageLockedException implements Exception {
+  const PageLockedException();
+  @override
+  String toString() => 'PageLockedException: page is locked or read-only';
+}
