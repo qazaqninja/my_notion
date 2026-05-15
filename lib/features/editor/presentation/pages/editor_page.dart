@@ -1100,9 +1100,39 @@ class _EditorBodyState extends State<_EditorBody> {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text(
-                state.message,
-                style: TextStyle(color: tokens.text2, fontSize: 14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Could not open page',
+                    style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.text2),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    state.message,
+                    style: TextStyle(
+                        color: tokens.text3, fontSize: 13, height: 1.5),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => context.go('/home'),
+                        child: const Text('Back to home'),
+                      ),
+                      const SizedBox(width: 4),
+                      TextButton(
+                        onPressed: () =>
+                            context.read<VaultBloc>().add(const ReindexVault()),
+                        child: const Text('Reindex vault'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           );
