@@ -45,7 +45,7 @@ void main() {
     await svc.add(tmp, pageUlid, author: 'A', body: 'one');
     await svc.add(tmp, pageUlid, author: 'B', body: 'two');
     final mid = (await svc.list(tmp, pageUlid))[1];
-    await svc.setResolved(tmp, pageUlid, mid.id, true);
+    await svc.setResolved(tmp, pageUlid, mid.id, resolved: true);
     final after = await svc.list(tmp, pageUlid);
     expect(after.first.resolved, isFalse);
     expect(after[1].resolved, isTrue);

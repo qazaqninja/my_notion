@@ -118,8 +118,12 @@ class CommentsService {
     await _save(vaultRoot, pageUlid, remaining);
   }
 
-  Future<void> setResolved(Directory vaultRoot, String pageUlid,
-      String commentId, bool resolved) async {
+  Future<void> setResolved(
+    Directory vaultRoot,
+    String pageUlid,
+    String commentId, {
+    required bool resolved,
+  }) async {
     final updated = (await list(vaultRoot, pageUlid)).map((c) {
       return c.id == commentId ? c.copyWith(resolved: resolved) : c;
     }).toList();

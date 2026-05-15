@@ -70,13 +70,13 @@ class ThemeCubit extends Cubit<ThemeState> {
     await prefs.setString(_accentKey, accent.name);
   }
 
-  Future<void> setCompact(bool value) async {
+  Future<void> setCompact({required bool value}) async {
     emit(state.copyWith(compact: value));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_compactKey, value);
   }
 
-  Future<void> toggleCompact() => setCompact(!state.compact);
+  Future<void> toggleCompact() => setCompact(value: !state.compact);
 
   Future<void> toggleAccent() {
     final next = state.accent == AccentKey.sage ? AccentKey.terracotta : AccentKey.sage;

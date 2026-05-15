@@ -339,7 +339,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
                       Directory(widget.vaultRoot),
                       widget.pageUlid,
                       c.id,
-                      !c.resolved,
+                      resolved: !c.resolved,
                     );
                     _refresh();
                   } catch (e) {
