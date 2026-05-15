@@ -46,15 +46,15 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --reporter expanded
 
-      - name: Enforce coverage threshold (56%)
-        # Baseline at M821 was 53.9% line coverage. By M900 the suite
-        # covered 55.94%; by M934 it's 57.15%. Ratchet history:
-        #   50 → 55 (M900) → 56 (M934). Next stop 60 once the
+      - name: Enforce coverage threshold (57%)
+        # Baseline at M821 was 53.9%. Ratchet history:
+        #   50 → 55 (M900) → 56 (M934) → 57 (M956).
+        # By M956 actual is 57.66%. Next stop 60% once the
         # presentation layer gets meaningful widget-test coverage.
         uses: VeryGoodOpenSource/very_good_coverage@v3
         with:
           path: coverage/lcov.info
-          min_coverage: 56
+          min_coverage: 57
 
       - name: Upload coverage artifact
         if: always()
