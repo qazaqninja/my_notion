@@ -222,6 +222,8 @@ enum SlashAction {
   productNumericLines,
   /// Tally distinct non-blank lines and emit `count× line` rows.
   frequencyLines,
+  /// Compute the range (max − min) of every numeric line.
+  rangeNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1036,6 +1038,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a/a/b → 2× a / 1× b',
     action: SlashAction.frequencyLines,
     keywords: ['frequency', 'tally', 'count', 'histogram', 'occurrence'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Range of numeric lines',
+    hint: 'max − min',
+    action: SlashAction.rangeNumericLines,
+    keywords: ['range', 'max', 'min', 'span', 'spread', 'math'],
   ),
   SlashEntry(
     icon: 'hash',

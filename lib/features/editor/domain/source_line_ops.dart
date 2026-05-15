@@ -902,6 +902,32 @@ SortLinesResult productNumericLinesIn(String text, int start, int end) =>
       return [product.toString()];
     });
 
+/// Compute the **range** (max − min) of every selected numeric
+/// line. Non-numeric lines are skipped. Renders integer-form when
+/// every input was integer AND the range has no fractional part,
+/// decimal-form otherwise. Returns the source unchanged when no
+/// line parses (preserves block structure).
+SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      double? lo;
+      double? hi;
+      var anyDecimalInput = false;
+      for (final l in lines) {
+        final trimmed = l.trim();
+        final v = double.tryParse(trimmed);
+        if (v == null) continue;
+        if (trimmed.contains('.')) anyDecimalInput = true;
+        if (lo == null || v < lo) lo = v;
+        if (hi == null || v > hi) hi = v;
+      }
+      if (lo == null || hi == null) return lines;
+      final range = hi - lo;
+      if (!anyDecimalInput && range == range.truncateToDouble()) {
+        return [range.toInt().toString()];
+      }
+      return [range.toString()];
+    });
+
 /// Sum every selected line that parses as a number (int or double).
 /// Non-numeric lines are skipped. Outputs a single line with the
 /// running total — integer when the sum has no fractional part,

@@ -2425,6 +2425,38 @@ void main() {
     });
   });
 
+  group('rangeNumericLinesIn', () {
+    test('range is max minus min', () {
+      const text = '1\n5\n3\n';
+      expect(rangeNumericLinesIn(text, 0, text.length).text, '4\n');
+    });
+
+    test('single numeric line yields 0', () {
+      const text = '42\n';
+      expect(rangeNumericLinesIn(text, 0, text.length).text, '0\n');
+    });
+
+    test('decimal input renders decimal', () {
+      const text = '1.5\n3.5\n';
+      expect(rangeNumericLinesIn(text, 0, text.length).text, '2.0\n');
+    });
+
+    test('negative values are supported', () {
+      const text = '-5\n0\n5\n';
+      expect(rangeNumericLinesIn(text, 0, text.length).text, '10\n');
+    });
+
+    test('skips non-numeric lines', () {
+      const text = '10\nlabel\n5\n';
+      expect(rangeNumericLinesIn(text, 0, text.length).text, '5\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(rangeNumericLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
