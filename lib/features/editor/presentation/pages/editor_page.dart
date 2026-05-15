@@ -1591,6 +1591,11 @@ class _DailyNoteNav extends StatelessWidget {
     final tokens = QuillTokens.of(context);
     final prev = d.subtract(const Duration(days: 1));
     final next = d.add(const Duration(days: 1));
+    final today = DateTime.now().toUtc();
+    final todayUtc = DateTime.utc(today.year, today.month, today.day);
+    final isToday = d.year == todayUtc.year &&
+        d.month == todayUtc.month &&
+        d.day == todayUtc.day;
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: Row(
@@ -1606,6 +1611,28 @@ class _DailyNoteNav extends StatelessWidget {
             icon: Icon(Icons.chevron_left,
                 size: 16, color: tokens.text3),
           ),
+          if (!isToday)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Tooltip(
+                message:
+                    'Jump to today · ${todayUtc.toIso8601String().substring(0, 10)}',
+                waitDuration: const Duration(milliseconds: 500),
+                child: TextButton(
+                  onPressed: () => _go(context, todayUtc),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 0),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: tokens.text2,
+                    textStyle: const TextStyle(fontSize: 11.5),
+                  ),
+                  child: const Text('Today'),
+                ),
+              ),
+            ),
           IconButton(
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.all(4),
