@@ -3499,8 +3499,9 @@ class _ToggleBlockState extends State<_ToggleBlock> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(right: 6, top: 2),
-                    child: Transform.rotate(
-                      angle: _open ? 1.5708 : 0,
+                    child: AnimatedRotation(
+                      turns: _open ? 0.25 : 0,
+                      duration: const Duration(milliseconds: 120),
                       child: Icon(Icons.chevron_right,
                           size: 16, color: tokens.text3),
                     ),
