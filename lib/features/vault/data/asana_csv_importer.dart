@@ -301,11 +301,18 @@ class _Mapping {
   final List<String> header;
 
   /// Frontmatter key for header column [i]. Normalises Asana's
-  /// PascalCase / space-separated labels to snake_case.
+  /// PascalCase / space-separated labels to snake_case and drops
+  /// YAML-structure glyphs (':' / '#' / '[' / '{' / etc.) so the
+  /// emitted key never needs quoting and never corrupts the YAML
+  /// mapping shape (mirrors csv_importer._normaliseKey from M759).
   String keyForIndex(int i) {
     if (i == sectionIdx) return 'status';
-    final raw = header[i].trim().toLowerCase();
-    return raw.replaceAll(RegExp(r'\s+'), '_').replaceAll('/', '_');
+    var s = header[i].trim().toLowerCase();
+    s = s.replaceAll(RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*,/\\]'''), '_');
+    s = s.replaceAll(RegExp(r'\s+'), '_');
+    s = s.replaceAll(RegExp(r'_+'), '_');
+    s = s.replaceAll(RegExp(r'^_|_$'), '');
+    return s.isEmpty ? 'col' : s;
   }
 }
 
