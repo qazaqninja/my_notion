@@ -1311,7 +1311,7 @@ views:
           header: QuillModalHeader(
             title: 'Vault stats',
             sub:
-                '${pages.length} pages · ${databases.length} databases · ${relations.length} relations.',
+                '${pages.length} ${pages.length == 1 ? "page" : "pages"} · ${databases.length} ${databases.length == 1 ? "database" : "databases"} · ${relations.length} ${relations.length == 1 ? "relation" : "relations"}.',
             icon: 'database',
             onClose: () => Navigator.of(ctx).pop(),
           ),
