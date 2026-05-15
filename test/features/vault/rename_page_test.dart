@@ -40,12 +40,21 @@ void main() {
         isTrue);
 
     bloc.add(RenamePage(ulid: ulid!, newBasename: 'NewName'));
-    final deadline = DateTime.now().add(const Duration(seconds: 2));
+    // Wait for BOTH the filesystem rename AND the indexer's database
+    // row to land. The earlier version only waited for the FS rename
+    // and then immediately asserted on the DB row, which is updated
+    // a tick later by the indexer — on heavily-loaded suite runs the
+    // assertion would see the stale row and fail flakily. Extending
+    // the deadline + polling both surfaces makes it deterministic.
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
     while (DateTime.now().isBefore(deadline)) {
-      if (await File(p.join(tmp.path, 'Folder', 'NewName.md')).exists() &&
-          !await File(p.join(tmp.path, 'Folder', 'OldName.md')).exists()) {
-        break;
-      }
+      final fsRenamed =
+          await File(p.join(tmp.path, 'Folder', 'NewName.md')).exists() &&
+              !await File(p.join(tmp.path, 'Folder', 'OldName.md')).exists();
+      final row = await (db.select(db.pages)
+            ..where((p) => p.ulid.equals(ulid!)))
+          .getSingleOrNull();
+      if (fsRenamed && row?.relativePath == 'Folder/NewName.md') break;
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     expect(await File(p.join(tmp.path, 'Folder', 'NewName.md')).exists(),
