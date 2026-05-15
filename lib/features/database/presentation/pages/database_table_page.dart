@@ -183,6 +183,13 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
               {for (final c in (_schema?.columns ?? const [])) c.key};
           _visibleOverride = {...current}..remove(columnKey);
         });
+        if (!mounted) return;
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text('Hid column "$columnKey" — Properties to restore'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
     }
   }
 
