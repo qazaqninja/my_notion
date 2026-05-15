@@ -115,9 +115,10 @@ String _wordCountTooltip(String body, int words, int chars, int mins) {
       .length;
   final sentences =
       stripped.split(RegExp(r'[.!?]+\s')).where((s) => s.trim().isNotEmpty).length;
-  return '$words words  ·  $chars chars (incl. spaces)  ·  $charsNoSpace chars (no spaces)\n'
-      '$paragraphs paragraphs  ·  $sentences sentences\n'
-      '~$mins min read at 220 wpm';
+  String pl(int n, String s, String p) => '$n ${n == 1 ? s : p}';
+  return '${pl(words, 'word', 'words')}  ·  ${pl(chars, 'char', 'chars')} (incl. spaces)  ·  ${pl(charsNoSpace, 'char', 'chars')} (no spaces)\n'
+      '${pl(paragraphs, 'paragraph', 'paragraphs')}  ·  ${pl(sentences, 'sentence', 'sentences')}\n'
+      '~${pl(mins, 'min', 'mins')} read at 220 wpm';
 }
 
 /// Hover-tooltip helper for the PageFooter date lines. Tries to
