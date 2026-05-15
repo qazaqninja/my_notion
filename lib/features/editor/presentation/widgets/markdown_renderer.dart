@@ -2789,7 +2789,9 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
                   Padding(
                     padding: const EdgeInsets.only(top: 6, left: 4),
                     child: Text(
-                      '+ ${data.rows.length - rows.length} more rows',
+                      data.rows.length - rows.length == 1
+                          ? '+ 1 more row'
+                          : '+ ${data.rows.length - rows.length} more rows',
                       style: mono(fontSize: 11, color: tokens.text3),
                     ),
                   ),
