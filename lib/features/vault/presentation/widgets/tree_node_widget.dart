@@ -261,9 +261,21 @@ class TreeNodeWidget extends StatelessWidget {
     } else if (selected == 'duplicate') {
       if (fl.ulid.isEmpty) return;
       final router = GoRouter.of(context);
+      final scope = context;
+      final sourceName = fl.name;
       context.read<VaultBloc>().add(DuplicatePage(
             fl.ulid,
-            onCreated: (newUlid) => router.go('/editor/$newUlid'),
+            onCreated: (newUlid) {
+              if (scope.mounted) {
+                scope.toastSuccess(
+                    sourceName.isEmpty
+                        ? 'Page duplicated'
+                        : 'Duplicated "$sourceName"',
+                    sub: 'New ULID: $newUlid',
+                    subMono: true);
+              }
+              router.go('/editor/$newUlid');
+            },
           ));
     } else if (selected == 'rename') {
       if (fl.ulid.isEmpty) return;
