@@ -874,7 +874,8 @@ class _WorkspaceIconButton extends StatelessWidget {
             child: hasIcon
                 ? Text(icon, style: const TextStyle(fontSize: 18))
                 : Icon(Icons.tag_faces_outlined,
-                    size: 16, color: Colors.white),
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onPrimary),
           ),
         ),
       ),
@@ -1237,7 +1238,9 @@ class _BtnState extends State<_Btn> {
                   QuillIcon(widget.icon!,
                       size: 13,
                       strokeWidth: 1.7,
-                      color: primary ? Colors.white : tokens.text2),
+                      color: primary
+                          ? Theme.of(context).colorScheme.onPrimary
+                          : tokens.text2),
                   const SizedBox(width: 6),
                 ],
                 Text(
@@ -1245,7 +1248,9 @@ class _BtnState extends State<_Btn> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
-                    color: primary ? Colors.white : tokens.text,
+                    color: primary
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : tokens.text,
                   ),
                 ),
               ],
@@ -1317,11 +1322,17 @@ class _Toggle extends StatelessWidget {
               width: 16,
               height: 16,
               decoration: BoxDecoration(
-                color: Colors.white,
+                // Toggle knob is canonically white-against-rail in
+                // both modes — `colorScheme.onPrimary` mirrors that
+                // semantic (rail is `tokens.accent`).
+                color: Theme.of(context).colorScheme.onPrimary,
                 borderRadius: const BorderRadius.all(Radius.circular(8)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .shadow
+                        .withValues(alpha: 0.15),
                     blurRadius: 2,
                     offset: const Offset(0, 1),
                   ),
@@ -1365,9 +1376,11 @@ class _SyncCard extends StatelessWidget {
             height: 30,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: tokens.isDark
-                  ? Colors.white.withValues(alpha: 0.04)
-                  : Colors.black.withValues(alpha: 0.04),
+              // Subtle inverse-of-bg wash so the chiclet shows up
+              // against the page surface — `tokens.text` is dark on
+              // light, light on dark, which matches the original
+              // black/white toggle exactly.
+              color: tokens.text.withValues(alpha: 0.04),
               borderRadius: const BorderRadius.all(Radius.circular(5)),
             ),
             child: QuillIcon(icon, size: 15, strokeWidth: 1.7,
