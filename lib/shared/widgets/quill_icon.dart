@@ -408,7 +408,13 @@ class QuillIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? DefaultTextStyle.of(context).style.color ?? Colors.black;
+    // Resolution order: explicit `color` arg → inherited text style →
+    // the M3 onSurface slot. The onSurface fallback is theme-aware
+    // (dark in light mode, light in dark mode) so the icon stays
+    // visible if no parent set a text color.
+    final c = color ??
+        DefaultTextStyle.of(context).style.color ??
+        Theme.of(context).colorScheme.onSurface;
     return CustomPaint(
       size: Size.square(size),
       painter: _IconPainter(name: name, strokeWidth: strokeWidth, color: c),
@@ -499,7 +505,9 @@ class DBGlyph extends StatelessWidget {
       child: Text(
         letter,
         style: TextStyle(
-          color: Colors.white,
+          // Letter sits on a callee-supplied accent fill — M3
+          // onPrimary slot for contrast across themes.
+          color: Theme.of(context).colorScheme.onPrimary,
           fontSize: size * 0.62,
           fontWeight: FontWeight.w600,
           height: 1,

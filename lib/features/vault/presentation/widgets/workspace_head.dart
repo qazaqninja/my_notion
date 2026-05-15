@@ -49,7 +49,8 @@ class WorkspaceHead extends StatelessWidget {
               style: mono(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
+                // Initial sits on the accent tile.
+                color: Theme.of(context).colorScheme.onPrimary,
                 letterSpacing: -0.5,
               ),
             ),

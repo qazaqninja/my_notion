@@ -238,7 +238,7 @@ class _DayCell extends StatelessWidget {
         ? tokens.accent
         : (isToday ? tokens.accentTint : Colors.transparent);
     final fg = isSelected
-        ? Colors.white
+        ? Theme.of(context).colorScheme.onPrimary
         : (isDisabled ? tokens.text3 : tokens.text);
     return InkWell(
       onTap: onTap,

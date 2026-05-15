@@ -287,7 +287,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
                   context.watch<VaultBloc>().state is VaultLoaded
                       ? FloatingActionButton(
                           backgroundColor: tokens.accent,
-                          foregroundColor: Colors.white,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
                           tooltip: 'New page',
                           onPressed: () => _newPage(context),
                           child: const Icon(Icons.add, size: 22),

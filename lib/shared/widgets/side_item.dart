@@ -139,8 +139,9 @@ class _SideItemState extends State<SideItem> {
                   ),
                   child: Text(
                     widget.glyph!.letter,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      // Glyph letter sits on a categorical-coloured tile.
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: FontWeight.w600,
                       fontSize: 14 * 0.62,
                       height: 1,
