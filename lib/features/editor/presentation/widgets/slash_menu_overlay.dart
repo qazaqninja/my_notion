@@ -111,6 +111,9 @@ class _Panel extends StatelessWidget {
                       entry: state.results[i],
                       selected: state.selectedIndex == i,
                       onTap: () => onPick(state.results[i]),
+                      onHover: () => context
+                          .read<SlashMenuCubit>()
+                          .setSelection(i),
                     ),
                   if (state.results.isEmpty)
                     Padding(
@@ -134,11 +137,13 @@ class _Row extends StatelessWidget {
     required this.entry,
     required this.selected,
     required this.onTap,
+    this.onHover,
   });
   final QuillTokens tokens;
   final SlashEntry entry;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback? onHover;
 
   @override
   Widget build(BuildContext context) {
@@ -146,6 +151,7 @@ class _Row extends StatelessWidget {
       onTap: onTap,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
+        onEnter: onHover == null ? null : (_) => onHover!(),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           color: selected ? tokens.hover : Colors.transparent,
