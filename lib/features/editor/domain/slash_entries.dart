@@ -171,6 +171,16 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['link', 'page', 'wikilink', 'relation', 'mention'],
   ),
   SlashEntry(
+    icon: 'link',
+    label: 'External link',
+    hint: '⌘K',
+    snippet: '[label](https://)',
+    // Place caret right after the opening paren so the user can paste
+    // a URL and immediately Tab back to edit the label.
+    cursorOffset: 9,
+    keywords: ['link', 'url', 'external', 'web', 'href'],
+  ),
+  SlashEntry(
     icon: 'file',
     label: 'Image',
     hint: '![',
