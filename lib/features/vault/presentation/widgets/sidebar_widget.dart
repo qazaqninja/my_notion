@@ -378,10 +378,12 @@ class _SidebarWidgetState extends State<SidebarWidget> {
       label: 'Folder name',
       confirmLabel: 'Create',
     );
-    if (name == null || name.isEmpty) return;
-    bloc.add(CreateFolder(parentFolder: '', name: name));
+    if (name == null) return;
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    bloc.add(CreateFolder(parentFolder: '', name: trimmed));
     if (!context.mounted) return;
-    context.toastSuccess('Created folder', sub: name, subMono: true);
+    context.toastSuccess('Created folder', sub: trimmed, subMono: true);
   }
 
   Future<void> _promptNewPage(BuildContext context) async {
@@ -394,9 +396,11 @@ class _SidebarWidgetState extends State<SidebarWidget> {
       label: 'Title',
       confirmLabel: 'Create',
     );
-    if (title == null || title.isEmpty) return;
+    if (title == null) return;
+    final trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) return;
     bloc.add(CreatePage(
-      title: title,
+      title: trimmedTitle,
       onCreated: (ulid) => router.go('/editor/$ulid'),
     ));
   }
