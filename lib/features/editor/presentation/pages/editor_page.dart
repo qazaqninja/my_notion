@@ -1401,9 +1401,10 @@ class _EditorBodyState extends State<_EditorBody> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               PageCoverBand(
-                                coverValue: page.frontmatter.get('cover') is String
-                                    ? page.frontmatter.get('cover') as String
-                                    : null,
+                                coverValue: switch (page.frontmatter.get('cover')) {
+                                  final String s => s,
+                                  _ => null,
+                                },
                                 vaultRoot: context.read<VaultBloc>().state is VaultLoaded
                                     ? (context.read<VaultBloc>().state as VaultLoaded).rootPath
                                     : null,
@@ -1454,9 +1455,10 @@ class _EditorBodyState extends State<_EditorBody> {
                                           padding: const EdgeInsets.only(
                                               top: 22, right: 12),
                                           child: PageIcon(
-                                            iconValue: page.frontmatter.get('icon') is String
-                                                ? page.frontmatter.get('icon') as String
-                                                : null,
+                                            iconValue: switch (page.frontmatter.get('icon')) {
+                                              final String s => s,
+                                              _ => null,
+                                            },
                                             size: 28,
                                             vaultRoot: context.read<VaultBloc>().state is VaultLoaded
                                                 ? (context.read<VaultBloc>().state as VaultLoaded).rootPath

@@ -368,9 +368,8 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
           (e) => e!.key == 'title',
           orElse: () => null,
         );
-    final nextTitle = titleEntry?.value is String
-        ? titleEntry!.value as String
-        : loaded.page.title;
+    final titleValue = titleEntry?.value;
+    final nextTitle = titleValue is String ? titleValue : loaded.page.title;
     final updated = loaded.page.copyWith(frontmatter: fm, title: nextTitle);
     emit(loaded.copyWith(page: updated, dirty: true));
     _scheduleSave();

@@ -421,9 +421,9 @@ class _QuillMenuLayoutDelegate extends SingleChildLayoutDelegate {
 /// Compute a [RelativeRect] for showing a menu just below an anchor [context]
 /// (typically a button or icon's BuildContext).
 RelativeRect quillMenuAnchor(BuildContext context, {Offset offset = const Offset(0, 4)}) {
-  final box = context.findRenderObject() as RenderBox;
+  final box = context.findRenderObject()! as RenderBox;
   final overlay =
-      Overlay.of(context).context.findRenderObject() as RenderBox;
+      Overlay.of(context).context.findRenderObject()! as RenderBox;
   final topLeft = box.localToGlobal(
     Offset(0, box.size.height) + offset,
     ancestor: overlay,
@@ -442,7 +442,7 @@ RelativeRect quillMenuAnchor(BuildContext context, {Offset offset = const Offset
 /// typical caller is `onSecondaryTapDown: (d) => showQuillMenu(..., position: quillMenuPosition(context, d.globalPosition))`.
 RelativeRect quillMenuPosition(BuildContext context, Offset globalPosition) {
   final overlay =
-      Overlay.of(context).context.findRenderObject() as RenderBox;
+      Overlay.of(context).context.findRenderObject()! as RenderBox;
   return RelativeRect.fromRect(
     Rect.fromPoints(globalPosition, globalPosition),
     Offset.zero & overlay.size,
