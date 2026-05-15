@@ -14,6 +14,8 @@ import '../../../../core/platform/reveal.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/relation_chip.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../database/domain/entities/database_schema.dart';
@@ -132,12 +134,7 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
     _selected.clear();
     onBodyChange?.call(next);
     if (!mounted) return;
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('Deleted $count ${count == 1 ? 'block' : 'blocks'}'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess('Deleted $count ${count == 1 ? 'block' : 'blocks'}');
   }
 
   Future<void> _copySelected(List<_Block> blocks) async {
@@ -154,12 +151,7 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
     await Clipboard.setData(ClipboardData(text: buf.toString()));
     if (!mounted) return;
     final count = ordered.length;
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('Copied $count ${count == 1 ? 'block' : 'blocks'}'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess('Copied $count ${count == 1 ? 'block' : 'blocks'}');
   }
 
   void _selectAllEditable(List<_Block> blocks) {
@@ -1870,9 +1862,7 @@ class _FileAttachment extends StatelessWidget {
     if (_isUrl) {
       final ok = await Reveal.openUrl(src);
       if (!ok && context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text('Could not open $src')),
-        );
+        context.toastError('Could not open', sub: src, subMono: true);
       }
       return;
     }
@@ -1881,9 +1871,7 @@ class _FileAttachment extends StatelessWidget {
     final resolved = src.startsWith('/') ? src : '${state.rootPath}/$src';
     final ok = await Reveal.show(resolved);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Could not open $resolved')),
-      );
+      context.toastError('Could not open', sub: resolved, subMono: true);
     }
   }
 
@@ -2760,10 +2748,25 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
           return _shell(tokens,
               title: widget.folder.isEmpty ? '(no folder)' : widget.folder,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Text(
-                  'No database matches "${widget.folder}".',
-                  style: TextStyle(fontSize: 12, color: tokens.text3),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    QuillIcon('database',
+                        size: 22, strokeWidth: 1.4, color: tokens.text3),
+                    const SizedBox(height: 8),
+                    Text('No database matches',
+                        style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.text2)),
+                    const SizedBox(height: 2),
+                    Text(
+                      '"${widget.folder}" — drop a .database.yaml in that folder.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 11.5, color: tokens.text3),
+                    ),
+                  ],
                 ),
               ),
               onOpen: null);
