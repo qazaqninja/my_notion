@@ -1062,7 +1062,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
             content: Text(
               n == 0
                   ? 'Templates already installed.'
-                  : 'Installed $n templates → Templates/',
+                  : 'Installed $n ${n == 1 ? 'template' : 'templates'} → Templates/',
             ),
             duration: const Duration(seconds: 4),
           ));
