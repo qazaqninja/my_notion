@@ -709,6 +709,12 @@ class _SourceViewState extends State<SourceView> {
                   const SingleActivator(LogicalKeyboardKey.keyC,
                       control: true, shift: true):
                       () => _wrapSelection('`', '`'),
+                  const SingleActivator(LogicalKeyboardKey.keyH,
+                      meta: true, shift: true):
+                      () => _wrapSelection('==', '=='),
+                  const SingleActivator(LogicalKeyboardKey.keyH,
+                      control: true, shift: true):
+                      () => _wrapSelection('==', '=='),
                   const SingleActivator(LogicalKeyboardKey.keyD, meta: true):
                       _duplicateLine,
                   const SingleActivator(LogicalKeyboardKey.keyD,
