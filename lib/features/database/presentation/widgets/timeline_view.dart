@@ -244,7 +244,7 @@ class _RulerHeader extends StatelessWidget {
   }
 }
 
-class _Row extends StatelessWidget {
+class _Row extends StatefulWidget {
   const _Row({
     required this.row,
     required this.origin,
@@ -259,6 +259,19 @@ class _Row extends StatelessWidget {
   final List<String> depTitles;
 
   @override
+  State<_Row> createState() => _RowState();
+}
+
+class _RowState extends State<_Row> {
+  bool _hover = false;
+
+  DatabasePageRow get row => widget.row;
+  DateTime get origin => widget.origin;
+  QuillTokens get tokens => widget.tokens;
+  int get depCount => widget.depCount;
+  List<String> get depTitles => widget.depTitles;
+
+  @override
   Widget build(BuildContext context) {
     final date = TimelineView._parseDate('${row.cells['updated'] ?? ''}');
     final color = _barColor('${row.cells['stage'] ?? ''}', tokens);
@@ -269,11 +282,16 @@ class _Row extends StatelessWidget {
     final daysFromOrigin = date == null ? 0.0 : date.difference(origin).inDays.toDouble();
     final startWeek = daysFromOrigin / 7.0;
 
-    return GestureDetector(
-      onTap: () => context.go('/editor/${row.ulid}'),
-      child: Container(
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => context.go('/editor/${row.ulid}'),
+        child: Container(
         height: TimelineView._rowH,
         decoration: BoxDecoration(
+          color: _hover ? tokens.hover : null,
           border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
         ),
         child: Row(
@@ -374,6 +392,7 @@ class _Row extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
