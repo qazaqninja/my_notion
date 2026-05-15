@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/ui/anchor_rect.dart';
 import '../../domain/usecases/search_pages.dart';
 
 class RelationPickerState extends Equatable {
@@ -26,7 +26,8 @@ class RelationPickerState extends Equatable {
   final int selectedIndex;
 
   /// Screen-space rect of the `[[` trigger — used to position the overlay.
-  final Rect? anchorRect;
+  /// Plain-Dart [AnchorRect] keeps the cubit layer Flutter-free (CA-01).
+  final AnchorRect? anchorRect;
 
   /// Character offset of the opening `[[` in the source text. Used when
   /// the user picks a result so we know where to splice the ULID.
@@ -44,7 +45,7 @@ class RelationPickerState extends Equatable {
     String? query,
     List<PageSearchResult>? results,
     int? selectedIndex,
-    Rect? anchorRect,
+    AnchorRect? anchorRect,
     int? anchorStartOffset,
   }) {
     return RelationPickerState(
@@ -69,7 +70,7 @@ class RelationPickerCubit extends Cubit<RelationPickerState> {
 
   final SearchPages _search;
 
-  Future<void> openAt({required Rect anchor, required int sourceOffset}) async {
+  Future<void> openAt({required AnchorRect anchor, required int sourceOffset}) async {
     emit(state.copyWith(
       open: true,
       anchorRect: anchor,

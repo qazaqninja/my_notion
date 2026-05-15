@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/ui/anchor_rect.dart';
 import '../../domain/slash_entries.dart';
 
 class SlashMenuState extends Equatable {
@@ -26,7 +26,8 @@ class SlashMenuState extends Equatable {
   final int selectedIndex;
 
   /// Screen-space rect of the trigger; used to position the overlay.
-  final Rect? anchorRect;
+  /// Plain-Dart [AnchorRect] keeps the cubit layer Flutter-free (CA-01).
+  final AnchorRect? anchorRect;
 
   /// Character offset of the leading `/` in source text, so the inserter
   /// knows where to splice and what to strip when picking.
@@ -44,7 +45,7 @@ class SlashMenuState extends Equatable {
     String? query,
     List<SlashEntry>? results,
     int? selectedIndex,
-    Rect? anchorRect,
+    AnchorRect? anchorRect,
     int? triggerOffset,
   }) {
     return SlashMenuState(
@@ -70,7 +71,7 @@ class SlashMenuState extends Equatable {
 class SlashMenuCubit extends Cubit<SlashMenuState> {
   SlashMenuCubit() : super(SlashMenuState.closed);
 
-  void openAt({required Rect anchor, required int triggerOffset}) {
+  void openAt({required AnchorRect anchor, required int triggerOffset}) {
     emit(state.copyWith(
       open: true,
       anchorRect: anchor,

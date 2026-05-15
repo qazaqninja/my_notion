@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/ui/anchor_rect.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
@@ -122,7 +123,7 @@ class _SourceViewState extends State<SourceView> {
         if (atStart || boundary) {
           _slashTriggerStart = caret;
           final rect = _caretRect() ?? Rect.zero;
-          _slash.openAt(anchor: rect, triggerOffset: caret - 1);
+          _slash.openAt(anchor: _toAnchorRect(rect), triggerOffset: caret - 1);
         }
       }
     } else {
@@ -148,7 +149,7 @@ class _SourceViewState extends State<SourceView> {
         _triggerStart = caret;
         _triggerLen = 2;
         final rect = _caretRect() ?? Rect.zero;
-        _picker.openAt(anchor: rect, sourceOffset: caret - 2);
+        _picker.openAt(anchor: _toAnchorRect(rect), sourceOffset: caret - 2);
         return;
       }
       // Detect a freshly-typed `@` at start-of-line or after whitespace.
@@ -166,7 +167,7 @@ class _SourceViewState extends State<SourceView> {
           _triggerStart = caret;
           _triggerLen = 1;
           final rect = _caretRect() ?? Rect.zero;
-          _picker.openAt(anchor: rect, sourceOffset: caret - 1);
+          _picker.openAt(anchor: _toAnchorRect(rect), sourceOffset: caret - 1);
         }
       }
       return;
@@ -226,6 +227,11 @@ class _SourceViewState extends State<SourceView> {
     final x = caretInField.dx.clamp(0.0, maxX);
     return Rect.fromLTWH(x, caretInField.dy, 320, 0);
   }
+
+  /// Convert a Flutter [Rect] to the plain-Dart [AnchorRect] used by the
+  /// cubit states. Keeps the bloc/cubit layer Flutter-free per CA-01.
+  static AnchorRect _toAnchorRect(Rect r) =>
+      AnchorRect(left: r.left, top: r.top, right: r.right, bottom: r.bottom);
 
   /// Tab / Shift-Tab on the current selection. Indents or outdents
   /// every line touched by the selection (or the line under the caret
