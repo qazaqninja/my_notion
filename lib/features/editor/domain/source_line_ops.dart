@@ -570,6 +570,26 @@ SortLinesResult codeLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Wrap each non-blank selected line in `~~…~~` (GFM strikethrough).
+/// Blank lines stay blank.
+SortLinesResult strikethroughLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else '~~$l~~',
+      ];
+    });
+
+/// Wrap each non-blank selected line in `==…==` (Pandoc highlight,
+/// rendered yellow by markdown_renderer). Blank lines stay blank.
+SortLinesResult highlightLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else '==$l==',
+      ];
+    });
+
 /// Convert a single line into `snake_case` — lowercase ASCII letters
 /// and digits, with non-alphanumeric runs collapsed to a single `_`.
 /// Leading/trailing underscores are trimmed. Empty / all-punctuation

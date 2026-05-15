@@ -151,6 +151,10 @@ enum SlashAction {
   italicLines,
   /// Wrap every non-blank selected line in `` `…` ``.
   codeLines,
+  /// Wrap every non-blank selected line in `~~…~~`.
+  strikethroughLines,
+  /// Wrap every non-blank selected line in `==…==`.
+  highlightLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -734,6 +738,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '`…`',
     action: SlashAction.codeLines,
     keywords: ['code', 'mono', 'backtick', 'wrap', 'inline'],
+  ),
+  SlashEntry(
+    icon: 'strikethrough',
+    label: 'Wrap each line in strikethrough',
+    hint: '~~…~~',
+    action: SlashAction.strikethroughLines,
+    keywords: ['strikethrough', 'strike', 'tilde', 'wrap', 'crossed'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Wrap each line in highlight',
+    hint: '==…==',
+    action: SlashAction.highlightLines,
+    keywords: ['highlight', 'mark', 'yellow', 'pandoc', 'wrap'],
   ),
   SlashEntry(
     icon: 'hash',

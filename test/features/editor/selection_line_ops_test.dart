@@ -1489,6 +1489,37 @@ void main() {
     });
   });
 
+  group('strikethroughLinesIn / highlightLinesIn', () {
+    test('wraps non-blank lines in ~~ ~~ for strikethrough', () {
+      const text = 'foo\nbar\n';
+      final r = strikethroughLinesIn(text, 0, text.length);
+      expect(r.text, '~~foo~~\n~~bar~~\n');
+    });
+
+    test('wraps non-blank lines in == == for highlight', () {
+      const text = 'foo\nbar\n';
+      final r = highlightLinesIn(text, 0, text.length);
+      expect(r.text, '==foo==\n==bar==\n');
+    });
+
+    test('blank lines stay blank for both wrappers', () {
+      const text = 'a\n\nb\n';
+      expect(
+        strikethroughLinesIn(text, 0, text.length).text,
+        '~~a~~\n\n~~b~~\n',
+      );
+      expect(
+        highlightLinesIn(text, 0, text.length).text,
+        '==a==\n\n==b==\n',
+      );
+    });
+
+    test('empty input is a no-op for both', () {
+      expect(strikethroughLinesIn('', 0, 0).text, '');
+      expect(highlightLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
