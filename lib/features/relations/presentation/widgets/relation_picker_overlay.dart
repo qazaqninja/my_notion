@@ -120,6 +120,19 @@ class _Panel extends StatelessWidget {
             ),
           ),
           // Results list
+          if (state.results.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+              child: Center(
+                child: Text(
+                  state.query.isEmpty
+                      ? 'Start typing to find a page'
+                      : 'No matches',
+                  style: TextStyle(fontSize: 12.5, color: tokens.text3),
+                ),
+              ),
+            )
+          else
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 320),
