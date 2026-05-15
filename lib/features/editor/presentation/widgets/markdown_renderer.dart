@@ -1408,8 +1408,26 @@ class _TranscludedBlock extends StatelessWidget {
               color: tokens.surface2,
               borderRadius: const BorderRadius.all(Radius.circular(4)),
             ),
-            child: Text('Page not found: $ulid',
-                style: mono(fontSize: 11.5, color: tokens.text3)),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.warning_amber_outlined,
+                    size: 13, color: tokens.text3),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Tooltip(
+                    message:
+                        'No page has this ULID. Has it been deleted?\n[[$ulid]]',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Text(
+                      'Broken transclusion · $ulid',
+                      style: mono(fontSize: 11.5, color: tokens.text3),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         }
         return GestureDetector(
