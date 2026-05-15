@@ -40,6 +40,15 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --reporter expanded
 
+      - name: Enforce coverage threshold (50%)
+        # Baseline at M821 was 53.9% line coverage. Setting the gate
+        # one notch lower (50%) catches genuine regressions but does
+        # not block on day one. Ratchet upward over time.
+        uses: VeryGoodOpenSource/very_good_coverage@v3
+        with:
+          path: coverage/lcov.info
+          min_coverage: 50
+
       - name: Upload coverage artifact
         if: always()
         uses: actions/upload-artifact@v4
