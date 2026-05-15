@@ -1345,6 +1345,46 @@ String generateHexColor({math.Random? random}) {
   return '#${value.toRadixString(16).padLeft(6, '0').toUpperCase()}';
 }
 
+/// Format a [DateTime] as the pill-style `@YYYY-MM-DD` snippet used
+/// by the `/today` slash entry. Splitting this out makes the format
+/// testable without committing to a clock at the call site.
+String formatTodayPill(DateTime when) {
+  final yyyy = when.year.toString().padLeft(4, '0');
+  final mm = when.month.toString().padLeft(2, '0');
+  final dd = when.day.toString().padLeft(2, '0');
+  return '@$yyyy-$mm-$dd';
+}
+
+/// Format a [DateTime] as the `YYYY-MM-DD HH:MM` timestamp used by
+/// the `/timestamp` slash entry — sortable but separator-friendly
+/// for log scribbling.
+String formatTimestamp(DateTime when) {
+  final yyyy = when.year.toString().padLeft(4, '0');
+  final mm = when.month.toString().padLeft(2, '0');
+  final dd = when.day.toString().padLeft(2, '0');
+  final hh = when.hour.toString().padLeft(2, '0');
+  final mi = when.minute.toString().padLeft(2, '0');
+  return '$yyyy-$mm-$dd $hh:$mi';
+}
+
+/// Format a [DateTime] as the ISO 8601 `YYYY-MM-DDTHH:MM:SS` form
+/// used by the `/iso` slash entry. Local clock — no trailing `Z`
+/// since this is wall time, not UTC.
+String formatIsoDateTime(DateTime when) {
+  final yyyy = when.year.toString().padLeft(4, '0');
+  final mm = when.month.toString().padLeft(2, '0');
+  final dd = when.day.toString().padLeft(2, '0');
+  final hh = when.hour.toString().padLeft(2, '0');
+  final mi = when.minute.toString().padLeft(2, '0');
+  final ss = when.second.toString().padLeft(2, '0');
+  return '$yyyy-$mm-${dd}T$hh:$mi:$ss';
+}
+
+/// Format a [DateTime] as the Unix-epoch second count used by the
+/// `/epoch` slash entry. Integer-truncated.
+String formatEpochTimestamp(DateTime when) =>
+    (when.millisecondsSinceEpoch ~/ 1000).toString();
+
 /// Generate a UUID v4 (random) as the canonical 36-char hyphenated
 /// string. Uses [math.Random] under the hood — **not** cryptographically
 /// secure (sufficient for placeholder IDs, test data, and stable

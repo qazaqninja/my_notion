@@ -1993,6 +1993,48 @@ void main() {
     });
   });
 
+  group('date / time formatters', () {
+    test('formatTodayPill emits @YYYY-MM-DD', () {
+      final when = DateTime(2026, 5, 16);
+      expect(formatTodayPill(when), '@2026-05-16');
+    });
+
+    test('formatTodayPill zero-pads single-digit months and days', () {
+      final when = DateTime(2026, 1, 3);
+      expect(formatTodayPill(when), '@2026-01-03');
+    });
+
+    test('formatTimestamp emits YYYY-MM-DD HH:MM', () {
+      final when = DateTime(2026, 5, 16, 14, 23);
+      expect(formatTimestamp(when), '2026-05-16 14:23');
+    });
+
+    test('formatTimestamp zero-pads single-digit times', () {
+      final when = DateTime(2026, 5, 16, 4, 5);
+      expect(formatTimestamp(when), '2026-05-16 04:05');
+    });
+
+    test('formatIsoDateTime emits YYYY-MM-DDTHH:MM:SS', () {
+      final when = DateTime(2026, 5, 16, 14, 23, 45);
+      expect(formatIsoDateTime(when), '2026-05-16T14:23:45');
+    });
+
+    test('formatIsoDateTime zero-pads seconds', () {
+      final when = DateTime(2026, 5, 16, 14, 23, 7);
+      expect(formatIsoDateTime(when), '2026-05-16T14:23:07');
+    });
+
+    test('formatEpochTimestamp matches millisecondsSinceEpoch ÷ 1000', () {
+      final when = DateTime.fromMillisecondsSinceEpoch(1_747_345_200_000);
+      expect(formatEpochTimestamp(when), '1747345200');
+    });
+
+    test('formatEpochTimestamp truncates sub-second precision', () {
+      final when = DateTime.fromMillisecondsSinceEpoch(1_747_345_200_999);
+      expect(formatEpochTimestamp(when), '1747345200');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

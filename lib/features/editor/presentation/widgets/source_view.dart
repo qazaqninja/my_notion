@@ -764,11 +764,7 @@ class _SourceViewState extends State<SourceView> {
         );
         await _insertDailyNoteLink(stripStart);
       case SlashAction.insertToday:
-        final today = DateTime.now();
-        final yyyy = today.year.toString().padLeft(4, '0');
-        final mm = today.month.toString().padLeft(2, '0');
-        final dd = today.day.toString().padLeft(2, '0');
-        final snippet = '@$yyyy-$mm-$dd';
+        final snippet = formatTodayPill(DateTime.now());
         final newText = text.replaceRange(stripStart, caret, snippet);
         _controller.value = TextEditingValue(
           text: newText,
@@ -776,13 +772,7 @@ class _SourceViewState extends State<SourceView> {
               TextSelection.collapsed(offset: stripStart + snippet.length),
         );
       case SlashAction.insertTimestamp:
-        final now = DateTime.now();
-        final yyyy = now.year.toString().padLeft(4, '0');
-        final mm = now.month.toString().padLeft(2, '0');
-        final dd = now.day.toString().padLeft(2, '0');
-        final hh = now.hour.toString().padLeft(2, '0');
-        final mi = now.minute.toString().padLeft(2, '0');
-        final snippet = '$yyyy-$mm-$dd $hh:$mi';
+        final snippet = formatTimestamp(DateTime.now());
         final newText = text.replaceRange(stripStart, caret, snippet);
         _controller.value = TextEditingValue(
           text: newText,
@@ -1062,26 +1052,14 @@ class _SourceViewState extends State<SourceView> {
           selection: TextSelection.collapsed(offset: stripStart + hex.length),
         );
       case SlashAction.insertIsoDateTime:
-        final now = DateTime.now();
-        // YYYY-MM-DDTHH:MM:SS (sortable, no timezone — local clock).
-        final yyyy = now.year.toString().padLeft(4, '0');
-        final mm = now.month.toString().padLeft(2, '0');
-        final dd = now.day.toString().padLeft(2, '0');
-        final hh = now.hour.toString().padLeft(2, '0');
-        final mi = now.minute.toString().padLeft(2, '0');
-        final ss = now.second.toString().padLeft(2, '0');
-        final iso = '$yyyy-$mm-${dd}T$hh:$mi:$ss';
+        final iso = formatIsoDateTime(DateTime.now());
         final cleared = text.replaceRange(stripStart, caret, iso);
         _controller.value = TextEditingValue(
           text: cleared,
           selection: TextSelection.collapsed(offset: stripStart + iso.length),
         );
       case SlashAction.insertEpochTimestamp:
-        // Seconds since 1970-01-01T00:00Z. Wall-clock-derived; safe
-        // for log scribbling and not meant as a high-precision time
-        // source.
-        final epoch =
-            (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+        final epoch = formatEpochTimestamp(DateTime.now());
         final cleared = text.replaceRange(stripStart, caret, epoch);
         _controller.value = TextEditingValue(
           text: cleared,
