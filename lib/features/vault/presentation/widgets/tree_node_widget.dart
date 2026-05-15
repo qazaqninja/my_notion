@@ -285,11 +285,14 @@ class TreeNodeWidget extends StatelessWidget {
       context.read<VaultBloc>().add(ToggleFavorite(fl.ulid));
     } else if (selected == 'trash') {
       if (fl.ulid.isEmpty) return;
+      final now = DateTime.now();
+      final bucket =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}';
       final confirmed = await showQuillConfirm(
         context,
         title: 'Move to trash?',
         sub:
-            'The .md file moves to .trash/<YYYY-MM>/${fl.relativePath}. '
+            'The .md file moves to .trash/$bucket/${fl.relativePath}. '
             'You can restore it from the Trash dialog later.',
         icon: 'trash',
         confirmLabel: 'Move to trash',
