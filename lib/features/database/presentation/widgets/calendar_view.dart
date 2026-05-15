@@ -250,8 +250,7 @@ class _CalendarViewState extends State<CalendarView> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        QuillIcon(
-                            _selected == null ? 'calendar' : 'calendar',
+                        QuillIcon('calendar',
                             size: 24,
                             strokeWidth: 1.4,
                             color: tokens.text3),
