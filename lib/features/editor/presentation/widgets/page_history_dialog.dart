@@ -204,6 +204,40 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
                   child: FutureBuilder<String>(
                     future: _content,
                     builder: (context, contentSnap) {
+                      if (contentSnap.hasError) {
+                        // git show <sha>:<path> can fail when the file
+                        // didn't exist at that revision, the SHA is bad,
+                        // or git is unavailable. Without this branch the
+                        // user saw an infinite spinner.
+                        return Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                QuillIcon('warning',
+                                    size: 22,
+                                    strokeWidth: 1.4,
+                                    color: tokens.text3),
+                                const SizedBox(height: 10),
+                                Text('Could not load this version',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: tokens.text2,
+                                    )),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${contentSnap.error}',
+                                  textAlign: TextAlign.center,
+                                  style: mono(
+                                      fontSize: 11, color: tokens.text3),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
                       if (!contentSnap.hasData) {
                         return Center(
                           child: SizedBox(
