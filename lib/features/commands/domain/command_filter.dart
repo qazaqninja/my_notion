@@ -5,8 +5,6 @@ enum CommandFilterScope { none, db, tag, path }
 
 class CommandFilter {
   const CommandFilter(this.scope, this.term);
-  final CommandFilterScope scope;
-  final String term;
 
   /// Recognised prefixes that scope the search:
   /// - `db:foo` / `@db:foo` / `database:foo` → databases by name.
@@ -31,4 +29,7 @@ class CommandFilter {
       _ => CommandFilter(CommandFilterScope.none, raw),
     };
   }
+
+  final CommandFilterScope scope;
+  final String term;
 }
