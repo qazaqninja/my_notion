@@ -920,6 +920,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
   }
 
   Widget _titleFooter(QuillTokens tokens) {
+    final n = widget.rows.length;
     return Container(
       height: _footerHeight,
       decoration: BoxDecoration(
@@ -927,8 +928,12 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 10),
       alignment: Alignment.centerLeft,
-      child: Text('count ${widget.rows.length}',
-          style: mono(fontSize: 11, color: tokens.text3)),
+      child: Tooltip(
+        message: 'Total rows after filters / search',
+        waitDuration: const Duration(milliseconds: 500),
+        child: Text('count $n',
+            style: mono(fontSize: 11, color: tokens.text3)),
+      ),
     );
   }
 
