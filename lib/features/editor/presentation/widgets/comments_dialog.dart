@@ -64,17 +64,22 @@ class _CommentsDialogState extends State<CommentsDialog> {
   Future<void> _submit() async {
     final body = _bodyCtl.text.trim();
     if (body.isEmpty) return;
-    await _service.add(
-      Directory(widget.vaultRoot),
-      widget.pageUlid,
-      author: _authorCtl.text.trim().isEmpty
-          ? widget.defaultAuthor
-          : _authorCtl.text.trim(),
-      body: body,
-      blockId: widget.blockId,
-    );
-    _bodyCtl.clear();
-    _refresh();
+    try {
+      await _service.add(
+        Directory(widget.vaultRoot),
+        widget.pageUlid,
+        author: _authorCtl.text.trim().isEmpty
+            ? widget.defaultAuthor
+            : _authorCtl.text.trim(),
+        body: body,
+        blockId: widget.blockId,
+      );
+      _bodyCtl.clear();
+      _refresh();
+    } catch (e) {
+      if (!mounted) return;
+      context.toastError('Could not post comment', sub: '$e');
+    }
   }
 
   @override
@@ -329,13 +334,22 @@ class _CommentsDialogState extends State<CommentsDialog> {
                 padding: const EdgeInsets.all(2),
                 constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
                 onPressed: () async {
-                  await _service.setResolved(
-                    Directory(widget.vaultRoot),
-                    widget.pageUlid,
-                    c.id,
-                    !c.resolved,
-                  );
-                  _refresh();
+                  try {
+                    await _service.setResolved(
+                      Directory(widget.vaultRoot),
+                      widget.pageUlid,
+                      c.id,
+                      !c.resolved,
+                    );
+                    _refresh();
+                  } catch (e) {
+                    if (!mounted) return;
+                    context.toastError(
+                        c.resolved
+                            ? 'Could not reopen comment'
+                            : 'Could not mark resolved',
+                        sub: '$e');
+                  }
                 },
                 tooltip: c.resolved
                     ? 'Reopen this comment'
@@ -363,12 +377,18 @@ class _CommentsDialogState extends State<CommentsDialog> {
                     danger: true,
                   );
                   if (!ok) return;
-                  await _service.delete(
-                      Directory(widget.vaultRoot), widget.pageUlid, c.id);
-                  if (!mounted) return;
-                  context.toastSuccess('Comment deleted',
-                      sub: 'by ${c.author}');
-                  _refresh();
+                  try {
+                    await _service.delete(
+                        Directory(widget.vaultRoot), widget.pageUlid, c.id);
+                    if (!mounted) return;
+                    context.toastSuccess('Comment deleted',
+                        sub: 'by ${c.author}');
+                    _refresh();
+                  } catch (e) {
+                    if (!mounted) return;
+                    context.toastError('Could not delete comment',
+                        sub: '$e');
+                  }
                 },
                 tooltip: 'Delete comment',
                 icon: Icon(Icons.close, size: 13, color: tokens.text3),
