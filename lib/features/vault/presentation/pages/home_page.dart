@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
+import '../../data/daily_note.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
@@ -87,10 +89,10 @@ class HomePage extends StatelessWidget {
                   const SizedBox(width: 16),
                   _Tile(
                     tokens: tokens,
-                    icon: 'note',
-                    title: 'Keyboard map',
-                    subtitle: 'Press ? to list every shortcut.',
-                    onTap: () => _showShortcuts(context),
+                    icon: 'calendar',
+                    title: "Today's note",
+                    subtitle: 'Open or create Daily/<YYYY-MM-DD>.md.',
+                    onTap: () => _openDailyNote(context),
                   ),
                   const SizedBox(width: 16),
                   _Tile(
@@ -115,6 +117,22 @@ class HomePage extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Future<void> _openDailyNote(BuildContext context) async {
+    final vault = context.read<VaultBloc>();
+    final state = vault.state;
+    if (state is! VaultLoaded) return;
+    final router = GoRouter.of(context);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      final r = await DailyNote.openTodaysNote(Directory(state.rootPath));
+      if (!r.alreadyExisted) vault.add(const ReindexVault());
+      router.go('/editor/${r.ulid}');
+    } catch (e) {
+      messenger?.showSnackBar(
+          SnackBar(content: Text('Daily note failed: $e')));
+    }
   }
 
   Future<void> _promptNewPage(BuildContext context) async {
@@ -151,16 +169,6 @@ class HomePage extends StatelessWidget {
     ));
   }
 
-  Future<void> _showShortcuts(BuildContext context) async {
-    // Dispatch the shortcut help via the shell's `?` handler — we
-    // can't reach the shell's private method from here, so we just
-    // show a friendly hint and let the user press `?` themselves.
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.showSnackBar(const SnackBar(
-      content: Text('Press ? for the full keyboard shortcut list.'),
-      duration: Duration(seconds: 3),
-    ));
-  }
 }
 
 /// Tile grid of the user's pinned pages (`.quill.yaml` `favorites:`).
