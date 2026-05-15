@@ -159,12 +159,14 @@ class HomePage extends StatelessWidget {
       label: 'Title',
       confirmLabel: 'Create',
     );
-    if (title == null || title.isEmpty) return;
+    if (title == null) return;
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) return;
     vaultBloc.add(CreatePage(
-      title: title,
+      title: trimmed,
       onCreated: (ulid) {
         if (scope.mounted) {
-          scope.toastSuccess('Created "$title"',
+          scope.toastSuccess('Created "$trimmed"',
               sub: 'ULID: $ulid', subMono: true);
         }
         router.go('/editor/$ulid');

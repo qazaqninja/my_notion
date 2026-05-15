@@ -512,8 +512,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       placeholder: 'Untitled',
       confirmLabel: 'Create',
     );
-    if (title == null || title.isEmpty) return;
+    if (title == null) return;
     final trimmed = title.trim();
+    if (trimmed.isEmpty) return;
     vaultBloc.add(CreatePage(
       title: trimmed,
       onCreated: (ulid) {
