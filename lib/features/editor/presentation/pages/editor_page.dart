@@ -443,10 +443,18 @@ class _EditorBodyState extends State<_EditorBody> {
       case 'duplicate':
         final router = GoRouter.of(context);
         final scope = context;
+        final sourceTitle = loaded.page.title;
         context.read<VaultBloc>().add(DuplicatePage(
               ulid,
               onCreated: (newUlid) {
-                if (scope.mounted) scope.toastSuccess('Page duplicated');
+                if (scope.mounted) {
+                  scope.toastSuccess(
+                      sourceTitle.isEmpty
+                          ? 'Page duplicated'
+                          : 'Duplicated "$sourceTitle"',
+                      sub: 'New ULID: $newUlid',
+                      subMono: true);
+                }
                 router.go('/editor/$newUlid');
               },
             ));
