@@ -3256,7 +3256,7 @@ class _SelectionToolbar extends StatelessWidget {
             _btn('Select all', tokens, onSelectAll, Icons.select_all),
             _btn('Copy', tokens, onCopy, Icons.content_copy),
             _btn('Delete', tokens, onDelete, Icons.delete_outline,
-                color: const Color(0xFFCB5A4F)),
+                color: tokens.danger),
             _btn('Cancel', tokens, onClear, Icons.close),
           ],
         ),
@@ -3572,7 +3572,7 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                               child: Icon(
                                 Icons.delete_outline,
                                 size: 12,
-                                color: const Color(0xFFCB5A4F),
+                                color: tokens.danger,
                               ),
                             ),
                           ),
@@ -4172,12 +4172,12 @@ List<InlineSpan> _buildSpans(
           final isOverdue = rel != null && rel.startsWith('overdue');
           final isToday = rel == 'today';
           final pillBg = isOverdue
-              ? const Color(0xFFCB5A4F).withValues(alpha: 0.18)
+              ? tokens.dangerTint
               : isToday
                   ? tokens.accent.withValues(alpha: 0.18)
                   : tokens.surface2;
           final pillFg = isOverdue
-              ? const Color(0xFFCB5A4F)
+              ? tokens.danger
               : isToday
                   ? tokens.accent
                   : tokens.text2;
@@ -4369,10 +4369,10 @@ List<InlineSpan> _buildSpans(
           flushPlain(i);
           out.add(TextSpan(
             text: '[$id]',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 10,
-              fontFeatures: const [FontFeature.superscripts()],
-              color: const Color(0xFF4A90D9),
+              fontFeatures: [FontFeature.superscripts()],
+              color: kCalloutInfo,
             ),
           ));
           i = close + 1;
