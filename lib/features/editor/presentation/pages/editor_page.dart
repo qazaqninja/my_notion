@@ -2098,16 +2098,21 @@ class _PageFooter extends StatelessWidget {
             const SizedBox(height: 6),
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 320),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.all(Radius.circular(2)),
-                child: LinearProgressIndicator(
-                  value: (words / g).clamp(0.0, 1.0),
-                  minHeight: 4,
-                  backgroundColor: tokens.surface2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    words >= g
-                        ? const Color(0xFF5A8F6E)
-                        : tokens.accent,
+              child: Tooltip(
+                message: words >= g
+                    ? 'Goal reached — $words / $g words'
+                    : '${(words * 100 / g).clamp(0, 100).round()}% of $g-word goal',
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(2)),
+                  child: LinearProgressIndicator(
+                    value: (words / g).clamp(0.0, 1.0),
+                    minHeight: 4,
+                    backgroundColor: tokens.surface2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      words >= g
+                          ? const Color(0xFF5A8F6E)
+                          : tokens.accent,
+                    ),
                   ),
                 ),
               ),
