@@ -668,8 +668,12 @@ class _EditorBodyState extends State<_EditorBody> {
     if (added.isEmpty) return;
     // Merge + dedupe, preserving order: current first, then new.
     final merged = <String>[...currentTags];
+    final actuallyNew = <String>[];
     for (final t in added) {
-      if (!merged.contains(t)) merged.add(t);
+      if (!merged.contains(t)) {
+        merged.add(t);
+        actuallyNew.add(t);
+      }
     }
     if (!context.mounted) return;
     final bloc = context.read<EditorBloc>();
@@ -687,7 +691,13 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: raw, value: merged),
       ));
     }
-    context.toastSuccess('Tags: ${merged.join(', ')}');
+    if (actuallyNew.isEmpty) {
+      context.toastInfo('All tags already on this page');
+    } else {
+      context.toastSuccess(
+          'Added ${actuallyNew.length} ${actuallyNew.length == 1 ? "tag" : "tags"}',
+          sub: actuallyNew.join(', '));
+    }
   }
 
   Future<void> _setWordGoal(
