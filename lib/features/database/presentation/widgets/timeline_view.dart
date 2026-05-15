@@ -353,21 +353,27 @@ class _RowState extends State<_Row> {
               padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(
                 children: [
-                  Container(
-                    width: 14,
-                    height: 14,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.7),
-                      borderRadius: const BorderRadius.all(Radius.circular(7)),
-                    ),
-                    child: Text(
-                      ownerInitial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        height: 1,
+                  Tooltip(
+                    message: '${row.cells['owner'] ?? '?'}'.isNotEmpty
+                        ? 'Owner: ${row.cells['owner']}'
+                        : 'No owner assigned',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Container(
+                      width: 14,
+                      height: 14,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.7),
+                        borderRadius: const BorderRadius.all(Radius.circular(7)),
+                      ),
+                      child: Text(
+                        ownerInitial,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          height: 1,
+                        ),
                       ),
                     ),
                   ),
