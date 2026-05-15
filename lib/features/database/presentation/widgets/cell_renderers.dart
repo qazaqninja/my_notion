@@ -174,11 +174,16 @@ class CellRenderer extends StatelessWidget {
         );
       case ColumnType.createdTime:
       case ColumnType.lastEditedTime:
+        final ts = _timestampDetail(v);
         return Align(
           alignment: align,
-          child: Text(
-            _formatTimestamp(v),
-            style: mono(fontSize: 12, color: tokens.text3),
+          child: Tooltip(
+            message: ts ?? _formatTimestamp(v),
+            waitDuration: const Duration(milliseconds: 500),
+            child: Text(
+              _formatTimestamp(v),
+              style: mono(fontSize: 12, color: tokens.text3),
+            ),
           ),
         );
       case ColumnType.person:
@@ -242,6 +247,23 @@ class CellRenderer extends StatelessWidget {
 
   static String _yyyymmdd(DateTime dt) =>
       '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+
+  /// Pretty timestamp for the createdTime/lastEditedTime tooltip — full
+  /// `YYYY-MM-DD HH:MM` so users can confirm the actual save instant
+  /// instead of just the day. Returns null when [v] doesn't parse so
+  /// the caller can fall back to the day-only label.
+  static String? _timestampDetail(dynamic v) {
+    DateTime? dt;
+    if (v is num) {
+      dt = DateTime.fromMillisecondsSinceEpoch(v.toInt()).toLocal();
+    } else if (v != null) {
+      dt = DateTime.tryParse('$v'.trim())?.toLocal();
+    }
+    if (dt == null) return null;
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    return '${_yyyymmdd(dt)} $hh:$mm';
+  }
 
   static List<String> _parseList(dynamic v) {
     if (v is List) return v.map((e) => '$e').toList();
