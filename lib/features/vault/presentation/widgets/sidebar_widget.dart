@@ -479,10 +479,17 @@ class _DatabasesList extends StatelessWidget {
           children: [
             for (final db in dbs)
               SideItem(
-                glyph: SideItemGlyph(
-                  color: _parseColor(db.color),
-                  letter: db.icon.isNotEmpty ? db.icon.substring(0, 1) : 'D',
-                ),
+                // Treat a single-emoji icon as a transparent glyph so the
+                // user's chosen emoji renders cleanly — otherwise fall
+                // back to the colored chip + first letter pattern.
+                emojiIcon: _looksLikeEmoji(db.icon) ? db.icon : null,
+                glyph: _looksLikeEmoji(db.icon)
+                    ? null
+                    : SideItemGlyph(
+                        color: _parseColor(db.color),
+                        letter:
+                            db.icon.isNotEmpty ? db.icon.substring(0, 1) : 'D',
+                      ),
                 label: db.name,
                 count: counts[db.id],
                 onTap: () => context.go('/db/${db.id}'),
@@ -498,6 +505,15 @@ class _DatabasesList extends StatelessWidget {
     if (hex.length == 6) hex = 'FF$hex';
     final v = int.tryParse(hex, radix: 16);
     return Color(v ?? 0xFF6B8E7F);
+  }
+
+  /// Heuristic: any non-ASCII single grapheme (or multi-codepoint emoji
+  /// sequence ≤ 4 runes) is treated as an emoji. ASCII strings keep
+  /// using the colored chip + first-letter pattern.
+  static bool _looksLikeEmoji(String s) {
+    if (s.isEmpty) return false;
+    if (s.codeUnits.every((c) => c < 128)) return false;
+    return s.runes.length <= 8;
   }
 }
 
