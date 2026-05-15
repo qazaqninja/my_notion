@@ -1441,11 +1441,17 @@ class _FindBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            matches == 0
-                ? 'no matches'
-                : '$cursor / $matches',
-            style: mono(fontSize: 11.5, color: tokens.text3),
+          Tooltip(
+            message: matches == 0
+                ? 'No matches in this page'
+                : 'Match $cursor of ${matches == 1 ? "1 match" : "$matches matches"}',
+            waitDuration: const Duration(milliseconds: 500),
+            child: Text(
+              matches == 0
+                  ? 'no matches'
+                  : '$cursor / $matches',
+              style: mono(fontSize: 11.5, color: tokens.text3),
+            ),
           ),
           const SizedBox(width: 6),
           IconButton(
