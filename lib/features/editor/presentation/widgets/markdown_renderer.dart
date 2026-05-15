@@ -2056,13 +2056,22 @@ class _FileAttachment extends StatelessWidget {
                     const SizedBox(height: 2),
                     FutureBuilder<int?>(
                       future: _size(context),
-                      builder: (_, snap) => Text(
-                        snap.data != null
+                      builder: (_, snap) {
+                        final body = snap.data != null
                             ? '${_basename(src)} · ${_fmtBytes(snap.data!)}'
-                            : _basename(src),
-                        style: mono(fontSize: 11, color: tokens.text3),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                            : _basename(src);
+                        return Tooltip(
+                          message: snap.data != null
+                              ? '$src\n${snap.data!} bytes'
+                              : src,
+                          waitDuration: const Duration(milliseconds: 600),
+                          child: Text(
+                            body,
+                            style: mono(fontSize: 11, color: tokens.text3),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
