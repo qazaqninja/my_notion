@@ -176,7 +176,14 @@ class _SideItemState extends State<SideItem> {
               if (_hover && widget.trailingOnHover != null)
                 widget.trailingOnHover!
               else if (widget.count != null)
-                Text('${widget.count}', style: mono(fontSize: 11, color: tokens.text3)),
+                Tooltip(
+                  message: widget.count == 1
+                      ? '1 item'
+                      : '${widget.count} items',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: Text('${widget.count}',
+                      style: mono(fontSize: 11, color: tokens.text3)),
+                ),
             ],
           ),
         ),
