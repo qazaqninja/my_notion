@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../theme/tag_colors.dart';
+
 /// Small coloured dot for health / sync status. Matches `StatusDot` from
-/// `primitives.jsx:45-51`.
+/// `primitives.jsx:45-51`. Pulls hues from `tag_colors.dart` so the
+/// palette lives in one place (TH-03).
 class StatusDot extends StatelessWidget {
   const StatusDot({
     super.key,
@@ -19,12 +22,12 @@ class StatusDot extends StatelessWidget {
   final String? tooltip;
 
   static const _map = <StatusDotColor, Color>{
-    StatusDotColor.green: Color(0xFF5A8F6E),
-    StatusDotColor.yellow: Color(0xFFC4A548),
-    StatusDotColor.red: Color(0xFFB66954),
-    StatusDotColor.gray: Color(0xFF9E9C97),
-    StatusDotColor.blue: Color(0xFF5A82B4),
-    StatusDotColor.purple: Color(0xFF8278B5),
+    StatusDotColor.green: kStatusDotGreen,
+    StatusDotColor.yellow: kStatusDotYellow,
+    StatusDotColor.red: kStatusDotRed,
+    StatusDotColor.gray: kStatusDotGray,
+    StatusDotColor.blue: kStatusDotBlue,
+    StatusDotColor.purple: kStatusDotPurple,
   };
 
   @override

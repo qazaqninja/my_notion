@@ -69,6 +69,19 @@ const Color kCalloutDanger = Color(0xFFCB5A4F);
 /// source of truth across light and dark themes.
 const Color kToastWarn = Color(0xFFB58A3A);
 
+/// Status-indicator dot palette — 6 muted hues calibrated for the
+/// 7px-circle `StatusDot` widget. Distinct from the callout palette
+/// (which targets larger, higher-saturation surfaces) so the dots
+/// read clearly at thumb-sized scale without screaming. Use the
+/// matching enum + map in `status_dot.dart` rather than these raw
+/// constants where possible.
+const Color kStatusDotGreen = Color(0xFF5A8F6E);
+const Color kStatusDotYellow = Color(0xFFC4A548);
+const Color kStatusDotRed = Color(0xFFB66954);
+const Color kStatusDotGray = Color(0xFF9E9C97);
+const Color kStatusDotBlue = Color(0xFF5A82B4);
+const Color kStatusDotPurple = Color(0xFF8278B5);
+
 /// Yellow accent for `<mark>…</mark>` highlights — the renderer adds
 /// alpha (0.55) at the use site so this is the un-tinted base hue.
 const Color kHighlightYellow = Color(0xFFFFE486);
