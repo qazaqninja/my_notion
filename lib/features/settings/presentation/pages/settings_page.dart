@@ -259,6 +259,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFCB5A4F),
+            ),
             child: const Text('Remove'),
           ),
         ],
