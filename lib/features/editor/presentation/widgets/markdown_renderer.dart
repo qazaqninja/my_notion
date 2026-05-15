@@ -678,11 +678,29 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       }
     }
     if (headings.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text(
-          'Table of contents · (no headings yet — start a line with #)',
-          style: TextStyle(fontSize: 12, color: tokens.text3),
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        decoration: BoxDecoration(
+          color: tokens.surface,
+          border: Border.all(color: tokens.divider2, width: 0.5),
+          borderRadius: const BorderRadius.all(Radius.circular(6)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('TABLE OF CONTENTS',
+                style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: tokens.text3)),
+            const SizedBox(height: 6),
+            Text(
+              'No headings yet — start a line with #, ##, or ### to populate.',
+              style: TextStyle(fontSize: 12, color: tokens.text3),
+            ),
+          ],
         ),
       );
     }
