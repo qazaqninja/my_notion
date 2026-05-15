@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/editor/domain/source_line_ops.dart';
 
@@ -446,6 +448,34 @@ void main() {
       const text = 'a\n\nb\n';
       final r = toggleBlockquotePrefixIn(text, 0, text.length);
       expect(r.text, '> a\n\n> b\n');
+    });
+  });
+
+  group('shuffleLinesIn', () {
+    test('seeded shuffle is deterministic', () {
+      const text = 'one\ntwo\nthree\nfour\nfive\n';
+      final a = shuffleLinesIn(text, 0, text.length, random: Random(42)).text;
+      final b = shuffleLinesIn(text, 0, text.length, random: Random(42)).text;
+      expect(a, b);
+    });
+
+    test('shuffle preserves the multiset of lines', () {
+      const text = 'a\nb\nc\nd\n';
+      final r = shuffleLinesIn(text, 0, text.length, random: Random(7)).text;
+      final origLines = text.split('\n')..sort();
+      final newLines = r.split('\n')..sort();
+      expect(newLines, origLines);
+    });
+
+    test('single line is a no-op', () {
+      const text = 'solo\n';
+      final r = shuffleLinesIn(text, 0, text.length, random: Random(1)).text;
+      expect(r, text);
+    });
+
+    test('empty text is a no-op', () {
+      final r = shuffleLinesIn('', 0, 0, random: Random(1)).text;
+      expect(r, '');
     });
   });
 

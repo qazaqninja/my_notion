@@ -903,6 +903,8 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, toggleBlockquotePrefixIn,
         );
+      case SlashAction.shuffleLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, shuffleLinesIn);
     }
   }
 

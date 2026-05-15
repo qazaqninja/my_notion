@@ -3,6 +3,8 @@
 /// unit-tested without a widget tree.
 library;
 
+import 'dart:math' as math;
+
 /// Result of a line-op: the new text and the new collapsed-selection
 /// caret offset.
 class LineOpResult {
@@ -509,6 +511,24 @@ SortLinesResult dedupeLinesIn(String text, int start, int end) =>
 /// flipping a sort or rendering a list bottom-up.
 SortLinesResult reverseLinesIn(String text, int start, int end) =>
     _transformLinesIn(text, start, end, (lines) => lines.reversed.toList());
+
+/// Shuffle the lines in the selected block uniformly at random.
+///
+/// When [random] is `null`, a system-seeded [Random] is used; tests
+/// pass a `Random(seed)` for deterministic ordering. Lines are
+/// shuffled in-place via the standard Fisher–Yates implementation in
+/// `List.shuffle`. Empty lines are shuffled along with the rest —
+/// they are first-class members of the block.
+SortLinesResult shuffleLinesIn(
+  String text,
+  int start,
+  int end, {
+  math.Random? random,
+}) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final shuffled = [...lines]..shuffle(random);
+      return shuffled;
+    });
 
 /// Strip trailing whitespace (spaces, tabs) from every line in the
 /// selected block. Common cleanup before committing — many tools

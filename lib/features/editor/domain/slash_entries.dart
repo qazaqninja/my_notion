@@ -55,6 +55,8 @@ enum SlashAction {
   /// Toggle a `> ` blockquote prefix on every line in the selection.
   /// Strips when every line is already quoted; adds otherwise.
   toggleBlockquote,
+  /// Shuffle the lines touched by the selection uniformly at random.
+  shuffleLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -372,6 +374,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '> …',
     action: SlashAction.toggleBlockquote,
     keywords: ['quote', 'blockquote', 'toggle', 'indent', 'gt'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Shuffle selected lines',
+    hint: '🎲',
+    action: SlashAction.shuffleLines,
+    keywords: ['shuffle', 'random', 'reorder', 'mix', 'randomize', 'lines'],
   ),
   SlashEntry(
     icon: 'tag',
