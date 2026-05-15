@@ -153,7 +153,35 @@ class _GalleryViewState extends State<GalleryView> {
           ),
         ),
         Expanded(
-          child: widget.subGroupBy == null
+          child: widget.rows.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        QuillIcon('gallery',
+                            size: 24,
+                            strokeWidth: 1.4,
+                            color: tokens.text3),
+                        const SizedBox(height: 10),
+                        Text('No cards yet',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: tokens.text2,
+                            )),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Pages in this database will appear as cards here.',
+                          style:
+                              TextStyle(fontSize: 12, color: tokens.text3),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : widget.subGroupBy == null
               ? GridView.builder(
                   padding: const EdgeInsets.all(24),
                   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
