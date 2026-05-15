@@ -115,6 +115,9 @@ enum SlashAction {
   /// Right-pad every selected line with spaces to the longest
   /// line's width — for column alignment.
   padRightLines,
+  /// Insert a one-line stats summary (`(N words · N characters · N
+  /// lines)`) about the surrounding body at the caret.
+  insertTextStats,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -607,6 +610,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'abc → abc__',
     action: SlashAction.padRightLines,
     keywords: ['pad', 'right', 'trailing', 'align', 'column', 'spaces'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Insert text statistics',
+    hint: '(N w · N c · N l)',
+    action: SlashAction.insertTextStats,
+    keywords: ['stats', 'word', 'character', 'count', 'metrics', 'length'],
   ),
   SlashEntry(
     icon: 'edit',

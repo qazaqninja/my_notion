@@ -969,6 +969,18 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, zeroPadLinesIn);
       case SlashAction.padRightLines:
         _applyLinesTransformAfterSlash(stripStart, caret, padRightLinesIn);
+      case SlashAction.insertTextStats:
+        // Strip the slash trigger, then splice a stats summary about
+        // the rest of the body at the caret position.
+        final cleared = text.replaceRange(stripStart, caret, '');
+        final summary = formatTextStats(textStats(cleared));
+        final newText = cleared.replaceRange(stripStart, stripStart, summary);
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + summary.length,
+          ),
+        );
     }
   }
 

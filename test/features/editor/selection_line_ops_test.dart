@@ -1122,6 +1122,47 @@ void main() {
     });
   });
 
+  group('textStats / formatTextStats', () {
+    test('empty body returns all-zero stats', () {
+      final s = textStats('');
+      expect(s.words, 0);
+      expect(s.chars, 0);
+      expect(s.lines, 0);
+    });
+
+    test('single line counts words and chars', () {
+      final s = textStats('hello world');
+      expect(s.words, 2);
+      expect(s.chars, 11);
+      expect(s.lines, 1);
+    });
+
+    test('multiple lines count non-blank lines only', () {
+      final s = textStats('one\n\ntwo\nthree\n');
+      expect(s.lines, 3);
+      expect(s.words, 3);
+    });
+
+    test('multi-space runs collapse to one word boundary', () {
+      final s = textStats('one    two\tthree\nfour');
+      expect(s.words, 4);
+    });
+
+    test('formatTextStats renders the human summary', () {
+      expect(
+        formatTextStats((words: 5, chars: 23, lines: 2)),
+        '(5 words · 23 characters · 2 lines)',
+      );
+    });
+
+    test('formatTextStats handles zero values', () {
+      expect(
+        formatTextStats((words: 0, chars: 0, lines: 0)),
+        '(0 words · 0 characters · 0 lines)',
+      );
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

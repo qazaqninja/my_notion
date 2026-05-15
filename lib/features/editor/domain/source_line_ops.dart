@@ -835,6 +835,27 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
+/// Aggregate statistics about a slice of body text: words, character
+/// count (without surrogate splits — counted by code-unit), and the
+/// number of non-blank lines. Lightweight, pure-Dart, intentionally
+/// not exposed via a class so callers can destructure into a Record.
+({int words, int chars, int lines}) textStats(String body) {
+  if (body.isEmpty) return (words: 0, chars: 0, lines: 0);
+  // Words: split on any whitespace run, drop empties.
+  final words = body.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+  final chars = body.length;
+  // Lines: count non-empty lines (consistent with Notion's "words /
+  // chars / lines" display).
+  final lines = body.split('\n').where((l) => l.isNotEmpty).length;
+  return (words: words, chars: chars, lines: lines);
+}
+
+/// Build a one-line human-readable stats summary like
+/// `(12 words · 84 characters · 3 lines)`. Used by the slash entry
+/// to insert a stats marker next to a chunk of prose.
+String formatTextStats(({int words, int chars, int lines}) s) =>
+    '(${s.words} words · ${s.chars} characters · ${s.lines} lines)';
+
 /// Right-pad every selected line with spaces so all lines reach at
 /// least [width] characters. Used for column alignment — when you
 /// drop a list of labels next to a column of values and want them
