@@ -51,15 +51,13 @@ class QuillToastCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final dark = tokens.isDark;
-    final bg = dark
-        ? const Color(0xFF1E1C18).withValues(alpha: 0.95)
-        : const Color(0xFFFCFBF7).withValues(alpha: 0.96);
+    final bg = tokens.toastBg.withValues(alpha: dark ? 0.95 : 0.96);
     final blurOk = _supportsBackdropBlur();
     final card = Container(
       width: 340,
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 11),
       decoration: BoxDecoration(
-        color: blurOk ? bg : (dark ? const Color(0xFF1E1C18) : const Color(0xFFFCFBF7)),
+        color: blurOk ? bg : tokens.toastBg,
         borderRadius: const BorderRadius.all(Radius.circular(8)),
         border: Border.all(color: tokens.divider2, width: 0.5),
         boxShadow: [

@@ -33,6 +33,7 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
     required this.dangerTint,
     required this.success,
     required this.codeBg,
+    required this.toastBg,
   });
 
   final Brightness brightness;
@@ -74,6 +75,11 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
   /// in light mode so the code block stands out from the page.
   final Color codeBg;
 
+  /// Toast card background — slightly tinted vs `bg` so the floating
+  /// card reads as a discrete surface against the underlying app
+  /// content.
+  final Color toastBg;
+
   bool get isDark => brightness == Brightness.dark;
 
   static QuillTokens of(BuildContext context) {
@@ -109,6 +115,7 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
     Color? dangerTint,
     Color? success,
     Color? codeBg,
+    Color? toastBg,
   }) {
     return QuillTokens(
       brightness: brightness ?? this.brightness,
@@ -136,6 +143,7 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
       dangerTint: dangerTint ?? this.dangerTint,
       success: success ?? this.success,
       codeBg: codeBg ?? this.codeBg,
+      toastBg: toastBg ?? this.toastBg,
     );
   }
 
@@ -168,6 +176,7 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
       dangerTint: Color.lerp(dangerTint, other.dangerTint, t)!,
       success: Color.lerp(success, other.success, t)!,
       codeBg: Color.lerp(codeBg, other.codeBg, t)!,
+      toastBg: Color.lerp(toastBg, other.toastBg, t)!,
     );
   }
 }
