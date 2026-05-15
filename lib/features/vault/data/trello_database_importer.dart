@@ -39,29 +39,35 @@ class TrelloDatabaseImporter {
     final imported = p.basename(source.path);
     final written = <ImportedTrelloCard>[];
     for (final card in board.cards) {
-      final ulid = _ulids.generate();
-      final safe = _safeFileName(card.title);
-      final rel = p.join(folderName, '$safe.md');
-      final out = File(p.join(vaultRoot.path, rel));
-      final fmBuf = StringBuffer('---\n');
-      fmBuf.writeln('id: $ulid');
-      fmBuf.writeln('title: ${yamlSafeScalar(card.title)}');
-      if (card.status.isNotEmpty) {
-        fmBuf.writeln('status: ${yamlSafeScalar(card.status)}');
+      try {
+        final ulid = _ulids.generate();
+        final safe = _safeFileName(card.title);
+        final rel = p.join(folderName, '$safe.md');
+        final out = File(p.join(vaultRoot.path, rel));
+        final fmBuf = StringBuffer('---\n');
+        fmBuf.writeln('id: $ulid');
+        fmBuf.writeln('title: ${yamlSafeScalar(card.title)}');
+        if (card.status.isNotEmpty) {
+          fmBuf.writeln('status: ${yamlSafeScalar(card.status)}');
+        }
+        if (card.labels.isNotEmpty) {
+          fmBuf.writeln('labels: [${card.labels.join(', ')}]');
+        }
+        if (card.due != null) fmBuf.writeln('due: ${card.due}');
+        fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
+        fmBuf.writeln('---');
+        fmBuf.writeln();
+        await out.writeAsString('${fmBuf.toString()}${card.body.trim()}\n');
+        written.add(ImportedTrelloCard(
+          ulid: ulid,
+          relativePath: rel,
+          title: card.title,
+        ));
+      } catch (e, st) {
+        // Per-card robustness (M731-M733).
+        // ignore: avoid_print
+        print('trello_importer: skipping card "${card.title}" — $e\n$st');
       }
-      if (card.labels.isNotEmpty) {
-        fmBuf.writeln('labels: [${card.labels.join(', ')}]');
-      }
-      if (card.due != null) fmBuf.writeln('due: ${card.due}');
-      fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
-      fmBuf.writeln('---');
-      fmBuf.writeln();
-      await out.writeAsString('${fmBuf.toString()}${card.body.trim()}\n');
-      written.add(ImportedTrelloCard(
-        ulid: ulid,
-        relativePath: rel,
-        title: card.title,
-      ));
     }
     return TrelloImportSummary(
       folder: folderName,
