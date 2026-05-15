@@ -1226,6 +1226,39 @@ void main() {
     });
   });
 
+  group('centerLinesIn', () {
+    test('auto width: centers each line within the longest', () {
+      const text = 'a\nbbb\nccccc\n';
+      // Target = 5. "a" gets 2/2, "bbb" gets 1/1, "ccccc" passes through.
+      final r = centerLinesIn(text, 0, text.length);
+      expect(r.text, '  a  \n bbb \nccccc\n');
+    });
+
+    test('odd remainder puts the extra space on the right', () {
+      const text = 'abc\n';
+      // Target 4: pad=1, left=0, right=1.
+      final r = centerLinesIn(text, 0, text.length, width: 4);
+      expect(r.text, 'abc \n');
+    });
+
+    test('lines at-or-above width pass through unchanged', () {
+      const text = 'too-long-line\n';
+      final r = centerLinesIn(text, 0, text.length, width: 5);
+      expect(r.text, text);
+    });
+
+    test('blank lines stay blank', () {
+      // Target = 'bb'.length = 2. 'a' has pad=1, extra goes right.
+      const text = 'a\n\nbb\n';
+      final r = centerLinesIn(text, 0, text.length);
+      expect(r.text, 'a \n\nbb\n');
+    });
+
+    test('empty input is a no-op', () {
+      expect(centerLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

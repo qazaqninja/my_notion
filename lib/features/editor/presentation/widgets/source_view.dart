@@ -993,6 +993,8 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, reverseWordsInLineIn,
         );
+      case SlashAction.centerLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, centerLinesIn);
     }
   }
 

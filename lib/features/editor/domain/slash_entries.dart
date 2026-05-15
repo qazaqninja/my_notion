@@ -127,6 +127,8 @@ enum SlashAction {
   /// Reverse the words on every selected line (preserving any
   /// trailing whitespace).
   reverseWordsInLine,
+  /// Center every selected line within a uniform field of spaces.
+  centerLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -626,6 +628,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'abc → abc__',
     action: SlashAction.padRightLines,
     keywords: ['pad', 'right', 'trailing', 'align', 'column', 'spaces'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Center lines',
+    hint: 'a → _a_',
+    action: SlashAction.centerLines,
+    keywords: ['center', 'centre', 'align', 'pad', 'middle'],
   ),
   SlashEntry(
     icon: 'hash',

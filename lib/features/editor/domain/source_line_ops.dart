@@ -902,6 +902,36 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
 String formatTextStats(({int words, int chars, int lines}) s) =>
     '(${s.words} words · ${s.chars} characters · ${s.lines} lines)';
 
+/// Center every selected line within a uniform field of spaces.
+/// Total width defaults to the longest line in the block. When the
+/// padding can't be split evenly, the extra space goes on the right
+/// — matching `padCenter` conventions in most languages. Blank lines
+/// stay blank.
+SortLinesResult centerLinesIn(
+  String text,
+  int start,
+  int end, {
+  int? width,
+}) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final target = width ??
+          lines.fold<int>(0, (max, l) => l.length > max ? l.length : max);
+      return [
+        for (final l in lines)
+          if (l.isEmpty)
+            l
+          else if (l.length >= target)
+            l
+          else
+            (() {
+              final pad = target - l.length;
+              final left = pad ~/ 2;
+              final right = pad - left;
+              return ' ' * left + l + ' ' * right;
+            })(),
+      ];
+    });
+
 /// Right-pad every selected line with spaces so all lines reach at
 /// least [width] characters. Used for column alignment — when you
 /// drop a list of labels next to a column of values and want them
