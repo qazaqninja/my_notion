@@ -551,6 +551,12 @@ class _SettingsPageState extends State<SettingsPage> {
     await next.save(Directory(state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('Added user $name'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _removeUser(VaultLoaded state, String name) async {
@@ -560,6 +566,12 @@ class _SettingsPageState extends State<SettingsPage> {
     await next.save(Directory(state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('Removed user $name'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _setDefaultUser(VaultLoaded state, String name) async {
@@ -572,6 +584,12 @@ class _SettingsPageState extends State<SettingsPage> {
     await next.save(Directory(state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('Default user: $name'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Widget _exportPane(QuillTokens tokens) {
