@@ -745,6 +745,25 @@ SortLinesResult quoteLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Inverse of [linesToJsonArrayIn]. Parse the selected block as a
+/// JSON array of strings and emit one element per line. The whole
+/// selection is concatenated before parsing so a multi-line array
+/// works too. Falls back to passing the source through unchanged
+/// when the input doesn't parse — keeps mixed-content selections
+/// safe.
+SortLinesResult jsonArrayToLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final joined = lines.join('\n').trim();
+      if (!joined.startsWith('[') || !joined.endsWith(']')) return lines;
+      try {
+        final decoded = jsonDecode(joined);
+        if (decoded is! List) return lines;
+        return [for (final v in decoded) '$v'];
+      } on FormatException {
+        return lines;
+      }
+    });
+
 /// Collapse a block of non-blank selected lines into a single
 /// JSON-style array (`["a", "b", "c"]`). Each cell is trimmed, then
 /// any internal `"` is escaped as `\"` and `\` is escaped as `\\`

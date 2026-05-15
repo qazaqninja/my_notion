@@ -2150,6 +2150,44 @@ void main() {
     });
   });
 
+  group('jsonArrayToLinesIn', () {
+    test('explodes a one-line array into per-element lines', () {
+      const text = '["apple","banana","cherry"]\n';
+      final r = jsonArrayToLinesIn(text, 0, text.length);
+      expect(r.text, 'apple\nbanana\ncherry\n');
+    });
+
+    test('round-trip lines → array → lines preserves the data', () {
+      const text = 'one\ntwo\nthree\n';
+      final asJson = linesToJsonArrayIn(text, 0, text.length).text;
+      final back = jsonArrayToLinesIn(asJson, 0, asJson.length).text;
+      expect(back, text);
+    });
+
+    test('un-escapes internal double quotes', () {
+      const text = r'["say \"hi\"","plain"]' '\n';
+      final r = jsonArrayToLinesIn(text, 0, text.length);
+      expect(r.text, 'say "hi"\nplain\n');
+    });
+
+    test('non-string elements stringify (numbers, bools)', () {
+      const text = '[1, 2, true]\n';
+      final r = jsonArrayToLinesIn(text, 0, text.length);
+      expect(r.text, '1\n2\ntrue\n');
+    });
+
+    test('malformed JSON passes through untouched', () {
+      const text = '[oops\n';
+      expect(jsonArrayToLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('multi-line array input still parses', () {
+      const text = '[\n  "a",\n  "b"\n]\n';
+      final r = jsonArrayToLinesIn(text, 0, text.length);
+      expect(r.text, 'a\nb\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

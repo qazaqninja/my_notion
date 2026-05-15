@@ -204,6 +204,8 @@ enum SlashAction {
   unquoteLines,
   /// Collapse selected lines into a single JSON-style array.
   linesToJsonArray,
+  /// Parse a JSON array of strings into one element per line.
+  jsonArrayToLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -955,6 +957,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a / b → ["a","b"]',
     action: SlashAction.linesToJsonArray,
     keywords: ['json', 'array', 'collapse', 'list', 'serialize'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'JSON array → lines',
+    hint: '["a","b"] → a / b',
+    action: SlashAction.jsonArrayToLines,
+    keywords: ['json', 'array', 'explode', 'deserialize'],
   ),
   SlashEntry(
     icon: 'hash',

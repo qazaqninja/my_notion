@@ -1108,6 +1108,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, linesToJsonArrayIn,
         );
+      case SlashAction.jsonArrayToLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, jsonArrayToLinesIn,
+        );
     }
   }
 
