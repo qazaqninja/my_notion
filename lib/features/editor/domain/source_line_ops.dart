@@ -1111,6 +1111,16 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
+/// Generate a random `#RRGGBB` CSS-style hex colour string. Useful
+/// for design scaffolding — drop a placeholder colour into prose
+/// without leaving the keyboard. Takes an optional [math.Random] so
+/// tests can pin determinism via `Random(seed)`.
+String generateHexColor({math.Random? random}) {
+  final rng = random ?? math.Random();
+  final value = rng.nextInt(0x1000000); // 24 bits.
+  return '#${value.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+}
+
 /// Generate a UUID v4 (random) as the canonical 36-char hyphenated
 /// string. Uses [math.Random] under the hood — **not** cryptographically
 /// secure (sufficient for placeholder IDs, test data, and stable

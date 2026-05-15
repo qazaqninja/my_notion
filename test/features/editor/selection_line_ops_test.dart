@@ -1700,6 +1700,34 @@ void main() {
     });
   });
 
+  group('generateHexColor', () {
+    test('returns a 7-char #RRGGBB string', () {
+      final hex = generateHexColor(random: Random(1));
+      expect(hex.length, 7);
+      expect(hex[0], '#');
+      expect(RegExp(r'^#[0-9A-F]{6}$').hasMatch(hex), isTrue,
+          reason: 'shape: $hex');
+    });
+
+    test('seeded calls are deterministic', () {
+      final a = generateHexColor(random: Random(42));
+      final b = generateHexColor(random: Random(42));
+      expect(a, b);
+    });
+
+    test('pads short values to 6 hex digits', () {
+      // Seed where the integer is small (e.g., < 0x100000) so the
+      // raw radix string is shorter than 6 chars. Verify the pad.
+      // We can't easily force the small value without knowing the
+      // Random's internals, so just sample many seeds and check
+      // every output has 6 digits after `#`.
+      for (var seed = 0; seed < 50; seed++) {
+        final hex = generateHexColor(random: Random(seed));
+        expect(hex.length, 7, reason: 'seed $seed → $hex');
+      }
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

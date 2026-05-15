@@ -164,6 +164,8 @@ enum SlashAction {
   insertUuid,
   /// Wrap each line that looks like a URL in `[url](url)`.
   urlsToMarkdownLinks,
+  /// Insert a random `#RRGGBB` colour at the caret.
+  insertHexColor,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -789,6 +791,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'http://… → [..](..)',
     action: SlashAction.urlsToMarkdownLinks,
     keywords: ['url', 'link', 'markdown', 'wrap', 'autolink'],
+  ),
+  SlashEntry(
+    icon: 'tag',
+    label: 'Insert hex colour',
+    hint: '#RRGGBB',
+    action: SlashAction.insertHexColor,
+    keywords: ['hex', 'color', 'colour', 'random', 'css', 'design'],
   ),
   SlashEntry(
     icon: 'hash',

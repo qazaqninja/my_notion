@@ -1054,6 +1054,13 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, urlsToMarkdownLinksIn,
         );
+      case SlashAction.insertHexColor:
+        final hex = generateHexColor();
+        final cleared = text.replaceRange(stripStart, caret, hex);
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart + hex.length),
+        );
     }
   }
 
