@@ -36,30 +36,37 @@ class HtmlExporter {
 
     await for (final entity in _walk(src)) {
       if (entity is! File || !entity.path.endsWith('.md')) continue;
-      final raw = await entity.readAsString();
-      final parsed = FrontmatterParser.parse(raw);
-      final title = parsed.frontmatter.title ??
-          p.basenameWithoutExtension(entity.path);
-      var body = markdownToHtml(parsed.body);
-      // Rewrite wikilink anchors to use titles. The title can be any
-      // user-typed string from frontmatter — escape before splicing
-      // into the anchor text so '<script>' typed as a title can't
-      // inject HTML on the linker page.
-      body = body.replaceAllMapped(
-        RegExp(r'<a class="wikilink" href="([0-9A-Z]{26})\.html">[0-9A-Z]{26}</a>'),
-        (m) {
-          final ulid = m.group(1)!;
-          final t = ulidToTitle[ulid] ?? ulid;
-          return '<a class="wikilink" href="$ulid.html">${_escapeAttr(t)}</a>';
-        },
-      );
+      try {
+        final raw = await entity.readAsString();
+        final parsed = FrontmatterParser.parse(raw);
+        final title = parsed.frontmatter.title ??
+            p.basenameWithoutExtension(entity.path);
+        var body = markdownToHtml(parsed.body);
+        // Rewrite wikilink anchors to use titles. The title can be any
+        // user-typed string from frontmatter — escape before splicing
+        // into the anchor text so '<script>' typed as a title can't
+        // inject HTML on the linker page.
+        body = body.replaceAllMapped(
+          RegExp(r'<a class="wikilink" href="([0-9A-Z]{26})\.html">[0-9A-Z]{26}</a>'),
+          (m) {
+            final ulid = m.group(1)!;
+            final t = ulidToTitle[ulid] ?? ulid;
+            return '<a class="wikilink" href="$ulid.html">${_escapeAttr(t)}</a>';
+          },
+        );
 
-      final id = parsed.frontmatter.id ??
-          p.basenameWithoutExtension(entity.path);
-      final out = File(p.join(dest.path, '$id.html'));
-      await out.parent.create(recursive: true);
-      await out.writeAsString(_template(title: title, body: body));
-      copied++;
+        final id = parsed.frontmatter.id ??
+            p.basenameWithoutExtension(entity.path);
+        final out = File(p.join(dest.path, '$id.html'));
+        await out.parent.create(recursive: true);
+        await out.writeAsString(_template(title: title, body: body));
+        copied++;
+      } catch (e, st) {
+        // Per-page robustness — one bad .md shouldn't abort the whole
+        // static-site export. M731–M735 contract for batch importers.
+        // ignore: avoid_print
+        print('html_exporter: skipping ${entity.path} — $e\n$st');
+      }
     }
 
     // Write a tiny index.html with a list of pages.
