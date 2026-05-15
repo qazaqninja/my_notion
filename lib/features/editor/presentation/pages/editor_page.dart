@@ -738,11 +738,18 @@ class _EditorBodyState extends State<_EditorBody> {
     final added = parseMultiValueInput(result);
     if (added.isEmpty) return;
     // Merge + dedupe, preserving order: current first, then new.
+    // Case-insensitive match — re-adding "draft" when "Draft" is
+    // already on the page is a no-op rather than double-listing the
+    // same tag with two casings (M786). The kept entry keeps its
+    // original casing.
     final merged = <String>[...currentTags];
+    final mergedLower = {for (final t in currentTags) t.toLowerCase()};
     final actuallyNew = <String>[];
     for (final t in added) {
-      if (!merged.contains(t)) {
+      final lower = t.toLowerCase();
+      if (!mergedLower.contains(lower)) {
         merged.add(t);
+        mergedLower.add(lower);
         actuallyNew.add(t);
       }
     }
