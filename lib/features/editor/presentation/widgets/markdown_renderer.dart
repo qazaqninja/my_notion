@@ -2882,6 +2882,14 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (rows.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Text(
+                      'No rows in this database yet.',
+                      style: TextStyle(fontSize: 12, color: tokens.text3),
+                    ),
+                  ),
                 for (final row in rows)
                   _embedRow(tokens, data.schema, row),
                 if (data.rows.length > rows.length)
