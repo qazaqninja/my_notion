@@ -36,7 +36,10 @@ class HomePage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome to Quill',
+                  state is VaultLoaded &&
+                          (state.workspace.name ?? '').trim().isNotEmpty
+                      ? 'Welcome to ${state.workspace.name!.trim()}'
+                      : 'Welcome to Quill',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
