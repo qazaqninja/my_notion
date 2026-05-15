@@ -1382,9 +1382,25 @@ class _TranscludedBlock extends StatelessWidget {
           color: tokens.surface2,
           borderRadius: const BorderRadius.all(Radius.circular(4)),
         ),
-        child: Text(
-          'Transclusion depth limit reached (would loop).',
-          style: TextStyle(fontSize: 11.5, color: tokens.text3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.repeat, size: 13, color: tokens.text3),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Tooltip(
+                message:
+                    'A transclusion chain hit the $maxDepth-level cap.\n'
+                    'Something probably embeds itself; check the source bodies.',
+                waitDuration: const Duration(milliseconds: 500),
+                child: Text(
+                  'Transclusion depth limit ($maxDepth) reached',
+                  style: TextStyle(fontSize: 11.5, color: tokens.text3),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
