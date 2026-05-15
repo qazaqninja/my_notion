@@ -298,9 +298,16 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     return _YamlEditor(
       key: ValueKey('yaml-${widget.page.ulid}-${raw.hashCode}'),
       initial: raw,
-      onSave: (text) => context
-          .read<EditorBloc>()
-          .add(ReplaceFrontmatterYaml(text)),
+      onSave: (text) {
+        // EditorBloc.ReplaceFrontmatterYaml silently swallows on
+        // locked pages (editor_bloc.dart:330). Without the guard the
+        // user would click Apply, see nothing happen, and have no
+        // idea why — same fix M681 applied to the field-edit path.
+        if (!_guardUnlocked()) return;
+        context
+            .read<EditorBloc>()
+            .add(ReplaceFrontmatterYaml(text));
+      },
     );
   }
 
