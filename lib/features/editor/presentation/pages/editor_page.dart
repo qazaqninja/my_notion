@@ -426,10 +426,13 @@ class _EditorBodyState extends State<_EditorBody> {
         if (existing == null) {
           context.toastInfo('No reminder set on this page.');
         } else {
+          final was = existing.rawScalar.trim();
           context
               .read<EditorBloc>()
               .add(const RemoveFrontmatterField('reminder'));
-          context.toastSuccess('Reminder cleared.');
+          context.toastSuccess(was.isEmpty
+              ? 'Reminder cleared.'
+              : 'Reminder cleared (was $was).');
         }
       case 'set-goal':
         await _setWordGoal(context, loaded);
