@@ -96,14 +96,20 @@ class _PageTitleFieldState extends State<PageTitleField> {
         behavior: HitTestBehavior.opaque,
         child: MouseRegion(
           cursor: SystemMouseCursors.text,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 18, 0, 8),
-            child: Text(
-              isEmpty ? 'Untitled' : widget.title,
-              style: isEmpty
-                  ? style.copyWith(
-                      color: tokens.text3, fontStyle: FontStyle.italic)
-                  : style,
+          child: Tooltip(
+            message: isEmpty
+                ? 'Click to set a page title'
+                : 'Click to rename · saved to frontmatter `title:`',
+            waitDuration: const Duration(milliseconds: 600),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 18, 0, 8),
+              child: Text(
+                isEmpty ? 'Untitled' : widget.title,
+                style: isEmpty
+                    ? style.copyWith(
+                        color: tokens.text3, fontStyle: FontStyle.italic)
+                    : style,
+              ),
             ),
           ),
         ),
