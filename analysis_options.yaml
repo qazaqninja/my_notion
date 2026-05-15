@@ -57,3 +57,7 @@ linter:
     # to match the rest of the async-first style. The "slow" overhead
     # is negligible (~ms) for the file counts in a typical vault.
     avoid_slow_async_io: false
+    # The SDK-sourced `flutter:` dependency conventionally lives at the
+    # top of pubspec.yaml even though strict alphabetic order would put
+    # `archive` first. The lint doesn't handle this exception.
+    sort_pub_dependencies: false

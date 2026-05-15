@@ -8,58 +8,47 @@ environment:
   sdk: ^3.9.2
 
 dependencies:
+  # Alphabetical, with SDK-sourced packages grouped at the top.
+  # Architectural notes:
+  # - DI is widget-tree via flutter_bloc; no service-locator packages
+  #   (DI-04 in docs/RULES.md).
+  # - The markdown renderer is hand-rolled; super_editor and
+  #   markdown_widget will land when WYSIWYG editing ships (see
+  #   CLAUDE.md "v1.x backlog").
   flutter:
     sdk: flutter
-
-  # State + routing — DI is widget-tree via RepositoryProvider / BlocProvider.
-  # No service-locator packages (DI-04 in docs/RULES.md).
-  flutter_bloc: ^9.1.1
-  equatable: ^2.0.7
-  go_router: ^16.0.0
-
-  # Database
+  archive: ^4.0.7
   drift: ^2.20.0
   drift_flutter: ^0.2.4
-  sqlite3_flutter_libs: ^0.5.27
-
-  # Filesystem + paths
-  path_provider: ^2.1.5
-  path: ^1.9.1
-  file_picker: ^10.1.2
-
-  # Markdown + YAML — the renderer is hand-rolled in markdown_renderer.dart;
-  # markdown_widget / super_editor were declared but never instantiated.
-  # super_editor will re-land when WYSIWYG editing ships (see CLAUDE.md).
-  yaml: ^3.1.3
-  yaml_writer: ^2.0.0
-
-  # Utilities
-  ulid: ^2.0.0
-  rxdart: ^0.28.0
-  shared_preferences: ^2.5.3
-  archive: ^4.0.7
+  equatable: ^2.0.7
   file: ^7.0.1
-
-  flutter_math_fork: ^0.7.4
-  table_calendar: ^3.2.0
+  file_picker: ^10.1.2
   fl_chart: ^1.2.0
+  flutter_bloc: ^9.1.1
+  flutter_math_fork: ^0.7.4
+  go_router: ^16.0.0
+  meta: ^1.16.0
+  path: ^1.9.1
+  path_provider: ^2.1.5
   pdf: ^3.12.0
   printing: ^5.14.3
+  rxdart: ^0.28.0
+  shared_preferences: ^2.5.3
+  sqlite3_flutter_libs: ^0.5.27
+  table_calendar: ^3.2.0
+  ulid: ^2.0.0
+  yaml: ^3.1.3
+  yaml_writer: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   integration_test:
     sdk: flutter
-
-  # Codegen — only drift is wired up; freezed/json_serializable/injectable
-  # were declared but never used. See docs/RULES.md DI-04.
   build_runner: ^2.4.15
   drift_dev: ^2.26.0
-
-  # Lints + test helpers
-  very_good_analysis: ^9.0.0
   mocktail: ^1.0.4
+  very_good_analysis: ^9.0.0
 
 flutter:
   uses-material-design: true
