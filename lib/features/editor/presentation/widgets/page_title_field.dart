@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
@@ -48,6 +49,12 @@ class _PageTitleFieldState extends State<PageTitleField> {
   }
 
   void _start() {
+    final state = context.read<EditorBloc>().state;
+    if (state is EditorLoaded && EditorBloc.isLocked(state)) {
+      context.toastInfo('Page is locked',
+          sub: 'Unlock the page (⌘⇧L) to rename it');
+      return;
+    }
     setState(() => _editing = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focus.requestFocus();
