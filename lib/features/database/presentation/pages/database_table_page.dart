@@ -749,7 +749,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   }
 }
 
-class _ToolButton extends StatelessWidget {
+class _ToolButton extends StatefulWidget {
   const _ToolButton({
     required this.icon,
     required this.label,
@@ -762,12 +762,22 @@ class _ToolButton extends StatelessWidget {
   final bool active;
 
   @override
+  State<_ToolButton> createState() => _ToolButtonState();
+}
+
+class _ToolButtonState extends State<_ToolButton> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+    final active = widget.active;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: active
@@ -775,22 +785,32 @@ class _ToolButton extends StatelessWidget {
                   color: tokens.accentTint,
                   borderRadius: const BorderRadius.all(Radius.circular(4)),
                 )
-              : null,
+              : _hover
+                  ? BoxDecoration(
+                      color: tokens.hover,
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(4)),
+                    )
+                  : null,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               QuillIcon(
-                icon,
+                widget.icon,
                 size: 13,
                 strokeWidth: 1.7,
-                color: active ? tokens.accent : tokens.text3,
+                color: active
+                    ? tokens.accent
+                    : (_hover ? tokens.text2 : tokens.text3),
               ),
               const SizedBox(width: 5),
               Text(
-                label,
+                widget.label,
                 style: TextStyle(
                   fontSize: 12.5,
-                  color: active ? tokens.accent : tokens.text2,
+                  color: active
+                      ? tokens.accent
+                      : (_hover ? tokens.text : tokens.text2),
                   fontWeight: active ? FontWeight.w500 : FontWeight.w400,
                 ),
               ),
