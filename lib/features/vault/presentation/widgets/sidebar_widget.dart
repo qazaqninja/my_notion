@@ -385,7 +385,15 @@ class _SidebarWidgetState extends State<SidebarWidget> {
       ),
     );
     if (name == null || name.trim().isEmpty) return;
-    bloc.add(CreateFolder(parentFolder: '', name: name.trim()));
+    final trimmed = name.trim();
+    bloc.add(CreateFolder(parentFolder: '', name: trimmed));
+    if (!context.mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('Created folder $trimmed'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _promptNewPage(BuildContext context) async {
