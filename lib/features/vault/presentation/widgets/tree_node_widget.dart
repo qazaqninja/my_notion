@@ -327,6 +327,17 @@ class TreeNodeWidget extends StatelessWidget {
     );
     if (picked == null || picked.isEmpty) return;
     bloc.add(RenamePage(ulid: fl.ulid, newBasename: picked));
+    if (!context.mounted) return;
+    // Mirror _safeFileName so the toast reflects what lands on disk.
+    var preview = picked
+        .replaceAll(RegExp(r'[\\/<>:"|?*]+'), '-')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (preview.toLowerCase().endsWith('.md')) {
+      preview = preview.substring(0, preview.length - 3).trim();
+    }
+    if (preview.isEmpty) preview = 'Untitled';
+    context.toastSuccess('Renamed to $preview.md');
   }
 
   Future<void> _promptNewSubpage(BuildContext context,
