@@ -144,6 +144,14 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
       buf.write(body.substring(ordered[i].sourceStart, ordered[i].sourceEnd));
     }
     await Clipboard.setData(ClipboardData(text: buf.toString()));
+    if (!mounted) return;
+    final count = ordered.length;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('Copied $count ${count == 1 ? 'block' : 'blocks'}'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _selectAllEditable(List<_Block> blocks) {
