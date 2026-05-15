@@ -51,17 +51,20 @@ class VaultExporter {
   }
 
   /// Decide whether to copy a file based on its vault-relative path.
-  /// .md and .database.yaml always go. Anything inside attachments/
-  /// (excluding dotfiles) also goes so embedded images / PDFs survive.
+  /// .md and .database.yaml always go. Anything inside an `attachments/`
+  /// folder (at any depth, not just vault root) also goes so embedded
+  /// images / PDFs survive — per-folder attachments are a common
+  /// pattern (e.g. `Customers/attachments/logo.png`) that the old
+  /// "segments.first == 'attachments'" check silently dropped.
   static bool _keep(String relativePath) {
     final basename = p.basename(relativePath);
     if (basename.endsWith('.md')) return true;
     if (basename == '.database.yaml') return true;
     if (basename.startsWith('.')) return false;
-    // Attachments folder — copy any non-dotfile so embedded media
-    // (images, PDFs, audio, video) survives the export.
     final segments = p.split(relativePath);
-    if (segments.length > 1 && segments.first == 'attachments') return true;
+    for (var i = 0; i < segments.length - 1; i++) {
+      if (segments[i] == 'attachments') return true;
+    }
     return false;
   }
 }

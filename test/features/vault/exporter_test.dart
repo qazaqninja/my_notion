@@ -74,6 +74,29 @@ void main() {
     expect(File(p.join(dest.path, 'scratch.png')).existsSync(), isFalse);
   });
 
+  test('nested attachments/ folders also carry their files (M789)',
+      () async {
+    // A per-folder `Customers/attachments/logo.png` is a common
+    // pattern: keep media co-located with the pages it embeds.
+    // The old `segments.first == 'attachments'` check only kept
+    // the top-level folder and silently dropped per-folder media.
+    Directory(p.join(src.path, 'Customers')).createSync();
+    File(p.join(src.path, 'Customers', 'page.md'))
+        .writeAsStringSync('![logo](attachments/logo.png)\n');
+    Directory(p.join(src.path, 'Customers', 'attachments'))
+        .createSync(recursive: true);
+    File(p.join(src.path, 'Customers', 'attachments', 'logo.png'))
+        .writeAsStringSync('PNG-bytes');
+
+    final n = await const VaultExporter().export(src: src, dest: dest);
+    expect(n, 2,
+        reason: 'page + nested attachment file should both export');
+    expect(
+        File(p.join(dest.path, 'Customers', 'attachments', 'logo.png'))
+            .existsSync(),
+        isTrue);
+  });
+
   test('skips .trash/ contents (M718)', () async {
     File(p.join(src.path, 'live.md')).writeAsStringSync('live');
     Directory(p.join(src.path, '.trash', '2026-05')).createSync(recursive: true);
