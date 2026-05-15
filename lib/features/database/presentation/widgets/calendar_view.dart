@@ -242,50 +242,11 @@ class _CalendarViewState extends State<CalendarView> {
                   itemCount: selectedRows.length,
                   itemBuilder: (context, i) {
                     final r = selectedRows[i];
-                    return GestureDetector(
-                      onTap: () => context.go('/editor/${r.ulid}'),
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          margin: const EdgeInsets.only(bottom: 6),
-                          decoration: BoxDecoration(
-                            color: tokens.surface,
-                            border: Border.all(color: tokens.divider2, width: 0.5),
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(5)),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: _subgroupColor(r, tokens.accent),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  displayTitle(r),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: tokens.text,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                '${r.cells[dateKey] ?? ''}',
-                                style:
-                                    mono(fontSize: 11, color: tokens.text3),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    return _DayPageRow(
+                      row: r,
+                      tokens: tokens,
+                      dotColor: _subgroupColor(r, tokens.accent),
+                      dateText: '${r.cells[dateKey] ?? ''}',
                     );
                   },
                 ),
@@ -295,3 +256,71 @@ class _CalendarViewState extends State<CalendarView> {
   }
 }
 
+class _DayPageRow extends StatefulWidget {
+  const _DayPageRow({
+    required this.row,
+    required this.tokens,
+    required this.dotColor,
+    required this.dateText,
+  });
+
+  final DatabasePageRow row;
+  final QuillTokens tokens;
+  final Color dotColor;
+  final String dateText;
+
+  @override
+  State<_DayPageRow> createState() => _DayPageRowState();
+}
+
+class _DayPageRowState extends State<_DayPageRow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = widget.tokens;
+    final r = widget.row;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => context.go('/editor/${r.ulid}'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          margin: const EdgeInsets.only(bottom: 6),
+          decoration: BoxDecoration(
+            color: _hover ? tokens.surface2 : tokens.surface,
+            border: Border.all(
+                color: _hover ? tokens.accent : tokens.divider2, width: 0.5),
+            borderRadius: const BorderRadius.all(Radius.circular(5)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: widget.dotColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  displayTitle(r),
+                  style: TextStyle(fontSize: 13, color: tokens.text),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                widget.dateText,
+                style: mono(fontSize: 11, color: tokens.text3),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
