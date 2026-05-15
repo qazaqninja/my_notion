@@ -269,7 +269,7 @@ class _SubGroupedGallery extends StatelessWidget {
   }
 }
 
-class _Card extends StatelessWidget {
+class _Card extends StatefulWidget {
   const _Card({
     required this.row,
     required this.schema,
@@ -282,18 +282,33 @@ class _Card extends StatelessWidget {
   final List<String>? cardFields;
 
   @override
+  State<_Card> createState() => _CardState();
+}
+
+class _CardState extends State<_Card> {
+  bool _hover = false;
+
+  DatabasePageRow get row => widget.row;
+  DatabaseSchema get schema => widget.schema;
+  _CardMetrics get metrics => widget.metrics;
+  List<String>? get cardFields => widget.cardFields;
+
+  @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final health = '${row.cells['health'] ?? ''}';
 
-    return GestureDetector(
-      onTap: () => context.go('/editor/${row.ulid}'),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => context.go('/editor/${row.ulid}'),
         child: Container(
           decoration: BoxDecoration(
-            color: tokens.surface,
-            border: Border.all(color: tokens.divider2, width: 0.5),
+            color: _hover ? tokens.surface2 : tokens.surface,
+            border: Border.all(
+                color: _hover ? tokens.accent : tokens.divider2, width: 0.5),
             borderRadius: const BorderRadius.all(Radius.circular(6)),
           ),
           child: Column(
