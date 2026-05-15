@@ -28,6 +28,7 @@ import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
+import '../../domain/strip_markdown.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
@@ -287,6 +288,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'move', child: Text('Move to folder…')),
         PopupMenuItem(value: 'history', child: Text('Page history…')),
         PopupMenuItem(value: 'copy-body', child: Text('Copy page body')),
+        PopupMenuItem(value: 'copy-plain', child: Text('Copy as plain text')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
         PopupMenuItem(value: 'export-html', child: Text('Export as .html…')),
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
@@ -328,6 +330,15 @@ class _EditorBodyState extends State<_EditorBody> {
           SnackBar(
             content: Text(
                 'Copied ${loaded.page.body.length} chars to clipboard'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      case 'copy-plain':
+        final plain = stripMarkdown(loaded.page.body);
+        await Clipboard.setData(ClipboardData(text: plain));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text('Copied ${plain.length} chars as plain text'),
             duration: const Duration(seconds: 2),
           ),
         );
