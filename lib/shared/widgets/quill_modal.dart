@@ -167,12 +167,17 @@ class _CloseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: const BorderRadius.all(Radius.circular(4)),
-      child: Padding(
-        padding: const EdgeInsets.all(4),
-        child: QuillIcon('x', size: 14, strokeWidth: 1.7, color: tokens.text3),
+    return Tooltip(
+      message: 'Close (Esc)',
+      waitDuration: const Duration(milliseconds: 500),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child:
+              QuillIcon('x', size: 14, strokeWidth: 1.7, color: tokens.text3),
+        ),
       ),
     );
   }
