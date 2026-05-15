@@ -2832,23 +2832,31 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
             const SizedBox(width: 8),
             Expanded(
               flex: 4,
-              child: Text(
-                row.title,
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: tokens.text),
-                overflow: TextOverflow.ellipsis,
+              child: Tooltip(
+                message: row.title,
+                waitDuration: const Duration(milliseconds: 600),
+                child: Text(
+                  row.title,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: tokens.text),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
             if (extras.isNotEmpty)
               Expanded(
                 flex: 4,
-                child: Text(
-                  extras.join('  ·  '),
-                  textAlign: TextAlign.right,
-                  style: mono(fontSize: 11.5, color: tokens.text3),
-                  overflow: TextOverflow.ellipsis,
+                child: Tooltip(
+                  message: extras.join('  ·  '),
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    extras.join('  ·  '),
+                    textAlign: TextAlign.right,
+                    style: mono(fontSize: 11.5, color: tokens.text3),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
           ],
