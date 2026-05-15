@@ -2882,14 +2882,18 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
                   size: 13, color: tokens.text3),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: tokens.text2,
+                child: Tooltip(
+                  message: title,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text2,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (subtitle != null)
