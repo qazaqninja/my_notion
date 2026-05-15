@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:my_notion/core/ui/anchor_rect.dart';
@@ -28,7 +30,7 @@ void main() {
       expect(cubit.state.open, isFalse);
       expect(cubit.state.results, isEmpty);
       expect(cubit.state.selectedIndex, 0);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('openAt sets anchor + sourceOffset, then resolves search results', () async {
@@ -40,7 +42,7 @@ void main() {
       expect(cubit.state.anchorStartOffset, 17);
       expect(cubit.state.results.length, 2);
       expect(cubit.state.selectedIndex, 0);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('setQuery resets selectedIndex and re-runs the search', () async {
@@ -60,7 +62,7 @@ void main() {
       expect(cubit.state.results, hasLength(1));
       expect(cubit.state.selectedIndex, 0,
           reason: 'setQuery resets selection back to top');
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('setQuery on a closed picker is a no-op', () async {
@@ -69,7 +71,7 @@ void main() {
       await cubit.setQuery('whatever');
       expect(cubit.state, equals(before));
       verifyNever(() => search.call(any(), limit: any(named: 'limit')));
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('move clamps the selectedIndex into the results range', () async {
@@ -82,7 +84,7 @@ void main() {
       expect(cubit.state.selectedIndex, 0);
       cubit.move(100);
       expect(cubit.state.selectedIndex, 1);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('dismiss returns to the closed sentinel state', () async {
@@ -93,7 +95,7 @@ void main() {
       );
       cubit.dismiss();
       expect(cubit.state, equals(RelationPickerState.closed));
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('selectedResult reflects the highlighted row', () async {
@@ -105,7 +107,7 @@ void main() {
       expect(cubit.state.selectedResult?.title, 'Alpha');
       cubit.move(1);
       expect(cubit.state.selectedResult?.title, 'Beta');
-      cubit.close();
+      unawaited(cubit.close());
     });
   });
 }

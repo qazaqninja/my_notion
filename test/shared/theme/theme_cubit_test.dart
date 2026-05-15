@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/shared/theme/accent.dart';
 import 'package:my_notion/shared/theme/app_theme_mode.dart';
@@ -17,7 +19,7 @@ void main() {
       expect(cubit.state.mode, AppThemeMode.system);
       expect(cubit.state.accent, AccentKey.sage);
       expect(cubit.state.compact, isFalse);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('load() hydrates from SharedPreferences when set', () async {
@@ -31,7 +33,7 @@ void main() {
       expect(cubit.state.mode, AppThemeMode.dark);
       expect(cubit.state.accent, AccentKey.terracotta);
       expect(cubit.state.compact, isTrue);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('load() falls back to defaults on unknown values', () async {
@@ -43,7 +45,7 @@ void main() {
       await cubit.load();
       expect(cubit.state.mode, AppThemeMode.system);
       expect(cubit.state.accent, AccentKey.sage);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('setMode emits new state and persists to prefs', () async {
@@ -52,7 +54,7 @@ void main() {
       expect(cubit.state.mode, AppThemeMode.dark);
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('theme.mode'), 'dark');
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('setAccent emits new state and persists to prefs', () async {
@@ -61,7 +63,7 @@ void main() {
       expect(cubit.state.accent, AccentKey.terracotta);
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getString('theme.accent'), 'terracotta');
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('toggleCompact flips and persists', () async {
@@ -73,7 +75,7 @@ void main() {
       expect(prefs.getBool('theme.compact'), isTrue);
       await cubit.toggleCompact();
       expect(cubit.state.compact, isFalse);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('cycleMode walks light → dark → system → light', () async {
@@ -85,7 +87,7 @@ void main() {
       expect(cubit.state.mode, AppThemeMode.system);
       await cubit.cycleMode();
       expect(cubit.state.mode, AppThemeMode.light);
-      cubit.close();
+      unawaited(cubit.close());
     });
 
     test('toggleAccent alternates sage ↔ terracotta', () async {
@@ -95,7 +97,7 @@ void main() {
       expect(cubit.state.accent, AccentKey.terracotta);
       await cubit.toggleAccent();
       expect(cubit.state.accent, AccentKey.sage);
-      cubit.close();
+      unawaited(cubit.close());
     });
   });
 }

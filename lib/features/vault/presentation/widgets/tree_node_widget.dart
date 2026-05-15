@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -169,8 +171,10 @@ class TreeNodeWidget extends StatelessWidget {
       await _promptNewSubfolder(context, parentFolder: f.relativePath);
     } else if (selected == 'search') {
       final cubit = context.read<CommandPaletteCubit>();
-      cubit.open();
-      cubit.setQuery('path:${f.relativePath}/');
+      // Fire-and-forget: the palette opens and updates its query
+      // asynchronously without blocking the menu-dismissal animation.
+      unawaited(cubit.open());
+      unawaited(cubit.setQuery('path:${f.relativePath}/'));
     } else if (selected == 'copy-path') {
       final path = p.join(state.rootPath, f.relativePath);
       await Clipboard.setData(ClipboardData(text: path));
