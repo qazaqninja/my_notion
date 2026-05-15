@@ -253,7 +253,7 @@ class _Panel extends StatelessWidget {
                                 color: tokens.text3),
                             const SizedBox(height: 8),
                             Text(
-                              'No matches',
+                              state.query.isEmpty ? 'Search' : 'No matches',
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
