@@ -47,6 +47,36 @@ class _DatabasesPageState extends State<DatabasesPage> {
             child: FutureBuilder<List<DatabaseSchema>>(
               future: _data,
               builder: (context, snap) {
+                if (snap.hasError) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          QuillIcon('warning',
+                              size: 22,
+                              strokeWidth: 1.4,
+                              color: tokens.text3),
+                          const SizedBox(height: 10),
+                          Text('Could not list databases',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: tokens.text2,
+                              )),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${snap.error}',
+                            textAlign: TextAlign.center,
+                            style:
+                                mono(fontSize: 11, color: tokens.text3),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
                 if (!snap.hasData) {
                   return Center(
                     child: SizedBox(
