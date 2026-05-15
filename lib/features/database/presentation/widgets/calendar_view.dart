@@ -350,10 +350,14 @@ class _DayPageRowState extends State<_DayPageRow> {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  displayTitle(r),
-                  style: TextStyle(fontSize: 13, color: tokens.text),
-                  overflow: TextOverflow.ellipsis,
+                child: Tooltip(
+                  message: displayTitle(r),
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    displayTitle(r),
+                    style: TextStyle(fontSize: 13, color: tokens.text),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
               Text(
