@@ -88,14 +88,20 @@ class _TrashDialogState extends State<TrashDialog> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'TRASH',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.0,
-                        color: tokens.text3,
-                      ),
+                    child: FutureBuilder<List<TrashedItem>>(
+                      future: _items,
+                      builder: (context, snap) {
+                        final n = snap.data?.length ?? 0;
+                        return Text(
+                          n == 0 ? 'TRASH' : 'TRASH · $n',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.0,
+                            color: tokens.text3,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   TextButton.icon(
