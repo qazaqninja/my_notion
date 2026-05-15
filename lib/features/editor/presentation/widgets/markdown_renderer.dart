@@ -2513,8 +2513,8 @@ class _ButtonBlockState extends State<_ButtonBlock> {
     final value = widget.props['value'] ?? '';
     switch (action) {
       case 'url':
-        await Reveal.openUrl(value);
-        _toast('Opened $value');
+        final ok = await Reveal.openUrl(value);
+        _toast(ok ? 'Opened $value' : 'Could not open $value');
         break;
       case 'copy':
         await Clipboard.setData(ClipboardData(text: value));
@@ -2526,8 +2526,8 @@ class _ButtonBlockState extends State<_ButtonBlock> {
         final path = value.startsWith('/') || root == null
             ? value
             : '$root/$value';
-        await Reveal.show(path);
-        _toast('Revealed');
+        final ok = await Reveal.show(path);
+        _toast(ok ? 'Revealed' : 'Could not reveal $path');
         break;
       case 'page':
         if (value.isNotEmpty) {
