@@ -198,7 +198,8 @@ class VaultPickerPage extends StatelessWidget {
                           style: mono(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            // Logo glyph against the saturated accent tile.
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       ),
@@ -262,11 +263,14 @@ class VaultPickerPage extends StatelessWidget {
                       children: [
                         ElevatedButton.icon(
                           onPressed: () => context.read<VaultBloc>().add(const PickVault()),
-                          icon: QuillIcon('folder', size: 14, color: Colors.white),
+                          icon: QuillIcon('folder',
+                              size: 14,
+                              color: Theme.of(context).colorScheme.onPrimary),
                           label: const Text('Choose folder…'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: tokens.accent,
-                            foregroundColor: Colors.white,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onPrimary,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             shape: const RoundedRectangleBorder(
                               borderRadius: BorderRadius.all(Radius.circular(6)),

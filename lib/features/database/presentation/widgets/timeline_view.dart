@@ -383,8 +383,9 @@ class _RowState extends State<_Row> {
                       ),
                       child: Text(
                         ownerInitial,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          // Initial against the categorical-coloured avatar.
+                          color: Theme.of(context).colorScheme.onPrimary,
                           fontSize: 9,
                           fontWeight: FontWeight.w600,
                           height: 1,
@@ -460,8 +461,9 @@ class _RowState extends State<_Row> {
                           ),
                           child: Text(
                             displayTitle(row),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              // Bar text against the stage-coloured bar.
+                              color: Theme.of(context).colorScheme.onPrimary,
                               fontSize: 11.5,
                               fontWeight: FontWeight.w500,
                             ),

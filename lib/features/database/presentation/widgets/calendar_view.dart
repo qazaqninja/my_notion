@@ -177,8 +177,9 @@ class _CalendarViewState extends State<CalendarView> {
               color: tokens.accent,
               shape: BoxShape.circle,
             ),
-            selectedTextStyle: const TextStyle(
-              color: Colors.white,
+            selectedTextStyle: TextStyle(
+              // Selected day reads against the accent-coloured circle.
+              color: Theme.of(context).colorScheme.onPrimary,
               fontWeight: FontWeight.w600,
               fontSize: 12.5,
             ),
