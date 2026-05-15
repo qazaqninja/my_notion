@@ -583,6 +583,12 @@ class _EditorBodyState extends State<_EditorBody> {
         ? loaded.page.relativePath
             .substring(0, loaded.page.relativePath.lastIndexOf('/'))
         : '';
+    final hasOtherFolder = sorted.any((f) => f != currentFolder);
+    if (currentFolder == '' && !hasOtherFolder) {
+      context.toastInfo('No folders to move to',
+          sub: 'Create a folder in the sidebar first');
+      return;
+    }
     final picked = await showQuillChoice<String>(
       context,
       title: 'Move to folder',
