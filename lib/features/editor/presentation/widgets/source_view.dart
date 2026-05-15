@@ -921,7 +921,11 @@ class _SourceViewState extends State<SourceView> {
                   focusNode: _focus,
                   maxLines: null,
                   minLines: 8,
-                  decoration: const InputDecoration.collapsed(hintText: ''),
+                  decoration: InputDecoration.collapsed(
+                    hintText: 'Type / for the slash menu, or markdown directly',
+                    hintStyle:
+                        mono(fontSize: 13.5, color: tokens.text3),
+                  ),
                   style: mono(fontSize: 13.5, color: tokens.text)
                       .copyWith(height: 1.65),
                 ),
