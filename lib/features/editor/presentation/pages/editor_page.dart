@@ -1025,8 +1025,12 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: next, value: !wasFull),
       ));
     }
+    final label = loaded.page.title.isEmpty
+        ? loaded.page.relativePath
+        : loaded.page.title;
     context.toastSuccess(
-        wasFull ? 'Page width: default' : 'Page width: full');
+        wasFull ? 'Page width: default' : 'Page width: full',
+        sub: label);
   }
 
   @override
