@@ -485,65 +485,125 @@ Future<String?> showQuillPrompt(
   bool mono = false,
   String? prefix,
   double width = 460,
-}) async {
-  final controller = TextEditingController(text: initial);
-  controller.selection = TextSelection(
-    baseOffset: 0,
-    extentOffset: initial.length,
-  );
-  final result = await showQuillModal<String>(
+}) {
+  return showQuillModal<String>(
     context,
-    builder: (ctx) {
-      void submit() {
-        Navigator.of(ctx).pop(controller.text.trim());
-      }
+    builder: (ctx) => _PromptBody(
+      title: title,
+      sub: sub,
+      icon: icon,
+      label: label,
+      hint: hint,
+      placeholder: placeholder,
+      initial: initial,
+      confirmLabel: confirmLabel,
+      mono: mono,
+      prefix: prefix,
+      width: width,
+    ),
+  );
+}
 
-      return QuillModal(
-        width: width,
-        header: QuillModalHeader(
-          title: title,
-          sub: sub,
-          icon: icon,
-          onClose: () => Navigator.of(ctx).pop(),
-        ),
-        footer: Row(
+// Owns the TextEditingController so it lives as long as the dialog element
+// itself. Disposing it in `showQuillPrompt` after `await` raced with the
+// dismiss transition — animation ticks re-subscribed listeners on the
+// already-disposed controller.
+class _PromptBody extends StatefulWidget {
+  const _PromptBody({
+    required this.title,
+    this.sub,
+    this.icon,
+    this.label,
+    this.hint,
+    required this.placeholder,
+    required this.initial,
+    required this.confirmLabel,
+    required this.mono,
+    this.prefix,
+    required this.width,
+  });
+
+  final String title;
+  final String? sub;
+  final String? icon;
+  final String? label;
+  final String? hint;
+  final String placeholder;
+  final String initial;
+  final String confirmLabel;
+  final bool mono;
+  final String? prefix;
+  final double width;
+
+  @override
+  State<_PromptBody> createState() => _PromptBodyState();
+}
+
+class _PromptBodyState extends State<_PromptBody> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initial)
+      ..selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: widget.initial.length,
+      );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() => Navigator.of(context).pop(_controller.text.trim());
+  void _cancel() => Navigator.of(context).pop();
+
+  @override
+  Widget build(BuildContext context) {
+    return QuillModal(
+      width: widget.width,
+      header: QuillModalHeader(
+        title: widget.title,
+        sub: widget.sub,
+        icon: widget.icon,
+        onClose: _cancel,
+      ),
+      footer: Row(
+        children: [
+          const Spacer(),
+          QuillSecondaryButton(label: 'Cancel', onPressed: _cancel),
+          const SizedBox(width: 8),
+          QuillPrimaryButton(
+            label: widget.confirmLabel,
+            icon: 'check',
+            onPressed: _submit,
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Spacer(),
-            QuillSecondaryButton(
-              label: 'Cancel',
-              onPressed: () => Navigator.of(ctx).pop(),
-            ),
-            const SizedBox(width: 8),
-            QuillPrimaryButton(
-              label: confirmLabel,
-              icon: 'check',
-              onPressed: submit,
+            if (widget.label != null)
+              QuillFormLabel(label: widget.label!, hint: widget.hint),
+            QuillInputField(
+              controller: _controller,
+              placeholder: widget.placeholder,
+              mono: widget.mono,
+              prefix: widget.prefix,
+              autofocus: true,
+              onSubmitted: (_) => _submit(),
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (label != null) QuillFormLabel(label: label, hint: hint),
-              QuillInputField(
-                controller: controller,
-                placeholder: placeholder,
-                mono: mono,
-                prefix: prefix,
-                autofocus: true,
-                onSubmitted: (_) => submit(),
-              ),
-            ],
-          ),
-        ),
-      );
-    },
-  );
-  controller.dispose();
-  return result;
+      ),
+    );
+  }
 }
 
 /// Vertical list of choices in a modal. Returns the picked value or null on cancel.
