@@ -635,6 +635,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show untagged pages':
         if (!context.mounted) return;
         await _showUntaggedDialog(context);
+      case 'Show pages without a title':
+        if (!context.mounted) return;
+        await _showUntitledDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
@@ -1106,6 +1109,37 @@ views:
         content: Text('Created database: $safe'),
         duration: const Duration(seconds: 4),
       ),
+    );
+  }
+
+  Future<void> _showUntitledDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    bool hasExplicitTitle(String json) {
+      if (json.isEmpty) return false;
+      try {
+        final m = jsonDecode(json);
+        if (m is! Map) return false;
+        final raw = m['title'];
+        if (raw is String) return raw.trim().isNotEmpty;
+      } catch (_) {/* fall through */}
+      return false;
+    }
+
+    final untitled = [
+      for (final p in pages)
+        if (!hasExplicitTitle(p.frontmatterJson)) p,
+    ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+    if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: untitled,
+      headingFull: 'PAGES WITHOUT A TITLE',
+      headingEmpty: 'EVERY PAGE HAS A TITLE',
+      subtitleFull:
+          'Pages with no `title:` frontmatter (the displayed title falls back to the filename). Sorted by last-edited.',
+      subtitleEmpty:
+          'Every indexed page declares a `title:` in its frontmatter.',
     );
   }
 
