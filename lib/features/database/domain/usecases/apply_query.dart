@@ -1,3 +1,4 @@
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../entities/database_query.dart';
 import '../entities/database_schema.dart';
 import '../repositories/database_repository.dart';
@@ -119,6 +120,15 @@ class ApplyQuery {
       final a = num.tryParse('${raw ?? ''}');
       final b = num.tryParse(expected);
       if (a != null && b != null) return a == b;
+    }
+    if (col?.type == ColumnType.multi) {
+      // Multi rawScalar is a YAML flow list (`[draft, urgent]`). The
+      // user filtering `equals draft` expects "any item == draft", not
+      // a string match of the bracketed whole. Without this, every
+      // equals filter on a multi column matched nothing. M791.
+      final items = parseYamlFlowList('${raw ?? ''}');
+      final needle = expected.toLowerCase().trim();
+      return items.any((item) => item.toLowerCase().trim() == needle);
     }
     return '${raw ?? ''}'.toLowerCase().trim() ==
         expected.toLowerCase().trim();
