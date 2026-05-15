@@ -556,13 +556,15 @@ class _SourceViewState extends State<SourceView> {
         return KeyEventResult.handled;
       }
       if (key == LogicalKeyboardKey.enter ||
-          key == LogicalKeyboardKey.numpadEnter) {
+          key == LogicalKeyboardKey.numpadEnter ||
+          key == LogicalKeyboardKey.tab) {
         final selected = _slash.state.selected;
         if (selected != null) {
           _onSlashPick(selected);
           return KeyEventResult.handled;
         }
-        // No match — dismiss instead of letting Enter inject a newline.
+        // No match — dismiss instead of letting Enter / Tab fall
+        // through to a newline or indent.
         _slashTriggerStart = null;
         _slash.dismiss();
         return KeyEventResult.handled;
@@ -637,7 +639,11 @@ class _SourceViewState extends State<SourceView> {
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.enter ||
-        key == LogicalKeyboardKey.numpadEnter) {
+        key == LogicalKeyboardKey.numpadEnter ||
+        key == LogicalKeyboardKey.tab) {
+      // Tab as autocomplete on an open picker — mirrors IDE / Slack
+      // pattern. Without this Tab would fall through to _indentSelection,
+      // which mangles the [[ trigger.
       final selected = _picker.state.selectedResult;
       if (selected != null) {
         _onPick(selected);
