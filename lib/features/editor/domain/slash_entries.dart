@@ -227,6 +227,8 @@ enum SlashAction {
   /// Replace each numeric line with the running total of all
   /// preceding numeric lines plus itself.
   cumulativeSumLines,
+  /// Emit consecutive deltas for every adjacent numeric pair.
+  deltaNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1055,6 +1057,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '1 / 2 / 3 → 1 / 3 / 6',
     action: SlashAction.cumulativeSumLines,
     keywords: ['cumulative', 'sum', 'running', 'total', 'cumsum'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Consecutive deltas',
+    hint: '1 / 5 / 10 → +4 / +5',
+    action: SlashAction.deltaNumericLines,
+    keywords: ['delta', 'difference', 'diff', 'gap', 'change'],
   ),
   SlashEntry(
     icon: 'hash',

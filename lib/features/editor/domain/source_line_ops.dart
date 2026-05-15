@@ -928,6 +928,53 @@ SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
       return [range.toString()];
     });
 
+/// Emit consecutive deltas (`x[i+1] - x[i]`) for every adjacent
+/// pair of parseable numeric lines in the selection. Non-numeric
+/// lines pass through and DO break the pair (so deltas don't span
+/// across labels — a "section divider" line stops the run).
+/// Output length is one less than the longest run of consecutive
+/// numeric lines.
+///
+///   1            +4
+///   5     →      +5
+///   10
+///
+/// Integer / decimal rendering follows the family convention. The
+/// `+` prefix on positive values keeps the output readable as
+/// signed deltas; negative deltas render with the native `-`.
+SortLinesResult deltaNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      String fmt(double v, {required bool decimal}) {
+        final body = !decimal && v == v.truncateToDouble()
+            ? v.toInt().toString()
+            : v.toString();
+        return v >= 0 ? '+$body' : body;
+      }
+
+      final out = <String>[];
+      var anyNumeric = false;
+      double? prev;
+      var prevDecimal = false;
+      for (final l in lines) {
+        final trimmed = l.trim();
+        final v = double.tryParse(trimmed);
+        if (v == null) {
+          out.add(l);
+          prev = null; // break the run
+          continue;
+        }
+        anyNumeric = true;
+        final isDecimal = trimmed.contains('.');
+        if (prev != null) {
+          out.add(fmt(v - prev, decimal: prevDecimal || isDecimal));
+        }
+        prev = v;
+        prevDecimal = isDecimal;
+      }
+      if (!anyNumeric) return lines;
+      return out;
+    });
+
 /// Replace every numeric line with the running total of all
 /// preceding numeric lines plus itself. Non-numeric lines pass
 /// through and don't advance the counter. Useful for "sum to date"

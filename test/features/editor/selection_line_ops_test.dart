@@ -2499,6 +2499,47 @@ void main() {
     });
   });
 
+  group('deltaNumericLinesIn', () {
+    test('basic consecutive deltas with + prefix on positives', () {
+      const text = '1\n5\n10\n';
+      final r = deltaNumericLinesIn(text, 0, text.length);
+      expect(r.text, '+4\n+5\n');
+    });
+
+    test('negative deltas use the native - sign', () {
+      const text = '10\n3\n0\n';
+      final r = deltaNumericLinesIn(text, 0, text.length);
+      expect(r.text, '-7\n-3\n');
+    });
+
+    test('non-numeric line breaks the run', () {
+      const text = '1\n5\ndivider\n10\n12\n';
+      final r = deltaNumericLinesIn(text, 0, text.length);
+      // Deltas: 5-1=+4; divider breaks; 12-10=+2.
+      expect(r.text, '+4\ndivider\n+2\n');
+    });
+
+    test('single numeric line yields no deltas', () {
+      const text = '42\n';
+      final r = deltaNumericLinesIn(text, 0, text.length);
+      // Only one number → no deltas to emit; the trailing newline
+      // from the source is preserved by _transformLinesIn so output
+      // is just '\n'.
+      expect(r.text, '\n');
+    });
+
+    test('decimal deltas render decimal', () {
+      const text = '1.0\n3.5\n';
+      final r = deltaNumericLinesIn(text, 0, text.length);
+      expect(r.text, '+2.5\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(deltaNumericLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

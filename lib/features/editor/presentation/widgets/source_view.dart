@@ -1148,6 +1148,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, cumulativeSumLinesIn,
         );
+      case SlashAction.deltaNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, deltaNumericLinesIn,
+        );
     }
   }
 
