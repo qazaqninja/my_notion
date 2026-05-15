@@ -124,13 +124,21 @@ class _Panel extends StatelessWidget {
           // Results list
           if (state.results.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
               child: Center(
-                child: Text(
-                  state.query.isEmpty
-                      ? 'Start typing to find a page'
-                      : 'No matches',
-                  style: TextStyle(fontSize: 12.5, color: tokens.text3),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    QuillIcon('search',
+                        size: 20, strokeWidth: 1.4, color: tokens.text3),
+                    const SizedBox(height: 8),
+                    Text(
+                      state.query.isEmpty
+                          ? 'Start typing to find a page'
+                          : 'No matches',
+                      style: TextStyle(fontSize: 12.5, color: tokens.text3),
+                    ),
+                  ],
                 ),
               ),
             )
