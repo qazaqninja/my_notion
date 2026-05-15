@@ -2694,7 +2694,7 @@ class _ButtonBlockState extends State<_ButtonBlock> {
       'copy' => 'Copy "$value"',
       'reveal' => 'Reveal $value',
       'page' => 'Open page $value',
-      _ => 'Action: $action',
+      _ => 'Unknown action: $action (try url / copy / reveal / page)',
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
