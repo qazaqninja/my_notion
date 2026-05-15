@@ -12,6 +12,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/fs/unique_path.dart';
 import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
+import '../../../../core/vault_dirs.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../data/indexer.dart';
 import '../../data/vault_watcher.dart';
@@ -563,7 +564,11 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       for (final e in entries) {
         final name = p.basename(e.path);
         if (name.startsWith('.')) continue;
-        if (const {'node_modules', '_meta'}.contains(name)) continue;
+        // Mirror the shared kIgnoredVaultDirs constant so the sidebar
+        // tree, indexer, and exporters all agree on what's invisible.
+        // Without this, `build/` (Flutter autogen output) appeared in
+        // the sidebar — visible noise the indexer already skipped.
+        if (kIgnoredVaultDirs.contains(name)) continue;
         final rel = p.relative(e.path, from: root.path);
         if (e is Directory) {
           final children = await walk(e);
