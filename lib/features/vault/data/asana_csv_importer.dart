@@ -300,19 +300,12 @@ class _Mapping {
   final Set<int> multiIdx;
   final List<String> header;
 
-  /// Frontmatter key for header column [i]. Normalises Asana's
-  /// PascalCase / space-separated labels to snake_case and drops
-  /// YAML-structure glyphs (':' / '#' / '[' / '{' / etc.) so the
-  /// emitted key never needs quoting and never corrupts the YAML
-  /// mapping shape (mirrors csv_importer._normaliseKey from M759).
+  /// Frontmatter key for header column [i]. The sectionIdx column maps
+  /// to the canonical 'status' field name; everything else goes through
+  /// the shared yamlSnakeKey normaliser.
   String keyForIndex(int i) {
     if (i == sectionIdx) return 'status';
-    var s = header[i].trim().toLowerCase();
-    s = s.replaceAll(RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*,/\\]'''), '_');
-    s = s.replaceAll(RegExp(r'\s+'), '_');
-    s = s.replaceAll(RegExp(r'_+'), '_');
-    s = s.replaceAll(RegExp(r'^_|_$'), '');
-    return s.isEmpty ? 'col' : s;
+    return yamlSnakeKey(header[i]);
   }
 }
 

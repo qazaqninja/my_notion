@@ -91,4 +91,47 @@ void main() {
       expect(tags, equals(inputs));
     });
   });
+
+  group('yamlSnakeKey', () {
+    test('lowercases + snake_cases plain labels', () {
+      expect(yamlSnakeKey('Foo Bar'), equals('foo_bar'));
+      expect(yamlSnakeKey('AGE'), equals('age'));
+      expect(yamlSnakeKey('hello world here'), equals('hello_world_here'));
+    });
+
+    test('drops every YAML structure / quote / slash glyph', () {
+      expect(yamlSnakeKey('Foo: Bar'), equals('foo_bar'));
+      expect(yamlSnakeKey('#Priority'), equals('priority'));
+      expect(yamlSnakeKey('Tag/Stage'), equals('tag_stage'));
+      expect(yamlSnakeKey('Cool [v2]'), equals('cool_v2'));
+      expect(yamlSnakeKey('a | b | c'), equals('a_b_c'));
+      expect(yamlSnakeKey(r'path\name'), equals('path_name'));
+    });
+
+    test('collapses repeated underscores and trims edges', () {
+      expect(yamlSnakeKey('___foo___'), equals('foo'));
+      expect(yamlSnakeKey('foo___bar'), equals('foo_bar'));
+      expect(yamlSnakeKey(' :foo: '), equals('foo'));
+    });
+
+    test('falls back to "col" on empty / whitespace / pure punctuation',
+        () {
+      expect(yamlSnakeKey(''), equals('col'));
+      expect(yamlSnakeKey('   '), equals('col'));
+      expect(yamlSnakeKey(':::'), equals('col'));
+      expect(yamlSnakeKey('___'), equals('col'));
+    });
+
+    test('round-trips through YAML as a bare key', () {
+      for (final label in ['Foo Bar', '#tag', 'a [b] c', 'X: y', '']) {
+        final key = yamlSnakeKey(label);
+        // Emit a mapping with the normalised key and parse it back.
+        final yaml = '$key: value\n';
+        final parsed = loadYaml(yaml) as YamlMap;
+        expect(parsed.keys, contains(key),
+            reason: 'normalised key from "$label" must parse as itself');
+        expect(parsed[key], equals('value'));
+      }
+    });
+  });
 }

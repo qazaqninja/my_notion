@@ -47,3 +47,26 @@ String yamlFlowItem(String value) {
   final escaped = value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
   return '"$escaped"';
 }
+
+final _unsafeKeyGlyphs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*,/\\]''');
+final _whitespaceRun = RegExp(r'\s+');
+final _underscoreRun = RegExp(r'_+');
+final _trimUnderscores = RegExp(r'^_|_$');
+
+/// Convert a free-form label (CSV column name, Asana field, etc.) into a
+/// YAML-safe block-mapping key. Lowercases, replaces every YAML
+/// structure / quote / slash glyph + whitespace with `_`, collapses
+/// duplicate underscores, and strips leading/trailing `_`. Falls back to
+/// `'col'` on empty input so a key is always non-empty and never needs
+/// quoting on emit.
+///
+/// Used by importers that derive frontmatter keys from user-typed
+/// column headers (csv_importer M759, asana_importer M760).
+String yamlSnakeKey(String label) {
+  var s = label.trim().toLowerCase();
+  s = s.replaceAll(_unsafeKeyGlyphs, '_');
+  s = s.replaceAll(_whitespaceRun, '_');
+  s = s.replaceAll(_underscoreRun, '_');
+  s = s.replaceAll(_trimUnderscores, '');
+  return s.isEmpty ? 'col' : s;
+}
