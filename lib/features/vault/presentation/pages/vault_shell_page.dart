@@ -1568,24 +1568,32 @@ class _StatsPageRowState extends State<_StatsPageRow> {
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  widget.title,
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: _hover ? tokens.accent : tokens.text2),
-                  overflow: TextOverflow.ellipsis,
+                child: Tooltip(
+                  message: widget.title,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    widget.title,
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: _hover ? tokens.accent : tokens.text2),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ),
-              Text(
-                widget.trailing,
-                style: widget.mono
-                    ? Theme.of(context).textTheme.bodySmall?.merge(
-                        TextStyle(
-                            fontSize: 11,
-                            color: tokens.text3,
-                            fontFamily: 'JetBrainsMono'))
-                    : TextStyle(fontSize: 11, color: tokens.text3),
-                overflow: TextOverflow.ellipsis,
+              Tooltip(
+                message: widget.trailing,
+                waitDuration: const Duration(milliseconds: 600),
+                child: Text(
+                  widget.trailing,
+                  style: widget.mono
+                      ? Theme.of(context).textTheme.bodySmall?.merge(
+                          TextStyle(
+                              fontSize: 11,
+                              color: tokens.text3,
+                              fontFamily: 'JetBrainsMono'))
+                      : TextStyle(fontSize: 11, color: tokens.text3),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
