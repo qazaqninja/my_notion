@@ -1760,7 +1760,11 @@ class _MarkdownImage extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: const BorderRadius.all(Radius.circular(4)),
-          child: image,
+          child: Tooltip(
+            message: spec.alt.isEmpty ? spec.src : '${spec.alt}\n${spec.src}',
+            waitDuration: const Duration(milliseconds: 700),
+            child: image,
+          ),
         ),
         caption,
       ],
