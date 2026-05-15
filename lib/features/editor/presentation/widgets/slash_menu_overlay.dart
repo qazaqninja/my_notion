@@ -95,9 +95,19 @@ class _Panel extends StatelessWidget {
                   style: mono(fontSize: 12, color: tokens.text2),
                 ),
                 const Spacer(),
-                Text(
-                  state.results.isEmpty ? 'no matches' : '${state.results.length}',
-                  style: mono(fontSize: 11, color: tokens.text3),
+                Tooltip(
+                  message: state.results.isEmpty
+                      ? 'No blocks match this query'
+                      : state.results.length == 1
+                          ? '1 block matches'
+                          : '${state.results.length} blocks match',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: Text(
+                    state.results.isEmpty
+                        ? 'no matches'
+                        : '${state.results.length}',
+                    style: mono(fontSize: 11, color: tokens.text3),
+                  ),
                 ),
               ],
             ),
