@@ -66,7 +66,11 @@ class WorkspaceHead extends StatelessWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: onIconTap,
-                child: square,
+                child: Tooltip(
+                  message: 'Change workspace icon',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: square,
+                ),
               ),
             )
           else
@@ -86,12 +90,16 @@ class WorkspaceHead extends StatelessWidget {
                     height: 1.2,
                   ),
                 ),
-                Text(
-                  vaultPath,
-                  style: mono(fontSize: 11, color: tokens.text3),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  softWrap: false,
+                Tooltip(
+                  message: vaultPath,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    vaultPath,
+                    style: mono(fontSize: 11, color: tokens.text3),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
                 ),
               ],
             ),
