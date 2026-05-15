@@ -825,7 +825,13 @@ class _WorkspaceIconButton extends StatelessWidget {
         }
         final next =
             state.workspace.copyWith(icon: picked.isEmpty ? '' : picked);
-        await next.save(Directory(state.rootPath));
+        try {
+          await next.save(Directory(state.rootPath));
+        } catch (e) {
+          if (!context.mounted) return;
+          context.toastError('Could not save workspace icon', sub: '$e');
+          return;
+        }
         if (!context.mounted) return;
         context.read<VaultBloc>().add(const RefreshFromDisk());
         context.toastSuccess(picked.isEmpty
@@ -895,7 +901,13 @@ class _WorkspaceNameFieldState extends State<_WorkspaceNameField> {
     final next = widget.state.workspace.copyWith(
       name: trimmed.isEmpty ? '' : trimmed,
     );
-    await next.save(Directory(widget.state.rootPath));
+    try {
+      await next.save(Directory(widget.state.rootPath));
+    } catch (e) {
+      if (!mounted) return;
+      context.toastError('Could not save workspace name', sub: '$e');
+      return;
+    }
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
     context.toastSuccess(trimmed.isEmpty
