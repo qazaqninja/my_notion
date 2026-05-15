@@ -7,6 +7,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../widgets/page_header.dart';
@@ -104,14 +105,33 @@ class _TagsPageState extends State<TagsPage> {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'No tags yet.\n\n'
-                        'Add a `tags:` or `status:` field to any page\'s '
-                        'frontmatter (or a multi-value column in a database) '
-                        'and they\'ll show up here.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 13.5, color: tokens.text3, height: 1.55),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          QuillIcon('tag',
+                              size: 24,
+                              strokeWidth: 1.4,
+                              color: tokens.text3),
+                          const SizedBox(height: 10),
+                          Text('No tags yet',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: tokens.text2,
+                              )),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Add a `tags:` or `status:` field to any page\'s\n'
+                            'frontmatter (or a multi-value column in a\n'
+                            'database) and they\'ll show up here.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: tokens.text3,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
