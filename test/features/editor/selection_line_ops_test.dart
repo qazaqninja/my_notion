@@ -1520,6 +1520,76 @@ void main() {
     });
   });
 
+  group('unwrapInlineFormattingLinesIn', () {
+    test('strips bold wrapper', () {
+      const text = '**a**\n**b**\n';
+      expect(
+        unwrapInlineFormattingLinesIn(text, 0, text.length).text,
+        'a\nb\n',
+      );
+    });
+
+    test('strips italic wrapper', () {
+      const text = '*a*\n*b*\n';
+      expect(
+        unwrapInlineFormattingLinesIn(text, 0, text.length).text,
+        'a\nb\n',
+      );
+    });
+
+    test('strips code wrapper', () {
+      const text = '`a`\n`b`\n';
+      expect(
+        unwrapInlineFormattingLinesIn(text, 0, text.length).text,
+        'a\nb\n',
+      );
+    });
+
+    test('strips strikethrough wrapper', () {
+      const text = '~~a~~\n~~b~~\n';
+      expect(
+        unwrapInlineFormattingLinesIn(text, 0, text.length).text,
+        'a\nb\n',
+      );
+    });
+
+    test('strips highlight wrapper', () {
+      const text = '==a==\n==b==\n';
+      expect(
+        unwrapInlineFormattingLinesIn(text, 0, text.length).text,
+        'a\nb\n',
+      );
+    });
+
+    test('strips bold preferentially over italic on **x**', () {
+      // `**x**` could lex as `*` + `*x*` + `*` if we went short-first.
+      // The pair list places bold ahead of italic, so the full
+      // wrapper is removed at once.
+      const text = '**hi**\n';
+      expect(
+        unwrapInlineFormattingLinesIn(text, 0, text.length).text,
+        'hi\n',
+      );
+    });
+
+    test('repeated invocation steps nested wrappers outward', () {
+      // `**~~x~~**` → after one pass `~~x~~`, after two `x`.
+      const text = '**~~x~~**\n';
+      final once = unwrapInlineFormattingLinesIn(text, 0, text.length).text;
+      expect(once, '~~x~~\n');
+      final twice = unwrapInlineFormattingLinesIn(once, 0, once.length).text;
+      expect(twice, 'x\n');
+    });
+
+    test('non-wrapped lines pass through untouched', () {
+      const text = 'plain text\n';
+      expect(
+        unwrapInlineFormattingLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

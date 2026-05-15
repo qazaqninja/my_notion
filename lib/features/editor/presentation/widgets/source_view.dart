@@ -1031,6 +1031,10 @@ class _SourceViewState extends State<SourceView> {
         );
       case SlashAction.highlightLines:
         _applyLinesTransformAfterSlash(stripStart, caret, highlightLinesIn);
+      case SlashAction.unwrapInlineFormatting:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, unwrapInlineFormattingLinesIn,
+        );
     }
   }
 

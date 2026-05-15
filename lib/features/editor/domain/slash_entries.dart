@@ -155,6 +155,9 @@ enum SlashAction {
   strikethroughLines,
   /// Wrap every non-blank selected line in `==…==`.
   highlightLines,
+  /// Strip outer markdown-formatting marks (`**…**`, `*…*`, `~~…~~`,
+  /// `==…==`, `` `…` ``) from each line.
+  unwrapInlineFormatting,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -752,6 +755,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '==…==',
     action: SlashAction.highlightLines,
     keywords: ['highlight', 'mark', 'yellow', 'pandoc', 'wrap'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Unwrap inline formatting',
+    hint: '**a** → a',
+    action: SlashAction.unwrapInlineFormatting,
+    keywords: ['unwrap', 'strip', 'bold', 'italic', 'code', 'plain'],
   ),
   SlashEntry(
     icon: 'hash',

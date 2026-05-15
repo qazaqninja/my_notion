@@ -590,6 +590,44 @@ SortLinesResult highlightLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Strip the outer markdown-formatting marks from each selected line
+/// when the **entire** line is wrapped in one of the M909/M910
+/// wrappers. Recognises `**…**`, `*…*`, `~~…~~`, `==…==`, and
+/// `` `…` ``. Strips only one layer at a time so repeated invocations
+/// step nested wrappers outward.
+///
+/// Lines that aren't fully-wrapped pass through untouched, so a
+/// mixed-content selection is safe to invoke.
+SortLinesResult unwrapInlineFormattingLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      const pairs = <(String, String)>[
+        ('**', '**'),
+        ('~~', '~~'),
+        ('==', '=='),
+        ('*', '*'),
+        ('`', '`'),
+      ];
+      return [
+        for (final l in lines)
+          (() {
+            for (final pair in pairs) {
+              final open = pair.$1;
+              final close = pair.$2;
+              if (l.length >= open.length + close.length &&
+                  l.startsWith(open) &&
+                  l.endsWith(close)) {
+                return l.substring(open.length, l.length - close.length);
+              }
+            }
+            return l;
+          })(),
+      ];
+    });
+
 /// Convert a single line into `snake_case` — lowercase ASCII letters
 /// and digits, with non-alphanumeric runs collapsed to a single `_`.
 /// Leading/trailing underscores are trimmed. Empty / all-punctuation
