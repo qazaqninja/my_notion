@@ -1680,7 +1680,8 @@ class _WikiBadge extends StatelessWidget {
             ? 'wiki · stale'
             : 'wiki';
     final tooltip = [
-      if (owners.isNotEmpty) 'Owners: ${owners.join(", ")}',
+      if (owners.isNotEmpty)
+        '${owners.length == 1 ? "Owner" : "Owners"}: ${owners.join(", ")}',
       if (verified != null)
         'Verified ${verified.toIso8601String().substring(0, 10)}'
             '${days == 0 ? " (today)" : days == 1 ? " (1 day ago)" : " ($days days ago)"}',
