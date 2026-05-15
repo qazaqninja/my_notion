@@ -32,29 +32,33 @@ class _SidebarSearchState extends State<SidebarSearch> {
             widget.onTap == null ? null : (_) => setState(() => _hover = false),
         child: GestureDetector(
           onTap: widget.onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: tokens.inputBg,
-              border: Border.all(
-                  color: _hover ? tokens.accent : tokens.divider2,
-                  width: 0.5),
-              borderRadius: const BorderRadius.all(Radius.circular(6)),
-            ),
-            child: Row(
-              children: [
-                QuillIcon('search',
-                    size: 13,
-                    strokeWidth: 1.8,
-                    color: _hover ? tokens.text2 : tokens.text3),
-                const SizedBox(width: 7),
-                Text('Search',
-                    style: TextStyle(
-                        color: _hover ? tokens.text2 : tokens.text3,
-                        fontSize: 12.5)),
-                const Spacer(),
-                const Kbd('⌘K'),
-              ],
+          child: Tooltip(
+            message: 'Open command palette (⌘K)',
+            waitDuration: const Duration(milliseconds: 500),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: tokens.inputBg,
+                border: Border.all(
+                    color: _hover ? tokens.accent : tokens.divider2,
+                    width: 0.5),
+                borderRadius: const BorderRadius.all(Radius.circular(6)),
+              ),
+              child: Row(
+                children: [
+                  QuillIcon('search',
+                      size: 13,
+                      strokeWidth: 1.8,
+                      color: _hover ? tokens.text2 : tokens.text3),
+                  const SizedBox(width: 7),
+                  Text('Search',
+                      style: TextStyle(
+                          color: _hover ? tokens.text2 : tokens.text3,
+                          fontSize: 12.5)),
+                  const Spacer(),
+                  const Kbd('⌘K'),
+                ],
+              ),
             ),
           ),
         ),
