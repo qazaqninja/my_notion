@@ -533,7 +533,10 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _addUser(VaultLoaded state, String rawName) async {
     final name = rawName.trim();
     if (name.isEmpty) return;
-    if (state.workspace.users.any((u) => u.name == name)) return;
+    if (state.workspace.users.any((u) => u.name == name)) {
+      context.toastInfo('User already exists', sub: name);
+      return;
+    }
     final next = state.workspace.copyWith(users: [
       ...state.workspace.users,
       WorkspaceUser(name: name),
