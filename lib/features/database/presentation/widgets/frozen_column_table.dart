@@ -1048,18 +1048,15 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       if (v != null) values.add(v);
     }
     if (values.isEmpty) return null;
-    switch (op) {
-      case _Agg.sum:
-        return values.fold<num>(0, (a, b) => a + b);
-      case _Agg.avg:
-        return values.fold<num>(0, (a, b) => a + b) / values.length;
-      case _Agg.min:
-        return values.reduce((a, b) => a < b ? a : b);
-      case _Agg.max:
-        return values.reduce((a, b) => a > b ? a : b);
-      default:
-        return null;
-    }
+    return switch (op) {
+      _Agg.sum => values.fold<num>(0, (a, b) => a + b),
+      _Agg.avg => values.fold<num>(0, (a, b) => a + b) / values.length,
+      _Agg.min => values.reduce((a, b) => a < b ? a : b),
+      _Agg.max => values.reduce((a, b) => a > b ? a : b),
+      // none + count return earlier — those branches are unreachable
+      // here, but Dart needs an exhaustive arm.
+      _Agg.none || _Agg.count => null,
+    };
   }
 
   static bool _isEditable(ColumnType t) {

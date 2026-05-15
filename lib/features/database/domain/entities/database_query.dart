@@ -23,15 +23,17 @@ class FilterRule {
   final FilterOp op;
   final String? value;
 
-  bool needsValue() {
-    switch (op) {
-      case FilterOp.isEmpty:
-      case FilterOp.isNotEmpty:
-        return false;
-      default:
-        return true;
-    }
-  }
+  bool needsValue() => switch (op) {
+        FilterOp.isEmpty || FilterOp.isNotEmpty => false,
+        FilterOp.equals ||
+        FilterOp.notEquals ||
+        FilterOp.contains ||
+        FilterOp.gt ||
+        FilterOp.lt ||
+        FilterOp.gte ||
+        FilterOp.lte =>
+          true,
+      };
 }
 
 class SortRule {

@@ -289,30 +289,17 @@ class _Parser {
   }
 
   // Precedence: 1 || · 2 && · 3 ==/!= · 4 </<=/>/>= · 5 +/- · 6 */ · 7 unary
-  int _bp(_TT t) {
-    switch (t) {
-      case _TT.or:
-        return 1;
-      case _TT.and:
-        return 2;
-      case _TT.eq:
-      case _TT.neq:
-        return 3;
-      case _TT.lt:
-      case _TT.lte:
-      case _TT.gt:
-      case _TT.gte:
-        return 4;
-      case _TT.plus:
-      case _TT.minus:
-        return 5;
-      case _TT.star:
-      case _TT.slash:
-        return 6;
-      default:
-        return 0;
-    }
-  }
+  int _bp(_TT t) => switch (t) {
+        _TT.or => 1,
+        _TT.and => 2,
+        _TT.eq || _TT.neq => 3,
+        _TT.lt || _TT.lte || _TT.gt || _TT.gte => 4,
+        _TT.plus || _TT.minus => 5,
+        _TT.star || _TT.slash => 6,
+        // Tokens that aren't binary ops (identifiers, parens, EOF, etc.)
+        // bind at 0 so the Pratt loop bails out.
+        _ => 0,
+      };
 
   _Node _expr(int minBp) {
     var lhs = _atom();

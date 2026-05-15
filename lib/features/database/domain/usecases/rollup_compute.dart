@@ -129,18 +129,17 @@ class RollupCompute {
           if (n != null) nums.add(n);
         }
         if (nums.isEmpty) return 0;
-        switch (agg) {
-          case RollupAgg.sum:
-            return nums.fold<num>(0, (a, b) => a + b);
-          case RollupAgg.avg:
-            return nums.fold<num>(0, (a, b) => a + b) / nums.length;
-          case RollupAgg.min:
-            return nums.reduce((a, b) => a < b ? a : b);
-          case RollupAgg.max:
-            return nums.reduce((a, b) => a > b ? a : b);
-          default:
-            return 0;
-        }
+        return switch (agg) {
+          RollupAgg.sum => nums.fold<num>(0, (a, b) => a + b),
+          RollupAgg.avg =>
+            nums.fold<num>(0, (a, b) => a + b) / nums.length,
+          RollupAgg.min => nums.reduce((a, b) => a < b ? a : b),
+          RollupAgg.max => nums.reduce((a, b) => a > b ? a : b),
+          // count + list are handled by the enclosing switch above;
+          // the inner switch only reaches here for the four numeric
+          // aggregates, but Dart needs an exhaustive arm.
+          RollupAgg.count || RollupAgg.list => 0,
+        };
     }
   }
 }
