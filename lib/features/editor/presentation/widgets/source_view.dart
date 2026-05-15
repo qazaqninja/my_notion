@@ -1019,6 +1019,12 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, constantCaseLinesIn,
         );
+      case SlashAction.boldLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, boldLinesIn);
+      case SlashAction.italicLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, italicLinesIn);
+      case SlashAction.codeLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, codeLinesIn);
     }
   }
 

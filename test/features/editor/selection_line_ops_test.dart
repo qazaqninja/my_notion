@@ -1456,6 +1456,39 @@ void main() {
     });
   });
 
+  group('boldLinesIn / italicLinesIn / codeLinesIn', () {
+    test('wraps non-blank lines in ** ** ** for bold', () {
+      const text = 'foo\nbar\n';
+      final r = boldLinesIn(text, 0, text.length);
+      expect(r.text, '**foo**\n**bar**\n');
+    });
+
+    test('wraps non-blank lines in * * * for italic', () {
+      const text = 'foo\nbar\n';
+      final r = italicLinesIn(text, 0, text.length);
+      expect(r.text, '*foo*\n*bar*\n');
+    });
+
+    test('wraps non-blank lines in backticks for code', () {
+      const text = 'foo\nbar\n';
+      final r = codeLinesIn(text, 0, text.length);
+      expect(r.text, '`foo`\n`bar`\n');
+    });
+
+    test('blank lines stay blank for all three wrappers', () {
+      const text = 'a\n\nb\n';
+      expect(boldLinesIn(text, 0, text.length).text, '**a**\n\n**b**\n');
+      expect(italicLinesIn(text, 0, text.length).text, '*a*\n\n*b*\n');
+      expect(codeLinesIn(text, 0, text.length).text, '`a`\n\n`b`\n');
+    });
+
+    test('empty input is a no-op for all three', () {
+      expect(boldLinesIn('', 0, 0).text, '');
+      expect(italicLinesIn('', 0, 0).text, '');
+      expect(codeLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

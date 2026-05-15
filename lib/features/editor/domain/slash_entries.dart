@@ -145,6 +145,12 @@ enum SlashAction {
   pascalCaseLines,
   /// Convert every selected line to `CONSTANT_CASE`.
   constantCaseLines,
+  /// Wrap every non-blank selected line in `**…**`.
+  boldLines,
+  /// Wrap every non-blank selected line in `*…*`.
+  italicLines,
+  /// Wrap every non-blank selected line in `` `…` ``.
+  codeLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -707,6 +713,27 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'A_B_C',
     action: SlashAction.constantCaseLines,
     keywords: ['constant', 'case', 'screaming', 'snake', 'env', 'macro'],
+  ),
+  SlashEntry(
+    icon: 'bold',
+    label: 'Wrap each line in bold',
+    hint: '**…**',
+    action: SlashAction.boldLines,
+    keywords: ['bold', 'strong', 'wrap', 'stars'],
+  ),
+  SlashEntry(
+    icon: 'italic',
+    label: 'Wrap each line in italic',
+    hint: '*…*',
+    action: SlashAction.italicLines,
+    keywords: ['italic', 'em', 'wrap', 'star'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'Wrap each line in inline code',
+    hint: '`…`',
+    action: SlashAction.codeLines,
+    keywords: ['code', 'mono', 'backtick', 'wrap', 'inline'],
   ),
   SlashEntry(
     icon: 'hash',

@@ -540,6 +540,36 @@ SortLinesResult dedupeLinesIn(String text, int start, int end) =>
 SortLinesResult reverseLinesIn(String text, int start, int end) =>
     _transformLinesIn(text, start, end, (lines) => lines.reversed.toList());
 
+/// Wrap each non-blank selected line in `**…**` so its contents
+/// render bold. Blank lines stay blank.
+SortLinesResult boldLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else '**$l**',
+      ];
+    });
+
+/// Wrap each non-blank selected line in `*…*` so its contents
+/// render italic. Blank lines stay blank.
+SortLinesResult italicLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else '*$l*',
+      ];
+    });
+
+/// Wrap each non-blank selected line in `` `…` `` so its contents
+/// render as inline code. Blank lines stay blank.
+SortLinesResult codeLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else '`$l`',
+      ];
+    });
+
 /// Convert a single line into `snake_case` — lowercase ASCII letters
 /// and digits, with non-alphanumeric runs collapsed to a single `_`.
 /// Leading/trailing underscores are trimmed. Empty / all-punctuation
