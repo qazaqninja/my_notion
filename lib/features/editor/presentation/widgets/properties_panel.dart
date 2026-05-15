@@ -53,9 +53,10 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         border: Border(left: BorderSide(color: tokens.divider2, width: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: tokens.isDark
-                ? Colors.black.withValues(alpha: 0.35)
-                : Colors.black.withValues(alpha: 0.06),
+            color: Theme.of(context)
+                .colorScheme
+                .shadow
+                .withValues(alpha: tokens.isDark ? 0.35 : 0.06),
             blurRadius: 28,
             offset: const Offset(-8, 0),
           ),
@@ -647,9 +648,10 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
                 borderRadius: const BorderRadius.all(Radius.circular(3)),
               ),
               child: on
-                  ? const Center(
-                      child:
-                          Icon(Icons.check, size: 12, color: Colors.white),
+                  ? Center(
+                      child: Icon(Icons.check,
+                          size: 12,
+                          color: Theme.of(context).colorScheme.onPrimary),
                     )
                   : null,
             ),
@@ -853,7 +855,7 @@ class _AddFieldFormState extends State<_AddFieldForm> {
                           fontWeight: FontWeight.w500,
                           color: _keyCtl.text.trim().isEmpty || duplicate
                               ? tokens.text3
-                              : Colors.white,
+                              : Theme.of(context).colorScheme.onPrimary,
                         ),
                       ),
                     ),
@@ -983,12 +985,13 @@ class _YamlEditorState extends State<_YamlEditor> {
                           borderRadius:
                               const BorderRadius.all(Radius.circular(5)),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Apply',
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white),
+                              color:
+                                  Theme.of(context).colorScheme.onPrimary),
                         ),
                       ),
                     ),

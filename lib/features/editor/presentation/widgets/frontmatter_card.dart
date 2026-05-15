@@ -52,9 +52,11 @@ class _FrontmatterCardState extends State<FrontmatterCard> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: tokens.isDark
-                        ? Colors.white.withValues(alpha: 0.02)
-                        : Colors.black.withValues(alpha: 0.015),
+                    // Inverse-of-bg wash so the chrome reads as a band
+                    // against the surface; `tokens.text` is dark on
+                    // light + light on dark, evaluating identically.
+                    color: tokens.text
+                        .withValues(alpha: tokens.isDark ? 0.02 : 0.015),
                     border: _expanded
                         ? Border(bottom: BorderSide(color: tokens.divider, width: 0.5))
                         : null,
