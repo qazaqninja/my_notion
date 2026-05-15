@@ -513,11 +513,26 @@ class TreeRoot extends StatelessWidget {
                 ),
               if (state.tree.topLevel.isNotEmpty && visible.isEmpty)
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Text(
-                    'No matches',
-                    style: TextStyle(fontSize: 11.5, color: tokens.text3),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'No matches',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: tokens.text2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Clear the filter to see the full tree.',
+                        style:
+                            TextStyle(fontSize: 11, color: tokens.text3),
+                      ),
+                    ],
                   ),
                 ),
               for (final node in visible)
