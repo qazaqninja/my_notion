@@ -643,10 +643,13 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
               const SizedBox(width: 10),
               Text(label, style: mono(fontSize: 11, color: fg)),
               const SizedBox(width: 12),
-              Text(
-                stripMdExtension(e.relativePath),
-                style: mono(fontSize: 11, color: tokens.text3),
-                overflow: TextOverflow.ellipsis,
+              Flexible(
+                child: Text(
+                  stripMdExtension(e.relativePath),
+                  style: mono(fontSize: 11, color: tokens.text3),
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.right,
+                ),
               ),
             ],
           ),
