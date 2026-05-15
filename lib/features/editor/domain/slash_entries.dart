@@ -96,6 +96,10 @@ enum SlashAction {
   /// Convert hex values (with or without `0x`) on every selected
   /// line to decimal.
   hexToDecimal,
+  /// Reverse the characters of every selected line in place.
+  reverseCharactersInLine,
+  /// Apply the ROT13 cipher per line (its own inverse).
+  rot13,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -532,6 +536,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '0xff → 255',
     action: SlashAction.hexToDecimal,
     keywords: ['hex', 'hexadecimal', 'decimal', 'convert', 'base16'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Reverse characters per line',
+    hint: 'abc → cba',
+    action: SlashAction.reverseCharactersInLine,
+    keywords: ['reverse', 'mirror', 'flip', 'characters', 'chars', 'palindrome'],
+  ),
+  SlashEntry(
+    icon: 'lock',
+    label: 'ROT13',
+    hint: 'a ↔ n, N ↔ A',
+    action: SlashAction.rot13,
+    keywords: ['rot13', 'cipher', 'caesar', 'encode', 'decode', 'fun'],
   ),
   SlashEntry(
     icon: 'edit',

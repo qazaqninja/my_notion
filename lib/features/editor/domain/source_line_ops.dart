@@ -610,6 +610,45 @@ SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2})
   );
 }
 
+/// Reverse the characters of each selected line in place. Different
+/// from [reverseLinesIn], which reverses the **order** of lines.
+/// Useful for the classic "reveal hidden text" gag and for testing
+/// palindromes.
+SortLinesResult reverseCharactersInLineIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text,
+      start,
+      end,
+      (lines) => [for (final l in lines) l.split('').reversed.join()],
+    );
+
+/// Apply the ROT13 cipher to every selected line — each ASCII letter
+/// is rotated by 13 positions, so a→n, n→a, A→N, N→A. Non-letters
+/// pass through unchanged. ROT13 is its own inverse — applying it
+/// twice returns the original text.
+String rot13(String s) {
+  final out = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    final c = s.codeUnitAt(i);
+    if (c >= 0x41 && c <= 0x5a) {
+      // Uppercase A-Z.
+      out.writeCharCode(((c - 0x41 + 13) % 26) + 0x41);
+    } else if (c >= 0x61 && c <= 0x7a) {
+      // Lowercase a-z.
+      out.writeCharCode(((c - 0x61 + 13) % 26) + 0x61);
+    } else {
+      out.writeCharCode(c);
+    }
+  }
+  return out.toString();
+}
+
+/// Apply [rot13] per line over the selected block.
+SortLinesResult rot13LinesIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text, start, end, (lines) => [for (final l in lines) rot13(l)],
+    );
+
 /// URL-encode every non-blank selected line via `Uri.encodeComponent`
 /// so the value is safe to drop into a query string or path segment
 /// (spaces become `%20`, slashes `%2F`, etc.). Blank lines stay blank

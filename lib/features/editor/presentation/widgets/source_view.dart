@@ -947,6 +947,12 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, convertHexToDecimalLinesIn,
         );
+      case SlashAction.reverseCharactersInLine:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, reverseCharactersInLineIn,
+        );
+      case SlashAction.rot13:
+        _applyLinesTransformAfterSlash(stripStart, caret, rot13LinesIn);
     }
   }
 

@@ -919,6 +919,52 @@ void main() {
     });
   });
 
+  group('reverseCharactersInLineIn', () {
+    test('reverses characters on each line independently', () {
+      const text = 'hello\nworld\n';
+      final r = reverseCharactersInLineIn(text, 0, text.length);
+      expect(r.text, 'olleh\ndlrow\n');
+    });
+
+    test('palindromes are invariant', () {
+      const text = 'racecar\n';
+      expect(reverseCharactersInLineIn(text, 0, text.length).text, text);
+    });
+
+    test('double-reverse is identity', () {
+      const text = 'one\ntwo\nthree\n';
+      final once = reverseCharactersInLineIn(text, 0, text.length);
+      final twice = reverseCharactersInLineIn(once.text, 0, once.text.length);
+      expect(twice.text, text);
+    });
+  });
+
+  group('rot13 / rot13LinesIn', () {
+    test('rot13 rotates lowercase a..z by 13', () {
+      expect(rot13('abc'), 'nop');
+      expect(rot13('hello'), 'uryyb');
+    });
+
+    test('rot13 rotates uppercase preserving case', () {
+      expect(rot13('Hello, World!'), 'Uryyb, Jbeyq!');
+    });
+
+    test('non-letters pass through unchanged', () {
+      expect(rot13('1234 / "abc"'), '1234 / "nop"');
+    });
+
+    test('rot13 is its own inverse', () {
+      const s = 'The quick brown fox jumps over the lazy dog.';
+      expect(rot13(rot13(s)), s);
+    });
+
+    test('rot13LinesIn applies per line', () {
+      const text = 'abc\nxyz\n';
+      final r = rot13LinesIn(text, 0, text.length);
+      expect(r.text, 'nop\nklm\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
