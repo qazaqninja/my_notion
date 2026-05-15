@@ -776,7 +776,7 @@ class _PropertiesPopoverState extends State<PropertiesPopover> {
 
 typedef PropertiesPopoverResult = ({Set<String>? visible});
 
-class _PropertyRow extends StatelessWidget {
+class _PropertyRow extends StatefulWidget {
   const _PropertyRow({
     required this.label,
     required this.visible,
@@ -790,14 +790,31 @@ class _PropertyRow extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_PropertyRow> createState() => _PropertyRowState();
+}
+
+class _PropertyRowState extends State<_PropertyRow> {
+  bool _hover = false;
+
+  String get label => widget.label;
+  bool get visible => widget.visible;
+  bool get locked => widget.locked;
+
+  @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return GestureDetector(
-      onTap: locked ? null : onTap,
-      child: MouseRegion(
-        cursor: locked ? SystemMouseCursors.basic : SystemMouseCursors.click,
+    return MouseRegion(
+      cursor: locked ? SystemMouseCursors.basic : SystemMouseCursors.click,
+      onEnter: locked ? null : (_) => setState(() => _hover = true),
+      onExit: locked ? null : (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: locked ? null : widget.onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+          decoration: BoxDecoration(
+            color: _hover ? tokens.hover : null,
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+          ),
           child: Row(
             children: [
               Container(
