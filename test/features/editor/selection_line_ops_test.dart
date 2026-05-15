@@ -1885,6 +1885,41 @@ void main() {
     });
   });
 
+  group('collapseBlankLinesIn / dropBlankLinesIn', () {
+    test('collapse keeps one blank between 2+ consecutive blanks', () {
+      const text = 'a\n\n\n\nb\n';
+      final r = collapseBlankLinesIn(text, 0, text.length);
+      expect(r.text, 'a\n\nb\n');
+    });
+
+    test('collapse leaves single blanks alone', () {
+      const text = 'a\n\nb\n';
+      expect(collapseBlankLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('drop removes every blank line', () {
+      const text = 'a\n\n\nb\n\nc\n';
+      final r = dropBlankLinesIn(text, 0, text.length);
+      expect(r.text, 'a\nb\nc\n');
+    });
+
+    test('drop is a no-op when there are no blank lines', () {
+      const text = 'a\nb\nc\n';
+      expect(dropBlankLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('whitespace-only lines are treated as blank', () {
+      const text = 'a\n   \n\t\nb\n';
+      expect(collapseBlankLinesIn(text, 0, text.length).text, 'a\n   \nb\n');
+      expect(dropBlankLinesIn(text, 0, text.length).text, 'a\nb\n');
+    });
+
+    test('empty input is a no-op for both', () {
+      expect(collapseBlankLinesIn('', 0, 0).text, '');
+      expect(dropBlankLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

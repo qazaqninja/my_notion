@@ -183,6 +183,10 @@ enum SlashAction {
   /// Collapse runs of internal spaces/tabs to a single space on
   /// every selected line.
   collapseSpaces,
+  /// Collapse 2+ consecutive blank lines to a single blank line.
+  collapseBlankLines,
+  /// Drop every blank line in the selection (stronger compaction).
+  dropBlankLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -864,6 +868,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a   b → a b',
     action: SlashAction.collapseSpaces,
     keywords: ['collapse', 'spaces', 'whitespace', 'normalize', 'tabs'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Collapse blank lines',
+    hint: '⊞⊞⊞ → ⊞',
+    action: SlashAction.collapseBlankLines,
+    keywords: ['collapse', 'blank', 'empty', 'paragraph', 'compact'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Drop all blank lines',
+    hint: 'compact',
+    action: SlashAction.dropBlankLines,
+    keywords: ['drop', 'blank', 'empty', 'remove', 'compact', 'strip'],
   ),
   SlashEntry(
     icon: 'hash',

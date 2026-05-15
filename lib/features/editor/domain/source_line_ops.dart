@@ -970,6 +970,35 @@ SortLinesResult trimTrailingWhitespaceIn(String text, int start, int end) =>
       (lines) => [for (final l in lines) l.replaceFirst(RegExp(r'[ \t]+$'), '')],
     );
 
+/// Collapse runs of 2+ consecutive blank lines in the selected
+/// block down to a single blank line. Common cleanup when paste
+/// introduces extra paragraph breaks or when a document accumulates
+/// "decorative" whitespace. Non-blank lines are untouched; the
+/// trailing newline after the selection is preserved.
+SortLinesResult collapseBlankLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final out = <String>[];
+      var prevBlank = false;
+      for (final l in lines) {
+        final blank = l.trim().isEmpty;
+        if (blank && prevBlank) continue;
+        out.add(l);
+        prevBlank = blank;
+      }
+      return out;
+    });
+
+/// Drop every blank line in the selected block. The complementary
+/// "stronger" variant of [collapseBlankLinesIn] — useful when you
+/// want a pure compact form with zero vertical breathing room.
+SortLinesResult dropBlankLinesIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text,
+      start,
+      end,
+      (lines) => [for (final l in lines) if (l.trim().isNotEmpty) l],
+    );
+
 /// Collapse internal runs of spaces and tabs on every selected
 /// line into a single space. Useful when pasting text whose
 /// formatting used multi-space alignment that no longer makes sense
