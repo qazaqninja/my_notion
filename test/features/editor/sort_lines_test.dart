@@ -667,6 +667,79 @@ void main() {
     });
   });
 
+  group('decimalToRoman / romanToDecimal', () {
+    test('basic decimal → roman', () {
+      expect(decimalToRoman(1), 'I');
+      expect(decimalToRoman(4), 'IV');
+      expect(decimalToRoman(9), 'IX');
+      expect(decimalToRoman(40), 'XL');
+      expect(decimalToRoman(90), 'XC');
+      expect(decimalToRoman(400), 'CD');
+      expect(decimalToRoman(900), 'CM');
+      expect(decimalToRoman(1994), 'MCMXCIV');
+      expect(decimalToRoman(3999), 'MMMCMXCIX');
+    });
+
+    test('out-of-range returns empty', () {
+      expect(decimalToRoman(0), '');
+      expect(decimalToRoman(-3), '');
+      expect(decimalToRoman(4000), '');
+    });
+
+    test('basic roman → decimal', () {
+      expect(romanToDecimal('I'), 1);
+      expect(romanToDecimal('IV'), 4);
+      expect(romanToDecimal('IX'), 9);
+      expect(romanToDecimal('LVIII'), 58);
+      expect(romanToDecimal('MCMXCIV'), 1994);
+    });
+
+    test('accepts mixed case', () {
+      expect(romanToDecimal('mcmxciv'), 1994);
+      expect(romanToDecimal('McMxCiV'), 1994);
+    });
+
+    test('non-roman returns null', () {
+      expect(romanToDecimal('hello'), isNull);
+      expect(romanToDecimal('123'), isNull);
+      expect(romanToDecimal(''), isNull);
+    });
+
+    test('round-trips for 1..3999 sample', () {
+      for (final n in [1, 7, 14, 49, 99, 500, 888, 1234, 3000, 3999]) {
+        final r = decimalToRoman(n);
+        expect(romanToDecimal(r), n, reason: 'round-trip for $n via $r');
+      }
+    });
+  });
+
+  group('convertDecimalToRomanLinesIn / convertRomanToDecimalLinesIn', () {
+    test('converts only numeric lines, leaves others untouched', () {
+      const text = '1\nhello\n7\nworld\n';
+      final r = convertDecimalToRomanLinesIn(text, 0, text.length);
+      expect(r.text, 'I\nhello\nVII\nworld\n');
+    });
+
+    test('reverse: converts only roman lines', () {
+      const text = 'I\nhello\nVII\nworld\n';
+      final r = convertRomanToDecimalLinesIn(text, 0, text.length);
+      expect(r.text, '1\nhello\n7\nworld\n');
+    });
+
+    test('decimal-roman-decimal round-trip is identity for numeric lines', () {
+      const text = '1\n7\n42\n3999\n';
+      final asRoman = convertDecimalToRomanLinesIn(text, 0, text.length).text;
+      final back = convertRomanToDecimalLinesIn(asRoman, 0, asRoman.length).text;
+      expect(back, text);
+    });
+
+    test('out-of-range decimals stay untouched', () {
+      const text = '0\n4000\n7\n';
+      final r = convertDecimalToRomanLinesIn(text, 0, text.length);
+      expect(r.text, '0\n4000\nVII\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

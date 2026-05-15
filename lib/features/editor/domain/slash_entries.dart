@@ -71,6 +71,11 @@ enum SlashAction {
   /// Convert every leading 2-space indent on every selected line
   /// into a tab. Inverse of [tabsToSpaces] (indent-only).
   spacesToTabs,
+  /// Convert decimal integers on every selected line to Roman
+  /// numerals (1..3999). Non-numeric lines stay untouched.
+  decimalToRoman,
+  /// Convert Roman numerals on every selected line to decimal.
+  romanToDecimal,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -437,6 +442,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '"  " → \\t',
     action: SlashAction.spacesToTabs,
     keywords: ['tab', 'spaces', 'compact', 'convert', 'indent'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Decimal → Roman',
+    hint: '7 → VII',
+    action: SlashAction.decimalToRoman,
+    keywords: ['roman', 'numeral', 'decimal', 'convert', 'number'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Roman → decimal',
+    hint: 'VII → 7',
+    action: SlashAction.romanToDecimal,
+    keywords: ['roman', 'numeral', 'decimal', 'convert', 'number'],
   ),
   SlashEntry(
     icon: 'edit',

@@ -609,6 +609,88 @@ SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2})
   );
 }
 
+/// Convert a positive decimal integer (1..3999) into its Roman
+/// numeral representation. Returns the empty string when out of
+/// range. Exposed for testing; production callers go through
+/// [convertDecimalToRomanLinesIn].
+String decimalToRoman(int n) {
+  if (n < 1 || n > 3999) return '';
+  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+  final buf = StringBuffer();
+  var rem = n;
+  for (var i = 0; i < vals.length; i++) {
+    while (rem >= vals[i]) {
+      buf.write(syms[i]);
+      rem -= vals[i];
+    }
+  }
+  return buf.toString();
+}
+
+/// Convert a Roman-numeral string into its decimal value. Returns
+/// `null` for the empty string and for any input containing a
+/// non-Roman character. Accepts mixed case.
+int? romanToDecimal(String roman) {
+  if (roman.isEmpty) return null;
+  const map = {
+    'I': 1, 'V': 5, 'X': 10, 'L': 50,
+    'C': 100, 'D': 500, 'M': 1000,
+  };
+  final upper = roman.toUpperCase();
+  var total = 0;
+  for (var i = 0; i < upper.length; i++) {
+    final v = map[upper[i]];
+    if (v == null) return null;
+    final next = i + 1 < upper.length ? map[upper[i + 1]] : null;
+    if (next != null && next > v) {
+      total += next - v;
+      i++;
+    } else {
+      total += v;
+    }
+  }
+  return total;
+}
+
+/// Convert every selected line that parses as a decimal integer
+/// (1..3999) into its Roman numeral form. Non-numeric lines are
+/// left untouched.
+SortLinesResult convertDecimalToRomanLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final n = int.tryParse(l.trim());
+            if (n == null || n < 1 || n > 3999) return l;
+            return decimalToRoman(n);
+          })(),
+      ];
+    });
+
+/// Convert every selected line that parses as a Roman numeral into
+/// its decimal form. Non-Roman lines stay untouched.
+SortLinesResult convertRomanToDecimalLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final stripped = l.trim();
+            if (stripped.isEmpty) return l;
+            final d = romanToDecimal(stripped);
+            return d == null ? l : d.toString();
+          })(),
+      ];
+    });
+
 /// Convert each run of [width] **leading** spaces on every selected
 /// line into a single tab character. Trailing/inline spaces are
 /// left alone — only the indent is converted, mirroring the

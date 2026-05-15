@@ -919,6 +919,14 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, tabsToSpacesIn);
       case SlashAction.spacesToTabs:
         _applyLinesTransformAfterSlash(stripStart, caret, spacesToTabsIn);
+      case SlashAction.decimalToRoman:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, convertDecimalToRomanLinesIn,
+        );
+      case SlashAction.romanToDecimal:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, convertRomanToDecimalLinesIn,
+        );
     }
   }
 
