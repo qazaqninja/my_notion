@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../../../../core/platform/reveal.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/side_item.dart';
 import '../../../editor/presentation/widgets/page_history_dialog.dart';
@@ -142,19 +143,16 @@ class TreeNodeWidget extends StatelessWidget {
       BuildContext context, VaultFolder f, Offset pos) async {
     final state = context.read<VaultBloc>().state;
     if (state is! VaultLoaded) return;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final selected = await showMenu<String>(
+    final selected = await showQuillMenu<String>(
       context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromLTWH(pos.dx, pos.dy, 1, 1),
-        Offset.zero & overlay.size,
-      ),
+      position: quillMenuPosition(context, pos),
+      width: 232,
       items: const [
-        PopupMenuItem(value: 'subpage', child: Text('New page here')),
-        PopupMenuItem(value: 'subfolder', child: Text('New subfolder…')),
-        PopupMenuItem(value: 'search', child: Text('Search this folder…')),
-        PopupMenuItem(value: 'copy-path', child: Text('Copy folder path')),
-        PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
+        QuillMenuItem(icon: 'plus', label: 'New page here', value: 'subpage'),
+        QuillMenuItem(icon: 'folder', label: 'New subfolder…', value: 'subfolder'),
+        QuillMenuItem(icon: 'search', label: 'Search this folder…', value: 'search'),
+        QuillMenuItem(icon: 'link', label: 'Copy folder path', value: 'copy-path'),
+        QuillMenuItem(icon: 'reveal', label: 'Reveal in Finder', value: 'reveal'),
       ],
     );
     if (!context.mounted) return;
@@ -168,101 +166,64 @@ class TreeNodeWidget extends StatelessWidget {
       cubit.setQuery('path:${f.relativePath}/');
     } else if (selected == 'copy-path') {
       final path = p.join(state.rootPath, f.relativePath);
-      final messenger = ScaffoldMessenger.maybeOf(context);
       await Clipboard.setData(ClipboardData(text: path));
-      messenger?.showSnackBar(
-        SnackBar(
-            content: Text('Copied $path'),
-            duration: const Duration(seconds: 2)),
-      );
+      if (context.mounted) context.toastSuccess('Copied path', sub: path, subMono: true);
     } else if (selected == 'reveal') {
       final path = p.join(state.rootPath, f.relativePath);
       final ok = await Reveal.show(path);
       if (!ok && context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text('Could not reveal $path')),
-        );
+        context.toastError('Could not reveal', sub: path, subMono: true);
       }
     }
   }
 
   Future<void> _promptNewSubfolder(BuildContext context,
       {required String parentFolder}) async {
-    final controller = TextEditingController();
     final bloc = context.read<VaultBloc>();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New subfolder'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-              hintText: parentFolder.isEmpty
-                  ? 'Folder name'
-                  : 'Folder name  ·  in $parentFolder/'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final name = await showQuillPrompt(
+      context,
+      title: 'New subfolder',
+      icon: 'folder',
+      label: 'Folder name',
+      hint: parentFolder.isEmpty ? null : 'in $parentFolder/',
+      confirmLabel: 'Create',
     );
-    if (name == null || name.trim().isEmpty) return;
-    final trimmed = name.trim();
-    bloc.add(CreateFolder(parentFolder: parentFolder, name: trimmed));
+    if (name == null || name.isEmpty) return;
+    bloc.add(CreateFolder(parentFolder: parentFolder, name: name));
     if (!context.mounted) return;
-    final fullPath =
-        parentFolder.isEmpty ? trimmed : '$parentFolder/$trimmed';
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('Created folder $fullPath'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    final fullPath = parentFolder.isEmpty ? name : '$parentFolder/$name';
+    context.toastSuccess('Created folder', sub: fullPath, subMono: true);
   }
 
   Future<void> _showFileMenu(
       BuildContext context, VaultFile fl, Offset pos) async {
     final state = context.read<VaultBloc>().state;
     if (state is! VaultLoaded) return;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final selected = await showMenu<String>(
+    final pinned = state.workspace.favorites.contains(fl.ulid);
+    final selected = await showQuillMenu<String>(
       context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromLTWH(pos.dx, pos.dy, 1, 1),
-        Offset.zero & overlay.size,
-      ),
+      position: quillMenuPosition(context, pos),
+      width: 244,
       items: [
-        const PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
-        const PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
-        const PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
-        const PopupMenuItem(value: 'copy-path', child: Text('Copy file path')),
-        const PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
-        const PopupMenuItem(value: 'rename', child: Text('Rename file…')),
-        const PopupMenuItem(value: 'history', child: Text('Page history')),
-        PopupMenuItem(
+        const QuillMenuItem(icon: 'reveal', label: 'Reveal in Finder', hint: '⌘⇧R', value: 'reveal'),
+        const QuillMenuItem(icon: 'link', label: 'Copy ULID', hint: '⌘L', value: 'copy-ulid'),
+        const QuillMenuItem(icon: 'link', label: 'Copy [[link]]', value: 'copy-link'),
+        const QuillMenuItem(icon: 'folder', label: 'Copy file path', value: 'copy-path'),
+        const QuillMenuItem(icon: 'note', label: 'Duplicate page', hint: '⌘D', value: 'duplicate'),
+        const QuillMenuItem(icon: 'edit', label: 'Rename file…', hint: 'F2', value: 'rename'),
+        const QuillMenuItem(icon: 'clock', label: 'Page history', value: 'history'),
+        QuillMenuItem(
+          icon: 'pin',
+          label: pinned ? 'Unpin from favorites' : 'Pin to favorites',
           value: 'pin',
-          child: Text(
-            state.workspace.favorites.contains(fl.ulid)
-                ? 'Unpin from favorites'
-                : 'Pin to favorites',
-          ),
         ),
-        const PopupMenuDivider(),
-        const PopupMenuItem(
+        QuillMenuItem.separator<String>(),
+        const QuillMenuItem(
+          icon: 'trash',
+          label: 'Move to trash',
+          hint: '⌫',
+          danger: true,
           value: 'trash',
-          child: Text(
-            'Move to trash',
-            style: TextStyle(color: Color(0xFFCB5A4F)),
-          ),
         ),
       ],
     );
@@ -271,35 +232,21 @@ class TreeNodeWidget extends StatelessWidget {
       final path = p.join(state.rootPath, fl.relativePath);
       final ok = await Reveal.show(path);
       if (!ok && context.mounted) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text('Could not reveal $path')),
-        );
+        context.toastError('Could not reveal', sub: path, subMono: true);
       }
     } else if (selected == 'copy-ulid') {
       await _copyUlid(context, fl.ulid);
     } else if (selected == 'copy-link') {
       if (fl.ulid.isEmpty) return;
-      final messenger = ScaffoldMessenger.maybeOf(context);
       await Clipboard.setData(ClipboardData(text: '[[${fl.ulid}]]'));
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text('Copied [[${fl.ulid}]]'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      if (context.mounted) context.toastSuccess('Copied [[${fl.ulid}]]', subMono: true);
     } else if (selected == 'copy-path') {
       final path = p.join(state.rootPath, fl.relativePath);
-      final messenger = ScaffoldMessenger.maybeOf(context);
       await Clipboard.setData(ClipboardData(text: path));
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text('Copied $path'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      if (context.mounted) context.toastSuccess('Copied path', sub: path, subMono: true);
     } else if (selected == 'history') {
-      await showDialog(
-        context: context,
+      await showQuillModal<void>(
+        context,
         builder: (_) => PageHistoryDialog(
           vaultRoot: state.rootPath,
           relativePath: fl.relativePath,
@@ -320,85 +267,65 @@ class TreeNodeWidget extends StatelessWidget {
       context.read<VaultBloc>().add(ToggleFavorite(fl.ulid));
     } else if (selected == 'trash') {
       if (fl.ulid.isEmpty) return;
+      final confirmed = await showQuillConfirm(
+        context,
+        title: 'Move to trash?',
+        sub:
+            'The .md file moves to .trash/<YYYY-MM>/${fl.relativePath}. '
+            'You can restore it from the Trash dialog later.',
+        icon: 'trash',
+        confirmLabel: 'Move to trash',
+        danger: true,
+      );
+      if (!confirmed || !context.mounted) return;
       context.read<VaultBloc>().add(MoveToTrash(fl.ulid));
     }
   }
 
   Future<void> _copyUlid(BuildContext context, String ulid) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
     if (ulid.isNotEmpty) {
       await Clipboard.setData(ClipboardData(text: ulid));
     }
-    messenger?.showSnackBar(SnackBar(
-        content: Text(ulid.isEmpty ? 'No ULID for this page' : 'Copied $ulid'),
-        duration: const Duration(seconds: 2)));
+    if (!context.mounted) return;
+    if (ulid.isEmpty) {
+      context.toastError('No ULID for this page');
+    } else {
+      context.toastSuccess('Copied $ulid', subMono: true);
+    }
   }
 
   Future<void> _promptRenameFile(BuildContext context, VaultFile fl) async {
     final basename = p.basenameWithoutExtension(fl.relativePath);
-    final controller = TextEditingController(text: basename);
-    controller.selection =
-        TextSelection(baseOffset: 0, extentOffset: basename.length);
     final bloc = context.read<VaultBloc>();
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rename file'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'new-name (without .md)',
-            helperText: 'ULID is unchanged — wikilinks survive the rename.',
-          ),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Rename'),
-          ),
-        ],
-      ),
+    final picked = await showQuillPrompt(
+      context,
+      title: 'Rename file',
+      icon: 'edit',
+      label: 'New name',
+      hint: 'ULID is unchanged — wikilinks survive the rename.',
+      placeholder: 'new-name (without .md)',
+      initial: basename,
+      confirmLabel: 'Rename',
     );
-    if (picked == null || picked.trim().isEmpty) return;
-    bloc.add(RenamePage(ulid: fl.ulid, newBasename: picked.trim()));
+    if (picked == null || picked.isEmpty) return;
+    bloc.add(RenamePage(ulid: fl.ulid, newBasename: picked));
   }
 
   Future<void> _promptNewSubpage(BuildContext context,
       {required String folderPath}) async {
-    final controller = TextEditingController();
     final router = GoRouter.of(context);
     final bloc = context.read<VaultBloc>();
-    final title = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New subpage'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(hintText: 'Title  ·  in $folderPath/'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final title = await showQuillPrompt(
+      context,
+      title: 'New subpage',
+      icon: 'file-md',
+      label: 'Title',
+      hint: 'in $folderPath/',
+      confirmLabel: 'Create',
     );
-    if (title == null || title.trim().isEmpty) return;
+    if (title == null || title.isEmpty) return;
     bloc.add(CreatePage(
-      title: title.trim(),
+      title: title,
       folderPath: folderPath,
       onCreated: (ulid) => router.go('/editor/$ulid'),
     ));

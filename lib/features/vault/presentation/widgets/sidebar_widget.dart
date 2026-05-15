@@ -11,6 +11,7 @@ import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/side_head.dart';
 import '../../../../shared/widgets/side_item.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
@@ -132,12 +133,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                             context
                                 .read<VaultBloc>()
                                 .add(const ReindexVault());
-                            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                              const SnackBar(
-                                content: Text('Reindexing vault…'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
+                            context.toastInfo('Reindexing vault…');
                           }
                         : null,
                     child: Tooltip(
@@ -305,8 +301,8 @@ class _SidebarWidgetState extends State<SidebarWidget> {
 
   Future<void> _openTrash(BuildContext context, VaultLoaded state) async {
     final bloc = context.read<VaultBloc>();
-    await showDialog<void>(
-      context: context,
+    await showQuillModal<void>(
+      context,
       builder: (_) => BlocProvider.value(
         value: bloc,
         child: TrashDialog(vaultRoot: state.rootPath),
@@ -322,34 +318,28 @@ class _SidebarWidgetState extends State<SidebarWidget> {
     await next.save(Directory(state.rootPath));
     if (!context.mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text(picked.isEmpty
-            ? 'Workspace icon cleared'
-            : 'Workspace icon: $picked'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess(picked.isEmpty
+        ? 'Workspace icon cleared'
+        : 'Workspace icon: $picked');
   }
 
   Future<void> _promptNewAtRoot(BuildContext context) async {
-    final kind = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        return SimpleDialog(
-          title: const Text('New at vault root'),
-          children: [
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, 'page'),
-              child: const Text('New page'),
-            ),
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, 'folder'),
-              child: const Text('New folder'),
-            ),
-          ],
-        );
-      },
+    final kind = await showQuillChoice<String>(
+      context,
+      title: 'New at vault root',
+      icon: 'plus',
+      options: const [
+        QuillChoiceOption<String>(
+          value: 'page',
+          label: 'New page',
+          icon: 'file-md',
+        ),
+        QuillChoiceOption<String>(
+          value: 'folder',
+          label: 'New folder',
+          icon: 'folder',
+        ),
+      ],
     );
     if (kind == null || !context.mounted) return;
     if (kind == 'page') {
@@ -360,71 +350,33 @@ class _SidebarWidgetState extends State<SidebarWidget> {
   }
 
   Future<void> _promptNewFolderAtRoot(BuildContext context) async {
-    final controller = TextEditingController();
     final bloc = context.read<VaultBloc>();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New folder'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Folder name'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final name = await showQuillPrompt(
+      context,
+      title: 'New folder',
+      icon: 'folder',
+      label: 'Folder name',
+      confirmLabel: 'Create',
     );
-    if (name == null || name.trim().isEmpty) return;
-    final trimmed = name.trim();
-    bloc.add(CreateFolder(parentFolder: '', name: trimmed));
+    if (name == null || name.isEmpty) return;
+    bloc.add(CreateFolder(parentFolder: '', name: name));
     if (!context.mounted) return;
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('Created folder $trimmed'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess('Created folder', sub: name, subMono: true);
   }
 
   Future<void> _promptNewPage(BuildContext context) async {
-    final controller = TextEditingController();
     final router = GoRouter.of(context);
     final bloc = context.read<VaultBloc>();
-    final title = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New page'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Title'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final title = await showQuillPrompt(
+      context,
+      title: 'New page',
+      icon: 'file-md',
+      label: 'Title',
+      confirmLabel: 'Create',
     );
-    if (title == null || title.trim().isEmpty) return;
+    if (title == null || title.isEmpty) return;
     bloc.add(CreatePage(
-      title: title.trim(),
+      title: title,
       onCreated: (ulid) => router.go('/editor/$ulid'),
     ));
   }
