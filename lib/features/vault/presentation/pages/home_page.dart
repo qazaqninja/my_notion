@@ -65,7 +65,7 @@ class HomePage extends StatelessWidget {
                     tokens: tokens,
                     icon: 'search',
                     title: 'Search & open',
-                    subtitle: 'Cmd+K to find any page or database.',
+                    subtitle: '⌘K to find any page or database.',
                     onTap: () =>
                         context.read<CommandPaletteCubit>().open(),
                   ),
@@ -92,7 +92,7 @@ class HomePage extends StatelessWidget {
                     tokens: tokens,
                     icon: 'plus',
                     title: 'New page',
-                    subtitle: 'Cmd+N — title prompt, then a fresh .md.',
+                    subtitle: '⌘N — title prompt, then a fresh .md.',
                     onTap: () => _promptNewPage(context),
                     disabled: state is! VaultLoaded,
                     disabledReason: 'Open a vault to create pages.',
