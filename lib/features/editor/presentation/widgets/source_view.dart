@@ -281,6 +281,12 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp(joinLineWithNext);
   }
 
+  /// Convert the current line to a heading of [level] (1, 2, or 3). Cmd+⇧+N.
+  void _setHeadingLevel(int level) {
+    final prefix = '${'#' * level} ';
+    _applyLineOp((text, caret) => applyLinePrefix(text, caret, prefix));
+  }
+
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
     final v = _controller.value;
@@ -739,6 +745,18 @@ class _SourceViewState extends State<SourceView> {
                       _joinLines,
                   const SingleActivator(LogicalKeyboardKey.keyJ,
                       control: true): _joinLines,
+                  const SingleActivator(LogicalKeyboardKey.digit1,
+                      meta: true, shift: true): () => _setHeadingLevel(1),
+                  const SingleActivator(LogicalKeyboardKey.digit1,
+                      control: true, shift: true): () => _setHeadingLevel(1),
+                  const SingleActivator(LogicalKeyboardKey.digit2,
+                      meta: true, shift: true): () => _setHeadingLevel(2),
+                  const SingleActivator(LogicalKeyboardKey.digit2,
+                      control: true, shift: true): () => _setHeadingLevel(2),
+                  const SingleActivator(LogicalKeyboardKey.digit3,
+                      meta: true, shift: true): () => _setHeadingLevel(3),
+                  const SingleActivator(LogicalKeyboardKey.digit3,
+                      control: true, shift: true): () => _setHeadingLevel(3),
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):

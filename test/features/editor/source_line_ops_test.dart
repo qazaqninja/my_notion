@@ -324,6 +324,40 @@ void main() {
     });
   });
 
+  group('applyLinePrefix', () {
+    test('promotes a plain line to # heading', () {
+      final r = applyLinePrefix('foo', 1, '# ');
+      expect(r.text, '# foo');
+      // Caret was at column 1 of "foo"; now at body col 1 (the 'o').
+      expect(r.caret, 3);
+    });
+
+    test('demotes # foo to ## foo by replacing the prefix', () {
+      final r = applyLinePrefix('# foo', 3, '## ');
+      expect(r.text, '## foo');
+    });
+
+    test('strips heading back to plain when prefix is empty', () {
+      final r = applyLinePrefix('## bar', 4, '');
+      expect(r.text, 'bar');
+    });
+
+    test('strips a bullet marker before applying new prefix', () {
+      final r = applyLinePrefix('- todo', 3, '> ');
+      expect(r.text, '> todo');
+    });
+
+    test('preserves leading indentation', () {
+      final r = applyLinePrefix('  hi', 3, '# ');
+      expect(r.text, '  # hi');
+    });
+
+    test('only touches the line under the caret', () {
+      final r = applyLinePrefix('one\ntwo\nthree', 4, '# ');
+      expect(r.text, 'one\n# two\nthree');
+    });
+  });
+
   group('joinLineWithNext', () {
     test('joins two plain lines with a single space', () {
       final r = joinLineWithNext('hello\nworld', 2);

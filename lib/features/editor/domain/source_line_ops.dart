@@ -114,6 +114,42 @@ LineOpResult toggleCommentLine(String text, int caret) {
   return LineOpResult(text: newText, caret: newCaret);
 }
 
+/// Replace the leading markdown block-marker on the line containing
+/// [caret] with [prefix]. Strips any existing `#{1,3} `, `- `, `* `,
+/// `<n>. `, `- [ ] `, `- [x] `, or `> ` prefix first so the conversion
+/// is idempotent — e.g. `# foo` → `applyLinePrefix(text, caret, '## ')`
+/// → `## foo`, never `## # foo`. Pass `''` to strip back to plain text.
+///
+/// The caret stays at the same column relative to the START of the
+/// line's content (not relative to the prefix), so a user pressing
+/// ⌘⇧2 while editing word 3 of a paragraph keeps editing word 3.
+LineOpResult applyLinePrefix(String text, int caret, String prefix) {
+  if (caret < 0) caret = 0;
+  if (caret > text.length) caret = text.length;
+  final lineStart =
+      caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
+  final nextNl = text.indexOf('\n', caret);
+  final lineEnd = nextNl == -1 ? text.length : nextNl;
+  final line = text.substring(lineStart, lineEnd);
+  // Strip leading whitespace before pattern matching so indented list
+  // items still get rewritten cleanly.
+  final indentLen = line.length - line.trimLeft().length;
+  final body = line.substring(indentLen);
+  final stripRe =
+      RegExp(r'^(#{1,3} |- \[ \] |- \[x\] |- |\* |\d+\. |> )');
+  final m = stripRe.firstMatch(body);
+  final stripped = m == null ? body : body.substring(m.end);
+  final newLine = '${line.substring(0, indentLen)}$prefix$stripped';
+  final newText = text.replaceRange(lineStart, lineEnd, newLine);
+  // Caret tracks the body. Compute the old column-of-body and re-apply
+  // it after the prefix swap. If caret was inside the old prefix it
+  // lands at body offset 0.
+  final oldBodyStart = lineStart + indentLen + (m?.end ?? 0);
+  final caretInBody = (caret - oldBodyStart).clamp(0, stripped.length);
+  final newCaret = lineStart + indentLen + prefix.length + caretInBody;
+  return LineOpResult(text: newText, caret: newCaret);
+}
+
 /// Smart-Enter continuation for markdown list lines. Inspect the
 /// portion of the current line BEFORE [caret]; if it's a recognised
 /// list item (`- `, `* `, `<n>. `, `- [ ] `, `- [x] `), return the
