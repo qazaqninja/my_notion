@@ -152,18 +152,24 @@ class _TagsPageState extends State<TagsPage> {
                               cubit.open();
                               cubit.setQuery('tag:${entries[i].key}');
                             },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                TagChip(
-                                  label: entries[i].key,
-                                  color: palette[i % palette.length],
-                                ),
-                                const SizedBox(width: 4),
-                                Text('${entries[i].value}',
-                                    style: mono(
-                                        fontSize: 11, color: tokens.text3)),
-                              ],
+                            child: Tooltip(
+                              message:
+                                  'Search pages tagged ${entries[i].key} (${entries[i].value} ${entries[i].value == 1 ? 'page' : 'pages'})',
+                              waitDuration:
+                                  const Duration(milliseconds: 500),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  TagChip(
+                                    label: entries[i].key,
+                                    color: palette[i % palette.length],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text('${entries[i].value}',
+                                      style: mono(
+                                          fontSize: 11, color: tokens.text3)),
+                                ],
+                              ),
                             ),
                           ),
                         ),
