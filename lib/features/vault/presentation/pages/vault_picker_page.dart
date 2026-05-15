@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
@@ -281,9 +282,9 @@ class VaultPickerPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFB66954).withValues(alpha: 0.08),
+                        color: kStatusDotRed.withValues(alpha: 0.08),
                         border: Border.all(
-                            color: const Color(0xFFB66954), width: 0.5),
+                            color: kStatusDotRed, width: 0.5),
                         borderRadius:
                             const BorderRadius.all(Radius.circular(6)),
                       ),
@@ -291,7 +292,7 @@ class VaultPickerPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(Icons.warning_amber_outlined,
-                              size: 18, color: Color(0xFFB66954)),
+                              size: 18, color: kStatusDotRed),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(state.message,

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -319,7 +320,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.warning_amber_outlined,
-                  size: 28, color: const Color(0xFFCB5A4F)),
+                  size: 28, color: kCalloutDanger),
               const SizedBox(height: 10),
               Text('Could not load database',
                   style: TextStyle(
