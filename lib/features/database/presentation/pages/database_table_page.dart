@@ -336,6 +336,9 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Icon(Icons.warning_amber_outlined,
+                  size: 28, color: const Color(0xFFCB5A4F)),
+              const SizedBox(height: 10),
               Text('Could not load database',
                   style: TextStyle(
                       fontSize: 17,
