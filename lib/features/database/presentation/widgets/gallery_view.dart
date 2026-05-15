@@ -484,25 +484,26 @@ class _CardState extends State<_Card> {
     final raw = '${row.cells['cover'] ?? ''}'.trim();
     if (raw.isEmpty) {
       return ImagePlaceholder(
-          label: 'cover · ${row.title.toLowerCase()}', height: height);
+          label: 'no cover · ${row.title.toLowerCase()}', height: height);
     }
-    final placeholder = ImagePlaceholder(
-        label: 'cover · ${row.title.toLowerCase()}', height: height);
+    final brokenPlaceholder = ImagePlaceholder(
+        label: 'cover not found · ${row.title.toLowerCase()}',
+        height: height);
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
       return Image.network(raw,
           height: height,
           width: double.infinity,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => placeholder);
+          errorBuilder: (_, __, ___) => brokenPlaceholder);
     }
     final state = context.read<VaultBloc>().state;
-    if (state is! VaultLoaded) return placeholder;
+    if (state is! VaultLoaded) return brokenPlaceholder;
     final resolved = raw.startsWith('/') ? raw : '${state.rootPath}/$raw';
     return Image.file(File(resolved),
         height: height,
         width: double.infinity,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => placeholder);
+        errorBuilder: (_, __, ___) => brokenPlaceholder);
   }
 
   Widget _rowIcon(DatabasePageRow row, QuillTokens tokens) {
