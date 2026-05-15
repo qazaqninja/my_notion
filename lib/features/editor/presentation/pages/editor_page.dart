@@ -1238,6 +1238,8 @@ class _EditorBodyState extends State<_EditorBody> {
                                     '${page.frontmatter.get('created_at') ?? ''}'.trim(),
                                 createdBy:
                                     '${page.frontmatter.get('created_by') ?? ''}'.trim(),
+                                lastEditedAt:
+                                    '${page.frontmatter.get('last_edited_at') ?? ''}'.trim(),
                                 lastEditedBy:
                                     '${page.frontmatter.get('last_edited_by') ?? ''}'.trim(),
                               ),
@@ -1698,6 +1700,7 @@ class _PageFooter extends StatelessWidget {
     this.goal,
     this.createdAt = '',
     this.createdBy = '',
+    this.lastEditedAt = '',
     this.lastEditedBy = '',
   });
 
@@ -1714,6 +1717,10 @@ class _PageFooter extends StatelessWidget {
 
   /// `created_by:` author name. Empty when unset.
   final String createdBy;
+
+  /// `last_edited_at:` ISO date. Hidden when equal to [createdAt] so
+  /// "untouched since creation" pages don't render redundant lines.
+  final String lastEditedAt;
 
   /// `last_edited_by:` author name. Hidden when equal to [createdBy]
   /// so single-author pages don't render two redundant lines.
@@ -1788,10 +1795,18 @@ class _PageFooter extends StatelessWidget {
               style: mono(fontSize: 11, color: tokens.text3),
             ),
           ],
-          if (lastEditedBy.isNotEmpty && lastEditedBy != createdBy) ...[
+          if ((lastEditedAt.isNotEmpty && lastEditedAt != createdAt) ||
+              (lastEditedBy.isNotEmpty && lastEditedBy != createdBy)) ...[
             const SizedBox(height: 2),
-            Text('Last edited by $lastEditedBy',
-                style: mono(fontSize: 11, color: tokens.text3)),
+            Text(
+              [
+                if (lastEditedAt.isNotEmpty && lastEditedAt != createdAt)
+                  'Last edited: $lastEditedAt',
+                if (lastEditedBy.isNotEmpty && lastEditedBy != createdBy)
+                  'by $lastEditedBy',
+              ].join(' '),
+              style: mono(fontSize: 11, color: tokens.text3),
+            ),
           ],
         ],
       ),
