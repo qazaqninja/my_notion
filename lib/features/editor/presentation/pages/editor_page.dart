@@ -1921,19 +1921,23 @@ class _ReminderBadge extends StatelessWidget {
             : tokens.surface2;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: const BorderRadius.all(Radius.circular(4)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.notifications_active_outlined, size: 11, color: fg),
-            const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontSize: 11, color: fg)),
-          ],
+      child: Tooltip(
+        message: 'Reminder · ${t.toIso8601String().substring(0, 10)}',
+        waitDuration: const Duration(milliseconds: 400),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.notifications_active_outlined, size: 11, color: fg),
+              const SizedBox(width: 4),
+              Text(label, style: TextStyle(fontSize: 11, color: fg)),
+            ],
+          ),
         ),
       ),
     );
