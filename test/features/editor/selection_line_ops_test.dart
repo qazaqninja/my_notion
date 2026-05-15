@@ -1957,6 +1957,42 @@ void main() {
     });
   });
 
+  group('htmlCommentLinesIn / htmlUncommentLinesIn', () {
+    test('wraps each non-blank line', () {
+      const text = 'one\ntwo\n';
+      final r = htmlCommentLinesIn(text, 0, text.length);
+      expect(r.text, '<!-- one -->\n<!-- two -->\n');
+    });
+
+    test('preserves blank lines', () {
+      const text = 'a\n\nb\n';
+      final r = htmlCommentLinesIn(text, 0, text.length);
+      expect(r.text, '<!-- a -->\n\n<!-- b -->\n');
+    });
+
+    test('uncomment strips the wrapper', () {
+      const text = '<!-- one -->\n<!-- two -->\n';
+      final r = htmlUncommentLinesIn(text, 0, text.length);
+      expect(r.text, 'one\ntwo\n');
+    });
+
+    test('uncomment handles no-space form', () {
+      const text = '<!--foo-->\n';
+      expect(htmlUncommentLinesIn(text, 0, text.length).text, 'foo\n');
+    });
+
+    test('uncomment passes through non-wrapped lines', () {
+      const text = 'plain\n';
+      expect(htmlUncommentLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('comment then uncomment is identity', () {
+      const text = 'one\ntwo\nthree\n';
+      final c = htmlCommentLinesIn(text, 0, text.length).text;
+      expect(htmlUncommentLinesIn(c, 0, c.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

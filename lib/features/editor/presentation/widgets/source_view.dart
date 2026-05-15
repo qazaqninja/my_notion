@@ -1112,6 +1112,12 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, commentLinesIn);
       case SlashAction.uncommentLines:
         _applyLinesTransformAfterSlash(stripStart, caret, uncommentLinesIn);
+      case SlashAction.htmlCommentLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, htmlCommentLinesIn);
+      case SlashAction.htmlUncommentLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, htmlUncommentLinesIn,
+        );
     }
   }
 

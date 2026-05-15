@@ -191,6 +191,10 @@ enum SlashAction {
   commentLines,
   /// Strip a leading `// ` from every selected line that has one.
   uncommentLines,
+  /// Wrap every non-blank selected line in `<!-- … -->`.
+  htmlCommentLines,
+  /// Strip a `<!-- … -->` wrapper from every selected line.
+  htmlUncommentLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -900,6 +904,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '// a → a',
     action: SlashAction.uncommentLines,
     keywords: ['uncomment', 'strip', 'slash', 'prefix', 'code', 'unmark'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'HTML-comment lines (<!-- -->)',
+    hint: 'a → <!-- a -->',
+    action: SlashAction.htmlCommentLines,
+    keywords: ['html', 'comment', 'wrap', 'hide', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'HTML-uncomment lines',
+    hint: '<!-- a --> → a',
+    action: SlashAction.htmlUncommentLines,
+    keywords: ['html', 'uncomment', 'unwrap', 'show'],
   ),
   SlashEntry(
     icon: 'hash',

@@ -1010,6 +1010,33 @@ SortLinesResult commentLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Wrap each non-blank selected line in `<!-- … -->`. Useful for
+/// hiding notes in markdown bodies (commented-out content is
+/// invisible in the rendered view but stays in the source).
+/// Blank lines stay blank.
+SortLinesResult htmlCommentLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else '<!-- $l -->',
+      ];
+    });
+
+/// Inverse of [htmlCommentLinesIn]: strip the `<!-- … -->` wrapper
+/// from every line where it fully wraps the line. Non-matching
+/// lines pass through.
+SortLinesResult htmlUncommentLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final wrap = RegExp(r'^<!--\s?(.*?)\s?-->$');
+      return [
+        for (final l in lines)
+          (() {
+            final m = wrap.firstMatch(l);
+            return m == null ? l : m.group(1) ?? l;
+          })(),
+      ];
+    });
+
 /// Inverse of [commentLinesIn]. Strip a leading `// ` (or `//`
 /// without space) from every line that starts with one. Blank
 /// lines and uncommented lines pass through.
