@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/quill_tokens.dart';
 import '../theme/tokens.dart';
+import 'quill_modal.dart';
 
 /// Hand-curated emoji palette — covers the common Notion icon use cases
 /// (work, docs, planning, status, faces, etc.) without pulling in a
@@ -51,8 +52,8 @@ bool looksLikeEmoji(String s) {
 /// Modal grid of curated emojis. Picking one pops the dialog with the
 /// chosen string. Tapping the "Clear" footer pops with empty string.
 Future<String?> pickEmoji(BuildContext context) {
-  return showDialog<String>(
-    context: context,
+  return showQuillModal<String>(
+    context,
     builder: (ctx) => const _EmojiPickerDialog(),
   );
 }
@@ -85,64 +86,37 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
     final items = _filtered();
     final size = MediaQuery.of(context).size;
     final w = size.width < 400 ? size.width - 32 : 360.0;
-    final h = size.height < 460 ? size.height - 60 : 420.0;
-    return Dialog(
-      backgroundColor: tokens.surface,
+    final h = size.height < 460 ? size.height - 60 : 360.0;
+    return QuillModal(
+      width: w,
+      header: QuillModalHeader(
+        title: 'Pick icon',
+        sub: 'Choose a glyph or paste any emoji.',
+        icon: 'tag',
+        onClose: () => Navigator.of(context).pop(),
+      ),
+      footer: Row(
+        children: [
+          Text(
+            '${items.length} curated',
+            style: mono(fontSize: 11, color: tokens.text3),
+          ),
+          const Spacer(),
+          QuillSecondaryButton(
+            label: 'Clear',
+            onPressed: () => Navigator.of(context).pop(''),
+          ),
+        ],
+      ),
       child: SizedBox(
-        width: w,
         height: h,
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(color: tokens.divider, width: 0.5),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Text('PICK ICON',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.0,
-                        color: tokens.text3,
-                      )),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(''),
-                    child:
-                        Text('Clear', style: TextStyle(color: tokens.text2)),
-                  ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(Icons.close, size: 18),
-                    onPressed: () => Navigator.of(context).pop(),
-                    tooltip: 'Cancel',
-                  ),
-                ],
-              ),
-            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
-              child: TextField(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+              child: QuillInputField(
                 controller: _customCtl,
-                autofocus: false,
-                style: TextStyle(fontSize: 14, color: tokens.text),
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 8),
-                  filled: true,
-                  fillColor: tokens.inputBg,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide(color: tokens.divider2, width: 0.5),
-                  ),
-                  hintText: 'Or paste any emoji and press ↵',
-                  hintStyle: TextStyle(fontSize: 13, color: tokens.text3),
-                ),
+                placeholder: 'Or paste any emoji and press ↵',
                 onSubmitted: (v) {
                   final s = v.trim();
                   if (looksLikeEmoji(s)) {
@@ -168,16 +142,6 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                     onTap: () => Navigator.of(context).pop(glyph),
                   );
                 },
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: tokens.divider, width: 0.5)),
-              ),
-              child: Text(
-                '${items.length} curated · drag an emoji from the system picker for more',
-                style: mono(fontSize: 10.5, color: tokens.text3),
               ),
             ),
           ],
