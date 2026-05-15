@@ -703,10 +703,24 @@ class _RecentList extends StatelessWidget {
         final rows = snap.data ?? const [];
         if (rows.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(
-              'No recent pages',
-              style: TextStyle(fontSize: 11.5, color: tokens.text3),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No recent pages',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.text2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Pages will appear here as you edit.',
+                  style: TextStyle(fontSize: 11, color: tokens.text3),
+                ),
+              ],
             ),
           );
         }
