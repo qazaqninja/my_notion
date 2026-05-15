@@ -956,7 +956,9 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       padding: const EdgeInsets.symmetric(horizontal: 10),
       alignment: Alignment.centerLeft,
       child: Tooltip(
-        message: 'Total rows after filters / search',
+        message: n == 1
+            ? '1 row after filters / search'
+            : '$n rows after filters / search',
         waitDuration: const Duration(milliseconds: 500),
         child: Text('count $n',
             style: mono(fontSize: 11, color: tokens.text3)),
