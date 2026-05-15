@@ -13,7 +13,7 @@ void main() {
   testWidgets('renders body without trailing newline (last block sourceEnd '
       'must not overshoot body.length)', (tester) async {
     const body = '# Heading\n\nfirst paragraph\n\nlast paragraph';
-    assert(!body.endsWith('\n'));
+    assert(!body.endsWith('\n'), 'fixture must not end with newline');
 
     await tester.pumpWidget(
       _wrap(MarkdownRenderer(body: body, onBodyChange: (_) {})),

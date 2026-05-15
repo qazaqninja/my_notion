@@ -41,9 +41,13 @@ class VaultWatcher {
       _sub = root
           .watch(recursive: true, events: FileSystemEvent.all)
           .listen(_onEvent, onError: (_) {});
+      // ignore: avoid_catching_errors
+      // UnsupportedError IS an Error subclass — but some platforms
+      // (older Linux without inotify) literally throw it when
+      // recursive watches aren't supported. Catching here is the
+      // only way to fail open.
     } on UnsupportedError {
-      // Some platforms (e.g. older Linux without inotify) don't support
-      // recursive watches. Fail open — no watcher, manual reindex only.
+      // Fail open — no watcher, manual reindex only.
     }
   }
 

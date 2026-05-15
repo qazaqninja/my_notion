@@ -1890,8 +1890,7 @@ class _WikiBadge extends StatelessWidget {
       if (owners.isNotEmpty)
         '${owners.length == 1 ? "Owner" : "Owners"}: ${owners.join(", ")}',
       if (verified != null)
-        'Verified ${verified.toIso8601String().substring(0, 10)}'
-            '${days == 0 ? " (today)" : days == 1 ? " (1 day ago)" : " ($days days ago)"}',
+        'Verified ${verified.toIso8601String().substring(0, 10)}${days == 0 ? " (today)" : days == 1 ? " (1 day ago)" : " ($days days ago)"}',
       if (stale)
         'Stale — re-verify (verified: <today> in frontmatter).',
     ].join('\n');
