@@ -69,9 +69,10 @@ class _Panel extends StatelessWidget {
         borderRadius: const BorderRadius.all(Radius.circular(8)),
         boxShadow: [
           BoxShadow(
-            color: tokens.isDark
-                ? Colors.black.withValues(alpha: 0.5)
-                : Colors.black.withValues(alpha: 0.10),
+            color: Theme.of(context)
+                .colorScheme
+                .shadow
+                .withValues(alpha: tokens.isDark ? 0.5 : 0.10),
             blurRadius: 40,
             offset: const Offset(0, 16),
           ),

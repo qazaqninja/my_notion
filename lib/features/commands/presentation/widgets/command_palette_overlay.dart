@@ -62,8 +62,14 @@ class _CommandPaletteOverlayState extends State<CommandPaletteOverlay> {
                 onTap: () => context.read<CommandPaletteCubit>().dismiss(),
                 behavior: HitTestBehavior.opaque,
                 child: Container(
+                  // Modal scrim: dark theme uses a deeper full-black
+                  // wash, light theme uses a warm muted brown matching
+                  // the design's `tokens.codeBg`-style backdrop.
                   color: tokens.isDark
-                      ? Colors.black.withValues(alpha: 0.45)
+                      ? Theme.of(context)
+                          .colorScheme
+                          .shadow
+                          .withValues(alpha: 0.45)
                       : const Color.fromRGBO(40, 38, 33, 0.22),
                 ),
               ),
@@ -130,9 +136,10 @@ class _Panel extends StatelessWidget {
         borderRadius: const BorderRadius.all(Radius.circular(8)),
         boxShadow: [
           BoxShadow(
-            color: tokens.isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : Colors.black.withValues(alpha: 0.15),
+            color: Theme.of(context)
+                .colorScheme
+                .shadow
+                .withValues(alpha: tokens.isDark ? 0.55 : 0.15),
             blurRadius: 80,
             offset: const Offset(0, 32),
           ),
