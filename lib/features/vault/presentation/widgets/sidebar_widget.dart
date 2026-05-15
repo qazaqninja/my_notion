@@ -516,9 +516,23 @@ class _DatabasesList extends StatelessWidget {
         if (dbs.isEmpty) {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(
-              'No databases yet',
-              style: TextStyle(fontSize: 11.5, color: tokens.text3),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No databases yet',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.text2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Drop a .database.yaml in any folder.',
+                  style: TextStyle(fontSize: 11, color: tokens.text3),
+                ),
+              ],
             ),
           );
         }
