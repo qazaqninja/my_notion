@@ -494,6 +494,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
     final vaultBloc = context.read<VaultBloc>();
     if (vaultBloc.state is! VaultLoaded) return;
     final router = GoRouter.of(context);
+    final scope = context;
     final title = await showQuillPrompt(
       context,
       title: 'New page',
@@ -503,9 +504,16 @@ class _VaultShellPageState extends State<VaultShellPage> {
       confirmLabel: 'Create',
     );
     if (title == null || title.isEmpty) return;
+    final trimmed = title.trim();
     vaultBloc.add(CreatePage(
-      title: title.trim(),
-      onCreated: (ulid) => router.go('/editor/$ulid'),
+      title: trimmed,
+      onCreated: (ulid) {
+        if (scope.mounted) {
+          scope.toastSuccess('Created "$trimmed"',
+              sub: 'ULID: $ulid', subMono: true);
+        }
+        router.go('/editor/$ulid');
+      },
     ));
   }
 

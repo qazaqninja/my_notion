@@ -151,6 +151,7 @@ class HomePage extends StatelessWidget {
     final vaultBloc = context.read<VaultBloc>();
     if (vaultBloc.state is! VaultLoaded) return;
     final router = GoRouter.of(context);
+    final scope = context;
     final title = await showQuillPrompt(
       context,
       title: 'New page',
@@ -161,7 +162,13 @@ class HomePage extends StatelessWidget {
     if (title == null || title.isEmpty) return;
     vaultBloc.add(CreatePage(
       title: title,
-      onCreated: (ulid) => router.go('/editor/$ulid'),
+      onCreated: (ulid) {
+        if (scope.mounted) {
+          scope.toastSuccess('Created "$title"',
+              sub: 'ULID: $ulid', subMono: true);
+        }
+        router.go('/editor/$ulid');
+      },
     ));
   }
 
