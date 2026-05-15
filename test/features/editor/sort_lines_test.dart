@@ -873,6 +873,52 @@ void main() {
     });
   });
 
+  group('convertDecimalToHexLinesIn / convertHexToDecimalLinesIn', () {
+    test('decimal → hex with 0x prefix and lowercase', () {
+      const text = '255\n0\n4096\n';
+      final r = convertDecimalToHexLinesIn(text, 0, text.length);
+      expect(r.text, '0xff\n0x0\n0x1000\n');
+    });
+
+    test('hex → decimal accepts both 0x and bare hex with letters', () {
+      const text = '0xff\nFF\n0x1000\n';
+      final r = convertHexToDecimalLinesIn(text, 0, text.length);
+      expect(r.text, '255\n255\n4096\n');
+    });
+
+    test('bare decimal digits stay as-is on hex→decimal pass', () {
+      // "42" without a 0x prefix and without [a-f] letters is decimal.
+      // Without this guard it'd parse as hex 0x42 = 66, masking user intent.
+      const text = '42\n';
+      final r = convertHexToDecimalLinesIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('non-numeric lines are left untouched', () {
+      const text = 'hello\nworld\n';
+      expect(
+        convertDecimalToHexLinesIn(text, 0, text.length).text,
+        text,
+      );
+      expect(
+        convertHexToDecimalLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+
+    test('round-trip preserves numeric values', () {
+      const text = '0\n255\n4096\n65535\n';
+      final asHex = convertDecimalToHexLinesIn(text, 0, text.length).text;
+      final back = convertHexToDecimalLinesIn(asHex, 0, asHex.length).text;
+      expect(back, text);
+    });
+
+    test('negative decimals stay untouched', () {
+      const text = '-5\n';
+      expect(convertDecimalToHexLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

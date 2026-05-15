@@ -749,6 +749,57 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
+/// Convert every selected line that parses as a non-negative decimal
+/// integer (any size) into its lowercase hex form prefixed with
+/// `0x`. Non-numeric lines are left untouched.
+///
+///   `255`   → `0xff`
+///   `0`     → `0x0`
+///   `4096`  → `0x1000`
+SortLinesResult convertDecimalToHexLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final n = int.tryParse(l.trim());
+            if (n == null || n < 0) return l;
+            return '0x${n.toRadixString(16)}';
+          })(),
+      ];
+    });
+
+/// Convert every selected line that parses as a hex value
+/// (`0x` prefix, or bare `[0-9a-fA-F]+`) into its decimal form.
+/// Non-hex lines are left untouched.
+SortLinesResult convertHexToDecimalLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final hexPattern = RegExp(r'^(0[xX])?([0-9a-fA-F]+)$');
+      return [
+        for (final l in lines)
+          (() {
+            final stripped = l.trim();
+            final m = hexPattern.firstMatch(stripped);
+            if (m == null) return l;
+            // Reject bare-non-0x patterns that are just decimal digits
+            // (e.g. "42") — without the 0x prefix, treat them as ASCII
+            // decimal and leave them alone.
+            if (m.group(1) == null && !RegExp(r'[a-fA-F]').hasMatch(stripped)) {
+              return l;
+            }
+            final n = int.parse(m.group(2)!, radix: 16);
+            return n.toString();
+          })(),
+      ];
+    });
+
 /// Convert a positive decimal integer (1..3999) into its Roman
 /// numeral representation. Returns the empty string when out of
 /// range. Exposed for testing; production callers go through

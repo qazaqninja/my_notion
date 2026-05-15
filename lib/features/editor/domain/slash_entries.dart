@@ -90,6 +90,12 @@ enum SlashAction {
   urlEncode,
   /// URL-decode every selected line; malformed sequences stay as-is.
   urlDecode,
+  /// Convert decimal integers on every selected line to lowercase
+  /// hex prefixed with `0x`.
+  decimalToHex,
+  /// Convert hex values (with or without `0x`) on every selected
+  /// line to decimal.
+  hexToDecimal,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -512,6 +518,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'foo%20bar → foo bar',
     action: SlashAction.urlDecode,
     keywords: ['url', 'decode', 'percent', 'unescape', 'query'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Decimal → hex',
+    hint: '255 → 0xff',
+    action: SlashAction.decimalToHex,
+    keywords: ['hex', 'hexadecimal', 'decimal', 'convert', 'base16'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Hex → decimal',
+    hint: '0xff → 255',
+    action: SlashAction.hexToDecimal,
+    keywords: ['hex', 'hexadecimal', 'decimal', 'convert', 'base16'],
   ),
   SlashEntry(
     icon: 'edit',

@@ -939,6 +939,14 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, urlEncodeLinesIn);
       case SlashAction.urlDecode:
         _applyLinesTransformAfterSlash(stripStart, caret, urlDecodeLinesIn);
+      case SlashAction.decimalToHex:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, convertDecimalToHexLinesIn,
+        );
+      case SlashAction.hexToDecimal:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, convertHexToDecimalLinesIn,
+        );
     }
   }
 
