@@ -158,6 +158,11 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
     if (state is! EditorLoaded) return;
     var loaded = state as EditorLoaded;
     if (!loaded.dirty || _vaultRoot == null) return;
+    // Cancel any pending debounced save — we're flushing now, no
+    // need for a follow-up to fire ms later and race against this one
+    // (the M715 fix protects the dirty flag but back-to-back writes
+    // still cost two disk hits).
+    _saveDebounce?.cancel();
     // Auto-stamp last_edited_by + created_by when a current user is known.
     final user = _currentUser;
     if (user != null && user.isNotEmpty) {
