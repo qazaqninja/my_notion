@@ -13,6 +13,7 @@ import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
@@ -854,21 +855,22 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
   }
 
   (IconData, Color) _calloutStyle(String kind, QuillTokens t) {
+    final color = calloutColor(kind) ?? t.accent;
     switch (kind) {
       case 'note':
-        return (Icons.info_outline, const Color(0xFF4A90D9));
+        return (Icons.info_outline, color);
       case 'tip':
-        return (Icons.lightbulb_outline, const Color(0xFF55A06A));
+        return (Icons.lightbulb_outline, color);
       case 'important':
-        return (Icons.priority_high_rounded, const Color(0xFF8E5CD0));
+        return (Icons.priority_high_rounded, color);
       case 'warning':
       case 'warn':
-        return (Icons.warning_amber_outlined, const Color(0xFFD08F3D));
+        return (Icons.warning_amber_outlined, color);
       case 'caution':
       case 'danger':
-        return (Icons.error_outline, const Color(0xFFCB5A4F));
+        return (Icons.error_outline, color);
       default:
-        return (Icons.bookmark_outline, t.accent);
+        return (Icons.bookmark_outline, color);
     }
   }
 

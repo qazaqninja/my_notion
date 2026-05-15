@@ -54,6 +54,38 @@ const List<Color> kCategoricalPalette = [
 
 const Color kCategoricalNeutral = Color(0xFF8C8C8C);
 
+/// Semantic accent colours for GFM admonition callouts and any other
+/// "kind-of-note" surface. Five distinct hues so info / tip / warning /
+/// important / caution read as different at a glance. Match the design's
+/// callout palette exactly. Use [calloutColor] to map a kind keyword.
+const Color kCalloutInfo = Color(0xFF4A90D9);
+const Color kCalloutTip = Color(0xFF55A06A);
+const Color kCalloutImportant = Color(0xFF8E5CD0);
+const Color kCalloutWarning = Color(0xFFD08F3D);
+const Color kCalloutDanger = Color(0xFFCB5A4F);
+
+/// Resolve a callout kind keyword (note/tip/important/warning/warn/
+/// caution/danger) to its accent colour. Returns null for unknown kinds
+/// so the caller can fall back to its theme accent.
+Color? calloutColor(String kind) {
+  switch (kind) {
+    case 'note':
+      return kCalloutInfo;
+    case 'tip':
+      return kCalloutTip;
+    case 'important':
+      return kCalloutImportant;
+    case 'warning':
+    case 'warn':
+      return kCalloutWarning;
+    case 'caution':
+    case 'danger':
+      return kCalloutDanger;
+    default:
+      return null;
+  }
+}
+
 /// Stable hue assignment for a string label: maps a value to one of the
 /// eight palette colours by hashing. Empty / `'—'` falls back to neutral.
 /// Uses a Java-style 31-multiplier so re-orderings of label characters
