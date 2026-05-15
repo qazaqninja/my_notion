@@ -753,34 +753,47 @@ class _AddFieldFormState extends State<_AddFieldForm> {
                 Text('key exists',
                     style: TextStyle(fontSize: 11.5, color: tokens.text3)),
               const Spacer(),
-              GestureDetector(
-                onTap: widget.onCancel,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  child: Text('Cancel',
-                      style: TextStyle(fontSize: 12.5, color: tokens.text2)),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: widget.onCancel,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    child: Text('Cancel',
+                        style: TextStyle(
+                            fontSize: 12.5, color: tokens.text2)),
+                  ),
                 ),
               ),
               const SizedBox(width: 4),
-              GestureDetector(
-                onTap: _keyCtl.text.trim().isEmpty || duplicate ? null : _submit,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _keyCtl.text.trim().isEmpty || duplicate
-                        ? tokens.surface
-                        : tokens.accent,
-                    borderRadius: const BorderRadius.all(Radius.circular(5)),
-                  ),
-                  child: Text(
-                    'Add',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
+              MouseRegion(
+                cursor: _keyCtl.text.trim().isEmpty || duplicate
+                    ? SystemMouseCursors.basic
+                    : SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: _keyCtl.text.trim().isEmpty || duplicate
+                      ? null
+                      : _submit,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
                       color: _keyCtl.text.trim().isEmpty || duplicate
-                          ? tokens.text3
-                          : Colors.white,
+                          ? tokens.surface
+                          : tokens.accent,
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(5)),
+                    ),
+                    child: Text(
+                      'Add',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: _keyCtl.text.trim().isEmpty || duplicate
+                            ? tokens.text3
+                            : Colors.white,
+                      ),
                     ),
                   ),
                 ),
