@@ -72,16 +72,21 @@ class _SampleVaultButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return OutlinedButton.icon(
-      onPressed: () => _create(context),
-      icon: QuillIcon('plus', size: 12, color: tokens.text2),
-      label: const Text('Try sample vault'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: tokens.text2,
-        side: BorderSide(color: tokens.divider2, width: 0.5),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(6)),
+    return Tooltip(
+      message:
+          'Creates a seeded vault under ~/Documents/Quill-Sample so you can poke around.',
+      waitDuration: const Duration(milliseconds: 500),
+      child: OutlinedButton.icon(
+        onPressed: () => _create(context),
+        icon: QuillIcon('plus', size: 12, color: tokens.text2),
+        label: const Text('Try sample vault'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: tokens.text2,
+          side: BorderSide(color: tokens.divider2, width: 0.5),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+          ),
         ),
       ),
     );
