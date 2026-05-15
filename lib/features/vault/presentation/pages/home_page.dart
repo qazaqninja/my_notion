@@ -380,14 +380,33 @@ class _PinboardState extends State<_Pinboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'PINBOARD',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.0,
-                  color: tokens.text3,
-                ),
+              Row(
+                children: [
+                  Text(
+                    'PINBOARD',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                      color: tokens.text3,
+                    ),
+                  ),
+                  const Spacer(),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _entries = _load()),
+                      child: Tooltip(
+                        message: 'Refresh',
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(Icons.refresh,
+                              size: 12, color: tokens.text3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Wrap(
