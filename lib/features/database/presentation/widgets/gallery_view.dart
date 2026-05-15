@@ -133,7 +133,7 @@ class _GalleryViewState extends State<GalleryView> {
               const SizedBox(width: 8),
               Segment<GalleryCardSize>(
                 value: _size,
-                onChanged: (next) => _setSize(next),
+                onChanged: _setSize,
                 options: const [
                   SegmentOption(
                       value: GalleryCardSize.small,

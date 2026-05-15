@@ -462,7 +462,7 @@ class _TreeFilterField extends StatelessWidget {
                   : MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
-                        onTap: () => controller.clear(),
+                        onTap: controller.clear,
                         child: Tooltip(
                           message: 'Clear filter',
                           waitDuration: const Duration(milliseconds: 500),

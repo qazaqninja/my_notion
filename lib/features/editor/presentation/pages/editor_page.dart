@@ -1187,10 +1187,10 @@ class _EditorBodyState extends State<_EditorBody> {
         final locked = EditorBloc.isLocked(loaded);
         return CallbackShortcuts(
           bindings: {
-            const SingleActivator(LogicalKeyboardKey.keyF, meta: true): () =>
-                _openFind(),
-            const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
-                _openFind(),
+            const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+                _openFind,
+            const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+                _openFind,
             const SingleActivator(LogicalKeyboardKey.keyS, meta: true): () =>
                 _flushSave(context, loaded),
             const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
