@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -292,6 +293,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'history', child: Text('Page history…')),
         PopupMenuItem(value: 'copy-body', child: Text('Copy page body')),
         PopupMenuItem(value: 'copy-plain', child: Text('Copy as plain text')),
+        PopupMenuItem(value: 'copy-json', child: Text('Copy as JSON')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
         PopupMenuItem(value: 'export-html', child: Text('Export as .html…')),
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
@@ -355,6 +357,24 @@ class _EditorBodyState extends State<_EditorBody> {
         messenger?.showSnackBar(
           SnackBar(
             content: Text('Copied ${plain.length} chars as plain text'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      case 'copy-json':
+        final fmMap = <String, Object?>{};
+        for (final e in loaded.page.frontmatter.entries) {
+          fmMap[e.key] = e.value;
+        }
+        final payload = jsonEncode({
+          'ulid': loaded.page.ulid,
+          'relativePath': loaded.page.relativePath,
+          'frontmatter': fmMap,
+          'body': loaded.page.body,
+        });
+        await Clipboard.setData(ClipboardData(text: payload));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text('Copied ${payload.length} chars JSON'),
             duration: const Duration(seconds: 2),
           ),
         );
