@@ -379,7 +379,13 @@ class _EditorBodyState extends State<_EditorBody> {
       case 'reveal':
         final vault = context.read<VaultBloc>().state;
         if (vault is VaultLoaded) {
-          await Reveal.show('${vault.rootPath}/${loaded.page.relativePath}');
+          final path = '${vault.rootPath}/${loaded.page.relativePath}';
+          final ok = await Reveal.show(path);
+          if (!ok) {
+            messenger?.showSnackBar(
+              SnackBar(content: Text('Could not reveal $path')),
+            );
+          }
         }
       case 'history':
         await _showPageHistory(context, loaded);
