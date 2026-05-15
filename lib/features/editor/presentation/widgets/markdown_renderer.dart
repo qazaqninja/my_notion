@@ -4001,6 +4001,7 @@ List<InlineSpan> _buildSpans(
           ),
           recognizer: TapGestureRecognizer()
             ..onTap = () => _BookmarkCard._openExternal(url),
+          mouseCursor: SystemMouseCursors.click,
         ));
         i = m.end;
         committed = i;
