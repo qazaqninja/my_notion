@@ -119,6 +119,16 @@ const List<SlashEntry> kSlashEntries = [
   ),
   SlashEntry(
     icon: 'note',
+    label: 'Quote with attribution',
+    hint: '> "…" — author',
+    snippet: '> \n> — ',
+    // Caret right after `> ` on line 1 so the user types the quote
+    // first; they then ↓ End to fill the author.
+    cursorOffset: 2,
+    keywords: ['quote', 'attribution', 'author', 'cite', 'citation'],
+  ),
+  SlashEntry(
+    icon: 'note',
     label: 'Callout',
     hint: '! ',
     snippet: '> [!NOTE]\n> ',
