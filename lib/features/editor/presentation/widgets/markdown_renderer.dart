@@ -565,9 +565,13 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
               b.text,
               mathStyle: MathStyle.display,
               textStyle: TextStyle(fontSize: 16, color: tokens.text),
-              onErrorFallback: (err) => Text(
-                b.text,
-                style: mono(fontSize: 12.5, color: tokens.text3),
+              onErrorFallback: (err) => Tooltip(
+                message: 'Math parse error — showing source.\n${err.message}',
+                waitDuration: const Duration(milliseconds: 400),
+                child: Text(
+                  b.text,
+                  style: mono(fontSize: 12.5, color: tokens.text3),
+                ),
               ),
             ),
           ),
