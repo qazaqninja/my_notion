@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
 import '../../data/repositories/database_repository_impl.dart';
@@ -95,7 +96,7 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final iconRaw = schema.icon.trim();
-    final hasGlyphIcon = iconRaw.isNotEmpty && iconRaw.length <= 4;
+    final hasGlyphIcon = looksLikeEmoji(iconRaw);
     return GestureDetector(
       onTap: () => context.go('/db/${schema.id}'),
       child: MouseRegion(
