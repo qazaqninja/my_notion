@@ -1423,18 +1423,23 @@ class _UserRow extends StatelessWidget {
           ],
           const Spacer(),
           if (user.isDefault)
-            Container(
-              margin: const EdgeInsets.only(right: 10),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: tokens.accent.withValues(alpha: 0.16),
-                borderRadius:
-                    const BorderRadius.all(Radius.circular(3)),
-              ),
-              child: Text(
-                'default',
-                style: mono(fontSize: 10, color: tokens.accent),
+            Tooltip(
+              message:
+                  'Auto-stamped into created_by + last_edited_by when saving.',
+              waitDuration: const Duration(milliseconds: 500),
+              child: Container(
+                margin: const EdgeInsets.only(right: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: tokens.accent.withValues(alpha: 0.16),
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(3)),
+                ),
+                child: Text(
+                  'default',
+                  style: mono(fontSize: 10, color: tokens.accent),
+                ),
               ),
             )
           else
