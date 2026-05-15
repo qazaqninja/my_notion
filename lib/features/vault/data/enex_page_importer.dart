@@ -43,7 +43,10 @@ class EnexPageImporter {
         fmBuf.writeln('id: $ulid');
         fmBuf.writeln('title: ${yamlSafeScalar(note.title)}');
         if (note.tags.isNotEmpty) {
-          fmBuf.writeln('tags: [${note.tags.join(', ')}]');
+          // Per-tag quoting so an Evernote tag containing ',' / ':' /
+          // '[' / ']' doesn't break the flow list (mirrors M689).
+          fmBuf.writeln(
+              'tags: [${note.tags.map(yamlFlowItem).join(', ')}]');
         }
         if (note.created != null) {
           fmBuf.writeln('created_at: ${note.created}');

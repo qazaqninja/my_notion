@@ -51,7 +51,10 @@ class TrelloDatabaseImporter {
           fmBuf.writeln('status: ${yamlSafeScalar(card.status)}');
         }
         if (card.labels.isNotEmpty) {
-          fmBuf.writeln('labels: [${card.labels.join(', ')}]');
+          // Quote each label so commas / colons / brackets in a Trello
+          // label name don't split the flow list (mirrors M689).
+          fmBuf.writeln(
+              'labels: [${card.labels.map(yamlFlowItem).join(', ')}]');
         }
         if (card.due != null) fmBuf.writeln('due: ${card.due}');
         fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
