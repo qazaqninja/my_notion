@@ -187,6 +187,10 @@ enum SlashAction {
   collapseBlankLines,
   /// Drop every blank line in the selection (stronger compaction).
   dropBlankLines,
+  /// Prefix every non-blank selected line with `// `.
+  commentLines,
+  /// Strip a leading `// ` from every selected line that has one.
+  uncommentLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -882,6 +886,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'compact',
     action: SlashAction.dropBlankLines,
     keywords: ['drop', 'blank', 'empty', 'remove', 'compact', 'strip'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'Comment lines (//)',
+    hint: 'a → // a',
+    action: SlashAction.commentLines,
+    keywords: ['comment', 'slash', 'prefix', 'code', 'mark'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'Uncomment lines',
+    hint: '// a → a',
+    action: SlashAction.uncommentLines,
+    keywords: ['uncomment', 'strip', 'slash', 'prefix', 'code', 'unmark'],
   ),
   SlashEntry(
     icon: 'hash',

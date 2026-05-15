@@ -999,6 +999,33 @@ SortLinesResult dropBlankLinesIn(String text, int start, int end) =>
       (lines) => [for (final l in lines) if (l.trim().isNotEmpty) l],
     );
 
+/// Prefix every non-blank selected line with `// ` so the block
+/// reads as a code-style comment. Blank lines stay blank. Useful
+/// when pasting prose alongside snippets and wanting to mark
+/// sections as commentary.
+SortLinesResult commentLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines) if (l.trim().isEmpty) l else '// $l',
+      ];
+    });
+
+/// Inverse of [commentLinesIn]. Strip a leading `// ` (or `//`
+/// without space) from every line that starts with one. Blank
+/// lines and uncommented lines pass through.
+SortLinesResult uncommentLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            // Handle both `// foo` and `//foo` (no space).
+            if (l.startsWith('// ')) return l.substring(3);
+            if (l.startsWith('//')) return l.substring(2);
+            return l;
+          })(),
+      ];
+    });
+
 /// Collapse internal runs of spaces and tabs on every selected
 /// line into a single space. Useful when pasting text whose
 /// formatting used multi-space alignment that no longer makes sense

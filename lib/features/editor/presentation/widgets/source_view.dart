@@ -1108,6 +1108,10 @@ class _SourceViewState extends State<SourceView> {
         );
       case SlashAction.dropBlankLines:
         _applyLinesTransformAfterSlash(stripStart, caret, dropBlankLinesIn);
+      case SlashAction.commentLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, commentLinesIn);
+      case SlashAction.uncommentLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, uncommentLinesIn);
     }
   }
 

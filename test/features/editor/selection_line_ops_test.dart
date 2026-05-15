@@ -1920,6 +1920,43 @@ void main() {
     });
   });
 
+  group('commentLinesIn / uncommentLinesIn', () {
+    test('comment prefixes every non-blank line', () {
+      const text = 'one\ntwo\n';
+      final r = commentLinesIn(text, 0, text.length);
+      expect(r.text, '// one\n// two\n');
+    });
+
+    test('comment preserves blank lines', () {
+      const text = 'a\n\nb\n';
+      final r = commentLinesIn(text, 0, text.length);
+      expect(r.text, '// a\n\n// b\n');
+    });
+
+    test('uncomment strips `// ` from each commented line', () {
+      const text = '// one\n// two\n';
+      final r = uncommentLinesIn(text, 0, text.length);
+      expect(r.text, 'one\ntwo\n');
+    });
+
+    test('uncomment handles `//foo` (no space)', () {
+      const text = '//foo\n';
+      expect(uncommentLinesIn(text, 0, text.length).text, 'foo\n');
+    });
+
+    test('uncomment passes through non-commented lines', () {
+      const text = 'plain\n';
+      expect(uncommentLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('comment then uncomment is identity', () {
+      const text = 'one\ntwo\nthree\n';
+      final commented = commentLinesIn(text, 0, text.length).text;
+      final back = uncommentLinesIn(commented, 0, commented.length).text;
+      expect(back, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
