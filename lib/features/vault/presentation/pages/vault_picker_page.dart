@@ -264,10 +264,25 @@ class VaultPickerPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFFB66954), width: 0.5),
-                        borderRadius: const BorderRadius.all(Radius.circular(6)),
+                        color: const Color(0xFFB66954).withValues(alpha: 0.08),
+                        border: Border.all(
+                            color: const Color(0xFFB66954), width: 0.5),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(6)),
                       ),
-                      child: Text(state.message, style: TextStyle(color: tokens.text2, fontSize: 13)),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.warning_amber_outlined,
+                              size: 18, color: Color(0xFFB66954)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(state.message,
+                                style: TextStyle(
+                                    color: tokens.text2, fontSize: 13)),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                   const _RecentVaultsList(),
