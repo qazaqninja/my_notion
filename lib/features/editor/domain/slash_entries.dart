@@ -350,6 +350,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['ulid', 'id', 'uuid', 'identifier', 'random'],
   ),
   SlashEntry(
+    icon: 'edit',
+    label: 'Keyboard chip',
+    hint: '<kbd>⌘K</kbd>',
+    snippet: '<kbd>⌘K</kbd>',
+    // Caret right after `<kbd>` so the user can replace the placeholder.
+    cursorOffset: 5,
+    keywords: ['kbd', 'keyboard', 'key', 'shortcut', 'chip'],
+  ),
+  SlashEntry(
     icon: 'tag',
     label: 'Emoji…',
     hint: '🙂',
