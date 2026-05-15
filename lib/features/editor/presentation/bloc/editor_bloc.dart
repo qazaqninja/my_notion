@@ -170,17 +170,36 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
       }
     }
     emit(loaded.copyWith(saving: true));
+    final inFlightPage = loaded.page;
     try {
-      await _repo.writePage(loaded.page, root: _vaultRoot!);
-      await _indexer.upsertPage(loaded.page);
-      emit(loaded.copyWith(saving: false, dirty: false));
+      await _repo.writePage(inFlightPage, root: _vaultRoot!);
+      await _indexer.upsertPage(inFlightPage);
+      // Race: the user may have typed more during the await. Read the
+      // CURRENT state — only clear `dirty` when the latest body matches
+      // the body we just persisted. Otherwise leave dirty=true so the
+      // next debounced save picks up the new edits.
+      final current = state;
+      if (current is EditorLoaded) {
+        final stillSame = identical(current.page, inFlightPage) ||
+            (current.page.body == inFlightPage.body &&
+                current.page.frontmatter == inFlightPage.frontmatter);
+        emit(current.copyWith(
+          saving: false,
+          dirty: stillSame ? false : current.dirty,
+        ));
+      }
     } catch (err) {
       // Transient — emit the error so listeners can snackbar, then
-      // restore the dirty loaded state so the user doesn't lose their
-      // work. The "dirty" flag stays true so the next debounced save
-      // tries again.
+      // restore the loaded state so the user doesn't lose their work.
+      // The "dirty" flag stays true so the next debounced save tries
+      // again.
       emit(EditorError('Save failed: $err'));
-      emit(loaded.copyWith(saving: false));
+      final current = state;
+      if (current is EditorLoaded) {
+        emit(current.copyWith(saving: false));
+      } else {
+        emit(loaded.copyWith(saving: false));
+      }
     }
   }
 
