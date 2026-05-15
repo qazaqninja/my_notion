@@ -1309,7 +1309,7 @@ class _EditorBodyState extends State<_EditorBody> {
                     child: Tooltip(
                       message: loaded.dirty
                           ? 'Pending save — press ⌘S to flush now'
-                          : 'Last saved ${DateTime.fromMillisecondsSinceEpoch(page.mtimeMs)}',
+                          : 'Last saved ${DateTime.fromMillisecondsSinceEpoch(page.mtimeMs).toIso8601String().replaceFirst("T", " · ").substring(0, 18)}',
                       child: Text(
                         loaded.dirty
                             ? (loaded.saving ? 'saving…' : 'unsaved')
