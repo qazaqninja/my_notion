@@ -174,11 +174,11 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                   Container(height: 0.5, color: tokens.divider),
                   const SizedBox(height: 8),
                   _actionRow(
-                    tokens, 'reveal', 'Reveal in Finder', '⌘⇧R',
+                    tokens, 'reveal', 'Reveal in Finder', '⌘⌥R',
                     onTap: () => _revealPage(context),
                   ),
                   _actionRow(
-                    tokens, 'link', 'Copy ULID link', '⌘L',
+                    tokens, 'link', 'Copy ULID link', '',
                     onTap: () => _copyUlid(context),
                   ),
                   _actionRow(

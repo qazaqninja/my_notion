@@ -155,7 +155,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         const QuillMenuItem(icon: 'filter', label: 'Filter by this column…', value: 'filter'),
         QuillMenuItem.separator<String>(),
         if (!isHidden && columnKey != 'title')
-          const QuillMenuItem(icon: 'eye', label: 'Hide column', hint: '⌘H', value: 'hide'),
+          const QuillMenuItem(icon: 'eye', label: 'Hide column', value: 'hide'),
       ],
     );
     if (action == null) return;

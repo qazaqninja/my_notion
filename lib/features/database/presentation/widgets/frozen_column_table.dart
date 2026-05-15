@@ -723,7 +723,6 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
           const QuillMenuItem(
             icon: 'trash',
             label: 'Move to trash',
-            hint: '⌫',
             danger: true,
             value: 'trash',
           ),

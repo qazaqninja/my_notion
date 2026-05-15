@@ -211,12 +211,12 @@ class TreeNodeWidget extends StatelessWidget {
       position: quillMenuPosition(context, pos),
       width: 244,
       items: [
-        const QuillMenuItem(icon: 'reveal', label: 'Reveal in Finder', hint: '⌘⇧R', value: 'reveal'),
-        const QuillMenuItem(icon: 'link', label: 'Copy ULID', hint: '⌘L', value: 'copy-ulid'),
+        const QuillMenuItem(icon: 'reveal', label: 'Reveal in Finder', value: 'reveal'),
+        const QuillMenuItem(icon: 'link', label: 'Copy ULID', value: 'copy-ulid'),
         const QuillMenuItem(icon: 'link', label: 'Copy [[link]]', value: 'copy-link'),
         const QuillMenuItem(icon: 'folder', label: 'Copy file path', value: 'copy-path'),
-        const QuillMenuItem(icon: 'note', label: 'Duplicate page', hint: '⌘D', value: 'duplicate'),
-        const QuillMenuItem(icon: 'edit', label: 'Rename file…', hint: 'F2', value: 'rename'),
+        const QuillMenuItem(icon: 'note', label: 'Duplicate page', value: 'duplicate'),
+        const QuillMenuItem(icon: 'edit', label: 'Rename file…', value: 'rename'),
         const QuillMenuItem(icon: 'clock', label: 'Page history', value: 'history'),
         QuillMenuItem(
           icon: 'pin',
