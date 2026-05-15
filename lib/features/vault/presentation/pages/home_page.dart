@@ -737,30 +737,50 @@ class _RecentlyEditedState extends State<_RecentlyEdited> {
                             color: tokens.text3),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          e.title,
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w500,
-                            color: tokens.text,
+                        child: Tooltip(
+                          message: e.title,
+                          waitDuration:
+                              const Duration(milliseconds: 600),
+                          child: Text(
+                            e.title,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w500,
+                              color: tokens.text,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         flex: 2,
-                        child: Text(
-                          stripMdExtension(e.relativePath),
-                          textAlign: TextAlign.right,
-                          style: mono(fontSize: 11, color: tokens.text3),
-                          overflow: TextOverflow.ellipsis,
+                        child: Tooltip(
+                          message: e.relativePath,
+                          waitDuration:
+                              const Duration(milliseconds: 600),
+                          child: Text(
+                            stripMdExtension(e.relativePath),
+                            textAlign: TextAlign.right,
+                            style: mono(fontSize: 11, color: tokens.text3),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text(
-                        _ago(e.mtime),
-                        style: mono(fontSize: 11, color: tokens.text3),
+                      Tooltip(
+                        message: DateTime
+                                .fromMillisecondsSinceEpoch(e.mtime)
+                            .toIso8601String()
+                            .replaceFirst('T', ' ')
+                            .split('.')
+                            .first,
+                        waitDuration:
+                            const Duration(milliseconds: 500),
+                        child: Text(
+                          _ago(e.mtime),
+                          style: mono(fontSize: 11, color: tokens.text3),
+                        ),
                       ),
                     ],
                   ),
