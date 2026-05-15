@@ -62,7 +62,11 @@ class QuillToastCard extends StatelessWidget {
         border: Border.all(color: tokens.divider2, width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: dark ? 0.55 : 0.10),
+            // Material 3 semantic shadow slot, tinted by mode (TH-03).
+            color: Theme.of(context)
+                .colorScheme
+                .shadow
+                .withValues(alpha: dark ? 0.55 : 0.10),
             offset: const Offset(0, 10),
             blurRadius: 30,
           ),

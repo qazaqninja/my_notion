@@ -25,6 +25,10 @@ class QuillModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final dark = tokens.isDark;
+    // Material 3 semantic slots — shadow tinted by the theme, footer
+    // wash inverted from text colour so it reads as a subtle band
+    // against the surface regardless of light/dark mode.
+    final scheme = Theme.of(context).colorScheme;
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -35,7 +39,7 @@ class QuillModal extends StatelessWidget {
           border: Border.all(color: tokens.divider2, width: 0.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: dark ? 0.55 : 0.18),
+              color: scheme.shadow.withValues(alpha: dark ? 0.55 : 0.18),
               offset: const Offset(0, 32),
               blurRadius: 80,
             ),
@@ -51,9 +55,7 @@ class QuillModal extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 decoration: BoxDecoration(
-                  color: dark
-                      ? Colors.white.withValues(alpha: 0.015)
-                      : Colors.black.withValues(alpha: 0.01),
+                  color: tokens.text.withValues(alpha: dark ? 0.015 : 0.01),
                   border: Border(
                     top: BorderSide(color: tokens.divider, width: 0.5),
                   ),
@@ -199,8 +201,12 @@ class QuillPrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final bg = danger ? tokens.danger : tokens.text;
-    final fg = danger ? Colors.white : tokens.bg;
+    // Danger button reads against tokens.danger which is a red — the
+    // M3 onError slot guarantees a contrasting foreground regardless
+    // of theme calibration.
+    final fg = danger ? scheme.onError : tokens.bg;
     return InkWell(
       onTap: onPressed,
       borderRadius: const BorderRadius.all(Radius.circular(6)),
