@@ -278,8 +278,17 @@ class ChartView extends StatelessWidget {
                       final s = numCol != null
                           ? '\n${numCol.key}: ${sums[label] ?? 0}'
                           : '';
+                      // Sub-group breakdown — list each sub-key's count
+                      // beneath the total so the user can read the stack.
+                      final subs = stacks[label];
+                      final subLines = (subs == null || subs.isEmpty)
+                          ? ''
+                          : subOrder
+                              .where((k) => (subs[k] ?? 0) > 0)
+                              .map((k) => '\n  · $k: ${subs[k]}')
+                              .join();
                       return BarTooltipItem(
-                        '$label\n$c ${c == 1 ? 'row' : 'rows'}$s',
+                        '$label\n$c ${c == 1 ? 'row' : 'rows'}$s$subLines',
                         TextStyle(
                           fontSize: 11.5,
                           color: tokens.text,
