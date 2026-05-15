@@ -638,6 +638,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show pages without a title':
         if (!context.mounted) return;
         await _showUntitledDialog(context);
+      case 'Show broken wikilinks':
+        if (!context.mounted) return;
+        await _showBrokenLinksDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
@@ -1109,6 +1112,36 @@ views:
         content: Text('Created database: $safe'),
         duration: const Duration(seconds: 4),
       ),
+    );
+  }
+
+  Future<void> _showBrokenLinksDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    final relations = await db.select(db.relations).get();
+    final knownUlids = {for (final p in pages) p.ulid};
+    // Collect unique source pages whose body links to a target ULID
+    // that no longer exists in the index.
+    final brokenFromUlids = <String>{};
+    for (final r in relations) {
+      if (!knownUlids.contains(r.toUlid)) {
+        brokenFromUlids.add(r.fromUlid);
+      }
+    }
+    final broken = [
+      for (final p in pages)
+        if (brokenFromUlids.contains(p.ulid)) p,
+    ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+    if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: broken,
+      headingFull: 'PAGES WITH BROKEN WIKILINKS',
+      headingEmpty: 'NO BROKEN WIKILINKS',
+      subtitleFull:
+          'Pages whose body links to a `[[ULID]]` that no longer exists in the index. Sorted by last-edited.',
+      subtitleEmpty:
+          'Every wikilink in the vault resolves to a known page.',
     );
   }
 
