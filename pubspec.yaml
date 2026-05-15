@@ -27,12 +27,11 @@ dependencies:
   path: ^1.9.1
   file_picker: ^10.1.2
 
-  # Markdown + YAML
+  # Markdown + YAML — the renderer is hand-rolled in markdown_renderer.dart;
+  # markdown_widget / super_editor were declared but never instantiated.
+  # super_editor will re-land when WYSIWYG editing ships (see CLAUDE.md).
   yaml: ^3.1.3
   yaml_writer: ^2.0.0
-  markdown_widget: ^2.3.2+8
-  super_editor: ^0.3.0-dev.25
-  super_editor_markdown: ^0.1.6+1
 
   # Utilities
   ulid: ^2.0.0
@@ -41,7 +40,6 @@ dependencies:
   archive: ^4.0.7
   file: ^7.0.1
 
-  cupertino_icons: ^1.0.8
   flutter_math_fork: ^0.7.4
   table_calendar: ^3.2.0
   fl_chart: ^1.2.0
