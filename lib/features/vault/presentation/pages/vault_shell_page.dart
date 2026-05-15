@@ -16,6 +16,7 @@ import '../../../../core/platform/reveal.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
@@ -114,14 +115,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         listenWhen: (prev, next) => next is VaultError && prev is! VaultError,
         listener: (context, state) {
           if (state is! VaultError) return;
-          final messenger = ScaffoldMessenger.maybeOf(context);
-          messenger?.showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              duration: const Duration(seconds: 4),
-              backgroundColor: const Color(0xFFCB5A4F),
-            ),
-          );
+          context.toastError(state.message);
         },
         child: CallbackShortcuts(
         bindings: {
@@ -296,30 +290,36 @@ class _VaultShellPageState extends State<VaultShellPage> {
 
   Future<void> _showShortcuts(BuildContext context) async {
     if (!context.mounted) return;
-    final tokens = QuillTokens.of(context);
     final maxH = MediaQuery.of(context).size.height * 0.85;
-    await showDialog<void>(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: tokens.surface,
-        child: SizedBox(
+    await showQuillModal<void>(
+      context,
+      builder: (ctx) {
+        final tokens = QuillTokens.of(ctx);
+        return QuillModal(
           width: 460,
+          header: QuillModalHeader(
+            title: 'Keyboard shortcuts',
+            sub: 'Workspace and editor bindings.',
+            icon: 'edit',
+            onClose: () => Navigator.of(ctx).pop(),
+          ),
+          footer: Row(
+            children: [
+              const Spacer(),
+              QuillSecondaryButton(
+                label: 'Close',
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ],
+          ),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxH),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                Text('KEYBOARD SHORTCUTS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.0,
-                      color: tokens.text3,
-                    )),
-                const SizedBox(height: 14),
                 _kbSection(tokens, 'Workspace'),
                 _kbRow(tokens, '⌘K', 'Open command palette'),
                 _kbRow(tokens, '⌘N', 'New page'),
@@ -381,20 +381,13 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '[[ULID]]', 'Wikilink chip'),
                 _kbRow(tokens, '[[ULID#anchor]]', 'Link to heading'),
                 _kbRow(tokens, '![[ULID]]', 'Transclude page body'),
-                const SizedBox(height: 14),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
-          ),
         ),
-      ),
+      );
+      },
     );
   }
 
@@ -431,13 +424,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
 
   Future<void> _openRandomPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final router = GoRouter.of(context);
     final rows = await (db.select(db.pages)).get();
     if (rows.isEmpty) {
-      messenger?.showSnackBar(const SnackBar(
-        content: Text('No pages to pick from yet.'),
-      ));
+      if (context.mounted) context.toastInfo('No pages to pick from yet.');
       return;
     }
     final pick =
@@ -447,48 +437,25 @@ class _VaultShellPageState extends State<VaultShellPage> {
 
   Future<void> _promptAndBookmarkUrl(
       BuildContext context, String vaultPath) async {
-    final controller = TextEditingController();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final vaultBloc = context.read<VaultBloc>();
     final router = GoRouter.of(context);
-    final url = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Bookmark a URL'),
-        content: SizedBox(
-          width: 420,
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            keyboardType: TextInputType.url,
-            decoration: const InputDecoration(
-              hintText: 'https://...',
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (v) => Navigator.of(ctx).pop(v),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Bookmark'),
-          ),
-        ],
-      ),
+    final url = await showQuillPrompt(
+      context,
+      title: 'Bookmark a URL',
+      icon: 'link',
+      label: 'URL',
+      placeholder: 'https://...',
+      mono: true,
+      confirmLabel: 'Bookmark',
     );
-    if (url == null || url.trim().isEmpty) return;
+    if (url == null || url.isEmpty) return;
     try {
       final result =
           await UrlBookmark.capture(url, Directory(vaultPath));
       vaultBloc.add(const ReindexVault());
       router.go('/editor/${result.ulid}');
     } catch (e) {
-      messenger?.showSnackBar(
-          SnackBar(content: Text('Bookmark failed: $e')));
+      if (context.mounted) context.toastError('Bookmark failed', sub: '$e');
     }
   }
 
@@ -496,50 +463,24 @@ class _VaultShellPageState extends State<VaultShellPage> {
     final vaultBloc = context.read<VaultBloc>();
     final state = vaultBloc.state;
     if (state is! VaultLoaded) return;
-    final controller = TextEditingController();
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final text = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Quick capture'),
-        content: SizedBox(
-          width: 420,
-          child: TextField(
-            controller: controller,
-            autofocus: true,
-            minLines: 3,
-            maxLines: 6,
-            decoration: const InputDecoration(
-              hintText: 'Capture a thought — it lands at the top of '
-                  'Inbox/Quick capture.md with a timestamp.',
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (v) => Navigator.of(ctx).pop(v),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Capture'),
-          ),
-        ],
-      ),
+    final text = await showQuillPrompt(
+      context,
+      title: 'Quick capture',
+      icon: 'inbox',
+      label: 'Note',
+      hint: 'Lands at the top of Inbox/Quick capture.md with a timestamp.',
+      placeholder: 'Capture a thought…',
+      confirmLabel: 'Capture',
     );
-    if (text == null || text.trim().isEmpty) return;
+    if (text == null || text.isEmpty) return;
     try {
       await QuickCapture.append(text, Directory(state.rootPath));
       vaultBloc.add(const RefreshFromDisk());
-      messenger?.showSnackBar(const SnackBar(
-        content: Text('Captured → Inbox/Quick capture.md'),
-        duration: Duration(seconds: 2),
-      ));
+      if (context.mounted) {
+        context.toastSuccess('Captured → Inbox/Quick capture.md');
+      }
     } catch (e) {
-      messenger?.showSnackBar(
-          SnackBar(content: Text('Capture failed: $e')));
+      if (context.mounted) context.toastError('Capture failed', sub: '$e');
     }
   }
 
@@ -547,31 +488,15 @@ class _VaultShellPageState extends State<VaultShellPage> {
     final vaultBloc = context.read<VaultBloc>();
     if (vaultBloc.state is! VaultLoaded) return;
     final router = GoRouter.of(context);
-    final controller = TextEditingController();
-    final title = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New page'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Title'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () =>
-                Navigator.of(ctx).pop(controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final title = await showQuillPrompt(
+      context,
+      title: 'New page',
+      icon: 'file-md',
+      label: 'Title',
+      placeholder: 'Untitled',
+      confirmLabel: 'Create',
     );
-    if (title == null || title.trim().isEmpty) return;
+    if (title == null || title.isEmpty) return;
     vaultBloc.add(CreatePage(
       title: title.trim(),
       onCreated: (ulid) => router.go('/editor/$ulid'),
@@ -583,27 +508,20 @@ class _VaultShellPageState extends State<VaultShellPage> {
     final themeCubit = context.read<ThemeCubit>();
     final vaultState = vaultBloc.state;
     final vaultPath = vaultState is VaultLoaded ? vaultState.rootPath : null;
-    final messenger = ScaffoldMessenger.maybeOf(context);
 
     switch (label) {
       case 'Reveal vault in Finder':
         if (vaultPath == null) {
-          messenger?.showSnackBar(
-            const SnackBar(content: Text('No vault open')),
-          );
+          context.toastError('No vault open');
           return;
         }
         final ok = await Reveal.show(vaultPath);
-        if (!ok) {
-          messenger?.showSnackBar(
-            SnackBar(content: Text('Could not open $vaultPath')),
-          );
+        if (!ok && context.mounted) {
+          context.toastError('Could not open', sub: vaultPath, subMono: true);
         }
       case 'Export vault to folder':
         if (vaultPath == null) {
-          messenger?.showSnackBar(
-            const SnackBar(content: Text('No vault open')),
-          );
+          context.toastError('No vault open');
           return;
         }
         final dest = await FilePicker.platform.getDirectoryPath(
@@ -615,28 +533,24 @@ class _VaultShellPageState extends State<VaultShellPage> {
             src: Directory(vaultPath),
             dest: Directory(dest),
           );
-          messenger?.showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Exported $n ${n == 1 ? 'file' : 'files'} to $dest'),
-              duration: const Duration(seconds: 4),
-            ),
-          );
+          if (context.mounted) {
+            context.toastSuccess(
+              'Exported $n ${n == 1 ? 'file' : 'files'}',
+              sub: dest,
+              subMono: true,
+            );
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-            SnackBar(content: Text('Export failed: $e')),
-          );
+          if (context.mounted) context.toastError('Export failed', sub: '$e');
         }
       case 'Reindex vault':
         vaultBloc.add(const ReindexVault());
-        messenger?.showSnackBar(
-          const SnackBar(content: Text('Reindexing vault…')),
-        );
+        context.toastInfo('Reindexing vault…');
       case 'Quick capture':
         await _openQuickCapture(context);
       case 'Bookmark a URL':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         await _promptAndBookmarkUrl(context, vaultPath);
@@ -644,7 +558,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openRandomPage(context);
       case "Open today's daily note":
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         try {
@@ -656,8 +570,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
           if (!context.mounted) return;
           GoRouter.of(context).go('/editor/${result.ulid}');
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('Daily note failed: $e')));
+          if (context.mounted) context.toastError('Daily note failed', sub: '$e');
         }
       case 'Toggle theme':
         await themeCubit.cycleMode();
@@ -680,12 +593,12 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _showStaleDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         if (!context.mounted) return;
-        await showDialog(
-          context: context,
+        await showQuillModal<void>(
+          context,
           builder: (_) => BlocProvider.value(
             value: vaultBloc,
             child: TrashDialog(vaultRoot: vaultPath),
@@ -693,7 +606,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         );
       case 'Export vault as PDF':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final pickedPath = await FilePicker.platform.saveFile(
@@ -708,17 +621,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
             src: Directory(vaultPath),
             dest: File(pickedPath),
           );
-          messenger?.showSnackBar(SnackBar(
-            content: Text(
-                'Exported $n ${n == 1 ? 'page' : 'pages'} → $pickedPath'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess(
+              'Exported $n ${n == 1 ? 'page' : 'pages'}',
+              sub: pickedPath,
+              subMono: true,
+            );
+          }
         } catch (e) {
-          messenger?.showSnackBar(SnackBar(content: Text('PDF export failed: $e')));
+          if (context.mounted) context.toastError('PDF export failed', sub: '$e');
         }
       case 'Export vault as HTML':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final dest = await FilePicker.platform.getDirectoryPath(
@@ -730,17 +645,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
             src: Directory(vaultPath),
             dest: Directory(dest),
           );
-          messenger?.showSnackBar(SnackBar(
-            content: Text(
-                'Exported $n ${n == 1 ? 'page' : 'pages'} → $dest'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess(
+              'Exported $n ${n == 1 ? 'page' : 'pages'}',
+              sub: dest,
+              subMono: true,
+            );
+          }
         } catch (e) {
-          messenger?.showSnackBar(SnackBar(content: Text('HTML export failed: $e')));
+          if (context.mounted) context.toastError('HTML export failed', sub: '$e');
         }
       case 'Import CSV as database':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final result = await FilePicker.platform.pickFiles(
@@ -756,17 +673,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text(
-                'Imported ${summary.rowsWritten} ${summary.rowsWritten == 1 ? 'row' : 'rows'} · ${summary.columns} ${summary.columns == 1 ? 'col' : 'cols'} → ${summary.folderPath.split('/').last}'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess(
+              'Imported ${summary.rowsWritten} ${summary.rowsWritten == 1 ? 'row' : 'rows'} · ${summary.columns} ${summary.columns == 1 ? 'col' : 'cols'}',
+              sub: '→ ${summary.folderPath.split('/').last}',
+              subMono: true,
+            );
+          }
         } catch (e) {
-          messenger?.showSnackBar(SnackBar(content: Text('CSV import failed: $e')));
+          if (context.mounted) context.toastError('CSV import failed', sub: '$e');
         }
       case 'Import HTML file as page':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final result = await FilePicker.platform.pickFiles(
@@ -782,17 +701,16 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text('Imported HTML → ${summary.relativePath}'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess('Imported HTML',
+                sub: summary.relativePath, subMono: true);
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('HTML import failed: $e')));
+          if (context.mounted) context.toastError('HTML import failed', sub: '$e');
         }
       case 'Import Word .docx as page':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final docxPick = await FilePicker.platform.pickFiles(
@@ -808,17 +726,16 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text('Imported → ${summary.relativePath}'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess('Imported',
+                sub: summary.relativePath, subMono: true);
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('Word import failed: $e')));
+          if (context.mounted) context.toastError('Word import failed', sub: '$e');
         }
       case 'Import Evernote .enex notebook':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final enexPick = await FilePicker.platform.pickFiles(
@@ -834,18 +751,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text(
-                'Imported ${summary.notes.length} ${summary.notes.length == 1 ? 'note' : 'notes'} → ${summary.folder}/'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess(
+              'Imported ${summary.notes.length} ${summary.notes.length == 1 ? 'note' : 'notes'}',
+              sub: '${summary.folder}/',
+              subMono: true,
+            );
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('Evernote import failed: $e')));
+          if (context.mounted) context.toastError('Evernote import failed', sub: '$e');
         }
       case 'Import Asana CSV as database':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final asanaPick = await FilePicker.platform.pickFiles(
@@ -861,18 +779,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text(
-                'Imported ${summary.tasks.length} ${summary.tasks.length == 1 ? 'task' : 'tasks'} → ${summary.folder}/'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess(
+              'Imported ${summary.tasks.length} ${summary.tasks.length == 1 ? 'task' : 'tasks'}',
+              sub: '${summary.folder}/',
+              subMono: true,
+            );
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('Asana import failed: $e')));
+          if (context.mounted) context.toastError('Asana import failed', sub: '$e');
         }
       case 'Import Trello board as database':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final trPick = await FilePicker.platform.pickFiles(
@@ -888,18 +807,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text(
-                'Imported ${summary.cards.length} ${summary.cards.length == 1 ? 'card' : 'cards'} → ${summary.folder}/'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess(
+              'Imported ${summary.cards.length} ${summary.cards.length == 1 ? 'card' : 'cards'}',
+              sub: '${summary.folder}/',
+              subMono: true,
+            );
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('Trello import failed: $e')));
+          if (context.mounted) context.toastError('Trello import failed', sub: '$e');
         }
       case 'Import Roam JSON export':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final roamPick = await FilePicker.platform.pickFiles(
@@ -915,18 +835,19 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text(
-                'Imported ${summary.pages.length} ${summary.pages.length == 1 ? 'page' : 'pages'} → ${summary.folder}/'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess(
+              'Imported ${summary.pages.length} ${summary.pages.length == 1 ? 'page' : 'pages'}',
+              sub: '${summary.folder}/',
+              subMono: true,
+            );
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('Roam import failed: $e')));
+          if (context.mounted) context.toastError('Roam import failed', sub: '$e');
         }
       case 'Import OPML outline as page':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final opmlPick = await FilePicker.platform.pickFiles(
@@ -942,18 +863,17 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text('Imported OPML → ${summary.relativePath}'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess('Imported OPML',
+                sub: summary.relativePath, subMono: true);
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('OPML import failed: $e')));
+          if (context.mounted) context.toastError('OPML import failed', sub: '$e');
         }
       case 'Import text file as page':
       case 'Import Markdown file as page':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final exts = label == 'Import Markdown file as page'
@@ -972,17 +892,16 @@ class _VaultShellPageState extends State<VaultShellPage> {
             Directory(vaultPath),
           );
           vaultBloc.add(const ReindexVault());
-          messenger?.showSnackBar(SnackBar(
-            content: Text('Imported → ${summary.relativePath}'),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastSuccess('Imported',
+                sub: summary.relativePath, subMono: true);
+          }
         } catch (e) {
-          messenger?.showSnackBar(
-              SnackBar(content: Text('Import failed: $e')));
+          if (context.mounted) context.toastError('Import failed', sub: '$e');
         }
       case 'New page from template…':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         final db = context.read<QuillDatabase>();
@@ -991,42 +910,29 @@ class _VaultShellPageState extends State<VaultShellPage> {
                   p.relativePath.like('Templates\\%')))
             .get();
         if (templates.isEmpty) {
-          messenger?.showSnackBar(const SnackBar(
-            content: Text(
-                'No templates yet. Create a Templates/ folder at the vault root and add .md files.'),
-            duration: Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            context.toastInfo(
+              'No templates yet',
+              sub:
+                  'Create a Templates/ folder at the vault root and add .md files.',
+            );
+          }
           return;
         }
         if (!context.mounted) return;
-        final picked = await showDialog<String>(
-          context: context,
-          builder: (ctx) {
-            final t = QuillTokens.of(ctx);
-            return SimpleDialog(
-              title: const Text('New page from template'),
-              children: [
-                for (final tpl in templates)
-                  SimpleDialogOption(
-                    onPressed: () => Navigator.of(ctx).pop(tpl.ulid),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(tpl.title,
-                              style: TextStyle(
-                                  fontSize: 13.5, color: t.text)),
-                          Text(stripMdExtension(tpl.relativePath),
-                              style: TextStyle(
-                                  fontSize: 11, color: t.text3)),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
+        final picked = await showQuillChoice<String>(
+          context,
+          title: 'New page from template',
+          icon: 'note',
+          options: [
+            for (final tpl in templates)
+              QuillChoiceOption<String>(
+                value: tpl.ulid,
+                label: tpl.title,
+                hint: stripMdExtension(tpl.relativePath),
+                icon: 'file-md',
+              ),
+          ],
         );
         if (picked == null) return;
         if (!context.mounted) return;
@@ -1047,7 +953,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         GoRouter.of(context).go('/tags');
       case 'New database…':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         if (!context.mounted) return;
@@ -1057,74 +963,49 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _showShortcuts(context);
       case 'Install built-in templates':
         if (vaultPath == null) {
-          messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
+          context.toastError('No vault open');
           return;
         }
         try {
           final n = await const SeedTemplates().install(Directory(vaultPath));
-          messenger?.showSnackBar(SnackBar(
-            content: Text(
-              n == 0
-                  ? 'Templates already installed.'
-                  : 'Installed $n ${n == 1 ? 'template' : 'templates'} → Templates/',
-            ),
-            duration: const Duration(seconds: 4),
-          ));
+          if (context.mounted) {
+            if (n == 0) {
+              context.toastInfo('Templates already installed.');
+            } else {
+              context.toastSuccess(
+                'Installed $n ${n == 1 ? 'template' : 'templates'}',
+                sub: 'Templates/',
+                subMono: true,
+              );
+            }
+          }
           vaultBloc.add(const RefreshFromDisk());
         } catch (e) {
-          messenger?.showSnackBar(SnackBar(
-              content: Text('Could not install templates: $e')));
+          if (context.mounted) {
+            context.toastError('Could not install templates', sub: '$e');
+          }
         }
     }
   }
 
   Future<void> _createDatabase(
       BuildContext context, Directory vaultRoot) async {
-    final ctl = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New database'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Quill creates a folder under your vault and seeds it with a '
-              'minimal .database.yaml. Each .md inside the folder becomes '
-              'a row.',
-              style: TextStyle(fontSize: 12.5),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: ctl,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'Database name',
-              ),
-              onSubmitted: (v) => Navigator.of(ctx).pop(v),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(ctl.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final name = await showQuillPrompt(
+      context,
+      title: 'New database',
+      icon: 'database',
+      label: 'Database name',
+      hint:
+          'Quill creates a folder under your vault and seeds it with a minimal .database.yaml. Each .md inside the folder becomes a row.',
+      placeholder: 'Deals',
+      confirmLabel: 'Create',
     );
-    if (name == null || name.trim().isEmpty) return;
-    final safe = name.trim().replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    if (name == null || name.isEmpty) return;
+    final safe = name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
     final folder = Directory('${vaultRoot.path}/$safe');
     if (await folder.exists()) {
       if (!context.mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Folder already exists: $safe')),
-      );
+      context.toastError('Folder already exists', sub: safe, subMono: true);
       return;
     }
     final ulids = const UlidGenerator();
@@ -1147,14 +1028,8 @@ views:
     await folder.create(recursive: true);
     await File('${folder.path}/.database.yaml').writeAsString(yaml);
     if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     context.read<VaultBloc>().add(const ReindexVault());
-    messenger?.showSnackBar(
-      SnackBar(
-        content: Text('Created database: $safe'),
-        duration: const Duration(seconds: 4),
-      ),
-    );
+    context.toastSuccess('Created database', sub: safe, subMono: true);
   }
 
   Future<void> _showStaleDialog(BuildContext context) async {
@@ -1310,67 +1185,49 @@ views:
     required String subtitleFull,
     required String subtitleEmpty,
   }) async {
-    final tokens = QuillTokens.of(context);
     final size = MediaQuery.of(context).size;
     final w = size.width < 500 ? size.width - 32 : 460.0;
     final h = size.height < 580 ? size.height - 60 : 540.0;
-    await showDialog<void>(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: tokens.surface,
-        child: SizedBox(
+    await showQuillModal<void>(
+      context,
+      builder: (ctx) {
+        final tokens = QuillTokens.of(ctx);
+        return QuillModal(
           width: w,
-          height: h,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  pages.isEmpty
-                      ? headingEmpty
-                      : '$headingFull · ${pages.length}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                    color: tokens.text3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  pages.isEmpty ? subtitleEmpty : subtitleFull,
-                  style: TextStyle(fontSize: 12, color: tokens.text3),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: pages.length,
-                    itemBuilder: (_, i) {
-                      final p = pages[i];
-                      return _StatsPageRow(
-                        title: p.title,
-                        trailing: stripMdExtension(p.relativePath),
-                        ulid: p.ulid,
-                        mono: true,
-                        tokens: tokens,
-                      );
-                    },
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ),
-              ],
+          header: QuillModalHeader(
+            title: pages.isEmpty ? headingEmpty : headingFull,
+            sub: pages.isEmpty ? subtitleEmpty : subtitleFull,
+            icon: 'note',
+            onClose: () => Navigator.of(ctx).pop(),
+          ),
+          footer: Row(
+            children: [
+              const Spacer(),
+              QuillSecondaryButton(
+                label: 'Close',
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: h,
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+              itemCount: pages.length,
+              itemBuilder: (_, i) {
+                final p = pages[i];
+                return _StatsPageRow(
+                  title: p.title,
+                  trailing: stripMdExtension(p.relativePath),
+                  ulid: p.ulid,
+                  mono: true,
+                  tokens: tokens,
+                );
+              },
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -1442,32 +1299,39 @@ views:
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     if (!context.mounted) return;
-    final tokens = QuillTokens.of(context);
     final size = MediaQuery.of(context).size;
     final w = size.width < 460 ? size.width - 32 : 420.0;
     final maxH = size.height * 0.85;
-    await showDialog<void>(
-      context: context,
-      builder: (_) => Dialog(
-        backgroundColor: tokens.surface,
-        child: SizedBox(
+    await showQuillModal<void>(
+      context,
+      builder: (ctx) {
+        final tokens = QuillTokens.of(ctx);
+        return QuillModal(
           width: w,
+          header: QuillModalHeader(
+            title: 'Vault stats',
+            sub:
+                '${pages.length} pages · ${databases.length} databases · ${relations.length} relations.',
+            icon: 'database',
+            onClose: () => Navigator.of(ctx).pop(),
+          ),
+          footer: Row(
+            children: [
+              const Spacer(),
+              QuillSecondaryButton(
+                label: 'Close',
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ],
+          ),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxHeight: maxH),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                Text('VAULT STATS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1,
-                      color: tokens.text3,
-                    )),
-                const SizedBox(height: 14),
                 _statRow(tokens, 'Pages indexed', '${pages.length}'),
                 _statRow(tokens, 'Databases', '${databases.length}'),
                 _statRow(tokens, 'Relations', '${relations.length}'),
@@ -1588,20 +1452,13 @@ views:
                       ),
                     ),
                 ],
-                const SizedBox(height: 14),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ),
+                const SizedBox(height: 6),
               ],
             ),
           ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

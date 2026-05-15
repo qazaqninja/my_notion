@@ -13,9 +13,9 @@ class QuillModal extends StatelessWidget {
   const QuillModal({
     super.key,
     this.header,
-    required this.child,
     this.footer,
     this.width = 480,
+    required this.child,
   });
 
   final Widget? header;
