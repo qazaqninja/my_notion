@@ -1852,13 +1852,23 @@ class _FileAttachment extends StatelessWidget {
 
   Future<void> _open(BuildContext context) async {
     if (_isUrl) {
-      await Reveal.openUrl(src);
+      final ok = await Reveal.openUrl(src);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text('Could not open $src')),
+        );
+      }
       return;
     }
     final state = context.read<VaultBloc>().state;
     if (state is! VaultLoaded) return;
     final resolved = src.startsWith('/') ? src : '${state.rootPath}/$src';
-    await Reveal.show(resolved);
+    final ok = await Reveal.show(resolved);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Could not open $resolved')),
+      );
+    }
   }
 
   Future<int?> _size(BuildContext context) async {

@@ -463,7 +463,12 @@ class _FileChip extends StatelessWidget {
     final state = context.read<VaultBloc>().state;
     if (state is! VaultLoaded) return;
     final resolved = value.startsWith('/') ? value : '${state.rootPath}/$value';
-    await Reveal.show(resolved);
+    final ok = await Reveal.show(resolved);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text('Could not open $resolved')),
+      );
+    }
   }
 
   Widget _thumb(BuildContext context, QuillTokens tokens) {
