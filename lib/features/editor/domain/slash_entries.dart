@@ -124,6 +124,9 @@ enum SlashAction {
   /// Sort the lines touched by the selection by length, longest
   /// first.
   sortLinesByLengthDesc,
+  /// Reverse the words on every selected line (preserving any
+  /// trailing whitespace).
+  reverseWordsInLine,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -567,6 +570,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'abc → cba',
     action: SlashAction.reverseCharactersInLine,
     keywords: ['reverse', 'mirror', 'flip', 'characters', 'chars', 'palindrome'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Reverse words per line',
+    hint: 'a b → b a',
+    action: SlashAction.reverseWordsInLine,
+    keywords: ['reverse', 'words', 'flip', 'mirror', 'order'],
   ),
   SlashEntry(
     icon: 'lock',

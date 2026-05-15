@@ -1194,6 +1194,38 @@ void main() {
     });
   });
 
+  group('reverseWordsInLineIn', () {
+    test('flips two-word lines', () {
+      const text = 'hello world\n';
+      final r = reverseWordsInLineIn(text, 0, text.length);
+      expect(r.text, 'world hello\n');
+    });
+
+    test('flips multi-word lines', () {
+      const text = 'one two three four\n';
+      final r = reverseWordsInLineIn(text, 0, text.length);
+      expect(r.text, 'four three two one\n');
+    });
+
+    test('double-reverse on a single-space line is identity', () {
+      const text = 'alpha beta gamma\n';
+      final once = reverseWordsInLineIn(text, 0, text.length);
+      final twice = reverseWordsInLineIn(once.text, 0, once.text.length);
+      expect(twice.text, text);
+    });
+
+    test('blank lines stay blank', () {
+      const text = 'one\n\ntwo three\n';
+      final r = reverseWordsInLineIn(text, 0, text.length);
+      expect(r.text, 'one\n\nthree two\n');
+    });
+
+    test('single-word line is invariant', () {
+      const text = 'solo\n';
+      expect(reverseWordsInLineIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

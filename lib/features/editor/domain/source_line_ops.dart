@@ -684,6 +684,25 @@ SortLinesResult htmlUnescapeLinesIn(String text, int start, int end) =>
       ],
     );
 
+/// Reverse the **words** on every selected line, preserving the
+/// inter-word whitespace runs and any trailing newline. Different
+/// from [reverseCharactersInLineIn] (per-char flip) and
+/// [reverseLinesIn] (order flip).
+///
+///   `hello world` → `world hello`
+///   `one two three` → `three two one`
+SortLinesResult reverseWordsInLineIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty)
+            l
+          else
+            l.trimRight().split(' ').reversed.join(' ') +
+                l.substring(l.trimRight().length),
+      ];
+    });
+
 /// Reverse the characters of each selected line in place. Different
 /// from [reverseLinesIn], which reverses the **order** of lines.
 /// Useful for the classic "reveal hidden text" gag and for testing
