@@ -1362,19 +1362,29 @@ class _ImageSpec {
   final bool fullWidth;
 }
 
-/// If [text] is JUST a wikilink — `[[ULID]]` with nothing else — return
-/// the ULID. Used to render sub-page cards.
+/// If [text] is JUST a wikilink — `[[ULID]]` or `[[ULID#anchor]]`
+/// with nothing else — return the ULID. The anchor (if any) is
+/// stripped: sub-page cards link to the target page, the section
+/// anchor would just be a click-only side-effect (mirrors M779 for
+/// export paths).
 String? _matchStandaloneWikilink(String text) {
   final trimmed = text.trim();
-  final m = RegExp(r'^\[\[([0-9A-Z]{26})\]\]$').firstMatch(trimmed);
+  final m = RegExp(
+          r'^\[\[([0-9A-Z]{26})(?:#[a-z0-9][a-z0-9\-]*)?\]\]$')
+      .firstMatch(trimmed);
   return m?.group(1);
 }
 
-/// If [text] is JUST a transclusion — `![[ULID]]` with nothing else —
-/// return the ULID. Renders the target page's body inline.
+/// If [text] is JUST a transclusion — `![[ULID]]` or
+/// `![[ULID#anchor]]` with nothing else — return the ULID. The
+/// anchor is ignored for transclusion (the whole body inlines);
+/// without this match an anchored transclusion would silently
+/// downgrade to an inline chip via the paragraph-inline parser.
 String? _matchStandaloneTransclusion(String text) {
   final trimmed = text.trim();
-  final m = RegExp(r'^!\[\[([0-9A-Z]{26})\]\]$').firstMatch(trimmed);
+  final m = RegExp(
+          r'^!\[\[([0-9A-Z]{26})(?:#[a-z0-9][a-z0-9\-]*)?\]\]$')
+      .firstMatch(trimmed);
   return m?.group(1);
 }
 
@@ -1538,11 +1548,13 @@ class _TranscludedBlock extends StatelessWidget {
     );
   }
 
-  /// Strip nested `![[ULID]]` from the body if we're already at max
-  /// depth, so the FutureBuilder above doesn't keep recursing.
+  /// Strip nested `![[ULID]]` (or `![[ULID#anchor]]`) from the body
+  /// if we're already at max depth, so the FutureBuilder above
+  /// doesn't keep recursing.
   static String _bodyAtDepth(String body, int nextDepth) {
     if (nextDepth < maxDepth) return body;
-    return body.replaceAll(RegExp(r'!\[\[[0-9A-Z]{26}\]\]'),
+    return body.replaceAll(
+        RegExp(r'!\[\[[0-9A-Z]{26}(?:#[a-z0-9][a-z0-9\-]*)?\]\]'),
         '⟪deeply nested transclusion⟫');
   }
 }
