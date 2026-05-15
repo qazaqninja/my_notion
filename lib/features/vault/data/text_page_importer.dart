@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../../core/markdown/frontmatter_parser.dart';
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import '../domain/entities/frontmatter_entry.dart';
 
@@ -56,8 +57,8 @@ class TextPageImporter {
     final out = File(p.join(vaultRoot.path, rel));
     final frontmatter = '---\n'
         'id: $ulid\n'
-        'title: ${_yamlString(title)}\n'
-        'imported_from: ${_yamlString(importedFrom)}\n'
+        'title: ${yamlSafeScalar(title)}\n'
+        'imported_from: ${yamlSafeScalar(importedFrom)}\n'
         '---\n\n';
     await out.writeAsString('$frontmatter${body.trimRight()}\n');
     return ImportedTextSummary(
@@ -93,7 +94,7 @@ class TextPageImporter {
     if (!hasImportedFrom) {
       entries.add(FrontmatterEntry(
         key: 'imported_from',
-        rawScalar: _yamlString(importedFrom),
+        rawScalar: yamlSafeScalar(importedFrom),
         type: FrontmatterType.text,
         value: importedFrom,
       ));
@@ -123,12 +124,6 @@ class TextPageImporter {
     return s;
   }
 
-  static String _yamlString(String value) {
-    if (RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value)) {
-      return '"${value.replaceAll('"', r'\"')}"';
-    }
-    return value;
-  }
 }
 
 class ImportedTextSummary {

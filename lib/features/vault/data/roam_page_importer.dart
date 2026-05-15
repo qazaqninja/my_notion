@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'roam_to_markdown.dart';
 
@@ -37,8 +38,8 @@ class RoamPageImporter {
           : null;
       final fmBuf = StringBuffer('---\n');
       fmBuf.writeln('id: $ulid');
-      fmBuf.writeln('title: ${_yamlString(page.title)}');
-      fmBuf.writeln('imported_from: ${_yamlString(imported)}');
+      fmBuf.writeln('title: ${yamlSafeScalar(page.title)}');
+      fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
       if (createdAt != null) fmBuf.writeln('created_at: $createdAt');
       fmBuf.writeln('---');
       fmBuf.writeln();
@@ -60,12 +61,6 @@ class RoamPageImporter {
     return s;
   }
 
-  static String _yamlString(String value) {
-    if (RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value)) {
-      return '"${value.replaceAll('"', r'\"')}"';
-    }
-    return value;
-  }
 }
 
 class ImportedRoamPage {

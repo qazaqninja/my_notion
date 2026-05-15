@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'html_to_markdown.dart';
 
@@ -39,7 +40,7 @@ class EnexPageImporter {
       final body = HtmlToMarkdown.convert(note.content);
       final fmBuf = StringBuffer('---\n');
       fmBuf.writeln('id: $ulid');
-      fmBuf.writeln('title: ${_yamlString(note.title)}');
+      fmBuf.writeln('title: ${yamlSafeScalar(note.title)}');
       if (note.tags.isNotEmpty) {
         fmBuf.writeln('tags: [${note.tags.join(', ')}]');
       }
@@ -49,7 +50,7 @@ class EnexPageImporter {
       if (note.updated != null) {
         fmBuf.writeln('updated: ${note.updated}');
       }
-      fmBuf.writeln('imported_from: ${_yamlString(imported)}');
+      fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
       fmBuf.writeln('---');
       fmBuf.writeln();
       await out.writeAsString('${fmBuf.toString()}${body.trim()}\n');
@@ -161,12 +162,6 @@ class EnexPageImporter {
     return out;
   }
 
-  static String _yamlString(String value) {
-    if (RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value)) {
-      return '"${value.replaceAll('"', r'\"')}"';
-    }
-    return value;
-  }
 }
 
 class EnexNote {

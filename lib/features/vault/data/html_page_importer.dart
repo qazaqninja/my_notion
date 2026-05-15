@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'html_to_markdown.dart';
 
@@ -37,8 +38,8 @@ class HtmlPageImporter {
     final imported = p.basename(source.path);
     final frontmatter = '---\n'
         'id: $ulid\n'
-        'title: ${_yamlString(title)}\n'
-        'imported_from: ${_yamlString(imported)}\n'
+        'title: ${yamlSafeScalar(title)}\n'
+        'imported_from: ${yamlSafeScalar(imported)}\n'
         '---\n\n';
     await out.writeAsString('$frontmatter$body');
     return ImportedPageSummary(
@@ -58,14 +59,6 @@ class HtmlPageImporter {
     return s;
   }
 
-  /// Quote the value if it contains a YAML-significant character, else
-  /// emit it bare. Keeps frontmatter readable for simple cases.
-  static String _yamlString(String value) {
-    if (RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value)) {
-      return '"${value.replaceAll('"', r'\"')}"';
-    }
-    return value;
-  }
 }
 
 class ImportedPageSummary {

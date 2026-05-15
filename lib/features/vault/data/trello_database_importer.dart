@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'trello_to_database.dart';
 
@@ -44,15 +45,15 @@ class TrelloDatabaseImporter {
       final out = File(p.join(vaultRoot.path, rel));
       final fmBuf = StringBuffer('---\n');
       fmBuf.writeln('id: $ulid');
-      fmBuf.writeln('title: ${_yamlString(card.title)}');
+      fmBuf.writeln('title: ${yamlSafeScalar(card.title)}');
       if (card.status.isNotEmpty) {
-        fmBuf.writeln('status: ${_yamlString(card.status)}');
+        fmBuf.writeln('status: ${yamlSafeScalar(card.status)}');
       }
       if (card.labels.isNotEmpty) {
         fmBuf.writeln('labels: [${card.labels.join(', ')}]');
       }
       if (card.due != null) fmBuf.writeln('due: ${card.due}');
-      fmBuf.writeln('imported_from: ${_yamlString(imported)}');
+      fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
       fmBuf.writeln('---');
       fmBuf.writeln();
       await out.writeAsString('${fmBuf.toString()}${card.body.trim()}\n');
@@ -75,7 +76,7 @@ class TrelloDatabaseImporter {
   }) {
     final buf = StringBuffer();
     buf.writeln('id: $dbId');
-    buf.writeln('name: ${_yamlString(name)}');
+    buf.writeln('name: ${yamlSafeScalar(name)}');
     buf.writeln('icon: T');
     buf.writeln('color: "#5A82B4"');
     buf.writeln('schema:');
@@ -86,7 +87,7 @@ class TrelloDatabaseImporter {
     if (statusOptions.isNotEmpty) {
       buf.writeln('    options:');
       for (final o in statusOptions) {
-        buf.writeln('      - ${_yamlString(o)}');
+        buf.writeln('      - ${yamlSafeScalar(o)}');
       }
     }
     buf.writeln('  labels:');
@@ -120,12 +121,6 @@ class TrelloDatabaseImporter {
     return s;
   }
 
-  static String _yamlString(String value) {
-    if (RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value)) {
-      return '"${value.replaceAll('"', r'\"')}"';
-    }
-    return value;
-  }
 }
 
 class ImportedTrelloCard {

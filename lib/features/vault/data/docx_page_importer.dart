@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'docx_to_markdown.dart';
 
@@ -31,8 +32,8 @@ class DocxPageImporter {
     final imported = p.basename(source.path);
     final fm = '---\n'
         'id: $ulid\n'
-        'title: ${_yamlString(title)}\n'
-        'imported_from: ${_yamlString(imported)}\n'
+        'title: ${yamlSafeScalar(title)}\n'
+        'imported_from: ${yamlSafeScalar(imported)}\n'
         '---\n\n';
     await out.writeAsString('$fm${body.trim()}\n');
     return ImportedDocxSummary(
@@ -47,12 +48,6 @@ class DocxPageImporter {
     return s;
   }
 
-  static String _yamlString(String value) {
-    if (RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value)) {
-      return '"${value.replaceAll('"', r'\"')}"';
-    }
-    return value;
-  }
 }
 
 class ImportedDocxSummary {

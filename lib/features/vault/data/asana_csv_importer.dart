@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 
 /// Tailored Asana CSV import — produces a database whose `.database.yaml`
@@ -60,7 +61,7 @@ class AsanaCsvImporter {
           : '';
       final fmBuf = StringBuffer('---\n');
       fmBuf.writeln('id: $ulid');
-      fmBuf.writeln('title: ${_yamlString(title)}');
+      fmBuf.writeln('title: ${yamlSafeScalar(title)}');
       for (var i = 0; i < header.length; i++) {
         if (i == mapping.titleIdx || i == mapping.notesIdx) continue;
         if (i >= row.length) continue;
@@ -71,10 +72,10 @@ class AsanaCsvImporter {
           final parts = _splitMulti(v);
           fmBuf.writeln('$key: [${parts.join(', ')}]');
         } else {
-          fmBuf.writeln('$key: ${_yamlString(v)}');
+          fmBuf.writeln('$key: ${yamlSafeScalar(v)}');
         }
       }
-      fmBuf.writeln('imported_from: ${_yamlString(imported)}');
+      fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
       fmBuf.writeln('---');
       fmBuf.writeln();
       await out.writeAsString('${fmBuf.toString()}${body.trim()}\n');
@@ -137,7 +138,7 @@ class AsanaCsvImporter {
   }) {
     final buf = StringBuffer();
     buf.writeln('id: $dbId');
-    buf.writeln('name: ${_yamlString(name)}');
+    buf.writeln('name: ${yamlSafeScalar(name)}');
     buf.writeln('icon: A');
     buf.writeln('color: "#B46F4F"');
     buf.writeln('schema:');
@@ -152,7 +153,7 @@ class AsanaCsvImporter {
         if (mapping.sectionOptions.isNotEmpty) {
           buf.writeln('    options:');
           for (final o in mapping.sectionOptions) {
-            buf.writeln('      - ${_yamlString(o)}');
+            buf.writeln('      - ${yamlSafeScalar(o)}');
           }
         }
       } else if (mapping.multiIdx.contains(i)) {
@@ -224,13 +225,6 @@ class AsanaCsvImporter {
   static String _yamlKey(String k) {
     if (RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$').hasMatch(k)) return k;
     return '"${k.replaceAll('"', r'\"')}"';
-  }
-
-  static String _yamlString(String value) {
-    if (RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value)) {
-      return '"${value.replaceAll('"', r'\"')}"';
-    }
-    return value;
   }
 
   // ------------------------------------------------------------------ csv

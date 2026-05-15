@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 
 /// Capture a URL as a new page under `<vault>/Bookmarks/<host>-<slug>.md`.
@@ -41,8 +42,8 @@ class UrlBookmark {
     final file = File(p.join(vaultRoot.path, rel));
     final buf = StringBuffer('---\n')
       ..writeln('id: $ulid')
-      ..writeln('title: ${_yamlString(title)}')
-      ..writeln('url: ${_yamlString(trimmed)}')
+      ..writeln('title: ${yamlSafeScalar(title)}')
+      ..writeln('url: ${yamlSafeScalar(trimmed)}')
       ..writeln('created_at: $today')
       ..writeln('tags: [bookmark]')
       ..writeln('---')
@@ -61,12 +62,6 @@ class UrlBookmark {
     return s;
   }
 
-  static String _yamlString(String value) {
-    if (RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value)) {
-      return '"${value.replaceAll('"', r'\"')}"';
-    }
-    return value;
-  }
 }
 
 class UrlBookmarkResult {
