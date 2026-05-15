@@ -365,9 +365,11 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
           for (final p in s.split(','))
             if (p.trim().isNotEmpty) p.trim(),
         ];
-        return ('[${parts.join(', ')}]', parts);
-      case ColumnType.text:
+        return ('[${parts.map(_yamlFlowItem).join(', ')}]', parts);
       case ColumnType.date:
+        // YYYY-MM-DD never needs escape.
+        return (s, s);
+      case ColumnType.text:
       case ColumnType.select:
       case ColumnType.relation:
       case ColumnType.formula:
@@ -376,8 +378,22 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
       case ColumnType.file:
       case ColumnType.createdTime:
       case ColumnType.lastEditedTime:
-        return (s, s);
+        return (_yamlSafeScalar(s), s);
     }
+  }
+
+  /// Flow-list element variant (mirrors editor_page.dart M689) — quotes
+  /// also when ',' appears since flow lists separate on commas.
+  static String _yamlFlowItem(String value) {
+    if (value.isEmpty) return '""';
+    final needs =
+        RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
+            value.startsWith(' ') ||
+            value.endsWith(' ');
+    if (!needs) return value;
+    final escaped =
+        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    return '"$escaped"';
   }
 
   static FrontmatterType _columnToFrontmatterType(ColumnType t) => switch (t) {
