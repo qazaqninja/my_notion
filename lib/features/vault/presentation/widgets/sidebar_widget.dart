@@ -65,7 +65,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
     final state = context.watch<VaultBloc>().state;
 
     final workspaceName = state is VaultLoaded
-        ? (state.workspace.name?.isNotEmpty == true
+        ? ((state.workspace.name?.isNotEmpty ?? false)
             ? state.workspace.name!
             : p.basename(state.rootPath).isNotEmpty
                 ? p

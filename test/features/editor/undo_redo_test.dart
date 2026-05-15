@@ -36,7 +36,7 @@ Page _seed({String body = 'initial body', String title = 'P'}) => Page(
       ulid: '01HX0V9R5N6E8L3P7Q8S9U2X4B',
       relativePath: 'p.md',
       title: title,
-      frontmatter: const Frontmatter(entries: []),
+      frontmatter: Frontmatter.empty,
       body: body,
     );
 

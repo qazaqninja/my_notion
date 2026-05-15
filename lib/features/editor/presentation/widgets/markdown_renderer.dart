@@ -2692,7 +2692,7 @@ class _ButtonBlockState extends State<_ButtonBlock> {
   @override
   Widget build(BuildContext context) {
     final tokens = widget.tokens;
-    final label = widget.props['label']?.trim().isNotEmpty == true
+    final label = (widget.props['label']?.trim().isNotEmpty ?? false)
         ? widget.props['label']!
         : 'Button';
     final action = (widget.props['action'] ?? 'url').toLowerCase();

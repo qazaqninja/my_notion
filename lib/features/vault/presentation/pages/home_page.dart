@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
+import 'package:drift/drift.dart' show OrderingMode, OrderingTerm;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';

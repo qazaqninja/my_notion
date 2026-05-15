@@ -26,7 +26,7 @@ void main() {
   }
 
   test('isLocked: missing key → false', () {
-    expect(EditorBloc.isLocked(build(const Frontmatter(entries: []))), isFalse);
+    expect(EditorBloc.isLocked(build(Frontmatter.empty)), isFalse);
   });
 
   test('isLocked: bool true → true', () {
