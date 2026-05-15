@@ -197,6 +197,11 @@ enum SlashAction {
   htmlUncommentLines,
   /// Re-number every selected `N. ` line sequentially from 1.
   renumberListLines,
+  /// Wrap every non-blank selected line in straight double quotes.
+  quoteLines,
+  /// Strip surrounding straight double quotes from every selected
+  /// line that has them on both ends.
+  unquoteLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -927,6 +932,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '7, 3, 9 → 1, 2, 3',
     action: SlashAction.renumberListLines,
     keywords: ['renumber', 'list', 'ordered', 'fix', 'sequence'],
+  ),
+  SlashEntry(
+    icon: 'quote',
+    label: 'Quote each line',
+    hint: 'a → "a"',
+    action: SlashAction.quoteLines,
+    keywords: ['quote', 'string', 'csv', 'wrap', 'json'],
+  ),
+  SlashEntry(
+    icon: 'quote',
+    label: 'Unquote each line',
+    hint: '"a" → a',
+    action: SlashAction.unquoteLines,
+    keywords: ['unquote', 'strip', 'string', 'csv', 'unwrap'],
   ),
   SlashEntry(
     icon: 'hash',

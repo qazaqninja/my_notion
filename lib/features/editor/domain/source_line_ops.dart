@@ -734,6 +734,33 @@ SortLinesResult urlsToMarkdownLinksIn(String text, int start, int end) =>
       ];
     });
 
+/// Wrap each non-blank selected line in straight double quotes
+/// (`"abc"`). Internal `"` is preserved as-is. Useful for quoting
+/// rows before CSV export or JSON-array construction.
+SortLinesResult quoteLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else '"$l"',
+      ];
+    });
+
+/// Inverse of [quoteLinesIn]: strip a single pair of surrounding
+/// straight double quotes when both ends of a line are `"`.
+/// Single-sided quotes and inner quotes pass through.
+SortLinesResult unquoteLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            if (l.length >= 2 && l.startsWith('"') && l.endsWith('"')) {
+              return l.substring(1, l.length - 1);
+            }
+            return l;
+          })(),
+      ];
+    });
+
 /// Wrap each non-blank selected line in `==…==` (Pandoc highlight,
 /// rendered yellow by markdown_renderer). Blank lines stay blank.
 SortLinesResult highlightLinesIn(String text, int start, int end) =>

@@ -2067,6 +2067,42 @@ void main() {
     });
   });
 
+  group('quoteLinesIn / unquoteLinesIn', () {
+    test('quote wraps non-blank lines', () {
+      const text = 'apple\nbanana\n';
+      final r = quoteLinesIn(text, 0, text.length);
+      expect(r.text, '"apple"\n"banana"\n');
+    });
+
+    test('quote preserves blanks', () {
+      const text = 'a\n\nb\n';
+      final r = quoteLinesIn(text, 0, text.length);
+      expect(r.text, '"a"\n\n"b"\n');
+    });
+
+    test('unquote strips paired outer quotes', () {
+      const text = '"apple"\n"banana"\n';
+      final r = unquoteLinesIn(text, 0, text.length);
+      expect(r.text, 'apple\nbanana\n');
+    });
+
+    test('unquote leaves single-sided quotes alone', () {
+      const text = '"foo\n';
+      expect(unquoteLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('unquote leaves lines with no outer quotes alone', () {
+      const text = 'plain\n';
+      expect(unquoteLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('quote then unquote is identity for non-blank input', () {
+      const text = 'one\ntwo\nthree\n';
+      final q = quoteLinesIn(text, 0, text.length).text;
+      expect(unquoteLinesIn(q, 0, q.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
