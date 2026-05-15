@@ -82,6 +82,10 @@ enum SlashAction {
   /// Inverse of [smartTypography]: turn Unicode typographic
   /// characters back into ASCII.
   dumbifyTypography,
+  /// Base64-encode every selected line using UTF-8 bytes.
+  base64Encode,
+  /// Base64-decode every selected line; invalid Base64 stays as-is.
+  base64Decode,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -476,6 +480,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '“ ” → "',
     action: SlashAction.dumbifyTypography,
     keywords: ['dumb', 'ascii', 'straight', 'quotes', 'typography', 'plain'],
+  ),
+  SlashEntry(
+    icon: 'lock',
+    label: 'Base64 encode',
+    hint: 'abc → YWJj',
+    action: SlashAction.base64Encode,
+    keywords: ['base64', 'encode', 'b64'],
+  ),
+  SlashEntry(
+    icon: 'lock',
+    label: 'Base64 decode',
+    hint: 'YWJj → abc',
+    action: SlashAction.base64Decode,
+    keywords: ['base64', 'decode', 'b64'],
   ),
   SlashEntry(
     icon: 'edit',

@@ -931,6 +931,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, smartTypographyIn);
       case SlashAction.dumbifyTypography:
         _applyLinesTransformAfterSlash(stripStart, caret, dumbifyTypographyIn);
+      case SlashAction.base64Encode:
+        _applyLinesTransformAfterSlash(stripStart, caret, base64EncodeLinesIn);
+      case SlashAction.base64Decode:
+        _applyLinesTransformAfterSlash(stripStart, caret, base64DecodeLinesIn);
     }
   }
 

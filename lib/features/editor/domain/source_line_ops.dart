@@ -3,6 +3,7 @@
 /// unit-tested without a widget tree.
 library;
 
+import 'dart:convert';
 import 'dart:math' as math;
 
 /// Result of a line-op: the new text and the new collapsed-selection
@@ -608,6 +609,39 @@ SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2})
     (lines) => [for (final l in lines) l.replaceAll('\t', replacement)],
   );
 }
+
+/// Base64-encode every selected line using UTF-8 bytes. Lines that
+/// were empty stay empty so block structure is preserved. Useful
+/// when copying secrets / blob payloads into structured fields.
+SortLinesResult base64EncodeLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.isEmpty) l else base64.encode(utf8.encode(l)),
+      ];
+    });
+
+/// Base64-decode every selected line back to its UTF-8 string. Lines
+/// that fail to parse (not Base64, or contain invalid UTF-8) are
+/// left untouched so a mixed-content selection is still safe to
+/// invoke. Empty lines stay empty.
+SortLinesResult base64DecodeLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty)
+            l
+          else
+            (() {
+              try {
+                final bytes = base64.decode(l.trim());
+                return utf8.decode(bytes);
+              } on FormatException {
+                return l;
+              }
+            })(),
+      ];
+    });
 
 /// Convert ASCII typography into Unicode typographic equivalents:
 ///

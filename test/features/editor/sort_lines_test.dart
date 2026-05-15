@@ -799,6 +799,45 @@ void main() {
     });
   });
 
+  group('base64EncodeLinesIn / base64DecodeLinesIn', () {
+    test('encodes each line as UTF-8 base64', () {
+      const text = 'hello\nworld\n';
+      final r = base64EncodeLinesIn(text, 0, text.length);
+      expect(r.text, 'aGVsbG8=\nd29ybGQ=\n');
+    });
+
+    test('round-trip is identity for ASCII lines', () {
+      const text = 'foo\nbar\nbaz\n';
+      final enc = base64EncodeLinesIn(text, 0, text.length).text;
+      final dec = base64DecodeLinesIn(enc, 0, enc.length).text;
+      expect(dec, text);
+    });
+
+    test('round-trip is identity for multibyte UTF-8 lines', () {
+      const text = '你好\n🚀 rocket\n';
+      final enc = base64EncodeLinesIn(text, 0, text.length).text;
+      final dec = base64DecodeLinesIn(enc, 0, enc.length).text;
+      expect(dec, text);
+    });
+
+    test('decode leaves non-base64 lines untouched', () {
+      const text = 'not base64\nalso plain\n';
+      final r = base64DecodeLinesIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('decode preserves blank lines', () {
+      const text = '';
+      expect(base64DecodeLinesIn(text, 0, 0).text, text);
+    });
+
+    test('encode preserves blank lines', () {
+      const text = 'a\n\nb\n';
+      final r = base64EncodeLinesIn(text, 0, text.length);
+      expect(r.text, 'YQ==\n\nYg==\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
