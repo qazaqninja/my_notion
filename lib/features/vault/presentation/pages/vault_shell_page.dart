@@ -1647,7 +1647,7 @@ class _SidebarDragHandle extends StatelessWidget {
 /// the corresponding editor route. Pulled out into its own widget so
 /// the dialog body stays readable and so the gesture wiring lives in
 /// one place.
-class _StatsPageRow extends StatelessWidget {
+class _StatsPageRow extends StatefulWidget {
   const _StatsPageRow({
     required this.title,
     required this.trailing,
@@ -1663,28 +1663,41 @@ class _StatsPageRow extends StatelessWidget {
   final QuillTokens tokens;
 
   @override
+  State<_StatsPageRow> createState() => _StatsPageRowState();
+}
+
+class _StatsPageRowState extends State<_StatsPageRow> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pop();
-        context.go('/editor/$ulid');
-      },
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
+    final tokens = widget.tokens;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.of(context).pop();
+          context.go('/editor/${widget.ulid}');
+        },
+        child: Container(
+          color: _hover ? tokens.accentTint : null,
+          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
           child: Row(
             children: [
               Expanded(
                 child: Text(
-                  title,
-                  style: TextStyle(fontSize: 12, color: tokens.text2),
+                  widget.title,
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: _hover ? tokens.accent : tokens.text2),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               Text(
-                trailing,
-                style: mono
+                widget.trailing,
+                style: widget.mono
                     ? Theme.of(context).textTheme.bodySmall?.merge(
                         TextStyle(
                             fontSize: 11,
