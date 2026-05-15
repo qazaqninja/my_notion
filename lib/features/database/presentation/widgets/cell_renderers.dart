@@ -80,20 +80,35 @@ class CellRenderer extends StatelessWidget {
         if (s.contains('..')) {
           final parts = s.split('..');
           if (parts.length == 2) {
+            final from = DateTime.tryParse(parts[0].trim());
+            final to = DateTime.tryParse(parts[1].trim());
+            final days = (from != null && to != null)
+                ? to.difference(from).inDays
+                : null;
             return Align(
               alignment: align,
-              child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(
-                      text: _fmtDate(parts[0].trim()),
-                      style: mono(fontSize: 12.5, color: tokens.text2)),
-                  TextSpan(
-                      text: '  →  ',
-                      style: TextStyle(fontSize: 12, color: tokens.text3)),
-                  TextSpan(
-                      text: _fmtDate(parts[1].trim()),
-                      style: mono(fontSize: 12.5, color: tokens.text2)),
-                ]),
+              child: Tooltip(
+                message: days == null
+                    ? s
+                    : days == 0
+                        ? '$s (same day)'
+                        : days.abs() == 1
+                            ? '$s (1 day)'
+                            : '$s (${days.abs()} days)',
+                waitDuration: const Duration(milliseconds: 500),
+                child: Text.rich(
+                  TextSpan(children: [
+                    TextSpan(
+                        text: _fmtDate(parts[0].trim()),
+                        style: mono(fontSize: 12.5, color: tokens.text2)),
+                    TextSpan(
+                        text: '  →  ',
+                        style: TextStyle(fontSize: 12, color: tokens.text3)),
+                    TextSpan(
+                        text: _fmtDate(parts[1].trim()),
+                        style: mono(fontSize: 12.5, color: tokens.text2)),
+                  ]),
+                ),
               ),
             );
           }
