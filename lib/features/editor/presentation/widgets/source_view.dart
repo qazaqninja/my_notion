@@ -1076,6 +1076,18 @@ class _SourceViewState extends State<SourceView> {
           text: cleared,
           selection: TextSelection.collapsed(offset: stripStart + iso.length),
         );
+      case SlashAction.insertEpochTimestamp:
+        // Seconds since 1970-01-01T00:00Z. Wall-clock-derived; safe
+        // for log scribbling and not meant as a high-precision time
+        // source.
+        final epoch =
+            (DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+        final cleared = text.replaceRange(stripStart, caret, epoch);
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection:
+              TextSelection.collapsed(offset: stripStart + epoch.length),
+        );
     }
   }
 

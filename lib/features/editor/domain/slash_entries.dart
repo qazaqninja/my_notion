@@ -169,6 +169,8 @@ enum SlashAction {
   /// Insert the current local datetime in ISO 8601 form
   /// (`YYYY-MM-DDTHH:MM:SS`).
   insertIsoDateTime,
+  /// Insert the current Unix-epoch timestamp in seconds.
+  insertEpochTimestamp,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -808,6 +810,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'YYYY-MM-DDTHH:MM:SS',
     action: SlashAction.insertIsoDateTime,
     keywords: ['iso', 'datetime', '8601', 'timestamp', 'sortable'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Insert epoch timestamp',
+    hint: '1747345200',
+    action: SlashAction.insertEpochTimestamp,
+    keywords: ['epoch', 'unix', 'timestamp', 'seconds', 'integer'],
   ),
   SlashEntry(
     icon: 'hash',
