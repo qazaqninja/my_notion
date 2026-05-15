@@ -124,6 +124,18 @@ const Color kBannerWarnFgDark = Color(0xFFD7C896);
 const Color kBannerErrorFgLight = Color(0xFF7E3D33);
 const Color kBannerErrorFgDark = Color(0xFFD6A39B);
 
+/// Background-tint variants of the banner palette. Each is the
+/// matching base hue at a low alpha (10–16%). Defined here as named
+/// constants (rather than inline `Color(0x29…)` literals in
+/// `quill_banner.dart`) so the TH-03 rule reads cleanly: every
+/// surface colour lives in the theme module.
+const Color kBannerSuccessBgDark = Color(0x295A8F6E); // kStatusDotGreen @ 16%
+const Color kBannerWarnBgDark = Color(0x29C4A548); // kStatusDotYellow @ 16%
+const Color kBannerErrorBgDark = Color(0x29A8584C); // kBannerErrorBase @ 16%
+const Color kBannerSuccessBgLight = Color(0x1A5A8F6E); // kStatusDotGreen @ 10%
+const Color kBannerWarnBgLight = Color(0x24C4A548); // kStatusDotYellow @ 14%
+const Color kBannerErrorBgLight = Color(0x1AA8584C); // kBannerErrorBase @ 10%
+
 /// Yellow accent for `<mark>…</mark>` highlights — the renderer adds
 /// alpha (0.55) at the use site so this is the un-tinted base hue.
 const Color kHighlightYellow = Color(0xFFFFE486);

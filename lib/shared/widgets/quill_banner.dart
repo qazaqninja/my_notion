@@ -13,9 +13,9 @@ class _BannerColors {
 }
 
 _BannerColors _colorsFor(QuillToastKind kind, QuillTokens tokens) {
-  // Background tints are the base hue at low alpha; explicit alpha
-  // bytes (0x29 / 0x24 / 0x1A) keep the values pure-token and avoid
-  // creating a runtime-only Color via withOpacity.
+  // Background tints live in tag_colors.dart (`kBannerSuccessBgDark`
+  // etc.) as the base hue at low alpha — no inline Color literals
+  // here so TH-03 reads clean.
   if (tokens.isDark) {
     switch (kind) {
       case QuillToastKind.info:
@@ -27,19 +27,19 @@ _BannerColors _colorsFor(QuillToastKind kind, QuillTokens tokens) {
       case QuillToastKind.success:
         return const _BannerColors(
           fg: kBannerSuccessFgDark,
-          bg: Color(0x295A8F6E), // kStatusDotGreen @ 16%
+          bg: kBannerSuccessBgDark,
           border: kStatusDotGreen,
         );
       case QuillToastKind.warn:
         return const _BannerColors(
           fg: kBannerWarnFgDark,
-          bg: Color(0x29C4A548), // kStatusDotYellow @ 16%
+          bg: kBannerWarnBgDark,
           border: kStatusDotYellow,
         );
       case QuillToastKind.error:
         return const _BannerColors(
           fg: kBannerErrorFgDark,
-          bg: Color(0x29A8584C), // kBannerErrorBase @ 16%
+          bg: kBannerErrorBgDark,
           border: kBannerErrorBase,
         );
     }
@@ -54,19 +54,19 @@ _BannerColors _colorsFor(QuillToastKind kind, QuillTokens tokens) {
     case QuillToastKind.success:
       return const _BannerColors(
         fg: kBannerSuccessFgLight,
-        bg: Color(0x1A5A8F6E), // kStatusDotGreen @ 10%
+        bg: kBannerSuccessBgLight,
         border: kStatusDotGreen,
       );
     case QuillToastKind.warn:
       return const _BannerColors(
         fg: kBannerWarnFgLight,
-        bg: Color(0x24C4A548), // kStatusDotYellow @ 14%
+        bg: kBannerWarnBgLight,
         border: kStatusDotYellow,
       );
     case QuillToastKind.error:
       return const _BannerColors(
         fg: kBannerErrorFgLight,
-        bg: Color(0x1AA8584C), // kBannerErrorBase @ 10%
+        bg: kBannerErrorBgLight,
         border: kBannerErrorBase,
       );
   }
