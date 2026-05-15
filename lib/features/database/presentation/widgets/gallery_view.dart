@@ -471,10 +471,14 @@ class _CardState extends State<_Card> {
     if (RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(raw)) {
       return Text(raw, style: mono(fontSize: 11, color: tokens.text3));
     }
-    return Text(raw,
-        style: TextStyle(fontSize: 11.5, color: tokens.text2),
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1);
+    return Tooltip(
+      message: raw,
+      waitDuration: const Duration(milliseconds: 600),
+      child: Text(raw,
+          style: TextStyle(fontSize: 11.5, color: tokens.text2),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1),
+    );
   }
 
   /// Cover image strip for a card. Reads the row's `cover:` frontmatter
