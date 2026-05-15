@@ -1120,8 +1120,16 @@ class _EditorBodyState extends State<_EditorBody> {
                 value: loaded.mode,
                 onChanged: (m) => context.read<EditorBloc>().add(ToggleEditorMode(m)),
                 options: const [
-                  SegmentOption(value: EditorMode.rendered, label: 'Rendered', icon: 'eye'),
-                  SegmentOption(value: EditorMode.source, label: 'Source', icon: 'code'),
+                  SegmentOption(
+                      value: EditorMode.rendered,
+                      label: 'Rendered',
+                      icon: 'eye',
+                      tooltip: 'Rendered view (⌘E)'),
+                  SegmentOption(
+                      value: EditorMode.source,
+                      label: 'Source',
+                      icon: 'code',
+                      tooltip: 'Source markdown (⌘E)'),
                 ],
               ),
               actions: Row(
