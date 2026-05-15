@@ -365,6 +365,9 @@ class _CommentsDialogState extends State<CommentsDialog> {
                   if (!ok) return;
                   await _service.delete(
                       Directory(widget.vaultRoot), widget.pageUlid, c.id);
+                  if (!mounted) return;
+                  context.toastSuccess('Comment deleted',
+                      sub: 'by ${c.author}');
                   _refresh();
                 },
                 tooltip: 'Delete comment',
