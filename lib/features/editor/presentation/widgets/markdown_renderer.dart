@@ -2077,10 +2077,23 @@ class _BrokenImageBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: tokens.surface2,
         border: Border.all(color: tokens.divider2, width: 0.5),
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
       ),
       child: Center(
-        child: Text('image not found',
-            style: TextStyle(fontSize: 11.5, color: tokens.text3)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.broken_image_outlined,
+                size: 28, color: tokens.text3),
+            const SizedBox(height: 6),
+            Text('Image not found',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: tokens.text2,
+                )),
+          ],
+        ),
       ),
     );
   }
