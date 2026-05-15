@@ -159,13 +159,18 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                     _yamlBody(tokens),
                   const SizedBox(height: 18),
                   // Relations rail
-                  Text(
-                    'RELATIONS',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.0,
-                      color: tokens.text3,
+                  Tooltip(
+                    message:
+                        'Frontmatter fields of type relation — values are [[ULID]] links to other pages.',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Text(
+                      'RELATIONS',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                        color: tokens.text3,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
