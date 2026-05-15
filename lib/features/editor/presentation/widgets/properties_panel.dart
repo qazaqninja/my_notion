@@ -187,10 +187,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                     onTap: () => _copyUlid(context),
                   ),
                   _actionRow(
-                    tokens, 'export', 'Export .md', '',
-                    onTap: () => _revealPage(context),
-                  ),
-                  _actionRow(
                     tokens, 'note', 'Comments', '',
                     onTap: () => _openComments(context),
                   ),
@@ -198,7 +194,6 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                     tokens, 'export', 'Print…', '',
                     onTap: () => _printPage(context),
                   ),
-                  _actionRow(tokens, 'trash', 'Move to trash', '⌫'),
                 ],
               ),
             ),
