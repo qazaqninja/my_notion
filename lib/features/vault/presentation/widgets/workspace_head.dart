@@ -80,13 +80,19 @@ class WorkspaceHead extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    color: tokens.text,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    height: 1.2,
+                Tooltip(
+                  message: name,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      color: tokens.text,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
                 Tooltip(
