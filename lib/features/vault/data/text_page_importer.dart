@@ -93,7 +93,7 @@ class TextPageImporter {
     if (!hasImportedFrom) {
       entries.add(FrontmatterEntry(
         key: 'imported_from',
-        rawScalar: importedFrom,
+        rawScalar: _yamlString(importedFrom),
         type: FrontmatterType.text,
         value: importedFrom,
       ));
