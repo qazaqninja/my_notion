@@ -331,6 +331,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘⇧1', 'Convert current line to # heading (source)'),
                 _kbRow(tokens, '⌘⇧2', 'Convert current line to ## heading (source)'),
                 _kbRow(tokens, '⌘⇧3', 'Convert current line to ### heading (source)'),
+                _kbRow(tokens, '⌘⇧0', 'Strip block marker — back to plain paragraph (source)'),
+                _kbRow(tokens, '⌘⇧.', 'Convert current line to > blockquote (source)'),
                 _kbRow(tokens, '↵', 'Continue list / increment number (source). ⇧↵ to break out.'),
                 _kbRow(tokens, '⌫', 'Strip marker on an empty list item (source).'),
                 _kbRow(tokens, '[[ULID]]', 'Wikilink chip'),

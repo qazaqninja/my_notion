@@ -287,6 +287,18 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp((text, caret) => applyLinePrefix(text, caret, prefix));
   }
 
+  /// Strip any leading block marker on the current line (heading, list,
+  /// quote, …) back to plain paragraph. Cmd+⇧+0.
+  void _stripLinePrefix() {
+    _applyLineOp((text, caret) => applyLinePrefix(text, caret, ''));
+  }
+
+  /// Convert the current line to a `> ` blockquote. Cmd+⇧+. (mnemonic:
+  /// the period sits on the same key as `>` on US layouts).
+  void _convertToQuote() {
+    _applyLineOp((text, caret) => applyLinePrefix(text, caret, '> '));
+  }
+
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
     final v = _controller.value;
@@ -757,6 +769,14 @@ class _SourceViewState extends State<SourceView> {
                       meta: true, shift: true): () => _setHeadingLevel(3),
                   const SingleActivator(LogicalKeyboardKey.digit3,
                       control: true, shift: true): () => _setHeadingLevel(3),
+                  const SingleActivator(LogicalKeyboardKey.digit0,
+                      meta: true, shift: true): _stripLinePrefix,
+                  const SingleActivator(LogicalKeyboardKey.digit0,
+                      control: true, shift: true): _stripLinePrefix,
+                  const SingleActivator(LogicalKeyboardKey.period,
+                      meta: true, shift: true): _convertToQuote,
+                  const SingleActivator(LogicalKeyboardKey.period,
+                      control: true, shift: true): _convertToQuote,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
