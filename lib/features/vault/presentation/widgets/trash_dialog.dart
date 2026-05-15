@@ -195,11 +195,27 @@ class _TrashDialogState extends State<TrashDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(item.title,
-                    style: TextStyle(fontSize: 13, color: tokens.text)),
+                Tooltip(
+                  message: item.title,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    item.title,
+                    style: TextStyle(fontSize: 13, color: tokens.text),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text('${item.bucket} · ${item.basename}',
-                    style: mono(fontSize: 11, color: tokens.text3)),
+                Tooltip(
+                  message: '${item.bucket} · ${item.basename}',
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    '${item.bucket} · ${item.basename}',
+                    style: mono(fontSize: 11, color: tokens.text3),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
               ],
             ),
           ),
