@@ -1140,6 +1140,19 @@ views:
     }
     final topFolders = folderCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
+    // Orphan detection: pages with no incoming AND no outgoing wikilinks.
+    // Templates / `.trash/` / `_meta/` would inflate this count but the
+    // indexer already excludes them, so the count is a clean hygiene
+    // signal.
+    final linked = <String>{};
+    for (final r in relations) {
+      linked.add(r.fromUlid);
+      linked.add(r.toUlid);
+    }
+    final orphans = [
+      for (final p in pages)
+        if (!linked.contains(p.ulid)) p,
+    ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
     if (!context.mounted) return;
     final tokens = QuillTokens.of(context);
     await showDialog<void>(
@@ -1219,6 +1232,36 @@ views:
                           Text('${t.value}',
                               style: mono(
                                   fontSize: 11, color: tokens.text3)),
+                        ],
+                      ),
+                    ),
+                ],
+                if (orphans.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                      'ORPHANS · ${orphans.length} page${orphans.length == 1 ? '' : 's'} with no wikilinks',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                        color: tokens.text3,
+                      )),
+                  const SizedBox(height: 6),
+                  for (final p in orphans.take(5))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(p.title,
+                                style: TextStyle(
+                                    fontSize: 12, color: tokens.text2),
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          Text(p.relativePath,
+                              style: mono(
+                                  fontSize: 10.5, color: tokens.text3),
+                              overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
