@@ -682,11 +682,22 @@ class _EditorBodyState extends State<_EditorBody> {
     );
     if (picked == null || !context.mounted) return;
     final bloc = context.read<EditorBloc>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final label = switch (picked) {
+      'sans' => 'sans-serif (default)',
+      'serif' => 'serif',
+      'mono' => 'monospace',
+      _ => picked,
+    };
     if (picked == 'sans') {
       // Default — strip the frontmatter entry entirely.
       if (existing != null) {
         bloc.add(const RemoveFrontmatterField('font'));
       }
+      messenger?.showSnackBar(SnackBar(
+        content: Text('Page font: $label'),
+        duration: const Duration(seconds: 2),
+      ));
       return;
     }
     if (existing == null) {
@@ -702,6 +713,10 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: picked, value: picked),
       ));
     }
+    messenger?.showSnackBar(SnackBar(
+      content: Text('Page font: $label'),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   Future<void> _addTags(
