@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:printing/printing.dart';
 
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../vault/data/pdf_exporter.dart';
 import '../../../../shared/theme/quill_tokens.dart';
@@ -533,7 +534,7 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
             if (s.trim().isNotEmpty) s.trim(),
         ];
         return widget.entry.copyWith(
-          rawScalar: '[${parts.map(_yamlFlowItem).join(', ')}]',
+          rawScalar: '[${parts.map(yamlFlowItem).join(', ')}]',
           value: parts,
         );
       case fe.FrontmatterType.checkbox:
@@ -550,34 +551,8 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
       case fe.FrontmatterType.formula:
       case fe.FrontmatterType.file:
         return widget.entry
-            .copyWith(rawScalar: _yamlSafeScalar(text), value: text);
+            .copyWith(rawScalar: yamlSafeScalar(text), value: text);
     }
-  }
-
-  /// Mirror of _AddFieldFormState._yamlSafeScalar — kept inline rather
-  /// than promoted to a shared util to match the existing duplicated
-  /// _yamlString pattern across the codebase.
-  static String _yamlSafeScalar(String value) {
-    if (value.isEmpty) return value;
-    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-        value.startsWith(' ') ||
-        value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
-  }
-
-  static String _yamlFlowItem(String value) {
-    if (value.isEmpty) return '""';
-    final needs =
-        RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-            value.startsWith(' ') ||
-            value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
   }
 
   @override
@@ -754,43 +729,15 @@ class _AddFieldFormState extends State<_AddFieldForm> {
           ];
           return fe.FrontmatterEntry(
             key: key,
-            rawScalar: '[${items.map(_yamlFlowItem).join(', ')}]',
+            rawScalar: '[${items.map(yamlFlowItem).join(', ')}]',
             type: _type,
             value: items,
           );
         }(),
       _ => fe.FrontmatterEntry(
-          key: key, rawScalar: _yamlSafeScalar(text), type: _type, value: text),
+          key: key, rawScalar: yamlSafeScalar(text), type: _type, value: text),
     };
     widget.onAdd(entry);
-  }
-
-  /// Match VaultBloc._yamlSafeScalar (M686) — wrap in double quotes when
-  /// the user-typed value contains a YAML-unsafe glyph or
-  /// leading / trailing whitespace.
-  static String _yamlSafeScalar(String value) {
-    if (value.isEmpty) return value;
-    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-        value.startsWith(' ') ||
-        value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
-  }
-
-  /// Flow-list element variant (M689): also quotes on `,` since flow
-  /// lists separate elements on commas.
-  static String _yamlFlowItem(String value) {
-    if (value.isEmpty) return '""';
-    final needs =
-        RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-            value.startsWith(' ') ||
-            value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
   }
 
   @override

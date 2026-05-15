@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
@@ -312,7 +313,7 @@ class _EditorBodyState extends State<_EditorBody> {
       }
       return;
     }
-    final iconRaw = _yamlSafeScalar(picked);
+    final iconRaw = yamlSafeScalar(picked);
     if (existing != null && existing.rawScalar.trim() == iconRaw) {
       if (context.mounted) {
         context.toastInfo('Page icon already $picked');
@@ -333,22 +334,6 @@ class _EditorBodyState extends State<_EditorBody> {
       ));
     }
     if (context.mounted) context.toastSuccess('Page icon: $picked');
-  }
-
-  /// Wrap a string in double quotes when it contains YAML-unsafe glyphs.
-  /// Mirrors VaultBloc._yamlSafeScalar (M686). The emoji picker accepts
-  /// custom non-ASCII input ≤8 runes, which can include ':' / '#' etc.
-  /// in multi-character "emoji" sequences — so the icon path needs this
-  /// too even though hand-curated emojis are safe.
-  static String _yamlSafeScalar(String value) {
-    if (value.isEmpty) return value;
-    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-        value.startsWith(' ') ||
-        value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
   }
 
   Future<void> _showPageMenu(BuildContext context, EditorLoaded loaded) async {
@@ -775,7 +760,7 @@ class _EditorBodyState extends State<_EditorBody> {
     // Without this, a tag like "high, priority" would split into two
     // entries when re-parsed.
     final raw =
-        '[${merged.map(_yamlFlowItem).join(', ')}]';
+        '[${merged.map(yamlFlowItem).join(', ')}]';
     if (existing == null) {
       bloc.add(AddFrontmatterField(FrontmatterEntry(
         key: 'tags',
@@ -792,23 +777,6 @@ class _EditorBodyState extends State<_EditorBody> {
     context.toastSuccess(
         'Added ${actuallyNew.length} ${actuallyNew.length == 1 ? "tag" : "tags"}',
         sub: actuallyNew.join(', '));
-  }
-
-  /// Wrap a flow-list element in double quotes when it contains glyphs
-  /// that would split or be reinterpreted by YAML's flow grammar
-  /// (`,`, `[`, `]`, `{`, `}`, `:`, `#`, etc.). Mirrors VaultBloc.
-  /// _yamlSafeScalar (M686) but adds `,` to the unsafe-glyph set
-  /// because flow lists separate on commas.
-  static String _yamlFlowItem(String value) {
-    if (value.isEmpty) return '""';
-    final needs =
-        RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-            value.startsWith(' ') ||
-            value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
   }
 
   Future<void> _setWordGoal(

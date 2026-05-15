@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
@@ -71,7 +72,7 @@ class _PageTitleFieldState extends State<PageTitleField> {
     final state = bloc.state;
     if (state is! EditorLoaded) return;
     final existing = state.page.frontmatter.find('title');
-    final raw = _yamlSafeScalar(next);
+    final raw = yamlSafeScalar(next);
     if (existing == null) {
       bloc.add(AddFrontmatterField(FrontmatterEntry(
         key: 'title',
@@ -85,21 +86,6 @@ class _PageTitleFieldState extends State<PageTitleField> {
         existing.copyWith(rawScalar: raw, value: next),
       ));
     }
-  }
-
-  /// Mirror of VaultBloc._yamlSafeScalar (M686): wrap titles containing
-  /// YAML-unsafe glyphs in double quotes so the on-disk frontmatter
-  /// round-trips. Inline rather than imported to match the codebase's
-  /// existing per-file duplication pattern.
-  static String _yamlSafeScalar(String value) {
-    if (value.isEmpty) return value;
-    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-        value.startsWith(' ') ||
-        value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
   }
 
   @override

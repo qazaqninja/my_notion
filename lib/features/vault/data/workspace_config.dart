@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import '../../../core/markdown/yaml_scalar.dart';
+
 /// A single local user known to the vault. Names are referenced by the
 /// `person` / `created_by` / `last_edited_by` column types and stamped
 /// into frontmatter by the editor at save time.
@@ -169,8 +171,8 @@ class WorkspaceConfig {
     final buf = StringBuffer();
     if (name != null || icon != null) {
       buf.writeln('workspace:');
-      if (name != null) buf.writeln('  name: ${_yamlSafe(name!)}');
-      if (icon != null) buf.writeln('  icon: ${_yamlSafe(icon!)}');
+      if (name != null) buf.writeln('  name: ${yamlSafeScalar(name!)}');
+      if (icon != null) buf.writeln('  icon: ${yamlSafeScalar(icon!)}');
     }
     if (favorites.isNotEmpty) {
       buf.writeln('favorites:');
@@ -187,21 +189,21 @@ class WorkspaceConfig {
       if (sidebarOrder != null && sidebarOrder!.isNotEmpty) {
         buf.writeln('  order:');
         for (final s in sidebarOrder!) {
-          buf.writeln('    - ${_yamlSafe(s)}');
+          buf.writeln('    - ${yamlSafeScalar(s)}');
         }
       }
       if (sidebarHidden.isNotEmpty) {
         buf.writeln('  hidden:');
         for (final s in sidebarHidden) {
-          buf.writeln('    - ${_yamlSafe(s)}');
+          buf.writeln('    - ${yamlSafeScalar(s)}');
         }
       }
     }
     if (users.isNotEmpty) {
       buf.writeln('users:');
       for (final u in users) {
-        buf.writeln('  - name: ${_yamlSafe(u.name)}');
-        if (u.email != null) buf.writeln('    email: ${_yamlSafe(u.email!)}');
+        buf.writeln('  - name: ${yamlSafeScalar(u.name)}');
+        if (u.email != null) buf.writeln('    email: ${yamlSafeScalar(u.email!)}');
         if (u.isDefault) buf.writeln('    default: true');
       }
     }
@@ -209,19 +211,4 @@ class WorkspaceConfig {
     await file.writeAsString(buf.isEmpty ? '' : buf.toString());
   }
 
-  /// Wrap a string in double quotes when it contains YAML-unsafe glyphs.
-  /// Same pattern as VaultBloc._yamlSafeScalar (M686) — every user-typed
-  /// field in .quill.yaml (workspace.name, workspace.icon, user.name,
-  /// user.email, sidebar entries) goes through this so the file
-  /// round-trips through `load()` on next launch.
-  static String _yamlSafe(String value) {
-    if (value.isEmpty) return value;
-    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-        value.startsWith(' ') ||
-        value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
-  }
 }

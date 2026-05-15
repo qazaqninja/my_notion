@@ -10,6 +10,7 @@ import 'package:drift/drift.dart' show Value;
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../data/indexer.dart';
 import '../../data/vault_watcher.dart';
@@ -183,7 +184,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         ),
         FrontmatterEntry(
           key: 'title',
-          rawScalar: _yamlSafeScalar(displayTitle),
+          rawScalar: yamlSafeScalar(displayTitle),
           type: FrontmatterType.text,
           value: displayTitle,
         ),
@@ -196,7 +197,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         if (author != null && author.isNotEmpty)
           FrontmatterEntry(
             key: 'created_by',
-            rawScalar: _yamlSafeScalar(author),
+            rawScalar: yamlSafeScalar(author),
             type: FrontmatterType.text,
             value: author,
           ),
@@ -481,25 +482,6 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       return trimmed.substring(0, trimmed.length - 3).trim();
     }
     return trimmed;
-  }
-
-  /// Wrap a string in double quotes when it contains YAML-unsafe glyphs
-  /// (`:`, `#`, `>`, `[`, `]`, etc.). Without this, a user-typed title
-  /// like "foo: bar" written as `title: foo: bar` would re-parse as a
-  /// map. Pure mechanical escape — backslashes and double quotes inside
-  /// the value get backslash-escaped. Mirrors the duplicated _yamlString
-  /// helpers across importers (url_bookmark.dart, trello_database_importer.dart,
-  /// etc.) so the contract is consistent across all FrontmatterEntry
-  /// creators.
-  static String _yamlSafeScalar(String value) {
-    if (value.isEmpty) return value;
-    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-        value.startsWith(' ') ||
-        value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
   }
 
   /// In-place refresh. Unlike [LoadFromPath], does NOT emit VaultLoading,

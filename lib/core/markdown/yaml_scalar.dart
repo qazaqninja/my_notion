@@ -1,0 +1,49 @@
+/// YAML scalar quoting helpers. Centralises the escape logic that
+/// otherwise gets copy-pasted across importers, the bloc, the database
+/// repo, the properties panel, the title field, etc. — each call site
+/// would otherwise reinvent the same regex, and any future fix to one
+/// instance would skip the rest.
+///
+/// Two flavours:
+///
+/// - [yamlSafeScalar] — block-mapping value, e.g. `title: foo`. Quotes
+///   on YAML reserved glyphs (`:`, `#`, `>`, `[`, `]`, `{`, `}`, `|`,
+///   `"`, `'`, etc.) and on leading / trailing whitespace.
+/// - [yamlFlowItem] — flow-list element, e.g. `tags: [foo, bar]`. Adds
+///   `,` to the unsafe set since flow lists separate on commas. Returns
+///   `""` for empty strings so they round-trip.
+///
+/// Both return the input unchanged when no escaping is needed. The
+/// escaped form wraps in double quotes and backslash-escapes `\` and
+/// `"` inside the value. Re-parsing through `package:yaml` recovers
+/// the original string verbatim.
+library;
+
+final _unsafeBlock = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''');
+final _unsafeFlow = RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''');
+
+/// Block-mapping value escape. Returns [value] unchanged when it parses
+/// safely as a YAML plain scalar; otherwise wraps in double quotes
+/// with `\\` / `\"` escaping inside.
+String yamlSafeScalar(String value) {
+  if (value.isEmpty) return value;
+  final needs = _unsafeBlock.hasMatch(value) ||
+      value.startsWith(' ') ||
+      value.endsWith(' ');
+  if (!needs) return value;
+  final escaped = value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+  return '"$escaped"';
+}
+
+/// Flow-list element escape — same as [yamlSafeScalar] but also quotes
+/// on `,` so list items containing commas don't split. Empty strings
+/// become `""` (rather than disappearing into the flow grammar).
+String yamlFlowItem(String value) {
+  if (value.isEmpty) return '""';
+  final needs = _unsafeFlow.hasMatch(value) ||
+      value.startsWith(' ') ||
+      value.endsWith(' ');
+  if (!needs) return value;
+  final escaped = value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+  return '"$escaped"';
+}

@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/wikilink_parser.dart';
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/entities/frontmatter.dart';
@@ -283,7 +284,7 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
       ),
       FrontmatterEntry(
         key: 'title',
-        rawScalar: _yamlSafeScalar(title),
+        rawScalar: yamlSafeScalar(title),
         type: FrontmatterType.text,
         value: title,
       ),
@@ -365,7 +366,7 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
           for (final p in s.split(','))
             if (p.trim().isNotEmpty) p.trim(),
         ];
-        return ('[${parts.map(_yamlFlowItem).join(', ')}]', parts);
+        return ('[${parts.map(yamlFlowItem).join(', ')}]', parts);
       case ColumnType.date:
         // YYYY-MM-DD never needs escape.
         return (s, s);
@@ -378,22 +379,8 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
       case ColumnType.file:
       case ColumnType.createdTime:
       case ColumnType.lastEditedTime:
-        return (_yamlSafeScalar(s), s);
+        return (yamlSafeScalar(s), s);
     }
-  }
-
-  /// Flow-list element variant (mirrors editor_page.dart M689) — quotes
-  /// also when ',' appears since flow lists separate on commas.
-  static String _yamlFlowItem(String value) {
-    if (value.isEmpty) return '""';
-    final needs =
-        RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-            value.startsWith(' ') ||
-            value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
   }
 
   static FrontmatterType _columnToFrontmatterType(ColumnType t) => switch (t) {
@@ -426,20 +413,6 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
     return stripped.isEmpty ? 'Untitled' : stripped;
-  }
-
-  /// Wrap a string in double quotes when it contains YAML-unsafe glyphs.
-  /// Mirrors VaultBloc._yamlSafeScalar (M686) so DB createRow rows with
-  /// titles like "foo: bar" or "#tag" round-trip correctly.
-  static String _yamlSafeScalar(String value) {
-    if (value.isEmpty) return value;
-    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
-        value.startsWith(' ') ||
-        value.endsWith(' ');
-    if (!needs) return value;
-    final escaped =
-        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
-    return '"$escaped"';
   }
 
   Map<String, dynamic> _decodeCells(String fmJson) {
