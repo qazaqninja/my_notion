@@ -252,6 +252,13 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     emit(state.copyWith(selectedIndex: next));
   }
 
+  void setSelection(int index) {
+    if (!state.open || state.totalResults == 0) return;
+    if (index < 0 || index >= state.totalResults) return;
+    if (state.selectedIndex == index) return;
+    emit(state.copyWith(selectedIndex: index));
+  }
+
   /// Resolve [selectedIndex] back into a typed entry (page/db/action).
   /// Returns null if nothing focused.
   Object? selectedItem() {

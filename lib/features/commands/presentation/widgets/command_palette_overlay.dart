@@ -190,6 +190,9 @@ class _Panel extends StatelessWidget {
                                 state.pages[i].relativePath),
                             selected: state.selectedIndex == i,
                             onTap: () => onPickPage(state.pages[i]),
+                            onHover: () => context
+                                .read<CommandPaletteCubit>()
+                                .setSelection(i),
                           ),
                       ],
                     ),
@@ -206,6 +209,9 @@ class _Panel extends StatelessWidget {
                             hint: 'Database',
                             selected: state.selectedIndex == state.pages.length + j,
                             onTap: () => onPickDatabase(state.databases[j]),
+                            onHover: () => context
+                                .read<CommandPaletteCubit>()
+                                .setSelection(state.pages.length + j),
                           ),
                       ],
                     ),
@@ -223,6 +229,11 @@ class _Panel extends StatelessWidget {
                             selected: state.selectedIndex ==
                                 state.pages.length + state.databases.length + k,
                             onTap: () => onInvokeAction(state.actions[k]),
+                            onHover: () => context
+                                .read<CommandPaletteCubit>()
+                                .setSelection(state.pages.length +
+                                    state.databases.length +
+                                    k),
                           ),
                       ],
                     ),
@@ -336,6 +347,7 @@ class _ResultRow extends StatelessWidget {
     required this.hint,
     required this.selected,
     required this.onTap,
+    this.onHover,
     this.emojiIcon,
   });
 
@@ -345,6 +357,7 @@ class _ResultRow extends StatelessWidget {
   final String hint;
   final bool selected;
   final VoidCallback onTap;
+  final VoidCallback? onHover;
 
   /// Plain-emoji glyph rendered in place of [icon] when non-null.
   final String? emojiIcon;
@@ -355,6 +368,7 @@ class _ResultRow extends StatelessWidget {
       onTap: onTap,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
+        onEnter: onHover == null ? null : (_) => onHover!(),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
