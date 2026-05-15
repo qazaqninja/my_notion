@@ -412,6 +412,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘⇧X', 'Wrap selection in ~~strikethrough~~ (source)'),
                 _kbRow(tokens, '⌘⇧C', 'Wrap selection in `inline code` (source)'),
                 _kbRow(tokens, 'F2', 'Rename current page file'),
+                _kbRow(tokens, '⇥ Tab', 'Pick the highlighted entry in slash menu / relation picker'),
                 _kbRow(tokens, '⌘P', 'Print current page'),
                 _kbRow(tokens, '⌘V', 'Smart paste — wraps selection as [sel](url) if clipboard is a URL (source)'),
                 _kbRow(tokens, '⌘⇧S', 'Sort selected lines ascending (source)'),
