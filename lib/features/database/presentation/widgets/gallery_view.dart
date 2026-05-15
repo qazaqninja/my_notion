@@ -369,14 +369,20 @@ class _CardState extends State<_Card> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Tooltip(
-                          message: row.title,
+                          message:
+                              row.title.isEmpty ? 'Untitled page' : row.title,
                           waitDuration: const Duration(milliseconds: 600),
                           child: Text(
-                            row.title,
+                            row.title.isEmpty ? 'Untitled' : row.title,
                             style: TextStyle(
                               fontSize: metrics.titleSize,
                               fontWeight: FontWeight.w600,
-                              color: tokens.text,
+                              color: row.title.isEmpty
+                                  ? tokens.text3
+                                  : tokens.text,
+                              fontStyle: row.title.isEmpty
+                                  ? FontStyle.italic
+                                  : FontStyle.normal,
                             ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,

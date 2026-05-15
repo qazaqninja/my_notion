@@ -206,14 +206,19 @@ class _RowState extends State<_Row> {
               Expanded(
                 flex: 4,
                 child: Tooltip(
-                  message: row.title,
+                  message:
+                      row.title.isEmpty ? 'Untitled page' : row.title,
                   waitDuration: const Duration(milliseconds: 600),
                   child: Text(
-                    row.title,
+                    row.title.isEmpty ? 'Untitled' : row.title,
                     style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w500,
-                      color: tokens.text,
+                      color:
+                          row.title.isEmpty ? tokens.text3 : tokens.text,
+                      fontStyle: row.title.isEmpty
+                          ? FontStyle.italic
+                          : FontStyle.normal,
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
