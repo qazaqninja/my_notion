@@ -43,27 +43,32 @@ class PersonChip extends StatelessWidget {
         ),
       ),
     );
+    final tip = trimmed.isEmpty ? 'Unassigned' : trimmed;
     if (compact) {
       return Tooltip(
-        message: trimmed.isEmpty ? 'Unassigned' : trimmed,
+        message: tip,
         waitDuration: const Duration(milliseconds: 400),
         child: avatar,
       );
     }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        avatar,
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            trimmed.isEmpty ? '—' : trimmed,
-            style: TextStyle(fontSize: 12.5, color: tokens.text2),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
+    return Tooltip(
+      message: tip,
+      waitDuration: const Duration(milliseconds: 500),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          avatar,
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              trimmed.isEmpty ? '—' : trimmed,
+              style: TextStyle(fontSize: 12.5, color: tokens.text2),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
