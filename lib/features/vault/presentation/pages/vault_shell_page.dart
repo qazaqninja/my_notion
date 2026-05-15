@@ -487,7 +487,12 @@ class _VaultShellPageState extends State<VaultShellPage> {
       await QuickCapture.append(text, Directory(state.rootPath));
       vaultBloc.add(const RefreshFromDisk());
       if (context.mounted) {
-        context.toastSuccess('Captured → Inbox/Quick capture.md');
+        final preview = text.trim().replaceAll(RegExp(r'\s+'), ' ');
+        final excerpt = preview.length > 60
+            ? '${preview.substring(0, 60)}…'
+            : preview;
+        context.toastSuccess('Captured → Inbox/Quick capture.md',
+            sub: excerpt);
       }
     } catch (e) {
       if (context.mounted) context.toastError('Capture failed', sub: '$e');
