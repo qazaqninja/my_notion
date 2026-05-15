@@ -20,9 +20,9 @@ Future<T?> showQueryPopover<T>({
 }) {
   return showDialog<T>(
     context: context,
-    barrierColor: Colors.black.withValues(
-      alpha: QuillTokens.of(context).isDark ? 0.40 : 0.18,
-    ),
+    barrierColor: Theme.of(context).colorScheme.shadow.withValues(
+          alpha: QuillTokens.of(context).isDark ? 0.40 : 0.18,
+        ),
     builder: (ctx) => Align(
       alignment: Alignment.topRight,
       child: Padding(
@@ -133,12 +133,12 @@ class _FilterPopoverState extends State<FilterPopover> {
                   borderRadius:
                       const BorderRadius.all(Radius.circular(5)),
                 ),
-                child: const Text(
+                child: Text(
                   'Apply',
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white),
+                      color: Theme.of(context).colorScheme.onPrimary),
                 ),
               ),
             ),
@@ -341,12 +341,12 @@ class _SortPopoverState extends State<SortPopover> {
                   borderRadius:
                       const BorderRadius.all(Radius.circular(5)),
                 ),
-                child: const Text(
+                child: Text(
                   'Apply',
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white),
+                      color: Theme.of(context).colorScheme.onPrimary),
                 ),
               ),
             ),
@@ -511,12 +511,12 @@ class _GroupPopoverState extends State<GroupPopover> {
                   borderRadius:
                       const BorderRadius.all(Radius.circular(5)),
                 ),
-                child: const Text(
+                child: Text(
                   'Apply',
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white),
+                      color: Theme.of(context).colorScheme.onPrimary),
                 ),
               ),
             ),
@@ -639,9 +639,9 @@ class _PopoverShell extends StatelessWidget {
         borderRadius: const BorderRadius.all(Radius.circular(8)),
         boxShadow: [
           BoxShadow(
-            color: tokens.isDark
-                ? Colors.black.withValues(alpha: 0.45)
-                : Colors.black.withValues(alpha: 0.10),
+            color: Theme.of(context).colorScheme.shadow.withValues(
+                  alpha: tokens.isDark ? 0.45 : 0.10,
+                ),
             blurRadius: 36,
             offset: const Offset(0, 12),
           ),
@@ -772,12 +772,12 @@ class _PropertiesPopoverState extends State<PropertiesPopover> {
                   borderRadius:
                       const BorderRadius.all(Radius.circular(5)),
                 ),
-                child: const Text(
+                child: Text(
                   'Apply',
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white),
+                      color: Theme.of(context).colorScheme.onPrimary),
                 ),
               ),
             ),
@@ -862,9 +862,10 @@ class _PropertyRowState extends State<_PropertyRow> {
                   borderRadius: const BorderRadius.all(Radius.circular(3)),
                 ),
                 child: visible
-                    ? const Center(
-                        child:
-                            Icon(Icons.check, size: 11, color: Colors.white),
+                    ? Center(
+                        child: Icon(Icons.check,
+                            size: 11,
+                            color: Theme.of(context).colorScheme.onPrimary),
                       )
                     : null,
               ),

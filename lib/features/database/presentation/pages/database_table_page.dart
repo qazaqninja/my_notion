@@ -390,7 +390,10 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                         style: TextStyle(
                           color: looksLikeEmoji(schema.icon)
                               ? null
-                              : Colors.white,
+                              // On-accent foreground for a single
+                              // initial letter against the saturated
+                              // tile bg — M3 onPrimary slot.
+                              : Theme.of(context).colorScheme.onPrimary,
                           fontWeight: FontWeight.w600,
                           fontSize:
                               looksLikeEmoji(schema.icon) ? 18 : 13,
