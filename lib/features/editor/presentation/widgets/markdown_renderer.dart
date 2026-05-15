@@ -2576,6 +2576,14 @@ class _ButtonBlockState extends State<_ButtonBlock> {
       'page' => Icons.link,
       _ => Icons.open_in_new,
     };
+    final value = widget.props['value'] ?? '';
+    final tip = switch (action) {
+      'url' => 'Open $value',
+      'copy' => 'Copy "$value"',
+      'reveal' => 'Reveal $value',
+      'page' => 'Open page $value',
+      _ => 'Action: $action',
+    };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Align(
@@ -2584,35 +2592,40 @@ class _ButtonBlockState extends State<_ButtonBlock> {
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
             onTap: () => _run(context),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: _flash != null ? tokens.surface2 : tokens.accent,
-                borderRadius: const BorderRadius.all(Radius.circular(6)),
-                border: Border.all(
-                  color: _flash != null ? tokens.divider2 : tokens.accent,
-                  width: 0.5,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(icon,
-                      size: 14,
-                      color:
-                          _flash != null ? tokens.text2 : Colors.white),
-                  const SizedBox(width: 8),
-                  Text(
-                    _flash ?? label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: _flash != null ? tokens.text2 : Colors.white,
-                    ),
+            child: Tooltip(
+              message: tip,
+              waitDuration: const Duration(milliseconds: 500),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _flash != null ? tokens.surface2 : tokens.accent,
+                  borderRadius: const BorderRadius.all(Radius.circular(6)),
+                  border: Border.all(
+                    color: _flash != null ? tokens.divider2 : tokens.accent,
+                    width: 0.5,
                   ),
-                ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icon,
+                        size: 14,
+                        color:
+                            _flash != null ? tokens.text2 : Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      _flash ?? label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color:
+                            _flash != null ? tokens.text2 : Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
