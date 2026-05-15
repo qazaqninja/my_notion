@@ -293,6 +293,14 @@ class _SidebarWidgetState extends State<SidebarWidget> {
     await next.save(Directory(state.rootPath));
     if (!context.mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(picked.isEmpty
+            ? 'Workspace icon cleared'
+            : 'Workspace icon: $picked'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _promptNewAtRoot(BuildContext context) async {
