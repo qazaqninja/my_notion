@@ -220,6 +220,12 @@ class _StatsStripState extends State<_StatsStrip> {
     );
   }
 
+  void _searchPalette(BuildContext context, String query) {
+    final cubit = context.read<CommandPaletteCubit>();
+    cubit.open();
+    cubit.setQuery(query);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
@@ -228,12 +234,14 @@ class _StatsStripState extends State<_StatsStrip> {
       builder: (context, snap) {
         if (!snap.hasData) return const SizedBox(height: 18);
         final c = snap.data!;
-        final pieces = <(String, int, Color?)>[
-          ('pages', c.pages, null),
-          ('databases', c.databases, null),
-          ('tags', c.tags, null),
+        // (label, count, color?, palette-query)
+        final pieces = <(String, int, Color?, String)>[
+          ('pages', c.pages, null, 'vault stats'),
+          ('databases', c.databases, null, 'browse all databases'),
+          ('tags', c.tags, null, 'browse tags'),
           ('orphans', c.orphans,
-              c.orphans == 0 ? null : const Color(0xFFCB5A4F)),
+              c.orphans == 0 ? null : const Color(0xFFCB5A4F),
+              'show orphan'),
         ];
         return Row(
           children: [
@@ -241,11 +249,17 @@ class _StatsStripState extends State<_StatsStrip> {
               if (i > 0)
                 Text('  ·  ',
                     style: mono(fontSize: 12, color: tokens.text3)),
-              Text(
-                '${pieces[i].$2} ${pieces[i].$1}',
-                style: mono(
-                    fontSize: 12,
-                    color: pieces[i].$3 ?? tokens.text2),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => _searchPalette(context, pieces[i].$4),
+                  child: Text(
+                    '${pieces[i].$2} ${pieces[i].$1}',
+                    style: mono(
+                        fontSize: 12,
+                        color: pieces[i].$3 ?? tokens.text2),
+                  ),
+                ),
               ),
             ],
           ],
