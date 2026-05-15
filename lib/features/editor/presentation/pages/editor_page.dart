@@ -766,7 +766,11 @@ class _EditorBodyState extends State<_EditorBody> {
       'reminder',
       existing.copyWith(rawScalar: iso, value: iso),
     ));
-    context.toastSuccess('Snoozed reminder to $iso');
+    final now = DateTime.now();
+    final todayDay = DateTime(now.year, now.month, now.day);
+    final days = next.difference(todayDay).inDays;
+    context.toastSuccess(
+        'Snoozed reminder to $iso (in $days ${days == 1 ? "day" : "days"})');
   }
 
   Future<void> _setReminder(
