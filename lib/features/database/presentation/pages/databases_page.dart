@@ -163,20 +163,33 @@ class _RowState extends State<_Row> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(schema.name,
+                    Tooltip(
+                      message: schema.name,
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        schema.name,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: tokens.text,
-                        )),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(
-                      '${schema.folderPath}  ·  '
-                      '${schema.columns.length} ${schema.columns.length == 1 ? 'column' : 'columns'}  ·  '
-                      '${schema.views.length} ${schema.views.length == 1 ? 'view' : 'views'}',
-                      style: mono(fontSize: 11.5, color: tokens.text3),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                    Tooltip(
+                      message:
+                          '${schema.folderPath}/.database.yaml\n${schema.columns.length} ${schema.columns.length == 1 ? "column" : "columns"} · ${schema.views.length} ${schema.views.length == 1 ? "view" : "views"}',
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        '${schema.folderPath}  ·  '
+                        '${schema.columns.length} ${schema.columns.length == 1 ? 'column' : 'columns'}  ·  '
+                        '${schema.views.length} ${schema.views.length == 1 ? 'view' : 'views'}',
+                        style: mono(fontSize: 11.5, color: tokens.text3),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                   ],
                 ),
