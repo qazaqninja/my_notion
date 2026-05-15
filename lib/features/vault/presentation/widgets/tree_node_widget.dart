@@ -196,10 +196,13 @@ class TreeNodeWidget extends StatelessWidget {
       confirmLabel: 'Create',
     );
     if (name == null || name.isEmpty) return;
-    bloc.add(CreateFolder(parentFolder: parentFolder, name: name));
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    bloc.add(CreateFolder(parentFolder: parentFolder, name: trimmed));
     if (!context.mounted) return;
-    final fullPath = parentFolder.isEmpty ? name : '$parentFolder/$name';
-    context.toastSuccess('Created folder', sub: fullPath, subMono: true);
+    context.toastSuccess('Created folder "$trimmed"',
+        sub: parentFolder.isEmpty ? null : 'in $parentFolder/',
+        subMono: parentFolder.isNotEmpty);
   }
 
   Future<void> _showFileMenu(
