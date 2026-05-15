@@ -359,6 +359,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘⇧X', 'Wrap selection in ~~strikethrough~~ (source)'),
                 _kbRow(tokens, '⌘⇧C', 'Wrap selection in `inline code` (source)'),
                 _kbRow(tokens, '⌘⇧H', 'Wrap selection in ==highlight== (source)'),
+                _kbRow(tokens, '⌘K', 'Insert link — URL pre-fills from clipboard (source)'),
                 _kbRow(tokens, '⌘D', 'Duplicate current line (source)'),
                 _kbRow(tokens, '⌥↑', 'Move current line up (source)'),
                 _kbRow(tokens, '⌥↓', 'Move current line down (source)'),

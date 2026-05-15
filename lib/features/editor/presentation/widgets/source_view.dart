@@ -20,6 +20,7 @@ import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/attachment_writer.dart';
+import '../../domain/insert_link.dart';
 import '../../domain/slash_entries.dart';
 import '../../domain/source_line_ops.dart';
 import '../bloc/editor_bloc.dart';
@@ -373,6 +374,52 @@ class _SourceViewState extends State<SourceView> {
     _controller.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: caret + insert.length),
+    );
+  }
+
+  /// Open the "insert link" dialog. ⌘K. Pre-fills the label from the
+  /// current selection (if any) and the URL from the system clipboard
+  /// (when it looks like a URL). On confirm, splices `[label](url)` at
+  /// the selection range. Inert when the page is locked.
+  Future<void> _openLinkDialog() async {
+    final v = _controller.value;
+    final sel = v.selection;
+    if (!sel.isValid) return;
+    final start = sel.start.clamp(0, v.text.length);
+    final end = sel.end.clamp(start, v.text.length);
+    final selected = v.text.substring(start, end);
+
+    final clip = await Clipboard.getData(Clipboard.kTextPlain);
+    final clipText = clip?.text?.trim() ?? '';
+    final urlSeed = looksLikeUrl(clipText) ? clipText : '';
+
+    if (!mounted) return;
+    final url = await showQuillPrompt(
+      context,
+      title: 'Insert link',
+      icon: 'link',
+      label: 'URL',
+      hint: selected.isEmpty
+          ? 'The URL gets a "link" label by default.'
+          : 'Wraps the current selection.',
+      placeholder: 'https://example.com',
+      initial: urlSeed,
+      mono: true,
+      confirmLabel: 'Insert',
+    );
+    if (url == null || url.trim().isEmpty) return;
+
+    final label = selected.isEmpty ? 'link' : selected;
+    final r = insertMarkdownLink(
+      text: v.text,
+      start: start,
+      end: end,
+      label: label,
+      url: url.trim(),
+    );
+    _controller.value = TextEditingValue(
+      text: r.text,
+      selection: TextSelection.collapsed(offset: r.caret),
     );
   }
 
@@ -975,6 +1022,10 @@ class _SourceViewState extends State<SourceView> {
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
                       () => _indentSelection(true),
+                  const SingleActivator(LogicalKeyboardKey.keyK, meta: true):
+                      _openLinkDialog,
+                  const SingleActivator(LogicalKeyboardKey.keyK, control: true):
+                      _openLinkDialog,
                 },
                 child: TextField(
                   controller: _controller,
