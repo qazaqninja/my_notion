@@ -3012,10 +3012,15 @@ class _ListItemDragWrapState extends State<_ListItemDragWrap> {
                             ),
                             child: MouseRegion(
                               cursor: SystemMouseCursors.grab,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Icon(Icons.drag_indicator,
-                                    size: 12, color: tokens.text3),
+                              child: Tooltip(
+                                message: 'Drag to reorder item',
+                                waitDuration:
+                                    const Duration(milliseconds: 500),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Icon(Icons.drag_indicator,
+                                      size: 12, color: tokens.text3),
+                                ),
                               ),
                             ),
                           )
