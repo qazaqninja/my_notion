@@ -1058,11 +1058,16 @@ class _EditorBodyState extends State<_EditorBody> {
                   _ReminderBadge(page: page),
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: Text(
-                      loaded.dirty
-                          ? (loaded.saving ? 'saving…' : 'unsaved')
-                          : 'saved ${_relativeMtime(page.mtimeMs)}',
-                      style: mono(fontSize: 11, color: tokens.text3),
+                    child: Tooltip(
+                      message: loaded.dirty
+                          ? 'Pending save — press ⌘S to flush now'
+                          : 'Last saved ${DateTime.fromMillisecondsSinceEpoch(page.mtimeMs)}',
+                      child: Text(
+                        loaded.dirty
+                            ? (loaded.saving ? 'saving…' : 'unsaved')
+                            : 'saved ${_relativeMtime(page.mtimeMs)}',
+                        style: mono(fontSize: 11, color: tokens.text3),
+                      ),
                     ),
                   ),
                   _PinButton(pageUlid: page.ulid, onTap: () => _togglePin(context, loaded)),
