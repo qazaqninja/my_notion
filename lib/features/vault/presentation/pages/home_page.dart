@@ -395,18 +395,20 @@ class _PinboardState extends State<_Pinboard> {
                 runSpacing: 10,
                 children: [
                   for (final e in list)
-                    GestureDetector(
+                    _HoverableTile(
+                      width: 220,
                       onTap: () => context.go('/editor/${e.ulid}'),
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: Container(
+                      builder: (hover) => Container(
                           width: 220,
                           padding:
                               const EdgeInsets.fromLTRB(12, 10, 12, 10),
                           decoration: BoxDecoration(
-                            color: tokens.surface,
+                            color: hover ? tokens.surface2 : tokens.surface,
                             border: Border.all(
-                                color: tokens.divider2, width: 0.5),
+                                color: hover
+                                    ? tokens.accent
+                                    : tokens.divider2,
+                                width: 0.5),
                             borderRadius:
                                 const BorderRadius.all(Radius.circular(6)),
                           ),
@@ -467,7 +469,6 @@ class _PinboardState extends State<_Pinboard> {
                             ],
                           ),
                         ),
-                      ),
                     ),
                 ],
               ),
@@ -801,6 +802,45 @@ class _RecentEntry {
   final String relativePath;
   final int mtime;
   final String? emojiIcon;
+}
+
+/// Generic hover wrapper used by the Pinboard tiles. Builder receives
+/// the current hover state so the caller can paint the surface and
+/// border however they want — `_Tile` could probably consume this
+/// later but the existing static layout doesn't need to right now.
+class _HoverableTile extends StatefulWidget {
+  const _HoverableTile({
+    required this.builder,
+    required this.onTap,
+    this.width,
+  });
+  final Widget Function(bool hover) builder;
+  final VoidCallback onTap;
+  final double? width;
+
+  @override
+  State<_HoverableTile> createState() => _HoverableTileState();
+}
+
+class _HoverableTileState extends State<_HoverableTile> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          width: widget.width,
+          child: widget.builder(_hover),
+        ),
+      ),
+    );
+  }
 }
 
 class _Tile extends StatefulWidget {
