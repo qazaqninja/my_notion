@@ -120,24 +120,32 @@ class _BacklinkCardState extends State<_BacklinkCard> {
                         size: 12, strokeWidth: 1.7, color: tokens.text3),
                   const SizedBox(width: 5),
                   Flexible(
-                    child: Text(
-                      bl.title,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: tokens.text,
+                    child: Tooltip(
+                      message: bl.title,
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        bl.title,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: tokens.text,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 3),
-              Text(
-                stripMdExtension(bl.relativePath),
-                style: mono(fontSize: 10.5, color: tokens.text3),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+              Tooltip(
+                message: bl.relativePath,
+                waitDuration: const Duration(milliseconds: 600),
+                child: Text(
+                  stripMdExtension(bl.relativePath),
+                  style: mono(fontSize: 10.5, color: tokens.text3),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
