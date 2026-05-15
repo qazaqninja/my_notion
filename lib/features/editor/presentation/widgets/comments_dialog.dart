@@ -275,8 +275,16 @@ class _CommentsDialogState extends State<CommentsDialog> {
                       fontWeight: FontWeight.w600,
                       color: c.resolved ? tokens.text3 : tokens.text)),
               const SizedBox(width: 8),
-              Text(_relativeTime(c.timestamp),
-                  style: mono(fontSize: 11, color: tokens.text3)),
+              Tooltip(
+                message: c.timestamp
+                    .toIso8601String()
+                    .replaceFirst('T', ' ')
+                    .split('.')
+                    .first,
+                waitDuration: const Duration(milliseconds: 500),
+                child: Text(_relativeTime(c.timestamp),
+                    style: mono(fontSize: 11, color: tokens.text3)),
+              ),
               // Block-scope badge — only shown when the dialog is in
               // page scope (no widget.blockId) and the comment itself
               // is anchored to a block. The header already conveys the
