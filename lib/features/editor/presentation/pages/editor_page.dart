@@ -1110,6 +1110,7 @@ class _EditorBodyState extends State<_EditorBody> {
 
   void _toggleFullWidth(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
     final fm = loaded.page.frontmatter;
     final wasFull = _isFullWidth(fm);
     final existing = fm.find('full_width');
@@ -1127,6 +1128,12 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: next, value: !wasFull),
       ));
     }
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(wasFull ? 'Page width: default' : 'Page width: full'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
