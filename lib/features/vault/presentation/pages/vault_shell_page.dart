@@ -971,10 +971,25 @@ class _VaultShellPageState extends State<VaultShellPage> {
         if (picked == null) return;
         if (!context.mounted) return;
         final router = GoRouter.of(context);
+        final scope = context;
+        final tplTitle = templates
+                .firstWhere((t) => t.ulid == picked,
+                    orElse: () => templates.first)
+                .title;
         vaultBloc.add(DuplicatePage(
           picked,
           targetFolder: '',
-          onCreated: (newUlid) => router.go('/editor/$newUlid'),
+          onCreated: (newUlid) {
+            if (scope.mounted) {
+              scope.toastSuccess(
+                  tplTitle.isEmpty
+                      ? 'New page from template'
+                      : 'New page from "$tplTitle"',
+                  sub: 'New ULID: $newUlid',
+                  subMono: true);
+            }
+            router.go('/editor/$newUlid');
+          },
         ));
       case 'Vault stats':
         if (!context.mounted) return;
