@@ -185,7 +185,10 @@ class _SidebarWidgetState extends State<SidebarWidget> {
       case 'favorites':
         if (state is VaultLoaded && state.workspace.favorites.isNotEmpty) {
           return [
-            const SideHead(label: 'Favorites'),
+            SideHead(
+              label: 'Favorites',
+              count: state.workspace.favorites.length,
+            ),
             _FavoritesList(
               ulids: state.workspace.favorites,
               activeUlid: _activeUlid,
@@ -210,6 +213,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
         return [
           SideHead(
             label: 'Workspace',
+            count: state is VaultLoaded ? state.pageCount : null,
             actionIcon: 'plus',
             onAction:
                 state is VaultLoaded ? () => _promptNewAtRoot(context) : null,

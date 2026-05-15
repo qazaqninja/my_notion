@@ -5,10 +5,20 @@ import 'quill_icon.dart';
 
 /// Sidebar section heading, matches `SideHead` from `primitives.jsx:110-122`.
 class SideHead extends StatelessWidget {
-  const SideHead({super.key, required this.label, this.actionIcon, this.onAction});
+  const SideHead({
+    super.key,
+    required this.label,
+    this.actionIcon,
+    this.onAction,
+    this.count,
+  });
   final String label;
   final String? actionIcon;
   final VoidCallback? onAction;
+
+  /// Optional count badge rendered next to the label as a faint mono
+  /// number. Suppressed when null.
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
@@ -17,17 +27,28 @@ class SideHead extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label.toUpperCase(),
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.0,
-                color: tokens.text3,
-              ),
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.0,
+              color: tokens.text3,
             ),
           ),
+          if (count != null) ...[
+            const SizedBox(width: 6),
+            Text(
+              '${count!}',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w500,
+                color: tokens.text3.withValues(alpha: 0.7),
+                fontFamily: 'JetBrainsMono',
+              ),
+            ),
+          ],
+          const Spacer(),
           if (actionIcon != null)
             GestureDetector(
               onTap: onAction,
