@@ -25,10 +25,19 @@ class VaultFsDatasource {
   static const _markdownExt = '.md';
 
   /// Walk [root] recursively, emitting one [Page] per markdown file.
+  /// A single malformed file (e.g. invalid YAML, transient read error)
+  /// is logged and skipped rather than aborting the whole reindex —
+  /// the old behaviour would emit a `VaultError` on the very first
+  /// broken file and leave the user with an empty index.
   Stream<Page> scan(Directory root) async* {
     await for (final entity in _walk(root)) {
       if (entity is File && p.extension(entity.path) == _markdownExt) {
-        yield await readOne(entity, vaultRoot: root);
+        try {
+          yield await readOne(entity, vaultRoot: root);
+        } catch (e, st) {
+          // ignore: avoid_print
+          print('vault scan: skipping ${entity.path} — $e\n$st');
+        }
       }
     }
   }
