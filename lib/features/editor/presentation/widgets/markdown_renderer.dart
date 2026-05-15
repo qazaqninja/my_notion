@@ -2230,7 +2230,9 @@ class _ListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Tappable checkbox if `[ ]` / `[x]` prefix.
+    // Display-only checkbox if `[ ]` / `[x]` prefix. Toggle in source
+    // mode (⌘↵ on a todo line) — interactive toggling here would need
+    // an onBodyChange plumbed through every nesting level.
     final m = RegExp(r'^\[([ xX])\]\s+').firstMatch(raw);
     if (m != null) {
       final checked = m.group(1)!.toLowerCase() == 'x';
@@ -2240,12 +2242,16 @@ class _ListItem extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 5, right: 10, left: 4),
-            child: Icon(
-              checked
-                  ? Icons.check_box_outlined
-                  : Icons.check_box_outline_blank,
-              size: 16,
-              color: checked ? tokens.accent : tokens.text3,
+            child: Tooltip(
+              message: checked ? 'Done — toggle in source (⌘↵)' : 'Todo — toggle in source (⌘↵)',
+              waitDuration: const Duration(milliseconds: 500),
+              child: Icon(
+                checked
+                    ? Icons.check_box_outlined
+                    : Icons.check_box_outline_blank,
+                size: 16,
+                color: checked ? tokens.accent : tokens.text3,
+              ),
             ),
           ),
           Expanded(
