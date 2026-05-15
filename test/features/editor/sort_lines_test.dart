@@ -740,6 +740,65 @@ void main() {
     });
   });
 
+  group('smartTypography', () {
+    test('opens and closes double quotes by context', () {
+      expect(smartTypography('"hello"'), '“hello”');
+    });
+
+    test('opens and closes single quotes', () {
+      expect(smartTypography("'hello'"), '‘hello’');
+    });
+
+    test('contraction apostrophe is a right-single', () {
+      // "don't" → "don’t" (right single after letter)
+      expect(smartTypography("don't"), 'don’t');
+    });
+
+    test('em-dash and ellipsis are substituted', () {
+      expect(smartTypography('a -- b'), 'a — b');
+      expect(smartTypography('to be... or not'), 'to be… or not');
+    });
+
+    test('quote after opening bracket is opening', () {
+      expect(smartTypography('("yes")'), '(“yes”)');
+    });
+
+    test('no-op on text without ASCII typography', () {
+      expect(smartTypography('plain text'), 'plain text');
+    });
+  });
+
+  group('dumbifyTypography (inverse)', () {
+    test('reverts smart quotes to ASCII', () {
+      expect(dumbifyTypography('“hello”'), '"hello"');
+    });
+
+    test('reverts ellipsis and em-dash', () {
+      expect(dumbifyTypography('a — b… c'), 'a -- b... c');
+    });
+
+    test('smart → dumb round-trip preserves the original ASCII', () {
+      // No fancy chars in source, conversion + revert is identity.
+      const ascii = '"hello" "world"';
+      final smart = smartTypography(ascii);
+      expect(dumbifyTypography(smart), ascii);
+    });
+  });
+
+  group('smartTypographyIn / dumbifyTypographyIn', () {
+    test('applies per-line transformation', () {
+      const text = '"a"\n"b"\n';
+      final r = smartTypographyIn(text, 0, text.length);
+      expect(r.text, '“a”\n“b”\n');
+    });
+
+    test('dumbify works per-line too', () {
+      const text = '“a”\n“b”\n';
+      final r = dumbifyTypographyIn(text, 0, text.length);
+      expect(r.text, '"a"\n"b"\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

@@ -76,6 +76,12 @@ enum SlashAction {
   decimalToRoman,
   /// Convert Roman numerals on every selected line to decimal.
   romanToDecimal,
+  /// Apply typographic substitutions to every selected line:
+  /// `"x"` → `“x”`, `'x'` → `‘x’`, `...` → `…`, `--` → `—`.
+  smartTypography,
+  /// Inverse of [smartTypography]: turn Unicode typographic
+  /// characters back into ASCII.
+  dumbifyTypography,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -456,6 +462,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'VII → 7',
     action: SlashAction.romanToDecimal,
     keywords: ['roman', 'numeral', 'decimal', 'convert', 'number'],
+  ),
+  SlashEntry(
+    icon: 'quote',
+    label: 'Smart typography',
+    hint: '" → “ ” …',
+    action: SlashAction.smartTypography,
+    keywords: ['smart', 'quotes', 'typography', 'curly', 'ellipsis', 'dash'],
+  ),
+  SlashEntry(
+    icon: 'quote',
+    label: 'Dumbify typography',
+    hint: '“ ” → "',
+    action: SlashAction.dumbifyTypography,
+    keywords: ['dumb', 'ascii', 'straight', 'quotes', 'typography', 'plain'],
   ),
   SlashEntry(
     icon: 'edit',

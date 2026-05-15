@@ -609,6 +609,73 @@ SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2})
   );
 }
 
+/// Convert ASCII typography into Unicode typographic equivalents:
+///
+///   `"abc"`     → `"abc"`
+///   `'it's'`    → `'it's'`
+///   `--`        → `—` (em dash)
+///   `...`       → `…` (ellipsis)
+///
+/// Direction for `"` and `'` is decided contextually: a straight
+/// quote that follows whitespace, line start, or an opening bracket
+/// is treated as the **opening** form; otherwise it's the **closing**
+/// form. Returned text has the same character count for em-dash and
+/// straight conversions, two fewer for each `...` → `…` replacement,
+/// one fewer for each `--` → `—` replacement.
+String smartTypography(String body) {
+  // First, ellipsis and em-dash, which are direction-free.
+  final s = body.replaceAll('...', '…').replaceAll('--', '—');
+  // Then quotes: walk the string and choose open vs close from context.
+  final out = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    final c = s[i];
+    if (c == '"' || c == "'") {
+      final prev = i == 0 ? ' ' : s[i - 1];
+      final isOpening = prev == ' ' ||
+          prev == '\t' ||
+          prev == '\n' ||
+          prev == '(' ||
+          prev == '[' ||
+          prev == '{' ||
+          prev == '—' ||
+          prev == '…';
+      if (c == '"') {
+        out.write(isOpening ? '“' : '”');
+      } else {
+        out.write(isOpening ? '‘' : '’');
+      }
+    } else {
+      out.write(c);
+    }
+  }
+  return out.toString();
+}
+
+/// Apply [smartTypography] to every line in the selected block.
+SortLinesResult smartTypographyIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text, start, end, (lines) => [for (final l in lines) smartTypography(l)],
+    );
+
+/// Inverse of [smartTypography]: convert Unicode typographic chars
+/// back to ASCII. `"…"` → `"..."`, em/en dashes to `--`/`-`.
+String dumbifyTypography(String body) {
+  return body
+      .replaceAll('“', '"')
+      .replaceAll('”', '"')
+      .replaceAll('‘', "'")
+      .replaceAll('’', "'")
+      .replaceAll('…', '...')
+      .replaceAll('—', '--')
+      .replaceAll('–', '-');
+}
+
+/// Apply [dumbifyTypography] to every line in the selected block.
+SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
+    );
+
 /// Convert a positive decimal integer (1..3999) into its Roman
 /// numeral representation. Returns the empty string when out of
 /// range. Exposed for testing; production callers go through
