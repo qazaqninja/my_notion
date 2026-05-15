@@ -228,6 +228,7 @@ class TreeNodeWidget extends StatelessWidget {
         const PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         const PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
         const PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
+        const PopupMenuItem(value: 'copy-path', child: Text('Copy file path')),
         const PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
         const PopupMenuItem(value: 'rename', child: Text('Rename file…')),
         const PopupMenuItem(value: 'history', child: Text('Page history')),
@@ -255,6 +256,16 @@ class TreeNodeWidget extends StatelessWidget {
       messenger?.showSnackBar(
         SnackBar(
           content: Text('Copied [[${fl.ulid}]]'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else if (selected == 'copy-path') {
+      final path = p.join(state.rootPath, fl.relativePath);
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      await Clipboard.setData(ClipboardData(text: path));
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text('Copied $path'),
           duration: const Duration(seconds: 2),
         ),
       );
