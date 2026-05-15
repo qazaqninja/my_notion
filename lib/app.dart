@@ -21,6 +21,7 @@ import 'features/vault/presentation/pages/vault_shell_page.dart';
 import 'shared/theme/theme_cubit.dart';
 import 'shared/theme/tokens.dart';
 import 'shared/widgets/component_sheet_page.dart';
+import 'shared/widgets/quill_toast.dart';
 
 class QuillApp extends StatefulWidget {
   const QuillApp({super.key});
@@ -88,7 +89,9 @@ class _QuillAppState extends State<QuillApp> {
                           ? const TextScaler.linear(0.92)
                           : mq.textScaler,
                     ),
-                    child: child ?? const SizedBox.shrink(),
+                    child: QuillToastHost(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   );
                 },
               );
