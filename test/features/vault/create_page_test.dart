@@ -117,4 +117,66 @@ void main() {
     await db.close();
     await tmp.delete(recursive: true);
   });
+
+  test('CreatePage disambiguates against an existing file (M768)', () async {
+    final tmp =
+        await Directory.systemTemp.createTemp('quill_create_page_collide_');
+    final db = QuillDatabase.forTesting(NativeDatabase.memory());
+    final repo = VaultRepositoryImpl(
+      VaultFsDatasource(ulids: const UlidGenerator()),
+    );
+    final indexer = Indexer(db, repo.datasource);
+    final bloc = VaultBloc(repo: repo, indexer: indexer, db: db);
+
+    bloc.add(LoadFromPath(tmp.path));
+    final loadedAt = DateTime.now();
+    while (bloc.state is! VaultLoaded) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      if (DateTime.now().difference(loadedAt).inSeconds > 3) {
+        fail('Vault never reached VaultLoaded: ${bloc.state}');
+      }
+    }
+
+    // First creation lands at "Notes.md".
+    String? first;
+    bloc.add(CreatePage(title: 'Notes', onCreated: (u) => first = u));
+    while (first == null) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(await File(p.join(tmp.path, 'Notes.md')).exists(), isTrue);
+
+    // Second creation with the same title would clobber the first via
+    // the atomic tmp → rename write. The disambiguator must redirect it
+    // to "Notes (2).md" instead.
+    String? second;
+    bloc.add(CreatePage(title: 'Notes', onCreated: (u) => second = u));
+    while (second == null) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(await File(p.join(tmp.path, 'Notes.md')).exists(), isTrue,
+        reason: 'first page must survive');
+    expect(await File(p.join(tmp.path, 'Notes (2).md')).exists(), isTrue,
+        reason: 'second page must land on a fresh filename');
+
+    // Frontmatter title mirrors the filename so the sidebar reflects
+    // both entries distinctly instead of two pages titled "Notes".
+    final raw2 =
+        await File(p.join(tmp.path, 'Notes (2).md')).readAsString();
+    final parsed2 = FrontmatterParser.parse(raw2);
+    expect(parsed2.frontmatter.title, equals('Notes (2)'));
+    expect(first, isNot(equals(second)),
+        reason: 'each create gets its own ULID');
+
+    // Third creation lands at (3).
+    String? third;
+    bloc.add(CreatePage(title: 'Notes', onCreated: (u) => third = u));
+    while (third == null) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(await File(p.join(tmp.path, 'Notes (3).md')).exists(), isTrue);
+
+    await bloc.close();
+    await db.close();
+    await tmp.delete(recursive: true);
+  });
 }

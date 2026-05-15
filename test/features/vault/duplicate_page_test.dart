@@ -62,4 +62,58 @@ void main() {
     await db.close();
     await tmp.delete(recursive: true);
   });
+
+  test('DuplicatePage twice yields (copy) then (copy) (2) (M768)', () async {
+    final tmp = await Directory.systemTemp.createTemp('quill_dup_collide_');
+    final db = QuillDatabase.forTesting(NativeDatabase.memory());
+    final repo = VaultRepositoryImpl(
+      VaultFsDatasource(ulids: const UlidGenerator()),
+    );
+    final indexer = Indexer(db, repo.datasource);
+    final bloc = VaultBloc(repo: repo, indexer: indexer, db: db);
+
+    bloc.add(LoadFromPath(tmp.path));
+    while (bloc.state is! VaultLoaded) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+
+    String? srcUlid;
+    bloc.add(CreatePage(title: 'Notes', onCreated: (u) => srcUlid = u));
+    while (srcUlid == null) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+
+    // First duplicate → "Notes (copy).md".
+    String? dup1;
+    bloc.add(DuplicatePage(srcUlid!, onCreated: (u) => dup1 = u));
+    while (dup1 == null) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(await File(p.join(tmp.path, 'Notes (copy).md')).exists(), isTrue);
+
+    // Second duplicate of the same source must NOT overwrite the first
+    // copy. The disambiguator redirects to "Notes (copy) (2).md".
+    String? dup2;
+    bloc.add(DuplicatePage(srcUlid!, onCreated: (u) => dup2 = u));
+    while (dup2 == null) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+    expect(await File(p.join(tmp.path, 'Notes (copy).md')).exists(), isTrue,
+        reason: 'first duplicate must survive');
+    expect(
+        await File(p.join(tmp.path, 'Notes (copy) (2).md')).exists(), isTrue,
+        reason: 'second duplicate must land on a fresh filename');
+
+    final fm2 = FrontmatterParser.parse(await File(
+            p.join(tmp.path, 'Notes (copy) (2).md'))
+        .readAsString())
+        .frontmatter;
+    expect(fm2.title, equals('Notes (copy) (2)'),
+        reason: 'frontmatter title mirrors the disambiguated filename');
+    expect(dup1, isNot(equals(dup2)));
+
+    await bloc.close();
+    await db.close();
+    await tmp.delete(recursive: true);
+  });
 }
