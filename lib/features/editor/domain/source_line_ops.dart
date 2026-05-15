@@ -745,6 +745,22 @@ SortLinesResult quoteLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Collapse a block of non-blank selected lines into a single
+/// JSON-style array (`["a", "b", "c"]`). Each cell is trimmed, then
+/// any internal `"` is escaped as `\"` and `\` is escaped as `\\`
+/// so the output parses cleanly with `dart:convert`'s `JsonDecoder`.
+/// Blank lines are dropped (they'd produce empty array elements).
+/// Returns the source unchanged when there are no non-blank lines.
+SortLinesResult linesToJsonArrayIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final cells =
+          [for (final l in lines) l.trim()].where((l) => l.isNotEmpty);
+      if (cells.isEmpty) return lines;
+      String escape(String s) =>
+          s.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+      return ['[${cells.map((c) => '"${escape(c)}"').join(', ')}]'];
+    });
+
 /// Inverse of [quoteLinesIn]: strip a single pair of surrounding
 /// straight double quotes when both ends of a line are `"`.
 /// Single-sided quotes and inner quotes pass through.

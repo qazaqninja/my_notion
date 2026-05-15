@@ -202,6 +202,8 @@ enum SlashAction {
   /// Strip surrounding straight double quotes from every selected
   /// line that has them on both ends.
   unquoteLines,
+  /// Collapse selected lines into a single JSON-style array.
+  linesToJsonArray,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -946,6 +948,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '"a" → a',
     action: SlashAction.unquoteLines,
     keywords: ['unquote', 'strip', 'string', 'csv', 'unwrap'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'Lines → JSON array',
+    hint: 'a / b → ["a","b"]',
+    action: SlashAction.linesToJsonArray,
+    keywords: ['json', 'array', 'collapse', 'list', 'serialize'],
   ),
   SlashEntry(
     icon: 'hash',

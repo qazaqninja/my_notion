@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -2100,6 +2101,52 @@ void main() {
       const text = 'one\ntwo\nthree\n';
       final q = quoteLinesIn(text, 0, text.length).text;
       expect(unquoteLinesIn(q, 0, q.length).text, text);
+    });
+  });
+
+  group('linesToJsonArrayIn', () {
+    test('basic conversion', () {
+      const text = 'apple\nbanana\ncherry\n';
+      final r = linesToJsonArrayIn(text, 0, text.length);
+      expect(r.text, '["apple", "banana", "cherry"]\n');
+    });
+
+    test('trims each cell', () {
+      const text = '  apple  \nbanana\n';
+      final r = linesToJsonArrayIn(text, 0, text.length);
+      expect(r.text, '["apple", "banana"]\n');
+    });
+
+    test('drops blank lines', () {
+      const text = 'a\n\nb\n';
+      final r = linesToJsonArrayIn(text, 0, text.length);
+      expect(r.text, '["a", "b"]\n');
+    });
+
+    test('escapes internal double quotes', () {
+      const text = 'say "hi"\nplain\n';
+      final r = linesToJsonArrayIn(text, 0, text.length);
+      expect(r.text, '["say \\"hi\\"", "plain"]\n');
+    });
+
+    test('escapes backslashes', () {
+      const text = r'C:\path\file' '\n';
+      final r = linesToJsonArrayIn(text, 0, text.length);
+      expect(r.text, r'["C:\\path\\file"]' '\n');
+    });
+
+    test('output parses as valid JSON via dart:convert', () {
+      const text = 'one\ntwo\nthree\n';
+      final json = linesToJsonArrayIn(text, 0, text.length).text.trim();
+      // We can't import dart:convert at the top because that bloats
+      // the test imports for one assertion; do a quick local parse.
+      final decoded = jsonDecode(json);
+      expect(decoded, ['one', 'two', 'three']);
+    });
+
+    test('block with no non-blank lines is a no-op', () {
+      const text = '\n\n';
+      expect(linesToJsonArrayIn(text, 0, text.length).text, text);
     });
   });
 
