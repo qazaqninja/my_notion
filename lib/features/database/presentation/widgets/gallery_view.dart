@@ -415,9 +415,13 @@ class _CardState extends State<_Card> {
           child: Row(children: [
             SizedBox(
               width: 56,
-              child: Text(key,
-                  style: mono(fontSize: 10.5, color: tokens.text3),
-                  overflow: TextOverflow.ellipsis),
+              child: Tooltip(
+                message: key,
+                waitDuration: const Duration(milliseconds: 600),
+                child: Text(key,
+                    style: mono(fontSize: 10.5, color: tokens.text3),
+                    overflow: TextOverflow.ellipsis),
+              ),
             ),
             const SizedBox(width: 6),
             Expanded(child: _renderCell(key, raw, tokens)),
