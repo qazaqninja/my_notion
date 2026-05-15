@@ -234,9 +234,20 @@ class _TrashDialogState extends State<TrashDialog> {
           ),
           TextButton(
             onPressed: () async {
+              final confirmed = await showQuillConfirm(
+                context,
+                title: 'Delete forever?',
+                sub:
+                    'This permanently deletes "${item.title}". This cannot be undone.',
+                icon: 'trash',
+                confirmLabel: 'Delete forever',
+                danger: true,
+              );
+              if (!confirmed || !mounted) return;
               final ok = await _service.deleteForever(item);
               if (!ok || !mounted) return;
-              context.toastSuccess('Deleted', sub: item.basename, subMono: true);
+              context.toastSuccess('Deleted',
+                  sub: item.basename, subMono: true);
               _refresh();
             },
             child: Text('Delete', style: TextStyle(color: tokens.text2)),
