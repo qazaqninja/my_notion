@@ -139,7 +139,21 @@ class _Panel extends StatelessWidget {
                         color: selected ? tokens.hover : Colors.transparent,
                         child: Row(
                           children: [
-                            QuillIcon('file-md', size: 13, strokeWidth: 1.7, color: tokens.text3),
+                            if (r.emojiIcon != null)
+                              SizedBox(
+                                width: 13,
+                                height: 13,
+                                child: Center(
+                                  child: Text(r.emojiIcon!,
+                                      style: const TextStyle(
+                                          fontSize: 12, height: 1)),
+                                ),
+                              )
+                            else
+                              QuillIcon('file-md',
+                                  size: 13,
+                                  strokeWidth: 1.7,
+                                  color: tokens.text3),
                             const SizedBox(width: 9),
                             Expanded(
                               child: Column(
@@ -191,7 +205,9 @@ class _Panel extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    state.selectedResult!.title,
+                    state.selectedResult!.emojiIcon == null
+                        ? state.selectedResult!.title
+                        : '${state.selectedResult!.emojiIcon!}  ${state.selectedResult!.title}',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
