@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 
 /// One thread entry on a page. Stored in
@@ -139,20 +140,13 @@ class CommentsService {
     final buf = StringBuffer();
     for (final c in comments) {
       buf.writeln('- id: ${c.id}');
-      buf.writeln('  author: ${_yamlQuote(c.author)}');
+      buf.writeln('  author: ${yamlSafeScalar(c.author)}');
       buf.writeln('  at: ${c.timestamp.toUtc().toIso8601String()}');
       if (c.resolved) buf.writeln('  resolved: true');
       if (c.blockId != null) buf.writeln('  block_id: ${c.blockId}');
-      buf.writeln('  body: ${_yamlQuote(c.body)}');
+      buf.writeln('  body: ${yamlSafeScalar(c.body)}');
     }
     await file.writeAsString(buf.toString());
   }
 
-  static String _yamlQuote(String s) {
-    // Always single-line quoted with escaped quotes. Multi-line bodies
-    // collapse newlines to literal \n — comments aren't expected to be
-    // novel-length.
-    final escaped = s.replaceAll('\\', r'\\').replaceAll('"', r'\"').replaceAll('\n', r'\n');
-    return '"$escaped"';
-  }
 }
