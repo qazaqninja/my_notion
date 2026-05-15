@@ -12,6 +12,7 @@ import 'package:my_notion/core/db/quill_database.dart';
 import 'package:my_notion/core/markdown/frontmatter_parser.dart';
 import 'package:my_notion/core/ulid/ulid_generator.dart';
 import 'package:my_notion/features/database/data/repositories/database_repository_impl.dart';
+import 'package:my_notion/features/database/domain/repositories/database_repository.dart';
 import 'package:my_notion/features/vault/data/datasources/vault_fs_datasource.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/data/repositories/vault_repository_impl.dart';
@@ -129,6 +130,71 @@ void main() {
     );
     expect(p.basename(row.relativePath), equals('Bad-Name-Here-.md'));
   });
+
+  test('updateCell throws PageLockedException when page has locked: true',
+      () async {
+    final schema = (await dbRepo.listDatabases()).first;
+    final col = schema.columns.firstWhere((c) => c.key == 'owner');
+    final rows = await dbRepo.getRows(schema.id);
+    final northwind =
+        rows.firstWhere((r) => r.relativePath.endsWith('Northwind.md'));
+
+    // Inject `locked: true` into the page on disk + reindex.
+    final file = File(p.join(tmp.path, northwind.relativePath));
+    final raw = await file.readAsString();
+    final patched = raw.replaceFirst('---\n', '---\nlocked: true\n');
+    await file.writeAsString(patched);
+    await indexer.reindex(tmp);
+
+    await expectLater(
+      dbRepo.updateCell(
+        ulid: northwind.ulid,
+        column: col,
+        newValue: 'Priya',
+        vaultRoot: tmp,
+      ),
+      throwsA(isA<PageLockedException>()),
+    );
+    // The owner field on disk should be untouched.
+    final after = await file.readAsString();
+    final parsed = FrontmatterParser.parse(after);
+    expect(parsed.frontmatter.get('owner'), isNot(equals('Priya')));
+  });
+
+  test(
+    'updateCell respects permissions: read_only / readonly / read-only / locked',
+    () async {
+      final schema = (await dbRepo.listDatabases()).first;
+      final col = schema.columns.firstWhere((c) => c.key == 'owner');
+      final rows = await dbRepo.getRows(schema.id);
+      final northwind =
+          rows.firstWhere((r) => r.relativePath.endsWith('Northwind.md'));
+      final file = File(p.join(tmp.path, northwind.relativePath));
+      final original = await file.readAsString();
+
+      for (final perm in const [
+        'read_only',
+        'readonly',
+        'read-only',
+        'locked',
+      ]) {
+        await file.writeAsString(
+            original.replaceFirst('---\n', '---\npermissions: $perm\n'));
+        await indexer.reindex(tmp);
+        await expectLater(
+          dbRepo.updateCell(
+            ulid: northwind.ulid,
+            column: col,
+            newValue: 'Priya',
+            vaultRoot: tmp,
+          ),
+          throwsA(isA<PageLockedException>()),
+          reason: 'permissions: $perm should block updateCell',
+        );
+        await file.writeAsString(original);
+      }
+    },
+  );
 
   test('createRow with row_template copies frontmatter + body', () async {
     // Seed: a template page at vault root.
