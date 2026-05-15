@@ -116,6 +116,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                     visualDensity: VisualDensity.compact,
                     icon: const Icon(Icons.close, size: 18),
                     onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Cancel',
                   ),
                 ],
               ),
@@ -159,21 +160,9 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                 itemCount: items.length,
                 itemBuilder: (context, i) {
                   final glyph = items[i];
-                  return GestureDetector(
+                  return _EmojiTile(
+                    glyph: glyph,
                     onTap: () => Navigator.of(context).pop(glyph),
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: tokens.surface2,
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(4)),
-                        ),
-                        child: Text(glyph,
-                            style: const TextStyle(fontSize: 18)),
-                      ),
-                    ),
                   );
                 },
               ),
@@ -189,6 +178,44 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmojiTile extends StatefulWidget {
+  const _EmojiTile({required this.glyph, required this.onTap});
+  final String glyph;
+  final VoidCallback onTap;
+
+  @override
+  State<_EmojiTile> createState() => _EmojiTileState();
+}
+
+class _EmojiTileState extends State<_EmojiTile> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _hover ? tokens.accentTint : tokens.surface2,
+            border: _hover
+                ? Border.all(color: tokens.accent, width: 1)
+                : null,
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+          ),
+          child: Text(widget.glyph,
+              style: TextStyle(fontSize: _hover ? 20 : 18)),
         ),
       ),
     );
