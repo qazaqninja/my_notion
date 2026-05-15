@@ -15,8 +15,8 @@ import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/side_head.dart';
 import '../../../../shared/widgets/side_item.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
-import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../database/domain/entities/database_schema.dart';
+import '../../../database/domain/repositories/database_repository.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
 import '../bloc/vault_state.dart';
@@ -514,9 +514,10 @@ class _DatabasesList extends StatelessWidget {
   const _DatabasesList({required this.rebuildKey});
   final String rebuildKey;
 
-  Future<({List<DatabaseSchema> dbs, Map<String, int> counts})>
-      _load(QuillDatabase db) async {
-    final repo = DatabaseRepositoryImpl(db);
+  Future<({List<DatabaseSchema> dbs, Map<String, int> counts})> _load(
+    DatabaseRepository repo,
+    QuillDatabase db,
+  ) async {
     final dbs = await repo.listDatabases();
     final counts = <String, int>{};
     for (final s in dbs) {
@@ -531,10 +532,11 @@ class _DatabasesList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
+    final repo = context.read<DatabaseRepository>();
     final qdb = context.read<QuillDatabase>();
     return FutureBuilder<({List<DatabaseSchema> dbs, Map<String, int> counts})>(
       key: ValueKey('dbs-$rebuildKey'),
-      future: _load(qdb),
+      future: _load(repo, qdb),
       builder: (context, snap) {
         final dbs = snap.data?.dbs ?? const [];
         if (dbs.isEmpty) {

@@ -17,7 +17,6 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/relation_chip.dart';
-import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../database/domain/entities/database_schema.dart';
 import '../../../database/domain/repositories/database_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
@@ -2808,8 +2807,7 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
   }
 
   Future<_EmbedData?> _load() async {
-    final db = context.read<QuillDatabase>();
-    final repo = DatabaseRepositoryImpl(db);
+    final repo = context.read<DatabaseRepository>();
     final all = await repo.listDatabases();
     DatabaseSchema? hit;
     final q = widget.folder.trim();

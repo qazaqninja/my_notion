@@ -6,7 +6,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
@@ -14,14 +13,11 @@ import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
-import '../../../vault/data/indexer.dart';
-import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
 import '../../data/datasources/csv_exporter.dart';
-import '../../data/repositories/database_repository_impl.dart';
 import '../../domain/entities/database_query.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
@@ -62,11 +58,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   @override
   void initState() {
     super.initState();
-    _repo = DatabaseRepositoryImpl(
-      context.read<QuillDatabase>(),
-      vault: context.read<VaultRepository>(),
-      indexer: context.read<Indexer>(),
-    );
+    _repo = context.read<DatabaseRepository>();
     _restorePrefs();
     _load();
   }

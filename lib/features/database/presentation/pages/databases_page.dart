@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../vault/presentation/widgets/page_header.dart';
-import '../../data/repositories/database_repository_impl.dart';
 import '../../domain/entities/database_schema.dart';
+import '../../domain/repositories/database_repository.dart';
 
 /// Index of every database in the vault. Reached via /databases or the
 /// mobile tab bar's Bases entry. Each row links to `/db/<id>`.
@@ -29,11 +28,8 @@ class _DatabasesPageState extends State<DatabasesPage> {
     _data = _load();
   }
 
-  Future<List<DatabaseSchema>> _load() {
-    final repo =
-        DatabaseRepositoryImpl(context.read<QuillDatabase>());
-    return repo.listDatabases();
-  }
+  Future<List<DatabaseSchema>> _load() =>
+      context.read<DatabaseRepository>().listDatabases();
 
   @override
   Widget build(BuildContext context) {

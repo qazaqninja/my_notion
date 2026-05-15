@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/db/quill_database.dart' hide Page;
+import 'features/database/data/repositories/database_repository_impl.dart';
+import 'features/database/domain/repositories/database_repository.dart';
 import 'features/database/presentation/pages/database_table_page.dart';
 import 'features/database/presentation/pages/databases_page.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
@@ -33,6 +35,7 @@ class QuillApp extends StatefulWidget {
 class _QuillAppState extends State<QuillApp> {
   late final QuillDatabase _db;
   late final VaultRepositoryImpl _repo;
+  late final DatabaseRepository _dbRepo;
   late final Indexer _indexer;
   late final VaultBloc _vaultBloc;
   late final ThemeCubit _themeCubit;
@@ -44,6 +47,7 @@ class _QuillAppState extends State<QuillApp> {
     _db = QuillDatabase();
     _repo = VaultRepositoryImpl.local();
     _indexer = Indexer(_db, _repo.datasource);
+    _dbRepo = DatabaseRepositoryImpl(_db, vault: _repo, indexer: _indexer);
     _vaultBloc = VaultBloc(repo: _repo, indexer: _indexer, db: _db);
     _themeCubit = ThemeCubit()..load();
     _router = _buildRouter(_vaultBloc);
@@ -70,9 +74,11 @@ class _QuillAppState extends State<QuillApp> {
         value: _db,
         child: RepositoryProvider<VaultRepository>.value(
           value: _repo,
-          child: RepositoryProvider<Indexer>.value(
-            value: _indexer,
-            child: BlocBuilder<ThemeCubit, ThemeState>(
+          child: RepositoryProvider<DatabaseRepository>.value(
+            value: _dbRepo,
+            child: RepositoryProvider<Indexer>.value(
+              value: _indexer,
+              child: BlocBuilder<ThemeCubit, ThemeState>(
             builder: (context, themeState) {
               return MaterialApp.router(
                 title: 'Quill',
@@ -96,8 +102,9 @@ class _QuillAppState extends State<QuillApp> {
                 },
               );
             },
+              ),
+            ),
           ),
-        ),
         ),
       ),
     );
