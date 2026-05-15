@@ -535,8 +535,6 @@ class _EditorBodyState extends State<_EditorBody> {
     );
     if (picked == null || picked.isEmpty) return;
     if (!context.mounted) return;
-    context.read<VaultBloc>().add(
-        RenamePage(ulid: loaded.page.ulid, newBasename: picked));
     // Mirror _safeFileName's transformations so the toast matches the
     // actual filename on disk (slashes/quotes/etc. become "-"; trailing
     // .md is stripped).
@@ -548,6 +546,12 @@ class _EditorBodyState extends State<_EditorBody> {
       preview = preview.substring(0, preview.length - 3).trim();
     }
     if (preview.isEmpty) preview = 'Untitled';
+    if (preview == base) {
+      context.toastInfo('Filename unchanged');
+      return;
+    }
+    context.read<VaultBloc>().add(
+        RenamePage(ulid: loaded.page.ulid, newBasename: picked));
     context.toastSuccess('Renamed to $preview.md');
   }
 
