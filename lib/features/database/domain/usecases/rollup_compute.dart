@@ -1,4 +1,5 @@
 import '../../../../core/markdown/wikilink_parser.dart';
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../entities/database_schema.dart';
 import '../repositories/database_repository.dart';
 
@@ -77,15 +78,37 @@ class RollupCompute {
     return _aggregate(values, column.rollupAgg);
   }
 
+  static final _ulidShapeRe = RegExp(r'^[0-9A-Z]{26}$');
+
+  /// Extract every ULID referenced by a relation cell value. Accepts:
+  ///   - `[[ULID]]` wikilinks (preferred, what the relation picker writes)
+  ///   - bare `ULID` strings (external edits, externally-imported data)
+  ///   - quoted bare `"ULID"` strings
+  ///   - flow lists / Dart Lists of any of the above
+  ///
+  /// Without the bare/quoted fallback, a user round-tripping through
+  /// Obsidian or hand-editing a relation cell would silently break the
+  /// rollup — the relation chip still rendered (M777) but the rollup
+  /// saw zero items.
   static List<String> _readUlids(dynamic raw) {
     if (raw == null) return const [];
     final out = <String>{};
+    void absorb(String s) {
+      // First pass: bracketed wikilinks.
+      out.addAll(WikilinkParser.find(s).map((w) => w.ulid));
+      // Second pass: bare ULID-shaped scalars in the same item.
+      // parseYamlFlowList handles `[a, b]` and bare `a, b` shapes.
+      for (final item in parseYamlFlowList(s)) {
+        if (_ulidShapeRe.hasMatch(item)) out.add(item);
+      }
+    }
+
     if (raw is List) {
       for (final item in raw) {
-        out.addAll(WikilinkParser.find('$item').map((w) => w.ulid));
+        absorb('$item');
       }
     } else {
-      out.addAll(WikilinkParser.find('$raw').map((w) => w.ulid));
+      absorb('$raw');
     }
     return out.toList();
   }

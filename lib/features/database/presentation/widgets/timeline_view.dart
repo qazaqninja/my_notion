@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/markdown/wikilink_parser.dart';
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -215,14 +216,27 @@ class TimelineView extends StatelessWidget {
     );
   }
 
+  static final _ulidShapeRe = RegExp(r'^[0-9A-Z]{26}$');
+
+  /// Extract dependency ULIDs from a relation-style cell value.
+  /// Accepts the `[[ULID]]` wikilink shape AND bare ULIDs in a flow
+  /// list, so externally-edited cells still draw their arrows on the
+  /// timeline (M784 — mirrors RollupCompute._readUlids).
   static List<String> _parseDepUlids(dynamic raw) {
     final out = <String>{};
+    void absorb(String s) {
+      out.addAll(WikilinkParser.find(s).map((w) => w.ulid));
+      for (final item in parseYamlFlowList(s)) {
+        if (_ulidShapeRe.hasMatch(item)) out.add(item);
+      }
+    }
+
     if (raw is List) {
       for (final item in raw) {
-        out.addAll(WikilinkParser.find('$item').map((w) => w.ulid));
+        absorb('$item');
       }
     } else {
-      out.addAll(WikilinkParser.find('$raw').map((w) => w.ulid));
+      absorb('$raw');
     }
     return out.toList();
   }

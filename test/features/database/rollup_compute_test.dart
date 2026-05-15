@@ -155,6 +155,32 @@ void main() {
       expect(out.first.cells['total'], 0);
     });
 
+    test('rolls up bare ULIDs (no [[…]] wrapping) (M784)', () {
+      // External edits / Obsidian round-trips can leave a relation
+      // cell as a bare flow list of ULIDs. The old WikilinkParser-only
+      // reader returned an empty set and the rollup silently fell to
+      // 0; the new fallback also accepts `[ULID, ULID]`.
+      final schema = _schemaFor(RollupAgg.sum);
+      final rows = [
+        _parent(
+            '[AAAAAAAAAAAAAAAAAAAAAAAAA0, BBBBBBBBBBBBBBBBBBBBBBBBB0]'),
+        _subA,
+        _subB,
+      ];
+      final out = RollupCompute.apply(rows, schema);
+      expect(out.first.cells['total'], 8);
+    });
+
+    test('rolls up a single bare ULID scalar (M784)', () {
+      final schema = _schemaFor(RollupAgg.sum);
+      final rows = [
+        _parent('AAAAAAAAAAAAAAAAAAAAAAAAA0'),
+        _subA,
+      ];
+      final out = RollupCompute.apply(rows, schema);
+      expect(out.first.cells['total'], 3);
+    });
+
     test('no rollup columns → identity passthrough', () {
       const plain = DatabaseSchema(
         id: 'x',

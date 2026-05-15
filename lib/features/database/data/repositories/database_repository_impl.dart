@@ -180,15 +180,30 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
     }
   }
 
+  static final _ulidShapeRe = RegExp(r'^[0-9A-Z]{26}$');
+
+  /// Pull every ULID a relation-style cell references. Accepts the
+  /// `[[ULID]]` wikilink shape (default for the relation picker) as
+  /// well as bare / quoted / flow-list-of-bare-ULIDs that an external
+  /// editor or import might produce. Mirrors RollupCompute._readUlids
+  /// (M784) so the inverse-relation mirror agrees with the rollup
+  /// reader on what counts as a relation.
   static Set<String> _ulidsIn(dynamic v) {
     if (v == null) return const {};
     final out = <String>{};
+    void absorb(String s) {
+      out.addAll(WikilinkParser.find(s).map((w) => w.ulid));
+      for (final item in parseYamlFlowList(s)) {
+        if (_ulidShapeRe.hasMatch(item)) out.add(item);
+      }
+    }
+
     if (v is List) {
       for (final item in v) {
-        out.addAll(WikilinkParser.find('$item').map((w) => w.ulid));
+        absorb('$item');
       }
     } else {
-      out.addAll(WikilinkParser.find('$v').map((w) => w.ulid));
+      absorb('$v');
     }
     return out;
   }
