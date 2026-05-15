@@ -629,7 +629,7 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
               Text(label, style: mono(fontSize: 11, color: fg)),
               const SizedBox(width: 12),
               Text(
-                e.relativePath,
+                stripMdExtension(e.relativePath),
                 style: mono(fontSize: 11, color: tokens.text3),
                 overflow: TextOverflow.ellipsis,
               ),
