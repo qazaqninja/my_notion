@@ -300,6 +300,7 @@ class TreeNodeWidget extends StatelessWidget {
       );
       if (!confirmed || !context.mounted) return;
       context.read<VaultBloc>().add(MoveToTrash(fl.ulid));
+      context.toastSuccess('Moved to trash', sub: fl.name);
     }
   }
 
