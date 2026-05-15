@@ -53,6 +53,13 @@ void main() {
       expect(em.action, SlashAction.pickEmoji);
     });
 
+    test('Random page link entry routes through insertRandomPageLink', () {
+      final out = filterSlashEntries('random');
+      expect(out, isNotEmpty);
+      final e = out.firstWhere((e) => e.label == 'Random page link');
+      expect(e.action, SlashAction.insertRandomPageLink);
+    });
+
     test('Lorem ipsum entry inserts three placeholder paragraphs', () {
       final out = filterSlashEntries('lorem');
       expect(out, isNotEmpty);

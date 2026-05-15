@@ -21,6 +21,7 @@ import '../../domain/attachment_writer.dart';
 import '../../domain/slash_entries.dart';
 import '../../domain/source_line_ops.dart';
 import '../bloc/editor_bloc.dart';
+import '../bloc/editor_state.dart';
 import '../bloc/editor_event.dart';
 import '../cubit/slash_menu_cubit.dart';
 import 'slash_menu_overlay.dart';
@@ -603,7 +604,35 @@ class _SourceViewState extends State<SourceView> {
           selection: TextSelection.collapsed(offset: stripStart),
         );
         await _pickAndInsertEmoji(stripStart);
+      case SlashAction.insertRandomPageLink:
+        final cleared = text.replaceRange(stripStart, caret, '');
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart),
+        );
+        await _insertRandomPageLink(stripStart);
     }
+  }
+
+  Future<void> _insertRandomPageLink(int insertAt) async {
+    final db = context.read<QuillDatabase>();
+    // Snapshot the self-ULID synchronously so we don't reach into
+    // `context` after the await.
+    final loaded = context.read<EditorBloc>().state;
+    final selfUlid = loaded is EditorLoaded ? loaded.page.ulid : '';
+    final rows = await db.select(db.pages).get();
+    if (rows.isEmpty) return;
+    final pool = rows.where((r) => r.ulid != selfUlid).toList();
+    if (pool.isEmpty) return;
+    final pick = pool[DateTime.now().microsecondsSinceEpoch % pool.length];
+    final t = _controller.text;
+    final at = insertAt.clamp(0, t.length);
+    final snippet = '[[${pick.ulid}]]';
+    final newText = t.replaceRange(at, at, snippet);
+    _controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: at + snippet.length),
+    );
   }
 
   Future<void> _pickAndInsertEmoji(int insertAt) async {

@@ -8,6 +8,7 @@ enum SlashAction {
   insertTimestamp,
   insertDailyNoteLink,
   pickEmoji,
+  insertRandomPageLink,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -280,6 +281,13 @@ const List<SlashEntry> kSlashEntries = [
     snippet: '^sup^',
     cursorOffset: 1,
     keywords: ['superscript', 'sup', 'exponent', 'power', 'math'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Random page link',
+    hint: '[[?]]',
+    action: SlashAction.insertRandomPageLink,
+    keywords: ['random', 'wormhole', 'link', 'page', 'shuffle', 'serendipity'],
   ),
   SlashEntry(
     icon: 'note',
