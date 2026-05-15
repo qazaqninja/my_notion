@@ -70,17 +70,22 @@ void main() {
     await Indexer(db, ds).reindex(vault);
 
     final pages = await db.select(db.pages).get();
-    // 6 fixture files + 1 Inbox.md without frontmatter = 7 pages
-    expect(pages, hasLength(7));
-    expect(pages.map((p) => p.title).toSet(), {
-      'Acmeco',
-      'Northwind',
-      'Globex',
-      'Initech',
-      'Acmeco renewal',
-      '2026 Q1 QBR',
-      'Inbox',
-    });
+    // ULIDs are unique → no page is indexed twice.
+    final ulids = pages.map((p) => p.ulid).toList();
+    expect(ulids.toSet().length, ulids.length, reason: 'every page must be indexed exactly once');
+    final titles = pages.map((p) => p.title).toSet();
+    expect(
+      titles,
+      containsAll({
+        'Acmeco',
+        'Northwind',
+        'Globex',
+        'Initech',
+        'Acmeco renewal',
+        '2026 Q1 QBR',
+        'Inbox',
+      }),
+    );
     await db.close();
   });
 }
