@@ -316,6 +316,27 @@ class _CommentsDialogState extends State<CommentsDialog> {
                 padding: const EdgeInsets.all(2),
                 constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
                 onPressed: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete comment?'),
+                      content: const Text(
+                          'This permanently removes the comment from the .yaml sidecar. This cannot be undone.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(true),
+                          style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFFCB5A4F)),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (ok != true) return;
                   await _service.delete(
                       Directory(widget.vaultRoot), widget.pageUlid, c.id);
                   _refresh();
