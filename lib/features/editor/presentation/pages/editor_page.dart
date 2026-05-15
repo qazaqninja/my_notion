@@ -803,7 +803,17 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: iso, value: iso),
       ));
     }
-    context.toastSuccess('Reminder set for $iso');
+    final today = DateTime(now.year, now.month, now.day);
+    final tPicked = DateTime(picked.year, picked.month, picked.day);
+    final days = tPicked.difference(today).inDays;
+    final relative = days == 0
+        ? 'today'
+        : days == 1
+            ? 'tomorrow'
+            : days > 0
+                ? 'in $days ${days == 1 ? "day" : "days"}'
+                : '${-days} ${(-days) == 1 ? "day" : "days"} ago';
+    context.toastSuccess('Reminder set for $iso ($relative)');
   }
 
   Future<void> _exportPageAsHtml(
