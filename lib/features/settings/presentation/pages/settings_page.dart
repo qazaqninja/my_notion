@@ -477,6 +477,12 @@ class _SettingsPageState extends State<SettingsPage> {
     await updated.save(Directory(state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(
+        content: Text('Sidebar reset to default order'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   Widget _usersPane(QuillTokens tokens) {
