@@ -45,6 +45,7 @@ QuillTokens buildTokens(Brightness brightness, AccentKey accentKey) {
       danger: const Color(0xFFCB5A4F),
       dangerTint: const Color(0xFFCB5A4F).withValues(alpha: 0.16),
       success: const Color(0xFF5A8F6E),
+      codeBg: const Color(0xFF101010),
     );
   }
   return QuillTokens(
@@ -72,6 +73,7 @@ QuillTokens buildTokens(Brightness brightness, AccentKey accentKey) {
     danger: const Color(0xFFCB5A4F),
     dangerTint: const Color(0xFFCB5A4F).withValues(alpha: 0.16),
     success: const Color(0xFF5A8F6E),
+    codeBg: const Color(0xFFF0EDE6),
   );
 }
 

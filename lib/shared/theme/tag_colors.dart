@@ -69,6 +69,17 @@ const Color kCalloutDanger = Color(0xFFCB5A4F);
 /// source of truth across light and dark themes.
 const Color kToastWarn = Color(0xFFB58A3A);
 
+/// Yellow accent for `<mark>…</mark>` highlights — the renderer adds
+/// alpha (0.55) at the use site so this is the un-tinted base hue.
+const Color kHighlightYellow = Color(0xFFFFE486);
+
+/// Background + foreground for the Pandoc `==text==` highlight. Fixed
+/// dark-brown text on light-amber tint reads well in light mode but
+/// is intentionally low-contrast in dark mode — Pandoc-style highlights
+/// are advisory and not meant to scream.
+const Color kHighlightAmberBg = Color(0x55FBE19A);
+const Color kHighlightAmberFg = Color(0xFF3C2F0F);
+
 /// Stage / status colours for sales-pipeline-shaped databases. The five
 /// hues match `tokens.jsx:stage` exactly. Used by the timeline-view bar
 /// renderer and any other "deal stage"-like grouping.

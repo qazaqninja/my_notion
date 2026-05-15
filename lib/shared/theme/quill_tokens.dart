@@ -32,6 +32,7 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
     required this.danger,
     required this.dangerTint,
     required this.success,
+    required this.codeBg,
   });
 
   final Brightness brightness;
@@ -68,6 +69,11 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
   /// "saved" badge on the editor footer.
   final Color success;
 
+  /// Background for fenced code blocks. Slightly darker than `surface2`
+  /// in dark mode for higher contrast against `text`, slightly warmer
+  /// in light mode so the code block stands out from the page.
+  final Color codeBg;
+
   bool get isDark => brightness == Brightness.dark;
 
   static QuillTokens of(BuildContext context) {
@@ -102,6 +108,7 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
     Color? danger,
     Color? dangerTint,
     Color? success,
+    Color? codeBg,
   }) {
     return QuillTokens(
       brightness: brightness ?? this.brightness,
@@ -128,6 +135,7 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
       danger: danger ?? this.danger,
       dangerTint: dangerTint ?? this.dangerTint,
       success: success ?? this.success,
+      codeBg: codeBg ?? this.codeBg,
     );
   }
 
@@ -159,6 +167,7 @@ class QuillTokens extends ThemeExtension<QuillTokens> {
       danger: Color.lerp(danger, other.danger, t)!,
       dangerTint: Color.lerp(dangerTint, other.dangerTint, t)!,
       success: Color.lerp(success, other.success, t)!,
+      codeBg: Color.lerp(codeBg, other.codeBg, t)!,
     );
   }
 }

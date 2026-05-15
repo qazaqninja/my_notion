@@ -2520,9 +2520,7 @@ class _CodeBlockState extends State<_CodeBlock> {
         decoration: BoxDecoration(
           color: isMermaid
               ? tokens.accent.withValues(alpha: 0.06)
-              : (tokens.isDark
-                  ? const Color(0xFF101010)
-                  : const Color(0xFFF0EDE6)),
+              : tokens.codeBg,
           border: Border.all(
             color: isMermaid
                 ? tokens.accent.withValues(alpha: 0.35)
@@ -4111,7 +4109,7 @@ List<InlineSpan> _buildSpans(
             padding:
                 const EdgeInsets.symmetric(horizontal: 3, vertical: 0.5),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFE486).withValues(alpha: 0.55),
+              color: kHighlightYellow.withValues(alpha: 0.55),
               borderRadius: const BorderRadius.all(Radius.circular(2)),
             ),
             child: Text(
@@ -4393,8 +4391,8 @@ List<InlineSpan> _buildSpans(
           out.add(TextSpan(
             text: inner,
             style: const TextStyle(
-              backgroundColor: Color(0x55FBE19A),
-              color: Color(0xFF3C2F0F),
+              backgroundColor: kHighlightAmberBg,
+              color: kHighlightAmberFg,
             ),
           ));
           i = end + 2;
