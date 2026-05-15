@@ -101,15 +101,19 @@ class _QuillSelectState<T> extends State<QuillSelect<T>> {
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: widget.mono ? 'JetBrainsMono' : null,
-                    fontSize: widget.dense ? 12.5 : 13,
-                    color: tokens.text,
+                child: Tooltip(
+                  message: label,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: widget.mono ? 'JetBrainsMono' : null,
+                      fontSize: widget.dense ? 12.5 : 13,
+                      color: tokens.text,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 6),
