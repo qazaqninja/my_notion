@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../domain/entities/database_query.dart';
 import '../../domain/entities/database_schema.dart';
 
@@ -19,7 +20,9 @@ Future<T?> showQueryPopover<T>({
 }) {
   return showDialog<T>(
     context: context,
-    barrierColor: Colors.black.withValues(alpha: 0.18),
+    barrierColor: Colors.black.withValues(
+      alpha: QuillTokens.of(context).isDark ? 0.40 : 0.18,
+    ),
     builder: (ctx) => Align(
       alignment: Alignment.topRight,
       child: Padding(
@@ -208,33 +211,27 @@ class _FilterRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          DropdownButton<String>(
+          QuillSelect<String>(
             value: rule.columnKey,
-            isDense: true,
-            underline: const SizedBox.shrink(),
-            style: mono(fontSize: 12, color: tokens.text2),
-            items: [
+            mono: true,
+            dense: true,
+            width: 110,
+            onChanged: onColumnChanged,
+            options: [
               for (final c in schema.columns)
-                if (c.key != 'id')
-                  DropdownMenuItem(value: c.key, child: Text(c.key)),
+                if (c.key != 'id') QuillSelectOption(value: c.key, label: c.key),
             ],
-            onChanged: (v) {
-              if (v != null) onColumnChanged(v);
-            },
           ),
           const SizedBox(width: 6),
-          DropdownButton<FilterOp>(
+          QuillSelect<FilterOp>(
             value: ops.contains(rule.op) ? rule.op : ops.first,
-            isDense: true,
-            underline: const SizedBox.shrink(),
-            style: TextStyle(fontSize: 12, color: tokens.text2),
-            items: [
+            dense: true,
+            width: 96,
+            onChanged: onOpChanged,
+            options: [
               for (final op in ops)
-                DropdownMenuItem(value: op, child: Text(filterOpLabel(op))),
+                QuillSelectOption(value: op, label: filterOpLabel(op)),
             ],
-            onChanged: (v) {
-              if (v != null) onOpChanged(v);
-            },
           ),
           const SizedBox(width: 6),
           if (rule.needsValue())
@@ -406,19 +403,17 @@ class _SortRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: DropdownButton<String>(
+            child: QuillSelect<String>(
               value: rule.columnKey,
-              isDense: true,
-              underline: const SizedBox.shrink(),
-              style: mono(fontSize: 12, color: tokens.text2),
-              items: [
+              mono: true,
+              dense: true,
+              width: 200,
+              onChanged: onColumnChanged,
+              options: [
                 for (final c in schema.columns)
                   if (c.key != 'id')
-                    DropdownMenuItem(value: c.key, child: Text(c.key)),
+                    QuillSelectOption(value: c.key, label: c.key),
               ],
-              onChanged: (v) {
-                if (v != null) onColumnChanged(v);
-              },
             ),
           ),
           GestureDetector(
