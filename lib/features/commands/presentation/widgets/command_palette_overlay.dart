@@ -116,9 +116,12 @@ class _Panel extends StatelessWidget {
     // Responsive width: thumb-friendly full-width minus margin on
     // narrow viewports, capped at 580px on desktop so the palette
     // doesn't sprawl across wide monitors.
-    final screenW = MediaQuery.of(context).size.width;
+    final screen = MediaQuery.of(context).size;
     final width =
-        screenW < 640 ? (screenW - 16).clamp(280.0, 580.0) : 580.0;
+        screen.width < 640 ? (screen.width - 16).clamp(280.0, 580.0) : 580.0;
+    // Cap the result list to ~50% of viewport so the palette fits even
+    // on small windows; never grow beyond the original 420px max.
+    final resultMaxHeight = (screen.height * 0.5).clamp(220.0, 420.0);
     return Container(
       width: width,
       decoration: BoxDecoration(
@@ -169,7 +172,7 @@ class _Panel extends StatelessWidget {
           ),
           // Results
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 420),
+            constraints: BoxConstraints(maxHeight: resultMaxHeight),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Column(
