@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tokens.dart';
 
 class OutlineEntry {
   const OutlineEntry({
@@ -114,14 +115,32 @@ class _OutlineRailState extends State<OutlineRail> {
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: Text(
-            'ON THIS PAGE',
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.0,
-              color: tokens.text3,
-            ),
+          child: Row(
+            children: [
+              Text(
+                'ON THIS PAGE',
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                  color: tokens.text3,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Tooltip(
+                message: entries.length == 1
+                    ? '1 heading on this page'
+                    : '${entries.length} headings on this page',
+                waitDuration: const Duration(milliseconds: 500),
+                child: Text(
+                  '${entries.length}',
+                  style: mono(
+                    fontSize: 10.5,
+                    color: tokens.text3.withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         for (int i = 0; i < entries.length; i++)
