@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/paths.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/kbd.dart';
@@ -185,10 +186,8 @@ class _Panel extends StatelessWidget {
                             icon: 'file-md',
                             emojiIcon: state.pages[i].emojiIcon,
                             label: state.pages[i].title,
-                            hint: state.pages[i].relativePath.endsWith('.md')
-                                ? state.pages[i].relativePath.substring(
-                                    0, state.pages[i].relativePath.length - 3)
-                                : state.pages[i].relativePath,
+                            hint: stripMdExtension(
+                                state.pages[i].relativePath),
                             selected: state.selectedIndex == i,
                             onTap: () => onPickPage(state.pages[i]),
                           ),

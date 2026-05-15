@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/paths.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -97,10 +98,7 @@ class BacklinksRail extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          bl.relativePath.endsWith('.md')
-                              ? bl.relativePath.substring(
-                                  0, bl.relativePath.length - 3)
-                              : bl.relativePath,
+                          stripMdExtension(bl.relativePath),
                           style: mono(fontSize: 10.5, color: tokens.text3),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,

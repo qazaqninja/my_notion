@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -951,11 +952,7 @@ class _EditorBodyState extends State<_EditorBody> {
         // the header reads "Operations / Customers / Acmeco" instead
         // of "… / Acmeco.md". File-on-disk path is still surfaced via
         // the editor kebab → Reveal in Finder for power users.
-        final crumbs = page.relativePath.split('/');
-        if (crumbs.isNotEmpty && crumbs.last.endsWith('.md')) {
-          crumbs[crumbs.length - 1] = crumbs.last
-              .substring(0, crumbs.last.length - 3);
-        }
+        final crumbs = stripMdExtension(page.relativePath).split('/');
         final mobile = isMobileWidth(context);
         final locked = EditorBloc.isLocked(loaded);
         return CallbackShortcuts(

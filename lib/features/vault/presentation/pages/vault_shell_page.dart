@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import '../../../../core/paths.dart';
+
 import 'package:drift/drift.dart' as drift;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -1311,7 +1313,7 @@ views:
                       final p = pages[i];
                       return _StatsPageRow(
                         title: p.title,
-                        trailing: p.relativePath,
+                        trailing: stripMdExtension(p.relativePath),
                         ulid: p.ulid,
                         mono: true,
                         tokens: tokens,

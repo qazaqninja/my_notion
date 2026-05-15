@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
+import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
@@ -720,9 +721,8 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
         ),
       );
     }
-    final stripped =
-        rp.endsWith('.md') ? rp.substring(0, rp.length - 3) : rp;
-    final crumbs = stripped.split('/').where((s) => s.isNotEmpty).toList();
+    final crumbs =
+        stripMdExtension(rp).split('/').where((s) => s.isNotEmpty).toList();
     if (crumbs.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1568,13 +1568,7 @@ class _SubpageCard extends StatelessWidget {
       builder: (context, snap) {
         final page = snap.data;
         final title = page?.title ?? 'Untitled (${ulid.substring(20)})';
-        final rawPath = page?.relativePath ?? '';
-        // Drop the `.md` suffix from the sub-card's path line so it
-        // matches every other page-listing surface (sidebar tree,
-        // PageHeader breadcrumb M307, etc.).
-        final path = rawPath.endsWith('.md')
-            ? rawPath.substring(0, rawPath.length - 3)
-            : rawPath;
+        final path = stripMdExtension(page?.relativePath ?? '');
         final emoji = page == null
             ? null
             : emojiFromFrontmatterJson(page.frontmatterJson);
