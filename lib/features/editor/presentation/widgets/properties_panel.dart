@@ -348,7 +348,7 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
       builder: (_) => CommentsDialog(
         vaultRoot: vault.rootPath,
         pageUlid: widget.page.ulid,
-        defaultAuthor: 'You',
+        defaultAuthor: vault.workspace.currentUserName ?? 'You',
       ),
     );
   }
