@@ -846,7 +846,14 @@ class _EditorBodyState extends State<_EditorBody> {
     }
     final base =
         DateTime.tryParse(existing.rawScalar) ?? DateTime.now();
-    final today = DateTime(base.year, base.month, base.day);
+    final baseDay = DateTime(base.year, base.month, base.day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // If the existing reminder is in the past, snooze should push from
+    // today rather than the past — otherwise '+ 7 days' on a 2025-01-01
+    // reminder produces 2025-01-08, still in the past. Notion / Apple
+    // Mail semantics: snooze always lands in the future.
+    final start = baseDay.isBefore(today) ? today : baseDay;
     final picked = await showQuillChoice<int>(
       context,
       title: 'Snooze reminder',
@@ -860,7 +867,7 @@ class _EditorBodyState extends State<_EditorBody> {
       ],
     );
     if (picked == null || !context.mounted) return;
-    final next = today.add(Duration(days: picked));
+    final next = start.add(Duration(days: picked));
     final iso =
         '${next.year.toString().padLeft(4, '0')}-${next.month.toString().padLeft(2, '0')}-${next.day.toString().padLeft(2, '0')}';
     final bloc = context.read<EditorBloc>();
@@ -868,9 +875,7 @@ class _EditorBodyState extends State<_EditorBody> {
       'reminder',
       existing.copyWith(rawScalar: iso, value: iso),
     ));
-    final now = DateTime.now();
-    final todayDay = DateTime(now.year, now.month, now.day);
-    final days = next.difference(todayDay).inDays;
+    final days = next.difference(today).inDays;
     context.toastSuccess(
         'Snoozed reminder to $iso (in $days ${days == 1 ? "day" : "days"})');
   }
