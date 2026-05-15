@@ -115,15 +115,21 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
                             bottom: BorderSide(color: tokens.divider, width: 0.5),
                           ),
                         ),
-                        child: Text(
-                          commits.length == 1
-                              ? 'HISTORY · 1 commit'
-                              : 'HISTORY · ${commits.length} commits',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.0,
-                            color: tokens.text3,
+                        child: Tooltip(
+                          message: commits.length == 1
+                              ? '1 commit touched this file'
+                              : '${commits.length} commits touched this file',
+                          waitDuration: const Duration(milliseconds: 500),
+                          child: Text(
+                            commits.length == 1
+                                ? 'HISTORY · 1 commit'
+                                : 'HISTORY · ${commits.length} commits',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.0,
+                              color: tokens.text3,
+                            ),
                           ),
                         ),
                       ),
