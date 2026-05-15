@@ -127,6 +127,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
                     visualDensity: VisualDensity.compact,
                     icon: const Icon(Icons.close, size: 18),
                     onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
                   ),
                 ],
               ),
@@ -215,6 +216,7 @@ class _CommentsDialogState extends State<CommentsDialog> {
                   IconButton(
                     onPressed: _submit,
                     icon: Icon(Icons.send, size: 18, color: tokens.accent),
+                    tooltip: 'Post comment (↵)',
                   ),
                 ],
               ),
