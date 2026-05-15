@@ -629,6 +629,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await themeCubit.cycleMode();
       case 'Toggle compact mode':
         await themeCubit.toggleCompact();
+      case 'Show orphan pages':
+        if (!context.mounted) return;
+        await _showOrphansDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
@@ -1099,6 +1102,83 @@ views:
       SnackBar(
         content: Text('Created database: $safe'),
         duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  Future<void> _showOrphansDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    final relations = await db.select(db.relations).get();
+    final linked = <String>{};
+    for (final r in relations) {
+      linked.add(r.fromUlid);
+      linked.add(r.toUlid);
+    }
+    final orphans = [
+      for (final p in pages)
+        if (!linked.contains(p.ulid)) p,
+    ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+    if (!context.mounted) return;
+    final tokens = QuillTokens.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: tokens.surface,
+        child: SizedBox(
+          width: 460,
+          height: 540,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  orphans.isEmpty
+                      ? 'NO ORPHAN PAGES'
+                      : 'ORPHAN PAGES · ${orphans.length}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1,
+                    color: tokens.text3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  orphans.isEmpty
+                      ? 'Every indexed page has at least one wikilink coming in or going out. Nice.'
+                      : 'Pages with no incoming or outgoing wikilinks. Sorted by last-edited (most recent first).',
+                  style: TextStyle(fontSize: 12, color: tokens.text3),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: orphans.length,
+                    itemBuilder: (_, i) {
+                      final p = orphans[i];
+                      return _StatsPageRow(
+                        title: p.title,
+                        trailing: p.relativePath,
+                        ulid: p.ulid,
+                        mono: true,
+                        tokens: tokens,
+                      );
+                    },
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
