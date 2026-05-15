@@ -374,10 +374,9 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         final b = s.trim().toLowerCase() == 'true';
         return (b ? 'true' : 'false', b);
       case ColumnType.multi:
-        final parts = [
-          for (final p in s.split(','))
-            if (p.trim().isNotEmpty) p.trim(),
-        ];
+        // Quote-aware split — `"a, b", c` parses to `['a, b', 'c']`
+        // instead of being shredded into three bogus items (M783).
+        final parts = parseMultiValueInput(s);
         return ('[${parts.map(yamlFlowItem).join(', ')}]', parts);
       case ColumnType.date:
         // The UI date picker emits YYYY-MM-DD which is always safe,

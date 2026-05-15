@@ -124,6 +124,28 @@ List<String> parseYamlFlowList(String raw) {
   return out;
 }
 
+/// Quote-aware split of a user-typed multi-value text into items.
+/// Accepts both the bracket flow-list form (`[a, "b, c"]`) and the
+/// bare comma-separated form (`a, "b, c"`) — the latter is what
+/// shows up in a multi-cell or properties-panel TextField.
+///
+/// A user typing `"high, priority", normal` gets two items:
+/// `['high, priority', 'normal']`. A user typing the more familiar
+/// `tag1, tag2` (no quotes) gets two items too. Without this, the
+/// edit path naively split on every `,` and the quoted form was
+/// shredded into bogus items.
+List<String> parseMultiValueInput(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return const [];
+  // Wrap bare input in `[ ]` so the same flow-list parser handles
+  // both shapes uniformly. A single token without commas survives
+  // the round-trip as a one-element list.
+  final wrapped = trimmed.startsWith('[') && trimmed.endsWith(']')
+      ? trimmed
+      : '[$trimmed]';
+  return parseYamlFlowList(wrapped);
+}
+
 /// Convert a free-form label (CSV column name, Asana field, etc.) into a
 /// YAML-safe block-mapping key. Lowercases, replaces every YAML
 /// structure / quote / slash glyph + whitespace with `_`, collapses

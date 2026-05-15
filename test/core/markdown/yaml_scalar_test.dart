@@ -149,6 +149,39 @@ void main() {
     });
   });
 
+  group('parseMultiValueInput', () {
+    test('splits bare comma-separated input', () {
+      expect(parseMultiValueInput('a, b, c'),
+          equals(['a', 'b', 'c']));
+    });
+
+    test('respects quoted commas in bare input (M783)', () {
+      // The whole point of this helper: a user typing
+      // `"high, priority", normal` into a multi cell gets two
+      // items, not three.
+      expect(parseMultiValueInput('"high, priority", normal'),
+          equals(['high, priority', 'normal']));
+    });
+
+    test('accepts bracket flow-list form too', () {
+      expect(parseMultiValueInput('[a, "b, c"]'),
+          equals(['a', 'b, c']));
+    });
+
+    test('single token survives as one-element list', () {
+      expect(parseMultiValueInput('urgent'), equals(['urgent']));
+    });
+
+    test('empty / whitespace returns empty', () {
+      expect(parseMultiValueInput(''), isEmpty);
+      expect(parseMultiValueInput('   '), isEmpty);
+    });
+
+    test('drops blank items between commas', () {
+      expect(parseMultiValueInput('a, , b'), equals(['a', 'b']));
+    });
+  });
+
   group('yamlSnakeKey', () {
     test('lowercases + snake_cases plain labels', () {
       expect(yamlSnakeKey('Foo Bar'), equals('foo_bar'));

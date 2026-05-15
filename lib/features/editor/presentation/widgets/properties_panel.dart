@@ -536,10 +536,9 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
           value: n ?? text.trim(),
         );
       case fe.FrontmatterType.multi:
-        final parts = [
-          for (final s in text.split(','))
-            if (s.trim().isNotEmpty) s.trim(),
-        ];
+        // Quote-aware split (M783) — `"a, b", c` yields two items
+        // not three.
+        final parts = parseMultiValueInput(text);
         return widget.entry.copyWith(
           rawScalar: '[${parts.map(yamlFlowItem).join(', ')}]',
           value: parts,
@@ -730,10 +729,8 @@ class _AddFieldFormState extends State<_AddFieldForm> {
           value: text.trim().toLowerCase() == 'true',
         ),
       fe.FrontmatterType.multi => () {
-          final items = [
-            for (final s in text.split(','))
-              if (s.trim().isNotEmpty) s.trim(),
-          ];
+          // Quote-aware split (M783).
+          final items = parseMultiValueInput(text);
           return fe.FrontmatterEntry(
             key: key,
             rawScalar: '[${items.map(yamlFlowItem).join(', ')}]',

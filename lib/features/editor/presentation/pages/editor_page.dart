@@ -733,10 +733,9 @@ class _EditorBodyState extends State<_EditorBody> {
       confirmLabel: 'Add',
     );
     if (result == null) return;
-    final added = <String>[
-      for (final t in result.split(','))
-        if (t.trim().isNotEmpty) t.trim(),
-    ];
+    // Quote-aware split (M783) so a user typing
+    // `"high, priority", urgent` lands as two tags not three.
+    final added = parseMultiValueInput(result);
     if (added.isEmpty) return;
     // Merge + dedupe, preserving order: current first, then new.
     final merged = <String>[...currentTags];
