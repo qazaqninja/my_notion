@@ -1129,66 +1129,15 @@ views:
         if (!hasTag(p.frontmatterJson)) p,
     ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
     if (!context.mounted) return;
-    final tokens = QuillTokens.of(context);
-    await showDialog<void>(
+    await _showHygieneDialog(
       context: context,
-      builder: (_) => Dialog(
-        backgroundColor: tokens.surface,
-        child: SizedBox(
-          width: 460,
-          height: 540,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  untagged.isEmpty
-                      ? 'EVERY PAGE IS TAGGED'
-                      : 'UNTAGGED PAGES · ${untagged.length}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1,
-                    color: tokens.text3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  untagged.isEmpty
-                      ? 'Every indexed page has at least one tag in its frontmatter.'
-                      : 'Pages with no `tags:` frontmatter. Sorted by last-edited (most recent first).',
-                  style: TextStyle(fontSize: 12, color: tokens.text3),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: untagged.length,
-                    itemBuilder: (_, i) {
-                      final p = untagged[i];
-                      return _StatsPageRow(
-                        title: p.title,
-                        trailing: p.relativePath,
-                        ulid: p.ulid,
-                        mono: true,
-                        tokens: tokens,
-                      );
-                    },
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      pages: untagged,
+      headingFull: 'UNTAGGED PAGES',
+      headingEmpty: 'EVERY PAGE IS TAGGED',
+      subtitleFull:
+          'Pages with no `tags:` frontmatter. Sorted by last-edited (most recent first).',
+      subtitleEmpty:
+          'Every indexed page has at least one tag in its frontmatter.',
     );
   }
 
@@ -1206,6 +1155,30 @@ views:
         if (!linked.contains(p.ulid)) p,
     ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
     if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: orphans,
+      headingFull: 'ORPHAN PAGES',
+      headingEmpty: 'NO ORPHAN PAGES',
+      subtitleFull:
+          'Pages with no incoming or outgoing wikilinks. Sorted by last-edited (most recent first).',
+      subtitleEmpty:
+          'Every indexed page has at least one wikilink coming in or going out. Nice.',
+    );
+  }
+
+  /// Shared dialog for vault-hygiene lists (orphans, untagged, …). All
+  /// callers boil down to the same template: heading + subtitle, then a
+  /// scrollable list of clickable `_StatsPageRow`s that navigate to the
+  /// page on tap.
+  Future<void> _showHygieneDialog({
+    required BuildContext context,
+    required List<dynamic> pages,
+    required String headingFull,
+    required String headingEmpty,
+    required String subtitleFull,
+    required String subtitleEmpty,
+  }) async {
     final tokens = QuillTokens.of(context);
     await showDialog<void>(
       context: context,
@@ -1221,9 +1194,9 @@ views:
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  orphans.isEmpty
-                      ? 'NO ORPHAN PAGES'
-                      : 'ORPHAN PAGES · ${orphans.length}',
+                  pages.isEmpty
+                      ? headingEmpty
+                      : '$headingFull · ${pages.length}',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -1233,17 +1206,15 @@ views:
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  orphans.isEmpty
-                      ? 'Every indexed page has at least one wikilink coming in or going out. Nice.'
-                      : 'Pages with no incoming or outgoing wikilinks. Sorted by last-edited (most recent first).',
+                  pages.isEmpty ? subtitleEmpty : subtitleFull,
                   style: TextStyle(fontSize: 12, color: tokens.text3),
                 ),
                 const SizedBox(height: 12),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: orphans.length,
+                    itemCount: pages.length,
                     itemBuilder: (_, i) {
-                      final p = orphans[i];
+                      final p = pages[i];
                       return _StatsPageRow(
                         title: p.title,
                         trailing: p.relativePath,
