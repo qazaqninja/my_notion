@@ -157,6 +157,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
               _openQuickCapture(context),
           const SingleActivator(LogicalKeyboardKey.period, control: true): () =>
               _openQuickCapture(context),
+          const SingleActivator(LogicalKeyboardKey.keyO,
+              meta: true, shift: true): () => _openRandomPage(context),
+          const SingleActivator(LogicalKeyboardKey.keyO,
+              control: true, shift: true): () => _openRandomPage(context),
         },
         child: Focus(
           focusNode: _rootFocus,
@@ -296,6 +300,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘[', 'Back'),
                 _kbRow(tokens, '⌘,', 'Settings'),
                 _kbRow(tokens, '⌘.', 'Quick capture → Inbox/Quick capture.md'),
+                _kbRow(tokens, '⌘⇧O', 'Open a random page'),
                 _kbRow(tokens, '⌘H', 'Home'),
                 _kbRow(tokens, '?', 'This shortcut list'),
                 const SizedBox(height: 10),
