@@ -66,42 +66,50 @@ class CsvImporter {
     await File(p.join(folder.path, '.database.yaml'))
         .writeAsString(yamlBuf.toString());
 
-    // Write one .md per row.
+    // Write one .md per row. A single bad row (encoding error, disk
+    // write failure, etc.) is logged and skipped rather than aborting
+    // the whole import — same robustness contract M712/M713 added to
+    // the indexer scans.
     int written = 0;
     final usedNames = <String>{};
     for (final row in dataRows) {
       if (row.every((c) => c.trim().isEmpty)) continue;
-      final title = (titleIdx < row.length ? row[titleIdx] : '').trim();
-      final pageUlid = ulids.generate();
-      final safeName = _uniqueFilename(
-        usedNames,
-        title.isEmpty ? pageUlid : title,
-      );
-      final entries = <FrontmatterEntry>[
-        FrontmatterEntry(
-          key: 'id',
-          rawScalar: pageUlid,
-          type: FrontmatterType.ulid,
-          value: pageUlid,
-        ),
-        if (title.isNotEmpty)
+      try {
+        final title = (titleIdx < row.length ? row[titleIdx] : '').trim();
+        final pageUlid = ulids.generate();
+        final safeName = _uniqueFilename(
+          usedNames,
+          title.isEmpty ? pageUlid : title,
+        );
+        final entries = <FrontmatterEntry>[
           FrontmatterEntry(
-            key: 'title',
-            rawScalar: yamlSafeScalar(title),
-            type: FrontmatterType.text,
-            value: title,
+            key: 'id',
+            rawScalar: pageUlid,
+            type: FrontmatterType.ulid,
+            value: pageUlid,
           ),
-        for (int i = 0; i < columns.length; i++)
-          if (i < row.length && row[i].trim().isNotEmpty && i != titleIdx)
-            _entryFor(columns[i], row[i]),
-      ];
-      final page = ParsedMarkdown(
-        frontmatter: Frontmatter(entries: entries),
-        body: '',
-      );
-      final raw = FrontmatterParser.serialise(page);
-      await File(p.join(folder.path, '$safeName.md')).writeAsString(raw);
-      written++;
+          if (title.isNotEmpty)
+            FrontmatterEntry(
+              key: 'title',
+              rawScalar: yamlSafeScalar(title),
+              type: FrontmatterType.text,
+              value: title,
+            ),
+          for (int i = 0; i < columns.length; i++)
+            if (i < row.length && row[i].trim().isNotEmpty && i != titleIdx)
+              _entryFor(columns[i], row[i]),
+        ];
+        final page = ParsedMarkdown(
+          frontmatter: Frontmatter(entries: entries),
+          body: '',
+        );
+        final raw = FrontmatterParser.serialise(page);
+        await File(p.join(folder.path, '$safeName.md')).writeAsString(raw);
+        written++;
+      } catch (e, st) {
+        // ignore: avoid_print
+        print('csv_importer: skipping row — $e\n$st');
+      }
     }
 
     return CsvImportResult(
