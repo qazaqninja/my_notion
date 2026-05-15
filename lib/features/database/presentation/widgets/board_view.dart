@@ -229,11 +229,15 @@ class _CardState extends State<_Card> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                displayTitle(row),
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.text, height: 1.35),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              Tooltip(
+                message: displayTitle(row),
+                waitDuration: const Duration(milliseconds: 600),
+                child: Text(
+                  displayTitle(row),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.text, height: 1.35),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               const SizedBox(height: 6),
               Row(children: [

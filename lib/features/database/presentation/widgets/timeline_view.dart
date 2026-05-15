@@ -364,11 +364,15 @@ class _RowState extends State<_Row> {
                   ),
                   const SizedBox(width: 7),
                   Expanded(
-                    child: Text(
-                      displayTitle(row),
-                      style: TextStyle(fontSize: 13, color: tokens.text),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                    child: Tooltip(
+                      message: displayTitle(row),
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        displayTitle(row),
+                        style: TextStyle(fontSize: 13, color: tokens.text),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                   ),
                   if (depCount > 0)
@@ -411,22 +415,27 @@ class _RowState extends State<_Row> {
                       top: 8,
                       width: TimelineView._weekW - 12,
                       height: 22,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        alignment: Alignment.centerLeft,
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: const BorderRadius.all(Radius.circular(3)),
-                        ),
-                        child: Text(
-                          displayTitle(row),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
+                      child: Tooltip(
+                        message:
+                            '${displayTitle(row)}\n${date.toIso8601String().split("T").first}',
+                        waitDuration: const Duration(milliseconds: 500),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          alignment: Alignment.centerLeft,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: const BorderRadius.all(Radius.circular(3)),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                          child: Text(
+                            displayTitle(row),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
                         ),
                       ),
                     ),
