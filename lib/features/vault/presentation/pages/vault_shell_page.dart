@@ -1045,6 +1045,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
         }
         if (!context.mounted) return;
         await _createDatabase(context, Directory(vaultPath));
+      case 'Show keyboard shortcuts':
+        if (!context.mounted) return;
+        await _showShortcuts(context);
       case 'Install built-in templates':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
