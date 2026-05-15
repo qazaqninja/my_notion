@@ -492,16 +492,20 @@ class _SubgroupBand extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       alignment: Alignment.centerLeft,
-      child: Text(
-        label,
-        style: mono(
-          fontSize: 11,
-          color: tokens.text2,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
+      child: Tooltip(
+        message: 'Sub-group: $label',
+        waitDuration: const Duration(milliseconds: 600),
+        child: Text(
+          label,
+          style: mono(
+            fontSize: 11,
+            color: tokens.text2,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
         ),
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
       ),
     );
   }
