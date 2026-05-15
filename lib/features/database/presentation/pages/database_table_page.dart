@@ -231,11 +231,14 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
   }
 
   Future<void> _trashRow(DatabasePageRow row) async {
+    final now = DateTime.now();
+    final bucket =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}';
     final confirmed = await showQuillConfirm(
       context,
       title: 'Move row to trash?',
       sub:
-          'The .md file moves to .trash/<YYYY-MM>/. You can restore it from the Trash dialog later.',
+          'The .md file moves to .trash/$bucket/. You can restore it from the Trash dialog later.',
       icon: 'trash',
       confirmLabel: 'Move to trash',
       danger: true,

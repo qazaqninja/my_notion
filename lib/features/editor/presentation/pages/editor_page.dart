@@ -448,11 +448,14 @@ class _EditorBodyState extends State<_EditorBody> {
               },
             ));
       case 'trash':
+        final now = DateTime.now();
+        final bucket =
+            '${now.year}-${now.month.toString().padLeft(2, '0')}';
         final confirmed = await showQuillConfirm(
           context,
           title: 'Move to trash?',
           sub:
-              'The .md file moves to .trash/<YYYY-MM>/${loaded.page.relativePath}. '
+              'The .md file moves to .trash/$bucket/${loaded.page.relativePath}. '
               'You can restore it from the Trash dialog later.',
           icon: 'trash',
           confirmLabel: 'Move to trash',
