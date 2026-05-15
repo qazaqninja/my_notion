@@ -284,6 +284,9 @@ class TreeNodeWidget extends StatelessWidget {
     } else if (selected == 'pin') {
       if (fl.ulid.isEmpty) return;
       context.read<VaultBloc>().add(ToggleFavorite(fl.ulid));
+      context.toastSuccess(
+          pinned ? 'Unpinned from favorites' : 'Pinned to favorites',
+          sub: fl.name);
     } else if (selected == 'trash') {
       if (fl.ulid.isEmpty) return;
       final now = DateTime.now();
