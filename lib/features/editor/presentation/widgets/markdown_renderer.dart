@@ -4056,6 +4056,32 @@ List<InlineSpan> _buildSpans(
         }
       }
     }
+    // Footnote ref: [^id] — rendered as a tiny superscript pill so
+    // the reader can spot it without overpowering the line. No scroll-
+    // to-definition wiring yet; definitions render as plain `[^id]:`
+    // paragraphs at the bottom of the body.
+    if (c == '[' && i + 1 < n && text[i + 1] == '^') {
+      final close = text.indexOf(']', i + 2);
+      if (close != -1 && close > i + 2) {
+        final id = text.substring(i + 2, close);
+        if (id.isNotEmpty &&
+            !id.contains('\n') &&
+            !id.contains(' ')) {
+          flushPlain(i);
+          out.add(TextSpan(
+            text: '[$id]',
+            style: TextStyle(
+              fontSize: 10,
+              fontFeatures: const [FontFeature.superscripts()],
+              color: const Color(0xFF4A90D9),
+            ),
+          ));
+          i = close + 1;
+          committed = i;
+          continue;
+        }
+      }
+    }
     // Highlight: ==text== (mark)
     if (c == '=' && i + 1 < n && text[i + 1] == '=') {
       final end = text.indexOf('==', i + 2);

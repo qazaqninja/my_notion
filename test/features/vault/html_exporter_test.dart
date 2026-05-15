@@ -81,6 +81,11 @@ void main() {
       expect(html, contains('mc<sup>2</sup>'));
     });
 
+    test('footnote ref [^id] → <sup class="footnote-ref">', () {
+      final html = markdownToHtml('See [^1] for details.');
+      expect(html, contains('<sup class="footnote-ref">[1]</sup>'));
+    });
+
     test('strikethrough wins over subscript for the same `~~`', () {
       final html = markdownToHtml('~~struck~~ vs ~sub~');
       expect(html, contains('<del>struck</del>'));

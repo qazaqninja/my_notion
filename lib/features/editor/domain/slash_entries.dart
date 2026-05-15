@@ -275,6 +275,14 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['highlight', 'mark', 'yellow', 'emphasis'],
   ),
   SlashEntry(
+    icon: 'note',
+    label: 'Footnote ref',
+    hint: '[^1]',
+    snippet: '[^1]',
+    cursorOffset: 2,
+    keywords: ['footnote', 'ref', 'reference', 'citation', 'cite'],
+  ),
+  SlashEntry(
     icon: 'edit',
     label: 'Subscript',
     hint: '~x~',

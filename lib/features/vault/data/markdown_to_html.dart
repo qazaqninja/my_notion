@@ -280,6 +280,11 @@ String _inline(String s) {
     RegExp(r'\^([^\^\n]+)\^'),
     (m) => '<sup>${m.group(1)}</sup>',
   );
+  // Footnote ref [^id] → small superscript link (anchorless for now).
+  s = s.replaceAllMapped(
+    RegExp(r'\[\^([^\]\s]+)\]'),
+    (m) => '<sup class="footnote-ref">[${m.group(1)}]</sup>',
+  );
   // Highlight  ==text==
   s = s.replaceAllMapped(
     RegExp(r'==([^=\n]+)=='),
