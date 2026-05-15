@@ -282,7 +282,10 @@ class _SettingsPageState extends State<SettingsPage> {
         dest: Directory(dest),
       );
       messenger.showSnackBar(
-        SnackBar(content: Text('Exported $n files to $dest'), duration: const Duration(seconds: 4)),
+        SnackBar(
+            content: Text(
+                'Exported $n ${n == 1 ? 'file' : 'files'} to $dest'),
+            duration: const Duration(seconds: 4)),
       );
     } catch (e) {
       messenger.showSnackBar(
@@ -645,7 +648,8 @@ class _SettingsPageState extends State<SettingsPage> {
         dest: Directory(dest),
       );
       messenger.showSnackBar(SnackBar(
-        content: Text('Exported $n HTML files to $dest'),
+        content: Text(
+            'Exported $n HTML ${n == 1 ? 'file' : 'files'} to $dest'),
         duration: const Duration(seconds: 4),
       ));
     } catch (e) {
@@ -671,7 +675,8 @@ class _SettingsPageState extends State<SettingsPage> {
         dest: File(picked),
       );
       messenger.showSnackBar(SnackBar(
-        content: Text('Exported $n pages to $picked'),
+        content: Text(
+            'Exported $n ${n == 1 ? 'page' : 'pages'} to $picked'),
         duration: const Duration(seconds: 4),
       ));
     } catch (e) {

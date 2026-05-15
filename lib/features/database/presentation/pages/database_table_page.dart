@@ -689,7 +689,9 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         rows: filtered,
       );
       messenger?.showSnackBar(
-        SnackBar(content: Text('Exported $n rows → $picked')),
+        SnackBar(
+            content:
+                Text('Exported $n ${n == 1 ? 'row' : 'rows'} → $picked')),
       );
     } catch (e) {
       messenger?.showSnackBar(SnackBar(content: Text('Export failed: $e')));

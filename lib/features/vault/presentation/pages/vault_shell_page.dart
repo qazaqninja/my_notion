@@ -613,7 +613,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
           );
           messenger?.showSnackBar(
             SnackBar(
-              content: Text('Exported $n files to $dest'),
+              content: Text(
+                  'Exported $n ${n == 1 ? 'file' : 'files'} to $dest'),
               duration: const Duration(seconds: 4),
             ),
           );
@@ -704,7 +705,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
             dest: File(pickedPath),
           );
           messenger?.showSnackBar(SnackBar(
-            content: Text('Exported $n pages → $pickedPath'),
+            content: Text(
+                'Exported $n ${n == 1 ? 'page' : 'pages'} → $pickedPath'),
             duration: const Duration(seconds: 4),
           ));
         } catch (e) {
@@ -725,7 +727,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
             dest: Directory(dest),
           );
           messenger?.showSnackBar(SnackBar(
-            content: Text('Exported $n pages → $dest'),
+            content: Text(
+                'Exported $n ${n == 1 ? 'page' : 'pages'} → $dest'),
             duration: const Duration(seconds: 4),
           ));
         } catch (e) {
