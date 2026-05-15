@@ -3303,21 +3303,28 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
                           onTap: _attachAndComment,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: tokens.surface,
-                              border: Border.all(
-                                  color: tokens.divider2, width: 0.5),
-                              borderRadius: const BorderRadius.all(
-                                  Radius.circular(4)),
-                            ),
-                            child: Icon(
-                              Icons.mode_comment_outlined,
-                              size: 12,
-                              color: widget.block.blockId != null
-                                  ? tokens.accent
-                                  : tokens.text3,
+                          child: Tooltip(
+                            message: widget.block.blockId != null
+                                ? 'View / add comments on this block'
+                                : 'Add comment on this block',
+                            waitDuration:
+                                const Duration(milliseconds: 500),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: tokens.surface,
+                                border: Border.all(
+                                    color: tokens.divider2, width: 0.5),
+                                borderRadius: const BorderRadius.all(
+                                    Radius.circular(4)),
+                              ),
+                              child: Icon(
+                                Icons.mode_comment_outlined,
+                                size: 12,
+                                color: widget.block.blockId != null
+                                    ? tokens.accent
+                                    : tokens.text3,
+                              ),
                             ),
                           ),
                         ),
