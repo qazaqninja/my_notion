@@ -69,6 +69,21 @@ const Color kCalloutDanger = Color(0xFFCB5A4F);
 /// source of truth across light and dark themes.
 const Color kToastWarn = Color(0xFFB58A3A);
 
+/// Off-state rail fill for the settings-page toggle switch. The
+/// "on" state uses `tokens.accent`; the off state needs a muted
+/// warm gray that reads as inactive without disappearing on the
+/// page background. Lives here rather than QuillTokens since it's
+/// a one-widget concern.
+const Color kToggleRailOffDark = Color(0xFF3A3833);
+const Color kToggleRailOffLight = Color(0xFFD5D1C8);
+
+/// Sage-green avatar fill for the settings-page Users tab's role
+/// chip — a warm muted hue that contrasts well with white text
+/// regardless of theme. Distinct from kCalloutTip (`0xFF55A06A`)
+/// and kStatusDotGreen (`0xFF5A8F6E`) which are saturated callout /
+/// status accents.
+const Color kSettingsUserAvatarBg = Color(0xFF8C9F8B);
+
 /// Selected-tile fill for the segmented-control widget. Slightly
 /// warmer than `tokens.surface2` and intentionally not equal to any
 /// of the M3 surface tints — the design uses a beige/warm-gray that

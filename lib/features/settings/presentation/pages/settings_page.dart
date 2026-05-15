@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
@@ -16,7 +17,6 @@ import '../../../../shared/widgets/person_chip.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../../shared/theme/accent.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
-import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../vault/data/exporter.dart';
@@ -1302,7 +1302,9 @@ class _Toggle extends StatelessWidget {
       width: 34,
       height: 20,
       decoration: BoxDecoration(
-        color: on ? tokens.accent : (tokens.isDark ? const Color(0xFF3A3833) : const Color(0xFFD5D1C8)),
+        color: on
+            ? tokens.accent
+            : (tokens.isDark ? kToggleRailOffDark : kToggleRailOffLight),
         borderRadius: const BorderRadius.all(Radius.circular(10)),
       ),
       child: Stack(
@@ -1434,14 +1436,17 @@ class _MemberRow extends StatelessWidget {
             width: 20,
             height: 20,
             alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: const Color(0xFF8C9F8B),
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
+            decoration: const BoxDecoration(
+              color: kSettingsUserAvatarBg,
+              borderRadius: BorderRadius.all(Radius.circular(10)),
             ),
             child: Text(
               name.substring(0, 1),
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.w600, fontSize: 11),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
             ),
           ),
           const SizedBox(width: 9),
