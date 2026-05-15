@@ -541,7 +541,13 @@ class _SettingsPageState extends State<SettingsPage> {
       ...state.workspace.users,
       WorkspaceUser(name: name),
     ]);
-    await next.save(Directory(state.rootPath));
+    try {
+      await next.save(Directory(state.rootPath));
+    } catch (e) {
+      if (!mounted) return;
+      context.toastError('Could not save user', sub: '$e');
+      return;
+    }
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
     context.toastSuccess('Added user', sub: name);
@@ -551,7 +557,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final next = state.workspace.copyWith(
       users: [for (final u in state.workspace.users) if (u.name != name) u],
     );
-    await next.save(Directory(state.rootPath));
+    try {
+      await next.save(Directory(state.rootPath));
+    } catch (e) {
+      if (!mounted) return;
+      context.toastError('Could not save user list', sub: '$e');
+      return;
+    }
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
     context.toastSuccess('Removed user', sub: name);
@@ -564,7 +576,13 @@ class _SettingsPageState extends State<SettingsPage> {
           u.copyWith(isDefault: u.name == name),
       ],
     );
-    await next.save(Directory(state.rootPath));
+    try {
+      await next.save(Directory(state.rootPath));
+    } catch (e) {
+      if (!mounted) return;
+      context.toastError('Could not save default user', sub: '$e');
+      return;
+    }
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
     context.toastSuccess('Default user: $name');
