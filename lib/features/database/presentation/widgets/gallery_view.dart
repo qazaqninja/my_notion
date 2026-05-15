@@ -369,7 +369,8 @@ class _CardState extends State<_Card> {
                           maxLines: 1,
                         ),
                       ),
-                      if (health.isNotEmpty) StatusDot(color: _dotColor(health)),
+                      if (health.isNotEmpty)
+                        StatusDot(color: _dotColor(health), tooltip: health),
                     ]),
                     const SizedBox(height: 8),
                     ..._cardBodyRows(tokens),

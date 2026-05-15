@@ -221,7 +221,7 @@ class _RowState extends State<_Row> {
                 ),
               if (health.isNotEmpty) ...[
                 const SizedBox(width: 10),
-                StatusDot(color: _dotColor(health)),
+                StatusDot(color: _dotColor(health), tooltip: health),
               ],
             ],
           ),
