@@ -641,6 +641,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show broken wikilinks':
         if (!context.mounted) return;
         await _showBrokenLinksDialog(context);
+      case 'Show stale pages (90+ days)':
+        if (!context.mounted) return;
+        await _showStaleDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
@@ -1112,6 +1115,28 @@ views:
         content: Text('Created database: $safe'),
         duration: const Duration(seconds: 4),
       ),
+    );
+  }
+
+  Future<void> _showStaleDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    final cutoff =
+        DateTime.now().subtract(const Duration(days: 90)).millisecondsSinceEpoch;
+    final stale = [
+      for (final p in pages)
+        if (p.mtimeMs < cutoff) p,
+    ]..sort((a, b) => a.mtimeMs.compareTo(b.mtimeMs));
+    if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: stale,
+      headingFull: 'STALE PAGES',
+      headingEmpty: 'NO STALE PAGES',
+      subtitleFull:
+          'Pages not edited in 90+ days. Oldest first — candidates for archive or refresh.',
+      subtitleEmpty:
+          'Every indexed page has been edited within the last 90 days.',
     );
   }
 

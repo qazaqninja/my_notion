@@ -198,9 +198,13 @@ class _StatsStripState extends State<_StatsStrip> {
       linked.add(r.fromUlid);
       linked.add(r.toUlid);
     }
+    final staleCutoff =
+        DateTime.now().subtract(const Duration(days: 90)).millisecondsSinceEpoch;
     int orphans = 0;
+    int stale = 0;
     for (final p in pages) {
       if (!linked.contains(p.ulid)) orphans++;
+      if (p.mtimeMs < staleCutoff) stale++;
       if (p.frontmatterJson.isEmpty) continue;
       try {
         final m = jsonDecode(p.frontmatterJson);
@@ -217,6 +221,7 @@ class _StatsStripState extends State<_StatsStrip> {
       databases: dbs.length,
       tags: tagSet.length,
       orphans: orphans,
+      stale: stale,
     );
   }
 
@@ -242,6 +247,7 @@ class _StatsStripState extends State<_StatsStrip> {
           ('orphans', c.orphans,
               c.orphans == 0 ? null : const Color(0xFFCB5A4F),
               'show orphan'),
+          ('stale', c.stale, null, 'show stale'),
         ];
         return Row(
           children: [
@@ -275,11 +281,13 @@ class _StripCounts {
     required this.databases,
     required this.tags,
     required this.orphans,
+    required this.stale,
   });
   final int pages;
   final int databases;
   final int tags;
   final int orphans;
+  final int stale;
 }
 
 class _Pinboard extends StatefulWidget {
