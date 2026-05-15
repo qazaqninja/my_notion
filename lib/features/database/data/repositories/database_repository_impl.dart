@@ -372,8 +372,12 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         ];
         return ('[${parts.map(yamlFlowItem).join(', ')}]', parts);
       case ColumnType.date:
-        // YYYY-MM-DD never needs escape.
-        return (s, s);
+        // The UI date picker emits YYYY-MM-DD which is always safe,
+        // but a CSV / external import could route non-date text
+        // ('next week', 'TBD: q3') through this branch. Route through
+        // yamlSafeScalar — ISO dates are short alphanumerics so the
+        // escape is a no-op for them.
+        return (yamlSafeScalar(s), s);
       case ColumnType.text:
       case ColumnType.select:
       case ColumnType.relation:
