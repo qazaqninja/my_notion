@@ -873,7 +873,7 @@ class _TypeDropdown extends StatelessWidget {
   final fe.FrontmatterType value;
   final void Function(fe.FrontmatterType) onChanged;
 
-  static const _editableTypes = [
+  static const List<fe.FrontmatterType> _editableTypes = [
     fe.FrontmatterType.text,
     fe.FrontmatterType.number,
     fe.FrontmatterType.date,

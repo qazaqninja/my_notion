@@ -22,7 +22,7 @@ class VaultFsDatasource {
   final UlidGenerator ulids;
   final FileSystem fs;
 
-  static const _ignoredDirs = kIgnoredVaultDirs;
+  static const Set<String> _ignoredDirs = kIgnoredVaultDirs;
   static const _markdownExt = '.md';
 
   /// Walk [root] recursively, emitting one [Page] per markdown file.

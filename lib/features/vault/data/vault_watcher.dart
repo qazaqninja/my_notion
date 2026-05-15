@@ -24,7 +24,7 @@ class VaultWatcher {
   Directory? _root;
   final _controller = StreamController<void>.broadcast();
 
-  static const _ignoredDirs = kIgnoredVaultDirs;
+  static const Set<String> _ignoredDirs = kIgnoredVaultDirs;
 
   /// Stream of "something changed under root" pings. One ping may
   /// represent many underlying events that arrived within [debounce].

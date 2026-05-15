@@ -36,7 +36,7 @@ class VaultExporter {
     return copied;
   }
 
-  static const _ignoredDirs = kIgnoredVaultDirs;
+  static const Set<String> _ignoredDirs = kIgnoredVaultDirs;
 
   Stream<FileSystemEntity> _walk(Directory dir) async* {
     for (final entity in dir.listSync()) {
