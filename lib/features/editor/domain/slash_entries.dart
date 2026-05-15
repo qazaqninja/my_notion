@@ -220,6 +220,8 @@ enum SlashAction {
   countLines,
   /// Multiply every numeric line into a single product.
   productNumericLines,
+  /// Tally distinct non-blank lines and emit `count× line` rows.
+  frequencyLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1027,6 +1029,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '2 / 3 / 4 → 24',
     action: SlashAction.productNumericLines,
     keywords: ['product', 'multiply', 'math', 'numeric'],
+  ),
+  SlashEntry(
+    icon: 'list',
+    label: 'Frequency tally',
+    hint: 'a/a/b → 2× a / 1× b',
+    action: SlashAction.frequencyLines,
+    keywords: ['frequency', 'tally', 'count', 'histogram', 'occurrence'],
   ),
   SlashEntry(
     icon: 'hash',

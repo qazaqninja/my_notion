@@ -2394,6 +2394,37 @@ void main() {
     });
   });
 
+  group('frequencyLinesIn', () {
+    test('counts and emits "Nx line" sorted by descending count', () {
+      const text = 'apple\nbanana\napple\ncherry\napple\nbanana\n';
+      final r = frequencyLinesIn(text, 0, text.length);
+      expect(r.text, '3× apple\n2× banana\n1× cherry\n');
+    });
+
+    test('alphabetic tie-break is case-insensitive ascending', () {
+      const text = 'zebra\napple\nzebra\napple\n';
+      final r = frequencyLinesIn(text, 0, text.length);
+      // Both at count 2; tie → apple before zebra.
+      expect(r.text, '2× apple\n2× zebra\n');
+    });
+
+    test('skips blank lines', () {
+      const text = 'a\n\nb\n\na\n';
+      final r = frequencyLinesIn(text, 0, text.length);
+      expect(r.text, '2× a\n1× b\n');
+    });
+
+    test('no non-blank lines is a no-op', () {
+      const text = '\n\n';
+      expect(frequencyLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('single occurrence still gets the count prefix', () {
+      const text = 'only one\n';
+      expect(frequencyLinesIn(text, 0, text.length).text, '1× only one\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

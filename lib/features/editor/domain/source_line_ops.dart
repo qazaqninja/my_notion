@@ -844,6 +844,39 @@ SortLinesResult countLinesIn(String text, int start, int end) =>
       return [n.toString()];
     });
 
+/// Tally every distinct non-blank line in the selection and emit
+/// `count× line` rows sorted by descending count. Ties break by
+/// the original line text in case-insensitive ascending order so
+/// the output is deterministic. Useful for quick log-analysis
+/// scratch ("how many of each kind in this dump?").
+///
+///   apple
+///   banana
+///   apple
+///   cherry
+///
+/// becomes:
+///
+///   2× apple
+///   1× banana
+///   1× cherry
+SortLinesResult frequencyLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final counts = <String, int>{};
+      for (final l in lines) {
+        if (l.trim().isEmpty) continue;
+        counts[l] = (counts[l] ?? 0) + 1;
+      }
+      if (counts.isEmpty) return lines;
+      final entries = counts.entries.toList()
+        ..sort((a, b) {
+          final byCount = b.value.compareTo(a.value);
+          if (byCount != 0) return byCount;
+          return a.key.toLowerCase().compareTo(b.key.toLowerCase());
+        });
+      return [for (final e in entries) '${e.value}× ${e.key}'];
+    });
+
 /// Multiply every selected numeric line into a single product.
 /// Non-numeric lines are skipped. Renders integer-form when every
 /// input string was an integer (no `.`) AND the product has no

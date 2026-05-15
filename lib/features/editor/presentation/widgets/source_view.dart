@@ -1138,6 +1138,8 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, productNumericLinesIn,
         );
+      case SlashAction.frequencyLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, frequencyLinesIn);
     }
   }
 
