@@ -100,6 +100,10 @@ enum SlashAction {
   reverseCharactersInLine,
   /// Apply the ROT13 cipher per line (its own inverse).
   rot13,
+  /// HTML-escape the 5 standard entities on every selected line.
+  htmlEscape,
+  /// HTML-unescape the 5 standard entities on every selected line.
+  htmlUnescape,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -550,6 +554,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a ↔ n, N ↔ A',
     action: SlashAction.rot13,
     keywords: ['rot13', 'cipher', 'caesar', 'encode', 'decode', 'fun'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'HTML escape',
+    hint: '< → &lt;',
+    action: SlashAction.htmlEscape,
+    keywords: ['html', 'escape', 'entity', 'amp', 'encode'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'HTML unescape',
+    hint: '&lt; → <',
+    action: SlashAction.htmlUnescape,
+    keywords: ['html', 'unescape', 'entity', 'decode'],
   ),
   SlashEntry(
     icon: 'edit',

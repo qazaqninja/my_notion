@@ -953,6 +953,10 @@ class _SourceViewState extends State<SourceView> {
         );
       case SlashAction.rot13:
         _applyLinesTransformAfterSlash(stripStart, caret, rot13LinesIn);
+      case SlashAction.htmlEscape:
+        _applyLinesTransformAfterSlash(stripStart, caret, htmlEscapeLinesIn);
+      case SlashAction.htmlUnescape:
+        _applyLinesTransformAfterSlash(stripStart, caret, htmlUnescapeLinesIn);
     }
   }
 

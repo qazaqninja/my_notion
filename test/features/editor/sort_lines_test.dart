@@ -965,6 +965,44 @@ void main() {
     });
   });
 
+  group('htmlEscapeLinesIn / htmlUnescapeLinesIn', () {
+    test('escapes the five standard entities', () {
+      const text = '<b>"a & b"</b>\n';
+      final r = htmlEscapeLinesIn(text, 0, text.length);
+      expect(r.text, '&lt;b&gt;&quot;a &amp; b&quot;&lt;/b&gt;\n');
+    });
+
+    test("escapes apostrophes as numeric &#39;", () {
+      const text = "don't\n";
+      final r = htmlEscapeLinesIn(text, 0, text.length);
+      expect(r.text, 'don&#39;t\n');
+    });
+
+    test('& must escape before the others', () {
+      // Naive ordering would emit "&amp;lt;" — verify we don't.
+      const text = '<\n';
+      expect(htmlEscapeLinesIn(text, 0, text.length).text, '&lt;\n');
+    });
+
+    test('round-trip on the five-entity sample is identity', () {
+      const text = '<b>"a & b" don\'t</b>\n';
+      final enc = htmlEscapeLinesIn(text, 0, text.length).text;
+      final dec = htmlUnescapeLinesIn(enc, 0, enc.length).text;
+      expect(dec, text);
+    });
+
+    test('unescape recognises &apos; for compatibility', () {
+      const text = 'don&apos;t\n';
+      expect(htmlUnescapeLinesIn(text, 0, text.length).text, "don't\n");
+    });
+
+    test('no-op on lines without entities', () {
+      const text = 'plain text\n';
+      expect(htmlEscapeLinesIn(text, 0, text.length).text, text);
+      expect(htmlUnescapeLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

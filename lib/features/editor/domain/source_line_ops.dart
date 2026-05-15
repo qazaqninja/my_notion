@@ -610,6 +610,53 @@ SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2})
   );
 }
 
+/// Escape HTML-significant characters on every selected line:
+///
+///   `&`   → `&amp;`   (MUST come first)
+///   `<`   → `&lt;`
+///   `>`   → `&gt;`
+///   `"`   → `&quot;`
+///   `'`   → `&#39;`
+///
+/// Useful when copying source code or HTML-templating into prose.
+SortLinesResult htmlEscapeLinesIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text,
+      start,
+      end,
+      (lines) => [
+        for (final l in lines)
+          l
+              .replaceAll('&', '&amp;')
+              .replaceAll('<', '&lt;')
+              .replaceAll('>', '&gt;')
+              .replaceAll('"', '&quot;')
+              .replaceAll("'", '&#39;'),
+      ],
+    );
+
+/// Inverse of [htmlEscapeLinesIn]: replace the five named/numeric
+/// entities back to their original characters. `&amp;` must come
+/// LAST so we don't accidentally re-decode `&amp;lt;`-style nested
+/// escapes prematurely. The decode pass also handles `&#39;` (the
+/// numeric form) and the equivalent `&apos;` for compatibility.
+SortLinesResult htmlUnescapeLinesIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text,
+      start,
+      end,
+      (lines) => [
+        for (final l in lines)
+          l
+              .replaceAll('&lt;', '<')
+              .replaceAll('&gt;', '>')
+              .replaceAll('&quot;', '"')
+              .replaceAll('&#39;', "'")
+              .replaceAll('&apos;', "'")
+              .replaceAll('&amp;', '&'),
+      ],
+    );
+
 /// Reverse the characters of each selected line in place. Different
 /// from [reverseLinesIn], which reverses the **order** of lines.
 /// Useful for the classic "reveal hidden text" gag and for testing
