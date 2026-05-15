@@ -126,7 +126,9 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    state is VaultLoaded ? '$pageCount pages indexed' : 'No vault',
+                    state is VaultLoaded
+                        ? '$pageCount ${pageCount == 1 ? 'page' : 'pages'} indexed'
+                        : 'No vault',
                     style: TextStyle(fontSize: 11.5, color: tokens.text3),
                     overflow: TextOverflow.ellipsis,
                   ),

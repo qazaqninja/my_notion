@@ -291,7 +291,10 @@ class _Panel extends StatelessWidget {
                 const SizedBox(width: 12),
                 _FooterKbd(tokens: tokens, label: 'close', children: const [Kbd('esc')]),
                 const Spacer(),
-                Text('${state.totalResults} results', style: mono(fontSize: 11, color: tokens.text3)),
+                Text(
+                  '${state.totalResults} ${state.totalResults == 1 ? 'result' : 'results'}',
+                  style: mono(fontSize: 11, color: tokens.text3),
+                ),
               ],
             ),
           ),
