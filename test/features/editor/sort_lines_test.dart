@@ -579,6 +579,57 @@ void main() {
     });
   });
 
+  group('stripLeadingWhitespaceIn', () {
+    test('strips leading spaces on every line', () {
+      const text = '  one\n    two\n      three\n';
+      final r = stripLeadingWhitespaceIn(text, 0, text.length);
+      expect(r.text, 'one\ntwo\nthree\n');
+    });
+
+    test('strips leading tabs too', () {
+      const text = '\tone\n\t\ttwo\n';
+      final r = stripLeadingWhitespaceIn(text, 0, text.length);
+      expect(r.text, 'one\ntwo\n');
+    });
+
+    test('leaves trailing whitespace alone', () {
+      const text = '  one  \n';
+      final r = stripLeadingWhitespaceIn(text, 0, text.length);
+      expect(r.text, 'one  \n');
+    });
+
+    test('no-op when nothing leads', () {
+      const text = 'clean\nlines\n';
+      final r = stripLeadingWhitespaceIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+  });
+
+  group('tabsToSpacesIn', () {
+    test('replaces tabs with 2 spaces by default', () {
+      const text = '\tone\n\t\ttwo\n';
+      final r = tabsToSpacesIn(text, 0, text.length);
+      expect(r.text, '  one\n    two\n');
+    });
+
+    test('configurable width', () {
+      const text = '\tone\n';
+      expect(tabsToSpacesIn(text, 0, text.length, width: 4).text, '    one\n');
+    });
+
+    test('replaces tabs anywhere on the line, not just leading', () {
+      const text = 'foo\tbar\tbaz\n';
+      final r = tabsToSpacesIn(text, 0, text.length);
+      expect(r.text, 'foo  bar  baz\n');
+    });
+
+    test('no-op when there are no tabs', () {
+      const text = 'no tabs here\n';
+      final r = tabsToSpacesIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

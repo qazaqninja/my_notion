@@ -63,6 +63,11 @@ enum SlashAction {
   /// Sentence-case every line in the selection. Lowercases the whole
   /// line then capitalises the first letter of each sentence.
   sentenceCaseSelectedLines,
+  /// Strip leading whitespace (spaces / tabs) from every line in the
+  /// selection. The trim-trailing-whitespace mirror.
+  stripLeadingWhitespace,
+  /// Replace every tab on every selected line with 2 spaces.
+  tabsToSpaces,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -408,6 +413,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'cleanup',
     action: SlashAction.trimTrailingWhitespace,
     keywords: ['trim', 'whitespace', 'cleanup', 'strip', 'tabs'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Strip leading whitespace',
+    hint: 'left-trim',
+    action: SlashAction.stripLeadingWhitespace,
+    keywords: ['strip', 'leading', 'whitespace', 'indent', 'left', 'trim'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Tabs → spaces',
+    hint: '\\t → "  "',
+    action: SlashAction.tabsToSpaces,
+    keywords: ['tab', 'spaces', 'expand', 'convert', 'indent'],
   ),
   SlashEntry(
     icon: 'edit',

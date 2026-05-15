@@ -584,6 +584,31 @@ SortLinesResult trimTrailingWhitespaceIn(String text, int start, int end) =>
       (lines) => [for (final l in lines) l.replaceFirst(RegExp(r'[ \t]+$'), '')],
     );
 
+/// Strip leading whitespace (spaces, tabs) from every line in the
+/// selected block. The trim-trailing's mirror — common when pasting
+/// pre-indented code into the editor and wanting a clean left margin.
+SortLinesResult stripLeadingWhitespaceIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text,
+      start,
+      end,
+      (lines) => [for (final l in lines) l.replaceFirst(RegExp(r'^[ \t]+'), '')],
+    );
+
+/// Replace every tab character on every selected line with [width]
+/// spaces (defaults to 2 — the editor's indent width). Useful for
+/// pasted code that mixes tabs and spaces, since `flutter analyze`
+/// rejects tabs in Dart source.
+SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2}) {
+  final replacement = ' ' * width;
+  return _transformLinesIn(
+    text,
+    start,
+    end,
+    (lines) => [for (final l in lines) l.replaceAll('\t', replacement)],
+  );
+}
+
 /// Uppercase every line in the selected block. Common power-user
 /// transform; mirrors VS Code's "Transform to Uppercase".
 SortLinesResult uppercaseLinesIn(String text, int start, int end) =>
