@@ -63,13 +63,32 @@ class _DatabasesPageState extends State<DatabasesPage> {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'No databases yet.\n\n'
-                        'Drop a .database.yaml in any folder of the vault '
-                        'to make Quill index it as a database.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 13.5, color: tokens.text3, height: 1.55),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          QuillIcon('database',
+                              size: 24,
+                              strokeWidth: 1.4,
+                              color: tokens.text3),
+                          const SizedBox(height: 10),
+                          Text('No databases yet',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: tokens.text2,
+                              )),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Drop a .database.yaml in any folder of the\n'
+                            'vault to make Quill index it as a database.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: tokens.text3,
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
