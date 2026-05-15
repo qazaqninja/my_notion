@@ -57,8 +57,12 @@ class _Panel extends StatelessWidget {
     // Cap the panel width to the narrower of 320px or the viewport
     // width minus a small breathing margin — keeps the menu on-screen
     // when the editor is narrow (mobile, split-view, narrow window).
-    final screenW = MediaQuery.of(context).size.width;
-    final w = screenW < 360 ? (screenW - 32).clamp(220.0, 320.0) : 320.0;
+    final screen = MediaQuery.of(context).size;
+    final w = screen.width < 360 ? (screen.width - 32).clamp(220.0, 320.0) : 320.0;
+    // Trim list height when the available space below the anchor is
+    // tight — keeps the menu fully on-screen on short windows.
+    final anchorBottom = state.anchorRect?.bottom ?? 200;
+    final availBelow = (screen.height - anchorBottom - 16).clamp(120.0, 320.0);
     return Container(
       width: w,
       decoration: BoxDecoration(
@@ -99,7 +103,7 @@ class _Panel extends StatelessWidget {
             ),
           ),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 320),
+            constraints: BoxConstraints(maxHeight: availBelow),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Column(
