@@ -132,7 +132,14 @@ class _Column extends StatelessWidget {
               children: [
                 TagChip(label: label, color: _stageColor(label)),
                 const SizedBox(width: 8),
-                Text('${rows.length}', style: mono(fontSize: 11.5, color: tokens.text3)),
+                Tooltip(
+                  message: rows.length == 1
+                      ? '1 card in $label'
+                      : '${rows.length} cards in $label',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: Text('${rows.length}',
+                      style: mono(fontSize: 11.5, color: tokens.text3)),
+                ),
                 const Spacer(),
                 QuillIcon('plus', size: 13, strokeWidth: 1.7, color: tokens.text3),
               ],

@@ -144,7 +144,12 @@ class _SectionHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text('$count', style: mono(fontSize: 11, color: tokens.text3)),
+          Tooltip(
+            message: count == 1 ? '1 row in $label' : '$count rows in $label',
+            waitDuration: const Duration(milliseconds: 500),
+            child: Text('$count',
+                style: mono(fontSize: 11, color: tokens.text3)),
+          ),
         ],
       ),
     );
