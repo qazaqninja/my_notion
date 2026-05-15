@@ -357,7 +357,11 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
     switch (t) {
       case ColumnType.number:
         final n = num.tryParse(s.trim());
-        return (n?.toString() ?? s, n ?? s);
+        // When the value parses as a number, n.toString() is always
+        // YAML-safe ('123', '12.5'). When parse fails, fall back to
+        // the raw string but escape it — a user typing 'foo: bar'
+        // into a number column shouldn't corrupt the YAML.
+        return (n != null ? n.toString() : yamlSafeScalar(s), n ?? s);
       case ColumnType.checkbox:
         final b = s.trim().toLowerCase() == 'true';
         return (b ? 'true' : 'false', b);
