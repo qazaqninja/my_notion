@@ -13,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class _StubVaultBloc extends Cubit<VaultState> implements VaultBloc {
   _StubVaultBloc() : super(const VaultInitial());
   @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 const _schema = DatabaseSchema(

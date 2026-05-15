@@ -12,7 +12,7 @@ import 'package:my_notion/shared/theme/tokens.dart';
 class _StubVaultBloc extends Cubit<VaultState> implements VaultBloc {
   _StubVaultBloc() : super(const VaultInitial());
   @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 Widget _wrap(Widget child) {

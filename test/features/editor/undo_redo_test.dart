@@ -21,7 +21,7 @@ import 'package:my_notion/features/vault/domain/repositories/vault_repository.da
 
 class _FakeRepo implements VaultRepository {
   @override
-  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
   @override
   Future<void> writePage(Page page, {required Directory root}) async {}
 }
