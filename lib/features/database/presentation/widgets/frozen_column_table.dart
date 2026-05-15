@@ -826,8 +826,13 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
+        _ColumnHeaderCell(
+          column: c,
+          width: _widthFor(c),
+          tokens: tokens,
+          isLast: isLast,
+          isSorted: isSorted,
+          sortAscending: widget.sortAscending,
           onTap: widget.onColumnHeaderTap == null
               ? null
               : () => widget.onColumnHeaderTap!(c.key),
@@ -835,43 +840,6 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
               ? null
               : (d) => widget.onColumnHeaderSecondaryTap!(
                   c.key, d.globalPosition),
-          child: Container(
-            width: _widthFor(c),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            alignment: c.type == ColumnType.number
-                ? Alignment.centerRight
-                : Alignment.centerLeft,
-            decoration: BoxDecoration(
-              border: isLast
-                  ? null
-                  : Border(
-                      right: BorderSide(color: tokens.divider, width: 0.5)),
-            ),
-            child: Row(
-              mainAxisAlignment: c.type == ColumnType.number
-                  ? MainAxisAlignment.end
-                  : MainAxisAlignment.start,
-              children: [
-                QuillIcon(_iconForType(c.type),
-                    size: 11, strokeWidth: 1.7, color: tokens.text3),
-                const SizedBox(width: 5),
-                Flexible(
-                  child: Text(c.key,
-                      style: mono(
-                          fontSize: 11.5,
-                          color: isSorted ? tokens.text : tokens.text3,
-                          fontWeight:
-                              isSorted ? FontWeight.w600 : FontWeight.normal),
-                      overflow: TextOverflow.ellipsis),
-                ),
-                if (isSorted) ...[
-                  const SizedBox(width: 4),
-                  Text(widget.sortAscending ? '▲' : '▼',
-                      style: TextStyle(fontSize: 9, color: tokens.text2)),
-                ],
-              ],
-            ),
-          ),
         ),
         // Right-edge drag handle. 6px wide, transparent fill, resize cursor.
         Positioned(
@@ -1241,5 +1209,96 @@ class _SubgroupDividerRight extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(height: 22, color: tokens.surface2);
+  }
+}
+
+class _ColumnHeaderCell extends StatefulWidget {
+  const _ColumnHeaderCell({
+    required this.column,
+    required this.width,
+    required this.tokens,
+    required this.isLast,
+    required this.isSorted,
+    required this.sortAscending,
+    required this.onTap,
+    required this.onSecondaryTapDown,
+  });
+
+  final ColumnDef column;
+  final double width;
+  final QuillTokens tokens;
+  final bool isLast;
+  final bool isSorted;
+  final bool sortAscending;
+  final VoidCallback? onTap;
+  final void Function(TapDownDetails)? onSecondaryTapDown;
+
+  @override
+  State<_ColumnHeaderCell> createState() => _ColumnHeaderCellState();
+}
+
+class _ColumnHeaderCellState extends State<_ColumnHeaderCell> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.column;
+    final tokens = widget.tokens;
+    final hoverable = widget.onTap != null;
+    Widget body = Container(
+      width: widget.width,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      alignment: c.type == ColumnType.number
+          ? Alignment.centerRight
+          : Alignment.centerLeft,
+      decoration: BoxDecoration(
+        color: hoverable && _hover ? tokens.accentTint : null,
+        border: widget.isLast
+            ? null
+            : Border(right: BorderSide(color: tokens.divider, width: 0.5)),
+      ),
+      child: Row(
+        mainAxisAlignment: c.type == ColumnType.number
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
+        children: [
+          QuillIcon(_iconForType(c.type),
+              size: 11,
+              strokeWidth: 1.7,
+              color: _hover && hoverable ? tokens.text2 : tokens.text3),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(c.key,
+                style: mono(
+                    fontSize: 11.5,
+                    color: widget.isSorted
+                        ? tokens.text
+                        : (_hover && hoverable ? tokens.text2 : tokens.text3),
+                    fontWeight: widget.isSorted
+                        ? FontWeight.w600
+                        : FontWeight.normal),
+                overflow: TextOverflow.ellipsis),
+          ),
+          if (widget.isSorted) ...[
+            const SizedBox(width: 4),
+            Text(widget.sortAscending ? '▲' : '▼',
+                style: TextStyle(fontSize: 9, color: tokens.text2)),
+          ],
+        ],
+      ),
+    );
+    body = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onTap,
+      onSecondaryTapDown: widget.onSecondaryTapDown,
+      child: body,
+    );
+    if (!hoverable) return body;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: body,
+    );
   }
 }
