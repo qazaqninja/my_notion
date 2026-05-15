@@ -724,7 +724,13 @@ class _SourceViewState extends State<SourceView> {
     );
     if (result == null || result.files.isEmpty) return;
     final picked = result.files.first;
-    if (picked.path == null) return;
+    if (picked.path == null) {
+      if (mounted) {
+        context.toastError('File has no readable path',
+            sub: 'macOS sandbox or web-only file');
+      }
+      return;
+    }
     try {
       final relative = await const AttachmentWriter().copy(
         source: File(picked.path!),
@@ -755,7 +761,13 @@ class _SourceViewState extends State<SourceView> {
     );
     if (result == null || result.files.isEmpty) return;
     final picked = result.files.first;
-    if (picked.path == null) return;
+    if (picked.path == null) {
+      if (mounted) {
+        context.toastError('Image has no readable path',
+            sub: 'macOS sandbox or web-only file');
+      }
+      return;
+    }
     try {
       final relative = await const AttachmentWriter().copy(
         source: File(picked.path!),
