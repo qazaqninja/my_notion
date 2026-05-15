@@ -69,37 +69,9 @@ class PageHeader extends StatelessWidget {
             ),
           ),
           if (extra != null) ...[const SizedBox(width: 8), extra!],
-          const SizedBox(width: 8),
-          if (actions != null) actions! else _DefaultActions(tokens: tokens),
+          if (actions != null) ...[const SizedBox(width: 8), actions!],
         ],
       ),
-    );
-  }
-}
-
-class _DefaultActions extends StatelessWidget {
-  const _DefaultActions({required this.tokens});
-  final QuillTokens tokens;
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () {},
-          padding: const EdgeInsets.all(4),
-          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-          icon: QuillIcon('panel', size: 16, strokeWidth: 1.7, color: tokens.text3),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () {},
-          padding: const EdgeInsets.all(4),
-          constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-          icon: QuillIcon('kebab-h', size: 16, strokeWidth: 1.7, color: tokens.text3),
-        ),
-      ],
     );
   }
 }
