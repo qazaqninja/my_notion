@@ -992,7 +992,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                           Text(tpl.title,
                               style: TextStyle(
                                   fontSize: 13.5, color: t.text)),
-                          Text(tpl.relativePath,
+                          Text(stripMdExtension(tpl.relativePath),
                               style: TextStyle(
                                   fontSize: 11, color: t.text3)),
                         ],
