@@ -944,6 +944,12 @@ class _SourceViewState extends State<SourceView> {
                   const SingleActivator(LogicalKeyboardKey.keyC,
                       control: true, shift: true):
                       () => _wrapSelection('`', '`'),
+                  // ⌘E mirrors the shorter shortcut common in Slack /
+                  // Discord / Linear for inline `code`.
+                  const SingleActivator(LogicalKeyboardKey.keyE, meta: true):
+                      () => _wrapSelection('`', '`'),
+                  const SingleActivator(LogicalKeyboardKey.keyE, control: true):
+                      () => _wrapSelection('`', '`'),
                   const SingleActivator(LogicalKeyboardKey.keyH,
                       meta: true, shift: true):
                       () => _wrapSelection('==', '=='),
