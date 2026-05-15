@@ -878,6 +878,14 @@ class _WorkspaceNameFieldState extends State<_WorkspaceNameField> {
     await next.save(Directory(widget.state.rootPath));
     if (!mounted) return;
     context.read<VaultBloc>().add(const RefreshFromDisk());
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(trimmed.isEmpty
+            ? 'Workspace name cleared'
+            : 'Workspace name: $trimmed'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
