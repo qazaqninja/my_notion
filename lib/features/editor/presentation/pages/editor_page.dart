@@ -1346,6 +1346,9 @@ class _EditorBodyState extends State<_EditorBody> {
                     onPressed: () => setState(() => _propertiesOpen = !_propertiesOpen),
                     padding: const EdgeInsets.all(4),
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    tooltip: _propertiesOpen
+                        ? 'Hide properties panel'
+                        : 'Show properties panel',
                     icon: QuillIcon('panel', size: 16, strokeWidth: 1.7,
                         color: _propertiesOpen ? tokens.accent : tokens.text3),
                   ),
@@ -1356,6 +1359,7 @@ class _EditorBodyState extends State<_EditorBody> {
                       padding: const EdgeInsets.all(4),
                       constraints:
                           const BoxConstraints(minWidth: 28, minHeight: 28),
+                      tooltip: 'Page menu',
                       icon: QuillIcon('kebab-h',
                           size: 16, strokeWidth: 1.7, color: tokens.text3),
                     ),
