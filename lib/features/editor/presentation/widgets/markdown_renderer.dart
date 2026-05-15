@@ -4132,27 +4132,34 @@ class _ResolvedChip extends StatelessWidget {
         final base = snap.data?.title ?? '…${ulid.substring(ulid.length - 6)}';
         final title = anchor == null ? base : '$base #$anchor';
         final relPath = snap.data?.relativePath;
-        final tooltip = relPath == null
-            ? title
-            : anchor == null
-                ? '$title\n$relPath'
-                : '$title\n$relPath #$anchor';
+        // Broken-link detection: lookup completed but no row found.
+        final isBroken = snap.connectionState == ConnectionState.done &&
+            snap.data == null;
+        final tooltip = isBroken
+            ? 'Broken wikilink — target page is no longer in the vault.\n[[$ulid]]'
+            : relPath == null
+                ? title
+                : anchor == null
+                    ? '$title\n$relPath'
+                    : '$title\n$relPath #$anchor';
         final emoji = snap.data == null
             ? null
             : emojiFromFrontmatterJson(snap.data!.frontmatterJson);
         return RelationChip(
-          label: title,
+          label: isBroken ? '⚠ $title' : title,
           ulid: ulid,
           showUlid: showUlid,
-          icon: 'file-md',
+          icon: isBroken ? 'trash' : 'file-md',
           emojiIcon: emoji,
           tooltip: tooltip,
-          onTap: () {
-            final route = anchor == null
-                ? '/editor/$ulid'
-                : '/editor/$ulid?anchor=$anchor';
-            GoRouter.of(context).push(route);
-          },
+          onTap: isBroken
+              ? null
+              : () {
+                  final route = anchor == null
+                      ? '/editor/$ulid'
+                      : '/editor/$ulid?anchor=$anchor';
+                  GoRouter.of(context).push(route);
+                },
         );
       },
     );
