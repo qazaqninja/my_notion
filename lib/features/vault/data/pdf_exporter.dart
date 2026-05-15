@@ -46,6 +46,8 @@ class PdfExporter {
           relativePath: p.relative(entity.path, from: src.path),
         ));
       } catch (e, st) {
+        // Per-page exporter failures are logged and skipped so the
+        // overall PDF still produces the rest of the vault.
         // ignore: avoid_print
         print('pdf_exporter: skipping ${entity.path} — $e\n$st');
       }

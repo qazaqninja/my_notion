@@ -1,3 +1,6 @@
+// This page is a dev / lab showcase of design tokens; the strict
+// `child:` ordering convention makes the side-by-side ComponentBox
+// comparison harder to read.
 // ignore_for_file: sort_child_properties_last
 
 import 'package:flutter/material.dart';

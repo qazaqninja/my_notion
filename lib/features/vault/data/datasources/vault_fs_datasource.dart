@@ -36,6 +36,8 @@ class VaultFsDatasource {
         try {
           yield await readOne(entity, vaultRoot: root);
         } catch (e, st) {
+          // Per-file parse failures are logged and skipped — vault
+          // scans must survive one malformed .md (M712).
           // ignore: avoid_print
           print('vault scan: skipping ${entity.path} — $e\n$st');
         }

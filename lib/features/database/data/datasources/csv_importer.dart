@@ -113,6 +113,9 @@ class CsvImporter {
         await File(p.join(folder.path, '$safeName.md')).writeAsString(raw);
         written++;
       } catch (e, st) {
+        // Per-row failures are logged and skipped so a single malformed
+        // row doesn't abort the whole CSV import (same robustness
+        // contract M712/M713 added to the indexer scans).
         // ignore: avoid_print
         print('csv_importer: skipping row — $e\n$st');
       }
