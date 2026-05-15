@@ -125,41 +125,75 @@ class _OutlineRailState extends State<OutlineRail> {
           ),
         ),
         for (int i = 0; i < entries.length; i++)
-          MouseRegion(
-            cursor: widget.scroll != null
-                ? SystemMouseCursors.click
-                : SystemMouseCursors.basic,
-            child: GestureDetector(
-              onTap: widget.scroll == null ? null : () => _jumpTo(entries[i]),
-              child: Container(
-                padding: EdgeInsets.fromLTRB(
-                    8 + (entries[i].level - 1) * 12.0, 4, 0, 4),
-                decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(
-                      color: i == _activeIndex
-                          ? tokens.accent
-                          : Colors.transparent,
-                      width: 1.5,
-                    ),
-                  ),
-                ),
-                child: Text(
-                  entries[i].text,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    color: i == _activeIndex ? tokens.text : tokens.text2,
-                    fontWeight: i == _activeIndex
-                        ? FontWeight.w500
-                        : FontWeight.w400,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
+          _OutlineItem(
+            entry: entries[i],
+            active: i == _activeIndex,
+            tokens: tokens,
+            onTap: widget.scroll == null ? null : () => _jumpTo(entries[i]),
+          ),
+      ],
+    );
+  }
+}
+
+class _OutlineItem extends StatefulWidget {
+  const _OutlineItem({
+    required this.entry,
+    required this.active,
+    required this.tokens,
+    required this.onTap,
+  });
+
+  final OutlineEntry entry;
+  final bool active;
+  final QuillTokens tokens;
+  final VoidCallback? onTap;
+
+  @override
+  State<_OutlineItem> createState() => _OutlineItemState();
+}
+
+class _OutlineItemState extends State<_OutlineItem> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = widget.tokens;
+    final entry = widget.entry;
+    final tappable = widget.onTap != null;
+    return MouseRegion(
+      cursor: tappable ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: tappable ? (_) => setState(() => _hover = true) : null,
+      onExit: tappable ? (_) => setState(() => _hover = false) : null,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+              8 + (entry.level - 1) * 12.0, 4, 0, 4),
+          decoration: BoxDecoration(
+            color: _hover && !widget.active ? tokens.hover : null,
+            border: Border(
+              left: BorderSide(
+                color: widget.active ? tokens.accent : Colors.transparent,
+                width: 1.5,
               ),
             ),
           ),
-      ],
+          child: Text(
+            entry.text,
+            style: TextStyle(
+              fontSize: 12.5,
+              color: widget.active
+                  ? tokens.text
+                  : (_hover ? tokens.text : tokens.text2),
+              fontWeight:
+                  widget.active ? FontWeight.w500 : FontWeight.w400,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
+      ),
     );
   }
 }
