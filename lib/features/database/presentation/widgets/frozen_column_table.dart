@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/formula/formula.dart';
 import '../../domain/repositories/database_repository.dart';
@@ -669,6 +672,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
         const PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
         const PopupMenuItem(
             value: 'copy-link', child: Text('Copy [[link]]')),
+        const PopupMenuItem(value: 'copy-path', child: Text('Copy file path')),
         if (widget.onDuplicateRow != null)
           const PopupMenuItem(value: 'duplicate', child: Text('Duplicate row')),
         if (widget.onTrashRow != null) ...[
@@ -695,6 +699,18 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
         messenger?.showSnackBar(
           SnackBar(
             content: Text('Copied [[${row.ulid}]]'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      case 'copy-path':
+        final vault = context.read<VaultBloc>().state;
+        final path = vault is VaultLoaded
+            ? '${vault.rootPath}/${row.relativePath}'
+            : row.relativePath;
+        await Clipboard.setData(ClipboardData(text: path));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text('Copied $path'),
             duration: const Duration(seconds: 2),
           ),
         );
