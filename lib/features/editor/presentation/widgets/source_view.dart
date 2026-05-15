@@ -472,14 +472,24 @@ class _SourceViewState extends State<SourceView> {
     final end = sel.end.clamp(start, v.text.length);
     final selected = v.text.substring(start, end);
 
-    final String snippet;
     if (selected.isNotEmpty && looksLikeUrl(text)) {
-      snippet = '[$selected](${text.trim()})';
-    } else {
-      snippet = text;
+      // Reuse insertMarkdownLink so wrap-on-paste and ⌘K go through
+      // the same splice path. Tested by insert_link_test.dart.
+      final r = insertMarkdownLink(
+        text: v.text,
+        start: start,
+        end: end,
+        label: selected,
+        url: text.trim(),
+      );
+      _controller.value = TextEditingValue(
+        text: r.text,
+        selection: TextSelection.collapsed(offset: r.caret),
+      );
+      return;
     }
-    final newText = v.text.replaceRange(start, end, snippet);
-    final caretAfter = start + snippet.length;
+    final newText = v.text.replaceRange(start, end, text);
+    final caretAfter = start + text.length;
     _controller.value = TextEditingValue(
       text: newText,
       selection: TextSelection.collapsed(offset: caretAfter),
