@@ -214,6 +214,8 @@ enum SlashAction {
   maxNumericLines,
   /// Find the minimum numeric value in the selection.
   minNumericLines,
+  /// Compute the median of every numeric line.
+  medianNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1000,6 +1002,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '1 / 5 / 3 → 1',
     action: SlashAction.minNumericLines,
     keywords: ['min', 'minimum', 'smallest', 'math', 'numeric'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Median of numeric lines',
+    hint: '1 / 5 / 3 → 3',
+    action: SlashAction.medianNumericLines,
+    keywords: ['median', 'middle', 'math', 'numeric', 'stats'],
   ),
   SlashEntry(
     icon: 'hash',

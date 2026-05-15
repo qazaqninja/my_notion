@@ -2286,6 +2286,47 @@ void main() {
     });
   });
 
+  group('medianNumericLinesIn', () {
+    test('odd count returns the middle element', () {
+      const text = '1\n5\n3\n';
+      final r = medianNumericLinesIn(text, 0, text.length);
+      expect(r.text, '3\n');
+    });
+
+    test('even count returns the mean of the two middles', () {
+      const text = '1\n2\n3\n4\n';
+      final r = medianNumericLinesIn(text, 0, text.length);
+      // (2 + 3) / 2 = 2.5
+      expect(r.text, '2.5\n');
+    });
+
+    test('all-integer odd count renders integer', () {
+      const text = '10\n20\n30\n';
+      expect(medianNumericLinesIn(text, 0, text.length).text, '20\n');
+    });
+
+    test('decimal input renders decimal', () {
+      const text = '1.0\n3.0\n5.0\n';
+      expect(medianNumericLinesIn(text, 0, text.length).text, '3.0\n');
+    });
+
+    test('skips non-numeric lines', () {
+      const text = '1\nlabel\n5\n3\n';
+      // numeric set {1, 5, 3} → sorted {1, 3, 5} → median 3
+      expect(medianNumericLinesIn(text, 0, text.length).text, '3\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(medianNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('negative values are supported', () {
+      const text = '-5\n0\n5\n';
+      expect(medianNumericLinesIn(text, 0, text.length).text, '0\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

@@ -1128,6 +1128,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, minNumericLinesIn,
         );
+      case SlashAction.medianNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, medianNumericLinesIn,
+        );
     }
   }
 

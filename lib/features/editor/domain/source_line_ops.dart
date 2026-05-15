@@ -781,6 +781,42 @@ SortLinesResult maxNumericLinesIn(String text, int start, int end) =>
       return [best.toString()];
     });
 
+/// Compute the median of every selected numeric line. Sorts the
+/// parsed values; for an odd count returns the middle element, for
+/// an even count returns the arithmetic mean of the two middle
+/// elements. Non-numeric lines are skipped. Renders as integer when
+/// every input was integer AND the median has no fractional part;
+/// decimal otherwise. Returns the source unchanged when no line
+/// parses.
+SortLinesResult medianNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final values = <double>[];
+      var anyDecimalInput = false;
+      for (final l in lines) {
+        final trimmed = l.trim();
+        final v = double.tryParse(trimmed);
+        if (v == null) continue;
+        // Track "user typed a decimal" from the source — relying on
+        // the numeric value would lose the distinction between "1"
+        // and "1.0".
+        if (trimmed.contains('.')) anyDecimalInput = true;
+        values.add(v);
+      }
+      if (values.isEmpty) return lines;
+      values.sort();
+      final n = values.length;
+      final double median;
+      if (n.isOdd) {
+        median = values[n ~/ 2];
+      } else {
+        median = (values[n ~/ 2 - 1] + values[n ~/ 2]) / 2;
+      }
+      if (!anyDecimalInput && median == median.truncateToDouble()) {
+        return [median.toInt().toString()];
+      }
+      return [median.toString()];
+    });
+
 /// Find the minimum numeric value in the selected block. Skips non-
 /// numeric lines. Returns the source unchanged when no line parses.
 SortLinesResult minNumericLinesIn(String text, int start, int end) =>
