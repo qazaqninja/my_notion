@@ -45,17 +45,21 @@ class _ReopenLastVaultButtonState extends State<_ReopenLastVaultButton> {
     final tokens = QuillTokens.of(context);
     final path = _path;
     if (path == null || path.isEmpty) return const SizedBox.shrink();
-    return OutlinedButton.icon(
-      onPressed: () => context.read<VaultBloc>().add(LoadFromPath(path)),
-      icon: QuillIcon('reveal', size: 12, color: tokens.text2),
-      label: Text('Reopen ${p.basename(path)}'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: tokens.text2,
-        side: BorderSide(color: tokens.divider2, width: 0.5),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(6)),
+    return Tooltip(
+      message: path,
+      waitDuration: const Duration(milliseconds: 500),
+      child: OutlinedButton.icon(
+        onPressed: () => context.read<VaultBloc>().add(LoadFromPath(path)),
+        icon: QuillIcon('reveal', size: 12, color: tokens.text2),
+        label: Text('Reopen ${p.basename(path)}'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: tokens.text2,
+          side: BorderSide(color: tokens.divider2, width: 0.5),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(6)),
+          ),
         ),
       ),
     );
