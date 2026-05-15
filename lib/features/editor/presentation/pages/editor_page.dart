@@ -286,7 +286,19 @@ class _EditorBodyState extends State<_EditorBody> {
     });
   }
 
+  /// Shared guard for actions that mutate frontmatter. Returns false +
+  /// info-toasts if the page is locked, so the caller can early-return
+  /// before opening pickers / dialogs that would silently no-op when
+  /// the bloc swallows the dispatch (editor_bloc.dart:261/290).
+  bool _requireUnlocked(BuildContext context, EditorLoaded loaded) {
+    if (!EditorBloc.isLocked(loaded)) return true;
+    context.toastInfo('Page is locked',
+        sub: 'Unlock the page (⌘⇧L) to edit it');
+    return false;
+  }
+
   Future<void> _pickIcon(BuildContext context, EditorLoaded loaded) async {
+    if (!_requireUnlocked(context, loaded)) return;
     final bloc = context.read<EditorBloc>();
     final picked = await pickEmoji(context);
     if (picked == null) return; // dismissed without choosing
@@ -427,6 +439,7 @@ class _EditorBodyState extends State<_EditorBody> {
       case 'snooze-reminder':
         await _snoozeReminder(context, loaded);
       case 'clear-reminder':
+        if (!_requireUnlocked(context, loaded)) return;
         final fm = loaded.page.frontmatter;
         final existing = fm.find('reminder');
         if (existing == null) {
@@ -623,6 +636,7 @@ class _EditorBodyState extends State<_EditorBody> {
 
   Future<void> _setFont(
       BuildContext context, EditorLoaded loaded) async {
+    if (!_requireUnlocked(context, loaded)) return;
     final fm = loaded.page.frontmatter;
     final existing = fm.find('font');
     final picked = await showQuillChoice<String>(
@@ -689,6 +703,7 @@ class _EditorBodyState extends State<_EditorBody> {
 
   Future<void> _addTags(
       BuildContext context, EditorLoaded loaded) async {
+    if (!_requireUnlocked(context, loaded)) return;
     final fm = loaded.page.frontmatter;
     final existing = fm.find('tags');
     final currentTags = <String>[];
@@ -759,6 +774,7 @@ class _EditorBodyState extends State<_EditorBody> {
 
   Future<void> _setWordGoal(
       BuildContext context, EditorLoaded loaded) async {
+    if (!_requireUnlocked(context, loaded)) return;
     final fm = loaded.page.frontmatter;
     final existing = fm.find('goal');
     final initial = existing?.rawScalar ?? '';
@@ -814,6 +830,7 @@ class _EditorBodyState extends State<_EditorBody> {
 
   Future<void> _snoozeReminder(
       BuildContext context, EditorLoaded loaded) async {
+    if (!_requireUnlocked(context, loaded)) return;
     final fm = loaded.page.frontmatter;
     final existing = fm.find('reminder');
     if (existing == null) {
@@ -853,6 +870,7 @@ class _EditorBodyState extends State<_EditorBody> {
 
   Future<void> _setReminder(
       BuildContext context, EditorLoaded loaded) async {
+    if (!_requireUnlocked(context, loaded)) return;
     final fm = loaded.page.frontmatter;
     final existing = fm.find('reminder');
     final now = DateTime.now();
