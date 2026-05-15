@@ -533,7 +533,7 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
             if (s.trim().isNotEmpty) s.trim(),
         ];
         return widget.entry.copyWith(
-          rawScalar: '[${parts.join(', ')}]',
+          rawScalar: '[${parts.map(_yamlFlowItem).join(', ')}]',
           value: parts,
         );
       case fe.FrontmatterType.checkbox:
@@ -549,8 +549,35 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
       case fe.FrontmatterType.relation:
       case fe.FrontmatterType.formula:
       case fe.FrontmatterType.file:
-        return widget.entry.copyWith(rawScalar: text, value: text);
+        return widget.entry
+            .copyWith(rawScalar: _yamlSafeScalar(text), value: text);
     }
+  }
+
+  /// Mirror of _AddFieldFormState._yamlSafeScalar — kept inline rather
+  /// than promoted to a shared util to match the existing duplicated
+  /// _yamlString pattern across the codebase.
+  static String _yamlSafeScalar(String value) {
+    if (value.isEmpty) return value;
+    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
+        value.startsWith(' ') ||
+        value.endsWith(' ');
+    if (!needs) return value;
+    final escaped =
+        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    return '"$escaped"';
+  }
+
+  static String _yamlFlowItem(String value) {
+    if (value.isEmpty) return '""';
+    final needs =
+        RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
+            value.startsWith(' ') ||
+            value.endsWith(' ');
+    if (!needs) return value;
+    final escaped =
+        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    return '"$escaped"';
   }
 
   @override
