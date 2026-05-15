@@ -234,19 +234,22 @@ class _TrashDialogState extends State<TrashDialog> {
           ),
           TextButton(
             onPressed: () async {
-              final newPath =
-                  await _service.restore(item, Directory(widget.vaultRoot));
-              if (!mounted) return;
-              context
-                  .read<VaultBloc>()
-                  .add(const ReindexVault());
-              context.toastSuccess(
-                  item.title.isEmpty
-                      ? 'Restored ${item.basename}'
-                      : 'Restored "${item.title}"',
-                  sub: newPath,
-                  subMono: true);
-              _refresh();
+              try {
+                final newPath = await _service.restore(
+                    item, Directory(widget.vaultRoot));
+                if (!mounted) return;
+                context.read<VaultBloc>().add(const ReindexVault());
+                context.toastSuccess(
+                    item.title.isEmpty
+                        ? 'Restored ${item.basename}'
+                        : 'Restored "${item.title}"',
+                    sub: newPath,
+                    subMono: true);
+                _refresh();
+              } catch (e) {
+                if (!mounted) return;
+                context.toastError('Restore failed', sub: '$e');
+              }
             },
             child: Text('Restore', style: TextStyle(color: tokens.accent)),
           ),
