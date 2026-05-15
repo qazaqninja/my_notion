@@ -136,4 +136,80 @@ void main() {
       expect(grouped.keys, containsAll(['2026-04-01', '2026-05-01', '2026-03-15', '—']));
     });
   });
+
+  // M791 — equals filter on a multi column must check any-item membership
+  // in the YAML flow list, not a string match on the bracketed whole.
+  group('ApplyQuery.apply — M791 multi-column equals', () {
+    final multiSchema = DatabaseSchema(
+      id: 'db',
+      name: 'Posts',
+      icon: '📝',
+      color: '#6B8E7F',
+      folderPath: 'Posts',
+      columns: const [
+        ColumnDef(key: 'title', type: ColumnType.text),
+        ColumnDef(key: 'tags', type: ColumnType.multi),
+      ],
+      views: const [],
+    );
+
+    DatabasePageRow row(String ulid, String title, String tagsRaw) =>
+        DatabasePageRow(
+          ulid: ulid,
+          title: title,
+          relativePath: '$ulid.md',
+          cells: {'title': title, 'tags': tagsRaw},
+        );
+
+    final rows = [
+      row('A', 'one', '[draft, urgent]'),
+      row('B', 'two', '[urgent]'),
+      row('C', 'three', '[done]'),
+      row('D', 'four', '[]'),
+    ];
+
+    test('equals "draft" matches a multi cell containing "draft"', () {
+      final q = DatabaseQuery(filters: [
+        FilterRule(columnKey: 'tags', op: FilterOp.equals, value: 'draft'),
+      ]);
+      final out = ApplyQuery.apply(rows, q, multiSchema);
+      expect(out.map((r) => r.ulid).toList(), ['A']);
+    });
+
+    test('equals "urgent" matches both rows that include it', () {
+      final q = DatabaseQuery(filters: [
+        FilterRule(columnKey: 'tags', op: FilterOp.equals, value: 'urgent'),
+      ]);
+      final out = ApplyQuery.apply(rows, q, multiSchema);
+      expect(out.map((r) => r.ulid).toList().toSet(), {'A', 'B'});
+    });
+
+    test('equals is case-insensitive', () {
+      final q = DatabaseQuery(filters: [
+        FilterRule(columnKey: 'tags', op: FilterOp.equals, value: 'DRAFT'),
+      ]);
+      final out = ApplyQuery.apply(rows, q, multiSchema);
+      expect(out.map((r) => r.ulid).toList(), ['A']);
+    });
+
+    test('equals does not match the bracketed whole', () {
+      final q = DatabaseQuery(filters: [
+        FilterRule(
+            columnKey: 'tags',
+            op: FilterOp.equals,
+            value: '[draft, urgent]'),
+      ]);
+      final out = ApplyQuery.apply(rows, q, multiSchema);
+      expect(out, isEmpty,
+          reason: 'the bracketed form is never a valid tag value');
+    });
+
+    test('equals on empty flow list yields no matches', () {
+      final q = DatabaseQuery(filters: [
+        FilterRule(columnKey: 'tags', op: FilterOp.equals, value: 'draft'),
+      ]);
+      final out = ApplyQuery.apply([rows[3]], q, multiSchema);
+      expect(out, isEmpty);
+    });
+  });
 }
