@@ -75,7 +75,28 @@ class TimelineView extends StatelessWidget {
     }
     if (dates.isEmpty) {
       return Center(
-        child: Text('No dated rows to plot', style: TextStyle(color: tokens.text2)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QuillIcon('timeline',
+                  size: 24, strokeWidth: 1.4, color: tokens.text3),
+              const SizedBox(height: 10),
+              Text('No dated rows',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.text2,
+                  )),
+              const SizedBox(height: 2),
+              Text(
+                'Set `updated:` on a page to plot it.',
+                style: TextStyle(fontSize: 12, color: tokens.text3),
+              ),
+            ],
+          ),
+        ),
       );
     }
     dates.sort();
