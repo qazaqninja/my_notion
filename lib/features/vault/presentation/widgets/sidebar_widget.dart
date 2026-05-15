@@ -132,7 +132,14 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                   onTap: () => context.go('/settings'),
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
-                    child: QuillIcon('gear', size: 13, strokeWidth: 1.7, color: tokens.text3),
+                    child: Tooltip(
+                      message: 'Settings (⌘,)',
+                      waitDuration: const Duration(milliseconds: 500),
+                      child: QuillIcon('gear',
+                          size: 13,
+                          strokeWidth: 1.7,
+                          color: tokens.text3),
+                    ),
                   ),
                 ),
               ],
