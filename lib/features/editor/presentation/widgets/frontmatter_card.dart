@@ -61,9 +61,13 @@ class _FrontmatterCardState extends State<FrontmatterCard> {
                   ),
                   child: Row(
                     children: [
-                      Transform.rotate(
-                        angle: _expanded ? 0 : -1.5708, // -90deg when collapsed
-                        child: QuillIcon('caret-down', size: 11, strokeWidth: 1.8, color: tokens.text3),
+                      AnimatedRotation(
+                        turns: _expanded ? 0 : -0.25,
+                        duration: const Duration(milliseconds: 120),
+                        child: QuillIcon('caret-down',
+                            size: 11,
+                            strokeWidth: 1.8,
+                            color: tokens.text3),
                       ),
                       const SizedBox(width: 8),
                       Text('frontmatter', style: mono(fontSize: 12, color: tokens.text3)),
