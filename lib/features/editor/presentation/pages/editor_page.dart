@@ -597,8 +597,12 @@ class _EditorBodyState extends State<_EditorBody> {
     if (!context.mounted) return;
     context.read<VaultBloc>().add(
         MovePage(ulid: loaded.page.ulid, targetFolder: picked));
+    final pageLabel = loaded.page.title.isEmpty
+        ? loaded.page.relativePath
+        : loaded.page.title;
     context.toastSuccess(
-        picked.isEmpty ? 'Moved to vault root' : 'Moved to $picked');
+        picked.isEmpty ? 'Moved to vault root' : 'Moved to $picked',
+        sub: pageLabel);
   }
 
   Future<void> _setFont(
