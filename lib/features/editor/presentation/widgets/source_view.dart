@@ -887,6 +887,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, toggleBulletPrefixIn,
         );
+      case SlashAction.toggleTaskList:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, toggleTaskPrefixIn,
+        );
     }
   }
 

@@ -250,6 +250,49 @@ void main() {
     });
   });
 
+  group('toggleTaskPrefixIn', () {
+    test('adds "- [ ] " to plain lines', () {
+      const text = 'one\ntwo\n';
+      final r = toggleTaskPrefixIn(text, 0, text.length);
+      expect(r.text, '- [ ] one\n- [ ] two\n');
+    });
+
+    test('strips when every non-empty line is already a task', () {
+      const text = '- [ ] one\n- [x] two\n';
+      final r = toggleTaskPrefixIn(text, 0, text.length);
+      expect(r.text, 'one\ntwo\n');
+    });
+
+    test('round-trip is back to the original plain text', () {
+      const text = 'alpha\nbeta\n';
+      final on = toggleTaskPrefixIn(text, 0, text.length);
+      final off = toggleTaskPrefixIn(on.text, 0, on.text.length);
+      expect(off.text, text);
+    });
+
+    test('preserves leading indent on add', () {
+      const text = '  foo\n';
+      expect(toggleTaskPrefixIn(text, 0, text.length).text, '  - [ ] foo\n');
+    });
+
+    test('preserves leading indent on strip', () {
+      const text = '  - [x] foo\n';
+      expect(toggleTaskPrefixIn(text, 0, text.length).text, '  foo\n');
+    });
+
+    test('mixed lines → all get tasked', () {
+      const text = '- [ ] one\ntwo\n- [x] three\n';
+      final r = toggleTaskPrefixIn(text, 0, text.length);
+      expect(r.text, '- [ ] one\n- [ ] two\n- [x] three\n');
+    });
+
+    test('blank lines stay blank both directions', () {
+      const text = 'a\n\nb\n';
+      final on = toggleTaskPrefixIn(text, 0, text.length);
+      expect(on.text, '- [ ] a\n\n- [ ] b\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

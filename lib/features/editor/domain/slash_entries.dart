@@ -41,6 +41,10 @@ enum SlashAction {
   /// Toggle a `- ` bullet prefix on every line in the selection. Strips
   /// the prefix when every line already has it; adds it otherwise.
   toggleBulletList,
+  /// Toggle a `- [ ] ` task-list prefix on every line in the selection.
+  /// Strips when every line is already a task; adds an unchecked
+  /// checkbox otherwise.
+  toggleTaskList,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -330,6 +334,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '- …',
     action: SlashAction.toggleBulletList,
     keywords: ['bullet', 'list', 'toggle', 'unordered', 'ul', 'dash'],
+  ),
+  SlashEntry(
+    icon: 'check',
+    label: 'Toggle task list',
+    hint: '- [ ] …',
+    action: SlashAction.toggleTaskList,
+    keywords: ['task', 'todo', 'checkbox', 'list', 'toggle', 'check'],
   ),
   SlashEntry(
     icon: 'tag',

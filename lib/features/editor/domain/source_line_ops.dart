@@ -518,6 +518,46 @@ SortLinesResult toggleBulletPrefixIn(String text, int start, int end) =>
       ];
     });
 
+/// Toggle a `- [ ] ` task-list prefix on every line in the selected
+/// block.
+///
+/// Behaviour mirrors [toggleBulletPrefixIn]: if every non-empty line
+/// already starts with a task checkbox (`- [ ]` or `- [x]`, allowing
+/// leading indent), the prefix is stripped to expose the inner text.
+/// Otherwise every non-empty line gains a `- [ ] ` checkbox. The
+/// `[x]`/`[X]` (checked) form is recognised on strip but always
+/// re-added as unchecked `[ ]`, since the user's intent on "toggle on"
+/// is "make these tasks I haven't started yet".
+SortLinesResult toggleTaskPrefixIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final taskPattern = RegExp(r'^- \[[ xX]\] ');
+      bool startsWithTask(String l) => taskPattern.hasMatch(l.trimLeft());
+
+      final nonEmpty = [for (final l in lines) if (l.trim().isNotEmpty) l];
+      final allTasked =
+          nonEmpty.isNotEmpty && nonEmpty.every(startsWithTask);
+
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty)
+            l
+          else if (allTasked)
+            (() {
+              final indent = l.substring(0, l.length - l.trimLeft().length);
+              // Drop the matched "- [.] " prefix (6 chars).
+              final after = l.trimLeft().substring(6);
+              return '$indent$after';
+            })()
+          else if (startsWithTask(l))
+            l
+          else
+            (() {
+              final indent = l.substring(0, l.length - l.trimLeft().length);
+              return '$indent- [ ] ${l.trimLeft()}';
+            })(),
+      ];
+    });
+
 /// Title-case every line in the selected block: capitalise the first
 /// letter of each whitespace-separated word, lowercase the rest. Words
 /// shorter than 4 chars in the middle of a line (and, or, the, of, …)
