@@ -459,6 +459,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
       final result =
           await UrlBookmark.capture(url, Directory(vaultPath));
       vaultBloc.add(const ReindexVault());
+      if (context.mounted) {
+        context.toastSuccess('Bookmarked "${result.title}"',
+            sub: 'ULID: ${result.ulid}', subMono: true);
+      }
       router.go('/editor/${result.ulid}');
     } catch (e) {
       if (context.mounted) context.toastError('Bookmark failed', sub: '$e');
