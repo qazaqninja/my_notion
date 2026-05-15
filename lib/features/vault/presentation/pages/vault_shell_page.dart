@@ -632,6 +632,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show orphan pages':
         if (!context.mounted) return;
         await _showOrphansDialog(context);
+      case 'Show untagged pages':
+        if (!context.mounted) return;
+        await _showUntaggedDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           messenger?.showSnackBar(const SnackBar(content: Text('No vault open')));
@@ -1102,6 +1105,89 @@ views:
       SnackBar(
         content: Text('Created database: $safe'),
         duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  Future<void> _showUntaggedDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    bool hasTag(String json) {
+      if (json.isEmpty) return false;
+      try {
+        final m = jsonDecode(json);
+        if (m is! Map) return false;
+        final raw = m['tags'];
+        if (raw is List) return raw.isNotEmpty;
+        if (raw is String) return raw.trim().isNotEmpty;
+      } catch (_) {/* fall through */}
+      return false;
+    }
+
+    final untagged = [
+      for (final p in pages)
+        if (!hasTag(p.frontmatterJson)) p,
+    ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+    if (!context.mounted) return;
+    final tokens = QuillTokens.of(context);
+    await showDialog<void>(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: tokens.surface,
+        child: SizedBox(
+          width: 460,
+          height: 540,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  untagged.isEmpty
+                      ? 'EVERY PAGE IS TAGGED'
+                      : 'UNTAGGED PAGES · ${untagged.length}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1,
+                    color: tokens.text3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  untagged.isEmpty
+                      ? 'Every indexed page has at least one tag in its frontmatter.'
+                      : 'Pages with no `tags:` frontmatter. Sorted by last-edited (most recent first).',
+                  style: TextStyle(fontSize: 12, color: tokens.text3),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: untagged.length,
+                    itemBuilder: (_, i) {
+                      final p = untagged[i];
+                      return _StatsPageRow(
+                        title: p.title,
+                        trailing: p.relativePath,
+                        ulid: p.ulid,
+                        mono: true,
+                        tokens: tokens,
+                      );
+                    },
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
