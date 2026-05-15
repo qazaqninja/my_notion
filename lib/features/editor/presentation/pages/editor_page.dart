@@ -524,7 +524,18 @@ class _EditorBodyState extends State<_EditorBody> {
     if (!context.mounted) return;
     context.read<VaultBloc>().add(
         RenamePage(ulid: loaded.page.ulid, newBasename: picked));
-    context.toastSuccess('Renamed to $picked.md');
+    // Mirror _safeFileName's transformations so the toast matches the
+    // actual filename on disk (slashes/quotes/etc. become "-"; trailing
+    // .md is stripped).
+    var preview = picked
+        .replaceAll(RegExp(r'[\\/<>:"|?*]+'), '-')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (preview.toLowerCase().endsWith('.md')) {
+      preview = preview.substring(0, preview.length - 3).trim();
+    }
+    if (preview.isEmpty) preview = 'Untitled';
+    context.toastSuccess('Renamed to $preview.md');
   }
 
   Future<void> _moveToFolder(
