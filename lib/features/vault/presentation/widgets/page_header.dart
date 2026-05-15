@@ -35,6 +35,7 @@ class PageHeader extends StatelessWidget {
             onPressed: onToggleSidebar,
             padding: const EdgeInsets.all(4),
             constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            tooltip: 'Toggle sidebar',
             icon: QuillIcon('sidebar', size: 16, strokeWidth: 1.7, color: tokens.text3),
           ),
           const SizedBox(width: 8),
@@ -48,15 +49,19 @@ class PageHeader extends StatelessWidget {
                       child: Text('/', style: TextStyle(color: tokens.text3.withValues(alpha: 0.5))),
                     ),
                   Flexible(
-                    child: Text(
-                      crumbs[i],
-                      style: mono(
-                        fontSize: 12.5,
-                        color: i == crumbs.length - 1 ? tokens.text2 : tokens.text3,
+                    child: Tooltip(
+                      message: crumbs[i],
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        crumbs[i],
+                        style: mono(
+                          fontSize: 12.5,
+                          color: i == crumbs.length - 1 ? tokens.text2 : tokens.text3,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        softWrap: false,
                       ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      softWrap: false,
                     ),
                   ),
                 ],
