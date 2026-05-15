@@ -633,6 +633,17 @@ class _EditorBodyState extends State<_EditorBody> {
       ],
     );
     if (picked == null || !context.mounted) return;
+    // No-op detection: 'sans' with no frontmatter entry is already the
+    // default; any other choice that matches the existing rawScalar is
+    // also a no-op. Skip the bloc dispatch + misleading success toast.
+    if (picked == 'sans' && existing == null) {
+      context.toastInfo('Page font already set to default');
+      return;
+    }
+    if (existing != null && existing.rawScalar.trim() == picked) {
+      context.toastInfo('Page font already set to $picked');
+      return;
+    }
     final bloc = context.read<EditorBloc>();
     final label = switch (picked) {
       'sans' => 'sans-serif (default)',
