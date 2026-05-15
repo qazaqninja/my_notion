@@ -40,13 +40,16 @@ class HtmlExporter {
       final title = parsed.frontmatter.title ??
           p.basenameWithoutExtension(entity.path);
       var body = markdownToHtml(parsed.body);
-      // Rewrite wikilink anchors to use titles.
+      // Rewrite wikilink anchors to use titles. The title can be any
+      // user-typed string from frontmatter — escape before splicing
+      // into the anchor text so '<script>' typed as a title can't
+      // inject HTML on the linker page.
       body = body.replaceAllMapped(
         RegExp(r'<a class="wikilink" href="([0-9A-Z]{26})\.html">[0-9A-Z]{26}</a>'),
         (m) {
           final ulid = m.group(1)!;
           final t = ulidToTitle[ulid] ?? ulid;
-          return '<a class="wikilink" href="$ulid.html">$t</a>';
+          return '<a class="wikilink" href="$ulid.html">${_escapeAttr(t)}</a>';
         },
       );
 
@@ -66,7 +69,10 @@ class HtmlExporter {
     final sorted = ulidToTitle.entries.toList()
       ..sort((a, b) => a.value.toLowerCase().compareTo(b.value.toLowerCase()));
     for (final e in sorted) {
-      index.write('<li><a href="${e.key}.html">${e.value}</a></li>');
+      // e.key is a ULID (alphanumeric), e.value is the user-typed
+      // title — escape that before splicing into the index anchor.
+      index.write(
+          '<li><a href="${e.key}.html">${_escapeAttr(e.value)}</a></li>');
     }
     index.write('</ul></body></html>');
     await File(p.join(dest.path, 'index.html')).writeAsString(index.toString());
@@ -90,17 +96,22 @@ class HtmlExporter {
   }
 
   static String _template({required String title, required String body}) {
+    // title is a user-typed frontmatter field — escape both the
+    // <title> attribute-style usage and the <h1> text-node usage.
+    // body is already HTML produced by markdownToHtml (which now
+    // pre-escapes every text node via M710) so we splice it as-is.
+    final safeTitle = _escapeAttr(title);
     return '''<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>$title</title>
+<title>$safeTitle</title>
 <link rel="stylesheet" href="site.css">
 </head>
 <body>
 <main>
-<h1 class="page-title">$title</h1>
+<h1 class="page-title">$safeTitle</h1>
 $body
 </main>
 </body>

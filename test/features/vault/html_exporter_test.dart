@@ -163,6 +163,47 @@ void main() {
     await dest.delete(recursive: true);
   });
 
+  test('XSS: multi-page export escapes title in <title>, <h1>, index, and '
+      'wikilink anchor (M711)', () async {
+    final src = await Directory.systemTemp.createTemp('quill_html_xss_src_');
+    final dest = await Directory.systemTemp.createTemp('quill_html_xss_dst_');
+    // Page A has a title with a script tag; page B wikilinks to it so
+    // the linked-title rewrite path also gets exercised.
+    await File(p.join(src.path, 'a.md')).writeAsString('---\n'
+        'id: 01HX0V9R5N6E8L3P7Q8S9U2X4B\n'
+        'title: "<script>alert(1)</script>"\n'
+        '---\nbody of a\n');
+    await File(p.join(src.path, 'b.md')).writeAsString('---\n'
+        'id: 01HX0VEY5T6K7R9X4Y8Z0A3D4G\n'
+        'title: B\n'
+        '---\nSee [[01HX0V9R5N6E8L3P7Q8S9U2X4B]].\n');
+    await const HtmlExporter().export(src: src, dest: dest);
+
+    final a = await File(
+            p.join(dest.path, '01HX0V9R5N6E8L3P7Q8S9U2X4B.html'))
+        .readAsString();
+    final b = await File(
+            p.join(dest.path, '01HX0VEY5T6K7R9X4Y8Z0A3D4G.html'))
+        .readAsString();
+    final idx =
+        await File(p.join(dest.path, 'index.html')).readAsString();
+
+    // No live <script> anywhere. The fixture body contains the literal
+    // characters via YAML, so we look for the script form specifically.
+    for (final out in [a, b, idx]) {
+      expect(out, isNot(contains('<script>alert(1)</script>')),
+          reason: 'title XSS leaked into ${out == a ? "A" : out == b ? "B" : "index"}');
+    }
+    // The escaped form must appear in the title element + h1 + wikilink
+    // anchor + index list entry.
+    expect(a, contains('&lt;script&gt;alert(1)&lt;/script&gt;'));
+    expect(b, contains('&lt;script&gt;alert(1)&lt;/script&gt;'));
+    expect(idx, contains('&lt;script&gt;alert(1)&lt;/script&gt;'));
+
+    await src.delete(recursive: true);
+    await dest.delete(recursive: true);
+  });
+
   group('HtmlExporter.renderStandalonePage', () {
     test('contains title, body and embedded CSS', () {
       final html = HtmlExporter.renderStandalonePage(
