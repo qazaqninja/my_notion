@@ -84,8 +84,17 @@ class HtmlExporter {
     for (final entity in dir.listSync()) {
       final name = p.basename(entity.path);
       if (entity is Directory) {
-        if (const {'.git', '.obsidian', 'node_modules', '_meta', '.dart_tool', '.idea', '.trash'}
-            .contains(name)) {
+        // Same ignored set as VaultFsDatasource (M718 sync).
+        if (const {
+          '.git',
+          '.obsidian',
+          'node_modules',
+          '_meta',
+          '.dart_tool',
+          '.idea',
+          'build',
+          '.trash',
+        }.contains(name)) {
           continue;
         }
         yield* _walk(entity);
