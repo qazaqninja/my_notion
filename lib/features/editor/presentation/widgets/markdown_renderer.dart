@@ -3102,9 +3102,15 @@ class _SelectionToolbar extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '$count / $total',
-              style: mono(fontSize: 11, color: tokens.text2),
+            Tooltip(
+              message: count == 1
+                  ? '1 of $total blocks selected'
+                  : '$count of $total blocks selected',
+              waitDuration: const Duration(milliseconds: 500),
+              child: Text(
+                '$count / $total',
+                style: mono(fontSize: 11, color: tokens.text2),
+              ),
             ),
             const SizedBox(width: 12),
             _bar(tokens),
