@@ -1236,6 +1236,11 @@ class _EditorBodyState extends State<_EditorBody> {
             const SingleActivator(LogicalKeyboardKey.keyR,
                 control: true, alt: true): () =>
                 _revealCurrentPage(context, loaded),
+            // F2 — universal "rename" shortcut across file managers,
+            // IDEs, and OS-level dialogs. Opens the same rename prompt
+            // as the editor kebab → Rename file….
+            const SingleActivator(LogicalKeyboardKey.f2): () =>
+                _renameFile(context, loaded),
             const SingleActivator(LogicalKeyboardKey.keyW,
                 meta: true, shift: true): () =>
                 _toggleFullWidth(context, loaded),
