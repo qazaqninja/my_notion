@@ -94,7 +94,9 @@ class _SideItemState extends State<SideItem> {
           margin: const EdgeInsets.symmetric(horizontal: 6),
           padding: EdgeInsets.fromLTRB(10 + widget.level * 14, padY, 6, padY),
           decoration: BoxDecoration(
-            color: widget.active ? tokens.selected : Colors.transparent,
+            color: widget.active
+                ? tokens.selected
+                : (_hover ? tokens.hover : Colors.transparent),
             borderRadius: const BorderRadius.all(Radius.circular(5)),
           ),
           child: Row(
