@@ -531,21 +531,30 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
               child: Builder(builder: (context) {
                 final visibleCount =
                     ApplyQuery.apply(rows, _query, schema).length;
-                return Row(
-                  children: [
-                    Text(
-                      'count ',
-                      style: mono(fontSize: 11.5, color: tokens.text3),
-                    ),
-                    Text('$visibleCount',
-                        style: mono(fontSize: 11.5, color: tokens.text2)),
-                    if (visibleCount != rows.length) ...[
-                      Text(' of ',
-                          style: mono(fontSize: 11.5, color: tokens.text3)),
-                      Text('${rows.length}',
-                          style: mono(fontSize: 11.5, color: tokens.text3)),
+                final filtered = visibleCount != rows.length;
+                return Tooltip(
+                  message: filtered
+                      ? '$visibleCount of ${rows.length} ${rows.length == 1 ? "row" : "rows"} match the active filters'
+                      : visibleCount == 1
+                          ? '1 row in this database'
+                          : '$visibleCount rows in this database',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: Row(
+                    children: [
+                      Text(
+                        'count ',
+                        style: mono(fontSize: 11.5, color: tokens.text3),
+                      ),
+                      Text('$visibleCount',
+                          style: mono(fontSize: 11.5, color: tokens.text2)),
+                      if (filtered) ...[
+                        Text(' of ',
+                            style: mono(fontSize: 11.5, color: tokens.text3)),
+                        Text('${rows.length}',
+                            style: mono(fontSize: 11.5, color: tokens.text3)),
+                      ],
                     ],
-                  ],
+                  ),
                 );
               }),
             ),
