@@ -358,15 +358,19 @@ class _CardState extends State<_Card> {
                       _rowIcon(row, tokens),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Text(
-                          row.title,
-                          style: TextStyle(
-                            fontSize: metrics.titleSize,
-                            fontWeight: FontWeight.w600,
-                            color: tokens.text,
+                        child: Tooltip(
+                          message: row.title,
+                          waitDuration: const Duration(milliseconds: 600),
+                          child: Text(
+                            row.title,
+                            style: TextStyle(
+                              fontSize: metrics.titleSize,
+                              fontWeight: FontWeight.w600,
+                              color: tokens.text,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
                         ),
                       ),
                       if (health.isNotEmpty)
