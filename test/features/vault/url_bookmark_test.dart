@@ -55,4 +55,32 @@ void main() {
     final r = await UrlBookmark.capture('https://example.org', vault);
     expect(r.relativePath, equals('Bookmarks/example.org.md'));
   });
+
+  test('rejects non-http(s) schemes (M717)', () async {
+    // file:// — would silently render as no bookmark card and could
+    // expose local paths; reject.
+    await expectLater(
+      () => UrlBookmark.capture('file:///etc/passwd', vault),
+      throwsA(isA<FormatException>()),
+    );
+    // javascript: — Uri.tryParse accepts it with a host-shaped tail;
+    // M717 rejects to prevent auto-launching JS via url_launcher.
+    await expectLater(
+      () => UrlBookmark.capture('javascript://example.com/alert(1)', vault),
+      throwsA(isA<FormatException>()),
+    );
+    // mailto: — different shape (no host) is already rejected by the
+    // host check, but include for documentation completeness.
+    await expectLater(
+      () => UrlBookmark.capture('mailto:nobody@example.com', vault),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
+  test('accepts both http and https (M717)', () async {
+    final http = await UrlBookmark.capture('http://example.com', vault);
+    expect(http.relativePath, startsWith('Bookmarks/'));
+    final https = await UrlBookmark.capture('https://example.com', vault);
+    expect(https.relativePath, startsWith('Bookmarks/'));
+  });
 }
