@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/markdown/frontmatter_parser.dart';
 import '../../../core/markdown/yaml_scalar.dart';
+import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import '../domain/entities/frontmatter_entry.dart';
 
@@ -30,7 +31,7 @@ class TextPageImporter {
     String targetFolder = 'Inbox',
   }) async {
     final ext = p.extension(source.path).toLowerCase();
-    final content = await source.readAsString();
+    final content = stripBom(await source.readAsString());
     final basename = p.basenameWithoutExtension(source.path);
     final imported = p.basename(source.path);
     if (ext == '.md' || ext == '.markdown') {

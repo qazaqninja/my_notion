@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import '../../../../core/markdown/frontmatter_parser.dart';
 import '../../../../core/markdown/type_inference.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
+import '../../../../core/text/strip_bom.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../vault/domain/entities/frontmatter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
@@ -32,7 +33,7 @@ class CsvImporter {
     Directory vaultRoot, {
     String? folderName,
   }) async {
-    final raw = await csv.readAsString();
+    final raw = stripBom(await csv.readAsString());
     final rows = _parse(raw);
     if (rows.length < 2) {
       throw const FormatException('CSV must have a header row + ≥1 data row');

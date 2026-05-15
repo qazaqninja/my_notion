@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../../core/markdown/yaml_scalar.dart';
+import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'opml_to_markdown.dart';
 
@@ -20,7 +21,7 @@ class OpmlPageImporter {
     Directory vaultRoot, {
     String targetFolder = 'Inbox',
   }) async {
-    final raw = await source.readAsString();
+    final raw = stripBom(await source.readAsString());
     final body = OpmlToMarkdown.convert(raw);
     final fallback = p.basenameWithoutExtension(source.path);
     final title = OpmlToMarkdown.extractTitle(raw) ?? fallback;

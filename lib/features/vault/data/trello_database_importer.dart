@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../../core/markdown/yaml_scalar.dart';
+import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'trello_to_database.dart';
 
@@ -17,7 +18,7 @@ class TrelloDatabaseImporter {
     File source,
     Directory vaultRoot,
   ) async {
-    final raw = await source.readAsString();
+    final raw = stripBom(await source.readAsString());
     final board = TrelloToDatabase.convert(raw);
     if (board == null) {
       throw const FormatException('Not a Trello board JSON');

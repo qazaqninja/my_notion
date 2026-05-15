@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../../core/markdown/yaml_scalar.dart';
+import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'html_to_markdown.dart';
 
@@ -25,7 +26,7 @@ class EnexPageImporter {
     Directory vaultRoot, {
     String targetFolder = 'Evernote',
   }) async {
-    final raw = await source.readAsString();
+    final raw = stripBom(await source.readAsString());
     final notes = _parseNotes(raw);
     final folder = Directory(p.join(vaultRoot.path, targetFolder));
     await folder.create(recursive: true);

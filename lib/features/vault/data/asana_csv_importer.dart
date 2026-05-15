@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../../core/markdown/yaml_scalar.dart';
+import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
 
 /// Tailored Asana CSV import — produces a database whose `.database.yaml`
@@ -21,7 +22,7 @@ class AsanaCsvImporter {
     File source,
     Directory vaultRoot,
   ) async {
-    final raw = await source.readAsString();
+    final raw = stripBom(await source.readAsString());
     final rows = _parseCsv(raw);
     if (rows.length < 2) {
       throw const FormatException('CSV must have a header row + ≥1 data row');

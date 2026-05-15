@@ -122,4 +122,35 @@ void main() {
     expect(parsed.frontmatter.get('cool_v2'), equals('ok'),
         reason: 'brackets stripped');
   });
+
+  test('strips a leading UTF-8 BOM from CSV exports (M769)', () async {
+    // Excel and Google Sheets routinely prepend a U+FEFF byte-order
+    // marker to CSV exports. Without stripBom() the importer treats it
+    // as a literal first character of the first header cell — the
+    // resulting column name has an invisible BOM and downstream lookups
+    // (and YAML keys, if they slipped through normalisation) misalign.
+    final csv = File(p.join(tmp.path, 'bomd.csv'));
+    await csv.writeAsString(
+      '﻿title,score\n'
+      'Alpha,1\n'
+      'Beta,2\n',
+    );
+
+    final result =
+        await const CsvImporter(ulids: UlidGenerator()).importTo(csv, tmp);
+    expect(result.rowsWritten, 2);
+
+    // The "title" column was picked correctly (not column index 0 by
+    // fallback), so page filenames come from each row's title cell.
+    final alpha =
+        File(p.join(result.folderPath, 'Alpha.md'));
+    expect(await alpha.exists(), isTrue,
+        reason: 'title column must be matched even when prefixed with BOM');
+    final parsed =
+        FrontmatterParser.parse(await alpha.readAsString());
+    // The body row's "title" frontmatter is the title column value,
+    // not the BOMed header collapsed into yamlSnakeKey's "col" fallback.
+    expect(parsed.frontmatter.find('title')?.value, equals('Alpha'));
+    expect(parsed.frontmatter.get('score'), equals(1));
+  });
 }

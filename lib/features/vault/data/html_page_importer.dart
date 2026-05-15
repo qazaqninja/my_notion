@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../../core/markdown/yaml_scalar.dart';
+import '../../../core/text/strip_bom.dart';
 import '../../../core/ulid/ulid_generator.dart';
 import 'html_to_markdown.dart';
 
@@ -25,7 +26,7 @@ class HtmlPageImporter {
     Directory vaultRoot, {
     String targetFolder = 'Inbox',
   }) async {
-    final html = await source.readAsString();
+    final html = stripBom(await source.readAsString());
     final body = HtmlToMarkdown.convert(html);
     final fallbackTitle = p.basenameWithoutExtension(source.path);
     final title = HtmlToMarkdown.extractTitle(html) ?? fallbackTitle;
