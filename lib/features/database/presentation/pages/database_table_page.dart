@@ -332,7 +332,34 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(_error!, style: TextStyle(color: tokens.text2)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Could not load database',
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text2)),
+              const SizedBox(height: 6),
+              Text(_error!,
+                  style: TextStyle(
+                      color: tokens.text3, fontSize: 13, height: 1.5)),
+              const SizedBox(height: 14),
+              Row(children: [
+                TextButton(
+                  onPressed: () => context.go('/databases'),
+                  child: const Text('Browse databases'),
+                ),
+                const SizedBox(width: 4),
+                TextButton(
+                  onPressed: () =>
+                      context.read<VaultBloc>().add(const ReindexVault()),
+                  child: const Text('Reindex vault'),
+                ),
+              ]),
+            ],
+          ),
         ),
       );
     }
