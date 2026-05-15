@@ -13,6 +13,10 @@ enum SlashAction {
   /// Reverse the order of the lines in the current selection. Falls
   /// back to a single-line no-op when there is no selection.
   reverseSelectedLines,
+  /// Walk the entire body for `:shortcode:` patterns and replace each
+  /// match with its emoji glyph (`:tada:` → 🎉). Unknown shortcodes
+  /// stay verbatim.
+  expandEmojiShortcodes,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -278,6 +282,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'flip ↕',
     action: SlashAction.reverseSelectedLines,
     keywords: ['reverse', 'flip', 'invert', 'lines', 'rev'],
+  ),
+  SlashEntry(
+    icon: 'tag',
+    label: 'Expand :shortcodes: → emoji',
+    hint: ':tada: → 🎉',
+    action: SlashAction.expandEmojiShortcodes,
+    keywords: ['emoji', 'shortcode', 'expand', 'replace', 'tada', 'fire'],
   ),
   SlashEntry(
     icon: 'tag',

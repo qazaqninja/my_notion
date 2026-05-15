@@ -20,6 +20,7 @@ import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/attachment_writer.dart';
+import '../../domain/emoji_shortcodes.dart';
 import '../../domain/insert_link.dart';
 import '../../domain/slash_entries.dart';
 import '../../domain/source_line_ops.dart';
@@ -835,6 +836,21 @@ class _SourceViewState extends State<SourceView> {
           selection: TextSelection.collapsed(offset: cursor),
         );
         _reverseSelectedLines();
+      case SlashAction.expandEmojiShortcodes:
+        // Strip the `/expand` trigger first, then scan the whole body
+        // for `:shortcode:` patterns and replace each with its emoji.
+        final cleared = text.replaceRange(stripStart, caret, '');
+        final expanded = replaceEmojiShortcodes(cleared);
+        // Caret lands where the trigger used to be — the splice can
+        // shift offsets to the right of stripStart, but the user
+        // typed the slash command at stripStart so that's the
+        // expected landing point.
+        _controller.value = TextEditingValue(
+          text: expanded,
+          selection: TextSelection.collapsed(
+            offset: stripStart.clamp(0, expanded.length),
+          ),
+        );
     }
   }
 
