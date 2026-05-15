@@ -1070,7 +1070,7 @@ class Tokens {
       TextStyle(fontFamily: 'JetBrainsMono', fontSize: fontSize, color: color);
 }
 
-class _Btn extends StatelessWidget {
+class _Btn extends StatefulWidget {
   const _Btn({required this.label, this.icon, this.onTap, this.primary = false});
   final String label;
   final String? icon;
@@ -1078,36 +1078,58 @@ class _Btn extends StatelessWidget {
   final bool primary;
 
   @override
+  State<_Btn> createState() => _BtnState();
+}
+
+class _BtnState extends State<_Btn> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: primary ? tokens.accent : Colors.transparent,
-            border: Border.all(color: primary ? Colors.transparent : tokens.divider2, width: 0.5),
-            borderRadius: const BorderRadius.all(Radius.circular(5)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                QuillIcon(icon!, size: 13, strokeWidth: 1.7,
-                    color: primary ? Colors.white : tokens.text2),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  color: primary ? Colors.white : tokens.text,
+    final primary = widget.primary;
+    final enabled = widget.onTap != null;
+    return MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: enabled ? (_) => setState(() => _hover = true) : null,
+      onExit: enabled ? (_) => setState(() => _hover = false) : null,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Opacity(
+          opacity: enabled ? 1.0 : 0.5,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: primary
+                  ? (_hover ? tokens.accent.withValues(alpha: 0.85) : tokens.accent)
+                  : (_hover ? tokens.hover : Colors.transparent),
+              border: Border.all(
+                  color: primary
+                      ? Colors.transparent
+                      : (_hover ? tokens.accent : tokens.divider2),
+                  width: 0.5),
+              borderRadius: const BorderRadius.all(Radius.circular(5)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.icon != null) ...[
+                  QuillIcon(widget.icon!,
+                      size: 13,
+                      strokeWidth: 1.7,
+                      color: primary ? Colors.white : tokens.text2),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: primary ? Colors.white : tokens.text,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
