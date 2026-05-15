@@ -432,6 +432,12 @@ class _VaultShellPageState extends State<VaultShellPage> {
     }
     final pick =
         rows[(DateTime.now().microsecondsSinceEpoch % rows.length).abs()];
+    if (context.mounted) {
+      context.toastInfo(
+        'Random pick from ${rows.length} ${rows.length == 1 ? "page" : "pages"}',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
     router.go('/editor/${pick.ulid}');
   }
 
@@ -1479,17 +1485,18 @@ views:
   }
 
   Widget _paletteOverlay(BuildContext context) {
+    final cubit = _cubit(context);
     return CommandPaletteOverlay(
       onPickPage: (p) {
-        context.read<CommandPaletteCubit>().dismiss();
+        cubit.dismiss();
         context.go('/editor/${p.ulid}');
       },
       onPickDatabase: (d) {
-        context.read<CommandPaletteCubit>().dismiss();
+        cubit.dismiss();
         context.go('/db/${d.id}');
       },
       onInvokeAction: (a) {
-        context.read<CommandPaletteCubit>().dismiss();
+        cubit.dismiss();
         _invokeAction(context, a.label);
       },
     );
