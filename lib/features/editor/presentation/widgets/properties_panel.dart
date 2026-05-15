@@ -203,6 +203,28 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     );
   }
 
+  /// True when the page's frontmatter marks it `locked: true` or
+  /// `permissions: read_only` (mirrors EditorBloc.isLocked but operates
+  /// on a raw Frontmatter so we don't need to pass EditorLoaded around).
+  bool _isLocked() {
+    final fm = widget.page.frontmatter;
+    final v = fm.get('locked');
+    if (v == true || '$v'.toLowerCase() == 'true') return true;
+    final p = fm.get('permissions');
+    final ps = '$p'.trim().toLowerCase();
+    return ps == 'read_only' ||
+        ps == 'read-only' ||
+        ps == 'readonly' ||
+        ps == 'locked';
+  }
+
+  bool _guardUnlocked() {
+    if (!_isLocked()) return true;
+    context.toastInfo('Page is locked',
+        sub: 'Unlock the page (⌘⇧L) to edit properties');
+    return false;
+  }
+
   Widget _fieldsBody(QuillTokens tokens) {
     final entries = widget.page.frontmatter.entries
         .where((e) => e.key != 'id')
@@ -238,18 +260,28 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
           _EditableFrontmatterRow(
             key: ValueKey('fm-${entry.key}'),
             entry: entry,
-            onChange: (next) => context
-                .read<EditorBloc>()
-                .add(EditFrontmatterField(entry.key, next)),
-            onRemove: () => context
-                .read<EditorBloc>()
-                .add(RemoveFrontmatterField(entry.key)),
+            onChange: (next) {
+              if (!_guardUnlocked()) return;
+              context
+                  .read<EditorBloc>()
+                  .add(EditFrontmatterField(entry.key, next));
+            },
+            onRemove: () {
+              if (!_guardUnlocked()) return;
+              context
+                  .read<EditorBloc>()
+                  .add(RemoveFrontmatterField(entry.key));
+            },
           ),
         if (_addingField)
           _AddFieldForm(
             existingKeys: widget.page.frontmatter.keys.toSet(),
             onCancel: () => setState(() => _addingField = false),
             onAdd: (newEntry) {
+              if (!_guardUnlocked()) {
+                setState(() => _addingField = false);
+                return;
+              }
               context
                   .read<EditorBloc>()
                   .add(AddFrontmatterField(newEntry));
