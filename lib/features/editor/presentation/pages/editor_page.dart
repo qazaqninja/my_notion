@@ -753,7 +753,12 @@ class _EditorBodyState extends State<_EditorBody> {
       return;
     }
     final bloc = context.read<EditorBloc>();
-    final raw = '[${merged.join(', ')}]';
+    // Quote each element when it would otherwise break the YAML flow
+    // list — `,`, `[`, `]`, `:`, `#`, leading/trailing whitespace.
+    // Without this, a tag like "high, priority" would split into two
+    // entries when re-parsed.
+    final raw =
+        '[${merged.map(_yamlFlowItem).join(', ')}]';
     if (existing == null) {
       bloc.add(AddFrontmatterField(FrontmatterEntry(
         key: 'tags',
@@ -770,6 +775,23 @@ class _EditorBodyState extends State<_EditorBody> {
     context.toastSuccess(
         'Added ${actuallyNew.length} ${actuallyNew.length == 1 ? "tag" : "tags"}',
         sub: actuallyNew.join(', '));
+  }
+
+  /// Wrap a flow-list element in double quotes when it contains glyphs
+  /// that would split or be reinterpreted by YAML's flow grammar
+  /// (`,`, `[`, `]`, `{`, `}`, `:`, `#`, etc.). Mirrors VaultBloc.
+  /// _yamlSafeScalar (M686) but adds `,` to the unsafe-glyph set
+  /// because flow lists separate on commas.
+  static String _yamlFlowItem(String value) {
+    if (value.isEmpty) return '""';
+    final needs =
+        RegExp(r'''[,#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
+            value.startsWith(' ') ||
+            value.endsWith(' ');
+    if (!needs) return value;
+    final escaped =
+        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    return '"$escaped"';
   }
 
   Future<void> _setWordGoal(
