@@ -50,7 +50,11 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   state is VaultLoaded
-                      ? 'Your vault has ${state.pageCount} indexed pages.'
+                      ? (state.pageCount == 0
+                          ? 'Fresh vault. Hit "New page" or ⌘N to start.'
+                          : state.pageCount == 1
+                              ? 'Your vault has 1 indexed page.'
+                              : 'Your vault has ${state.pageCount} indexed pages.')
                       : 'Choose a vault to get started.',
                   style: TextStyle(fontSize: 14, color: tokens.text3, height: 1.55),
                 ),
