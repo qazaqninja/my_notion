@@ -982,7 +982,11 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: next, value: !wasLocked),
       ));
     }
-    context.toastSuccess(wasLocked ? 'Page unlocked' : 'Page locked');
+    final label = loaded.page.title.isEmpty
+        ? loaded.page.relativePath
+        : loaded.page.title;
+    context.toastSuccess(wasLocked ? 'Page unlocked' : 'Page locked',
+        sub: label);
   }
 
   void _togglePin(BuildContext context, EditorLoaded loaded) {
