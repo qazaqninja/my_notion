@@ -300,6 +300,12 @@ class _EditorBodyState extends State<_EditorBody> {
       }
       return;
     }
+    if (existing != null && existing.rawScalar.trim() == picked) {
+      if (context.mounted) {
+        context.toastInfo('Page icon already $picked');
+      }
+      return;
+    }
     if (existing == null) {
       bloc.add(AddFrontmatterField(FrontmatterEntry(
         key: 'icon',
