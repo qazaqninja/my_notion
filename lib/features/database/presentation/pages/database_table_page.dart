@@ -575,6 +575,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         icon: 'filter',
         label: _query.filters.isEmpty ? 'Filter' : 'Filter (${_query.filters.length})',
         active: _query.filters.isNotEmpty,
+        tooltip: _query.filters.isEmpty
+            ? 'Filter rows'
+            : _query.filters.length == 1
+                ? '1 active filter'
+                : '${_query.filters.length} active filters',
         onTap: () => _openFilterPopover(context, schema),
       ),
       if (!mobile) const SizedBox(width: 4),
@@ -582,6 +587,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         icon: 'sort',
         label: _query.sorts.isEmpty ? 'Sort' : 'Sort (${_query.sorts.length})',
         active: _query.sorts.isNotEmpty,
+        tooltip: _query.sorts.isEmpty
+            ? 'Sort rows'
+            : _query.sorts.length == 1
+                ? '1 active sort'
+                : '${_query.sorts.length} active sorts',
         onTap: () => _openSortPopover(context, schema),
       ),
       if (!mobile) const SizedBox(width: 4),
@@ -593,6 +603,11 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                 ? 'Group: ${_query.groupBy}'
                 : 'Group: ${_query.groupBy} › ${_query.subGroupBy}',
         active: _query.groupBy != null,
+        tooltip: _query.groupBy == null
+            ? 'Group rows by a column'
+            : _query.subGroupBy == null
+                ? 'Grouped by ${_query.groupBy}'
+                : 'Grouped by ${_query.groupBy} › ${_query.subGroupBy}',
         onTap: () => _openGroupPopover(context, schema),
       ),
       if (!mobile) const SizedBox(width: 4),
@@ -602,6 +617,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
             ? 'Properties'
             : 'Properties (${_visibleOverride!.length + 1})',
         active: _visibleOverride != null,
+        tooltip: 'Choose which columns are visible',
         onTap: () => _openPropertiesPopover(context, schema),
       ),
       if (!mobile) const SizedBox(width: 4),
@@ -727,11 +743,16 @@ class _ToolButton extends StatefulWidget {
     required this.label,
     required this.onTap,
     this.active = false,
+    this.tooltip,
   });
   final String icon;
   final String label;
   final VoidCallback onTap;
   final bool active;
+
+  /// Optional hover hint. When null, no tooltip is shown — the label
+  /// already names the action.
+  final String? tooltip;
 
   @override
   State<_ToolButton> createState() => _ToolButtonState();
@@ -744,7 +765,7 @@ class _ToolButtonState extends State<_ToolButton> {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final active = widget.active;
-    return MouseRegion(
+    Widget btn = MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
@@ -791,6 +812,14 @@ class _ToolButtonState extends State<_ToolButton> {
         ),
       ),
     );
+    if (widget.tooltip != null) {
+      btn = Tooltip(
+        message: widget.tooltip!,
+        waitDuration: const Duration(milliseconds: 500),
+        child: btn,
+      );
+    }
+    return btn;
   }
 }
 
