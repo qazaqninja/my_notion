@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import '../../../../core/paths.dart';
@@ -1177,17 +1176,8 @@ views:
   Future<void> _showUntaggedDialog(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final pages = await db.select(db.pages).get();
-    bool hasTag(String json) {
-      if (json.isEmpty) return false;
-      try {
-        final m = jsonDecode(json);
-        if (m is! Map) return false;
-        final raw = m['tags'];
-        if (raw is List) return raw.isNotEmpty;
-        if (raw is String) return raw.trim().isNotEmpty;
-      } catch (_) {/* fall through */}
-      return false;
-    }
+    bool hasTag(String json) =>
+        listValueFromFrontmatterJson(json, 'tags').isNotEmpty;
 
     final untagged = [
       for (final p in pages)
