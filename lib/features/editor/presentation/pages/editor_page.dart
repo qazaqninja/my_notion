@@ -387,7 +387,7 @@ class _EditorBodyState extends State<_EditorBody> {
         messenger?.showSnackBar(
           SnackBar(
             content: Text(
-                'Copied ${loaded.page.body.length} chars to clipboard'),
+                'Copied ${loaded.page.body.length} ${loaded.page.body.length == 1 ? 'char' : 'chars'} to clipboard'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -396,7 +396,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await Clipboard.setData(ClipboardData(text: plain));
         messenger?.showSnackBar(
           SnackBar(
-            content: Text('Copied ${plain.length} chars as plain text'),
+            content: Text(
+                'Copied ${plain.length} ${plain.length == 1 ? 'char' : 'chars'} as plain text'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -414,7 +415,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await Clipboard.setData(ClipboardData(text: payload));
         messenger?.showSnackBar(
           SnackBar(
-            content: Text('Copied ${payload.length} chars JSON'),
+            content: Text(
+                'Copied ${payload.length} ${payload.length == 1 ? 'char' : 'chars'} JSON'),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -2030,13 +2032,13 @@ class _PageFooter extends StatelessWidget {
             message: _wordCountTooltip(body, words, chars, mins),
             child: Row(
               children: [
-                Text('$words words',
+                Text('$words ${words == 1 ? 'word' : 'words'}',
                     style: mono(fontSize: 11, color: tokens.text3)),
                 Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
-                Text('$chars chars',
+                Text('$chars ${chars == 1 ? 'char' : 'chars'}',
                     style: mono(fontSize: 11, color: tokens.text3)),
                 Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
-                Text('~$mins min read',
+                Text('~$mins ${mins == 1 ? 'min' : 'mins'} read',
                     style: mono(fontSize: 11, color: tokens.text3)),
                 if (g != null) ...[
                   Text('  ·  ',
