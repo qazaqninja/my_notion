@@ -176,7 +176,13 @@ class TreeNodeWidget extends StatelessWidget {
             duration: const Duration(seconds: 2)),
       );
     } else if (selected == 'reveal') {
-      await Reveal.show(p.join(state.rootPath, f.relativePath));
+      final path = p.join(state.rootPath, f.relativePath);
+      final ok = await Reveal.show(path);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text('Could not reveal $path')),
+        );
+      }
     }
   }
 
@@ -252,7 +258,13 @@ class TreeNodeWidget extends StatelessWidget {
     );
     if (!context.mounted) return;
     if (selected == 'reveal') {
-      await Reveal.show(p.join(state.rootPath, fl.relativePath));
+      final path = p.join(state.rootPath, fl.relativePath);
+      final ok = await Reveal.show(path);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text('Could not reveal $path')),
+        );
+      }
     } else if (selected == 'copy-ulid') {
       await _copyUlid(context, fl.ulid);
     } else if (selected == 'copy-link') {
