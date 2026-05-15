@@ -3337,28 +3337,35 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
                           onTap: widget.onToggleSelected,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: widget.selected
-                                  ? tokens.accent.withValues(alpha: 0.18)
-                                  : tokens.surface,
-                              border: Border.all(
-                                  color: widget.selected
-                                      ? tokens.accent
-                                      : tokens.divider2,
-                                  width: 0.5),
-                              borderRadius: const BorderRadius.all(
-                                  Radius.circular(4)),
-                            ),
-                            child: Icon(
-                              widget.selected
-                                  ? Icons.check_box
-                                  : Icons.check_box_outline_blank,
-                              size: 12,
-                              color: widget.selected
-                                  ? tokens.accent
-                                  : tokens.text3,
+                          child: Tooltip(
+                            message: widget.selected
+                                ? 'Deselect block'
+                                : 'Select block',
+                            waitDuration:
+                                const Duration(milliseconds: 500),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: widget.selected
+                                    ? tokens.accent.withValues(alpha: 0.18)
+                                    : tokens.surface,
+                                border: Border.all(
+                                    color: widget.selected
+                                        ? tokens.accent
+                                        : tokens.divider2,
+                                    width: 0.5),
+                                borderRadius: const BorderRadius.all(
+                                    Radius.circular(4)),
+                              ),
+                              child: Icon(
+                                widget.selected
+                                    ? Icons.check_box
+                                    : Icons.check_box_outline_blank,
+                                size: 12,
+                                color: widget.selected
+                                    ? tokens.accent
+                                    : tokens.text3,
+                              ),
                             ),
                           ),
                         ),
