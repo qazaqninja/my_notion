@@ -50,3 +50,10 @@ linter:
     only_throw_errors: false            # some flows throw strings as exception messages
     prefer_const_declarations: false    # style; const opt-in is at the use site
     flutter_style_todos: false          # TODOs without (user) ownership tags
+    # The lint says "File.exists() is slow, prefer existsSync()". For
+    # async vault scans / importers that's true — sync is faster and
+    # doesn't block the UI thread because we're already on a background
+    # zone. But the codebase uses await on dart:io for readability and
+    # to match the rest of the async-first style. The "slow" overhead
+    # is negligible (~ms) for the file counts in a typical vault.
+    avoid_slow_async_io: false
