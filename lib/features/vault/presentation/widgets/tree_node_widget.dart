@@ -216,7 +216,17 @@ class TreeNodeWidget extends StatelessWidget {
       ),
     );
     if (name == null || name.trim().isEmpty) return;
-    bloc.add(CreateFolder(parentFolder: parentFolder, name: name.trim()));
+    final trimmed = name.trim();
+    bloc.add(CreateFolder(parentFolder: parentFolder, name: trimmed));
+    if (!context.mounted) return;
+    final fullPath =
+        parentFolder.isEmpty ? trimmed : '$parentFolder/$trimmed';
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('Created folder $fullPath'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _showFileMenu(
