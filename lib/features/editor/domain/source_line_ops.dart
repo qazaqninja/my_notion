@@ -609,6 +609,35 @@ SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2})
   );
 }
 
+/// Convert each run of [width] **leading** spaces on every selected
+/// line into a single tab character. Trailing/inline spaces are
+/// left alone — only the indent is converted, mirroring the
+/// VS Code / Vim convention. Defaults to 2-space indents.
+///
+/// This is the inverse of [tabsToSpacesIn] for indents only: a round
+/// trip preserves leading-tab-only files, and a file with mixed
+/// inline spaces stays unchanged on the trip back.
+SortLinesResult spacesToTabsIn(String text, int start, int end, {int width = 2}) {
+  return _transformLinesIn(
+    text,
+    start,
+    end,
+    (lines) => [
+      for (final l in lines)
+        (() {
+          // Find the run of leading spaces.
+          var i = 0;
+          while (i < l.length && l.codeUnitAt(i) == 0x20) {
+            i++;
+          }
+          final tabs = '\t' * (i ~/ width);
+          final leftover = ' ' * (i % width);
+          return '$tabs$leftover${l.substring(i)}';
+        })(),
+    ],
+  );
+}
+
 /// Uppercase every line in the selected block. Common power-user
 /// transform; mirrors VS Code's "Transform to Uppercase".
 SortLinesResult uppercaseLinesIn(String text, int start, int end) =>

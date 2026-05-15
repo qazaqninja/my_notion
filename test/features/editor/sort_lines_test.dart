@@ -630,6 +630,43 @@ void main() {
     });
   });
 
+  group('spacesToTabsIn', () {
+    test('converts a 2-space indent into one tab (default)', () {
+      const text = '  one\n    two\n';
+      final r = spacesToTabsIn(text, 0, text.length);
+      expect(r.text, '\tone\n\t\ttwo\n');
+    });
+
+    test('configurable width', () {
+      const text = '    one\n';
+      expect(spacesToTabsIn(text, 0, text.length, width: 4).text, '\tone\n');
+    });
+
+    test('leftover spaces (not a full multiple) stay as spaces', () {
+      // 3 leading spaces with width 2 → 1 tab + 1 leftover space.
+      const text = '   foo\n';
+      expect(spacesToTabsIn(text, 0, text.length).text, '\t foo\n');
+    });
+
+    test('leaves mid-line and trailing spaces alone', () {
+      const text = '  one two   \n';
+      final r = spacesToTabsIn(text, 0, text.length);
+      expect(r.text, '\tone two   \n');
+    });
+
+    test('round-trip indent-only file is identity', () {
+      const text = '\tfoo\n\t\tbar\n';
+      final asSpaces = tabsToSpacesIn(text, 0, text.length).text;
+      final back = spacesToTabsIn(asSpaces, 0, asSpaces.length).text;
+      expect(back, text);
+    });
+
+    test('no-op when there is no leading whitespace', () {
+      const text = 'plain\nstuff\n';
+      expect(spacesToTabsIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

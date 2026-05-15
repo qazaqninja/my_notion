@@ -68,6 +68,9 @@ enum SlashAction {
   stripLeadingWhitespace,
   /// Replace every tab on every selected line with 2 spaces.
   tabsToSpaces,
+  /// Convert every leading 2-space indent on every selected line
+  /// into a tab. Inverse of [tabsToSpaces] (indent-only).
+  spacesToTabs,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -427,6 +430,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '\\t → "  "',
     action: SlashAction.tabsToSpaces,
     keywords: ['tab', 'spaces', 'expand', 'convert', 'indent'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Spaces → tabs',
+    hint: '"  " → \\t',
+    action: SlashAction.spacesToTabs,
+    keywords: ['tab', 'spaces', 'compact', 'convert', 'indent'],
   ),
   SlashEntry(
     icon: 'edit',
