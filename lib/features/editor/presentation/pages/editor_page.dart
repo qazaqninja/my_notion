@@ -711,8 +711,11 @@ class _EditorBodyState extends State<_EditorBody> {
     final bloc = context.read<EditorBloc>();
     if (trimmed.isEmpty) {
       if (existing != null) {
+        final was = existing.rawScalar.trim();
         bloc.add(const RemoveFrontmatterField('goal'));
-        context.toastSuccess('Word count goal cleared');
+        context.toastSuccess(was.isEmpty
+            ? 'Word count goal cleared'
+            : 'Word count goal cleared (was $was)');
       }
       return;
     }
@@ -734,7 +737,7 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: '$n', value: n),
       ));
     }
-    context.toastSuccess('Word count goal: $n');
+    context.toastSuccess('Word count goal: $n ${n == 1 ? "word" : "words"}');
   }
 
   Future<void> _snoozeReminder(
