@@ -133,10 +133,19 @@ class _Panel extends StatelessWidget {
                         size: 20, strokeWidth: 1.4, color: tokens.text3),
                     const SizedBox(height: 8),
                     Text(
+                      state.query.isEmpty ? 'Find a page' : 'No matches',
+                      style: TextStyle(
+                          fontSize: 12.5,
+                          color: tokens.text2,
+                          fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
                       state.query.isEmpty
-                          ? 'Start typing to find a page'
-                          : 'No matches',
-                      style: TextStyle(fontSize: 12.5, color: tokens.text3),
+                          ? 'Start typing to search by title.'
+                          : 'No page title matches "${state.query}".',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 11, color: tokens.text3),
                     ),
                   ],
                 ),
