@@ -5,8 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/db/quill_database.dart' hide Page;
+// Composition root — app.dart is the one place that constructs concrete
+// data-layer impls and wires them through RepositoryProvider. Other
+// presentation files MUST consume the abstract interfaces, never the
+// _impl classes. Per docs/RULES.md CA-04 the composition-root exception.
 import 'features/database/data/repositories/database_repository_impl.dart';
 import 'features/database/domain/repositories/database_repository.dart';
+import 'features/relations/data/relations_repository_impl.dart';
+import 'features/relations/domain/repositories/relations_repository.dart';
 import 'features/database/presentation/pages/database_table_page.dart';
 import 'features/database/presentation/pages/databases_page.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
@@ -36,6 +42,7 @@ class _QuillAppState extends State<QuillApp> {
   late final QuillDatabase _db;
   late final VaultRepositoryImpl _repo;
   late final DatabaseRepository _dbRepo;
+  late final RelationsRepository _relationsRepo;
   late final Indexer _indexer;
   late final VaultBloc _vaultBloc;
   late final ThemeCubit _themeCubit;
@@ -48,6 +55,7 @@ class _QuillAppState extends State<QuillApp> {
     _repo = VaultRepositoryImpl.local();
     _indexer = Indexer(_db, _repo.datasource);
     _dbRepo = DatabaseRepositoryImpl(_db, vault: _repo, indexer: _indexer);
+    _relationsRepo = RelationsRepositoryImpl(_db);
     _vaultBloc = VaultBloc(repo: _repo, indexer: _indexer, db: _db);
     _themeCubit = ThemeCubit()..load();
     _router = _buildRouter(_vaultBloc);
@@ -65,46 +73,46 @@ class _QuillAppState extends State<QuillApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    // DI-02 (docs/RULES.md): repositories are the outermost wrappers so
+    // any future bloc that resolves a repo from `context` inside
+    // BlocProvider.create can find it.
+    return MultiRepositoryProvider(
       providers: [
-        BlocProvider.value(value: _themeCubit),
-        BlocProvider.value(value: _vaultBloc),
+        RepositoryProvider<QuillDatabase>.value(value: _db),
+        RepositoryProvider<VaultRepository>.value(value: _repo),
+        RepositoryProvider<DatabaseRepository>.value(value: _dbRepo),
+        RepositoryProvider<RelationsRepository>.value(value: _relationsRepo),
+        RepositoryProvider<Indexer>.value(value: _indexer),
       ],
-      child: RepositoryProvider<QuillDatabase>.value(
-        value: _db,
-        child: RepositoryProvider<VaultRepository>.value(
-          value: _repo,
-          child: RepositoryProvider<DatabaseRepository>.value(
-            value: _dbRepo,
-            child: RepositoryProvider<Indexer>.value(
-              value: _indexer,
-              child: BlocBuilder<ThemeCubit, ThemeState>(
-            builder: (context, themeState) {
-              return MaterialApp.router(
-                title: 'Quill',
-                debugShowCheckedModeBanner: false,
-                theme: makeTheme(Brightness.light, themeState.accent),
-                darkTheme: makeTheme(Brightness.dark, themeState.accent),
-                themeMode: themeState.mode,
-                routerConfig: _router,
-                builder: (context, child) {
-                  final mq = MediaQuery.of(context);
-                  return MediaQuery(
-                    data: mq.copyWith(
-                      textScaler: themeState.compact
-                          ? const TextScaler.linear(0.92)
-                          : mq.textScaler,
-                    ),
-                    child: QuillToastHost(
-                      child: child ?? const SizedBox.shrink(),
-                    ),
-                  );
-                },
-              );
-            },
-              ),
-            ),
-          ),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: _themeCubit),
+          BlocProvider.value(value: _vaultBloc),
+        ],
+        child: BlocBuilder<ThemeCubit, ThemeState>(
+          builder: (context, themeState) {
+            return MaterialApp.router(
+              title: 'Quill',
+              debugShowCheckedModeBanner: false,
+              theme: makeTheme(Brightness.light, themeState.accent),
+              darkTheme: makeTheme(Brightness.dark, themeState.accent),
+              themeMode: themeState.mode,
+              routerConfig: _router,
+              builder: (context, child) {
+                final mq = MediaQuery.of(context);
+                return MediaQuery(
+                  data: mq.copyWith(
+                    textScaler: themeState.compact
+                        ? const TextScaler.linear(0.92)
+                        : mq.textScaler,
+                  ),
+                  child: QuillToastHost(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                );
+              },
+            );
+          },
         ),
       ),
     );

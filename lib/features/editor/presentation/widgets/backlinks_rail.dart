@@ -6,9 +6,7 @@ import '../../../../core/paths.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
-import '../../../relations/data/relations_repository_impl.dart';
 import '../../../relations/domain/repositories/relations_repository.dart';
-import '../../../../core/db/quill_database.dart' hide Page;
 
 /// Right-rail "Linked from" section. Queries Drift `relations` table for
 /// inverse links and renders a card per linking page.
@@ -19,8 +17,7 @@ class BacklinksRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    final db = context.read<QuillDatabase>();
-    final repo = RelationsRepositoryImpl(db);
+    final repo = context.read<RelationsRepository>();
     return FutureBuilder<List<Backlink>>(
       future: repo.backlinksFor(toUlid),
       builder: (context, snap) {
