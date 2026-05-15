@@ -775,28 +775,36 @@ class _AddFieldFormState extends State<_AddFieldForm> {
                 cursor: _keyCtl.text.trim().isEmpty || duplicate
                     ? SystemMouseCursors.basic
                     : SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: _keyCtl.text.trim().isEmpty || duplicate
-                      ? null
-                      : _submit,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: _keyCtl.text.trim().isEmpty || duplicate
-                          ? tokens.surface
-                          : tokens.accent,
-                      borderRadius:
-                          const BorderRadius.all(Radius.circular(5)),
-                    ),
-                    child: Text(
-                      'Add',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
+                child: Tooltip(
+                  message: _keyCtl.text.trim().isEmpty
+                      ? 'Type a field key to add'
+                      : duplicate
+                          ? 'A field with this key already exists'
+                          : 'Add field to frontmatter',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: GestureDetector(
+                    onTap: _keyCtl.text.trim().isEmpty || duplicate
+                        ? null
+                        : _submit,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
                         color: _keyCtl.text.trim().isEmpty || duplicate
-                            ? tokens.text3
-                            : Colors.white,
+                            ? tokens.surface
+                            : tokens.accent,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(5)),
+                      ),
+                      child: Text(
+                        'Add',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: _keyCtl.text.trim().isEmpty || duplicate
+                              ? tokens.text3
+                              : Colors.white,
+                        ),
                       ),
                     ),
                   ),
