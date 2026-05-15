@@ -69,7 +69,7 @@ class _FrontmatterCardState extends State<FrontmatterCard> {
                       Text('frontmatter', style: mono(fontSize: 12, color: tokens.text3)),
                       const Spacer(),
                       Text(
-                        '${widget.frontmatter.entries.length} fields',
+                        '${widget.frontmatter.entries.length} ${widget.frontmatter.entries.length == 1 ? 'field' : 'fields'}',
                         style: mono(fontSize: 11, color: tokens.text3.withValues(alpha: 0.7)),
                       ),
                     ],

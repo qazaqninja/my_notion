@@ -172,8 +172,8 @@ class _RowState extends State<_Row> {
                     const SizedBox(height: 2),
                     Text(
                       '${schema.folderPath}  ·  '
-                      '${schema.columns.length} columns  ·  '
-                      '${schema.views.length} views',
+                      '${schema.columns.length} ${schema.columns.length == 1 ? 'column' : 'columns'}  ·  '
+                      '${schema.views.length} ${schema.views.length == 1 ? 'view' : 'views'}',
                       style: mono(fontSize: 11.5, color: tokens.text3),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,

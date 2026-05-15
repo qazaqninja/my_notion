@@ -2727,7 +2727,8 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
         final rows = data.rows.take(limit.clamp(1, 100)).toList();
         return _shell(tokens,
             title: '${data.schema.icon}  ${data.schema.name}',
-            subtitle: '${data.rows.length} rows',
+            subtitle:
+                '${data.rows.length} ${data.rows.length == 1 ? 'row' : 'rows'}',
             onOpen: () => Navigator.of(context).maybePop().then((_) {
                   // Same go_router push the full-page table view uses.
                   // We avoid an import cycle by going through Navigator
