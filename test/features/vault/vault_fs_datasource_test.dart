@@ -74,6 +74,28 @@ void main() {
       final pages = await ds.scan(fs.directory('/vault')).toList();
       expect(pages, hasLength(1));
     });
+
+    test('one malformed file is skipped, others survive (M712)', () async {
+      // Yaml `loadYaml` throws on conflicting flow markers. Without
+      // M712's try/catch wrapper around readOne, the very first scan
+      // of this vault would have thrown and the user would see zero
+      // pages even though good.md and another.md are perfectly valid.
+      fs.file('/vault/good.md').writeAsStringSync(_northwindMd);
+      fs.file('/vault/broken.md').writeAsStringSync(
+        '---\nkey: [unclosed bracket, no terminator\nmore: stuff\n---\nbody\n',
+      );
+      fs.file('/vault/another.md').writeAsStringSync(_acmecoMd);
+
+      // Should not throw — scan yields the two valid pages and logs
+      // the broken one.
+      final pages = await ds.scan(fs.directory('/vault')).toList();
+      // The valid pages must still surface.
+      final titles = pages.map((p) => p.title).toSet();
+      expect(titles, contains('Northwind'),
+          reason: 'good page must be indexed');
+      expect(titles, contains('Acmeco'),
+          reason: 'second good page must be indexed');
+    });
   });
 
   group('readOne', () {
