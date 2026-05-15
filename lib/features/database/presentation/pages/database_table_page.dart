@@ -283,8 +283,10 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     final root = _vaultRoot();
     final schema = _schema;
     if (root == null || schema == null) return;
-    final title = await _promptForTitle();
-    if (title == null || title.isEmpty) return;
+    final raw = await _promptForTitle();
+    if (raw == null) return;
+    final title = raw.trim();
+    if (title.isEmpty) return;
     try {
       final row = await _repo.createRow(
         schema: schema,
