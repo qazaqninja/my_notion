@@ -403,7 +403,7 @@ class _PinboardState extends State<_Pinboard> {
                     _HoverableTile(
                       width: 220,
                       onTap: () => context.go('/editor/${e.ulid}'),
-                      builder: (hover) => Container(
+                      builder: ({required hover}) => Container(
                           width: 220,
                           padding:
                               const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -621,7 +621,7 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
             : tokens.text2;
     return _HoverableTile(
       onTap: () => context.go('/editor/${e.ulid}'),
-      builder: (hover) => Container(
+      builder: ({required hover}) => Container(
         padding: const EdgeInsets.symmetric(vertical: 7),
         decoration: BoxDecoration(
           color: hover ? tokens.hover : null,
@@ -748,7 +748,7 @@ class _RecentlyEditedState extends State<_RecentlyEdited> {
             for (final e in list)
               _HoverableTile(
                 onTap: () => context.go('/editor/${e.ulid}'),
-                builder: (hover) => Container(
+                builder: ({required hover}) => Container(
                   padding: const EdgeInsets.symmetric(vertical: 7),
                   decoration: BoxDecoration(
                     color: hover ? tokens.hover : null,
@@ -868,7 +868,7 @@ class _HoverableTile extends StatefulWidget {
     required this.onTap,
     this.width,
   });
-  final Widget Function(bool hover) builder;
+  final Widget Function({required bool hover}) builder;
   final VoidCallback onTap;
   final double? width;
 
@@ -890,7 +890,7 @@ class _HoverableTileState extends State<_HoverableTile> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           width: widget.width,
-          child: widget.builder(_hover),
+          child: widget.builder(hover: _hover),
         ),
       ),
     );

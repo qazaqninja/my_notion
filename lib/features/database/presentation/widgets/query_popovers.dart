@@ -371,8 +371,9 @@ class _SortPopoverState extends State<SortPopover> {
                     rule: _rules[i],
                     onColumnChanged: (k) => setState(
                         () => _rules[i] = SortRule(columnKey: k, ascending: _rules[i].ascending)),
-                    onDirChanged: (asc) => setState(() => _rules[i] = SortRule(
-                        columnKey: _rules[i].columnKey, ascending: asc)),
+                    onDirChanged: ({required asc}) => setState(() =>
+                        _rules[i] = SortRule(
+                            columnKey: _rules[i].columnKey, ascending: asc)),
                     onRemove: () => setState(() => _rules.removeAt(i)),
                   ),
               ],
@@ -392,7 +393,7 @@ class _SortRow extends StatelessWidget {
   final DatabaseSchema schema;
   final SortRule rule;
   final void Function(String) onColumnChanged;
-  final void Function(bool ascending) onDirChanged;
+  final void Function({required bool asc}) onDirChanged;
   final VoidCallback onRemove;
 
   @override
@@ -417,7 +418,7 @@ class _SortRow extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: () => onDirChanged(!rule.ascending),
+            onTap: () => onDirChanged(asc: !rule.ascending),
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
               child: Container(
