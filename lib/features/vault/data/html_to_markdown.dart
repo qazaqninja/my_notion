@@ -95,9 +95,12 @@ class HtmlToMarkdown {
   /// tag has its opener + closer stripped while keeping the text.
   static String _inline(String s) {
     var out = s;
-    // <a href="..."> text </a>
+    // <a href="..."> text </a> — accept both `"…"` and `'…'` quote
+    // styles for href. The img branch already matched both, the
+    // anchor branch only matched `"…"` and silently lost any link
+    // whose author used single quotes (common in hand-written HTML).
     out = out.replaceAllMapped(
-      RegExp(r'<a\s+[^>]*href="([^"]*)"[^>]*>([\s\S]*?)</a>',
+      RegExp(r'''<a\s+[^>]*href=["']([^"']*)["'][^>]*>([\s\S]*?)</a>''',
           caseSensitive: false),
       (m) =>
           '[${_escapeAlt(_stripInline(m.group(2) ?? '').trim())}](${m.group(1)})',

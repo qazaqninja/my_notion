@@ -72,6 +72,17 @@ void main() {
       expect(out, contains('[site](https://x.test)'));
     });
 
+    test("anchor with single-quoted href (M785)", () {
+      // Hand-written HTML and several CMS exports use single quotes.
+      // The old regex required `href="…"` exactly, so single-quoted
+      // links silently lost their URL — the `<a>` tag was stripped by
+      // the generic tag-strip pass and only the inner text survived.
+      final out = HtmlToMarkdown.convert(
+        "<p>see <a href='https://x.test'>site</a></p>",
+      );
+      expect(out, contains('[site](https://x.test)'));
+    });
+
     test('img → ![alt](src)', () {
       final out = HtmlToMarkdown.convert(
         '<p><img src="/a.png" alt="cover"></p>',
