@@ -146,11 +146,14 @@ class CsvImporter {
     final v = raw.trim();
     switch (c.type) {
       case ColumnType.number:
+        final n = num.tryParse(v);
         return FrontmatterEntry(
           key: c.key,
-          rawScalar: v,
+          // num.toString() is always YAML-safe; fall back via
+          // yamlSafeScalar when parse fails (mirrors M753).
+          rawScalar: n != null ? n.toString() : yamlSafeScalar(v),
           type: FrontmatterType.number,
-          value: num.tryParse(v) ?? v,
+          value: n ?? v,
         );
       case ColumnType.checkbox:
         final b = v.toLowerCase() == 'true';
@@ -163,7 +166,11 @@ class CsvImporter {
       case ColumnType.date:
         return FrontmatterEntry(
           key: c.key,
-          rawScalar: v,
+          // Type inference only picks ColumnType.date when every value
+          // matches the ISO regex, but defend against single-value
+          // edge cases that slip through — yamlSafeScalar is a no-op
+          // for safe ISO strings (mirrors M755).
+          rawScalar: yamlSafeScalar(v),
           type: FrontmatterType.date,
           value: v,
         );
