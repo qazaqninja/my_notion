@@ -580,6 +580,54 @@ SortLinesResult strikethroughLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Convert a block of CSV-shaped lines into a GFM pipe table. The
+/// first line is treated as the header row and produces the
+/// `| --- | --- |` divider underneath. Each cell is trimmed of
+/// surrounding whitespace. Lines without a comma pass through as
+/// single-cell rows (so a heading line above the data degrades
+/// gracefully).
+///
+///   apple, banana, cherry
+///   1, 2, 3
+///   4, 5, 6
+///
+/// becomes:
+///
+///   | apple | banana | cherry |
+///   | --- | --- | --- |
+///   | 1 | 2 | 3 |
+///   | 4 | 5 | 6 |
+SortLinesResult csvLinesToMarkdownTableIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      // Filter blanks but keep their positions in the output by
+      // pre-storing them. For a markdown table we don't want blank
+      // rows in the middle (they'd break the table), so drop them.
+      final rows = [for (final l in lines) if (l.trim().isNotEmpty) l]
+          .map((l) => l.split(',').map((c) => c.trim()).toList())
+          .toList();
+      if (rows.isEmpty) return lines;
+      final widest = rows.fold<int>(0, (m, r) => r.length > m ? r.length : m);
+      final out = <String>[];
+      // Header
+      out.add('| ${_padRow(rows.first, widest).join(' | ')} |');
+      // Divider
+      out.add('| ${List.filled(widest, '---').join(' | ')} |');
+      // Body
+      for (final r in rows.skip(1)) {
+        out.add('| ${_padRow(r, widest).join(' | ')} |');
+      }
+      return out;
+    });
+
+List<String> _padRow(List<String> row, int width) {
+  if (row.length >= width) return row;
+  return [...row, for (var i = row.length; i < width; i++) ''];
+}
+
 /// Convert every line that looks like a bare URL (`http://`,
 /// `https://`, or `www.`) into the markdown link form
 /// `[<url>](<url>)`. Lines that don't match pass through.

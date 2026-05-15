@@ -1728,6 +1728,56 @@ void main() {
     });
   });
 
+  group('csvLinesToMarkdownTableIn', () {
+    test('basic conversion: header + body', () {
+      const text = 'apple, banana, cherry\n1, 2, 3\n4, 5, 6\n';
+      final r = csvLinesToMarkdownTableIn(text, 0, text.length);
+      expect(
+        r.text,
+        '| apple | banana | cherry |\n'
+        '| --- | --- | --- |\n'
+        '| 1 | 2 | 3 |\n'
+        '| 4 | 5 | 6 |\n',
+      );
+    });
+
+    test('trims each cell', () {
+      const text = '  a  ,  b  \n1,2\n';
+      final r = csvLinesToMarkdownTableIn(text, 0, text.length);
+      expect(
+        r.text,
+        '| a | b |\n'
+        '| --- | --- |\n'
+        '| 1 | 2 |\n',
+      );
+    });
+
+    test('pads short rows to the widest column count', () {
+      const text = 'a, b, c\n1\n2, 3\n';
+      final r = csvLinesToMarkdownTableIn(text, 0, text.length);
+      expect(
+        r.text,
+        '| a | b | c |\n'
+        '| --- | --- | --- |\n'
+        '| 1 |  |  |\n'
+        '| 2 | 3 |  |\n',
+      );
+    });
+
+    test('drops blank lines from the body', () {
+      const text = 'a, b\n\n1, 2\n';
+      final r = csvLinesToMarkdownTableIn(text, 0, text.length);
+      expect(
+        r.text,
+        '| a | b |\n| --- | --- |\n| 1 | 2 |\n',
+      );
+    });
+
+    test('empty input is a no-op', () {
+      expect(csvLinesToMarkdownTableIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

@@ -171,6 +171,9 @@ enum SlashAction {
   insertIsoDateTime,
   /// Insert the current Unix-epoch timestamp in seconds.
   insertEpochTimestamp,
+  /// Convert a block of CSV-shaped lines into a GFM markdown
+  /// pipe table.
+  csvLinesToMarkdownTable,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -817,6 +820,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '1747345200',
     action: SlashAction.insertEpochTimestamp,
     keywords: ['epoch', 'unix', 'timestamp', 'seconds', 'integer'],
+  ),
+  SlashEntry(
+    icon: 'table',
+    label: 'CSV → markdown table',
+    hint: 'a,b → | a | b |',
+    action: SlashAction.csvLinesToMarkdownTable,
+    keywords: ['csv', 'table', 'pipe', 'convert', 'markdown'],
   ),
   SlashEntry(
     icon: 'hash',

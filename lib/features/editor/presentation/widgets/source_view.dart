@@ -1088,6 +1088,10 @@ class _SourceViewState extends State<SourceView> {
           selection:
               TextSelection.collapsed(offset: stripStart + epoch.length),
         );
+      case SlashAction.csvLinesToMarkdownTable:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, csvLinesToMarkdownTableIn,
+        );
     }
   }
 
