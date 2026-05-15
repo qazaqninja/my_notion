@@ -1194,13 +1194,18 @@ class _BtnState extends State<_Btn> {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value});
+  const _Stat({required this.label, required this.value, this.tooltip});
   final String label;
   final String value;
+
+  /// Optional hover hint with extra detail (e.g. raw byte count for a
+  /// human-formatted size).
+  final String? tooltip;
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return Column(
+    Widget body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1212,6 +1217,14 @@ class _Stat extends StatelessWidget {
         ),
       ],
     );
+    if (tooltip != null) {
+      body = Tooltip(
+        message: tooltip!,
+        waitDuration: const Duration(milliseconds: 500),
+        child: body,
+      );
+    }
+    return body;
   }
 }
 
@@ -1677,11 +1690,22 @@ class _VaultStatsRowState extends State<_VaultStatsRow> {
         final data = snap.data;
         return Row(
           children: [
-            _Stat(label: 'pages', value: '${widget.pageCount}'),
+            _Stat(
+              label: 'pages',
+              value: '${widget.pageCount}',
+              tooltip: widget.pageCount == 1
+                  ? '1 page indexed'
+                  : '${widget.pageCount} pages indexed',
+            ),
             const SizedBox(width: 28),
             _Stat(
               label: 'databases',
               value: data == null ? '…' : '${data.databases}',
+              tooltip: data == null
+                  ? null
+                  : data.databases == 1
+                      ? '1 database (.database.yaml)'
+                      : '${data.databases} databases (.database.yaml)',
             ),
             const SizedBox(width: 28),
             _Stat(
@@ -1689,6 +1713,9 @@ class _VaultStatsRowState extends State<_VaultStatsRow> {
               value: data == null || data.sizeBytes == null
                   ? '…'
                   : _fmtBytes(data.sizeBytes!),
+              tooltip: data == null || data.sizeBytes == null
+                  ? null
+                  : '${data.sizeBytes!} bytes on disk',
             ),
           ],
         );
