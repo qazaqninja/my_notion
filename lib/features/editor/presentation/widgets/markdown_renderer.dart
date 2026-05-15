@@ -3364,19 +3364,24 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
                           onTap: _deleteBlock,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: tokens.surface,
-                              border: Border.all(
-                                  color: tokens.divider2, width: 0.5),
-                              borderRadius: const BorderRadius.all(
-                                  Radius.circular(4)),
-                            ),
-                            child: Icon(
-                              Icons.delete_outline,
-                              size: 12,
-                              color: const Color(0xFFCB5A4F),
+                          child: Tooltip(
+                            message: 'Delete block',
+                            waitDuration:
+                                const Duration(milliseconds: 500),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: tokens.surface,
+                                border: Border.all(
+                                    color: tokens.divider2, width: 0.5),
+                                borderRadius: const BorderRadius.all(
+                                    Radius.circular(4)),
+                              ),
+                              child: Icon(
+                                Icons.delete_outline,
+                                size: 12,
+                                color: const Color(0xFFCB5A4F),
+                              ),
                             ),
                           ),
                         ),
