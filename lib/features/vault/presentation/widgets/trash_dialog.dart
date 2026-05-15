@@ -68,11 +68,14 @@ class _TrashDialogState extends State<TrashDialog> {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
+    final size = MediaQuery.of(context).size;
+    final w = size.width < 600 ? size.width - 32 : 560.0;
+    final h = size.height < 520 ? size.height - 60 : 480.0;
     return Dialog(
       backgroundColor: tokens.surface,
       child: SizedBox(
-        width: 560,
-        height: 480,
+        width: w,
+        height: h,
         child: Column(
           children: [
             Container(

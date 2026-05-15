@@ -79,11 +79,14 @@ class _CommentsDialogState extends State<CommentsDialog> {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
+    final size = MediaQuery.of(context).size;
+    final w = size.width < 520 ? size.width - 32 : 480.0;
+    final h = size.height < 560 ? size.height - 60 : 520.0;
     return Dialog(
       backgroundColor: tokens.surface,
       child: SizedBox(
-        width: 480,
-        height: 520,
+        width: w,
+        height: h,
         child: Column(
           children: [
             Container(
