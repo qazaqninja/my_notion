@@ -257,13 +257,17 @@ class _SubGroupedGallery extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(
-                    entry.key,
-                    style: mono(
-                      fontSize: 11,
-                      color: tokens.text2,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+                  Tooltip(
+                    message: 'Sub-group: ${entry.key}',
+                    waitDuration: const Duration(milliseconds: 600),
+                    child: Text(
+                      entry.key,
+                      style: mono(
+                        fontSize: 11,
+                        color: tokens.text2,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
