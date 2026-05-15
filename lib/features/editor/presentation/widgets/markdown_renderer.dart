@@ -1790,21 +1790,22 @@ class _MarkdownImage extends StatelessWidget {
           width: spec.fullWidth ? double.infinity : spec.width,
           height: spec.height,
           fit: fit,
-          errorBuilder: (_, __, ___) => const _BrokenImageBox());
+          errorBuilder: (_, __, ___) => _BrokenImageBox(src: src));
     } else if (src.startsWith('/')) {
       raw = Image.file(File(src),
           width: spec.fullWidth ? double.infinity : spec.width,
           height: spec.height,
           fit: fit,
-          errorBuilder: (_, __, ___) => const _BrokenImageBox());
+          errorBuilder: (_, __, ___) => _BrokenImageBox(src: src));
     } else if (vaultRoot == null) {
-      raw = const _BrokenImageBox();
+      raw = _BrokenImageBox(src: src);
     } else {
       raw = Image.file(File('$vaultRoot/$src'),
           width: spec.fullWidth ? double.infinity : spec.width,
           height: spec.height,
           fit: fit,
-          errorBuilder: (_, __, ___) => const _BrokenImageBox());
+          errorBuilder: (_, __, ___) =>
+              _BrokenImageBox(src: '$vaultRoot/$src'));
     }
     return raw;
   }
@@ -2152,11 +2153,13 @@ class _FileAttachment extends StatelessWidget {
 }
 
 class _BrokenImageBox extends StatelessWidget {
-  const _BrokenImageBox();
+  const _BrokenImageBox({this.src});
+  final String? src;
+
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return Container(
+    final box = Container(
       width: 240,
       height: 120,
       decoration: BoxDecoration(
@@ -2180,6 +2183,12 @@ class _BrokenImageBox extends StatelessWidget {
           ],
         ),
       ),
+    );
+    if (src == null || src!.isEmpty) return box;
+    return Tooltip(
+      message: src!,
+      waitDuration: const Duration(milliseconds: 500),
+      child: box,
     );
   }
 }
