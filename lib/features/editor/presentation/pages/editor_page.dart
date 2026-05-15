@@ -24,7 +24,9 @@ import '../../../vault/data/daily_note.dart';
 import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/data/pdf_exporter.dart';
+import '../../../vault/domain/entities/frontmatter.dart';
 import '../../../vault/domain/entities/frontmatter_entry.dart';
+import '../../../vault/domain/entities/page.dart' as vault_page;
 import '../../../vault/domain/entities/vault_tree.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 // ignore: unused_import — Indexer used via context.read
@@ -150,7 +152,7 @@ String _slugify(String s) {
   return cleaned.replaceAll(RegExp(r'(^-+)|(-+$)'), '');
 }
 
-bool _isFullWidth(dynamic frontmatter) {
+bool _isFullWidth(Frontmatter frontmatter) {
   final v = frontmatter.get('full_width');
   if (v == true) return true;
   return '${v ?? ''}'.toLowerCase() == 'true';
@@ -1850,7 +1852,7 @@ class _PinButton extends StatelessWidget {
 
 class _WikiBadge extends StatelessWidget {
   const _WikiBadge({required this.page});
-  final dynamic page;
+  final vault_page.Page page;
 
   @override
   Widget build(BuildContext context) {
@@ -1931,7 +1933,7 @@ class _WikiBadge extends StatelessWidget {
 /// bell + relative time pill that flips red when overdue.
 class _ReminderBadge extends StatelessWidget {
   const _ReminderBadge({required this.page});
-  final dynamic page;
+  final vault_page.Page page;
 
   @override
   Widget build(BuildContext context) {
