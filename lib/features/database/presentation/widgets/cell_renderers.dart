@@ -10,6 +10,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/person_chip.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/relation_chip.dart';
 import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/tag_chip.dart';
@@ -402,9 +403,7 @@ class _LinkCell extends StatelessWidget {
             onTap: () async {
               final ok = await Reveal.openUrl(target);
               if (!ok && innerCtx.mounted) {
-                ScaffoldMessenger.maybeOf(innerCtx)?.showSnackBar(
-                  SnackBar(content: Text('Could not open $target')),
-                );
+                innerCtx.toastError('Could not open', sub: target, subMono: true);
               }
             },
             child: Text(
@@ -474,9 +473,7 @@ class _FileChip extends StatelessWidget {
     final resolved = value.startsWith('/') ? value : '${state.rootPath}/$value';
     final ok = await Reveal.show(resolved);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Could not open $resolved')),
-      );
+      context.toastError('Could not open', sub: resolved, subMono: true);
     }
   }
 

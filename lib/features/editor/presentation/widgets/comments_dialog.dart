@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../data/comments_service.dart';
 
 class CommentsDialog extends StatefulWidget {
@@ -324,27 +325,16 @@ class _CommentsDialogState extends State<CommentsDialog> {
                 padding: const EdgeInsets.all(2),
                 constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
                 onPressed: () async {
-                  final ok = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('Delete comment?'),
-                      content: const Text(
-                          'This permanently removes the comment from the .yaml sidecar. This cannot be undone.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                          style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFCB5A4F)),
-                          child: const Text('Delete'),
-                        ),
-                      ],
-                    ),
+                  final ok = await showQuillConfirm(
+                    context,
+                    title: 'Delete comment?',
+                    sub:
+                        'This permanently removes the comment from the .yaml sidecar. This cannot be undone.',
+                    icon: 'trash',
+                    confirmLabel: 'Delete',
+                    danger: true,
                   );
-                  if (ok != true) return;
+                  if (!ok) return;
                   await _service.delete(
                       Directory(widget.vaultRoot), widget.pageUlid, c.id);
                   _refresh();
