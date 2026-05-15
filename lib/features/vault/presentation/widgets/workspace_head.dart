@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
-import '../../../../shared/widgets/quill_icon.dart';
 
 /// Matches `WorkspaceHead` from `shell.jsx:6-30`. Accent square with
 /// the workspace's first letter, name + mono path.
@@ -104,7 +103,6 @@ class WorkspaceHead extends StatelessWidget {
               ],
             ),
           ),
-          QuillIcon('caret-down', size: 13, strokeWidth: 1.7, color: tokens.text3),
         ],
       ),
     );
