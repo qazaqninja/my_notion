@@ -1653,6 +1653,53 @@ void main() {
     });
   });
 
+  group('urlsToMarkdownLinksIn', () {
+    test('wraps http URLs', () {
+      const text = 'http://example.com/path\n';
+      final r = urlsToMarkdownLinksIn(text, 0, text.length);
+      expect(
+        r.text,
+        '[http://example.com/path](http://example.com/path)\n',
+      );
+    });
+
+    test('wraps https URLs', () {
+      const text = 'https://example.com\n';
+      final r = urlsToMarkdownLinksIn(text, 0, text.length);
+      expect(r.text, '[https://example.com](https://example.com)\n');
+    });
+
+    test('wraps www. URLs without scheme', () {
+      const text = 'www.example.com\n';
+      final r = urlsToMarkdownLinksIn(text, 0, text.length);
+      expect(r.text, '[www.example.com](www.example.com)\n');
+    });
+
+    test('non-URL lines pass through unchanged', () {
+      const text = 'hello world\nnot a url\n';
+      final r = urlsToMarkdownLinksIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('preserves leading and trailing whitespace', () {
+      const text = '  http://example.com  \n';
+      final r = urlsToMarkdownLinksIn(text, 0, text.length);
+      expect(
+        r.text,
+        '  [http://example.com](http://example.com)  \n',
+      );
+    });
+
+    test('handles a mixed block — some URLs, some prose', () {
+      const text = 'first link:\nhttp://a.com\nsecond link:\nhttps://b.com\n';
+      final r = urlsToMarkdownLinksIn(text, 0, text.length);
+      expect(
+        r.text,
+        'first link:\n[http://a.com](http://a.com)\nsecond link:\n[https://b.com](https://b.com)\n',
+      );
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

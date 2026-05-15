@@ -580,6 +580,32 @@ SortLinesResult strikethroughLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Convert every line that looks like a bare URL (`http://`,
+/// `https://`, or `www.`) into the markdown link form
+/// `[<url>](<url>)`. Lines that don't match pass through.
+///
+/// Whitespace around the URL is preserved on either side. Useful
+/// when a user pastes a vertical list of URLs and wants them
+/// clickable in the renderer.
+SortLinesResult urlsToMarkdownLinksIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      // A URL is the whole non-whitespace span of the line.
+      final urlPattern = RegExp(
+        r'^(\s*)(https?://\S+|www\.\S+)(\s*)$',
+      );
+      return [
+        for (final l in lines)
+          (() {
+            final m = urlPattern.firstMatch(l);
+            if (m == null) return l;
+            final lead = m.group(1) ?? '';
+            final url = m.group(2) ?? '';
+            final trail = m.group(3) ?? '';
+            return '$lead[$url]($url)$trail';
+          })(),
+      ];
+    });
+
 /// Wrap each non-blank selected line in `==…==` (Pandoc highlight,
 /// rendered yellow by markdown_renderer). Blank lines stay blank.
 SortLinesResult highlightLinesIn(String text, int start, int end) =>

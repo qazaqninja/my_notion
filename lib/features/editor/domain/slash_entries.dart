@@ -162,6 +162,8 @@ enum SlashAction {
   insertPassword,
   /// Insert a UUID v4 at the caret (8-4-4-4-12 hyphenated form).
   insertUuid,
+  /// Wrap each line that looks like a URL in `[url](url)`.
+  urlsToMarkdownLinks,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -780,6 +782,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '8-4-4-4-12',
     action: SlashAction.insertUuid,
     keywords: ['uuid', 'guid', 'id', 'identifier', 'v4', 'random'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'URLs → markdown links',
+    hint: 'http://… → [..](..)',
+    action: SlashAction.urlsToMarkdownLinks,
+    keywords: ['url', 'link', 'markdown', 'wrap', 'autolink'],
   ),
   SlashEntry(
     icon: 'hash',

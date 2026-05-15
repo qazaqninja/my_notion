@@ -1050,6 +1050,10 @@ class _SourceViewState extends State<SourceView> {
           text: cleared,
           selection: TextSelection.collapsed(offset: stripStart + id.length),
         );
+      case SlashAction.urlsToMarkdownLinks:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, urlsToMarkdownLinksIn,
+        );
     }
   }
 
