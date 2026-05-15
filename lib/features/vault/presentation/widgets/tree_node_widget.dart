@@ -337,7 +337,6 @@ class TreeNodeWidget extends StatelessWidget {
       confirmLabel: 'Rename',
     );
     if (picked == null || picked.isEmpty) return;
-    bloc.add(RenamePage(ulid: fl.ulid, newBasename: picked));
     if (!context.mounted) return;
     // Mirror _safeFileName so the toast reflects what lands on disk.
     var preview = picked
@@ -348,6 +347,11 @@ class TreeNodeWidget extends StatelessWidget {
       preview = preview.substring(0, preview.length - 3).trim();
     }
     if (preview.isEmpty) preview = 'Untitled';
+    if (preview == basename) {
+      context.toastInfo('Filename unchanged');
+      return;
+    }
+    bloc.add(RenamePage(ulid: fl.ulid, newBasename: picked));
     context.toastSuccess('Renamed to $preview.md');
   }
 
