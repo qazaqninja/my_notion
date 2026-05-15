@@ -353,8 +353,31 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
   }
 
   @override
-  Future<void> close() {
+  Future<void> close() async {
     _saveDebounce?.cancel();
+    // Best-effort flush: if the user typed within the debounce window
+    // and navigated away (or app closed), persist the in-memory page
+    // before the bloc tears down. Without this, the controller's
+    // pending Timer is cancelled and the user's last keystrokes are
+    // lost.
+    final s = state;
+    if (s is EditorLoaded && s.dirty && _vaultRoot != null) {
+      try {
+        final user = _currentUser;
+        var page = s.page;
+        if (user != null && user.isNotEmpty) {
+          final stamped = _stampAuthor(page.frontmatter, user);
+          if (!identical(stamped, page.frontmatter)) {
+            page = page.copyWith(frontmatter: stamped);
+          }
+        }
+        await _repo.writePage(page, root: _vaultRoot!);
+        await _indexer.upsertPage(page);
+      } catch (_) {
+        // No UI to report into at this point — the bloc is closing.
+        // Better to drop the error than to crash the navigation.
+      }
+    }
     return super.close();
   }
 }
