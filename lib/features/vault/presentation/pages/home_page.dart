@@ -606,21 +606,20 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
         : isToday
             ? tokens.accent
             : tokens.text2;
-    return GestureDetector(
+    return _HoverableTile(
       onTap: () => context.go('/editor/${e.ulid}'),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 7),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: tokens.divider, width: 0.5),
-            ),
+      builder: (hover) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        decoration: BoxDecoration(
+          color: hover ? tokens.hover : null,
+          border: Border(
+            bottom: BorderSide(color: tokens.divider, width: 0.5),
           ),
-          child: Row(
-            children: [
-              Icon(Icons.notifications_active_outlined,
-                  size: 12, color: fg),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.notifications_active_outlined,
+                size: 12, color: fg),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -644,8 +643,7 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -714,65 +712,63 @@ class _RecentlyEditedState extends State<_RecentlyEdited> {
             ),
             const SizedBox(height: 8),
             for (final e in list)
-              GestureDetector(
+              _HoverableTile(
                 onTap: () => context.go('/editor/${e.ulid}'),
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 7),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: tokens.divider, width: 0.5),
+                builder: (hover) => Container(
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  decoration: BoxDecoration(
+                    color: hover ? tokens.hover : null,
+                    border: Border(
+                      bottom: BorderSide(color: tokens.divider, width: 0.5),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      if (e.emojiIcon != null)
+                        SizedBox(
+                          width: 13,
+                          height: 13,
+                          child: Center(
+                            child: Text(
+                              e.emojiIcon!,
+                              style: const TextStyle(
+                                  fontSize: 12, height: 1),
+                            ),
+                          ),
+                        )
+                      else
+                        QuillIcon('file-md',
+                            size: 13,
+                            strokeWidth: 1.7,
+                            color: tokens.text3),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          e.title,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w500,
+                            color: tokens.text,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        if (e.emojiIcon != null)
-                          SizedBox(
-                            width: 13,
-                            height: 13,
-                            child: Center(
-                              child: Text(
-                                e.emojiIcon!,
-                                style: const TextStyle(
-                                    fontSize: 12, height: 1),
-                              ),
-                            ),
-                          )
-                        else
-                          QuillIcon('file-md',
-                              size: 13,
-                              strokeWidth: 1.7,
-                              color: tokens.text3),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            e.title,
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w500,
-                              color: tokens.text,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          flex: 2,
-                          child: Text(
-                            stripMdExtension(e.relativePath),
-                            textAlign: TextAlign.right,
-                            style: mono(fontSize: 11, color: tokens.text3),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          _ago(e.mtime),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          stripMdExtension(e.relativePath),
+                          textAlign: TextAlign.right,
                           style: mono(fontSize: 11, color: tokens.text3),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _ago(e.mtime),
+                        style: mono(fontSize: 11, color: tokens.text3),
+                      ),
+                    ],
                   ),
                 ),
               ),
