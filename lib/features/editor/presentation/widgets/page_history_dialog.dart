@@ -52,6 +52,39 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
         child: FutureBuilder<List<PageVersion>>(
           future: _commits,
           builder: (context, snap) {
+            if (snap.hasError) {
+              // Process.run('git', ...) itself failed — git binary
+              // missing, working directory invalid, etc. The list()
+              // helper returns const [] on exit-code failures so this
+              // path is only hit on a true infrastructure problem.
+              return Padding(
+                padding: const EdgeInsets.all(24),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      QuillIcon('warning',
+                          size: 22,
+                          strokeWidth: 1.4,
+                          color: tokens.text3),
+                      const SizedBox(height: 10),
+                      Text('Could not load history',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.text2,
+                          )),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${snap.error}',
+                        textAlign: TextAlign.center,
+                        style: mono(fontSize: 11, color: tokens.text3),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
             if (!snap.hasData) {
               return Center(
                 child: SizedBox(
