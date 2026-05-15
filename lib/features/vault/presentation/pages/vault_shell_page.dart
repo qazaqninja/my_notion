@@ -1153,6 +1153,18 @@ views:
       for (final p in pages)
         if (!linked.contains(p.ulid)) p,
     ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+    // "Most-linked" hub pages: count inbound wikilinks per ULID and
+    // surface the top few by backlink count. Useful for finding the
+    // implicit table-of-contents-style notes in the vault.
+    final inboundCounts = <String, int>{};
+    for (final r in relations) {
+      inboundCounts[r.toUlid] = (inboundCounts[r.toUlid] ?? 0) + 1;
+    }
+    final pageByUlid = {for (final p in pages) p.ulid: p};
+    final hubs = inboundCounts.entries
+        .where((e) => pageByUlid.containsKey(e.key))
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     if (!context.mounted) return;
     final tokens = QuillTokens.of(context);
     await showDialog<void>(
@@ -1230,6 +1242,34 @@ views:
                                 overflow: TextOverflow.ellipsis),
                           ),
                           Text('${t.value}',
+                              style: mono(
+                                  fontSize: 11, color: tokens.text3)),
+                        ],
+                      ),
+                    ),
+                ],
+                if (hubs.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text('MOST LINKED · hub pages by backlink count',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                        color: tokens.text3,
+                      )),
+                  const SizedBox(height: 6),
+                  for (final h in hubs.take(5))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(pageByUlid[h.key]!.title,
+                                style: TextStyle(
+                                    fontSize: 12, color: tokens.text2),
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          Text('← ${h.value}',
                               style: mono(
                                   fontSize: 11, color: tokens.text3)),
                         ],
