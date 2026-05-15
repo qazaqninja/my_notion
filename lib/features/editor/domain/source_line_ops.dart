@@ -659,6 +659,46 @@ SortLinesResult toggleNumberedPrefixIn(String text, int start, int end) =>
       return out;
     });
 
+/// Toggle a `> ` blockquote prefix on every line in the selected
+/// block.
+///
+/// Behaviour mirrors [toggleBulletPrefixIn]: when every non-empty
+/// line already starts with `> ` (allowing leading indent), the
+/// prefix is stripped. Otherwise every non-empty line gains it.
+/// Existing indent is preserved.
+///
+/// Recognises the exact `> ` prefix only — a `>> nested` line is
+/// treated as plain text and gains one more `> ` (becoming
+/// `> >> nested`), so repeated toggles let the user step nested
+/// quotes outward one level at a time on reapply.
+SortLinesResult toggleBlockquotePrefixIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      bool startsWithQuote(String l) => l.trimLeft().startsWith('> ');
+
+      final nonEmpty = [for (final l in lines) if (l.trim().isNotEmpty) l];
+      final allQuoted =
+          nonEmpty.isNotEmpty && nonEmpty.every(startsWithQuote);
+
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty)
+            l
+          else if (allQuoted)
+            (() {
+              final indent = l.substring(0, l.length - l.trimLeft().length);
+              final after = l.trimLeft().substring(2);
+              return '$indent$after';
+            })()
+          else if (startsWithQuote(l))
+            l
+          else
+            (() {
+              final indent = l.substring(0, l.length - l.trimLeft().length);
+              return '$indent> ${l.trimLeft()}';
+            })(),
+      ];
+    });
+
 /// Title-case every line in the selected block: capitalise the first
 /// letter of each whitespace-separated word, lowercase the rest. Words
 /// shorter than 4 chars in the middle of a line (and, or, the, of, …)

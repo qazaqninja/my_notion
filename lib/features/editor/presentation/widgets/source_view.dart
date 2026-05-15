@@ -899,6 +899,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesNaturalIn,
         );
+      case SlashAction.toggleBlockquote:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, toggleBlockquotePrefixIn,
+        );
     }
   }
 

@@ -52,6 +52,9 @@ enum SlashAction {
   /// Sort the lines touched by the selection using **natural**
   /// ordering (file2 < file10).
   sortLinesNatural,
+  /// Toggle a `> ` blockquote prefix on every line in the selection.
+  /// Strips when every line is already quoted; adds otherwise.
+  toggleBlockquote,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -362,6 +365,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'file2 < file10',
     action: SlashAction.sortLinesNatural,
     keywords: ['natural', 'sort', 'numeric', 'human', 'version'],
+  ),
+  SlashEntry(
+    icon: 'quote',
+    label: 'Toggle blockquote',
+    hint: '> …',
+    action: SlashAction.toggleBlockquote,
+    keywords: ['quote', 'blockquote', 'toggle', 'indent', 'gt'],
   ),
   SlashEntry(
     icon: 'tag',

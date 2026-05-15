@@ -399,6 +399,56 @@ void main() {
     });
   });
 
+  group('toggleBlockquotePrefixIn', () {
+    test('adds "> " to plain lines', () {
+      const text = 'one\ntwo\n';
+      final r = toggleBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, '> one\n> two\n');
+    });
+
+    test('strips "> " when every non-empty line is already quoted', () {
+      const text = '> alpha\n> beta\n';
+      final r = toggleBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, 'alpha\nbeta\n');
+    });
+
+    test('round-trips back to the original plain text', () {
+      const text = 'a\nb\nc\n';
+      final on = toggleBlockquotePrefixIn(text, 0, text.length);
+      final off = toggleBlockquotePrefixIn(on.text, 0, on.text.length);
+      expect(off.text, text);
+    });
+
+    test('preserves leading indent in both directions', () {
+      const text = '  foo\n';
+      final on = toggleBlockquotePrefixIn(text, 0, text.length);
+      expect(on.text, '  > foo\n');
+      final off = toggleBlockquotePrefixIn(on.text, 0, on.text.length);
+      expect(off.text, text);
+    });
+
+    test('mixed lines → all get quoted', () {
+      const text = '> alpha\nbeta\n> gamma\n';
+      final r = toggleBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, '> alpha\n> beta\n> gamma\n');
+    });
+
+    test('recognises only `> ` — `>>` is treated as plain and gets quoted', () {
+      // The function deliberately only matches the exact `> ` prefix.
+      // A `>> nested` line is plain text to this transform, so toggling
+      // adds one more level. (Single-level by design.)
+      const text = '>> nested\n';
+      final r = toggleBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, '> >> nested\n');
+    });
+
+    test('blank lines stay blank', () {
+      const text = 'a\n\nb\n';
+      final r = toggleBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, '> a\n\n> b\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
