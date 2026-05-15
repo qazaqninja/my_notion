@@ -193,12 +193,17 @@ String markdownToHtml(String body) {
           '<figure><img src="${_escape(src)}" alt="${_escape(alt)}"/>${alt.isNotEmpty ? '<figcaption>${_escape(alt)}</figcaption>' : ''}</figure>\n');
       continue;
     }
-    // Standalone wikilink
-    final wiki = RegExp(r'^\[\[([0-9A-Z]{26})\]\]$')
+    // Standalone wikilink — optional `#anchor` suffix (M779) mirrors
+    // the renderer + indexer regex. Anchor becomes the `<a>` `href`
+    // fragment so site visitors actually land on the section.
+    final wiki = RegExp(
+            r'^\[\[([0-9A-Z]{26})(?:#([a-z0-9][a-z0-9\-]*))?\]\]$')
         .firstMatch(text.trim());
     if (wiki != null) {
-      out.write(
-          '<a class="subpage" href="${wiki.group(1)}.html">${wiki.group(1)}</a>\n');
+      final ulid = wiki.group(1)!;
+      final anchor = wiki.group(2);
+      final href = anchor == null ? '$ulid.html' : '$ulid.html#$anchor';
+      out.write('<a class="subpage" href="$href">$ulid</a>\n');
       continue;
     }
     // Standalone URL
@@ -263,9 +268,15 @@ String _inline(String s) {
   s = _escape(s);
   // Wikilinks first (they're greedy delimiters). ULIDs are
   // alphanumeric so the escape pass above never touches them.
+  // Accept the optional `#anchor` suffix (M779).
   s = s.replaceAllMapped(
-    RegExp(r'\[\[([0-9A-Z]{26})\]\]'),
-    (m) => '<a class="wikilink" href="${m.group(1)}.html">${m.group(1)}</a>',
+    RegExp(r'\[\[([0-9A-Z]{26})(?:#([a-z0-9][a-z0-9\-]*))?\]\]'),
+    (m) {
+      final ulid = m.group(1)!;
+      final anchor = m.group(2);
+      final href = anchor == null ? '$ulid.html' : '$ulid.html#$anchor';
+      return '<a class="wikilink" href="$href">$ulid</a>';
+    },
   );
   // Inline code. Input is already _escape'd at the top, so re-escaping
   // the captured content would double-encode it.

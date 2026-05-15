@@ -309,11 +309,17 @@ class PdfExporter {
 
   static String _resolveInline(String text, Map<String, String> ulidToTitle) {
     var out = text;
+    // Accept the optional `#anchor` suffix (mirrors M778 in the
+    // wikilink parser + the renderer). Anchors are display-only here:
+    // resolved chips become "Title #anchor" so the cross-reference
+    // stays readable in print.
     out = out.replaceAllMapped(
-      RegExp(r'\[\[([0-9A-Z]{26})\]\]'),
+      RegExp(r'\[\[([0-9A-Z]{26})(?:#([a-z0-9][a-z0-9\-]*))?\]\]'),
       (m) {
         final ulid = m.group(1)!;
-        return ulidToTitle[ulid] ?? ulid;
+        final anchor = m.group(2);
+        final base = ulidToTitle[ulid] ?? ulid;
+        return anchor == null ? base : '$base #$anchor';
       },
     );
     // Strip markdown emphasis markers for plain-PDF rendering (we can't

@@ -47,11 +47,13 @@ class HtmlExporter {
         // into the anchor text so '<script>' typed as a title can't
         // inject HTML on the linker page.
         body = body.replaceAllMapped(
-          RegExp(r'<a class="wikilink" href="([0-9A-Z]{26})\.html">[0-9A-Z]{26}</a>'),
+          RegExp(
+              r'<a class="wikilink" href="([0-9A-Z]{26})\.html(#[a-z0-9][a-z0-9\-]*)?">[0-9A-Z]{26}</a>'),
           (m) {
             final ulid = m.group(1)!;
+            final fragment = m.group(2) ?? '';
             final t = ulidToTitle[ulid] ?? ulid;
-            return '<a class="wikilink" href="$ulid.html">${_escapeAttr(t)}</a>';
+            return '<a class="wikilink" href="$ulid.html$fragment">${_escapeAttr(t)}</a>';
           },
         );
 
@@ -135,7 +137,10 @@ $body
   }) {
     var html = markdownToHtml(body);
     html = html.replaceAllMapped(
-      RegExp(r'<a class="wikilink" href="[0-9A-Z]{26}\.html">([^<]+)</a>'),
+      // Match both `ULID.html` and `ULID.html#anchor` shapes — both
+      // collapse to a non-link pill in a standalone single-page export.
+      RegExp(
+          r'<a class="wikilink" href="[0-9A-Z]{26}\.html(?:#[a-z0-9][a-z0-9\-]*)?">([^<]+)</a>'),
       (m) => '<span class="wikilink">${m.group(1)}</span>',
     );
     return '''<!doctype html>

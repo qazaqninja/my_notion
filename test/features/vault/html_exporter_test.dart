@@ -163,6 +163,31 @@ void main() {
     await dest.delete(recursive: true);
   });
 
+  test('multi-page export preserves #anchor in wikilink href (M779)', () async {
+    final src = await Directory.systemTemp.createTemp('quill_html_anchor_src_');
+    final dest = await Directory.systemTemp.createTemp('quill_html_anchor_dst_');
+    await File(p.join(src.path, 'foo.md')).writeAsString(
+      '---\nid: 01HX0V9R5N6E8L3P7Q8S9U2X4B\ntitle: Foo\n---\n## install\n',
+    );
+    await File(p.join(src.path, 'bar.md')).writeAsString(
+      '---\nid: 01HX0VEY5T6K7R9X4Y8Z0A3D4G\ntitle: Bar\n---\n'
+      'See [[01HX0V9R5N6E8L3P7Q8S9U2X4B#install]] for setup.\n',
+    );
+
+    await const HtmlExporter().export(src: src, dest: dest);
+    final bar = await File(
+            p.join(dest.path, '01HX0VEY5T6K7R9X4Y8Z0A3D4G.html'))
+        .readAsString();
+    // The anchor survives the title-rewrite pass — the link's href
+    // should be `<ulid>.html#install` and the anchor text is the
+    // target page's title.
+    expect(bar,
+        contains('href="01HX0V9R5N6E8L3P7Q8S9U2X4B.html#install">Foo</a>'));
+
+    await src.delete(recursive: true);
+    await dest.delete(recursive: true);
+  });
+
   test('XSS: multi-page export escapes title in <title>, <h1>, index, and '
       'wikilink anchor (M711)', () async {
     final src = await Directory.systemTemp.createTemp('quill_html_xss_src_');
@@ -227,6 +252,21 @@ void main() {
       );
       expect(html, contains('<span class="wikilink">'));
       expect(html, isNot(contains('href="01HX0V9R5N6E8L3P7Q8S9U2X4B.html"')));
+    });
+
+    test('downgrades anchored wikilinks too (M779)', () {
+      // `[[ULID#anchor]]` produces an `<a href="ULID.html#anchor">`
+      // first via markdownToHtml; renderStandalonePage strips it down
+      // to a non-link span because no sibling file exists in a single-
+      // file export. The anchor on the href would otherwise leak into
+      // the source page and break offline-share.
+      final html = HtmlExporter.renderStandalonePage(
+        title: 'P',
+        body: 'See [[01HX0V9R5N6E8L3P7Q8S9U2X4B#install]].',
+      );
+      expect(html, contains('<span class="wikilink">'));
+      expect(html, isNot(contains('href="')),
+          reason: 'anchored hrefs must be stripped, not leak as live links');
     });
 
     test('escapes < > & " in title attribute', () {
