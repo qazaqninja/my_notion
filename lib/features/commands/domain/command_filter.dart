@@ -15,7 +15,7 @@ class CommandFilter {
   ///   pages whose `relativePath` starts with the rest.
   ///
   /// Anything else falls through to a normal FTS search.
-  static CommandFilter parse(String q) {
+  factory CommandFilter.parse(String q) {
     final raw = q.trim();
     if (raw.isEmpty) return const CommandFilter(CommandFilterScope.none, '');
     final s = raw.startsWith('@') ? raw.substring(1) : raw;
@@ -23,18 +23,12 @@ class CommandFilter {
     if (colon <= 0) return CommandFilter(CommandFilterScope.none, raw);
     final prefix = s.substring(0, colon).toLowerCase();
     final rest = s.substring(colon + 1).trim();
-    switch (prefix) {
-      case 'db':
-      case 'database':
-        return CommandFilter(CommandFilterScope.db, rest);
-      case 'tag':
-        return CommandFilter(CommandFilterScope.tag, rest);
-      case 'in':
-      case 'path':
-      case 'folder':
-        return CommandFilter(CommandFilterScope.path, rest);
-      default:
-        return CommandFilter(CommandFilterScope.none, raw);
-    }
+    return switch (prefix) {
+      'db' || 'database' => CommandFilter(CommandFilterScope.db, rest),
+      'tag' => CommandFilter(CommandFilterScope.tag, rest),
+      'in' || 'path' || 'folder' =>
+        CommandFilter(CommandFilterScope.path, rest),
+      _ => CommandFilter(CommandFilterScope.none, raw),
+    };
   }
 }
