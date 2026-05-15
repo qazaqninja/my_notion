@@ -139,14 +139,14 @@ flutter test test/features/vault/                           # FS + exporter
 
 User-visible polish in rough impact order (full breakdown in `~/.claude/plans/build-prompt-self-hosted-transient-bear.md` § "Unimplemented features"):
 
-1. **File watching** — `Directory.watch(recursive: true)` so external edits show up without manual reindex. (1 day) — *surfaced when user edited 2026-Q1-QBR.md outside the app mid-session.*
+1. ~~**File watching**~~ — ✅ Already shipped. `lib/features/vault/data/vault_watcher.dart` runs `Directory.watch(recursive: true)` with a 250 ms debounce, filters to `.md` + `.database.yaml`, and `VaultBloc` subscribes (line 54) to dispatch `RefreshFromDisk` on each ping. Strike from the backlog.
 2. **Frontmatter inline editing in editor + properties panel** — `EditorBloc.EditFrontmatter` event exists, no UI dispatches it. (1–1.5 days)
 3. **Database cell editing + Add row** — `FrozenColumnTable` is read-only. No `UpdateCell` / `CreateRow` use case. (1.5–2 days)
 4. **Filter / Sort / Group runtime in database table** — buttons have empty `onPressed`. Schema parsing already captures `views.group_by`. (2 days)
 5. ~~**Relation picker keyboard navigation**~~ — ✅ Already shipped. `source_view.dart:663-690` wires Up/Down → `Cubit.move()`, Enter/Tab → `onPick(selected)`, Escape → `dismiss()`. Strike from the backlog.
-6. **Command palette action handlers** — Reveal/Export/Reindex/Toggle theme are stubs. (½ day)
+6. ~~**Command palette action handlers**~~ — ✅ Already shipped. `vault_shell_page.dart:_invokeAction` switches on the entry label and runs the matching handler for Reindex, Quick capture, Bookmark URL, Open random page, Open today's daily note, Toggle theme, Toggle compact mode, Show orphan/untagged/no-title/broken-wikilink/stale pages, Import CSV/HTML/text/Markdown/OPML, Export vault, Reveal vault in Finder, Show trash. Strike from the backlog.
 7. **macOS security-scoped bookmark persistence** — currently auto-restore fails on relaunch and silently falls back to picker. (1 day, Swift channel)
-8. **Reveal in Finder / xdg-open / explorer.exe** — cross-platform file-reveal, all `onTap: () {}`. (½ day)
+8. ~~**Reveal in Finder / xdg-open / explorer.exe**~~ — ✅ Already shipped. `lib/core/platform/reveal.dart` dispatches `open` / `xdg-open` / `explorer.exe /select,` per-platform; called from the palette and editor breadcrumb. Strike from the backlog.
 9. **WYSIWYG editing via super_editor** — biggest single-feature lift. Source mode + read-only rendered work fine without it. (2–3 days incl. round-trip serializer audit)
 10. **Mobile editor + database screens** — desktop pages scale but no mobile-optimised UI. Only the responsive *shell* (drawer + tab bar) is done. (1.5–2 days)
 
