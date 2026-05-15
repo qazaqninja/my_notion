@@ -1794,10 +1794,18 @@ class _ReminderBadge extends StatelessWidget {
         : today0
             ? tokens.accent.withValues(alpha: 0.16)
             : tokens.surface2;
+    final iso = t.toIso8601String().substring(0, 10);
+    final relative = overdue
+        ? '${-days} ${(-days) == 1 ? "day" : "days"} overdue'
+        : today0
+            ? 'today'
+            : days == 1
+                ? 'tomorrow'
+                : 'in $days ${days == 1 ? "day" : "days"}';
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Tooltip(
-        message: 'Reminder · ${t.toIso8601String().substring(0, 10)}',
+        message: 'Reminder · $iso ($relative)',
         waitDuration: const Duration(milliseconds: 400),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
