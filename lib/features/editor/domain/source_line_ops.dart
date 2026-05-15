@@ -152,6 +152,30 @@ LineOpResult applyLinePrefix(String text, int caret, String prefix) {
   return LineOpResult(text: newText, caret: newCaret);
 }
 
+/// Toggle the checkbox state of the to-do line under [caret]:
+///   * `- [ ] foo` → `- [x] foo`
+///   * `- [x] foo` → `- [ ] foo`
+/// Returns `null` for plain / non-todo lines so callers fall through.
+/// Indentation is preserved. The caret column relative to the body
+/// stays the same (the marker is the same length either way).
+LineOpResult? toggleTodoAt(String text, int caret) {
+  if (caret < 0) caret = 0;
+  if (caret > text.length) caret = text.length;
+  final lineStart =
+      caret == 0 ? 0 : text.lastIndexOf('\n', caret - 1) + 1;
+  final nextNl = text.indexOf('\n', caret);
+  final lineEnd = nextNl == -1 ? text.length : nextNl;
+  final line = text.substring(lineStart, lineEnd);
+  final m = RegExp(r'^(\s*)- \[([ xX])\] ').firstMatch(line);
+  if (m == null) return null;
+  final indent = m.group(1)!;
+  final mark = m.group(2)!.toLowerCase();
+  final newMark = mark == 'x' ? ' ' : 'x';
+  final newLine = '$indent- [$newMark] ${line.substring(m.end)}';
+  final newText = text.replaceRange(lineStart, lineEnd, newLine);
+  return LineOpResult(text: newText, caret: caret);
+}
+
 /// Smart-Enter continuation for markdown list lines. Inspect the
 /// portion of the current line BEFORE [caret]; if it's a recognised
 /// list item (`- `, `* `, `<n>. `, `- [ ] `, `- [x] `), return the

@@ -324,6 +324,43 @@ void main() {
     });
   });
 
+  group('toggleTodoAt', () {
+    test('unchecked → checked', () {
+      final r = toggleTodoAt('- [ ] task', 7);
+      expect(r, isNotNull);
+      expect(r!.text, '- [x] task');
+      expect(r.caret, 7);
+    });
+
+    test('checked → unchecked', () {
+      final r = toggleTodoAt('- [x] task', 7);
+      expect(r!.text, '- [ ] task');
+    });
+
+    test('accepts capital X as a checked variant', () {
+      final r = toggleTodoAt('- [X] task', 7);
+      expect(r!.text, '- [ ] task');
+    });
+
+    test('preserves indentation', () {
+      final r = toggleTodoAt('  - [ ] nested', 9);
+      expect(r!.text, '  - [x] nested');
+    });
+
+    test('returns null for plain bullets', () {
+      expect(toggleTodoAt('- bullet', 3), isNull);
+    });
+
+    test('returns null for non-list lines', () {
+      expect(toggleTodoAt('hello', 2), isNull);
+    });
+
+    test('only touches the line under the caret', () {
+      final r = toggleTodoAt('- [ ] a\n- [ ] b', 11);
+      expect(r!.text, '- [ ] a\n- [x] b');
+    });
+  });
+
   group('applyLinePrefix', () {
     test('promotes a plain line to # heading', () {
       final r = applyLinePrefix('foo', 1, '# ');

@@ -322,6 +322,19 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp((text, caret) => applyLinePrefix(text, caret, '> [!NOTE] '));
   }
 
+  /// Toggle `- [ ] ` ↔ `- [x] ` on the current line. Cmd+Enter.
+  /// No-op on non-todo lines (callers fall through to default Enter).
+  void _toggleTodoState() {
+    final v = _controller.value;
+    final caret = v.selection.isValid ? v.selection.baseOffset : v.text.length;
+    final r = toggleTodoAt(v.text, caret);
+    if (r == null) return;
+    _controller.value = TextEditingValue(
+      text: r.text,
+      selection: TextSelection.collapsed(offset: r.caret),
+    );
+  }
+
   /// Insert a horizontal rule (`\n---\n`) at the caret. Cmd+⇧+-.
   void _insertHorizontalRule() {
     final v = _controller.value;
@@ -890,6 +903,10 @@ class _SourceViewState extends State<SourceView> {
                       meta: true, shift: true): _convertToCallout,
                   const SingleActivator(LogicalKeyboardKey.keyM,
                       control: true, shift: true): _convertToCallout,
+                  const SingleActivator(LogicalKeyboardKey.enter,
+                      meta: true): _toggleTodoState,
+                  const SingleActivator(LogicalKeyboardKey.enter,
+                      control: true): _toggleTodoState,
                   const SingleActivator(LogicalKeyboardKey.minus,
                       meta: true, shift: true): _insertHorizontalRule,
                   const SingleActivator(LogicalKeyboardKey.minus,
