@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
 import '../../data/page_history.dart';
 
 /// Modal dialog that lists git commits touching [relativePath] and renders
@@ -61,11 +62,31 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
               return Padding(
                 padding: const EdgeInsets.all(24),
                 child: Center(
-                  child: Text(
-                    'No git history.\n\nMake the vault a git repo and commit '
-                    'to start tracking versions.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: tokens.text3),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      QuillIcon('git',
+                          size: 24,
+                          strokeWidth: 1.4,
+                          color: tokens.text3),
+                      const SizedBox(height: 10),
+                      Text('No git history',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.text2,
+                          )),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Make the vault a git repo and commit\nto start tracking versions.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: tokens.text3,
+                          height: 1.45,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
