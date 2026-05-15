@@ -855,7 +855,22 @@ class _SourceViewState extends State<SourceView> {
             child: Focus(
               onKeyEvent: _onKeyEvent,
               child: CallbackShortcuts(
-                bindings: {
+                // When the page is locked, suppress every mutating
+                // shortcut. _onChanged already short-circuits the bloc
+                // dispatch on locked (M682), but mutating shortcuts
+                // bypass the TextField's readOnly by writing
+                // _controller.value directly — that would leave the
+                // local controller ahead of the bloc and lose edits
+                // on close. Selecting the current line (⌘L) is
+                // read-only so it's preserved.
+                bindings: widget.locked
+                    ? {
+                        const SingleActivator(LogicalKeyboardKey.keyL,
+                            meta: true): _selectCurrentLine,
+                        const SingleActivator(LogicalKeyboardKey.keyL,
+                            control: true): _selectCurrentLine,
+                      }
+                    : {
                   const SingleActivator(LogicalKeyboardKey.keyB, meta: true):
                       () => _wrapSelection('**', '**'),
                   const SingleActivator(LogicalKeyboardKey.keyB, control: true):
