@@ -34,6 +34,20 @@ const List<String> _kCuratedEmojis = [
   '🐱', '🐶', '🐭', '🐰', '🦊', '🐼', '🐨', '🦁', '🐯', '🐮',
 ];
 
+/// Heuristic: detect whether [s] is a plain emoji glyph (or a multi-
+/// codepoint emoji sequence). Used to decide whether to render an
+/// `icon:` value as a clean transparent glyph or fall back to a
+/// chip-with-letter / fallback icon.
+///
+/// Returns false for empty strings, ASCII text (letters / digits /
+/// punctuation), and overly long inputs. Returns true for typical
+/// emojis like "📊", "🚀", "👨‍💻", "☕".
+bool looksLikeEmoji(String s) {
+  if (s.isEmpty) return false;
+  if (s.codeUnits.every((c) => c < 128)) return false;
+  return s.runes.length <= 8;
+}
+
 /// Modal grid of curated emojis. Picking one pops the dialog with the
 /// chosen string. Tapping the "Clear" footer pops with empty string.
 Future<String?> pickEmoji(BuildContext context) {

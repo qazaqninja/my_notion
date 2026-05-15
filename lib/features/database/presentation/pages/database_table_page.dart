@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
@@ -366,15 +367,20 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                       height: 22,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: _parseColor(schema.color),
+                        color: looksLikeEmoji(schema.icon)
+                            ? Colors.transparent
+                            : _parseColor(schema.color),
                         borderRadius: const BorderRadius.all(Radius.circular(4)),
                       ),
                       child: Text(
                         schema.icon,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: looksLikeEmoji(schema.icon)
+                              ? null
+                              : Colors.white,
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          fontSize:
+                              looksLikeEmoji(schema.icon) ? 18 : 13,
                         ),
                       ),
                     ),
