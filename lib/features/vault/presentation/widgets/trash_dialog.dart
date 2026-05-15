@@ -236,7 +236,12 @@ class _TrashDialogState extends State<TrashDialog> {
               context
                   .read<VaultBloc>()
                   .add(const ReindexVault());
-              context.toastSuccess('Restored', sub: newPath, subMono: true);
+              context.toastSuccess(
+                  item.title.isEmpty
+                      ? 'Restored ${item.basename}'
+                      : 'Restored "${item.title}"',
+                  sub: newPath,
+                  subMono: true);
               _refresh();
             },
             child: Text('Restore', style: TextStyle(color: tokens.accent)),
