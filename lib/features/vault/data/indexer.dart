@@ -67,17 +67,24 @@ class Indexer {
     await for (final entity in _walkAll(root)) {
       if (entity is! io.File) continue;
       if (p.basename(entity.path) != '.database.yaml') continue;
-      final yaml = await entity.readAsString();
-      final folderAbs = p.dirname(entity.path);
-      final folderRel = p.relative(folderAbs, from: rootPath);
-      final schema = DatabaseYamlParser.parse(yaml, folderPath: folderRel);
-      if (schema == null || schema.id.isEmpty) continue;
-      yield _DatabaseRow(
-        id: schema.id,
-        name: schema.name,
-        folderPath: folderRel,
-        schemaYaml: yaml,
-      );
+      try {
+        final yaml = await entity.readAsString();
+        final folderAbs = p.dirname(entity.path);
+        final folderRel = p.relative(folderAbs, from: rootPath);
+        final schema = DatabaseYamlParser.parse(yaml, folderPath: folderRel);
+        if (schema == null || schema.id.isEmpty) continue;
+        yield _DatabaseRow(
+          id: schema.id,
+          name: schema.name,
+          folderPath: folderRel,
+          schemaYaml: yaml,
+        );
+      } catch (e, st) {
+        // Mirror VaultFsDatasource.scan (M712): a single malformed
+        // .database.yaml shouldn't abort the whole reindex transaction.
+        // ignore: avoid_print
+        print('indexer: skipping database ${entity.path} — $e\n$st');
+      }
     }
   }
 
