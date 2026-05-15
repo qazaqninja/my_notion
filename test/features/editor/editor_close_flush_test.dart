@@ -82,6 +82,50 @@ void main() {
         reason: 'close() must flush in-memory edits to disk');
   });
 
+  test('save race: edits during in-flight save stay dirty (M715)',
+      () async {
+    final bloc = EditorBloc(repo: repo, indexer: indexer, db: db);
+    bloc.setVaultRoot(tmp);
+    bloc.add(OpenEditor(ulid));
+
+    final deadline = DateTime.now().add(const Duration(seconds: 3));
+    while (bloc.state is! EditorLoaded) {
+      if (DateTime.now().isAfter(deadline)) {
+        fail('Editor never reached EditorLoaded: ${bloc.state}');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+
+    // First edit + explicit save. Then immediately queue another edit
+    // — Bloc default transformer is concurrent, so the second handler
+    // can interleave with the save's awaits.
+    bloc.add(const EditBody('first version'));
+    bloc.add(const SaveNow());
+    bloc.add(const EditBody('second version'));
+
+    // Settle.
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+
+    final s = bloc.state;
+    expect(s is EditorLoaded, isTrue);
+    final loaded = s as EditorLoaded;
+    // The in-memory page must reflect the most recent edit.
+    expect(loaded.page.body.trim(), equals('second version'),
+        reason: 'latest body wins in memory');
+    // dirty must stay true so the next debounce / explicit save picks
+    // up the second edit. Without M715, the post-save emit would clear
+    // dirty using the stale loaded snapshot.
+    expect(loaded.dirty, isTrue,
+        reason: 'second-version edit must keep dirty=true after save');
+
+    await bloc.close();
+    // After close() flushes (M714), disk has the latest body.
+    final raw =
+        await File(p.join(tmp.path, 'p.md')).readAsString();
+    final parsed = FrontmatterParser.parse(raw);
+    expect(parsed.body.trim(), equals('second version'));
+  });
+
   test('close() is a no-op when state is clean', () async {
     final bloc = EditorBloc(repo: repo, indexer: indexer, db: db);
     bloc.setVaultRoot(tmp);
