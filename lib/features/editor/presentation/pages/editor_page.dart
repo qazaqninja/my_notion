@@ -1229,6 +1229,7 @@ class _EditorBodyState extends State<_EditorBody> {
                               _PageFooter(
                                 body: page.body,
                                 goal: _readGoal(page.frontmatter.get('goal')),
+                                createdAt: '${page.frontmatter.get('created_at') ?? ''}'.trim(),
                               ),
                               const SizedBox(height: 60),
                             ],
@@ -1682,13 +1683,18 @@ int? _readGoal(Object? raw) {
 /// pill (accent fill, green when met). Hidden if the body is empty so
 /// empty pages don't show "0 words · 0 chars · 1 min".
 class _PageFooter extends StatelessWidget {
-  const _PageFooter({required this.body, this.goal});
+  const _PageFooter({required this.body, this.goal, this.createdAt = ''});
 
   final String body;
 
   /// Optional word-count goal from frontmatter `goal:`. When non-null,
   /// the footer surfaces progress against this target.
   final int? goal;
+
+  /// `created_at:` from frontmatter (any format the user types) —
+  /// surfaced below the word-count line so users can see when they
+  /// started a page without opening the properties panel.
+  final String createdAt;
 
   @override
   Widget build(BuildContext context) {
@@ -1748,6 +1754,11 @@ class _PageFooter extends StatelessWidget {
                 ),
               ),
             ),
+          ],
+          if (createdAt.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text('Created: $createdAt',
+                style: mono(fontSize: 11, color: tokens.text3)),
           ],
         ],
       ),
