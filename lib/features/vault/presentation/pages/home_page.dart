@@ -102,7 +102,8 @@ class HomePage extends StatelessWidget {
                     tokens: tokens,
                     icon: 'calendar',
                     title: "Today's note",
-                    subtitle: 'Open or create Daily/<YYYY-MM-DD>.md.',
+                    subtitle:
+                        'Open or create Daily/${DateTime.now().toIso8601String().split("T").first}.md.',
                     onTap: () => _openDailyNote(context),
                     disabled: state is! VaultLoaded,
                     disabledReason: 'Open a vault to use daily notes.',
