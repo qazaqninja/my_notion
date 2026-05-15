@@ -1100,6 +1100,8 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, demoteHeadingsIn);
       case SlashAction.promoteHeadings:
         _applyLinesTransformAfterSlash(stripStart, caret, promoteHeadingsIn);
+      case SlashAction.collapseSpaces:
+        _applyLinesTransformAfterSlash(stripStart, caret, collapseSpacesIn);
     }
   }
 

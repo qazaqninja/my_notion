@@ -970,6 +970,19 @@ SortLinesResult trimTrailingWhitespaceIn(String text, int start, int end) =>
       (lines) => [for (final l in lines) l.replaceFirst(RegExp(r'[ \t]+$'), '')],
     );
 
+/// Collapse internal runs of spaces and tabs on every selected
+/// line into a single space. Useful when pasting text whose
+/// formatting used multi-space alignment that no longer makes sense
+/// in markdown prose. Leading whitespace is preserved (so indented
+/// list markers stay aligned); only **internal** runs collapse.
+SortLinesResult collapseSpacesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final internalRun = RegExp(r'(?<=\S)[ \t]{2,}');
+      return [
+        for (final l in lines) l.replaceAll(internalRun, ' '),
+      ];
+    });
+
 /// Strip leading whitespace (spaces, tabs) from every line in the
 /// selected block. The trim-trailing's mirror — common when pasting
 /// pre-indented code into the editor and wanting a clean left margin.

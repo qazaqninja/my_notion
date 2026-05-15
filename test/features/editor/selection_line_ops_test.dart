@@ -1856,6 +1856,35 @@ void main() {
     });
   });
 
+  group('collapseSpacesIn', () {
+    test('collapses internal runs of spaces to one', () {
+      const text = 'a   b    c\nd  e\n';
+      final r = collapseSpacesIn(text, 0, text.length);
+      expect(r.text, 'a b c\nd e\n');
+    });
+
+    test('collapses internal tabs and mixed tab/space runs', () {
+      const text = 'a\t\tb\nc \t d\n';
+      final r = collapseSpacesIn(text, 0, text.length);
+      expect(r.text, 'a b\nc d\n');
+    });
+
+    test('preserves leading whitespace (list indent etc.)', () {
+      const text = '  - item   one\n';
+      final r = collapseSpacesIn(text, 0, text.length);
+      expect(r.text, '  - item one\n');
+    });
+
+    test('single-space runs pass through', () {
+      const text = 'a b c\n';
+      expect(collapseSpacesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input is a no-op', () {
+      expect(collapseSpacesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

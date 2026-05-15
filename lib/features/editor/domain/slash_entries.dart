@@ -180,6 +180,9 @@ enum SlashAction {
   demoteHeadings,
   /// Promote every selected heading by one level (up to `# `).
   promoteHeadings,
+  /// Collapse runs of internal spaces/tabs to a single space on
+  /// every selected line.
+  collapseSpaces,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -854,6 +857,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '### → ##',
     action: SlashAction.promoteHeadings,
     keywords: ['promote', 'heading', 'h2', 'h1', 'shallower', 'flatten'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Collapse runs of spaces',
+    hint: 'a   b → a b',
+    action: SlashAction.collapseSpaces,
+    keywords: ['collapse', 'spaces', 'whitespace', 'normalize', 'tabs'],
   ),
   SlashEntry(
     icon: 'hash',
