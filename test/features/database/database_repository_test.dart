@@ -131,6 +131,62 @@ void main() {
     expect(p.basename(row.relativePath), equals('Bad-Name-Here-.md'));
   });
 
+  test('updateCell YAML-escapes text cells with reserved glyphs (M695)',
+      () async {
+    final schema = (await dbRepo.listDatabases()).first;
+    final col = schema.columns.firstWhere((c) => c.key == 'owner');
+    final rows = await dbRepo.getRows(schema.id);
+    final northwind =
+        rows.firstWhere((r) => r.relativePath.endsWith('Northwind.md'));
+
+    // ':' would split the YAML mapping; '#' would start a comment.
+    const unsafe = 'Priya: Tech Lead #urgent';
+    await dbRepo.updateCell(
+      ulid: northwind.ulid,
+      column: col,
+      newValue: unsafe,
+      vaultRoot: tmp,
+    );
+
+    final raw = await File(p.join(tmp.path, northwind.relativePath)).readAsString();
+    expect(raw, contains('owner: "Priya: Tech Lead #urgent"'),
+        reason: 'rawScalar must be double-quoted on disk');
+    final parsed = FrontmatterParser.parse(raw);
+    expect(parsed.frontmatter.get('owner'), equals(unsafe),
+        reason: 'round-trip must recover the original string');
+  });
+
+  test('updateCell YAML-escapes multi cells with commas in items (M695)',
+      () async {
+    // Build a synthetic schema with a multi column.
+    final dbYamlPath = p.join(tmp.path, 'Operations/Customers/.database.yaml');
+    final existing = await File(dbYamlPath).readAsString();
+    await File(dbYamlPath).writeAsString(
+        existing.replaceFirst('schema:\n',
+            'schema:\n  labels:\n    type: multi\n'));
+    await indexer.reindex(tmp);
+    final schema = (await dbRepo.listDatabases()).first;
+    final col = schema.columns.firstWhere((c) => c.key == 'labels');
+    final rows = await dbRepo.getRows(schema.id);
+    final northwind =
+        rows.firstWhere((r) => r.relativePath.endsWith('Northwind.md'));
+
+    // Comma inside a label would split into two labels without quoting.
+    await dbRepo.updateCell(
+      ulid: northwind.ulid,
+      column: col,
+      newValue: 'high, priority',
+      vaultRoot: tmp,
+    );
+
+    final raw = await File(p.join(tmp.path, northwind.relativePath)).readAsString();
+    final parsed = FrontmatterParser.parse(raw);
+    final labels = parsed.frontmatter.get('labels');
+    // The newValue 'high, priority' is split on commas by the cell
+    // editor convention — so we expect two trimmed items.
+    expect(labels, equals(['high', 'priority']));
+  });
+
   test('updateCell throws PageLockedException when page has locked: true',
       () async {
     final schema = (await dbRepo.listDatabases()).first;
