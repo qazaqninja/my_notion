@@ -6,7 +6,15 @@ class DatabaseYamlParser {
   const DatabaseYamlParser._();
 
   static DatabaseSchema? parse(String yamlText, {required String folderPath}) {
-    final dynamic doc = loadYaml(yamlText);
+    final dynamic doc;
+    try {
+      doc = loadYaml(yamlText);
+    } catch (_) {
+      // Malformed YAML — user edited the .database.yaml externally and
+      // broke the parse. Return null so listDatabases / getDatabase
+      // gracefully skip rather than throwing past every UI surface.
+      return null;
+    }
     if (doc is! YamlMap) return null;
 
     final id = (doc['id'] ?? '').toString();

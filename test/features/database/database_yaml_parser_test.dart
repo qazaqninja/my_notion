@@ -93,6 +93,27 @@ schema:
       );
     });
 
+    test('malformed YAML (syntax error) → null, no throw (M775)', () {
+      // A `.database.yaml` edited by hand and saved mid-sentence
+      // produces unterminated flow scalars; previously the loadYaml
+      // call propagated YamlException past listDatabases() and broke
+      // the entire databases sidebar section.
+      expect(
+        DatabaseYamlParser.parse(
+          'id: db\nname: "unterminated',
+          folderPath: 'x',
+        ),
+        isNull,
+      );
+      expect(
+        DatabaseYamlParser.parse(
+          'schema:\n  arr:\n    type: [unterminated, list',
+          folderPath: 'x',
+        ),
+        isNull,
+      );
+    });
+
     test('reads inverse_of on relation columns', () {
       final s = DatabaseYamlParser.parse(
         '''
