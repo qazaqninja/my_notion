@@ -176,7 +176,7 @@ void main() {
       expect(r.caret, 1); // col 1 on "bbb"
     });
 
-    test('caret column is clamped to the new line\'s length', () {
+    test("caret column is clamped to the new line's length", () {
       // "abcdef\nxy" — delete first line, caret col 5 → end of "xy" (2)
       final r = deleteLineAt('abcdef\nxy', 5);
       expect(r.text, 'xy');
@@ -400,7 +400,7 @@ void main() {
       expect(r.text, 'body');
     });
 
-    test('idempotent for `> [!NOTE] ` — second press doesn\'t stack', () {
+    test("idempotent for `> [!NOTE] ` — second press doesn't stack", () {
       final once = applyLinePrefix('foo', 1, '> [!NOTE] ');
       expect(once.text, '> [!NOTE] foo');
       final twice = applyLinePrefix(once.text, once.caret, '> [!NOTE] ');

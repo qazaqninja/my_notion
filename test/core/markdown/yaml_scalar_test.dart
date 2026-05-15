@@ -80,7 +80,7 @@ void main() {
       expect(yamlFlowItem(''), equals('""'));
     });
 
-    test('quotes comma so flow list doesn\'t split', () {
+    test("quotes comma so flow list doesn't split", () {
       expect(yamlFlowItem('high, priority'), equals('"high, priority"'));
     });
 

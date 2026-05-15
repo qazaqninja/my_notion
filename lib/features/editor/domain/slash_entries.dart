@@ -253,7 +253,7 @@ const List<SlashEntry> kSlashEntries = [
   ),
   SlashEntry(
     icon: 'calendar',
-    label: 'Today\'s daily note link',
+    label: "Today's daily note link",
     hint: '[[…]]',
     action: SlashAction.insertDailyNoteLink,
     keywords: ['daily', 'today', 'journal', 'link', 'wikilink'],

@@ -142,9 +142,9 @@ class _TagsPageState extends State<TagsPage> {
                               )),
                           const SizedBox(height: 4),
                           Text(
-                            'Add a `tags:` or `status:` field to any page\'s\n'
+                            "Add a `tags:` or `status:` field to any page's\n"
                             'frontmatter (or a multi-value column in a\n'
-                            'database) and they\'ll show up here.',
+                            "database) and they'll show up here.",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 12,
