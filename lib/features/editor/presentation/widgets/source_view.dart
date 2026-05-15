@@ -656,9 +656,16 @@ class _SourceViewState extends State<SourceView> {
     final loaded = context.read<EditorBloc>().state;
     final selfUlid = loaded is EditorLoaded ? loaded.page.ulid : '';
     final rows = await db.select(db.pages).get();
-    if (rows.isEmpty) return;
+    if (!mounted) return;
+    if (rows.isEmpty) {
+      context.toastInfo('No pages to link to yet');
+      return;
+    }
     final pool = rows.where((r) => r.ulid != selfUlid).toList();
-    if (pool.isEmpty) return;
+    if (pool.isEmpty) {
+      context.toastInfo('This is the only page in the vault');
+      return;
+    }
     final pick = pool[DateTime.now().microsecondsSinceEpoch % pool.length];
     final t = _controller.text;
     final at = insertAt.clamp(0, t.length);
