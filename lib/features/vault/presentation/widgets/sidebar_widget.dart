@@ -436,12 +436,19 @@ class _TreeFilterField extends StatelessWidget {
               valueListenable: controller,
               builder: (_, val, __) => val.text.isEmpty
                   ? const SizedBox.shrink()
-                  : GestureDetector(
-                      onTap: () => controller.clear(),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Icon(Icons.close,
-                            size: 11, color: tokens.text3),
+                  : MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => controller.clear(),
+                        child: Tooltip(
+                          message: 'Clear filter',
+                          waitDuration: const Duration(milliseconds: 500),
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Icon(Icons.close,
+                                size: 11, color: tokens.text3),
+                          ),
+                        ),
                       ),
                     ),
             ),
