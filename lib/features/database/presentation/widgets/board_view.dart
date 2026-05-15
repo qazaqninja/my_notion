@@ -155,18 +155,30 @@ class _Column extends StatelessWidget {
                     Container(width: 2, height: 10, color: tokens.divider2),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(
-                        sub.key,
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.8,
-                          color: tokens.text3,
+                      child: Tooltip(
+                        message: 'Sub-group: ${sub.key}',
+                        waitDuration: const Duration(milliseconds: 600),
+                        child: Text(
+                          sub.key,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                            color: tokens.text3,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ),
-                    Text('${sub.value.length}',
-                        style: mono(fontSize: 10.5, color: tokens.text3)),
+                    Tooltip(
+                      message: sub.value.length == 1
+                          ? '1 card in ${sub.key}'
+                          : '${sub.value.length} cards in ${sub.key}',
+                      waitDuration: const Duration(milliseconds: 500),
+                      child: Text('${sub.value.length}',
+                          style: mono(fontSize: 10.5, color: tokens.text3)),
+                    ),
                   ],
                 ),
               ),
