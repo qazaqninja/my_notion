@@ -231,9 +231,17 @@ class VaultPickerPage extends StatelessWidget {
                           child: CircularProgressIndicator(strokeWidth: 1.5, color: tokens.text2),
                         ),
                         const SizedBox(width: 10),
-                        Text(
-                          'Indexing ${state.rootPath ?? ''}…',
-                          style: mono(fontSize: 12, color: tokens.text3),
+                        Flexible(
+                          child: Tooltip(
+                            message: state.rootPath ?? 'Indexing…',
+                            waitDuration: const Duration(milliseconds: 500),
+                            child: Text(
+                              'Indexing ${state.rootPath ?? ''}…',
+                              style: mono(fontSize: 12, color: tokens.text3),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
                         ),
                       ],
                     )
