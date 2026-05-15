@@ -99,7 +99,8 @@ class HtmlToMarkdown {
     out = out.replaceAllMapped(
       RegExp(r'<a\s+[^>]*href="([^"]*)"[^>]*>([\s\S]*?)</a>',
           caseSensitive: false),
-      (m) => '[${_stripInline(m.group(2) ?? '').trim()}](${m.group(1)})',
+      (m) =>
+          '[${_escapeAlt(_stripInline(m.group(2) ?? '').trim())}](${m.group(1)})',
     );
     // <img src="..." alt="...">
     out = out.replaceAllMapped(
@@ -110,7 +111,7 @@ class HtmlToMarkdown {
         final altMatch =
             RegExp(r'''alt=["']([^"']*)["']''').firstMatch(m.group(0)!);
         final alt = altMatch?.group(1) ?? '';
-        return '![$alt]($src)';
+        return '![${_escapeAlt(alt)}]($src)';
       },
     );
     // <strong> / <b>
@@ -141,6 +142,14 @@ class HtmlToMarkdown {
 
   static String _stripInline(String s) =>
       s.replaceAll(RegExp(r'<[^>]+>'), '');
+
+  /// Escape `[` / `]` / `\` inside markdown link / image alt text so a
+  /// converted HTML `<img alt="foo [v2]">` survives as
+  /// `![foo \[v2\]](src)` instead of truncating at the first `]`.
+  static String _escapeAlt(String s) => s
+      .replaceAll(r'\', r'\\')
+      .replaceAll('[', r'\[')
+      .replaceAll(']', r'\]');
 
   static String _unorderedList(String inner) {
     final items = RegExp(r'<li\b[^>]*>([\s\S]*?)</li>', caseSensitive: false)
