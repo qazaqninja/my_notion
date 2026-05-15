@@ -530,14 +530,22 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
               width: 96,
               child: Row(
                 children: [
-                  QuillIcon(_iconForType(type),
-                      size: 12, strokeWidth: 1.7, color: tokens.text3),
+                  Tooltip(
+                    message: _labelForType(type),
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: QuillIcon(_iconForType(type),
+                        size: 12, strokeWidth: 1.7, color: tokens.text3),
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
-                    child: Text(
-                      widget.entry.key,
-                      style: mono(fontSize: 12, color: tokens.text3),
-                      overflow: TextOverflow.ellipsis,
+                    child: Tooltip(
+                      message: widget.entry.key,
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        widget.entry.key,
+                        style: mono(fontSize: 12, color: tokens.text3),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ],
