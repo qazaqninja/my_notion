@@ -97,6 +97,34 @@ void main() {
     expect(parsed.frontmatter.get('arr'), equals(525000));
   });
 
+  test('updateCell number cell escapes fallback string on parse failure '
+      '(M753)', () async {
+    final schema = (await dbRepo.listDatabases()).first;
+    final arr = schema.columns.firstWhere((c) => c.key == 'arr');
+    final rows = await dbRepo.getRows(schema.id);
+    final northwind =
+        rows.firstWhere((r) => r.relativePath.endsWith('Northwind.md'));
+
+    // Non-numeric input on a number column — used to emit raw, which
+    // for content like 'TBD: pending' would corrupt YAML on next
+    // parse.
+    await dbRepo.updateCell(
+      ulid: northwind.ulid,
+      column: arr,
+      newValue: 'TBD: pending #q3',
+      vaultRoot: tmp,
+    );
+
+    final raw =
+        await File(p.join(tmp.path, northwind.relativePath)).readAsString();
+    // Must be double-quoted on disk so YAML doesn't choke on ':' or
+    // treat '#' as a comment.
+    expect(raw, contains('arr: "TBD: pending #q3"'),
+        reason: 'unparseable number must round-trip via quoted scalar');
+    final parsed = FrontmatterParser.parse(raw);
+    expect(parsed.frontmatter.get('arr'), equals('TBD: pending #q3'));
+  });
+
   test('createRow writes a new .md inside the database folder', () async {
     final schema = (await dbRepo.listDatabases()).first;
     final initialCount = (await dbRepo.getRows(schema.id)).length;
