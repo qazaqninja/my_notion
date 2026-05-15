@@ -1411,9 +1411,21 @@ class _TranscludedBlock extends StatelessWidget {
       builder: (context, snap) {
         if (!snap.hasData) {
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text('Loading transclusion…',
-                style: TextStyle(fontSize: 11.5, color: tokens.text3)),
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 11,
+                  height: 11,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 1.3, color: tokens.text3),
+                ),
+                const SizedBox(width: 8),
+                Text('Loading transclusion…',
+                    style: TextStyle(fontSize: 11.5, color: tokens.text3)),
+              ],
+            ),
           );
         }
         final page = snap.data;
