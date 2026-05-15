@@ -333,11 +333,18 @@ class _Relation extends StatelessWidget {
         final emoji = snap.data == null
             ? null
             : emojiFromFrontmatterJson(snap.data!.frontmatterJson);
+        // Mirrors M335 in the inline `_ResolvedChip`: when the lookup
+        // settles with no row, render the chip as broken.
+        final isBroken = snap.connectionState == ConnectionState.done &&
+            snap.data == null;
         return RelationChip(
-          label: title,
+          label: isBroken ? '⚠ $title' : title,
           ulid: ulid,
-          icon: 'file-md',
+          icon: isBroken ? 'trash' : 'file-md',
           emojiIcon: emoji,
+          tooltip: isBroken
+              ? 'Broken relation — target page is no longer in the vault.\n[[$ulid]]'
+              : null,
         );
       },
     );
