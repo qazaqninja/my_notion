@@ -2255,7 +2255,7 @@ class _ListItem extends StatelessWidget {
 /// than paragraphs) but lands the user near the heading; the renderer
 /// is too dynamic for pixel-precise anchors without GlobalKey
 /// plumbing across nested renderers.
-class _TocLink extends StatelessWidget {
+class _TocLink extends StatefulWidget {
   const _TocLink({
     required this.level,
     required this.text,
@@ -2265,11 +2265,18 @@ class _TocLink extends StatelessWidget {
   final String text;
   final double lineFraction;
 
+  @override
+  State<_TocLink> createState() => _TocLinkState();
+}
+
+class _TocLinkState extends State<_TocLink> {
+  bool _hover = false;
+
   void _jump(BuildContext context) {
     final scrollable = Scrollable.maybeOf(context);
     if (scrollable == null) return;
     final pos = scrollable.position;
-    final target = (pos.maxScrollExtent * lineFraction).clamp(
+    final target = (pos.maxScrollExtent * widget.lineFraction).clamp(
       pos.minScrollExtent,
       pos.maxScrollExtent,
     );
@@ -2283,18 +2290,22 @@ class _TocLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return GestureDetector(
-      onTap: () => _jump(context),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+    final level = widget.level;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => _jump(context),
         child: Padding(
-          padding: EdgeInsets.only(left: (level - 1) * 14.0, top: 3, bottom: 1),
+          padding:
+              EdgeInsets.only(left: (level - 1) * 14.0, top: 3, bottom: 1),
           child: Text(
-            text,
+            widget.text,
             style: TextStyle(
               fontSize: level == 1 ? 14 : (level == 2 ? 13 : 12.5),
               fontWeight: level == 1 ? FontWeight.w600 : FontWeight.w500,
-              color: tokens.text2,
+              color: _hover ? tokens.accent : tokens.text2,
               decoration: TextDecoration.none,
             ),
           ),
