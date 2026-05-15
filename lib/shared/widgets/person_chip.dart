@@ -43,7 +43,13 @@ class PersonChip extends StatelessWidget {
         ),
       ),
     );
-    if (compact) return avatar;
+    if (compact) {
+      return Tooltip(
+        message: trimmed.isEmpty ? 'Unassigned' : trimmed,
+        waitDuration: const Duration(milliseconds: 400),
+        child: avatar,
+      );
+    }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
