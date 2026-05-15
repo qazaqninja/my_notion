@@ -844,14 +844,20 @@ class _EditorBodyState extends State<_EditorBody> {
     if (picked == null || !context.mounted) return;
     final trimmed = picked.trim();
     final bloc = context.read<EditorBloc>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
     if (trimmed.isEmpty) {
       if (existing != null) {
         bloc.add(const RemoveFrontmatterField('goal'));
+        messenger?.showSnackBar(
+          const SnackBar(
+            content: Text('Word count goal cleared'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
       return;
     }
     final n = int.tryParse(trimmed);
-    final messenger = ScaffoldMessenger.maybeOf(context);
     if (n == null || n < 1) {
       messenger?.showSnackBar(
         const SnackBar(content: Text('Goal must be a positive whole number')),
