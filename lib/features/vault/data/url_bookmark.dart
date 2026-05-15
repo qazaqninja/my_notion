@@ -41,8 +41,14 @@ class UrlBookmark {
     final today =
         DateTime.now().toIso8601String().substring(0, 10);
     final host = parsed.host;
+    // Strip leading and trailing `/` from the path so a URL like
+    // `https://example.com/blog/` slugifies as `blog`, not `blog-`.
+    // The previous regex `^/+|/+\$` had a buggy `\$` (escaped dollar
+    // = literal `$` char) instead of `$` (end-of-string), so it only
+    // stripped leading slashes and left trailing slashes to become
+    // `-` via the next replace pass (M790).
     final pathPart = parsed.path
-        .replaceAll(RegExp(r'^/+|/+\$'), '')
+        .replaceAll(RegExp(r'^/+|/+$'), '')
         .replaceAll(RegExp(r'[\\/:*?"<>|]'), '-');
     final base = pathPart.isEmpty ? host : '$host-$pathPart';
     final title = base.length > 100 ? base.substring(0, 100) : base;

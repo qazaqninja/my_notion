@@ -84,6 +84,28 @@ void main() {
     expect(https.relativePath, startsWith('Bookmarks/'));
   });
 
+  test('trailing slash strips cleanly off the slug (M790)', () async {
+    // The old `^/+|/+\$` regex was bugged: `\$` meant literal `$`,
+    // not end-of-string. Trailing slashes survived the leading-slash
+    // strip and were swept up by the next `/` → `-` replace, so
+    // `https://example.com/blog/` became `example.com-blog-` instead
+    // of `example.com-blog`.
+    final r = await UrlBookmark.capture(
+      'https://example.com/blog/',
+      vault,
+    );
+    expect(r.relativePath, equals('Bookmarks/example.com-blog.md'),
+        reason: 'trailing slash must not leak into the slug');
+  });
+
+  test('multiple trailing slashes also strip (M790)', () async {
+    final r = await UrlBookmark.capture(
+      'https://example.com/path///',
+      vault,
+    );
+    expect(r.relativePath, equals('Bookmarks/example.com-path.md'));
+  });
+
   test('disambiguates colliding filenames instead of overwriting (M773)',
       () async {
     // First capture lands at Bookmarks/example.com.md.
