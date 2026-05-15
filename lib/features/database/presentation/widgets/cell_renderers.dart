@@ -194,10 +194,14 @@ class CellRenderer extends StatelessWidget {
         }
         return Align(
           alignment: align,
-          child: Text('$v',
-              style: mono(fontSize: 12, color: tokens.text2),
-              overflow: TextOverflow.ellipsis,
-              maxLines: wrap ? null : 1),
+          child: Tooltip(
+            message: '$v',
+            waitDuration: const Duration(milliseconds: 600),
+            child: Text('$v',
+                style: mono(fontSize: 12, color: tokens.text2),
+                overflow: TextOverflow.ellipsis,
+                maxLines: wrap ? null : 1),
+          ),
         );
     }
   }
