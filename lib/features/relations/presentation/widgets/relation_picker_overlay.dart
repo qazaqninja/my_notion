@@ -240,6 +240,8 @@ class _Panel extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                       color: tokens.text2,
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                   if (state.selectedResult!.relativePath.isNotEmpty)
                     Padding(
@@ -247,6 +249,8 @@ class _Panel extends StatelessWidget {
                       child: Text(
                         state.selectedResult!.relativePath,
                         style: mono(fontSize: 10.5, color: tokens.text3),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ),
                   if (state.selectedResult!.snippet.isNotEmpty)
