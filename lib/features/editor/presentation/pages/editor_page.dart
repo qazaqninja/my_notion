@@ -299,6 +299,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'set-font', child: Text('Set page font…')),
         PopupMenuItem(value: 'set-reminder', child: Text('Set reminder…')),
         PopupMenuItem(value: 'snooze-reminder', child: Text('Snooze reminder…')),
+        PopupMenuItem(value: 'clear-reminder', child: Text('Clear reminder')),
         PopupMenuItem(value: 'set-goal', child: Text('Set word count goal…')),
         PopupMenuDivider(),
         PopupMenuItem(value: 'trash', child: Text('Move to trash')),
@@ -359,6 +360,27 @@ class _EditorBodyState extends State<_EditorBody> {
         await _setReminder(context, loaded);
       case 'snooze-reminder':
         await _snoozeReminder(context, loaded);
+      case 'clear-reminder':
+        final fm = loaded.page.frontmatter;
+        final existing = fm.find('reminder');
+        if (existing == null) {
+          messenger?.showSnackBar(
+            const SnackBar(
+              content: Text('No reminder set on this page.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          context
+              .read<EditorBloc>()
+              .add(const RemoveFrontmatterField('reminder'));
+          messenger?.showSnackBar(
+            const SnackBar(
+              content: Text('Reminder cleared.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       case 'set-goal':
         await _setWordGoal(context, loaded);
       case 'rename':
