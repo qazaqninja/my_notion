@@ -803,7 +803,7 @@ class _RecentEntry {
   final String? emojiIcon;
 }
 
-class _Tile extends StatelessWidget {
+class _Tile extends StatefulWidget {
   const _Tile({
     required this.tokens,
     required this.icon,
@@ -818,32 +818,53 @@ class _Tile extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
+  State<_Tile> createState() => _TileState();
+}
+
+class _TileState extends State<_Tile> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
+    final tokens = widget.tokens;
     return Expanded(
       child: MouseRegion(
-        cursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        cursor: widget.onTap != null
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() => _hover = false),
         child: GestureDetector(
-          onTap: onTap,
-          child: Container(
+          onTap: widget.onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: tokens.surface,
-              border: Border.all(color: tokens.divider2, width: 0.5),
+              color: _hover ? tokens.surface2 : tokens.surface,
+              border: Border.all(
+                color: _hover ? tokens.accent : tokens.divider2,
+                width: 0.5,
+              ),
               borderRadius: const BorderRadius.all(Radius.circular(6)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                QuillIcon(icon, size: 16, color: tokens.text2),
+                QuillIcon(widget.icon,
+                    size: 16,
+                    color: _hover ? tokens.accent : tokens.text2),
                 const SizedBox(height: 10),
                 Text(
-                  title,
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: tokens.text),
+                  widget.title,
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.text),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  subtitle,
+                  widget.subtitle,
                   style: mono(fontSize: 11, color: tokens.text3),
                 ),
               ],
