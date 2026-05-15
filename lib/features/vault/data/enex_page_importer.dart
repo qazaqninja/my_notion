@@ -33,32 +33,40 @@ class EnexPageImporter {
     final usedNames = <String>{};
     final written = <ImportedEnexNote>[];
     for (final note in notes) {
-      final ulid = _ulids.generate();
-      final safe = _uniqueFilename(usedNames, _safeFileName(note.title));
-      final rel = p.join(targetFolder, '$safe.md');
-      final out = File(p.join(vaultRoot.path, rel));
-      final body = HtmlToMarkdown.convert(note.content);
-      final fmBuf = StringBuffer('---\n');
-      fmBuf.writeln('id: $ulid');
-      fmBuf.writeln('title: ${yamlSafeScalar(note.title)}');
-      if (note.tags.isNotEmpty) {
-        fmBuf.writeln('tags: [${note.tags.join(', ')}]');
+      try {
+        final ulid = _ulids.generate();
+        final safe = _uniqueFilename(usedNames, _safeFileName(note.title));
+        final rel = p.join(targetFolder, '$safe.md');
+        final out = File(p.join(vaultRoot.path, rel));
+        final body = HtmlToMarkdown.convert(note.content);
+        final fmBuf = StringBuffer('---\n');
+        fmBuf.writeln('id: $ulid');
+        fmBuf.writeln('title: ${yamlSafeScalar(note.title)}');
+        if (note.tags.isNotEmpty) {
+          fmBuf.writeln('tags: [${note.tags.join(', ')}]');
+        }
+        if (note.created != null) {
+          fmBuf.writeln('created_at: ${note.created}');
+        }
+        if (note.updated != null) {
+          fmBuf.writeln('updated: ${note.updated}');
+        }
+        fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
+        fmBuf.writeln('---');
+        fmBuf.writeln();
+        await out.writeAsString('${fmBuf.toString()}${body.trim()}\n');
+        written.add(ImportedEnexNote(
+          ulid: ulid,
+          relativePath: rel,
+          title: note.title,
+        ));
+      } catch (e, st) {
+        // Skip a single failing note (encoding, disk write) rather
+        // than aborting the whole notebook import — matches M731's
+        // csv_importer robustness.
+        // ignore: avoid_print
+        print('enex_importer: skipping note "${note.title}" — $e\n$st');
       }
-      if (note.created != null) {
-        fmBuf.writeln('created_at: ${note.created}');
-      }
-      if (note.updated != null) {
-        fmBuf.writeln('updated: ${note.updated}');
-      }
-      fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
-      fmBuf.writeln('---');
-      fmBuf.writeln();
-      await out.writeAsString('${fmBuf.toString()}${body.trim()}\n');
-      written.add(ImportedEnexNote(
-        ulid: ulid,
-        relativePath: rel,
-        title: note.title,
-      ));
     }
     return EnexImportSummary(folder: targetFolder, notes: written);
   }
