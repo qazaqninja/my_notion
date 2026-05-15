@@ -260,11 +260,13 @@ class _Panel extends StatelessWidget {
                             const SizedBox(height: 2),
                             Text(
                               state.query.isEmpty
-                                  ? 'Start typing to search pages, databases, and commands.'
+                                  ? 'Start typing to search pages, databases, and commands.\nFilters: db: · tag: · in: · path: · folder:'
                                   : 'No pages, databases, or commands match "${state.query}".',
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                  fontSize: 12, color: tokens.text3),
+                                  fontSize: 12,
+                                  color: tokens.text3,
+                                  height: 1.5),
                             ),
                           ],
                         ),
