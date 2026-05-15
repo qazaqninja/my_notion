@@ -613,25 +613,37 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
                 size: 12, color: fg),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  e.title,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    color: tokens.text,
+                child: Tooltip(
+                  message: e.title,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    e.title,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: tokens.text,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 10),
-              Text(label, style: mono(fontSize: 11, color: fg)),
+              Tooltip(
+                message: 'Due ${e.due.toIso8601String().split("T").first}',
+                waitDuration: const Duration(milliseconds: 500),
+                child: Text(label, style: mono(fontSize: 11, color: fg)),
+              ),
               const SizedBox(width: 12),
               Flexible(
-                child: Text(
-                  stripMdExtension(e.relativePath),
-                  style: mono(fontSize: 11, color: tokens.text3),
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.right,
+                child: Tooltip(
+                  message: e.relativePath,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    stripMdExtension(e.relativePath),
+                    style: mono(fontSize: 11, color: tokens.text3),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                  ),
                 ),
               ),
             ],
