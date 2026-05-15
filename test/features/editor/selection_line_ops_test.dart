@@ -2353,6 +2353,47 @@ void main() {
     });
   });
 
+  group('productNumericLinesIn', () {
+    test('product of three integers', () {
+      const text = '2\n3\n4\n';
+      final r = productNumericLinesIn(text, 0, text.length);
+      expect(r.text, '24\n');
+    });
+
+    test('product of decimal inputs renders decimal', () {
+      const text = '0.5\n2.0\n';
+      final r = productNumericLinesIn(text, 0, text.length);
+      expect(r.text, '1.0\n');
+    });
+
+    test('integer inputs with decimal product render decimal', () {
+      // Can't easily produce this with pure ints, so use one .0 input
+      // to mark "decimal style"; mixed input → decimal-form output.
+      const text = '3\n0.5\n';
+      expect(productNumericLinesIn(text, 0, text.length).text, '1.5\n');
+    });
+
+    test('skips non-numeric lines', () {
+      const text = '2\nlabel\n3\n';
+      expect(productNumericLinesIn(text, 0, text.length).text, '6\n');
+    });
+
+    test('zero shorts the product to zero', () {
+      const text = '5\n0\n10\n';
+      expect(productNumericLinesIn(text, 0, text.length).text, '0\n');
+    });
+
+    test('negative values flip the sign correctly', () {
+      const text = '-2\n3\n';
+      expect(productNumericLinesIn(text, 0, text.length).text, '-6\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(productNumericLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

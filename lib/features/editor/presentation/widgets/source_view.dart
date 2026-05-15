@@ -1134,6 +1134,10 @@ class _SourceViewState extends State<SourceView> {
         );
       case SlashAction.countLines:
         _applyLinesTransformAfterSlash(stripStart, caret, countLinesIn);
+      case SlashAction.productNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, productNumericLinesIn,
+        );
     }
   }
 

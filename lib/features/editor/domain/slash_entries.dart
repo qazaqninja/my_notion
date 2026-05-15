@@ -218,6 +218,8 @@ enum SlashAction {
   medianNumericLines,
   /// Replace the selection with the count of its non-blank lines.
   countLines,
+  /// Multiply every numeric line into a single product.
+  productNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1018,6 +1020,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'tally',
     action: SlashAction.countLines,
     keywords: ['count', 'tally', 'how many', 'cardinality'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Product of numeric lines',
+    hint: '2 / 3 / 4 → 24',
+    action: SlashAction.productNumericLines,
+    keywords: ['product', 'multiply', 'math', 'numeric'],
   ),
   SlashEntry(
     icon: 'hash',

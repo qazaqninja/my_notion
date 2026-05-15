@@ -844,6 +844,31 @@ SortLinesResult countLinesIn(String text, int start, int end) =>
       return [n.toString()];
     });
 
+/// Multiply every selected numeric line into a single product.
+/// Non-numeric lines are skipped. Renders integer-form when every
+/// input string was an integer (no `.`) AND the product has no
+/// fractional part; decimal-form otherwise. Returns the source
+/// unchanged when no line parses (preserves block structure).
+SortLinesResult productNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      double product = 1;
+      var hasNumber = false;
+      var anyDecimalInput = false;
+      for (final l in lines) {
+        final trimmed = l.trim();
+        final v = double.tryParse(trimmed);
+        if (v == null) continue;
+        hasNumber = true;
+        if (trimmed.contains('.')) anyDecimalInput = true;
+        product *= v;
+      }
+      if (!hasNumber) return lines;
+      if (!anyDecimalInput && product == product.truncateToDouble()) {
+        return [product.toInt().toString()];
+      }
+      return [product.toString()];
+    });
+
 /// Sum every selected line that parses as a number (int or double).
 /// Non-numeric lines are skipped. Outputs a single line with the
 /// running total — integer when the sum has no fractional part,
