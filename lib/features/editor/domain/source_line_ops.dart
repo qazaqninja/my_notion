@@ -902,6 +902,36 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
 String formatTextStats(({int words, int chars, int lines}) s) =>
     '(${s.words} words · ${s.chars} characters · ${s.lines} lines)';
 
+/// Join every non-blank selected line into a single comma-separated
+/// row. Common for converting a vertical list back into a CSV cell.
+/// Whitespace around each line is trimmed so the joined output looks
+/// clean. Returns the source unchanged when the block is empty.
+SortLinesResult joinLinesWithCommaIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final cells =
+          [for (final l in lines) l.trim()].where((l) => l.isNotEmpty).toList();
+      if (cells.isEmpty) return lines;
+      return [cells.join(', ')];
+    });
+
+/// Split every selected line on `,` (with optional trailing
+/// whitespace) into separate lines. Inverse of [joinLinesWithCommaIn].
+/// Each split cell is trimmed. Lines without a comma pass through.
+SortLinesResult splitOnCommaIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final out = <String>[];
+      for (final l in lines) {
+        if (!l.contains(',')) {
+          out.add(l);
+          continue;
+        }
+        for (final cell in l.split(',')) {
+          out.add(cell.trim());
+        }
+      }
+      return out;
+    });
+
 /// Center every selected line within a uniform field of spaces.
 /// Total width defaults to the longest line in the block. When the
 /// padding can't be split evenly, the extra space goes on the right

@@ -995,6 +995,12 @@ class _SourceViewState extends State<SourceView> {
         );
       case SlashAction.centerLines:
         _applyLinesTransformAfterSlash(stripStart, caret, centerLinesIn);
+      case SlashAction.joinLinesWithComma:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, joinLinesWithCommaIn,
+        );
+      case SlashAction.splitOnComma:
+        _applyLinesTransformAfterSlash(stripStart, caret, splitOnCommaIn);
     }
   }
 

@@ -143,7 +143,7 @@ User-visible polish in rough impact order (full breakdown in `~/.claude/plans/bu
 2. **Frontmatter inline editing in editor + properties panel** — `EditorBloc.EditFrontmatter` event exists, no UI dispatches it. (1–1.5 days)
 3. **Database cell editing + Add row** — `FrozenColumnTable` is read-only. No `UpdateCell` / `CreateRow` use case. (1.5–2 days)
 4. **Filter / Sort / Group runtime in database table** — buttons have empty `onPressed`. Schema parsing already captures `views.group_by`. (2 days)
-5. **Relation picker keyboard navigation** — `Cubit.move()` exists, no key listener wired. Currently mouse-only. (½ day)
+5. ~~**Relation picker keyboard navigation**~~ — ✅ Already shipped. `source_view.dart:663-690` wires Up/Down → `Cubit.move()`, Enter/Tab → `onPick(selected)`, Escape → `dismiss()`. Strike from the backlog.
 6. **Command palette action handlers** — Reveal/Export/Reindex/Toggle theme are stubs. (½ day)
 7. **macOS security-scoped bookmark persistence** — currently auto-restore fails on relaunch and silently falls back to picker. (1 day, Swift channel)
 8. **Reveal in Finder / xdg-open / explorer.exe** — cross-platform file-reveal, all `onTap: () {}`. (½ day)

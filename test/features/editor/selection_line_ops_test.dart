@@ -1259,6 +1259,43 @@ void main() {
     });
   });
 
+  group('joinLinesWithCommaIn / splitOnCommaIn', () {
+    test('joins three lines into a single comma-separated row', () {
+      const text = 'apple\nbanana\ncherry\n';
+      final r = joinLinesWithCommaIn(text, 0, text.length);
+      expect(r.text, 'apple, banana, cherry\n');
+    });
+
+    test('trims whitespace around each joined cell', () {
+      const text = '  apple  \nbanana\n  cherry\n';
+      final r = joinLinesWithCommaIn(text, 0, text.length);
+      expect(r.text, 'apple, banana, cherry\n');
+    });
+
+    test('splits a single CSV row into multiple lines', () {
+      const text = 'apple, banana, cherry\n';
+      final r = splitOnCommaIn(text, 0, text.length);
+      expect(r.text, 'apple\nbanana\ncherry\n');
+    });
+
+    test('split→join round-trip is identity for trimmed cells', () {
+      const text = 'a, b, c\n';
+      final exploded = splitOnCommaIn(text, 0, text.length).text;
+      final back = joinLinesWithCommaIn(exploded, 0, exploded.length).text;
+      expect(back, text);
+    });
+
+    test('split leaves no-comma lines untouched', () {
+      const text = 'no comma here\n';
+      expect(splitOnCommaIn(text, 0, text.length).text, text);
+    });
+
+    test('join with no non-blank lines is a no-op', () {
+      const text = '\n\n\n';
+      expect(joinLinesWithCommaIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

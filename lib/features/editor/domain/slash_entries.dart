@@ -129,6 +129,10 @@ enum SlashAction {
   reverseWordsInLine,
   /// Center every selected line within a uniform field of spaces.
   centerLines,
+  /// Collapse selected lines into a single comma-separated row.
+  joinLinesWithComma,
+  /// Split each selected line on `,` into multiple lines.
+  splitOnComma,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -635,6 +639,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a → _a_',
     action: SlashAction.centerLines,
     keywords: ['center', 'centre', 'align', 'pad', 'middle'],
+  ),
+  SlashEntry(
+    icon: 'list',
+    label: 'Join lines with comma',
+    hint: 'a / b → a, b',
+    action: SlashAction.joinLinesWithComma,
+    keywords: ['join', 'comma', 'csv', 'collapse', 'flatten'],
+  ),
+  SlashEntry(
+    icon: 'list',
+    label: 'Split on comma',
+    hint: 'a, b → a / b',
+    action: SlashAction.splitOnComma,
+    keywords: ['split', 'comma', 'csv', 'explode', 'separate'],
   ),
   SlashEntry(
     icon: 'hash',
