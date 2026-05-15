@@ -147,10 +147,12 @@ class _QuillDatePickerState extends State<QuillDatePicker> {
                 _IconButton(
                   icon: 'caret',
                   rotate: 0.5, // 180°, faces left
+                  tooltip: 'Previous month',
                   onTap: () => _shift(-1),
                 ),
                 _IconButton(
                   icon: 'caret',
+                  tooltip: 'Next month',
                   onTap: () => _shift(1),
                 ),
               ],
@@ -292,15 +294,21 @@ class _NavButton extends StatelessWidget {
 }
 
 class _IconButton extends StatelessWidget {
-  const _IconButton({required this.icon, required this.onTap, this.rotate = 0});
+  const _IconButton({
+    required this.icon,
+    required this.onTap,
+    this.rotate = 0,
+    this.tooltip,
+  });
   final String icon;
   final VoidCallback onTap;
   final double rotate;
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return InkWell(
+    Widget button = InkWell(
       onTap: onTap,
       borderRadius: const BorderRadius.all(Radius.circular(4)),
       child: Padding(
@@ -312,6 +320,14 @@ class _IconButton extends StatelessWidget {
         ),
       ),
     );
+    if (tooltip != null) {
+      button = Tooltip(
+        message: tooltip!,
+        waitDuration: const Duration(milliseconds: 500),
+        child: button,
+      );
+    }
+    return button;
   }
 }
 
