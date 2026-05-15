@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/fs/unique_path.dart';
 import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/ulid/ulid_generator.dart';
@@ -254,7 +255,14 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
     }
     final ulid = _ulids.generate();
     final fileName = _safeFileName(title);
-    final relativePath = p.join(schema.folderPath, '$fileName.md');
+    final relativePath = await uniqueRelativePath(
+        vaultRoot, p.join(schema.folderPath, '$fileName.md'));
+    // If `(N)` was appended to avoid clobbering an existing row, mirror
+    // the suffix in the title so the table cell matches the filename
+    // (parity with VaultBloc._onCreatePage M768).
+    final relBase = p.basenameWithoutExtension(relativePath);
+    final adjustedTitle =
+        relBase == fileName ? title : '$title${relBase.substring(fileName.length)}';
 
     // Seed cell entries from the optional row template — frontmatter
     // values copied verbatim (sans id / title which the new row
@@ -284,9 +292,9 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
       ),
       FrontmatterEntry(
         key: 'title',
-        rawScalar: yamlSafeScalar(title),
+        rawScalar: yamlSafeScalar(adjustedTitle),
         type: FrontmatterType.text,
-        value: title,
+        value: adjustedTitle,
       ),
       for (final c in schema.columns)
         if (c.key != 'id' && c.key != 'title')
@@ -304,7 +312,7 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
     final page = Page(
       ulid: ulid,
       relativePath: relativePath,
-      title: title,
+      title: adjustedTitle,
       frontmatter: Frontmatter(entries: entries),
       body: templateBody,
       mtimeMs: DateTime.now().millisecondsSinceEpoch,
@@ -316,7 +324,7 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         .write(PagesCompanion(databaseId: Value(schema.id)));
     return DatabasePageRow(
       ulid: ulid,
-      title: title,
+      title: adjustedTitle,
       relativePath: relativePath,
       cells: _cellsFromEntries(entries),
     );

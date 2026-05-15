@@ -159,6 +159,34 @@ void main() {
     expect(p.basename(row.relativePath), equals('Bad-Name-Here-.md'));
   });
 
+  test('createRow disambiguates filename collisions (M776)', () async {
+    final schema = (await dbRepo.listDatabases()).first;
+    final first = await dbRepo.createRow(
+      schema: schema,
+      title: 'Collide',
+      vaultRoot: tmp,
+    );
+    expect(p.basename(first.relativePath), equals('Collide.md'));
+
+    // Same title → second row used to overwrite the first via the
+    // direct writePage path. uniqueRelativePath now disambiguates.
+    final second = await dbRepo.createRow(
+      schema: schema,
+      title: 'Collide',
+      vaultRoot: tmp,
+    );
+    expect(p.basename(second.relativePath), equals('Collide (2).md'));
+    expect(second.title, equals('Collide (2)'),
+        reason: 'title cell mirrors the disambiguated filename');
+
+    // Both rows survive.
+    expect(await File(p.join(tmp.path, first.relativePath)).exists(),
+        isTrue);
+    expect(await File(p.join(tmp.path, second.relativePath)).exists(),
+        isTrue);
+    expect(first.ulid, isNot(equals(second.ulid)));
+  });
+
   test('updateCell YAML-escapes text cells with reserved glyphs (M695)',
       () async {
     final schema = (await dbRepo.listDatabases()).first;
