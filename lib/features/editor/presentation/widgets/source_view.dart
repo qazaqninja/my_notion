@@ -451,6 +451,41 @@ class _SourceViewState extends State<SourceView> {
     );
   }
 
+  /// Smart paste: when the clipboard contains a URL and the user has a
+  /// non-empty selection, wrap the selection as `[selected](url)`. In
+  /// every other case, paste the clipboard text in place — same shape
+  /// as default ⌘V.
+  ///
+  /// Intercepting ⌘V completely replaces the platform paste path, so
+  /// this handler must cover every case (selection / no-selection,
+  /// URL / non-URL) — it does.
+  Future<void> _smartPaste() async {
+    final clip = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = clip?.text ?? '';
+    if (text.isEmpty) return;
+    if (!mounted) return;
+
+    final v = _controller.value;
+    final sel = v.selection;
+    if (!sel.isValid) return;
+    final start = sel.start.clamp(0, v.text.length);
+    final end = sel.end.clamp(start, v.text.length);
+    final selected = v.text.substring(start, end);
+
+    final String snippet;
+    if (selected.isNotEmpty && looksLikeUrl(text)) {
+      snippet = '[$selected](${text.trim()})';
+    } else {
+      snippet = text;
+    }
+    final newText = v.text.replaceRange(start, end, snippet);
+    final caretAfter = start + snippet.length;
+    _controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: caretAfter),
+    );
+  }
+
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
     final v = _controller.value;
@@ -1054,6 +1089,13 @@ class _SourceViewState extends State<SourceView> {
                       _openLinkDialog,
                   const SingleActivator(LogicalKeyboardKey.keyK, control: true):
                       _openLinkDialog,
+                  // Smart paste: wrap selection as [sel](url) when the
+                  // clipboard text looks like a URL; otherwise behaves
+                  // exactly like the platform's plain-text paste.
+                  const SingleActivator(LogicalKeyboardKey.keyV, meta: true):
+                      _smartPaste,
+                  const SingleActivator(LogicalKeyboardKey.keyV, control: true):
+                      _smartPaste,
                 },
                 child: TextField(
                   controller: _controller,
