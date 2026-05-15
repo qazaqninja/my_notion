@@ -52,38 +52,44 @@ class AsanaCsvImporter {
           ? row[mapping.titleIdx].trim()
           : '';
       if (title.isEmpty) continue;
-      final ulid = _ulids.generate();
-      final safe = _uniqueFilename(usedNames, _safeFileName(title));
-      final rel = p.join(folderName, '$safe.md');
-      final out = File(p.join(vaultRoot.path, rel));
-      final body = mapping.notesIdx != null && mapping.notesIdx! < row.length
-          ? row[mapping.notesIdx!]
-          : '';
-      final fmBuf = StringBuffer('---\n');
-      fmBuf.writeln('id: $ulid');
-      fmBuf.writeln('title: ${yamlSafeScalar(title)}');
-      for (var i = 0; i < header.length; i++) {
-        if (i == mapping.titleIdx || i == mapping.notesIdx) continue;
-        if (i >= row.length) continue;
-        final v = row[i].trim();
-        if (v.isEmpty) continue;
-        final key = mapping.keyForIndex(i);
-        if (mapping.multiIdx.contains(i)) {
-          final parts = _splitMulti(v);
-          fmBuf.writeln('$key: [${parts.join(', ')}]');
-        } else {
-          fmBuf.writeln('$key: ${yamlSafeScalar(v)}');
+      try {
+        final ulid = _ulids.generate();
+        final safe = _uniqueFilename(usedNames, _safeFileName(title));
+        final rel = p.join(folderName, '$safe.md');
+        final out = File(p.join(vaultRoot.path, rel));
+        final body = mapping.notesIdx != null && mapping.notesIdx! < row.length
+            ? row[mapping.notesIdx!]
+            : '';
+        final fmBuf = StringBuffer('---\n');
+        fmBuf.writeln('id: $ulid');
+        fmBuf.writeln('title: ${yamlSafeScalar(title)}');
+        for (var i = 0; i < header.length; i++) {
+          if (i == mapping.titleIdx || i == mapping.notesIdx) continue;
+          if (i >= row.length) continue;
+          final v = row[i].trim();
+          if (v.isEmpty) continue;
+          final key = mapping.keyForIndex(i);
+          if (mapping.multiIdx.contains(i)) {
+            final parts = _splitMulti(v);
+            fmBuf.writeln('$key: [${parts.join(', ')}]');
+          } else {
+            fmBuf.writeln('$key: ${yamlSafeScalar(v)}');
+          }
         }
+        fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
+        fmBuf.writeln('---');
+        fmBuf.writeln();
+        await out.writeAsString('${fmBuf.toString()}${body.trim()}\n');
+        written.add(ImportedAsanaTask(
+          ulid: ulid,
+          relativePath: rel,
+          title: title,
+        ));
+      } catch (e, st) {
+        // Per-task robustness (M731-M734).
+        // ignore: avoid_print
+        print('asana_importer: skipping task "$title" — $e\n$st');
       }
-      fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
-      fmBuf.writeln('---');
-      fmBuf.writeln();
-      await out.writeAsString('${fmBuf.toString()}${body.trim()}\n');
-      written.add(ImportedAsanaTask(
-        ulid: ulid,
-        relativePath: rel,
-        title: title,
-      ));
     }
     return AsanaImportSummary(folder: folderName, tasks: written);
   }
