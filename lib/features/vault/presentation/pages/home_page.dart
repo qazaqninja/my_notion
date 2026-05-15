@@ -977,7 +977,7 @@ class _TileState extends State<_Tile> {
       ),
     );
     if (isDisabled && widget.disabledReason != null) {
-      tile = Tooltip(message: widget.disabledReason!, child: tile);
+      tile = Tooltip(message: widget.disabledReason ?? '', child: tile);
     }
     return Expanded(child: tile);
   }

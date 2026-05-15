@@ -1283,7 +1283,7 @@ class _Stat extends StatelessWidget {
     );
     if (tooltip != null) {
       body = Tooltip(
-        message: tooltip!,
+        message: tooltip,
         waitDuration: const Duration(milliseconds: 500),
         child: body,
       );

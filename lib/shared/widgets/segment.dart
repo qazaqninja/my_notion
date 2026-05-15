@@ -98,7 +98,7 @@ class Segment<T> extends StatelessWidget {
           );
           if (o.tooltip != null) {
             tile = Tooltip(
-              message: o.tooltip!,
+              message: o.tooltip,
               waitDuration: const Duration(milliseconds: 500),
               child: tile,
             );

@@ -54,7 +54,7 @@ class TagChip extends StatelessWidget {
     );
     if (tooltip == null) return chip;
     return Tooltip(
-      message: tooltip!,
+      message: tooltip,
       waitDuration: const Duration(milliseconds: 500),
       child: chip,
     );

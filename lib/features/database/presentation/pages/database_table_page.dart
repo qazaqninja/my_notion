@@ -874,7 +874,7 @@ class _ToolButtonState extends State<_ToolButton> {
     );
     if (widget.tooltip != null) {
       btn = Tooltip(
-        message: widget.tooltip!,
+        message: widget.tooltip,
         waitDuration: const Duration(milliseconds: 500),
         child: btn,
       );

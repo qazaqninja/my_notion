@@ -73,7 +73,7 @@ class SideHead extends StatelessWidget {
                         strokeWidth: 1.7,
                         color: tokens.text3)
                     : Tooltip(
-                        message: actionTooltip!,
+                        message: actionTooltip,
                         waitDuration: const Duration(milliseconds: 500),
                         child: QuillIcon(actionIcon!,
                             size: 12,

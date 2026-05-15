@@ -39,7 +39,7 @@ class StatusDot extends StatelessWidget {
     );
     if (tooltip == null) return dot;
     return Tooltip(
-      message: tooltip!,
+      message: tooltip,
       waitDuration: const Duration(milliseconds: 400),
       child: dot,
     );

@@ -328,7 +328,7 @@ class _IconButton extends StatelessWidget {
     );
     if (tooltip != null) {
       button = Tooltip(
-        message: tooltip!,
+        message: tooltip,
         waitDuration: const Duration(milliseconds: 500),
         child: button,
       );

@@ -2233,9 +2233,10 @@ class _BrokenImageBox extends StatelessWidget {
         ),
       ),
     );
-    if (src == null || src!.isEmpty) return box;
+    final s = src;
+    if (s == null || s.isEmpty) return box;
     return Tooltip(
-      message: src!,
+      message: s,
       waitDuration: const Duration(milliseconds: 500),
       child: box,
     );

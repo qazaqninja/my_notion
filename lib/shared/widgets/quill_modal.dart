@@ -58,7 +58,7 @@ class QuillModal extends StatelessWidget {
                     top: BorderSide(color: tokens.divider, width: 0.5),
                   ),
                 ),
-                child: footer!,
+                child: footer,
               ),
           ],
         ),
