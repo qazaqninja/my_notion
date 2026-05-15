@@ -691,6 +691,12 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
                       style: TextStyle(fontSize: 12, color: tokens.accent),
                     ),
                   ],
+                )
+              else
+                Text(
+                  'Database is locked — unlock in .database.yaml to add rows.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: tokens.text3),
                 ),
             ],
           ),
