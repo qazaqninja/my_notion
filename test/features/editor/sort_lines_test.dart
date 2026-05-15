@@ -57,4 +57,53 @@ void main() {
       expect(r.text, 'a\nb\n');
     });
   });
+
+  group('dedupeLinesIn', () {
+    test('removes consecutive duplicates keeping the first', () {
+      const text = 'apple\napple\nbanana\n';
+      final r = dedupeLinesIn(text, 0, text.length);
+      expect(r.text, 'apple\nbanana\n');
+    });
+
+    test('removes non-consecutive duplicates keeping the first', () {
+      const text = 'apple\nbanana\napple\ncherry\nbanana\n';
+      final r = dedupeLinesIn(text, 0, text.length);
+      expect(r.text, 'apple\nbanana\ncherry\n');
+    });
+
+    test('case-sensitive — Apple and apple are different lines', () {
+      const text = 'apple\nApple\napple\n';
+      final r = dedupeLinesIn(text, 0, text.length);
+      expect(r.text, 'apple\nApple\n');
+    });
+
+    test('preserves the trailing newline outside the selection', () {
+      const text = 'a\nb\na\n';
+      // Selection covers exactly the three rows; trailing newline stays.
+      final r = dedupeLinesIn(text, 0, 5);
+      expect(r.text, 'a\nb\n');
+    });
+  });
+
+  group('reverseLinesIn', () {
+    test('flips three explicit lines', () {
+      const text = 'one\ntwo\nthree\n';
+      final r = reverseLinesIn(text, 0, text.length);
+      expect(r.text, 'three\ntwo\none\n');
+    });
+
+    test('reversing twice is the identity', () {
+      const text = 'a\nb\nc\nd\n';
+      final once = reverseLinesIn(text, 0, text.length);
+      final twice = reverseLinesIn(once.text, 0, once.text.length);
+      expect(twice.text, text);
+    });
+
+    test('widens partial selection to whole-line boundaries', () {
+      const text = 'one\ntwo\nthree\n';
+      // Caret inside "two" → only that single line, reverse is a no-op.
+      final r = reverseLinesIn(text, 5, 5);
+      expect(r.text, text);
+    });
+  });
 }

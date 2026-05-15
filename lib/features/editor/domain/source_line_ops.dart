@@ -362,18 +362,15 @@ class SortLinesResult {
   final int selectionEnd;
 }
 
-/// Sort the lines that the selection [start..end] touches. The
-/// selection is widened outward to whole-line boundaries before
-/// sorting; the new selection covers the same span (still whole
-/// lines) so the user can re-sort or undo without losing context.
-///
-/// - Sort is case-insensitive ascending.
-/// - When [end] sits at a line start (the user dragged to the very
-///   start of the next line), the bottom row is NOT included so the
-///   common "select N lines from above" gesture matches expectation.
-/// - Empty selection ([start] == [end]): sort only the line under
-///   the caret with itself (no-op), returning the same selection.
-SortLinesResult sortLinesIn(String text, int start, int end) {
+/// Apply [transform] to the block of lines that the selection
+/// [start..end] touches. Shared core for sort / reverse / dedupe.
+/// Selection-widening rules match VS Code's "select N lines" gesture.
+SortLinesResult _transformLinesIn(
+  String text,
+  int start,
+  int end,
+  List<String> Function(List<String>) transform,
+) {
   if (text.isEmpty) {
     return SortLinesResult(text: text, selectionStart: 0, selectionEnd: 0);
   }
@@ -402,13 +399,44 @@ SortLinesResult sortLinesIn(String text, int start, int end) {
     );
   }
   final block = text.substring(blockStart, blockEnd);
-  final lines = block.split('\n')
-    ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-  final sorted = lines.join('\n');
-  final newText = text.replaceRange(blockStart, blockEnd, sorted);
+  final lines = transform(block.split('\n'));
+  final out = lines.join('\n');
+  final newText = text.replaceRange(blockStart, blockEnd, out);
   return SortLinesResult(
     text: newText,
     selectionStart: blockStart,
-    selectionEnd: blockStart + sorted.length,
+    selectionEnd: blockStart + out.length,
   );
 }
+
+/// Sort the lines that the selection [start..end] touches. The
+/// selection is widened outward to whole-line boundaries before
+/// sorting; the new selection covers the same span (still whole
+/// lines) so the user can re-sort or undo without losing context.
+///
+/// - Sort is case-insensitive ascending.
+/// - When [end] sits at a line start (the user dragged to the very
+///   start of the next line), the bottom row is NOT included so the
+///   common "select N lines from above" gesture matches expectation.
+/// - Empty selection ([start] == [end]): sort only the line under
+///   the caret with itself (no-op), returning the same selection.
+SortLinesResult sortLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final sorted = [...lines]
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      return sorted;
+    });
+
+/// Remove consecutive AND non-consecutive duplicate lines in the
+/// selected block, keeping the FIRST occurrence of each. Case-
+/// sensitive — Notion / Vim convention.
+SortLinesResult dedupeLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final seen = <String>{};
+      return [for (final l in lines) if (seen.add(l)) l];
+    });
+
+/// Reverse the order of the lines in the selected block. Useful for
+/// flipping a sort or rendering a list bottom-up.
+SortLinesResult reverseLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) => lines.reversed.toList());

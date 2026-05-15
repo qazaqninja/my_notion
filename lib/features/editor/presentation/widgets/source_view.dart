@@ -496,14 +496,13 @@ class _SourceViewState extends State<SourceView> {
     );
   }
 
-  /// Sort the lines touched by the current selection, case-insensitive
-  /// ascending. ⌘⇧S in source mode. Selects the sorted block so the
-  /// user can re-sort or undo without losing context.
-  void _sortSelectedLines() {
+  void _applyLinesTransform(
+    SortLinesResult Function(String text, int start, int end) op,
+  ) {
     final v = _controller.value;
     final sel = v.selection;
     if (!sel.isValid) return;
-    final r = sortLinesIn(v.text, sel.start, sel.end);
+    final r = op(v.text, sel.start, sel.end);
     _controller.value = TextEditingValue(
       text: r.text,
       selection: TextSelection(
@@ -512,6 +511,19 @@ class _SourceViewState extends State<SourceView> {
       ),
     );
   }
+
+  /// Sort the lines touched by the current selection, case-insensitive
+  /// ascending. ⌘⇧S in source mode.
+  void _sortSelectedLines() => _applyLinesTransform(sortLinesIn);
+
+  /// Remove duplicate lines from the selected block, keeping the first
+  /// occurrence of each. ⌘⌥D in source mode.
+  void _dedupeSelectedLines() => _applyLinesTransform(dedupeLinesIn);
+
+  /// Reverse the order of the lines in the selected block. ⌘⌥R isn't
+  /// available (shell uses it for reveal), so this is bound from the
+  /// slash menu with a "Reverse lines" entry.
+  void _reverseSelectedLines() => _applyLinesTransform(reverseLinesIn);
 
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
@@ -812,6 +824,17 @@ class _SourceViewState extends State<SourceView> {
           selection:
               TextSelection.collapsed(offset: stripStart + snippet.length),
         );
+      case SlashAction.reverseSelectedLines:
+        // Strip the `/reverse` trigger before transforming so the
+        // helper sees the user's actual content. After that, run
+        // reverseLinesIn on whatever the caret is now sitting in.
+        final cleared = text.replaceRange(stripStart, caret, '');
+        final cursor = stripStart;
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: cursor),
+        );
+        _reverseSelectedLines();
     }
   }
 
@@ -1136,6 +1159,12 @@ class _SourceViewState extends State<SourceView> {
                       meta: true, shift: true): _sortSelectedLines,
                   const SingleActivator(LogicalKeyboardKey.keyS,
                       control: true, shift: true): _sortSelectedLines,
+                  // Deduplicate the lines in the selection — case-
+                  // sensitive, keeps first occurrence. ⌘⌥D.
+                  const SingleActivator(LogicalKeyboardKey.keyD,
+                      meta: true, alt: true): _dedupeSelectedLines,
+                  const SingleActivator(LogicalKeyboardKey.keyD,
+                      control: true, alt: true): _dedupeSelectedLines,
                 },
                 child: TextField(
                   controller: _controller,

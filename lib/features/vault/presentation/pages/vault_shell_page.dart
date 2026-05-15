@@ -415,6 +415,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, '⌘P', 'Print current page'),
                 _kbRow(tokens, '⌘V', 'Smart paste — wraps selection as [sel](url) if clipboard is a URL (source)'),
                 _kbRow(tokens, '⌘⇧S', 'Sort selected lines ascending (source)'),
+                _kbRow(tokens, '⌘⌥D', 'Dedupe selected lines — keeps first occurrence (source)'),
                 _kbRow(tokens, '⌘1..9', 'Jump to the Nth pinned page (favorites)'),
                 _kbRow(tokens, '⌘⇧H', 'Wrap selection in ==highlight== (source)'),
                 _kbRow(tokens, '⌘K', 'Insert link — URL pre-fills from clipboard (source)'),

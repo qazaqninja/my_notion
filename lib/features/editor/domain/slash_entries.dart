@@ -10,6 +10,9 @@ enum SlashAction {
   pickEmoji,
   insertRandomPageLink,
   insertCurrentUser,
+  /// Reverse the order of the lines in the current selection. Falls
+  /// back to a single-line no-op when there is no selection.
+  reverseSelectedLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -268,6 +271,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '@me',
     action: SlashAction.insertCurrentUser,
     keywords: ['me', 'mention', 'user', 'self', 'assign'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Reverse selected lines',
+    hint: 'flip ↕',
+    action: SlashAction.reverseSelectedLines,
+    keywords: ['reverse', 'flip', 'invert', 'lines', 'rev'],
   ),
   SlashEntry(
     icon: 'tag',
