@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../domain/entities/database_schema.dart';
@@ -663,67 +664,46 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
 
   Future<void> _showRowMenu(BuildContext context, DatabasePageRow row,
       Offset globalPos) async {
-    final action = await showMenu<String>(
+    final action = await showQuillMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        globalPos.dx,
-        globalPos.dy,
-        globalPos.dx,
-        0,
-      ),
+      position: quillMenuPosition(context, globalPos),
+      width: 232,
       items: [
-        const PopupMenuItem(value: 'open', child: Text('Open page')),
-        const PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
-        const PopupMenuItem(
-            value: 'copy-link', child: Text('Copy [[link]]')),
-        const PopupMenuItem(value: 'copy-path', child: Text('Copy file path')),
+        const QuillMenuItem(icon: 'eye', label: 'Open page', value: 'open'),
+        const QuillMenuItem(icon: 'link', label: 'Copy ULID', hint: '⌘L', value: 'copy-ulid'),
+        const QuillMenuItem(icon: 'link', label: 'Copy [[link]]', value: 'copy-link'),
+        const QuillMenuItem(icon: 'folder', label: 'Copy file path', value: 'copy-path'),
         if (widget.onDuplicateRow != null)
-          const PopupMenuItem(value: 'duplicate', child: Text('Duplicate row')),
+          const QuillMenuItem(icon: 'note', label: 'Duplicate row', hint: '⌘D', value: 'duplicate'),
         if (widget.onTrashRow != null) ...[
-          const PopupMenuDivider(),
-          const PopupMenuItem(
+          QuillMenuItem.separator<String>(),
+          const QuillMenuItem(
+            icon: 'trash',
+            label: 'Move to trash',
+            hint: '⌫',
+            danger: true,
             value: 'trash',
-            child: Text(
-              'Move to trash',
-              style: TextStyle(color: Color(0xFFCB5A4F)),
-            ),
           ),
         ],
       ],
     );
     if (action == null || !context.mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     switch (action) {
       case 'open':
         widget.onOpenPage(row);
       case 'copy-ulid':
         await Clipboard.setData(ClipboardData(text: row.ulid));
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text('Copied ${row.ulid}'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        if (context.mounted) context.toastSuccess('Copied ${row.ulid}', subMono: true);
       case 'copy-link':
         await Clipboard.setData(ClipboardData(text: '[[${row.ulid}]]'));
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text('Copied [[${row.ulid}]]'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        if (context.mounted) context.toastSuccess('Copied [[${row.ulid}]]', subMono: true);
       case 'copy-path':
         final vault = context.read<VaultBloc>().state;
         final path = vault is VaultLoaded
             ? '${vault.rootPath}/${row.relativePath}'
             : row.relativePath;
         await Clipboard.setData(ClipboardData(text: path));
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text('Copied $path'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        if (context.mounted) context.toastSuccess('Copied path', sub: path, subMono: true);
       case 'duplicate':
         widget.onDuplicateRow?.call(row);
       case 'trash':
@@ -1114,9 +1094,9 @@ class _EditableCellState extends State<_EditableCell> {
   Future<void> _pickDate() async {
     final initial = DateTime.tryParse('${widget.value ?? ''}'.trim()) ??
         DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
+    final picked = await showQuillDatePicker(
+      context,
+      initial: initial,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
