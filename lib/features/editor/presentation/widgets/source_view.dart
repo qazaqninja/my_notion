@@ -1061,6 +1061,21 @@ class _SourceViewState extends State<SourceView> {
           text: cleared,
           selection: TextSelection.collapsed(offset: stripStart + hex.length),
         );
+      case SlashAction.insertIsoDateTime:
+        final now = DateTime.now();
+        // YYYY-MM-DDTHH:MM:SS (sortable, no timezone — local clock).
+        final yyyy = now.year.toString().padLeft(4, '0');
+        final mm = now.month.toString().padLeft(2, '0');
+        final dd = now.day.toString().padLeft(2, '0');
+        final hh = now.hour.toString().padLeft(2, '0');
+        final mi = now.minute.toString().padLeft(2, '0');
+        final ss = now.second.toString().padLeft(2, '0');
+        final iso = '$yyyy-$mm-${dd}T$hh:$mi:$ss';
+        final cleared = text.replaceRange(stripStart, caret, iso);
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart + iso.length),
+        );
     }
   }
 

@@ -166,6 +166,9 @@ enum SlashAction {
   urlsToMarkdownLinks,
   /// Insert a random `#RRGGBB` colour at the caret.
   insertHexColor,
+  /// Insert the current local datetime in ISO 8601 form
+  /// (`YYYY-MM-DDTHH:MM:SS`).
+  insertIsoDateTime,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -798,6 +801,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '#RRGGBB',
     action: SlashAction.insertHexColor,
     keywords: ['hex', 'color', 'colour', 'random', 'css', 'design'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Insert ISO datetime',
+    hint: 'YYYY-MM-DDTHH:MM:SS',
+    action: SlashAction.insertIsoDateTime,
+    keywords: ['iso', 'datetime', '8601', 'timestamp', 'sortable'],
   ),
   SlashEntry(
     icon: 'hash',
