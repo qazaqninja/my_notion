@@ -286,6 +286,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
         PopupMenuItem(value: 'move', child: Text('Move to folder…')),
         PopupMenuItem(value: 'history', child: Text('Page history…')),
+        PopupMenuItem(value: 'copy-body', child: Text('Copy page body')),
         PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
         PopupMenuItem(value: 'export-html', child: Text('Export as .html…')),
         PopupMenuItem(value: 'print-page', child: Text('Print page…')),
@@ -320,6 +321,15 @@ class _EditorBodyState extends State<_EditorBody> {
         }
       case 'history':
         await _showPageHistory(context, loaded);
+      case 'copy-body':
+        await Clipboard.setData(ClipboardData(text: loaded.page.body));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+                'Copied ${loaded.page.body.length} chars to clipboard'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       case 'export-md':
         await _exportPageAsMarkdown(context, loaded);
       case 'export-html':
