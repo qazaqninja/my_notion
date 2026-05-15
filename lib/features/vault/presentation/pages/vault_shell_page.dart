@@ -1311,13 +1311,16 @@ views:
     required String subtitleEmpty,
   }) async {
     final tokens = QuillTokens.of(context);
+    final size = MediaQuery.of(context).size;
+    final w = size.width < 500 ? size.width - 32 : 460.0;
+    final h = size.height < 580 ? size.height - 60 : 540.0;
     await showDialog<void>(
       context: context,
       builder: (_) => Dialog(
         backgroundColor: tokens.surface,
         child: SizedBox(
-          width: 460,
-          height: 540,
+          width: w,
+          height: h,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
             child: Column(
