@@ -348,3 +348,67 @@ LineOpResult duplicateLineAt(String text, int caret) {
   final newCaret = lineEnd + 1 + column;
   return LineOpResult(text: newText, caret: newCaret);
 }
+
+/// Result of [sortLinesIn]: the new text and the new selection range
+/// (the same character span, since sorting doesn't change length).
+class SortLinesResult {
+  const SortLinesResult({
+    required this.text,
+    required this.selectionStart,
+    required this.selectionEnd,
+  });
+  final String text;
+  final int selectionStart;
+  final int selectionEnd;
+}
+
+/// Sort the lines that the selection [start..end] touches. The
+/// selection is widened outward to whole-line boundaries before
+/// sorting; the new selection covers the same span (still whole
+/// lines) so the user can re-sort or undo without losing context.
+///
+/// - Sort is case-insensitive ascending.
+/// - When [end] sits at a line start (the user dragged to the very
+///   start of the next line), the bottom row is NOT included so the
+///   common "select N lines from above" gesture matches expectation.
+/// - Empty selection ([start] == [end]): sort only the line under
+///   the caret with itself (no-op), returning the same selection.
+SortLinesResult sortLinesIn(String text, int start, int end) {
+  if (text.isEmpty) {
+    return SortLinesResult(text: text, selectionStart: 0, selectionEnd: 0);
+  }
+  final lo = start.clamp(0, text.length);
+  final hi = end.clamp(lo, text.length);
+  // Widen lo backward to the line start.
+  final blockStart = lo == 0 ? 0 : text.lastIndexOf('\n', lo - 1) + 1;
+  // Widen hi forward to the line end, EXCLUDING the trailing newline
+  // when hi is already at a line boundary (to honour the "select N
+  // lines" gesture).
+  int blockEnd;
+  if (hi == blockStart) {
+    blockEnd = text.indexOf('\n', hi);
+    if (blockEnd == -1) blockEnd = text.length;
+  } else if (hi > 0 && text[hi - 1] == '\n') {
+    blockEnd = hi - 1;
+  } else {
+    final nextNl = text.indexOf('\n', hi);
+    blockEnd = nextNl == -1 ? text.length : nextNl;
+  }
+  if (blockStart >= blockEnd) {
+    return SortLinesResult(
+      text: text,
+      selectionStart: blockStart,
+      selectionEnd: blockEnd,
+    );
+  }
+  final block = text.substring(blockStart, blockEnd);
+  final lines = block.split('\n')
+    ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+  final sorted = lines.join('\n');
+  final newText = text.replaceRange(blockStart, blockEnd, sorted);
+  return SortLinesResult(
+    text: newText,
+    selectionStart: blockStart,
+    selectionEnd: blockStart + sorted.length,
+  );
+}

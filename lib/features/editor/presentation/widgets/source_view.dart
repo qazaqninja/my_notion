@@ -496,6 +496,23 @@ class _SourceViewState extends State<SourceView> {
     );
   }
 
+  /// Sort the lines touched by the current selection, case-insensitive
+  /// ascending. ⌘⇧S in source mode. Selects the sorted block so the
+  /// user can re-sort or undo without losing context.
+  void _sortSelectedLines() {
+    final v = _controller.value;
+    final sel = v.selection;
+    if (!sel.isValid) return;
+    final r = sortLinesIn(v.text, sel.start, sel.end);
+    _controller.value = TextEditingValue(
+      text: r.text,
+      selection: TextSelection(
+        baseOffset: r.selectionStart,
+        extentOffset: r.selectionEnd,
+      ),
+    );
+  }
+
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
     final v = _controller.value;
@@ -1112,6 +1129,13 @@ class _SourceViewState extends State<SourceView> {
                       _smartPaste,
                   const SingleActivator(LogicalKeyboardKey.keyV, control: true):
                       _smartPaste,
+                  // Sort lines touched by the selection (case-insensitive
+                  // ascending). Same shortcut VS Code uses for "Sort
+                  // Lines Ascending".
+                  const SingleActivator(LogicalKeyboardKey.keyS,
+                      meta: true, shift: true): _sortSelectedLines,
+                  const SingleActivator(LogicalKeyboardKey.keyS,
+                      control: true, shift: true): _sortSelectedLines,
                 },
                 child: TextField(
                   controller: _controller,
