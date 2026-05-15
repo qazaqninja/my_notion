@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
 import '../../domain/row_display.dart';
@@ -41,7 +42,28 @@ class TimelineView extends StatelessWidget {
     final tokens = QuillTokens.of(context);
     if (rows.isEmpty) {
       return Center(
-        child: Text('No rows to plot', style: TextStyle(color: tokens.text2)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QuillIcon('database',
+                  size: 24, strokeWidth: 1.4, color: tokens.text3),
+              const SizedBox(height: 10),
+              Text('No rows to plot',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.text2,
+                  )),
+              const SizedBox(height: 2),
+              Text(
+                'Rows with a date will appear on the timeline.',
+                style: TextStyle(fontSize: 12, color: tokens.text3),
+              ),
+            ],
+          ),
+        ),
       );
     }
     // Compute the time origin: earliest date in the dataset, snapped to a

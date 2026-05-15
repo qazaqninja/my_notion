@@ -36,8 +36,25 @@ class DatabaseListView extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text('No rows',
-              style: TextStyle(fontSize: 13, color: tokens.text3)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QuillIcon('database',
+                  size: 24, strokeWidth: 1.4, color: tokens.text3),
+              const SizedBox(height: 10),
+              Text('No rows yet',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.text2,
+                  )),
+              const SizedBox(height: 2),
+              Text(
+                'Pages in this database will appear here.',
+                style: TextStyle(fontSize: 12, color: tokens.text3),
+              ),
+            ],
+          ),
         ),
       );
     }
