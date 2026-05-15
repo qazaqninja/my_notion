@@ -220,7 +220,10 @@ class _SettingsPageState extends State<SettingsPage> {
           child: _Btn(
             label: 'Reindex now',
             icon: 'sync',
-            onTap: () => context.read<VaultBloc>().add(const ReindexVault()),
+            onTap: () {
+              context.read<VaultBloc>().add(const ReindexVault());
+              context.toastInfo('Reindexing vault…');
+            },
           ),
         ),
         _SettingRow(
