@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -153,15 +154,7 @@ class _SettingsPageState extends State<SettingsPage> {
         _SettingRow(
           label: 'Vault stats',
           hint: 'Read directly from disk.',
-          child: Row(
-            children: [
-              _Stat(label: 'pages', value: '$pageCount'),
-              const SizedBox(width: 28),
-              _Stat(label: 'databases', value: '1'),
-              const SizedBox(width: 28),
-              _Stat(label: 'size', value: '—'),
-            ],
-          ),
+          child: _VaultStatsRow(pageCount: pageCount, vaultPath: vaultPath),
         ),
         const SizedBox(height: 28),
         _sectionLabel(tokens, 'Sync'),
@@ -1600,6 +1593,93 @@ class _SidebarSectionRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _VaultStatsRow extends StatefulWidget {
+  const _VaultStatsRow({required this.pageCount, required this.vaultPath});
+  final int pageCount;
+  final String vaultPath;
+
+  @override
+  State<_VaultStatsRow> createState() => _VaultStatsRowState();
+}
+
+class _VaultStatsRowState extends State<_VaultStatsRow> {
+  late Future<({int databases, int? sizeBytes})> _f;
+
+  @override
+  void initState() {
+    super.initState();
+    _f = _load();
+  }
+
+  @override
+  void didUpdateWidget(_VaultStatsRow old) {
+    super.didUpdateWidget(old);
+    if (old.vaultPath != widget.vaultPath ||
+        old.pageCount != widget.pageCount) {
+      _f = _load();
+    }
+  }
+
+  Future<({int databases, int? sizeBytes})> _load() async {
+    final db = context.read<QuillDatabase>();
+    final dbsRows = await db.select(db.databases).get();
+    int? sizeBytes;
+    if (!widget.vaultPath.startsWith('(')) {
+      try {
+        int total = 0;
+        await for (final ent in Directory(widget.vaultPath)
+            .list(recursive: true, followLinks: false)) {
+          if (ent is File) {
+            try {
+              total += await ent.length();
+            } catch (_) {}
+          }
+        }
+        sizeBytes = total;
+      } catch (_) {
+        sizeBytes = null;
+      }
+    }
+    return (databases: dbsRows.length, sizeBytes: sizeBytes);
+  }
+
+  static String _fmtBytes(int b) {
+    if (b < 1024) return '${b}B';
+    if (b < 1024 * 1024) return '${(b / 1024).toStringAsFixed(0)}KB';
+    if (b < 1024 * 1024 * 1024) {
+      return '${(b / (1024 * 1024)).toStringAsFixed(1)}MB';
+    }
+    return '${(b / (1024 * 1024 * 1024)).toStringAsFixed(2)}GB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<({int databases, int? sizeBytes})>(
+      future: _f,
+      builder: (context, snap) {
+        final data = snap.data;
+        return Row(
+          children: [
+            _Stat(label: 'pages', value: '${widget.pageCount}'),
+            const SizedBox(width: 28),
+            _Stat(
+              label: 'databases',
+              value: data == null ? '…' : '${data.databases}',
+            ),
+            const SizedBox(width: 28),
+            _Stat(
+              label: 'size',
+              value: data == null || data.sizeBytes == null
+                  ? '…'
+                  : _fmtBytes(data.sizeBytes!),
+            ),
+          ],
+        );
+      },
     );
   }
 }
