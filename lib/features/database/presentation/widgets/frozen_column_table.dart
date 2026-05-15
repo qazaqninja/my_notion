@@ -624,11 +624,14 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
             ? SystemMouseCursors.click
             : SystemMouseCursors.basic,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 32, 16, 32),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
+              QuillIcon('database',
+                  size: 24, strokeWidth: 1.4, color: tokens.text3),
+              const SizedBox(height: 10),
               Text(
                 'No rows yet',
                 style: TextStyle(
@@ -640,6 +643,7 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
               const SizedBox(height: 4),
               if (widget.onCreateRow != null)
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     QuillIcon('plus',
                         size: 11, strokeWidth: 1.7, color: tokens.accent),
