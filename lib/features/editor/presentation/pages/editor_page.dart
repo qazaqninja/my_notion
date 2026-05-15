@@ -785,6 +785,11 @@ class _EditorBodyState extends State<_EditorBody> {
       context.toastError('Goal must be a positive whole number');
       return;
     }
+    if (existing != null && existing.rawScalar.trim() == '$n') {
+      context.toastInfo(
+          'Word count goal already $n ${n == 1 ? "word" : "words"}');
+      return;
+    }
     if (existing == null) {
       bloc.add(AddFrontmatterField(FrontmatterEntry(
         key: 'goal',
