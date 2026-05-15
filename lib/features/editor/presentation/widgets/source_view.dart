@@ -299,6 +299,22 @@ class _SourceViewState extends State<SourceView> {
     _applyLineOp((text, caret) => applyLinePrefix(text, caret, '> '));
   }
 
+  /// Convert the current line to `- ` bullet. Cmd+⇧+8 (mnemonic: `*`).
+  void _convertToBullet() {
+    _applyLineOp((text, caret) => applyLinePrefix(text, caret, '- '));
+  }
+
+  /// Convert the current line to `1. ` numbered. Cmd+⇧+7. Existing
+  /// items below aren't re-numbered — the user typed `1.` intent.
+  void _convertToNumbered() {
+    _applyLineOp((text, caret) => applyLinePrefix(text, caret, '1. '));
+  }
+
+  /// Convert the current line to `- [ ] ` to-do. Cmd+⇧+T.
+  void _convertToTodo() {
+    _applyLineOp((text, caret) => applyLinePrefix(text, caret, '- [ ] '));
+  }
+
   /// Select the current line (between the surrounding newlines). Cmd+L.
   void _selectCurrentLine() {
     final v = _controller.value;
@@ -777,6 +793,18 @@ class _SourceViewState extends State<SourceView> {
                       meta: true, shift: true): _convertToQuote,
                   const SingleActivator(LogicalKeyboardKey.period,
                       control: true, shift: true): _convertToQuote,
+                  const SingleActivator(LogicalKeyboardKey.digit8,
+                      meta: true, shift: true): _convertToBullet,
+                  const SingleActivator(LogicalKeyboardKey.digit8,
+                      control: true, shift: true): _convertToBullet,
+                  const SingleActivator(LogicalKeyboardKey.digit7,
+                      meta: true, shift: true): _convertToNumbered,
+                  const SingleActivator(LogicalKeyboardKey.digit7,
+                      control: true, shift: true): _convertToNumbered,
+                  const SingleActivator(LogicalKeyboardKey.keyT,
+                      meta: true, shift: true): _convertToTodo,
+                  const SingleActivator(LogicalKeyboardKey.keyT,
+                      control: true, shift: true): _convertToTodo,
                   const SingleActivator(LogicalKeyboardKey.tab): () =>
                       _indentSelection(false),
                   const SingleActivator(LogicalKeyboardKey.tab, shift: true):
