@@ -473,7 +473,12 @@ class _EditorBodyState extends State<_EditorBody> {
           danger: true,
         );
         if (!confirmed || !context.mounted) return;
+        final title = loaded.page.title;
         context.read<VaultBloc>().add(MoveToTrash(ulid));
+        if (context.mounted) {
+          context.toastSuccess('Moved to trash',
+              sub: title.isEmpty ? loaded.page.relativePath : title);
+        }
         GoRouter.of(context).go('/home');
       case 'reindex':
         if (!context.mounted) return;

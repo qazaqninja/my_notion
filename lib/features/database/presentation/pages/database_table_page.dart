@@ -246,6 +246,8 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     if (!confirmed || !mounted) return;
     if (!context.mounted) return;
     context.read<VaultBloc>().add(MoveToTrash(row.ulid));
+    context.toastSuccess('Moved to trash',
+        sub: row.title.isEmpty ? '(Untitled row)' : row.title);
     setState(() => _rows = _rows?.where((r) => r.ulid != row.ulid).toList());
   }
 
