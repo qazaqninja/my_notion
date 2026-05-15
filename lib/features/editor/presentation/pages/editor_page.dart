@@ -16,6 +16,7 @@ import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/page_icon.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/data/daily_note.dart';
@@ -281,7 +282,6 @@ class _EditorBodyState extends State<_EditorBody> {
 
   Future<void> _pickIcon(BuildContext context, EditorLoaded loaded) async {
     final bloc = context.read<EditorBloc>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final picked = await pickEmoji(context);
     if (picked == null) return; // dismissed without choosing
     final fm = loaded.page.frontmatter;
@@ -290,10 +290,7 @@ class _EditorBodyState extends State<_EditorBody> {
       // "Clear" — remove the icon entry entirely.
       if (existing != null) {
         bloc.add(const RemoveFrontmatterField('icon'));
-        messenger?.showSnackBar(const SnackBar(
-          content: Text('Page icon cleared'),
-          duration: Duration(seconds: 2),
-        ));
+        if (context.mounted) context.toastSuccess('Page icon cleared');
       }
       return;
     }
@@ -310,113 +307,83 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: picked, value: picked),
       ));
     }
-    messenger?.showSnackBar(SnackBar(
-      content: Text('Page icon: $picked'),
-      duration: const Duration(seconds: 2),
-    ));
+    if (context.mounted) context.toastSuccess('Page icon: $picked');
   }
 
   Future<void> _showPageMenu(BuildContext context, EditorLoaded loaded) async {
-    final box = context.findRenderObject() as RenderBox?;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
-    if (box == null || overlay == null) return;
-    final pos = box.localToGlobal(box.size.bottomLeft(Offset.zero),
-        ancestor: overlay);
     final ulid = loaded.page.ulid;
-    final action = await showMenu<String>(
+    final action = await showQuillMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(pos.dx, pos.dy, pos.dx, 0),
-      items: const [
-        PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
-        PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
-        PopupMenuItem(value: 'copy-path', child: Text('Copy file path')),
-        PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
-        PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
-        PopupMenuItem(value: 'rename', child: Text('Rename file…')),
-        PopupMenuItem(value: 'move', child: Text('Move to folder…')),
-        PopupMenuItem(value: 'history', child: Text('Page history…')),
-        PopupMenuItem(value: 'copy-body', child: Text('Copy page body')),
-        PopupMenuItem(value: 'copy-plain', child: Text('Copy as plain text')),
-        PopupMenuItem(value: 'copy-json', child: Text('Copy as JSON')),
-        PopupMenuItem(value: 'export-md', child: Text('Export as .md…')),
-        PopupMenuItem(value: 'export-html', child: Text('Export as .html…')),
-        PopupMenuItem(value: 'print-page', child: Text('Print page…')),
-        PopupMenuDivider(),
-        PopupMenuItem(value: 'add-tags', child: Text('Add tags…')),
-        PopupMenuItem(value: 'set-font', child: Text('Set page font…')),
-        PopupMenuItem(value: 'set-reminder', child: Text('Set reminder…')),
-        PopupMenuItem(value: 'snooze-reminder', child: Text('Snooze reminder…')),
-        PopupMenuItem(value: 'clear-reminder', child: Text('Clear reminder')),
-        PopupMenuItem(value: 'set-goal', child: Text('Set word count goal…')),
-        PopupMenuDivider(),
-        PopupMenuItem(
-          value: 'trash',
-          child: Text(
-            'Move to trash',
-            style: TextStyle(color: Color(0xFFCB5A4F)),
-          ),
-        ),
-        PopupMenuItem(value: 'reindex', child: Text('Reindex vault')),
+      position: quillMenuAnchor(context),
+      width: 232,
+      items: [
+        const QuillMenuItem(icon: 'link', label: 'Copy ULID', hint: '⌘L', value: 'copy-ulid'),
+        const QuillMenuItem(icon: 'link', label: 'Copy [[link]]', value: 'copy-link'),
+        const QuillMenuItem(icon: 'folder', label: 'Copy file path', value: 'copy-path'),
+        const QuillMenuItem(icon: 'reveal', label: 'Reveal in Finder', hint: '⌘⇧R', value: 'reveal'),
+        const QuillMenuItem(icon: 'note', label: 'Duplicate page', hint: '⌘D', value: 'duplicate'),
+        const QuillMenuItem(icon: 'edit', label: 'Rename file…', hint: 'F2', value: 'rename'),
+        const QuillMenuItem(icon: 'folder', label: 'Move to folder…', value: 'move'),
+        const QuillMenuItem(icon: 'clock', label: 'Page history…', value: 'history'),
+        QuillMenuItem.separator<String>(),
+        const QuillMenuItem(icon: 'note', label: 'Copy page body', value: 'copy-body'),
+        const QuillMenuItem(icon: 'note', label: 'Copy as plain text', value: 'copy-plain'),
+        const QuillMenuItem(icon: 'code', label: 'Copy as JSON', value: 'copy-json'),
+        const QuillMenuItem(icon: 'export', label: 'Export as .md…', value: 'export-md'),
+        const QuillMenuItem(icon: 'export', label: 'Export as .html…', value: 'export-html'),
+        const QuillMenuItem(icon: 'export', label: 'Print page…', value: 'print-page'),
+        QuillMenuItem.separator<String>(),
+        const QuillMenuItem(icon: 'tag', label: 'Add tags…', value: 'add-tags'),
+        const QuillMenuItem(icon: 'edit', label: 'Set page font…', value: 'set-font'),
+        const QuillMenuItem(icon: 'clock', label: 'Set reminder…', value: 'set-reminder'),
+        const QuillMenuItem(icon: 'clock', label: 'Snooze reminder…', value: 'snooze-reminder'),
+        const QuillMenuItem(icon: 'clock', label: 'Clear reminder', value: 'clear-reminder'),
+        const QuillMenuItem(icon: 'hash', label: 'Set word count goal…', value: 'set-goal'),
+        QuillMenuItem.separator<String>(),
+        const QuillMenuItem(icon: 'trash', label: 'Move to trash', hint: '⌫', danger: true, value: 'trash'),
+        const QuillMenuItem(icon: 'sync', label: 'Reindex vault', value: 'reindex'),
       ],
     );
     if (action == null || !context.mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     switch (action) {
       case 'copy-ulid':
         await Clipboard.setData(ClipboardData(text: ulid));
-        messenger?.showSnackBar(
-          SnackBar(content: Text('Copied $ulid'),
-              duration: const Duration(seconds: 2)),
-        );
+        if (context.mounted) context.toastSuccess('Copied $ulid', subMono: true);
       case 'copy-link':
         await Clipboard.setData(ClipboardData(text: '[[$ulid]]'));
-        messenger?.showSnackBar(
-          SnackBar(content: Text('Copied [[$ulid]]'),
-              duration: const Duration(seconds: 2)),
-        );
+        if (context.mounted) context.toastSuccess('Copied [[$ulid]]', subMono: true);
       case 'copy-path':
         final vault = context.read<VaultBloc>().state;
         final path = vault is VaultLoaded
             ? '${vault.rootPath}/${loaded.page.relativePath}'
             : loaded.page.relativePath;
         await Clipboard.setData(ClipboardData(text: path));
-        messenger?.showSnackBar(
-          SnackBar(
-              content: Text('Copied $path'),
-              duration: const Duration(seconds: 2)),
-        );
+        if (context.mounted) context.toastSuccess('Copied path', sub: path, subMono: true);
       case 'reveal':
         final vault = context.read<VaultBloc>().state;
         if (vault is VaultLoaded) {
           final path = '${vault.rootPath}/${loaded.page.relativePath}';
           final ok = await Reveal.show(path);
-          if (!ok) {
-            messenger?.showSnackBar(
-              SnackBar(content: Text('Could not reveal $path')),
-            );
+          if (!ok && context.mounted) {
+            context.toastError('Could not reveal', sub: path, subMono: true);
           }
         }
       case 'history':
         await _showPageHistory(context, loaded);
       case 'copy-body':
         await Clipboard.setData(ClipboardData(text: loaded.page.body));
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text(
-                'Copied ${loaded.page.body.length} ${loaded.page.body.length == 1 ? 'char' : 'chars'} to clipboard'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        final n = loaded.page.body.length;
+        if (context.mounted) {
+          context.toastSuccess(
+              'Copied $n ${n == 1 ? 'char' : 'chars'} to clipboard');
+        }
       case 'copy-plain':
         final plain = stripMarkdown(loaded.page.body);
         await Clipboard.setData(ClipboardData(text: plain));
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text(
-                'Copied ${plain.length} ${plain.length == 1 ? 'char' : 'chars'} as plain text'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        if (context.mounted) {
+          context.toastSuccess(
+              'Copied ${plain.length} ${plain.length == 1 ? 'char' : 'chars'} as plain text');
+        }
       case 'copy-json':
         final fmMap = <String, Object?>{};
         for (final e in loaded.page.frontmatter.entries) {
@@ -429,13 +396,10 @@ class _EditorBodyState extends State<_EditorBody> {
           'body': loaded.page.body,
         });
         await Clipboard.setData(ClipboardData(text: payload));
-        messenger?.showSnackBar(
-          SnackBar(
-            content: Text(
-                'Copied ${payload.length} ${payload.length == 1 ? 'char' : 'chars'} JSON'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        if (context.mounted) {
+          context.toastSuccess(
+              'Copied ${payload.length} ${payload.length == 1 ? 'char' : 'chars'} JSON');
+        }
       case 'export-md':
         await _exportPageAsMarkdown(context, loaded);
       case 'export-html':
@@ -454,22 +418,12 @@ class _EditorBodyState extends State<_EditorBody> {
         final fm = loaded.page.frontmatter;
         final existing = fm.find('reminder');
         if (existing == null) {
-          messenger?.showSnackBar(
-            const SnackBar(
-              content: Text('No reminder set on this page.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          context.toastInfo('No reminder set on this page.');
         } else {
           context
               .read<EditorBloc>()
               .add(const RemoveFrontmatterField('reminder'));
-          messenger?.showSnackBar(
-            const SnackBar(
-              content: Text('Reminder cleared.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          context.toastSuccess('Reminder cleared.');
         }
       case 'set-goal':
         await _setWordGoal(context, loaded);
@@ -479,49 +433,32 @@ class _EditorBodyState extends State<_EditorBody> {
         await _moveToFolder(context, loaded);
       case 'duplicate':
         final router = GoRouter.of(context);
+        final scope = context;
         context.read<VaultBloc>().add(DuplicatePage(
               ulid,
               onCreated: (newUlid) {
-                messenger?.showSnackBar(
-                  const SnackBar(
-                    content: Text('Page duplicated'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
+                if (scope.mounted) scope.toastSuccess('Page duplicated');
                 router.go('/editor/$newUlid');
               },
             ));
       case 'trash':
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Move to trash?'),
-            content: Text(
-                'The .md file moves to .trash/<YYYY-MM>/${loaded.page.relativePath}. '
-                'You can restore it from the Trash dialog later.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                style:
-                    TextButton.styleFrom(foregroundColor: const Color(0xFFCB5A4F)),
-                child: const Text('Move to trash'),
-              ),
-            ],
-          ),
+        final confirmed = await showQuillConfirm(
+          context,
+          title: 'Move to trash?',
+          sub:
+              'The .md file moves to .trash/<YYYY-MM>/${loaded.page.relativePath}. '
+              'You can restore it from the Trash dialog later.',
+          icon: 'trash',
+          confirmLabel: 'Move to trash',
+          danger: true,
         );
-        if (confirmed != true || !context.mounted) return;
+        if (!confirmed || !context.mounted) return;
         context.read<VaultBloc>().add(MoveToTrash(ulid));
         GoRouter.of(context).go('/home');
       case 'reindex':
         if (!context.mounted) return;
         context.read<VaultBloc>().add(const ReindexVault());
-        messenger?.showSnackBar(
-          const SnackBar(content: Text('Reindexing vault…')),
-        );
+        context.toastInfo('Reindexing vault…');
     }
   }
 
@@ -539,7 +476,6 @@ class _EditorBodyState extends State<_EditorBody> {
   }
 
   Future<void> _printPage(BuildContext context, EditorLoaded loaded) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
     try {
       final bytes = await const PdfExporter().exportSingle(
         title: loaded.page.title,
@@ -550,7 +486,7 @@ class _EditorBodyState extends State<_EditorBody> {
         onLayout: (_) async => Uint8List.fromList(bytes),
       );
     } catch (e) {
-      messenger?.showSnackBar(SnackBar(content: Text('Print failed: $e')));
+      if (context.mounted) context.toastError('Print failed', sub: '$e');
     }
   }
 
@@ -562,46 +498,21 @@ class _EditorBodyState extends State<_EditorBody> {
     final base = basename.endsWith('.md')
         ? basename.substring(0, basename.length - 3)
         : basename;
-    final controller = TextEditingController(text: base);
-    controller.selection =
-        TextSelection(baseOffset: 0, extentOffset: base.length);
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rename file'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'new-name (without .md)',
-            helperText:
-                'ULID is unchanged — wikilinks survive the rename.',
-          ),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Rename'),
-          ),
-        ],
-      ),
+    final picked = await showQuillPrompt(
+      context,
+      title: 'Rename file',
+      icon: 'edit',
+      label: 'New name',
+      hint: 'ULID is unchanged — wikilinks survive the rename.',
+      placeholder: 'new-name (without .md)',
+      initial: base,
+      confirmLabel: 'Rename',
     );
-    if (picked == null || picked.trim().isEmpty) return;
+    if (picked == null || picked.isEmpty) return;
     if (!context.mounted) return;
-    final newName = picked.trim();
     context.read<VaultBloc>().add(
-        RenamePage(ulid: loaded.page.ulid, newBasename: newName));
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(
-        content: Text('Renamed to $newName.md'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+        RenamePage(ulid: loaded.page.ulid, newBasename: picked));
+    context.toastSuccess('Renamed to $picked.md');
   }
 
   Future<void> _moveToFolder(
@@ -626,78 +537,59 @@ class _EditorBodyState extends State<_EditorBody> {
         ? loaded.page.relativePath
             .substring(0, loaded.page.relativePath.lastIndexOf('/'))
         : '';
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (ctx) {
-        final tokens = QuillTokens.of(ctx);
-        return SimpleDialog(
-          title: const Text('Move to folder'),
-          children: [
-            if (currentFolder != '')
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(ctx, ''),
-                child: Text('(vault root)',
-                    style: TextStyle(color: tokens.text2)),
-              ),
-            for (final f in sorted)
-              if (f != currentFolder)
-                SimpleDialogOption(
-                  onPressed: () => Navigator.pop(ctx, f),
-                  child: Text(f),
-                ),
-          ],
-        );
-      },
+    final picked = await showQuillChoice<String>(
+      context,
+      title: 'Move to folder',
+      icon: 'folder',
+      options: [
+        if (currentFolder != '')
+          const QuillChoiceOption<String>(
+            value: '',
+            label: '(vault root)',
+            icon: 'home',
+          ),
+        for (final f in sorted)
+          if (f != currentFolder)
+            QuillChoiceOption<String>(
+              value: f,
+              label: f,
+              icon: 'folder',
+            ),
+      ],
     );
     if (picked == null) return;
     if (!context.mounted) return;
     context.read<VaultBloc>().add(
         MovePage(ulid: loaded.page.ulid, targetFolder: picked));
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.showSnackBar(
-      SnackBar(
-          content: Text(picked.isEmpty
-              ? 'Moved to vault root'
-              : 'Moved to $picked'),
-          duration: const Duration(seconds: 2)),
-    );
+    context.toastSuccess(
+        picked.isEmpty ? 'Moved to vault root' : 'Moved to $picked');
   }
 
   Future<void> _setFont(
       BuildContext context, EditorLoaded loaded) async {
     final fm = loaded.page.frontmatter;
     final existing = fm.find('font');
-    final current = existing?.rawScalar.trim().toLowerCase() ?? '';
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Page font'),
-        children: [
-          for (final option in const [
-            ('sans', 'Sans-serif (default)'),
-            ('serif', 'Serif (Georgia)'),
-            ('mono', 'Monospace (JetBrainsMono)'),
-          ])
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, option.$1),
-              child: Row(
-                children: [
-                  if (current == option.$1 ||
-                      (current.isEmpty && option.$1 == 'sans'))
-                    const Icon(Icons.check, size: 14)
-                  else
-                    const SizedBox(width: 14),
-                  const SizedBox(width: 8),
-                  Text(option.$2),
-                ],
-              ),
-            ),
-        ],
-      ),
+    final picked = await showQuillChoice<String>(
+      context,
+      title: 'Page font',
+      icon: 'edit',
+      options: const [
+        QuillChoiceOption<String>(
+          value: 'sans',
+          label: 'Sans-serif (default)',
+        ),
+        QuillChoiceOption<String>(
+          value: 'serif',
+          label: 'Serif (Georgia)',
+        ),
+        QuillChoiceOption<String>(
+          value: 'mono',
+          label: 'Monospace (JetBrainsMono)',
+        ),
+      ],
     );
     if (picked == null || !context.mounted) return;
     final bloc = context.read<EditorBloc>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final label = switch (picked) {
       'sans' => 'sans-serif (default)',
       'serif' => 'serif',
@@ -709,10 +601,7 @@ class _EditorBodyState extends State<_EditorBody> {
       if (existing != null) {
         bloc.add(const RemoveFrontmatterField('font'));
       }
-      messenger?.showSnackBar(SnackBar(
-        content: Text('Page font: $label'),
-        duration: const Duration(seconds: 2),
-      ));
+      context.toastSuccess('Page font: $label');
       return;
     }
     if (existing == null) {
@@ -728,10 +617,7 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: picked, value: picked),
       ));
     }
-    messenger?.showSnackBar(SnackBar(
-      content: Text('Page font: $label'),
-      duration: const Duration(seconds: 2),
-    ));
+    context.toastSuccess('Page font: $label');
   }
 
   Future<void> _addTags(
@@ -750,44 +636,17 @@ class _EditorBodyState extends State<_EditorBody> {
         currentTags.add(v.trim());
       }
     }
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add tags'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (currentTags.isNotEmpty) ...[
-              Text(
-                'Current: ${currentTags.join(', ')}',
-                style: const TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 8),
-            ],
-            TextField(
-              controller: controller,
-              autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'tag1, tag2',
-                helperText: 'Comma-separated. New tags are merged with current.',
-              ),
-              onSubmitted: (v) => Navigator.of(ctx).pop(v),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
+    final hint = currentTags.isEmpty
+        ? 'Comma-separated. New tags are merged with current.'
+        : 'Current: ${currentTags.join(', ')} · new tags are merged.';
+    final result = await showQuillPrompt(
+      context,
+      title: 'Add tags',
+      icon: 'tag',
+      label: 'Tags',
+      hint: hint,
+      placeholder: 'tag1, tag2',
+      confirmLabel: 'Add',
     );
     if (result == null) return;
     final added = <String>[
@@ -816,13 +675,7 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: raw, value: merged),
       ));
     }
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.showSnackBar(
-      SnackBar(
-        content: Text('Tags: ${merged.join(', ')}'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess('Tags: ${merged.join(', ')}');
   }
 
   Future<void> _setWordGoal(
@@ -830,53 +683,30 @@ class _EditorBodyState extends State<_EditorBody> {
     final fm = loaded.page.frontmatter;
     final existing = fm.find('goal');
     final initial = existing?.rawScalar ?? '';
-    final controller = TextEditingController(text: initial);
-    final picked = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Set word count goal'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-              hintText: 'e.g. 500',
-              helperText: 'Empty to clear. The footer will show progress.'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+    final picked = await showQuillPrompt(
+      context,
+      title: 'Set word count goal',
+      icon: 'hash',
+      label: 'Goal',
+      hint: 'Empty to clear. The footer will show progress.',
+      placeholder: 'e.g. 500',
+      initial: initial,
+      confirmLabel: 'Save',
+      mono: true,
     );
     if (picked == null || !context.mounted) return;
     final trimmed = picked.trim();
     final bloc = context.read<EditorBloc>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     if (trimmed.isEmpty) {
       if (existing != null) {
         bloc.add(const RemoveFrontmatterField('goal'));
-        messenger?.showSnackBar(
-          const SnackBar(
-            content: Text('Word count goal cleared'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        context.toastSuccess('Word count goal cleared');
       }
       return;
     }
     final n = int.tryParse(trimmed);
     if (n == null || n < 1) {
-      messenger?.showSnackBar(
-        const SnackBar(content: Text('Goal must be a positive whole number')),
-      );
+      context.toastError('Goal must be a positive whole number');
       return;
     }
     if (existing == null) {
@@ -892,53 +722,31 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: '$n', value: n),
       ));
     }
-    messenger?.showSnackBar(
-      SnackBar(content: Text('Word count goal: $n'),
-          duration: const Duration(seconds: 2)),
-    );
+    context.toastSuccess('Word count goal: $n');
   }
 
   Future<void> _snoozeReminder(
       BuildContext context, EditorLoaded loaded) async {
     final fm = loaded.page.frontmatter;
     final existing = fm.find('reminder');
-    final messenger = ScaffoldMessenger.maybeOf(context);
     if (existing == null) {
-      messenger?.showSnackBar(
-        const SnackBar(
-          content: Text(
-              'No reminder set. Use "Set reminder…" to start one.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      context.toastInfo('No reminder set. Use "Set reminder…" to start one.');
       return;
     }
     final base =
         DateTime.tryParse(existing.rawScalar) ?? DateTime.now();
     final today = DateTime(base.year, base.month, base.day);
-    final picked = await showDialog<int>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Snooze reminder'),
-        children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, 1),
-            child: const Text('+ 1 day'),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, 3),
-            child: const Text('+ 3 days'),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, 7),
-            child: const Text('+ 1 week'),
-          ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.pop(ctx, 30),
-            child: const Text('+ 1 month (30d)'),
-          ),
-        ],
-      ),
+    final picked = await showQuillChoice<int>(
+      context,
+      title: 'Snooze reminder',
+      icon: 'clock',
+      options: const [
+        QuillChoiceOption<int>(value: 1, label: '+ 1 day', icon: 'clock'),
+        QuillChoiceOption<int>(value: 3, label: '+ 3 days', icon: 'clock'),
+        QuillChoiceOption<int>(value: 7, label: '+ 1 week', icon: 'clock'),
+        QuillChoiceOption<int>(
+            value: 30, label: '+ 1 month (30d)', icon: 'clock'),
+      ],
     );
     if (picked == null || !context.mounted) return;
     final next = today.add(Duration(days: picked));
@@ -949,11 +757,7 @@ class _EditorBodyState extends State<_EditorBody> {
       'reminder',
       existing.copyWith(rawScalar: iso, value: iso),
     ));
-    messenger?.showSnackBar(
-      SnackBar(
-          content: Text('Snoozed reminder to $iso'),
-          duration: const Duration(seconds: 2)),
-    );
+    context.toastSuccess('Snoozed reminder to $iso');
   }
 
   Future<void> _setReminder(
@@ -966,12 +770,11 @@ class _EditorBodyState extends State<_EditorBody> {
       final parsed = DateTime.tryParse(existing.rawScalar);
       if (parsed != null) initial = parsed;
     }
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
+    final picked = await showQuillDatePicker(
+      context,
+      initial: initial,
       firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 5),
-      helpText: 'Set page reminder',
     );
     if (picked == null) return;
     if (!context.mounted) return;
@@ -991,11 +794,7 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: iso, value: iso),
       ));
     }
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.showSnackBar(
-      SnackBar(content: Text('Reminder set for $iso'),
-          duration: const Duration(seconds: 2)),
-    );
+    context.toastSuccess('Reminder set for $iso');
   }
 
   Future<void> _exportPageAsHtml(
@@ -1011,20 +810,17 @@ class _EditorBodyState extends State<_EditorBody> {
     );
     if (picked == null) return;
     if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     try {
       final html = HtmlExporter.renderStandalonePage(
         title: loaded.page.title,
         body: loaded.page.body,
       );
       await File(picked).writeAsString(html);
-      messenger?.showSnackBar(
-        SnackBar(content: Text('Exported to $picked')),
-      );
+      if (context.mounted) {
+        context.toastSuccess('Exported HTML', sub: picked, subMono: true);
+      }
     } catch (e) {
-      messenger?.showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
-      );
+      if (context.mounted) context.toastError('Export failed', sub: '$e');
     }
   }
 
@@ -1046,16 +842,14 @@ class _EditorBodyState extends State<_EditorBody> {
     );
     if (picked == null) return;
     if (!context.mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     try {
       await source.copy(picked);
-      messenger?.showSnackBar(
-        SnackBar(content: Text('Exported to $picked')),
-      );
+      if (context.mounted) {
+        context.toastSuccess('Exported markdown',
+            sub: picked, subMono: true);
+      }
     } catch (e) {
-      messenger?.showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
-      );
+      if (context.mounted) context.toastError('Export failed', sub: '$e');
     }
   }
 
@@ -1066,9 +860,7 @@ class _EditorBodyState extends State<_EditorBody> {
     final path = '${vault.rootPath}/${loaded.page.relativePath}';
     final ok = await Reveal.show(path);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Could not reveal $path')),
-      );
+      context.toastError('Could not reveal', sub: path, subMono: true);
     }
   }
 
@@ -1089,22 +881,11 @@ class _EditorBodyState extends State<_EditorBody> {
 
   void _flushSave(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     if (loaded.dirty) {
       bloc.add(const SaveNow());
-      messenger?.showSnackBar(
-        const SnackBar(
-          content: Text('Saving…'),
-          duration: Duration(seconds: 1),
-        ),
-      );
+      context.toastInfo('Saving…');
     } else {
-      messenger?.showSnackBar(
-        const SnackBar(
-          content: Text('Already saved'),
-          duration: Duration(seconds: 1),
-        ),
-      );
+      context.toastInfo('Already saved');
     }
   }
 
@@ -1117,7 +898,6 @@ class _EditorBodyState extends State<_EditorBody> {
 
   void _toggleLock(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final wasLocked = EditorBloc.isLocked(loaded);
     final fm = loaded.page.frontmatter;
     final existing = fm.find('locked');
@@ -1135,17 +915,11 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: next, value: !wasLocked),
       ));
     }
-    messenger?.showSnackBar(
-      SnackBar(
-        content: Text(wasLocked ? 'Page unlocked' : 'Page locked'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess(wasLocked ? 'Page unlocked' : 'Page locked');
   }
 
   void _togglePin(BuildContext context, EditorLoaded loaded) {
     final vault = context.read<VaultBloc>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final ulid = loaded.page.ulid;
     if (ulid.isEmpty) return;
     final state = vault.state;
@@ -1153,16 +927,12 @@ class _EditorBodyState extends State<_EditorBody> {
         ? state.workspace.favorites.contains(ulid)
         : false;
     vault.add(ToggleFavorite(ulid));
-    messenger?.showSnackBar(SnackBar(
-      content:
-          Text(wasPinned ? 'Unpinned from favorites' : 'Pinned to favorites'),
-      duration: const Duration(seconds: 2),
-    ));
+    context.toastSuccess(
+        wasPinned ? 'Unpinned from favorites' : 'Pinned to favorites');
   }
 
   void _toggleFullWidth(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final fm = loaded.page.frontmatter;
     final wasFull = _isFullWidth(fm);
     final existing = fm.find('full_width');
@@ -1180,12 +950,8 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: next, value: !wasFull),
       ));
     }
-    messenger?.showSnackBar(
-      SnackBar(
-        content: Text(wasFull ? 'Page width: default' : 'Page width: full'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    context.toastSuccess(
+        wasFull ? 'Page width: default' : 'Page width: full');
   }
 
   @override
@@ -1198,13 +964,7 @@ class _EditorBodyState extends State<_EditorBody> {
       listenWhen: (prev, next) => next is EditorError,
       listener: (context, state) {
         if (state is! EditorError) return;
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(state.message),
-            duration: const Duration(seconds: 4),
-            backgroundColor: const Color(0xFFCB5A4F),
-          ),
-        );
+        context.toastError(state.message);
       },
       builder: (context, state) {
         if (state is EditorLoading || state is EditorIdle) {
@@ -1422,8 +1182,8 @@ class _EditorBodyState extends State<_EditorBody> {
                     padding: const EdgeInsets.all(4),
                     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                     tooltip: _propertiesOpen
-                        ? 'Hide properties panel'
-                        : 'Show properties panel',
+                        ? 'Hide properties panel (⌘⇧P)'
+                        : 'Show properties panel (⌘⇧P)',
                     icon: QuillIcon('panel', size: 16, strokeWidth: 1.7,
                         color: _propertiesOpen ? tokens.accent : tokens.text3),
                   ),
@@ -1796,7 +1556,6 @@ class _DailyNoteNav extends StatelessWidget {
     final vault = vaultBloc.state;
     if (vault is! VaultLoaded) return;
     final router = GoRouter.of(context);
-    final messenger = ScaffoldMessenger.maybeOf(context);
     try {
       final result = await DailyNote.openTodaysNote(
         Directory(vault.rootPath),
@@ -1807,8 +1566,7 @@ class _DailyNoteNav extends StatelessWidget {
       }
       router.go('/editor/${result.ulid}');
     } catch (e) {
-      messenger?.showSnackBar(
-          SnackBar(content: Text('Daily note nav failed: $e')));
+      if (context.mounted) context.toastError('Daily note nav failed', sub: '$e');
     }
   }
 

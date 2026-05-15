@@ -490,8 +490,7 @@ Future<String?> showQuillPrompt(
     context,
     builder: (ctx) {
       void submit() {
-        final v = controller.text.trim();
-        Navigator.of(ctx).pop(v.isEmpty ? null : v);
+        Navigator.of(ctx).pop(controller.text.trim());
       }
 
       return QuillModal(
