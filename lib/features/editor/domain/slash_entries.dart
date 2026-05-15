@@ -224,6 +224,9 @@ enum SlashAction {
   frequencyLines,
   /// Compute the range (max − min) of every numeric line.
   rangeNumericLines,
+  /// Replace each numeric line with the running total of all
+  /// preceding numeric lines plus itself.
+  cumulativeSumLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1045,6 +1048,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'max − min',
     action: SlashAction.rangeNumericLines,
     keywords: ['range', 'max', 'min', 'span', 'spread', 'math'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Cumulative sum',
+    hint: '1 / 2 / 3 → 1 / 3 / 6',
+    action: SlashAction.cumulativeSumLines,
+    keywords: ['cumulative', 'sum', 'running', 'total', 'cumsum'],
   ),
   SlashEntry(
     icon: 'hash',

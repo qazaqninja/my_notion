@@ -928,6 +928,45 @@ SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
       return [range.toString()];
     });
 
+/// Replace every numeric line with the running total of all
+/// preceding numeric lines plus itself. Non-numeric lines pass
+/// through and don't advance the counter. Useful for "sum to date"
+/// or financial-style tally columns.
+///
+///   1            1
+///   2     →      3
+///   3            6
+///
+/// Renders integer-form when every input was integer AND each
+/// running total has no fractional part. Decimal-form otherwise.
+/// Returns the source unchanged when no line parses (preserves the
+/// block instead of producing an empty output).
+SortLinesResult cumulativeSumLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      var anyDecimalInput = false;
+      var anyNumeric = false;
+      double total = 0;
+      final out = <String>[];
+      for (final l in lines) {
+        final trimmed = l.trim();
+        final v = double.tryParse(trimmed);
+        if (v == null) {
+          out.add(l);
+          continue;
+        }
+        anyNumeric = true;
+        if (trimmed.contains('.')) anyDecimalInput = true;
+        total += v;
+        if (!anyDecimalInput && total == total.truncateToDouble()) {
+          out.add(total.toInt().toString());
+        } else {
+          out.add(total.toString());
+        }
+      }
+      if (!anyNumeric) return lines;
+      return out;
+    });
+
 /// Sum every selected line that parses as a number (int or double).
 /// Non-numeric lines are skipped. Outputs a single line with the
 /// running total — integer when the sum has no fractional part,

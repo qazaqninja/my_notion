@@ -2457,6 +2457,48 @@ void main() {
     });
   });
 
+  group('cumulativeSumLinesIn', () {
+    test('basic running total', () {
+      const text = '1\n2\n3\n';
+      final r = cumulativeSumLinesIn(text, 0, text.length);
+      expect(r.text, '1\n3\n6\n');
+    });
+
+    test('non-numeric lines pass through without advancing', () {
+      const text = '1\nlabel\n2\n';
+      final r = cumulativeSumLinesIn(text, 0, text.length);
+      expect(r.text, '1\nlabel\n3\n');
+    });
+
+    test('decimal inputs render decimal', () {
+      const text = '1.5\n2.5\n';
+      final r = cumulativeSumLinesIn(text, 0, text.length);
+      expect(r.text, '1.5\n4.0\n');
+    });
+
+    test('negative values supported', () {
+      const text = '10\n-3\n-2\n';
+      final r = cumulativeSumLinesIn(text, 0, text.length);
+      expect(r.text, '10\n7\n5\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(cumulativeSumLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('last running total equals the M938 sum', () {
+      const text = '3\n7\n5\n';
+      final cum = cumulativeSumLinesIn(text, 0, text.length).text;
+      final sum = sumNumericLinesIn(text, 0, text.length).text;
+      // Last line of cum should match the sum output (modulo trailing
+      // newline).
+      final lastCum = cum.split('\n').where((l) => l.isNotEmpty).last;
+      final sumLine = sum.split('\n').where((l) => l.isNotEmpty).single;
+      expect(lastCum, sumLine);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
