@@ -150,22 +150,35 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        c.message.split('\n').first,
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          color: tokens.text,
-                                          fontWeight: selected
-                                              ? FontWeight.w500
-                                              : FontWeight.w400,
+                                      Tooltip(
+                                        message: c.message,
+                                        waitDuration: const Duration(
+                                            milliseconds: 600),
+                                        child: Text(
+                                          c.message.split('\n').first,
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            color: tokens.text,
+                                            fontWeight: selected
+                                                ? FontWeight.w500
+                                                : FontWeight.w400,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 2),
-                                      Text(
-                                        '${c.author} · ${_relativeTime(c.timestamp)}',
-                                        style: mono(fontSize: 10.5, color: tokens.text3),
+                                      Tooltip(
+                                        message:
+                                            '${c.author} · ${c.timestamp.toIso8601String().replaceFirst("T", " ").split(".").first}',
+                                        waitDuration: const Duration(
+                                            milliseconds: 500),
+                                        child: Text(
+                                          '${c.author} · ${_relativeTime(c.timestamp)}',
+                                          style: mono(
+                                              fontSize: 10.5,
+                                              color: tokens.text3),
+                                        ),
                                       ),
                                     ],
                                   ),
