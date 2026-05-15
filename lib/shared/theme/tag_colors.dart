@@ -82,6 +82,25 @@ const Color kStatusDotGray = Color(0xFF9E9C97);
 const Color kStatusDotBlue = Color(0xFF5A82B4);
 const Color kStatusDotPurple = Color(0xFF8278B5);
 
+/// Banner / toast accent palette. The border colour for each kind is
+/// the **base hue**; foreground text uses a deeper variant in light
+/// mode and a lighter variant in dark mode so the wedge of contrast
+/// against the page is balanced. Background is the base hue at low
+/// alpha (light 0x1A–0x24, dark 0x29) so the wash is decorative
+/// rather than competing with body text.
+///
+/// Used by `quill_banner.dart` and `quill_toast.dart`. Re-uses the
+/// status-dot greens / yellows where the base hue lines up; defines
+/// its own red because the dot's terracotta is too warm next to a
+/// large coloured surface.
+const Color kBannerErrorBase = Color(0xFFA8584C);
+const Color kBannerSuccessFgLight = Color(0xFF3F6E54);
+const Color kBannerSuccessFgDark = Color(0xFF9BBF9F);
+const Color kBannerWarnFgLight = Color(0xFF806020);
+const Color kBannerWarnFgDark = Color(0xFFD7C896);
+const Color kBannerErrorFgLight = Color(0xFF7E3D33);
+const Color kBannerErrorFgDark = Color(0xFFD6A39B);
+
 /// Yellow accent for `<mark>…</mark>` highlights — the renderer adds
 /// alpha (0.55) at the use site so this is the un-tinted base hue.
 const Color kHighlightYellow = Color(0xFFFFE486);
