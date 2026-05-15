@@ -134,24 +134,37 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _Row extends StatelessWidget {
+class _Row extends StatefulWidget {
   const _Row({required this.row, required this.schema});
 
   final DatabasePageRow row;
   final DatabaseSchema schema;
 
   @override
+  State<_Row> createState() => _RowState();
+}
+
+class _RowState extends State<_Row> {
+  bool _hover = false;
+
+  DatabasePageRow get row => widget.row;
+  DatabaseSchema get schema => widget.schema;
+
+  @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final secondary = _secondary();
     final health = '${row.cells['health'] ?? ''}'.toLowerCase();
-    return GestureDetector(
-      onTap: () => context.go('/editor/${row.ulid}'),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => context.go('/editor/${row.ulid}'),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 7),
           decoration: BoxDecoration(
+            color: _hover ? tokens.hover : null,
             border: Border(
               bottom: BorderSide(color: tokens.divider, width: 0.5),
             ),
