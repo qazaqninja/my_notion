@@ -27,28 +27,35 @@ class RoamPageImporter {
     final imported = p.basename(source.path);
     final written = <ImportedRoamPage>[];
     for (final page in pages) {
-      final ulid = _ulids.generate();
-      final safe = _safeFileName(page.title);
-      final rel = p.join(targetFolder, '$safe.md');
-      final out = File(p.join(vaultRoot.path, rel));
-      final createdAt = page.createdAtMs != null
-          ? DateTime.fromMillisecondsSinceEpoch(page.createdAtMs!, isUtc: true)
-              .toIso8601String()
-              .substring(0, 10)
-          : null;
-      final fmBuf = StringBuffer('---\n');
-      fmBuf.writeln('id: $ulid');
-      fmBuf.writeln('title: ${yamlSafeScalar(page.title)}');
-      fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
-      if (createdAt != null) fmBuf.writeln('created_at: $createdAt');
-      fmBuf.writeln('---');
-      fmBuf.writeln();
-      await out.writeAsString('${fmBuf.toString()}${page.body.trim()}\n');
-      written.add(ImportedRoamPage(
-        ulid: ulid,
-        relativePath: rel,
-        title: page.title,
-      ));
+      try {
+        final ulid = _ulids.generate();
+        final safe = _safeFileName(page.title);
+        final rel = p.join(targetFolder, '$safe.md');
+        final out = File(p.join(vaultRoot.path, rel));
+        final createdAt = page.createdAtMs != null
+            ? DateTime.fromMillisecondsSinceEpoch(page.createdAtMs!, isUtc: true)
+                .toIso8601String()
+                .substring(0, 10)
+            : null;
+        final fmBuf = StringBuffer('---\n');
+        fmBuf.writeln('id: $ulid');
+        fmBuf.writeln('title: ${yamlSafeScalar(page.title)}');
+        fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
+        if (createdAt != null) fmBuf.writeln('created_at: $createdAt');
+        fmBuf.writeln('---');
+        fmBuf.writeln();
+        await out.writeAsString('${fmBuf.toString()}${page.body.trim()}\n');
+        written.add(ImportedRoamPage(
+          ulid: ulid,
+          relativePath: rel,
+          title: page.title,
+        ));
+      } catch (e, st) {
+        // Per-page robustness (M731/M732). A single bad Roam entry
+        // shouldn't abort the whole export import.
+        // ignore: avoid_print
+        print('roam_importer: skipping page "${page.title}" — $e\n$st');
+      }
     }
     return RoamImportSummary(folder: targetFolder, pages: written);
   }
