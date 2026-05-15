@@ -1043,6 +1043,13 @@ class _SourceViewState extends State<SourceView> {
           text: cleared,
           selection: TextSelection.collapsed(offset: stripStart + pw.length),
         );
+      case SlashAction.insertUuid:
+        final id = generateUuidV4();
+        final cleared = text.replaceRange(stripStart, caret, id);
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart + id.length),
+        );
     }
   }
 

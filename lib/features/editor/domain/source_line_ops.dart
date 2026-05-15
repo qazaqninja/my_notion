@@ -1085,6 +1085,30 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
+/// Generate a UUID v4 (random) as the canonical 36-char hyphenated
+/// string. Uses [math.Random] under the hood — **not** cryptographically
+/// secure (sufficient for placeholder IDs, test data, and stable
+/// frontmatter keys; the user should swap to `Random.secure()` for
+/// security-sensitive IDs). The version (4) and variant (8-b) nibbles
+/// are forced to match RFC 4122.
+String generateUuidV4({math.Random? random}) {
+  final rng = random ?? math.Random();
+  // Roll 16 random bytes.
+  final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
+  // Force version 4: 0100 in the high nibble of byte 6.
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  // Force variant RFC 4122: 10xx in the high nibbles of byte 8.
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  String hexByte(int b) => b.toRadixString(16).padLeft(2, '0');
+  final hex = bytes.map(hexByte).join();
+  // 8-4-4-4-12 grouping.
+  return '${hex.substring(0, 8)}-'
+      '${hex.substring(8, 12)}-'
+      '${hex.substring(12, 16)}-'
+      '${hex.substring(16, 20)}-'
+      '${hex.substring(20, 32)}';
+}
+
 /// Generate a cryptographically-weak random password of [length]
 /// characters drawn from a pool of upper / lower / digit / symbol
 /// glyphs. The default 16-char output mixes all four classes; pass

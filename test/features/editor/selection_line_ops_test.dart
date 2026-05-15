@@ -1618,6 +1618,41 @@ void main() {
     });
   });
 
+  group('generateUuidV4', () {
+    test('returns a 36-character hyphenated string', () {
+      final id = generateUuidV4(random: Random(1));
+      expect(id.length, 36);
+      expect(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$').hasMatch(id), isTrue,
+          reason: 'shape: $id');
+    });
+
+    test('version nibble is forced to 4', () {
+      final id = generateUuidV4(random: Random(123));
+      // Position 14 (0-indexed) is the version digit, right after the
+      // third hyphen at position 13.
+      expect(id[14], '4');
+    });
+
+    test('variant nibble matches RFC 4122 (8, 9, a, or b)', () {
+      final id = generateUuidV4(random: Random(123));
+      // Position 19 is the variant digit, right after the fourth hyphen.
+      expect(['8', '9', 'a', 'b'].contains(id[19]), isTrue,
+          reason: 'variant nibble: ${id[19]} in $id');
+    });
+
+    test('seeded calls are deterministic', () {
+      final a = generateUuidV4(random: Random(42));
+      final b = generateUuidV4(random: Random(42));
+      expect(a, b);
+    });
+
+    test('different seeds produce different UUIDs', () {
+      final a = generateUuidV4(random: Random(1));
+      final b = generateUuidV4(random: Random(2));
+      expect(a, isNot(equals(b)));
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

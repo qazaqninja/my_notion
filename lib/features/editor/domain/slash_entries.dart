@@ -160,6 +160,8 @@ enum SlashAction {
   unwrapInlineFormatting,
   /// Insert a 16-char random password at the caret.
   insertPassword,
+  /// Insert a UUID v4 at the caret (8-4-4-4-12 hyphenated form).
+  insertUuid,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -771,6 +773,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '16 chars',
     action: SlashAction.insertPassword,
     keywords: ['password', 'secret', 'random', 'generate', 'pwd'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Insert UUID',
+    hint: '8-4-4-4-12',
+    action: SlashAction.insertUuid,
+    keywords: ['uuid', 'guid', 'id', 'identifier', 'v4', 'random'],
   ),
   SlashEntry(
     icon: 'hash',
