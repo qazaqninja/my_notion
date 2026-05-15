@@ -131,10 +131,16 @@ String _dateAgoTooltip(String iso) {
   if (iso.trim().isEmpty) return 'No date set';
   final parsed = DateTime.tryParse(iso);
   if (parsed == null) return iso;
+  final pretty = parsed
+      .toIso8601String()
+      .replaceFirst('T', ' ')
+      .split('.')
+      .first;
   final delta = DateTime.now().difference(parsed);
-  if (delta.inDays < 1 && delta.inDays > -1) return 'today  ·  $parsed';
-  if (delta.inDays > 0) return '${delta.inDays}d ago  ·  $parsed';
-  return 'in ${-delta.inDays}d  ·  $parsed';
+  if (delta.inDays < 1 && delta.inDays > -1) return 'today  ·  $pretty';
+  final days = delta.inDays;
+  if (days > 0) return '${days == 1 ? "1 day" : "$days days"} ago  ·  $pretty';
+  return 'in ${-days == 1 ? "1 day" : "${-days} days"}  ·  $pretty';
 }
 
 String _slugify(String s) {
