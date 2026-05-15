@@ -26,6 +26,7 @@ import 'features/vault/presentation/bloc/vault_state.dart';
 import 'features/vault/presentation/pages/home_page.dart';
 import 'features/vault/presentation/pages/vault_picker_page.dart';
 import 'features/vault/presentation/pages/vault_shell_page.dart';
+import 'shared/theme/app_theme_mode.dart';
 import 'shared/theme/theme_cubit.dart';
 import 'shared/theme/tokens.dart';
 import 'shared/widgets/component_sheet_page.dart';
@@ -96,7 +97,11 @@ class _QuillAppState extends State<QuillApp> {
               debugShowCheckedModeBanner: false,
               theme: makeTheme(Brightness.light, themeState.accent),
               darkTheme: makeTheme(Brightness.dark, themeState.accent),
-              themeMode: themeState.mode,
+              themeMode: switch (themeState.mode) {
+                AppThemeMode.light => ThemeMode.light,
+                AppThemeMode.dark => ThemeMode.dark,
+                AppThemeMode.system => ThemeMode.system,
+              },
               routerConfig: _router,
               builder: (context, child) {
                 final mq = MediaQuery.of(context);

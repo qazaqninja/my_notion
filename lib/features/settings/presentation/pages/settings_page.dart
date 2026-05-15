@@ -17,6 +17,7 @@ import '../../../../shared/widgets/tag_chip.dart';
 import '../../../../shared/theme/accent.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/theme/tag_colors.dart';
+import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../vault/data/exporter.dart';
 import '../../../vault/data/html_exporter.dart';
@@ -750,12 +751,12 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Wrap(
             spacing: 8,
             children: [
-              for (final m in ThemeMode.values)
+              for (final m in AppThemeMode.values)
                 _Btn(
                   label: switch (m) {
-                    ThemeMode.light => 'Light',
-                    ThemeMode.dark => 'Dark',
-                    ThemeMode.system => 'System',
+                    AppThemeMode.light => 'Light',
+                    AppThemeMode.dark => 'Dark',
+                    AppThemeMode.system => 'System',
                   },
                   primary: themeState.mode == m,
                   onTap: () => context.read<ThemeCubit>().setMode(m),

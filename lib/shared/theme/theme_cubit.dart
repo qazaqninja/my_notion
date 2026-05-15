@@ -1,9 +1,9 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'accent.dart';
+import 'app_theme_mode.dart';
 
 class ThemeState extends Equatable {
   const ThemeState({
@@ -12,14 +12,16 @@ class ThemeState extends Equatable {
     this.compact = false,
   });
 
-  final ThemeMode mode;
+  /// Plain-Dart [AppThemeMode] keeps the cubit layer Flutter-free (CA-01).
+  /// The widget layer maps to Flutter's `ThemeMode` at the boundary.
+  final AppThemeMode mode;
   final AccentKey accent;
 
   /// When true, the global text scale is shrunk to ~0.92× so the UI fits
   /// more content per viewport. Matches Notion's "small text" toggle.
   final bool compact;
 
-  ThemeState copyWith({ThemeMode? mode, AccentKey? accent, bool? compact}) {
+  ThemeState copyWith({AppThemeMode? mode, AccentKey? accent, bool? compact}) {
     return ThemeState(
       mode: mode ?? this.mode,
       accent: accent ?? this.accent,
@@ -32,7 +34,7 @@ class ThemeState extends Equatable {
 }
 
 class ThemeCubit extends Cubit<ThemeState> {
-  ThemeCubit() : super(const ThemeState(mode: ThemeMode.system, accent: AccentKey.sage));
+  ThemeCubit() : super(const ThemeState(mode: AppThemeMode.system, accent: AccentKey.sage));
 
   static const _modeKey = 'theme.mode';
   static const _accentKey = 'theme.accent';
@@ -44,9 +46,9 @@ class ThemeCubit extends Cubit<ThemeState> {
     final accentName = prefs.getString(_accentKey);
     final compact = prefs.getBool(_compactKey) ?? false;
     emit(ThemeState(
-      mode: ThemeMode.values.firstWhere(
+      mode: AppThemeMode.values.firstWhere(
         (m) => m.name == modeName,
-        orElse: () => ThemeMode.system,
+        orElse: () => AppThemeMode.system,
       ),
       accent: AccentKey.values.firstWhere(
         (a) => a.name == accentName,
@@ -56,7 +58,7 @@ class ThemeCubit extends Cubit<ThemeState> {
     ));
   }
 
-  Future<void> setMode(ThemeMode mode) async {
+  Future<void> setMode(AppThemeMode mode) async {
     emit(state.copyWith(mode: mode));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_modeKey, mode.name);
@@ -83,9 +85,9 @@ class ThemeCubit extends Cubit<ThemeState> {
 
   Future<void> cycleMode() {
     final next = switch (state.mode) {
-      ThemeMode.light => ThemeMode.dark,
-      ThemeMode.dark => ThemeMode.system,
-      ThemeMode.system => ThemeMode.light,
+      AppThemeMode.light => AppThemeMode.dark,
+      AppThemeMode.dark => AppThemeMode.system,
+      AppThemeMode.system => AppThemeMode.light,
     };
     return setMode(next);
   }

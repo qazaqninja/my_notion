@@ -21,6 +21,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../commands/presentation/widgets/command_palette_overlay.dart';
@@ -614,9 +615,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await themeCubit.cycleMode();
         if (!context.mounted) return;
         final modeLabel = switch (themeCubit.state.mode) {
-          ThemeMode.light => 'Light',
-          ThemeMode.dark => 'Dark',
-          ThemeMode.system => 'System',
+          AppThemeMode.light => 'Light',
+          AppThemeMode.dark => 'Dark',
+          AppThemeMode.system => 'System',
         };
         context.toastSuccess('Theme: $modeLabel');
       case 'Toggle compact mode':
