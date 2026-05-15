@@ -778,12 +778,16 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
               ),
               const SizedBox(width: 6),
               Expanded(
-                child: Text(
-                  row.title,
-                  style: TextStyle(fontSize: 13, color: tokens.text, height: 1.4),
-                  overflow:
-                      widget.wrap ? TextOverflow.visible : TextOverflow.ellipsis,
-                  maxLines: widget.wrap ? null : 1,
+                child: Tooltip(
+                  message: row.title,
+                  waitDuration: const Duration(milliseconds: 600),
+                  child: Text(
+                    row.title,
+                    style: TextStyle(fontSize: 13, color: tokens.text, height: 1.4),
+                    overflow:
+                        widget.wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+                    maxLines: widget.wrap ? null : 1,
+                  ),
                 ),
               ),
             ],
