@@ -1070,6 +1070,7 @@ class _EditorBodyState extends State<_EditorBody> {
   }
 
   void _toggleFullWidth(BuildContext context, EditorLoaded loaded) {
+    if (!_requireUnlocked(context, loaded)) return;
     final bloc = context.read<EditorBloc>();
     final fm = loaded.page.frontmatter;
     final wasFull = _isFullWidth(fm);
