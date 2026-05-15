@@ -1431,17 +1431,24 @@ class _EditorBodyState extends State<_EditorBody> {
                                       cursor: locked
                                           ? SystemMouseCursors.basic
                                           : SystemMouseCursors.click,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 22, right: 12),
-                                        child: PageIcon(
-                                          iconValue: page.frontmatter.get('icon') is String
-                                              ? page.frontmatter.get('icon') as String
-                                              : null,
-                                          size: 28,
-                                          vaultRoot: context.read<VaultBloc>().state is VaultLoaded
-                                              ? (context.read<VaultBloc>().state as VaultLoaded).rootPath
-                                              : null,
+                                      child: Tooltip(
+                                        message: locked
+                                            ? 'Page is locked'
+                                            : 'Change icon',
+                                        waitDuration: const Duration(
+                                            milliseconds: 500),
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(
+                                              top: 22, right: 12),
+                                          child: PageIcon(
+                                            iconValue: page.frontmatter.get('icon') is String
+                                                ? page.frontmatter.get('icon') as String
+                                                : null,
+                                            size: 28,
+                                            vaultRoot: context.read<VaultBloc>().state is VaultLoaded
+                                                ? (context.read<VaultBloc>().state as VaultLoaded).rootPath
+                                                : null,
+                                          ),
                                         ),
                                       ),
                                     ),
