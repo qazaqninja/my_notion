@@ -611,6 +611,33 @@ class _SourceViewState extends State<SourceView> {
           selection: TextSelection.collapsed(offset: stripStart),
         );
         await _insertRandomPageLink(stripStart);
+      case SlashAction.insertCurrentUser:
+        final vault = context.read<VaultBloc>().state;
+        final name = vault is VaultLoaded
+            ? (vault.workspace.currentUserName ?? '')
+            : '';
+        if (name.isEmpty) {
+          final cleared = text.replaceRange(stripStart, caret, '');
+          _controller.value = TextEditingValue(
+            text: cleared,
+            selection: TextSelection.collapsed(offset: stripStart),
+          );
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'No current user — add one in Settings → Users'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        final snippet = '@$name';
+        final newText = text.replaceRange(stripStart, caret, snippet);
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection:
+              TextSelection.collapsed(offset: stripStart + snippet.length),
+        );
     }
   }
 

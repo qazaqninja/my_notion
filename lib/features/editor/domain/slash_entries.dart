@@ -9,6 +9,7 @@ enum SlashAction {
   insertDailyNoteLink,
   pickEmoji,
   insertRandomPageLink,
+  insertCurrentUser,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -250,6 +251,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '@now',
     action: SlashAction.insertTimestamp,
     keywords: ['now', 'time', 'timestamp', 'date'],
+  ),
+  SlashEntry(
+    icon: 'users',
+    label: 'Mention me',
+    hint: '@me',
+    action: SlashAction.insertCurrentUser,
+    keywords: ['me', 'mention', 'user', 'self', 'assign'],
   ),
   SlashEntry(
     icon: 'tag',

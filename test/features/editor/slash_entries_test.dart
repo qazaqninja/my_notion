@@ -53,6 +53,13 @@ void main() {
       expect(em.action, SlashAction.pickEmoji);
     });
 
+    test('Mention me entry routes through insertCurrentUser', () {
+      final out = filterSlashEntries('me');
+      expect(out, isNotEmpty);
+      final e = out.firstWhere((e) => e.label == 'Mention me');
+      expect(e.action, SlashAction.insertCurrentUser);
+    });
+
     test('Random page link entry routes through insertRandomPageLink', () {
       final out = filterSlashEntries('random');
       expect(out, isNotEmpty);
