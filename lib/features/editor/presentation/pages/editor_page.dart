@@ -1241,6 +1241,13 @@ class _EditorBodyState extends State<_EditorBody> {
             // as the editor kebab → Rename file….
             const SingleActivator(LogicalKeyboardKey.f2): () =>
                 _renameFile(context, loaded),
+            // ⌘P — print current page. ⌘⇧P remains the properties-panel
+            // toggle; the two don't collide because the modifier set
+            // differs.
+            const SingleActivator(LogicalKeyboardKey.keyP, meta: true): () =>
+                _printPage(context, loaded),
+            const SingleActivator(LogicalKeyboardKey.keyP, control: true): () =>
+                _printPage(context, loaded),
             const SingleActivator(LogicalKeyboardKey.keyW,
                 meta: true, shift: true): () =>
                 _toggleFullWidth(context, loaded),
