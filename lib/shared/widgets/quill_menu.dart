@@ -448,4 +448,3 @@ RelativeRect quillMenuPosition(BuildContext context, Offset globalPosition) {
     Offset.zero & overlay.size,
   );
 }
-

@@ -378,4 +378,3 @@ Future<DateTime?> showQuillDatePicker(
     },
   );
 }
-

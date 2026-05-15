@@ -882,5 +882,3 @@ class _ToolButtonState extends State<_ToolButton> {
     return btn;
   }
 }
-
-

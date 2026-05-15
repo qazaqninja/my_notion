@@ -2155,4 +2155,3 @@ class _PageFooter extends StatelessWidget {
     );
   }
 }
-
