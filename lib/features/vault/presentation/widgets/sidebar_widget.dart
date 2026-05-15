@@ -225,6 +225,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
             label: 'Workspace',
             count: state is VaultLoaded ? state.pageCount : null,
             actionIcon: 'plus',
+            actionTooltip: 'New page at vault root',
             onAction:
                 state is VaultLoaded ? () => _promptNewAtRoot(context) : null,
           ),
@@ -468,6 +469,12 @@ class _DatabasesHead extends StatelessWidget {
         label: 'Databases',
         count: snap.data,
         actionIcon: 'plus',
+        actionTooltip: 'New database…',
+        onAction: () {
+          final cubit = context.read<CommandPaletteCubit>();
+          cubit.open();
+          cubit.setQuery('New database…');
+        },
       ),
     );
   }

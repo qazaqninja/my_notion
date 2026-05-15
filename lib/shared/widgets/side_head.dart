@@ -10,11 +10,16 @@ class SideHead extends StatelessWidget {
     required this.label,
     this.actionIcon,
     this.onAction,
+    this.actionTooltip,
     this.count,
   });
   final String label;
   final String? actionIcon;
   final VoidCallback? onAction;
+
+  /// Optional tooltip shown when hovering the trailing action icon.
+  /// Defaults to nothing — the caller can opt in.
+  final String? actionTooltip;
 
   /// Optional count badge rendered next to the label as a faint mono
   /// number. Suppressed when null.
@@ -50,9 +55,26 @@ class SideHead extends StatelessWidget {
           ],
           const Spacer(),
           if (actionIcon != null)
-            GestureDetector(
-              onTap: onAction,
-              child: QuillIcon(actionIcon!, size: 12, strokeWidth: 1.7, color: tokens.text3),
+            MouseRegion(
+              cursor: onAction == null
+                  ? SystemMouseCursors.basic
+                  : SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onAction,
+                child: actionTooltip == null
+                    ? QuillIcon(actionIcon!,
+                        size: 12,
+                        strokeWidth: 1.7,
+                        color: tokens.text3)
+                    : Tooltip(
+                        message: actionTooltip!,
+                        waitDuration: const Duration(milliseconds: 500),
+                        child: QuillIcon(actionIcon!,
+                            size: 12,
+                            strokeWidth: 1.7,
+                            color: tokens.text3),
+                      ),
+              ),
             ),
         ],
       ),
