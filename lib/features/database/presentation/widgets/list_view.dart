@@ -215,12 +215,16 @@ class _RowState extends State<_Row> {
               if (secondary.isNotEmpty)
                 Expanded(
                   flex: 5,
-                  child: Text(
-                    secondary,
-                    textAlign: TextAlign.right,
-                    style: mono(fontSize: 11.5, color: tokens.text3),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                  child: Tooltip(
+                    message: secondary,
+                    waitDuration: const Duration(milliseconds: 600),
+                    child: Text(
+                      secondary,
+                      textAlign: TextAlign.right,
+                      style: mono(fontSize: 11.5, color: tokens.text3),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
               if (health.isNotEmpty) ...[
