@@ -272,6 +272,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                       builder: (innerContext) => IconButton(
                         icon: Icon(Icons.menu, color: tokens.text2, size: 18),
                         onPressed: () => Scaffold.of(innerContext).openDrawer(),
+                        tooltip: 'Open navigation drawer',
                       ),
                     ),
                   ),

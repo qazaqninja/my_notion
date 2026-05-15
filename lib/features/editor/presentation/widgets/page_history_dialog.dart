@@ -189,6 +189,7 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
                                   visualDensity: VisualDensity.compact,
                                   onPressed: () => Navigator.of(context).pop(),
                                   icon: const Icon(Icons.close, size: 18),
+                                  tooltip: 'Close',
                                 ),
                               ],
                             ),
