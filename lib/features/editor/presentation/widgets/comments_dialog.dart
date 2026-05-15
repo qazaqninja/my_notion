@@ -127,18 +127,23 @@ class _CommentsDialogState extends State<CommentsDialog> {
                         ),
                         if (widget.blockId != null) ...[
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: tokens.surface2,
-                              borderRadius:
-                                  const BorderRadius.all(Radius.circular(3)),
-                            ),
-                            child: Text(
-                              'block · ${widget.blockId!.substring(widget.blockId!.length - 6)}',
-                              style: mono(
-                                  fontSize: 10, color: tokens.text2),
+                          Tooltip(
+                            message:
+                                'Comments scoped to block ^${widget.blockId}',
+                            waitDuration: const Duration(milliseconds: 500),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: tokens.surface2,
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(3)),
+                              ),
+                              child: Text(
+                                'block · ${widget.blockId!.substring(widget.blockId!.length - 6)}',
+                                style: mono(
+                                    fontSize: 10, color: tokens.text2),
+                              ),
                             ),
                           ),
                         ],
@@ -300,17 +305,21 @@ class _CommentsDialogState extends State<CommentsDialog> {
               // scope when widget.blockId is set.
               if (widget.blockId == null && c.blockId != null) ...[
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: tokens.surface2,
-                    borderRadius:
-                        const BorderRadius.all(Radius.circular(3)),
-                  ),
-                  child: Text(
-                    'block · ${c.blockId!.substring(c.blockId!.length - 6)}',
-                    style: mono(fontSize: 10, color: tokens.text3),
+                Tooltip(
+                  message: 'Anchored to block ^${c.blockId}',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: tokens.surface2,
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(3)),
+                    ),
+                    child: Text(
+                      'block · ${c.blockId!.substring(c.blockId!.length - 6)}',
+                      style: mono(fontSize: 10, color: tokens.text3),
+                    ),
                   ),
                 ),
               ],
