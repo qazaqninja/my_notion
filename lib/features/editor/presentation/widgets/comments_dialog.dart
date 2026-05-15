@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
 import '../../data/comments_service.dart';
 
 class CommentsDialog extends StatefulWidget {
@@ -150,10 +151,28 @@ class _CommentsDialogState extends State<CommentsDialog> {
                   if (items.isEmpty) {
                     return Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Text(
-                          'No comments yet. Start the thread below.',
-                          style: TextStyle(fontSize: 13, color: tokens.text3),
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            QuillIcon('note',
+                                size: 24,
+                                strokeWidth: 1.4,
+                                color: tokens.text3),
+                            const SizedBox(height: 10),
+                            Text('No comments yet',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.text2,
+                                )),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Start the thread below.',
+                              style: TextStyle(
+                                  fontSize: 12, color: tokens.text3),
+                            ),
+                          ],
                         ),
                       ),
                     );
