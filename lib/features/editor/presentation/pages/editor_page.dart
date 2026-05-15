@@ -298,6 +298,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'add-tags', child: Text('Add tags…')),
         PopupMenuItem(value: 'set-font', child: Text('Set page font…')),
         PopupMenuItem(value: 'set-reminder', child: Text('Set reminder…')),
+        PopupMenuItem(value: 'snooze-reminder', child: Text('Snooze reminder…')),
         PopupMenuItem(value: 'set-goal', child: Text('Set word count goal…')),
         PopupMenuDivider(),
         PopupMenuItem(value: 'trash', child: Text('Move to trash')),
@@ -356,6 +357,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _setFont(context, loaded);
       case 'set-reminder':
         await _setReminder(context, loaded);
+      case 'snooze-reminder':
+        await _snoozeReminder(context, loaded);
       case 'set-goal':
         await _setWordGoal(context, loaded);
       case 'rename':
@@ -751,6 +754,64 @@ class _EditorBodyState extends State<_EditorBody> {
     }
     messenger?.showSnackBar(
       SnackBar(content: Text('Word count goal: $n'),
+          duration: const Duration(seconds: 2)),
+    );
+  }
+
+  Future<void> _snoozeReminder(
+      BuildContext context, EditorLoaded loaded) async {
+    final fm = loaded.page.frontmatter;
+    final existing = fm.find('reminder');
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (existing == null) {
+      messenger?.showSnackBar(
+        const SnackBar(
+          content: Text(
+              'No reminder set. Use "Set reminder…" to start one.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final base =
+        DateTime.tryParse(existing.rawScalar) ?? DateTime.now();
+    final today = DateTime(base.year, base.month, base.day);
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('Snooze reminder'),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 1),
+            child: const Text('+ 1 day'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 3),
+            child: const Text('+ 3 days'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 7),
+            child: const Text('+ 1 week'),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, 30),
+            child: const Text('+ 1 month (30d)'),
+          ),
+        ],
+      ),
+    );
+    if (picked == null || !context.mounted) return;
+    final next = today.add(Duration(days: picked));
+    final iso =
+        '${next.year.toString().padLeft(4, '0')}-${next.month.toString().padLeft(2, '0')}-${next.day.toString().padLeft(2, '0')}';
+    final bloc = context.read<EditorBloc>();
+    bloc.add(EditFrontmatterField(
+      'reminder',
+      existing.copyWith(rawScalar: iso, value: iso),
+    ));
+    messenger?.showSnackBar(
+      SnackBar(
+          content: Text('Snoozed reminder to $iso'),
           duration: const Duration(seconds: 2)),
     );
   }
