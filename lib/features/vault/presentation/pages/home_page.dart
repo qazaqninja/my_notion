@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
+import '../../../../core/paths.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -361,6 +362,7 @@ class _PinboardState extends State<_Pinboard> {
             ulid: u,
             title: byUlid[u]!.title,
             relativePath: byUlid[u]!.relativePath,
+            mtimeMs: byUlid[u]!.mtimeMs,
             emojiIcon:
                 emojiFromFrontmatterJson(byUlid[u]!.frontmatterJson),
           ),
@@ -444,11 +446,21 @@ class _PinboardState extends State<_Pinboard> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                e.relativePath,
+                                stripMdExtension(e.relativePath),
                                 style: mono(
                                     fontSize: 11, color: tokens.text3),
                                 overflow: TextOverflow.ellipsis,
                               ),
+                              if (e.mtimeMs > 0) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  'edited ${_relMtime(e.mtimeMs)}',
+                                  style: mono(
+                                      fontSize: 10.5,
+                                      color: tokens.text3
+                                          .withValues(alpha: 0.7)),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -464,16 +476,34 @@ class _PinboardState extends State<_Pinboard> {
   }
 }
 
+/// Shared "edited Xm ago" helper for the home page sections. Mirrors
+/// the editor's `_relativeMtime` so the two surfaces use the same
+/// vocabulary.
+String _relMtime(int mtimeMs) {
+  final now = DateTime.now().millisecondsSinceEpoch;
+  final secs = ((now - mtimeMs) ~/ 1000).clamp(0, 1 << 30);
+  if (secs < 5) return 'just now';
+  if (secs < 60) return '${secs}s ago';
+  final mins = secs ~/ 60;
+  if (mins < 60) return '${mins}m ago';
+  final hrs = mins ~/ 60;
+  if (hrs < 24) return '${hrs}h ago';
+  final days = hrs ~/ 24;
+  return '${days}d ago';
+}
+
 class _PinEntry {
   const _PinEntry({
     required this.ulid,
     required this.title,
     required this.relativePath,
+    required this.mtimeMs,
     this.emojiIcon,
   });
   final String ulid;
   final String title;
   final String relativePath;
+  final int mtimeMs;
   final String? emojiIcon;
 }
 
