@@ -13,6 +13,7 @@ import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/side_head.dart';
 import '../../../../shared/widgets/side_item.dart';
+import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../database/data/repositories/database_repository_impl.dart';
 import '../../../database/domain/entities/database_schema.dart';
 import '../bloc/vault_bloc.dart';
@@ -97,7 +98,9 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                 ? () => _pickWorkspaceIcon(context, state)
                 : null,
           ),
-          const SidebarSearch(),
+          SidebarSearch(
+            onTap: () => context.read<CommandPaletteCubit>().open(),
+          ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(bottom: 8),
