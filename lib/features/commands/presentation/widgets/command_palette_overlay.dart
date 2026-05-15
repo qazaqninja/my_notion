@@ -239,10 +239,35 @@ class _Panel extends StatelessWidget {
                     ),
                   if (state.totalResults == 0)
                     Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Text(
-                        'No matches',
-                        style: TextStyle(color: tokens.text3, fontSize: 13),
+                      padding: const EdgeInsets.all(28),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            QuillIcon('search',
+                                size: 22,
+                                strokeWidth: 1.4,
+                                color: tokens.text3),
+                            const SizedBox(height: 8),
+                            Text(
+                              'No matches',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: tokens.text2,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              state.query.isEmpty
+                                  ? 'Start typing to search pages, databases, and commands.'
+                                  : 'No pages, databases, or commands match "${state.query}".',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 12, color: tokens.text3),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                 ],
