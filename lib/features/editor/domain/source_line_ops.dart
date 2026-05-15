@@ -610,6 +610,45 @@ SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2})
   );
 }
 
+/// URL-encode every non-blank selected line via `Uri.encodeComponent`
+/// so the value is safe to drop into a query string or path segment
+/// (spaces become `%20`, slashes `%2F`, etc.). Blank lines stay blank
+/// so block structure is preserved.
+SortLinesResult urlEncodeLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.isEmpty) l else Uri.encodeComponent(l),
+      ];
+    });
+
+/// Inverse of [urlEncodeLinesIn]: decode `%XX` triplets back to the
+/// original UTF-8 text. Lines that contain malformed percent
+/// sequences are caught by [ArgumentError] / [FormatException] and
+/// left untouched so a mixed-content selection is safe to invoke.
+SortLinesResult urlDecodeLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.isEmpty)
+            l
+          else
+            (() {
+              try {
+                return Uri.decodeComponent(l);
+                // Uri.decodeComponent throws ArgumentError on a few
+                // malformed inputs; treat it like FormatException
+                // and leave the source line as-is.
+                // ignore: avoid_catching_errors
+              } on ArgumentError {
+                return l;
+              } on FormatException {
+                return l;
+              }
+            })(),
+      ];
+    });
+
 /// Base64-encode every selected line using UTF-8 bytes. Lines that
 /// were empty stay empty so block structure is preserved. Useful
 /// when copying secrets / blob payloads into structured fields.

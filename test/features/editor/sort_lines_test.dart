@@ -838,6 +838,41 @@ void main() {
     });
   });
 
+  group('urlEncodeLinesIn / urlDecodeLinesIn', () {
+    test('encodes spaces and reserved chars', () {
+      const text = 'hello world\nfoo/bar?baz=1\n';
+      final r = urlEncodeLinesIn(text, 0, text.length);
+      expect(r.text, 'hello%20world\nfoo%2Fbar%3Fbaz%3D1\n');
+    });
+
+    test('round-trip ASCII line preserves it', () {
+      const text = 'a b c\nx=y&z\n';
+      final enc = urlEncodeLinesIn(text, 0, text.length).text;
+      final dec = urlDecodeLinesIn(enc, 0, enc.length).text;
+      expect(dec, text);
+    });
+
+    test('round-trip multibyte UTF-8 line preserves it', () {
+      const text = 'café 🍰\n你好\n';
+      final enc = urlEncodeLinesIn(text, 0, text.length).text;
+      final dec = urlDecodeLinesIn(enc, 0, enc.length).text;
+      expect(dec, text);
+    });
+
+    test('decode leaves malformed lines untouched', () {
+      // Lone "%" without 2 hex chars is malformed.
+      const text = '50% off\n';
+      final r = urlDecodeLinesIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('encode preserves blank lines', () {
+      const text = 'a\n\nb\n';
+      final r = urlEncodeLinesIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

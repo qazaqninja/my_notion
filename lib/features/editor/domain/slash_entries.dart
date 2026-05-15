@@ -86,6 +86,10 @@ enum SlashAction {
   base64Encode,
   /// Base64-decode every selected line; invalid Base64 stays as-is.
   base64Decode,
+  /// URL-encode every selected line via Uri.encodeComponent.
+  urlEncode,
+  /// URL-decode every selected line; malformed sequences stay as-is.
+  urlDecode,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -494,6 +498,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'YWJj → abc',
     action: SlashAction.base64Decode,
     keywords: ['base64', 'decode', 'b64'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'URL encode',
+    hint: 'foo bar → foo%20bar',
+    action: SlashAction.urlEncode,
+    keywords: ['url', 'encode', 'percent', 'escape', 'query'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'URL decode',
+    hint: 'foo%20bar → foo bar',
+    action: SlashAction.urlDecode,
+    keywords: ['url', 'decode', 'percent', 'unescape', 'query'],
   ),
   SlashEntry(
     icon: 'edit',
