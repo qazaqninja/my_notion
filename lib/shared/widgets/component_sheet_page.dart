@@ -30,10 +30,10 @@ class ComponentSheetPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF101010),
+      backgroundColor: kComponentSheetBg,
       appBar: AppBar(
         title: const Text('quill / components'),
-        backgroundColor: const Color(0xFF101010),
+        backgroundColor: kComponentSheetBg,
         foregroundColor: Colors.white,
         actions: [
           BlocBuilder<ThemeCubit, ThemeState>(
@@ -141,6 +141,11 @@ class _SheetBody extends StatelessWidget {
         _SectionHeading('Color', tokens: tokens),
         Row(
           children: [
+            // These two swatches deliberately display the raw bg/text
+            // hex values from `tokens.dart` so designers can see the
+            // canonical light-bg + dark-text combination side-by-side
+            // regardless of the active theme. Inline literals are
+            // intentional for a design preview — not a TH-03 violation.
             _Swatch(color: const Color(0xFFF8F6F2), label: 'bg / light', sub: '#F8F6F2', tokens: tokens),
             const SizedBox(width: 12),
             _Swatch(color: const Color(0xFF1A1A1A), label: 'text / dark', sub: '#1A1A1A', tokens: tokens),
@@ -313,15 +318,29 @@ class _SheetBody extends StatelessWidget {
               child: Container(
                 color: tokens.sidebar,
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                child: const Column(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SideItem(icon: 'file-md', label: 'Inbox.md'),
-                    SideItem(icon: 'file-md', label: 'Northwind.md', active: true),
-                    SideItem(icon: 'folder', label: 'Customers', chevron: SideChevron.open),
-                    SideItem(icon: 'file-md', label: 'Acmeco.md', level: 1, mute: true),
+                    const SideItem(icon: 'file-md', label: 'Inbox.md'),
+                    const SideItem(
+                      icon: 'file-md', label: 'Northwind.md', active: true,
+                    ),
+                    const SideItem(
+                      icon: 'folder',
+                      label: 'Customers',
+                      chevron: SideChevron.open,
+                    ),
+                    const SideItem(
+                      icon: 'file-md',
+                      label: 'Acmeco.md',
+                      level: 1,
+                      mute: true,
+                    ),
                     SideItem(
-                      glyph: SideItemGlyph(color: Color(0xFF6B8E7F), letter: 'C'),
+                      glyph: SideItemGlyph(
+                        color: AccentKey.sage.color,
+                        letter: 'C',
+                      ),
                       label: 'Customers',
                       count: 48,
                     ),

@@ -84,6 +84,13 @@ const Color kToggleRailOffLight = Color(0xFFD5D1C8);
 /// status accents.
 const Color kSettingsUserAvatarBg = Color(0xFF8C9F8B);
 
+/// Background fill for the component-sheet preview page. Always
+/// dark regardless of the app theme so designers can read the
+/// design tokens against a consistent backdrop. Matches the dark
+/// theme's `codeBg` byte-for-byte but lives here as its own named
+/// constant since the page intentionally overrides the active theme.
+const Color kComponentSheetBg = Color(0xFF101010);
+
 /// Selected-tile fill for the segmented-control widget. Slightly
 /// warmer than `tokens.surface2` and intentionally not equal to any
 /// of the M3 surface tints — the design uses a beige/warm-gray that
