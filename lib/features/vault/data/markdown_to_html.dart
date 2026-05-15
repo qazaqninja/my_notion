@@ -238,10 +238,15 @@ List<String> _splitTableRow(String line) {
 }
 
 String _escape(String s) {
+  // Escapes the four HTML special characters that matter inside both
+  // text nodes and attribute values. Quoting `"` is what makes
+  // _escape safe to use for href/src/class attribute interpolation
+  // (M706/M707/M708) — without it those XSS fixes were incomplete.
   return s
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;');
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
 }
 
 /// Inline pass: bold / italic / strike / code / wikilinks / URLs.
