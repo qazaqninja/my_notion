@@ -25,6 +25,19 @@ String _iconForType(FrontmatterDisplayType type) => switch (type) {
       FrontmatterDisplayType.checkbox => 'checksquare',
     };
 
+String _labelForType(FrontmatterDisplayType type) => switch (type) {
+      FrontmatterDisplayType.ulid => 'ULID',
+      FrontmatterDisplayType.text => 'text',
+      FrontmatterDisplayType.number => 'number',
+      FrontmatterDisplayType.date => 'date',
+      FrontmatterDisplayType.select => 'select',
+      FrontmatterDisplayType.multi => 'multi-select',
+      FrontmatterDisplayType.relation => 'relation',
+      FrontmatterDisplayType.formula => 'formula',
+      FrontmatterDisplayType.file => 'file',
+      FrontmatterDisplayType.checkbox => 'checkbox',
+    };
+
 /// Single frontmatter field row — type-aware. Matches `FrontmatterRow` from
 /// `primitives.jsx:174-198`.
 class FrontmatterRow extends StatelessWidget {
@@ -67,7 +80,12 @@ class FrontmatterRow extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Row(
                 children: [
-                  QuillIcon(_iconForType(type), size: 12, strokeWidth: 1.7, color: tokens.text3),
+                  Tooltip(
+                    message: _labelForType(type),
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: QuillIcon(_iconForType(type),
+                        size: 12, strokeWidth: 1.7, color: tokens.text3),
+                  ),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
