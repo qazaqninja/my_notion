@@ -827,13 +827,23 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
               const SizedBox(width: 6),
               Expanded(
                 child: Tooltip(
-                  message: row.title,
+                  message:
+                      row.title.isEmpty ? 'Untitled page' : row.title,
                   waitDuration: const Duration(milliseconds: 600),
                   child: Text(
-                    row.title,
-                    style: TextStyle(fontSize: 13, color: tokens.text, height: 1.4),
-                    overflow:
-                        widget.wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+                    row.title.isEmpty ? 'Untitled' : row.title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color:
+                          row.title.isEmpty ? tokens.text3 : tokens.text,
+                      height: 1.4,
+                      fontStyle: row.title.isEmpty
+                          ? FontStyle.italic
+                          : FontStyle.normal,
+                    ),
+                    overflow: widget.wrap
+                        ? TextOverflow.visible
+                        : TextOverflow.ellipsis,
                     maxLines: widget.wrap ? null : 1,
                   ),
                 ),
