@@ -745,6 +745,59 @@ SortLinesResult quoteLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Compute the arithmetic mean of every selected line that parses
+/// as a number. Non-numeric lines are skipped. Always returns a
+/// fixed-point result (means generally aren't whole numbers, so we
+/// don't bother trying to detect that case). Returns the source
+/// unchanged when no line parses as a number.
+SortLinesResult averageNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      double total = 0;
+      var count = 0;
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v == null) continue;
+        total += v;
+        count++;
+      }
+      if (count == 0) return lines;
+      return [(total / count).toString()];
+    });
+
+/// Find the maximum numeric value in the selected block. Skips non-
+/// numeric lines. Returns the source unchanged when no line parses.
+SortLinesResult maxNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      double? best;
+      var allInt = true;
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v == null) continue;
+        if (v != v.truncateToDouble()) allInt = false;
+        if (best == null || v > best) best = v;
+      }
+      if (best == null) return lines;
+      if (allInt) return [best.toInt().toString()];
+      return [best.toString()];
+    });
+
+/// Find the minimum numeric value in the selected block. Skips non-
+/// numeric lines. Returns the source unchanged when no line parses.
+SortLinesResult minNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      double? best;
+      var allInt = true;
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v == null) continue;
+        if (v != v.truncateToDouble()) allInt = false;
+        if (best == null || v < best) best = v;
+      }
+      if (best == null) return lines;
+      if (allInt) return [best.toInt().toString()];
+      return [best.toString()];
+    });
+
 /// Sum every selected line that parses as a number (int or double).
 /// Non-numeric lines are skipped. Outputs a single line with the
 /// running total — integer when the sum has no fractional part,

@@ -2233,6 +2233,59 @@ void main() {
     });
   });
 
+  group('averageNumericLinesIn', () {
+    test('mean of three integers', () {
+      const text = '1\n2\n3\n';
+      final r = averageNumericLinesIn(text, 0, text.length);
+      expect(r.text, '2.0\n');
+    });
+
+    test('mean skips non-numeric lines', () {
+      const text = '10\nlabel\n20\n';
+      final r = averageNumericLinesIn(text, 0, text.length);
+      expect(r.text, '15.0\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(averageNumericLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
+  group('maxNumericLinesIn / minNumericLinesIn', () {
+    test('max picks the biggest', () {
+      const text = '1\n5\n3\n';
+      expect(maxNumericLinesIn(text, 0, text.length).text, '5\n');
+    });
+
+    test('min picks the smallest', () {
+      const text = '1\n5\n3\n';
+      expect(minNumericLinesIn(text, 0, text.length).text, '1\n');
+    });
+
+    test('all-integer input renders integer output', () {
+      const text = '4\n8\n';
+      expect(maxNumericLinesIn(text, 0, text.length).text, '8\n');
+    });
+
+    test('any decimal input renders decimal output', () {
+      const text = '4\n8.5\n';
+      expect(maxNumericLinesIn(text, 0, text.length).text, '8.5\n');
+    });
+
+    test('negative numbers are supported', () {
+      const text = '-5\n-1\n-9\n';
+      expect(maxNumericLinesIn(text, 0, text.length).text, '-1\n');
+      expect(minNumericLinesIn(text, 0, text.length).text, '-9\n');
+    });
+
+    test('no numeric lines is a no-op for both', () {
+      const text = 'a\nb\n';
+      expect(maxNumericLinesIn(text, 0, text.length).text, text);
+      expect(minNumericLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

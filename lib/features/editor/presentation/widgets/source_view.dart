@@ -1116,6 +1116,18 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, sumNumericLinesIn,
         );
+      case SlashAction.averageNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, averageNumericLinesIn,
+        );
+      case SlashAction.maxNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, maxNumericLinesIn,
+        );
+      case SlashAction.minNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, minNumericLinesIn,
+        );
     }
   }
 

@@ -208,6 +208,12 @@ enum SlashAction {
   jsonArrayToLines,
   /// Sum every numeric line in the selection into a single total.
   sumNumericLines,
+  /// Compute the arithmetic mean of every numeric line.
+  averageNumericLines,
+  /// Find the maximum numeric value in the selection.
+  maxNumericLines,
+  /// Find the minimum numeric value in the selection.
+  minNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -973,6 +979,27 @@ const List<SlashEntry> kSlashEntries = [
     hint: '1 / 2 / 3 → 6',
     action: SlashAction.sumNumericLines,
     keywords: ['sum', 'total', 'add', 'math', 'numeric'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Average numeric lines',
+    hint: '1 / 2 / 3 → 2.0',
+    action: SlashAction.averageNumericLines,
+    keywords: ['average', 'mean', 'math', 'numeric'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Max of numeric lines',
+    hint: '1 / 5 / 3 → 5',
+    action: SlashAction.maxNumericLines,
+    keywords: ['max', 'maximum', 'largest', 'math', 'numeric'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Min of numeric lines',
+    hint: '1 / 5 / 3 → 1',
+    action: SlashAction.minNumericLines,
+    keywords: ['min', 'minimum', 'smallest', 'math', 'numeric'],
   ),
   SlashEntry(
     icon: 'hash',
