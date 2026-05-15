@@ -362,12 +362,14 @@ class TreeNodeWidget extends StatelessWidget {
       confirmLabel: 'Create',
     );
     if (title == null || title.isEmpty) return;
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) return;
     bloc.add(CreatePage(
-      title: title,
+      title: trimmed,
       folderPath: folderPath,
       onCreated: (ulid) {
         if (scope.mounted) {
-          scope.toastSuccess('Created "$title" in $folderPath/',
+          scope.toastSuccess('Created "$trimmed" in $folderPath/',
               sub: 'ULID: $ulid', subMono: true);
         }
         router.go('/editor/$ulid');
