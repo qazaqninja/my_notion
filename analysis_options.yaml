@@ -9,6 +9,15 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+# Skip out-of-tree review-bundle scaffolding and generated drift code.
+# `flutter_clean_arch_bundle/` is vendored reference material for the
+# arch agents; not part of the running app.
+analyzer:
+  exclude:
+    - flutter_clean_arch_bundle/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
