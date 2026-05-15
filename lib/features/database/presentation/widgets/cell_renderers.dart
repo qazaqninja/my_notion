@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
@@ -267,26 +268,12 @@ class CellRenderer extends StatelessWidget {
 
   static List<String> _parseList(dynamic v) {
     if (v is List) return v.map((e) => '$e').toList();
-    final s = '$v'.trim();
-    if (s.startsWith('[') && s.endsWith(']')) {
-      return s
-          .substring(1, s.length - 1)
-          .split(',')
-          .map((part) => _stripQuotes(part.trim()))
-          .where((part) => part.isNotEmpty)
-          .toList();
-    }
-    return [s];
-  }
-
-  static String _stripQuotes(String s) {
-    if (s.length < 2) return s;
-    final first = s[0];
-    final last = s[s.length - 1];
-    if ((first == '"' || first == "'") && first == last) {
-      return s.substring(1, s.length - 1);
-    }
-    return s;
+    // Route through parseYamlFlowList so quoted commas inside an item
+    // (e.g. `[draft, "high, priority"]`) don't split. The old inline
+    // splitter naively split on every `,`, silently shredding any
+    // multi-value entry that contained a quoted comma into bogus
+    // individual chips.
+    return parseYamlFlowList('$v');
   }
 
   static TagColor _tagFor(String value) {

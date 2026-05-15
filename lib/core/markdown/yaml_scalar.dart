@@ -66,6 +66,64 @@ final _whitespaceRun = RegExp(r'\s+');
 final _underscoreRun = RegExp(r'_+');
 final _trimUnderscores = RegExp(r'^_|_$');
 
+/// Strip a single layer of YAML double- or single-quotes around [s].
+/// Idempotent on unquoted scalars.
+String _stripYamlQuotes(String s) {
+  if (s.length < 2) return s;
+  if ((s.startsWith('"') && s.endsWith('"')) ||
+      (s.startsWith("'") && s.endsWith("'"))) {
+    return s.substring(1, s.length - 1);
+  }
+  return s;
+}
+
+/// Parse a YAML flow list scalar (e.g. `[draft, "high, priority"]`)
+/// into its constituent strings. Tracks quote state so a comma INSIDE
+/// a quoted item doesn't split the list. Plain scalar input (no
+/// surrounding `[ ]`) is wrapped as a one-element list, so callers
+/// can treat both shapes uniformly.
+///
+/// Used by every site that needs to enumerate the elements of a
+/// multi-value frontmatter entry (tag aggregation, cell renderers,
+/// rollup readers, the flow-list reader in frontmatter_icon.dart).
+List<String> parseYamlFlowList(String raw) {
+  final trimmed = raw.trim();
+  if (trimmed.isEmpty) return const [];
+  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) {
+    final s = _stripYamlQuotes(trimmed);
+    return s.isEmpty ? const [] : [s];
+  }
+  final inner = trimmed.substring(1, trimmed.length - 1);
+  if (inner.trim().isEmpty) return const [];
+  final out = <String>[];
+  final buf = StringBuffer();
+  var inQuotes = false;
+  String? quoteChar;
+  for (var i = 0; i < inner.length; i++) {
+    final ch = inner[i];
+    if (inQuotes) {
+      if (ch == quoteChar) {
+        inQuotes = false;
+        quoteChar = null;
+      } else {
+        buf.write(ch);
+      }
+    } else if (ch == '"' || ch == "'") {
+      inQuotes = true;
+      quoteChar = ch;
+    } else if (ch == ',') {
+      final v = buf.toString().trim();
+      if (v.isNotEmpty) out.add(_stripYamlQuotes(v));
+      buf.clear();
+    } else {
+      buf.write(ch);
+    }
+  }
+  final tail = buf.toString().trim();
+  if (tail.isNotEmpty) out.add(_stripYamlQuotes(tail));
+  return out;
+}
+
 /// Convert a free-form label (CSV column name, Asana field, etc.) into a
 /// YAML-safe block-mapping key. Lowercases, replaces every YAML
 /// structure / quote / slash glyph + whitespace with `_`, collapses

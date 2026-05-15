@@ -105,6 +105,50 @@ void main() {
     });
   });
 
+  group('parseYamlFlowList', () {
+    test('parses a bare flow list', () {
+      expect(parseYamlFlowList('[draft, urgent]'),
+          equals(['draft', 'urgent']));
+    });
+
+    test('respects quoted commas inside an item', () {
+      expect(parseYamlFlowList('[draft, "high, priority"]'),
+          equals(['draft', 'high, priority']));
+    });
+
+    test('respects single-quoted items', () {
+      expect(parseYamlFlowList("[a, 'b, c', d]"),
+          equals(['a', 'b, c', 'd']));
+    });
+
+    test('empty list returns empty', () {
+      expect(parseYamlFlowList('[]'), isEmpty);
+      expect(parseYamlFlowList('[   ]'), isEmpty);
+    });
+
+    test('plain scalar wraps as one-element list', () {
+      expect(parseYamlFlowList('urgent'), equals(['urgent']));
+    });
+
+    test('plain scalar with surrounding quotes peels them', () {
+      expect(parseYamlFlowList('"urgent"'), equals(['urgent']));
+      expect(parseYamlFlowList("'urgent'"), equals(['urgent']));
+    });
+
+    test('empty / whitespace input returns empty', () {
+      expect(parseYamlFlowList(''), isEmpty);
+      expect(parseYamlFlowList('   '), isEmpty);
+    });
+
+    test('strips quotes off item values', () {
+      expect(parseYamlFlowList('["a", "b"]'), equals(['a', 'b']));
+    });
+
+    test('drops empty items between commas', () {
+      expect(parseYamlFlowList('[a, , b]'), equals(['a', 'b']));
+    });
+  });
+
   group('yamlSnakeKey', () {
     test('lowercases + snake_cases plain labels', () {
       expect(yamlSnakeKey('Foo Bar'), equals('foo_bar'));

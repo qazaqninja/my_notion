@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'yaml_scalar.dart';
+
 /// Returns the rawScalar of the frontmatter entry with [key] from the
 /// drift-cached JSON blob written by Indexer._upsertPage. The blob's
 /// shape is `{entries: [{key, rawScalar, type}, …]}` — a nested
@@ -56,47 +58,6 @@ String? emojiFromFrontmatterJson(String json) {
   return s;
 }
 
-/// Parse a YAML flow list rawScalar (e.g. `[draft, "urgent, now"]`) into
-/// its constituent strings. Bare single values are wrapped in a
-/// one-element list so the caller can treat both shapes uniformly.
-List<String> _parseFlowList(String raw) {
-  final trimmed = raw.trim();
-  if (trimmed.isEmpty) return const [];
-  if (!trimmed.startsWith('[') || !trimmed.endsWith(']')) {
-    final s = _unquoteYaml(trimmed);
-    return s.isEmpty ? const [] : [s];
-  }
-  final inner = trimmed.substring(1, trimmed.length - 1);
-  if (inner.trim().isEmpty) return const [];
-  final out = <String>[];
-  final buf = StringBuffer();
-  var inQuotes = false;
-  String? quoteChar;
-  for (var i = 0; i < inner.length; i++) {
-    final ch = inner[i];
-    if (inQuotes) {
-      if (ch == quoteChar) {
-        inQuotes = false;
-        quoteChar = null;
-      } else {
-        buf.write(ch);
-      }
-    } else if (ch == '"' || ch == "'") {
-      inQuotes = true;
-      quoteChar = ch;
-    } else if (ch == ',') {
-      final v = buf.toString().trim();
-      if (v.isNotEmpty) out.add(_unquoteYaml(v));
-      buf.clear();
-    } else {
-      buf.write(ch);
-    }
-  }
-  final tail = buf.toString().trim();
-  if (tail.isNotEmpty) out.add(_unquoteYaml(tail));
-  return out;
-}
-
 /// Returns the list-of-strings stored under [key] in the cached
 /// frontmatter JSON. Handles flow lists (`[a, b]`), single scalar
 /// values (`a` → `['a']`), and missing / malformed entries (`[]`).
@@ -107,7 +68,7 @@ List<String> _parseFlowList(String raw) {
 List<String> listValueFromFrontmatterJson(String json, String key) {
   final raw = rawScalarFromFrontmatterJson(json, key);
   if (raw == null) return const [];
-  return _parseFlowList(raw);
+  return parseYamlFlowList(raw);
 }
 
 /// True when the entry exists AND its rawScalar trims to non-empty.
