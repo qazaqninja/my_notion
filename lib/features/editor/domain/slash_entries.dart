@@ -112,6 +112,9 @@ enum SlashAction {
   /// Left-pad every selected line with `0` so it reaches the
   /// length of the longest line in the block (auto width).
   zeroPadLines,
+  /// Right-pad every selected line with spaces to the longest
+  /// line's width — for column alignment.
+  padRightLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -597,6 +600,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '5 → 005',
     action: SlashAction.zeroPadLines,
     keywords: ['pad', 'zero', 'leading', 'align', 'right-align', 'numeric'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Pad lines right with spaces',
+    hint: 'abc → abc__',
+    action: SlashAction.padRightLines,
+    keywords: ['pad', 'right', 'trailing', 'align', 'column', 'spaces'],
   ),
   SlashEntry(
     icon: 'edit',

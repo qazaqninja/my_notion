@@ -1092,6 +1092,36 @@ void main() {
     });
   });
 
+  group('padRightLinesIn', () {
+    test('auto width pads all lines to the longest length with spaces', () {
+      const text = 'a\nbb\nccc\n';
+      final r = padRightLinesIn(text, 0, text.length);
+      expect(r.text, 'a  \nbb \nccc\n');
+    });
+
+    test('explicit width pads even past the longest line', () {
+      const text = 'a\nbb\n';
+      final r = padRightLinesIn(text, 0, text.length, width: 5);
+      expect(r.text, 'a    \nbb   \n');
+    });
+
+    test('lines already at or above width pass unchanged', () {
+      const text = 'short\nverylonger\n';
+      final r = padRightLinesIn(text, 0, text.length, width: 3);
+      expect(r.text, text);
+    });
+
+    test('blank lines stay blank', () {
+      const text = 'a\n\nbb\n';
+      final r = padRightLinesIn(text, 0, text.length);
+      expect(r.text, 'a \n\nbb\n');
+    });
+
+    test('empty input is a no-op', () {
+      expect(padRightLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

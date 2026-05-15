@@ -967,6 +967,8 @@ class _SourceViewState extends State<SourceView> {
         );
       case SlashAction.zeroPadLines:
         _applyLinesTransformAfterSlash(stripStart, caret, zeroPadLinesIn);
+      case SlashAction.padRightLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, padRightLinesIn);
     }
   }
 

@@ -835,6 +835,26 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
+/// Right-pad every selected line with spaces so all lines reach at
+/// least [width] characters. Used for column alignment — when you
+/// drop a list of labels next to a column of values and want them
+/// to line up. Lines longer than the target are unchanged. Blank
+/// lines stay blank.
+SortLinesResult padRightLinesIn(
+  String text,
+  int start,
+  int end, {
+  int? width,
+}) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final target = width ??
+          lines.fold<int>(0, (max, l) => l.length > max ? l.length : max);
+      return [
+        for (final l in lines)
+          if (l.isEmpty) l else l.padRight(target),
+      ];
+    });
+
 /// Left-pad every selected line with `0` so all lines reach at
 /// least [width] characters. Useful when you want a column of
 /// integers to sort lexicographically the same way they sort
