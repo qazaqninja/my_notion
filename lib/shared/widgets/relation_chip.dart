@@ -13,6 +13,7 @@ class RelationChip extends StatelessWidget {
     this.ulid,
     this.showUlid = false,
     this.icon = 'file-md',
+    this.emojiIcon,
     this.prefix,
     this.onTap,
     this.tooltip,
@@ -22,6 +23,13 @@ class RelationChip extends StatelessWidget {
   final String? ulid;
   final bool showUlid;
   final String icon;
+
+  /// Optional plain-emoji glyph; rendered in place of [icon] when set.
+  /// Wikilink chips use this to surface the linked page's frontmatter
+  /// `icon:` so the chip stays in sync with the sidebar / palette
+  /// emoji sweep (M253–M257).
+  final String? emojiIcon;
+
   final String? prefix;
   final VoidCallback? onTap;
 
@@ -52,7 +60,18 @@ class RelationChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            QuillIcon(icon, size: 11, strokeWidth: 1.7, color: tokens.chipText),
+            if (emojiIcon != null)
+              SizedBox(
+                width: 11,
+                height: 11,
+                child: Center(
+                  child: Text(emojiIcon!,
+                      style: const TextStyle(fontSize: 10, height: 1)),
+                ),
+              )
+            else
+              QuillIcon(icon,
+                  size: 11, strokeWidth: 1.7, color: tokens.chipText),
             const SizedBox(width: 5),
             if (prefix != null) ...[
               Text(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
@@ -329,7 +330,15 @@ class _Relation extends StatelessWidget {
       future: (db.select(db.pages)..where((p) => p.ulid.equals(ulid))).getSingleOrNull(),
       builder: (context, snap) {
         final title = snap.data?.title ?? '…${ulid.length >= 6 ? ulid.substring(ulid.length - 6) : ulid}';
-        return RelationChip(label: title, ulid: ulid, icon: 'file-md');
+        final emoji = snap.data == null
+            ? null
+            : emojiFromFrontmatterJson(snap.data!.frontmatterJson);
+        return RelationChip(
+          label: title,
+          ulid: ulid,
+          icon: 'file-md',
+          emojiIcon: emoji,
+        );
       },
     );
   }

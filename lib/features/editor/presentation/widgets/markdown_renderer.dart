@@ -4111,11 +4111,15 @@ class _ResolvedChip extends StatelessWidget {
             : anchor == null
                 ? '$title\n$relPath'
                 : '$title\n$relPath #$anchor';
+        final emoji = snap.data == null
+            ? null
+            : emojiFromFrontmatterJson(snap.data!.frontmatterJson);
         return RelationChip(
           label: title,
           ulid: ulid,
           showUlid: showUlid,
           icon: 'file-md',
+          emojiIcon: emoji,
           tooltip: tooltip,
           onTap: () {
             final route = anchor == null
