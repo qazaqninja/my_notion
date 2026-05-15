@@ -101,6 +101,25 @@ String _relativeMtime(int mtimeMs) {
 
 /// Heading slug: lowercase, runs of non-word collapsed to `-`, trimmed.
 /// Mirrors the common GFM heading-anchor convention.
+/// Compose a full word/char/paragraph breakdown for the PageFooter's
+/// word-count tooltip. The basic numbers (words/chars/min-read) are
+/// already on screen — this adds paragraphs, sentences, and chars-
+/// without-spaces so power users can verify a draft against an
+/// external word-count tool.
+String _wordCountTooltip(String body, int words, int chars, int mins) {
+  final stripped = body.replaceAll(RegExp(r'```[\s\S]*?```'), ' ');
+  final charsNoSpace = stripped.replaceAll(RegExp(r'\s'), '').length;
+  final paragraphs = stripped
+      .split(RegExp(r'\n\s*\n'))
+      .where((s) => s.trim().isNotEmpty)
+      .length;
+  final sentences =
+      stripped.split(RegExp(r'[.!?]+\s')).where((s) => s.trim().isNotEmpty).length;
+  return '$words words  ·  $chars chars (incl. spaces)  ·  $charsNoSpace chars (no spaces)\n'
+      '$paragraphs paragraphs  ·  $sentences sentences\n'
+      '~$mins min read at 220 wpm';
+}
+
 String _slugify(String s) {
   final lower = s.toLowerCase();
   final cleaned = lower.replaceAll(RegExp(r'[^a-z0-9]+'), '-');
@@ -1954,27 +1973,30 @@ class _PageFooter extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text('$words words',
-                  style: mono(fontSize: 11, color: tokens.text3)),
-              Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
-              Text('$chars chars',
-                  style: mono(fontSize: 11, color: tokens.text3)),
-              Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
-              Text('~$mins min read',
-                  style: mono(fontSize: 11, color: tokens.text3)),
-              if (g != null) ...[
-                Text('  ·  ',
-                    style: TextStyle(fontSize: 11, color: tokens.text3)),
-                Text('$words / $g goal',
-                    style: mono(
-                        fontSize: 11,
-                        color: words >= g
-                            ? const Color(0xFF5A8F6E)
-                            : tokens.text3)),
+          Tooltip(
+            message: _wordCountTooltip(body, words, chars, mins),
+            child: Row(
+              children: [
+                Text('$words words',
+                    style: mono(fontSize: 11, color: tokens.text3)),
+                Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
+                Text('$chars chars',
+                    style: mono(fontSize: 11, color: tokens.text3)),
+                Text('  ·  ', style: TextStyle(fontSize: 11, color: tokens.text3)),
+                Text('~$mins min read',
+                    style: mono(fontSize: 11, color: tokens.text3)),
+                if (g != null) ...[
+                  Text('  ·  ',
+                      style: TextStyle(fontSize: 11, color: tokens.text3)),
+                  Text('$words / $g goal',
+                      style: mono(
+                          fontSize: 11,
+                          color: words >= g
+                              ? const Color(0xFF5A8F6E)
+                              : tokens.text3)),
+                ],
               ],
-            ],
+            ),
           ),
           if (g != null) ...[
             const SizedBox(height: 6),
