@@ -184,8 +184,10 @@ String markdownToHtml(String body) {
     final imageMatch =
         RegExp(r'^!\[([^\]]*)\]\(([^)]+)\)$').firstMatch(text.trim());
     if (imageMatch != null) {
+      final alt = imageMatch.group(1) ?? '';
+      final src = imageMatch.group(2) ?? '';
       out.write(
-          '<figure><img src="${imageMatch.group(2)}" alt="${_escape(imageMatch.group(1) ?? '')}"/>${imageMatch.group(1)?.isNotEmpty == true ? '<figcaption>${_escape(imageMatch.group(1)!)}</figcaption>' : ''}</figure>\n');
+          '<figure><img src="${_escape(src)}" alt="${_escape(alt)}"/>${alt.isNotEmpty ? '<figcaption>${_escape(alt)}</figcaption>' : ''}</figure>\n');
       continue;
     }
     // Standalone wikilink
@@ -290,10 +292,15 @@ String _inline(String s) {
     RegExp(r'==([^=\n]+)=='),
     (m) => '<mark>${m.group(1)}</mark>',
   );
-  // Bare URLs
+  // Bare URLs. The regex already excludes `"`, `<`, `>`, `[`, `]`, `(`,
+  // `)`, but `&` is allowed and would render literally without escape.
   s = s.replaceAllMapped(
     RegExp(r'(?<!["=])(https?://[^\s\<\>\[\]\(\)]+)'),
-    (m) => '<a href="${m.group(1)}" target="_blank">${m.group(1)}</a>',
+    (m) {
+      final url = m.group(1) ?? '';
+      final escaped = _escape(url);
+      return '<a href="$escaped" target="_blank">$escaped</a>';
+    },
   );
   return s;
 }
