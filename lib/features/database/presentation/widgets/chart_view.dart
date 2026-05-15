@@ -291,23 +291,27 @@ class ChartView extends StatelessWidget {
               runSpacing: 6,
               children: [
                 for (final sub in subOrder)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: _subColor(sub),
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(2)),
+                  Tooltip(
+                    message: 'Sub-group: $sub',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: _subColor(sub),
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(2)),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(sub,
-                          style:
-                              TextStyle(fontSize: 11, color: tokens.text2)),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(sub,
+                            style:
+                                TextStyle(fontSize: 11, color: tokens.text2)),
+                      ],
+                    ),
                   ),
               ],
             ),
