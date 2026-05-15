@@ -13,6 +13,7 @@ class TrashedItem {
     required this.basename,
     this.ulid,
     this.mtimeMs = 0,
+    this.emojiIcon,
   });
 
   /// Absolute path on disk.
@@ -32,6 +33,11 @@ class TrashedItem {
 
   /// File mtime (millis since epoch) — the moment the trash move happened.
   final int mtimeMs;
+
+  /// Plain emoji from the page's `icon:` frontmatter, if any. Asset
+  /// paths and URLs are skipped so the trash dialog can render a 16px
+  /// glyph without an async image load.
+  final String? emojiIcon;
 }
 
 class TrashService {
@@ -51,6 +57,13 @@ class TrashService {
           final raw = await entity.readAsString();
           final fm = FrontmatterParser.parse(raw).frontmatter;
           final stat = await entity.stat();
+          final iconRaw = fm.find('icon')?.rawScalar.trim() ?? '';
+          final emoji = iconRaw.isEmpty ||
+                  iconRaw.length > 4 ||
+                  iconRaw.contains('/') ||
+                  iconRaw.startsWith('http')
+              ? null
+              : iconRaw;
           out.add(TrashedItem(
             path: entity.path,
             bucket: bucket,
@@ -58,6 +71,7 @@ class TrashService {
             basename: basename,
             ulid: fm.id,
             mtimeMs: stat.modified.millisecondsSinceEpoch,
+            emojiIcon: emoji,
           ));
         } catch (_) {
           // Skip malformed files — never crash the trash listing.

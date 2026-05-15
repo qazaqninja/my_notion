@@ -156,7 +156,17 @@ class _TrashDialogState extends State<TrashDialog> {
       ),
       child: Row(
         children: [
-          Icon(Icons.delete_outline, size: 16, color: tokens.text3),
+          if (item.emojiIcon != null)
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: Center(
+                child: Text(item.emojiIcon!,
+                    style: const TextStyle(fontSize: 14, height: 1)),
+              ),
+            )
+          else
+            Icon(Icons.delete_outline, size: 16, color: tokens.text3),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
