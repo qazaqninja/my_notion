@@ -380,33 +380,9 @@ class _PinboardState extends State<_Pinboard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text(
-                    'PINBOARD',
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.0,
-                      color: tokens.text3,
-                    ),
-                  ),
-                  const Spacer(),
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () => setState(() => _entries = _load()),
-                      child: Tooltip(
-                        message: 'Refresh',
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Icon(Icons.refresh,
-                              size: 12, color: tokens.text3),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              _SectionHeader(
+                label: 'PINBOARD',
+                onRefresh: () => setState(() => _entries = _load()),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -561,14 +537,9 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'UPCOMING REMINDERS',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.0,
-                  color: tokens.text3,
-                ),
+              _SectionHeader(
+                label: 'UPCOMING REMINDERS',
+                onRefresh: () => setState(() => _entries = _load()),
               ),
               const SizedBox(height: 8),
               for (final e in list) _row(e, tokens),
@@ -699,33 +670,9 @@ class _RecentlyEditedState extends State<_RecentlyEdited> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Text(
-                  'RECENTLY EDITED',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
-                    color: tokens.text3,
-                  ),
-                ),
-                const Spacer(),
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => setState(() => _entries = _load()),
-                    child: Tooltip(
-                      message: 'Refresh',
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Icon(Icons.refresh,
-                            size: 12, color: tokens.text3),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            _SectionHeader(
+              label: 'RECENTLY EDITED',
+              onRefresh: () => setState(() => _entries = _load()),
             ),
             const SizedBox(height: 8),
             for (final e in list)
@@ -871,6 +818,47 @@ class _Tile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Section-heading row used by the home page lists (Pinboard, Recently
+/// edited, Upcoming reminders). Title in uppercase letter-spaced text3
+/// with a trailing refresh icon that calls back into the parent.
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.label, required this.onRefresh});
+  final String label;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return Row(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.0,
+            color: tokens.text3,
+          ),
+        ),
+        const Spacer(),
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: onRefresh,
+            child: Tooltip(
+              message: 'Refresh',
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Icon(Icons.refresh, size: 12, color: tokens.text3),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
