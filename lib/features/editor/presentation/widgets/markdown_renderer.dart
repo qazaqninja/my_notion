@@ -1473,69 +1473,12 @@ String? _matchStandaloneUrl(String text) {
 }
 
 /// Bookmark card for a standalone URL.
-class _BookmarkCard extends StatelessWidget {
+class _BookmarkCard extends StatefulWidget {
   const _BookmarkCard({required this.url});
   final String url;
 
   @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    final host = Uri.tryParse(url)?.host ?? url;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: tokens.surface,
-        border: Border.all(color: tokens.divider2, width: 0.5),
-        borderRadius: const BorderRadius.all(Radius.circular(6)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 26,
-            height: 26,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: tokens.surface2,
-              borderRadius: const BorderRadius.all(Radius.circular(4)),
-            ),
-            child: Icon(Icons.link, size: 14, color: tokens.text3),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  host,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: tokens.text,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  url,
-                  style: mono(fontSize: 11, color: tokens.text3),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.all(2),
-            constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-            onPressed: () => _openExternal(url),
-            icon: Icon(Icons.open_in_new, size: 14, color: tokens.text3),
-            tooltip: 'Open in browser',
-          ),
-        ],
-      ),
-    );
-  }
+  State<_BookmarkCard> createState() => _BookmarkCardState();
 
   static Future<void> _openExternal(String url) async {
     // Use the cross-platform shell-out path (Reveal.show works for files;
@@ -1549,6 +1492,80 @@ class _BookmarkCard extends StatelessWidget {
         await Process.run('cmd', ['/c', 'start', '', url]);
       }
     } catch (_) {}
+  }
+}
+
+class _BookmarkCardState extends State<_BookmarkCard> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    final url = widget.url;
+    final host = Uri.tryParse(url)?.host ?? url;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () => _BookmarkCard._openExternal(url),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          decoration: BoxDecoration(
+            color: _hover ? tokens.surface2 : tokens.surface,
+            border: Border.all(
+                color: _hover ? tokens.accent : tokens.divider2, width: 0.5),
+            borderRadius: const BorderRadius.all(Radius.circular(6)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 26,
+                height: 26,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tokens.surface2,
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                ),
+                child: Icon(Icons.link, size: 14, color: tokens.text3),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      host,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: tokens.text,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      url,
+                      style: mono(fontSize: 11, color: tokens.text3),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(2),
+                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                onPressed: () => _BookmarkCard._openExternal(url),
+                icon: Icon(Icons.open_in_new, size: 14, color: tokens.text3),
+                tooltip: 'Open in browser',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
