@@ -345,6 +345,60 @@ void main() {
     });
   });
 
+  group('compareNatural', () {
+    test('file2 sorts before file10', () {
+      expect(compareNatural('file2', 'file10'), lessThan(0));
+    });
+
+    test('case-insensitive alpha comparison', () {
+      expect(compareNatural('Apple', 'banana'), lessThan(0));
+      expect(compareNatural('apple', 'Banana'), lessThan(0));
+    });
+
+    test('digit run treated as number, not lexicographic', () {
+      // "2" < "10" naturally; lex would say "10" < "2".
+      expect(compareNatural('2', '10'), lessThan(0));
+    });
+
+    test('equal numbers tie-break by run length (01 > 1)', () {
+      // Same int value but "01" has a longer source — sort it second.
+      expect(compareNatural('1', '01'), lessThan(0));
+    });
+
+    test('compares mixed segments', () {
+      // v1.2 < v1.10 < v2.0
+      final inputs = ['v2.0', 'v1.10', 'v1.2'];
+      inputs.sort(compareNatural);
+      expect(inputs, ['v1.2', 'v1.10', 'v2.0']);
+    });
+
+    test('shorter prefix-equal string sorts first', () {
+      expect(compareNatural('foo', 'foobar'), lessThan(0));
+    });
+
+    test('identical strings compare equal', () {
+      expect(compareNatural('abc123', 'abc123'), 0);
+    });
+  });
+
+  group('sortLinesNaturalIn', () {
+    test('sorts a block of file-like names naturally', () {
+      const text = 'file10\nfile2\nfile1\n';
+      final r = sortLinesNaturalIn(text, 0, text.length);
+      expect(r.text, 'file1\nfile2\nfile10\n');
+    });
+
+    test('mixed alpha + numeric segments', () {
+      const text = 'v2.0\nv1.10\nv1.2\n';
+      final r = sortLinesNaturalIn(text, 0, text.length);
+      expect(r.text, 'v1.2\nv1.10\nv2.0\n');
+    });
+
+    test('empty text is a no-op', () {
+      expect(sortLinesNaturalIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

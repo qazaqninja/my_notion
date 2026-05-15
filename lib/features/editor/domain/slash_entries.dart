@@ -49,6 +49,9 @@ enum SlashAction {
   /// selection. Adding renumbers from 1; stripping recognises any
   /// `\d+. ` prefix.
   toggleNumberedList,
+  /// Sort the lines touched by the selection using **natural**
+  /// ordering (file2 < file10).
+  sortLinesNatural,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -352,6 +355,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '1. …',
     action: SlashAction.toggleNumberedList,
     keywords: ['number', 'numbered', 'ordered', 'list', 'toggle', 'ol'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort lines naturally',
+    hint: 'file2 < file10',
+    action: SlashAction.sortLinesNatural,
+    keywords: ['natural', 'sort', 'numeric', 'human', 'version'],
   ),
   SlashEntry(
     icon: 'tag',

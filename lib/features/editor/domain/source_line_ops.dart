@@ -438,6 +438,64 @@ SortLinesResult sortLinesDescIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Compare two strings using natural (human-friendly) ordering: runs
+/// of digits compare as integers, non-digit runs as case-insensitive
+/// strings. So "file2" < "file10" and "v1.2" < "v1.10". Exposed for
+/// testing; production callers go through [sortLinesNaturalIn].
+int compareNatural(String a, String b) {
+  var i = 0;
+  var j = 0;
+  while (i < a.length && j < b.length) {
+    final ca = a.codeUnitAt(i);
+    final cb = b.codeUnitAt(j);
+    final aDigit = ca >= 0x30 && ca <= 0x39;
+    final bDigit = cb >= 0x30 && cb <= 0x39;
+    if (aDigit && bDigit) {
+      // Consume each run, compare as ints to avoid leading-zero quirks.
+      var ai = i;
+      while (ai < a.length) {
+        final c = a.codeUnitAt(ai);
+        if (c < 0x30 || c > 0x39) break;
+        ai++;
+      }
+      var bj = j;
+      while (bj < b.length) {
+        final c = b.codeUnitAt(bj);
+        if (c < 0x30 || c > 0x39) break;
+        bj++;
+      }
+      final na = int.parse(a.substring(i, ai));
+      final nb = int.parse(b.substring(j, bj));
+      if (na != nb) return na.compareTo(nb);
+      // Equal as int — fall through to length tiebreak via the
+      // surrounding string compare (e.g. "01" vs "1": both 1, but
+      // longer source string sorts after).
+      if ((ai - i) != (bj - j)) return (ai - i).compareTo(bj - j);
+      i = ai;
+      j = bj;
+    } else {
+      final la = String.fromCharCode(ca).toLowerCase();
+      final lb = String.fromCharCode(cb).toLowerCase();
+      final cmp = la.compareTo(lb);
+      if (cmp != 0) return cmp;
+      i++;
+      j++;
+    }
+  }
+  return (a.length - i).compareTo(b.length - j);
+}
+
+/// Sort the lines that the selection touches using **natural**
+/// (human-friendly) ordering: runs of digits compare as integers, so
+/// "file2" sorts before "file10". Common for version strings, file
+/// lists, and ordered task IDs. Selection-widening rules mirror
+/// [sortLinesIn].
+SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final sorted = [...lines]..sort(compareNatural);
+      return sorted;
+    });
+
 /// Remove consecutive AND non-consecutive duplicate lines in the
 /// selected block, keeping the FIRST occurrence of each. Case-
 /// sensitive — Notion / Vim convention.

@@ -895,6 +895,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, toggleNumberedPrefixIn,
         );
+      case SlashAction.sortLinesNatural:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, sortLinesNaturalIn,
+        );
     }
   }
 
