@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../theme/quill_tokens.dart';
 import 'quill_icon.dart';
 
-const Color _kDangerColor = Color(0xFFA8584C);
-
 /// Floating popover surface — 8px radius, 0.5px border, soft drop shadow.
 /// Ports `Surface` from `menus.jsx:8-23`.
 class QuillSurface extends StatelessWidget {
@@ -85,10 +83,10 @@ class _QuillMenuRowState extends State<QuillMenuRow> {
     final highlight = widget.active || (_hover && !widget.disabled);
     final fg = widget.disabled
         ? tokens.text3
-        : (widget.danger ? _kDangerColor : tokens.text);
+        : (widget.danger ? tokens.danger : tokens.text);
     final iconColor = widget.disabled
         ? tokens.text3
-        : (widget.danger ? _kDangerColor : tokens.text2);
+        : (widget.danger ? tokens.danger : tokens.text2);
     final body = Container(
       padding: EdgeInsets.fromLTRB(
         widget.indent ? 28 : 10,
