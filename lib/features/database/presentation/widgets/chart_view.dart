@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
 
@@ -107,12 +108,29 @@ class ChartView extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Text(
-            rows.isEmpty
-                ? 'No rows to chart.'
-                : 'No column to group by.\n\nAdd a select-typed column to group rows.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: tokens.text3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QuillIcon(rows.isEmpty ? 'database' : 'group',
+                  size: 24, strokeWidth: 1.4, color: tokens.text3),
+              const SizedBox(height: 10),
+              Text(
+                rows.isEmpty ? 'No rows to chart' : 'No column to group by',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: tokens.text2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                rows.isEmpty
+                    ? 'Rows in this database will be aggregated here.'
+                    : 'Add a select-typed column to group rows.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: tokens.text3),
+              ),
+            ],
           ),
         ),
       );
