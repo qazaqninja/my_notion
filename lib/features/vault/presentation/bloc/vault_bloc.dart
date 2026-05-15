@@ -45,6 +45,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     on<DuplicatePage>(_onDuplicate);
     on<ToggleFavorite>(_onToggleFavorite);
     on<MovePage>(_onMovePage);
+    on<RenamePage>(_onRenamePage);
     on<CreateFolder>(_onCreateFolder);
     on<CloseVault>(_onCloseVault);
     _watchSub = _watcher.changes.listen((_) => add(const RefreshFromDisk()));
@@ -373,6 +374,42 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       emit(loaded.copyWith(tree: tree));
     } catch (err) {
       emit(VaultError('Create folder failed: $err'));
+      emit(loaded);
+    }
+  }
+
+  Future<void> _onRenamePage(RenamePage e, Emitter<VaultState> emit) async {
+    if (state is! VaultLoaded) return;
+    final loaded = state as VaultLoaded;
+    final row = await (_db.select(_db.pages)..where((p) => p.ulid.equals(e.ulid)))
+        .getSingleOrNull();
+    if (row == null) return;
+    final safe = _safeFileName(e.newBasename);
+    if (safe.isEmpty) return;
+    final root = Directory(loaded.rootPath);
+    final folder = p.dirname(row.relativePath);
+    final folderRel = folder == '.' ? '' : folder;
+    final currentBase = p.basenameWithoutExtension(row.relativePath);
+    if (currentBase == safe) return;
+    final newRel = folderRel.isEmpty ? '$safe.md' : p.join(folderRel, '$safe.md');
+    final src = File(p.join(root.path, row.relativePath));
+    final dest = File(p.join(root.path, newRel));
+    if (!await src.exists()) return;
+    if (await dest.exists()) {
+      emit(VaultError(
+          'Rename skipped: $safe.md already exists in the same folder.'));
+      emit(loaded);
+      return;
+    }
+    try {
+      await src.rename(dest.path);
+      final updated = await _repo.readPage(newRel, root: root);
+      await _indexer.upsertPage(updated);
+      final tree = await _buildTree(root);
+      final count = (await _db.select(_db.pages).get()).length;
+      emit(loaded.copyWith(tree: tree, pageCount: count));
+    } catch (err) {
+      emit(VaultError('Rename failed: $err'));
       emit(loaded);
     }
   }

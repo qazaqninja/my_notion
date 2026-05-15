@@ -84,6 +84,19 @@ class MovePage extends VaultEvent {
   List<Object?> get props => [ulid, targetFolder];
 }
 
+/// Rename a page's `.md` file in place. Keeps the folder, swaps the
+/// basename. ULID stays the same so wikilinks are unaffected.
+class RenamePage extends VaultEvent {
+  const RenamePage({required this.ulid, required this.newBasename});
+  final String ulid;
+
+  /// New basename WITHOUT `.md` extension. The handler appends it.
+  final String newBasename;
+
+  @override
+  List<Object?> get props => [ulid, newBasename];
+}
+
 /// Copy a page to a new .md with a fresh ULID and a `(copy)` title suffix.
 /// Defaults to the source page's parent folder; pass [targetFolder] to
 /// override (empty string = vault root). Used both for context-menu

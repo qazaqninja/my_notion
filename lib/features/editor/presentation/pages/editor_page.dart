@@ -286,6 +286,7 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
+        PopupMenuItem(value: 'rename', child: Text('Rename file…')),
         PopupMenuItem(value: 'move', child: Text('Move to folder…')),
         PopupMenuItem(value: 'history', child: Text('Page history…')),
         PopupMenuItem(value: 'copy-body', child: Text('Copy page body')),
@@ -357,6 +358,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _setReminder(context, loaded);
       case 'set-goal':
         await _setWordGoal(context, loaded);
+      case 'rename':
+        await _renameFile(context, loaded);
       case 'move':
         await _moveToFolder(context, loaded);
       case 'duplicate':
@@ -434,6 +437,49 @@ class _EditorBodyState extends State<_EditorBody> {
     } catch (e) {
       messenger?.showSnackBar(SnackBar(content: Text('Print failed: $e')));
     }
+  }
+
+  Future<void> _renameFile(
+      BuildContext context, EditorLoaded loaded) async {
+    final current = loaded.page.relativePath;
+    final slash = current.lastIndexOf('/');
+    final basename = current.substring(slash + 1);
+    final base = basename.endsWith('.md')
+        ? basename.substring(0, basename.length - 3)
+        : basename;
+    final controller = TextEditingController(text: base);
+    controller.selection =
+        TextSelection(baseOffset: 0, extentOffset: base.length);
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename file'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'new-name (without .md)',
+            helperText:
+                'ULID is unchanged — wikilinks survive the rename.',
+          ),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+    if (picked == null || picked.trim().isEmpty) return;
+    if (!context.mounted) return;
+    context.read<VaultBloc>().add(
+        RenamePage(ulid: loaded.page.ulid, newBasename: picked.trim()));
   }
 
   Future<void> _moveToFolder(
