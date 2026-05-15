@@ -254,11 +254,19 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     if (schema == null) return;
     final router = GoRouter.of(context);
     final scope = context;
+    final sourceTitle = row.title;
     context.read<VaultBloc>().add(DuplicatePage(
           row.ulid,
           targetFolder: schema.folderPath,
           onCreated: (newUlid) {
-            if (scope.mounted) scope.toastSuccess('Row duplicated');
+            if (scope.mounted) {
+              scope.toastSuccess(
+                  sourceTitle.isEmpty
+                      ? 'Row duplicated'
+                      : 'Duplicated "$sourceTitle"',
+                  sub: 'New ULID: $newUlid',
+                  subMono: true);
+            }
             router.go('/editor/$newUlid');
           },
         ));
