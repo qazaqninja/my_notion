@@ -149,44 +149,7 @@ class _RecentVaultsListState extends State<_RecentVaultsList> {
           ),
           const SizedBox(height: 8),
           for (final path in _recent.skip(1))
-            GestureDetector(
-              onTap: () =>
-                  context.read<VaultBloc>().add(LoadFromPath(path)),
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    children: [
-                      QuillIcon('folder',
-                          size: 12, color: tokens.text3),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          p.basename(path),
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: tokens.text2,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          path,
-                          style:
-                              mono(fontSize: 11, color: tokens.text3),
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            _RecentVaultRow(path: path),
         ],
       ),
     );
@@ -313,6 +276,73 @@ class VaultPickerPage extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _RecentVaultRow extends StatefulWidget {
+  const _RecentVaultRow({required this.path});
+  final String path;
+
+  @override
+  State<_RecentVaultRow> createState() => _RecentVaultRowState();
+}
+
+class _RecentVaultRowState extends State<_RecentVaultRow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = QuillTokens.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: () =>
+            context.read<VaultBloc>().add(LoadFromPath(widget.path)),
+        child: Tooltip(
+          message: widget.path,
+          waitDuration: const Duration(milliseconds: 500),
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 2),
+            padding:
+                const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+            decoration: BoxDecoration(
+              color: _hover ? tokens.hover : null,
+              borderRadius: const BorderRadius.all(Radius.circular(4)),
+            ),
+            child: Row(
+              children: [
+                QuillIcon('folder',
+                    size: 12,
+                    color: _hover ? tokens.text2 : tokens.text3),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    p.basename(widget.path),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _hover ? tokens.text : tokens.text2,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    widget.path,
+                    style: mono(fontSize: 11, color: tokens.text3),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
