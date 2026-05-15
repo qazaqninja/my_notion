@@ -86,7 +86,7 @@ class CsvImporter {
         if (title.isNotEmpty)
           FrontmatterEntry(
             key: 'title',
-            rawScalar: title,
+            rawScalar: _yamlSafeScalar(title),
             type: FrontmatterType.text,
             value: title,
           ),
@@ -170,11 +170,26 @@ class CsvImporter {
       case ColumnType.lastEditedTime:
         return FrontmatterEntry(
           key: c.key,
-          rawScalar: v,
+          rawScalar: _yamlSafeScalar(v),
           type: FrontmatterType.text,
           value: v,
         );
     }
+  }
+
+  /// Wrap a CSV cell value in double quotes when it contains glyphs YAML
+  /// would interpret as structure (`:`, `#`, flow markers, etc.). CSV
+  /// data routinely contains free-form text with these characters —
+  /// without escape, the imported .md frontmatter is malformed.
+  static String _yamlSafeScalar(String value) {
+    if (value.isEmpty) return value;
+    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
+        value.startsWith(' ') ||
+        value.endsWith(' ');
+    if (!needs) return value;
+    final escaped =
+        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    return '"$escaped"';
   }
 
   static int _pickTitleColumn(List<String> header) {
