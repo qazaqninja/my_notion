@@ -1543,20 +1543,28 @@ class _BookmarkCardState extends State<_BookmarkCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      host,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: tokens.text,
+                    Tooltip(
+                      message: host,
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        host,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: tokens.text,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      url,
-                      style: mono(fontSize: 11, color: tokens.text3),
-                      overflow: TextOverflow.ellipsis,
+                    Tooltip(
+                      message: url,
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        url,
+                        style: mono(fontSize: 11, color: tokens.text3),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -1643,22 +1651,30 @@ class _SubpageCardState extends State<_SubpageCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: tokens.text,
+                        Tooltip(
+                          message: title,
+                          waitDuration: const Duration(milliseconds: 600),
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: tokens.text,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                         if (path.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 1),
-                            child: Text(
-                              path,
-                              style: mono(fontSize: 11, color: tokens.text3),
-                              overflow: TextOverflow.ellipsis,
+                            child: Tooltip(
+                              message: path,
+                              waitDuration: const Duration(milliseconds: 600),
+                              child: Text(
+                                path,
+                                style: mono(fontSize: 11, color: tokens.text3),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                       ],
