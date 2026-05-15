@@ -1049,8 +1049,10 @@ class _VaultShellPageState extends State<VaultShellPage> {
       placeholder: 'Deals',
       confirmLabel: 'Create',
     );
-    if (name == null || name.isEmpty) return;
-    final safe = name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+    if (name == null) return;
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+    final safe = trimmed.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
     final folder = Directory('${vaultRoot.path}/$safe');
     if (await folder.exists()) {
       if (!context.mounted) return;
@@ -1059,8 +1061,12 @@ class _VaultShellPageState extends State<VaultShellPage> {
     }
     final ulids = const UlidGenerator();
     final id = ulids.generate();
+    // Quote `name:` so YAML-unsafe characters in the user's input (`:`,
+    // `#`, leading `>`/`[`/`{`, etc.) don't break the database schema
+    // reload on next reindex.
+    final escapedName = trimmed.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
     final yaml = '''id: $id
-name: $name
+name: "$escapedName"
 icon: 📊
 color: "#6B8E7F"
 schema:
@@ -1078,8 +1084,9 @@ views:
     await File('${folder.path}/.database.yaml').writeAsString(yaml);
     if (!context.mounted) return;
     context.read<VaultBloc>().add(const ReindexVault());
-    context.toastSuccess('Created database "$name"',
-        sub: safe == name ? null : '→ $safe/', subMono: safe != name);
+    context.toastSuccess('Created database "$trimmed"',
+        sub: safe == trimmed ? null : '→ $safe/',
+        subMono: safe != trimmed);
   }
 
   Future<void> _showStaleDialog(BuildContext context) async {
