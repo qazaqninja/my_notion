@@ -860,6 +860,10 @@ class _EditorBodyState extends State<_EditorBody> {
     if (!context.mounted) return;
     final iso =
         '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+    if (existing != null && existing.rawScalar.trim() == iso) {
+      context.toastInfo('Reminder already set for $iso');
+      return;
+    }
     final bloc = context.read<EditorBloc>();
     if (existing == null) {
       bloc.add(AddFrontmatterField(FrontmatterEntry(
