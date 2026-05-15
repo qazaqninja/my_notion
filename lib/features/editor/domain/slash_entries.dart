@@ -31,6 +31,10 @@ enum SlashAction {
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
   insertUlid,
+  /// Insert yesterday's date as a `@YYYY-MM-DD` pill.
+  insertYesterday,
+  /// Insert tomorrow's date as a `@YYYY-MM-DD` pill.
+  insertTomorrow,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -357,6 +361,20 @@ const List<SlashEntry> kSlashEntries = [
     // Caret right after `<kbd>` so the user can replace the placeholder.
     cursorOffset: 5,
     keywords: ['kbd', 'keyboard', 'key', 'shortcut', 'chip'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: "Yesterday's date",
+    hint: '@…-1d',
+    action: SlashAction.insertYesterday,
+    keywords: ['yesterday', 'date', 'day'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: "Tomorrow's date",
+    hint: '@…+1d',
+    action: SlashAction.insertTomorrow,
+    keywords: ['tomorrow', 'date', 'day'],
   ),
   SlashEntry(
     icon: 'tag',

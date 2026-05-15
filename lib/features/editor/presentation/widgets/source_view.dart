@@ -877,7 +877,27 @@ class _SourceViewState extends State<SourceView> {
           text: cleared,
           selection: TextSelection.collapsed(offset: stripStart + ulid.length),
         );
+      case SlashAction.insertYesterday:
+        _insertRelativeDate(stripStart, caret, const Duration(days: -1));
+      case SlashAction.insertTomorrow:
+        _insertRelativeDate(stripStart, caret, const Duration(days: 1));
     }
+  }
+
+  /// Insert `@YYYY-MM-DD` for `DateTime.now() + offset` at the caret,
+  /// replacing the slash trigger.
+  void _insertRelativeDate(int stripStart, int caret, Duration offset) {
+    final v = _controller.value;
+    final target = DateTime.now().add(offset);
+    final yyyy = target.year.toString().padLeft(4, '0');
+    final mm = target.month.toString().padLeft(2, '0');
+    final dd = target.day.toString().padLeft(2, '0');
+    final snippet = '@$yyyy-$mm-$dd';
+    final newText = v.text.replaceRange(stripStart, caret, snippet);
+    _controller.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: stripStart + snippet.length),
+    );
   }
 
   /// Strip the slash trigger then apply [op] to the line under the
