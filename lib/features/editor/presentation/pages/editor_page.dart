@@ -1731,6 +1731,8 @@ class _WikiBadge extends StatelessWidget {
       if (verified != null)
         'Verified ${verified.toIso8601String().substring(0, 10)}'
             '${days == 0 ? " (today)" : days == 1 ? " (1 day ago)" : " ($days days ago)"}',
+      if (stale)
+        'Stale — re-verify (verified: <today> in frontmatter).',
     ].join('\n');
     return Padding(
       padding: const EdgeInsets.only(right: 8),
