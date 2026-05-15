@@ -465,17 +465,24 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
           ),
           child: Column(
             children: [
-              Container(
-                height: _headerHeight,
-                color: tokens.surface2,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  children: [
-                    QuillIcon('file-md', size: 11, strokeWidth: 1.7, color: tokens.text3),
-                    const SizedBox(width: 5),
-                    Text('title', style: mono(fontSize: 11.5, color: tokens.text3)),
-                  ],
+              Tooltip(
+                message:
+                    'Page title (from frontmatter or filename) — frozen, always visible',
+                waitDuration: const Duration(milliseconds: 600),
+                child: Container(
+                  height: _headerHeight,
+                  color: tokens.surface2,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      QuillIcon('file-md',
+                          size: 11, strokeWidth: 1.7, color: tokens.text3),
+                      const SizedBox(width: 5),
+                      Text('title',
+                          style: mono(fontSize: 11.5, color: tokens.text3)),
+                    ],
+                  ),
                 ),
               ),
               Expanded(
