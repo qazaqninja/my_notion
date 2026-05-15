@@ -386,7 +386,9 @@ class _RowState extends State<_Row> {
                   ),
                   if (depCount > 0)
                     Tooltip(
-                      message: 'Depends on:\n• ${depTitles.join("\n• ")}',
+                      message: depCount == 1
+                          ? 'Depends on:\n• ${depTitles.first}'
+                          : 'Depends on $depCount items:\n• ${depTitles.join("\n• ")}',
                       child: Container(
                         margin: const EdgeInsets.only(left: 6),
                         padding: const EdgeInsets.symmetric(
