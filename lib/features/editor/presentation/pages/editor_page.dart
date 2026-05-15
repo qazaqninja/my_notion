@@ -1959,10 +1959,11 @@ class _PageFooter extends StatelessWidget {
             Tooltip(
               message: _dateAgoTooltip(createdAt),
               child: Text(
-                [
-                  if (createdAt.isNotEmpty) 'Created: $createdAt',
-                  if (createdBy.isNotEmpty) 'by $createdBy',
-                ].join(' '),
+                createdAt.isNotEmpty
+                    ? (createdBy.isNotEmpty
+                        ? 'Created: $createdAt by $createdBy'
+                        : 'Created: $createdAt')
+                    : 'Created by $createdBy',
                 style: mono(fontSize: 11, color: tokens.text3),
               ),
             ),
@@ -1970,18 +1971,24 @@ class _PageFooter extends StatelessWidget {
           if ((lastEditedAt.isNotEmpty && lastEditedAt != createdAt) ||
               (lastEditedBy.isNotEmpty && lastEditedBy != createdBy)) ...[
             const SizedBox(height: 2),
-            Tooltip(
-              message: _dateAgoTooltip(lastEditedAt),
-              child: Text(
-                [
-                  if (lastEditedAt.isNotEmpty && lastEditedAt != createdAt)
-                    'Last edited: $lastEditedAt',
-                  if (lastEditedBy.isNotEmpty && lastEditedBy != createdBy)
-                    'by $lastEditedBy',
-                ].join(' '),
-                style: mono(fontSize: 11, color: tokens.text3),
-              ),
-            ),
+            Builder(builder: (_) {
+              final showAt =
+                  lastEditedAt.isNotEmpty && lastEditedAt != createdAt;
+              final showBy =
+                  lastEditedBy.isNotEmpty && lastEditedBy != createdBy;
+              final label = showAt
+                  ? (showBy
+                      ? 'Last edited: $lastEditedAt by $lastEditedBy'
+                      : 'Last edited: $lastEditedAt')
+                  : 'Last edited by $lastEditedBy';
+              return Tooltip(
+                message: _dateAgoTooltip(lastEditedAt),
+                child: Text(
+                  label,
+                  style: mono(fontSize: 11, color: tokens.text3),
+                ),
+              );
+            }),
           ],
         ],
       ),
