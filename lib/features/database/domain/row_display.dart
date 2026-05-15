@@ -11,7 +11,9 @@ String? rowIconString(DatabasePageRow row) {
 }
 
 /// Prepend the row's `icon:` cell to the title when it's a plain emoji
-/// glyph. Returns the bare title otherwise.
+/// glyph. Returns the bare title otherwise. Empty titles fall back to
+/// "Untitled" so empty rows stay visually distinct across board /
+/// timeline / calendar — matches FCT (M621) and gallery/list (M622).
 ///
 /// Used by every "list of pages" surface in the database views (board,
 /// timeline, calendar) so the rendering stays in sync across them.
@@ -19,5 +21,6 @@ String? rowIconString(DatabasePageRow row) {
 /// title because we can't async-load an image into a 12–22px row.
 String displayTitle(DatabasePageRow row) {
   final emoji = rowIconString(row);
-  return emoji == null ? row.title : '$emoji  ${row.title}';
+  final title = row.title.isEmpty ? 'Untitled' : row.title;
+  return emoji == null ? title : '$emoji  $title';
 }
