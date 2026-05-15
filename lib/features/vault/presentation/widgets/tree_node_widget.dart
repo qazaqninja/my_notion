@@ -46,6 +46,7 @@ class TreeNodeWidget extends StatelessWidget {
               context.read<VaultBloc>().add(
                     MovePage(ulid: d.data, targetFolder: n.relativePath),
                   );
+              context.toastSuccess('Moved to ${n.relativePath}/');
             },
             builder: (context, candidate, _) {
               final hovering = candidate.isNotEmpty;
@@ -440,6 +441,7 @@ class TreeRoot extends StatelessWidget {
         context
             .read<VaultBloc>()
             .add(MovePage(ulid: d.data, targetFolder: ''));
+        context.toastSuccess('Moved to vault root');
       },
       builder: (context, candidate, _) {
         final hovering = candidate.isNotEmpty;
