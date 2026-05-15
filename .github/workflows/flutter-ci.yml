@@ -1,0 +1,50 @@
+name: flutter-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel an in-flight run when a newer commit on the same PR comes in.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    name: analyze + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter doctor (diagnostics)
+        run: flutter doctor -v
+
+      - name: Pub get
+        run: flutter pub get
+
+      # flutter_clean_arch_bundle/ is vendored reference material that
+      # depends on custom_lint_builder (not in pubspec). The analyzer
+      # excludes it via analysis_options.yaml.
+      - name: Analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Run tests with coverage
+        run: flutter test --coverage --reporter expanded
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: warn
+          retention-days: 14
