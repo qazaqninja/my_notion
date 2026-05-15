@@ -170,6 +170,39 @@ void main() {
     });
   });
 
+  group('sortLinesDescIn', () {
+    test('sorts three explicit lines descending case-insensitive', () {
+      const text = 'apple\nBanana\ncherry\n';
+      final r = sortLinesDescIn(text, 0, text.length);
+      expect(r.text, 'cherry\nBanana\napple\n');
+    });
+
+    test('descending sort is the reverse of the ascending sort', () {
+      const text = 'd\nA\nc\nB\n';
+      final asc = sortLinesIn(text, 0, text.length).text;
+      final desc = sortLinesDescIn(text, 0, text.length).text;
+      // Reverse the ascending block (excluding the trailing newline)
+      // and confirm it matches the descending output.
+      final ascLines = asc.split('\n').where((l) => l.isNotEmpty).toList();
+      final descLines = desc.split('\n').where((l) => l.isNotEmpty).toList();
+      expect(descLines, ascLines.reversed.toList());
+    });
+
+    test('widens partial selection to whole-line boundaries', () {
+      const text = 'apple\nBanana\ncherry\nDate\n';
+      final r = sortLinesDescIn(text, 2, 15);
+      // Block widens to lines 0..2; descending of {apple, Banana, cherry}
+      // is cherry, Banana, apple.
+      expect(r.text, 'cherry\nBanana\napple\nDate\n');
+      expect(r.selectionStart, 0);
+    });
+
+    test('empty text is a no-op', () {
+      final r = sortLinesDescIn('', 0, 0);
+      expect(r.text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

@@ -881,6 +881,8 @@ class _SourceViewState extends State<SourceView> {
         _insertRelativeDate(stripStart, caret, const Duration(days: -1));
       case SlashAction.insertTomorrow:
         _insertRelativeDate(stripStart, caret, const Duration(days: 1));
+      case SlashAction.sortLinesDescending:
+        _applyLinesTransformAfterSlash(stripStart, caret, sortLinesDescIn);
     }
   }
 

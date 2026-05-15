@@ -35,6 +35,9 @@ enum SlashAction {
   insertYesterday,
   /// Insert tomorrow's date as a `@YYYY-MM-DD` pill.
   insertTomorrow,
+  /// Sort the lines touched by the selection in descending order
+  /// (Z→A, case-insensitive).
+  sortLinesDescending,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -310,6 +313,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'flip ↕',
     action: SlashAction.reverseSelectedLines,
     keywords: ['reverse', 'flip', 'invert', 'lines', 'rev'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort lines descending',
+    hint: 'Z → A',
+    action: SlashAction.sortLinesDescending,
+    keywords: ['sort', 'desc', 'descending', 'reverse', 'z-a', 'lines'],
   ),
   SlashEntry(
     icon: 'tag',

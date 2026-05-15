@@ -427,6 +427,17 @@ SortLinesResult sortLinesIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Sort the lines that the selection touches in **descending** order
+/// (Z→A, case-insensitive). Selection-widening rules and result shape
+/// mirror [sortLinesIn]; this is the natural companion for flipping
+/// a previously-ascending block without an extra reverse step.
+SortLinesResult sortLinesDescIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final sorted = [...lines]
+        ..sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
+      return sorted;
+    });
+
 /// Remove consecutive AND non-consecutive duplicate lines in the
 /// selected block, keeping the FIRST occurrence of each. Case-
 /// sensitive — Notion / Vim convention.
