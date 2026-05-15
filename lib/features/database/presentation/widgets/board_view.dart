@@ -169,19 +169,6 @@ class _Column extends StatelessWidget {
               const SizedBox(height: 6),
             ],
           ],
-          GestureDetector(
-            onTap: () {},
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              child: Row(
-                children: [
-                  QuillIcon('plus', size: 11, strokeWidth: 1.8, color: tokens.text3),
-                  const SizedBox(width: 5),
-                  Text('New', style: TextStyle(fontSize: 12, color: tokens.text3)),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
