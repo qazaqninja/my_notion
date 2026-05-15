@@ -105,13 +105,22 @@ class _CommentsDialogState extends State<CommentsDialog> {
                           future: _items,
                           builder: (context, snap) {
                             final n = snap.data?.length ?? 0;
-                            return Text(
-                              n == 0 ? 'COMMENTS' : 'COMMENTS · $n',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.0,
-                                color: tokens.text3,
+                            return Tooltip(
+                              message: n == 0
+                                  ? 'No comments yet'
+                                  : n == 1
+                                      ? '1 comment'
+                                      : '$n comments',
+                              waitDuration:
+                                  const Duration(milliseconds: 500),
+                              child: Text(
+                                n == 0 ? 'COMMENTS' : 'COMMENTS · $n',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.0,
+                                  color: tokens.text3,
+                                ),
                               ),
                             );
                           },
