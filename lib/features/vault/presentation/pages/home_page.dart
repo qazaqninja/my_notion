@@ -268,11 +268,14 @@ class _StatsStripState extends State<_StatsStrip> {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap: () => _searchPalette(context, pieces[i].$4),
-                  child: Text(
-                    '${pieces[i].$2} ${pieces[i].$1}',
-                    style: mono(
-                        fontSize: 12,
-                        color: pieces[i].$3 ?? tokens.text2),
+                  child: Tooltip(
+                    message: 'Click → ⌘K with "${pieces[i].$4}" pre-filled',
+                    child: Text(
+                      '${pieces[i].$2} ${pieces[i].$1}',
+                      style: mono(
+                          fontSize: 12,
+                          color: pieces[i].$3 ?? tokens.text2),
+                    ),
                   ),
                 ),
               ),
