@@ -281,6 +281,7 @@ class _EditorBodyState extends State<_EditorBody> {
 
   Future<void> _pickIcon(BuildContext context, EditorLoaded loaded) async {
     final bloc = context.read<EditorBloc>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
     final picked = await pickEmoji(context);
     if (picked == null) return; // dismissed without choosing
     final fm = loaded.page.frontmatter;
@@ -289,6 +290,10 @@ class _EditorBodyState extends State<_EditorBody> {
       // "Clear" — remove the icon entry entirely.
       if (existing != null) {
         bloc.add(const RemoveFrontmatterField('icon'));
+        messenger?.showSnackBar(const SnackBar(
+          content: Text('Page icon cleared'),
+          duration: Duration(seconds: 2),
+        ));
       }
       return;
     }
@@ -305,6 +310,10 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: picked, value: picked),
       ));
     }
+    messenger?.showSnackBar(SnackBar(
+      content: Text('Page icon: $picked'),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   Future<void> _showPageMenu(BuildContext context, EditorLoaded loaded) async {
