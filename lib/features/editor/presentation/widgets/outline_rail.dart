@@ -179,18 +179,22 @@ class _OutlineItemState extends State<_OutlineItem> {
               ),
             ),
           ),
-          child: Text(
-            entry.text,
-            style: TextStyle(
-              fontSize: 12.5,
-              color: widget.active
-                  ? tokens.text
-                  : (_hover ? tokens.text : tokens.text2),
-              fontWeight:
-                  widget.active ? FontWeight.w500 : FontWeight.w400,
+          child: Tooltip(
+            message: entry.text,
+            waitDuration: const Duration(milliseconds: 600),
+            child: Text(
+              entry.text,
+              style: TextStyle(
+                fontSize: 12.5,
+                color: widget.active
+                    ? tokens.text
+                    : (_hover ? tokens.text : tokens.text2),
+                fontWeight:
+                    widget.active ? FontWeight.w500 : FontWeight.w400,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
           ),
         ),
       ),
