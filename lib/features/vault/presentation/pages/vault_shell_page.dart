@@ -1129,6 +1129,17 @@ views:
     }
     final topTags = tagCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
+    // Aggregate page count per top-level folder. Pages at the vault
+    // root are bucketed under "(root)".
+    final folderCounts = <String, int>{};
+    for (final p in pages) {
+      final slash = p.relativePath.indexOf('/');
+      final folder =
+          slash == -1 ? '(root)' : p.relativePath.substring(0, slash);
+      folderCounts[folder] = (folderCounts[folder] ?? 0) + 1;
+    }
+    final topFolders = folderCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
     if (!context.mounted) return;
     final tokens = QuillTokens.of(context);
     await showDialog<void>(
@@ -1206,6 +1217,34 @@ views:
                                 overflow: TextOverflow.ellipsis),
                           ),
                           Text('${t.value}',
+                              style: mono(
+                                  fontSize: 11, color: tokens.text3)),
+                        ],
+                      ),
+                    ),
+                ],
+                if (topFolders.length > 1) ...[
+                  const SizedBox(height: 12),
+                  Text('PAGES BY FOLDER',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                        color: tokens.text3,
+                      )),
+                  const SizedBox(height: 6),
+                  for (final f in topFolders.take(8))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(f.key,
+                                style: TextStyle(
+                                    fontSize: 12, color: tokens.text2),
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          Text('${f.value}',
                               style: mono(
                                   fontSize: 11, color: tokens.text3)),
                         ],
