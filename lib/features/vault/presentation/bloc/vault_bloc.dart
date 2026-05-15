@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:drift/drift.dart' show Value;
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/fs/unique_path.dart';
 import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/ulid/ulid_generator.dart';
@@ -169,7 +170,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     final initialRel = e.folderPath.isEmpty
         ? '$safe.md'
         : p.join(e.folderPath, '$safe.md');
-    final relativePath = await _uniqueRelativePath(initialRel, root);
+    final relativePath = await uniqueRelativePath(root, initialRel);
     // If a `(N)` suffix was applied to avoid clobbering an existing file,
     // mirror it in the frontmatter title so the sidebar entry matches the
     // filename instead of two pages appearing under the same title.
@@ -285,7 +286,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     final initialRel = folder.isEmpty || folder == '.'
         ? '$fileName0.md'
         : p.join(folder, '$fileName0.md');
-    final relativePath = await _uniqueRelativePath(initialRel, root);
+    final relativePath = await uniqueRelativePath(root, initialRel);
     final relBase = p.basenameWithoutExtension(relativePath);
     final newTitle = relBase == fileName0
         ? tentativeTitle
@@ -493,33 +494,6 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     return stripped.isEmpty ? 'Untitled' : stripped;
   }
 
-  /// Disambiguates [relativePath] against the filesystem by appending
-  /// ` (N)` to the basename. Returns the original path when no file
-  /// lives there.
-  ///
-  /// Protects [CreatePage] / [DuplicatePage] from silently clobbering an
-  /// existing file — `VaultFsDatasource.write` uses atomic `tmp → rename`
-  /// which would overwrite without warning.
-  Future<String> _uniqueRelativePath(
-      String relativePath, Directory root) async {
-    if (!await File(p.join(root.path, relativePath)).exists()) {
-      return relativePath;
-    }
-    final folder = p.dirname(relativePath);
-    final base = p.basenameWithoutExtension(relativePath);
-    final ext = p.extension(relativePath);
-    for (var n = 2; n < 1000; n++) {
-      final candidate = '$base ($n)$ext';
-      final rel =
-          folder == '.' ? candidate : p.join(folder, candidate);
-      if (!await File(p.join(root.path, rel)).exists()) return rel;
-    }
-    // Final fallback: append epoch-ms so we never overwrite even if 999
-    // prior copies somehow exist.
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final candidate = '$base ($ts)$ext';
-    return folder == '.' ? candidate : p.join(folder, candidate);
-  }
 
   /// Strip a trailing `.md` so the title in frontmatter / display
   /// doesn't get the extension when the user typed "foo.md" in the

@@ -83,4 +83,29 @@ void main() {
     final https = await UrlBookmark.capture('https://example.com', vault);
     expect(https.relativePath, startsWith('Bookmarks/'));
   });
+
+  test('disambiguates colliding filenames instead of overwriting (M773)',
+      () async {
+    // First capture lands at Bookmarks/example.com.md.
+    final first =
+        await UrlBookmark.capture('https://example.com', vault);
+    expect(first.relativePath, equals('Bookmarks/example.com.md'));
+
+    // Second capture of the same URL would clobber the first via a
+    // direct File.writeAsString. The disambiguator must redirect.
+    final second =
+        await UrlBookmark.capture('https://example.com', vault);
+    expect(second.relativePath, equals('Bookmarks/example.com (2).md'));
+
+    // Verify both pages survive on disk.
+    expect(await File(p.join(vault.path, first.relativePath)).exists(),
+        isTrue);
+    expect(await File(p.join(vault.path, second.relativePath)).exists(),
+        isTrue);
+    expect(first.ulid, isNot(equals(second.ulid)));
+
+    // Third lands at (3).
+    final third = await UrlBookmark.capture('https://example.com', vault);
+    expect(third.relativePath, equals('Bookmarks/example.com (3).md'));
+  });
 }

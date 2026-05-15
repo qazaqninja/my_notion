@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../../../core/fs/unique_path.dart';
 import '../../../core/markdown/yaml_scalar.dart';
 import '../../../core/ulid/ulid_generator.dart';
 
@@ -46,7 +47,8 @@ class UrlBookmark {
     final base = pathPart.isEmpty ? host : '$host-$pathPart';
     final title = base.length > 100 ? base.substring(0, 100) : base;
     final safe = _safeFileName(title);
-    final rel = p.join('Bookmarks', '$safe.md');
+    final rel = await uniqueRelativePath(
+        vaultRoot, p.join('Bookmarks', '$safe.md'));
     final file = File(p.join(vaultRoot.path, rel));
     final buf = StringBuffer('---\n')
       ..writeln('id: $ulid')
