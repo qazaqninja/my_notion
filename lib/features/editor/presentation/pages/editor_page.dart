@@ -321,7 +321,7 @@ class _EditorBodyState extends State<_EditorBody> {
         const QuillMenuItem(icon: 'link', label: 'Copy [[link]]', value: 'copy-link'),
         const QuillMenuItem(icon: 'folder', label: 'Copy file path', value: 'copy-path'),
         const QuillMenuItem(icon: 'reveal', label: 'Reveal in Finder', hint: '⌘⇧R', value: 'reveal'),
-        const QuillMenuItem(icon: 'note', label: 'Duplicate page', hint: '⌘D', value: 'duplicate'),
+        const QuillMenuItem(icon: 'note', label: 'Duplicate page', value: 'duplicate'),
         const QuillMenuItem(icon: 'edit', label: 'Rename file…', hint: 'F2', value: 'rename'),
         const QuillMenuItem(icon: 'folder', label: 'Move to folder…', value: 'move'),
         const QuillMenuItem(icon: 'clock', label: 'Page history…', value: 'history'),

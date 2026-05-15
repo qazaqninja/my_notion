@@ -713,11 +713,11 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
       width: 232,
       items: [
         const QuillMenuItem(icon: 'eye', label: 'Open page', value: 'open'),
-        const QuillMenuItem(icon: 'link', label: 'Copy ULID', hint: '⌘L', value: 'copy-ulid'),
+        const QuillMenuItem(icon: 'link', label: 'Copy ULID', value: 'copy-ulid'),
         const QuillMenuItem(icon: 'link', label: 'Copy [[link]]', value: 'copy-link'),
         const QuillMenuItem(icon: 'folder', label: 'Copy file path', value: 'copy-path'),
         if (widget.onDuplicateRow != null)
-          const QuillMenuItem(icon: 'note', label: 'Duplicate row', hint: '⌘D', value: 'duplicate'),
+          const QuillMenuItem(icon: 'note', label: 'Duplicate row', value: 'duplicate'),
         if (widget.onTrashRow != null) ...[
           QuillMenuItem.separator<String>(),
           const QuillMenuItem(
