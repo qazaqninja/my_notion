@@ -796,6 +796,15 @@ class _WorkspaceIconButton extends StatelessWidget {
       onTap: () async {
         final picked = await pickEmoji(context);
         if (picked == null) return;
+        final current = (icon ?? '').trim();
+        final pickedTrimmed = picked.trim();
+        if (current == pickedTrimmed) {
+          if (!context.mounted) return;
+          context.toastInfo(pickedTrimmed.isEmpty
+              ? 'Workspace already has no icon'
+              : 'Workspace icon already $pickedTrimmed');
+          return;
+        }
         final next =
             state.workspace.copyWith(icon: picked.isEmpty ? '' : picked);
         await next.save(Directory(state.rootPath));
