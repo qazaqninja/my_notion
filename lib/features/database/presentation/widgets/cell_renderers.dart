@@ -369,15 +369,54 @@ class CellRenderer extends StatelessWidget {
 
 class _Relation extends StatelessWidget {
   const _Relation({required this.ulid});
+
+  /// Raw cell value as written in YAML. May be `01HX…`, `[[01HX…]]`,
+  /// `"01HX…"`, or — when the user round-trips through Obsidian — a
+  /// quoted wikilink form. The Drift lookup needs the bare ULID, so
+  /// normalise before querying.
   final String ulid;
+
+  /// Strip surrounding `[[…]]` wikilink wrapping and YAML quotes so
+  /// the Drift lookup sees the bare 26-char ULID. Returns null when
+  /// the result doesn't look like a ULID — the chip then renders as
+  /// broken with the original raw text in the tooltip.
+  static String? _normalise(String raw) {
+    var s = raw.trim();
+    if (s.length >= 2) {
+      if ((s.startsWith('"') && s.endsWith('"')) ||
+          (s.startsWith("'") && s.endsWith("'"))) {
+        s = s.substring(1, s.length - 1).trim();
+      }
+    }
+    if (s.startsWith('[[') && s.endsWith(']]') && s.length >= 4) {
+      s = s.substring(2, s.length - 2).trim();
+    }
+    if (RegExp(r'^[0-9A-Z]{26}$').hasMatch(s)) return s;
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final db = context.read<QuillDatabase>();
+    final normalised = _normalise(ulid);
+    if (normalised == null) {
+      // Not a ULID-shaped value — render as broken without hitting the DB.
+      return RelationChip(
+        label: '⚠ $ulid',
+        ulid: ulid,
+        icon: 'trash',
+        emojiIcon: null,
+        tooltip:
+            'Broken relation — value is not a ULID (`$ulid`).',
+      );
+    }
     return FutureBuilder(
-      future: (db.select(db.pages)..where((p) => p.ulid.equals(ulid))).getSingleOrNull(),
+      future: (db.select(db.pages)
+            ..where((p) => p.ulid.equals(normalised)))
+          .getSingleOrNull(),
       builder: (context, snap) {
-        final title = snap.data?.title ?? '…${ulid.length >= 6 ? ulid.substring(ulid.length - 6) : ulid}';
+        final title = snap.data?.title ??
+            '…${normalised.substring(normalised.length - 6)}';
         final emoji = snap.data == null
             ? null
             : emojiFromFrontmatterJson(snap.data!.frontmatterJson);
@@ -387,11 +426,11 @@ class _Relation extends StatelessWidget {
             snap.data == null;
         return RelationChip(
           label: isBroken ? '⚠ $title' : title,
-          ulid: ulid,
+          ulid: normalised,
           icon: isBroken ? 'trash' : 'file-md',
           emojiIcon: emoji,
           tooltip: isBroken
-              ? 'Broken relation — target page is no longer in the vault.\n[[$ulid]]'
+              ? 'Broken relation — target page is no longer in the vault.\n[[$normalised]]'
               : null,
         );
       },
