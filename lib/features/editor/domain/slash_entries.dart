@@ -118,6 +118,12 @@ enum SlashAction {
   /// Insert a one-line stats summary (`(N words · N characters · N
   /// lines)`) about the surrounding body at the caret.
   insertTextStats,
+  /// Sort the lines touched by the selection by length, shortest
+  /// first.
+  sortLinesByLength,
+  /// Sort the lines touched by the selection by length, longest
+  /// first.
+  sortLinesByLengthDesc,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -617,6 +623,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '(N w · N c · N l)',
     action: SlashAction.insertTextStats,
     keywords: ['stats', 'word', 'character', 'count', 'metrics', 'length'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort lines by length',
+    hint: 'shortest first',
+    action: SlashAction.sortLinesByLength,
+    keywords: ['sort', 'length', 'short', 'long', 'asc', 'size'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort lines by length (descending)',
+    hint: 'longest first',
+    action: SlashAction.sortLinesByLengthDesc,
+    keywords: ['sort', 'length', 'long', 'desc', 'descending', 'size'],
   ),
   SlashEntry(
     icon: 'edit',

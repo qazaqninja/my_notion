@@ -441,6 +441,33 @@ SortLinesResult sortLinesDescIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Sort the lines touched by the selection by **length**, ascending
+/// (shortest first). Equal-length lines fall back to a stable
+/// case-insensitive lex compare for deterministic ordering.
+SortLinesResult sortLinesByLengthIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final sorted = [...lines]
+        ..sort((a, b) {
+          final cmp = a.length.compareTo(b.length);
+          if (cmp != 0) return cmp;
+          return a.toLowerCase().compareTo(b.toLowerCase());
+        });
+      return sorted;
+    });
+
+/// Sort the lines touched by the selection by **length**, descending
+/// (longest first). The natural pair to [sortLinesByLengthIn].
+SortLinesResult sortLinesByLengthDescIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final sorted = [...lines]
+        ..sort((a, b) {
+          final cmp = b.length.compareTo(a.length);
+          if (cmp != 0) return cmp;
+          return a.toLowerCase().compareTo(b.toLowerCase());
+        });
+      return sorted;
+    });
+
 /// Compare two strings using natural (human-friendly) ordering: runs
 /// of digits compare as integers, non-digit runs as case-insensitive
 /// strings. So "file2" < "file10" and "v1.2" < "v1.10". Exposed for

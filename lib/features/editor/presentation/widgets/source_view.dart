@@ -981,6 +981,14 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart + summary.length,
           ),
         );
+      case SlashAction.sortLinesByLength:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, sortLinesByLengthIn,
+        );
+      case SlashAction.sortLinesByLengthDesc:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, sortLinesByLengthDescIn,
+        );
     }
   }
 

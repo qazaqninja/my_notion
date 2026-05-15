@@ -1163,6 +1163,37 @@ void main() {
     });
   });
 
+  group('sortLinesByLengthIn / sortLinesByLengthDescIn', () {
+    test('ascending: shortest first', () {
+      const text = 'banana\napple\nblueberry\n';
+      final r = sortLinesByLengthIn(text, 0, text.length);
+      expect(r.text, 'apple\nbanana\nblueberry\n');
+    });
+
+    test('descending: longest first', () {
+      const text = 'banana\napple\nblueberry\n';
+      final r = sortLinesByLengthDescIn(text, 0, text.length);
+      expect(r.text, 'blueberry\nbanana\napple\n');
+    });
+
+    test('equal-length tie-break is case-insensitive lex', () {
+      // Same length, sort alpha — "Bee" < "ant" because "Bee".lower < "ant".lower? No.
+      // "ant" < "bee" → ascending puts "ant" first.
+      const text = 'bee\nant\ncat\n';
+      final r = sortLinesByLengthIn(text, 0, text.length);
+      expect(r.text, 'ant\nbee\ncat\n');
+    });
+
+    test('asc-then-desc returns the same multiset', () {
+      const text = 'one\nthree\ntwo\nfour\n';
+      final asc = sortLinesByLengthIn(text, 0, text.length).text;
+      final desc = sortLinesByLengthDescIn(asc, 0, asc.length).text;
+      final ascLines = asc.split('\n').where((l) => l.isNotEmpty).toList();
+      final descLines = desc.split('\n').where((l) => l.isNotEmpty).toList();
+      expect(descLines.toSet(), ascLines.toSet());
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
