@@ -1158,6 +1158,9 @@ class _EditorBodyState extends State<_EditorBody> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Icon(Icons.warning_amber_outlined,
+                      size: 28, color: const Color(0xFFCB5A4F)),
+                  const SizedBox(height: 10),
                   Text(
                     'Could not open page',
                     style: TextStyle(
