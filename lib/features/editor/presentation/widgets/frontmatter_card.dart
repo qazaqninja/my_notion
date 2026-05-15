@@ -42,32 +42,39 @@ class _FrontmatterCardState extends State<FrontmatterCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          GestureDetector(
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: tokens.isDark
-                    ? Colors.white.withValues(alpha: 0.02)
-                    : Colors.black.withValues(alpha: 0.015),
-                border: _expanded
-                    ? Border(bottom: BorderSide(color: tokens.divider, width: 0.5))
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Transform.rotate(
-                    angle: _expanded ? 0 : -1.5708, // -90deg when collapsed
-                    child: QuillIcon('caret-down', size: 11, strokeWidth: 1.8, color: tokens.text3),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Tooltip(
+                message: _expanded ? 'Collapse frontmatter' : 'Expand frontmatter',
+                waitDuration: const Duration(milliseconds: 600),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: tokens.isDark
+                        ? Colors.white.withValues(alpha: 0.02)
+                        : Colors.black.withValues(alpha: 0.015),
+                    border: _expanded
+                        ? Border(bottom: BorderSide(color: tokens.divider, width: 0.5))
+                        : null,
                   ),
-                  const SizedBox(width: 8),
-                  Text('frontmatter', style: mono(fontSize: 12, color: tokens.text3)),
-                  const Spacer(),
-                  Text(
-                    '${widget.frontmatter.entries.length} fields',
-                    style: mono(fontSize: 11, color: tokens.text3.withValues(alpha: 0.7)),
+                  child: Row(
+                    children: [
+                      Transform.rotate(
+                        angle: _expanded ? 0 : -1.5708, // -90deg when collapsed
+                        child: QuillIcon('caret-down', size: 11, strokeWidth: 1.8, color: tokens.text3),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('frontmatter', style: mono(fontSize: 12, color: tokens.text3)),
+                      const Spacer(),
+                      Text(
+                        '${widget.frontmatter.entries.length} fields',
+                        style: mono(fontSize: 11, color: tokens.text3.withValues(alpha: 0.7)),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
