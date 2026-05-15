@@ -91,4 +91,35 @@ void main() {
       throwsA(isA<FormatException>()),
     );
   });
+
+  test('normalises column keys to snake_case + drops YAML-unsafe chars '
+      '(M759)', () async {
+    final csv = File(p.join(tmp.path, 'oddcols.csv'));
+    // Headers with spaces, colons, hashes, slashes, brackets — used
+    // to land in FrontmatterEntry.key verbatim and corrupt the YAML
+    // mapping on serialise.
+    await csv.writeAsString(
+      'title,Foo: Bar,#Priority,Tag/Stage,Cool [v2]\n'
+      'Row,1,P1,beta,ok\n',
+    );
+
+    final result = await const CsvImporter(ulids: UlidGenerator()).importTo(
+      csv,
+      tmp,
+    );
+    expect(result.rowsWritten, 1);
+
+    final raw =
+        await File(p.join(result.folderPath, 'Row.md')).readAsString();
+    final parsed = FrontmatterParser.parse(raw);
+    // Every key now snake_case, no unsafe glyphs remain.
+    expect(parsed.frontmatter.get('foo_bar'), equals(1),
+        reason: 'colon stripped, spaces snake-cased');
+    expect(parsed.frontmatter.get('priority'), equals('P1'),
+        reason: 'leading # stripped');
+    expect(parsed.frontmatter.get('tag_stage'), equals('beta'),
+        reason: 'slash replaced');
+    expect(parsed.frontmatter.get('cool_v2'), equals('ok'),
+        reason: 'brackets stripped');
+  });
 }

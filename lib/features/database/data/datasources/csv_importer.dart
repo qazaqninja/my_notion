@@ -193,6 +193,20 @@ class CsvImporter {
     }
   }
 
+  /// Snake_case the header into a safe YAML mapping key. Drops every
+  /// glyph YAML treats as structure ('{' / '[' / ':' / '#' / '|' /
+  /// quote / etc.), collapses runs of whitespace to '_', and falls
+  /// back to 'col' on empty input.
+  static String _normaliseKey(String header) {
+    var s = header.trim().toLowerCase();
+    // Replace YAML structure / quote characters with '_'.
+    s = s.replaceAll(RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*,/\\]'''), '_');
+    s = s.replaceAll(RegExp(r'\s+'), '_');
+    s = s.replaceAll(RegExp(r'_+'), '_');
+    s = s.replaceAll(RegExp(r'^_|_$'), '');
+    return s.isEmpty ? 'col' : s;
+  }
+
   static int _pickTitleColumn(List<String> header) {
     for (var i = 0; i < header.length; i++) {
       final k = header[i].trim().toLowerCase();
@@ -227,7 +241,11 @@ class CsvImporter {
       } else {
         type = ColumnType.text;
       }
-      out.add(ColumnDef(key: header[col].trim(), type: type));
+      // Normalise the column key so it's safe as a YAML mapping
+       // key — header[col] may contain ':', '#', spaces, slashes, etc.
+       // FrontmatterParser._emitYaml writes 'e.key: e.rawScalar' raw,
+       // so a key like 'Foo: Bar' would split the YAML.
+      out.add(ColumnDef(key: _normaliseKey(header[col]), type: type));
     }
     return out;
   }
