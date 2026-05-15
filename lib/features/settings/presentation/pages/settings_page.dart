@@ -795,19 +795,23 @@ class _WorkspaceIconButton extends StatelessWidget {
       },
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        child: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: hasIcon ? tokens.surface2 : tokens.accent,
-            border: Border.all(color: tokens.divider2, width: 0.5),
-            borderRadius: const BorderRadius.all(Radius.circular(6)),
+        child: Tooltip(
+          message: hasIcon ? 'Change workspace icon' : 'Pick workspace icon',
+          waitDuration: const Duration(milliseconds: 500),
+          child: Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: hasIcon ? tokens.surface2 : tokens.accent,
+              border: Border.all(color: tokens.divider2, width: 0.5),
+              borderRadius: const BorderRadius.all(Radius.circular(6)),
+            ),
+            child: hasIcon
+                ? Text(icon, style: const TextStyle(fontSize: 18))
+                : Icon(Icons.tag_faces_outlined,
+                    size: 16, color: Colors.white),
           ),
-          child: hasIcon
-              ? Text(icon, style: const TextStyle(fontSize: 18))
-              : Icon(Icons.tag_faces_outlined,
-                  size: 16, color: Colors.white),
         ),
       ),
     );
