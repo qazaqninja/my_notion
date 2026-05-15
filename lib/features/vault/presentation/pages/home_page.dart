@@ -12,6 +12,7 @@ import '../../../../core/paths.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../data/daily_note.dart';
 import '../bloc/vault_bloc.dart';
@@ -136,14 +137,12 @@ class HomePage extends StatelessWidget {
     final state = vault.state;
     if (state is! VaultLoaded) return;
     final router = GoRouter.of(context);
-    final messenger = ScaffoldMessenger.maybeOf(context);
     try {
       final r = await DailyNote.openTodaysNote(Directory(state.rootPath));
       if (!r.alreadyExisted) vault.add(const ReindexVault());
       router.go('/editor/${r.ulid}');
     } catch (e) {
-      messenger?.showSnackBar(
-          SnackBar(content: Text('Daily note failed: $e')));
+      if (context.mounted) context.toastError('Daily note failed', sub: '$e');
     }
   }
 
@@ -151,32 +150,16 @@ class HomePage extends StatelessWidget {
     final vaultBloc = context.read<VaultBloc>();
     if (vaultBloc.state is! VaultLoaded) return;
     final router = GoRouter.of(context);
-    final controller = TextEditingController();
-    final title = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New page'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Title'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    final title = await showQuillPrompt(
+      context,
+      title: 'New page',
+      icon: 'file-md',
+      label: 'Title',
+      confirmLabel: 'Create',
     );
-    if (title == null || title.trim().isEmpty) return;
+    if (title == null || title.isEmpty) return;
     vaultBloc.add(CreatePage(
-      title: title.trim(),
+      title: title,
       onCreated: (ulid) => router.go('/editor/$ulid'),
     ));
   }

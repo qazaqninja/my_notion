@@ -10,6 +10,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../relations/presentation/cubit/relation_picker_cubit.dart';
 import '../../../relations/presentation/widgets/relation_picker_overlay.dart';
@@ -635,13 +636,7 @@ class _SourceViewState extends State<SourceView> {
             text: cleared,
             selection: TextSelection.collapsed(offset: stripStart),
           );
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            const SnackBar(
-              content: Text(
-                  'No current user — add one in Settings → Users'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          context.toastInfo('No current user — add one in Settings → Users');
           return;
         }
         final snippet = '@$name';
@@ -690,7 +685,6 @@ class _SourceViewState extends State<SourceView> {
   Future<void> _insertDailyNoteLink(int insertAt) async {
     final vault = context.read<VaultBloc>().state;
     if (vault is! VaultLoaded) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     // Capture the bloc before the async gap so we don't reach into
     // context after awaiting (linter complaint).
     final vaultBloc = context.read<VaultBloc>();
@@ -710,15 +704,13 @@ class _SourceViewState extends State<SourceView> {
         vaultBloc.add(const ReindexVault());
       }
     } catch (e) {
-      messenger?.showSnackBar(
-          SnackBar(content: Text('Daily note failed: $e')));
+      if (mounted) context.toastError('Daily note failed', sub: '$e');
     }
   }
 
   Future<void> _pickAndInsertFile(int insertAt) async {
     final vault = context.read<VaultBloc>().state;
     if (vault is! VaultLoaded) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final result = await FilePicker.platform.pickFiles(
       type: FileType.any,
       withData: false,
@@ -743,14 +735,13 @@ class _SourceViewState extends State<SourceView> {
         selection: TextSelection.collapsed(offset: at + snippet.length),
       );
     } catch (e) {
-      messenger?.showSnackBar(SnackBar(content: Text('File copy failed: $e')));
+      if (mounted) context.toastError('File copy failed', sub: '$e');
     }
   }
 
   Future<void> _pickAndInsertImage(int insertAt) async {
     final vault = context.read<VaultBloc>().state;
     if (vault is! VaultLoaded) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: false,
@@ -772,7 +763,7 @@ class _SourceViewState extends State<SourceView> {
         selection: TextSelection.collapsed(offset: at + snippet.length),
       );
     } catch (e) {
-      messenger?.showSnackBar(SnackBar(content: Text('Image copy failed: $e')));
+      if (mounted) context.toastError('Image copy failed', sub: '$e');
     }
   }
 

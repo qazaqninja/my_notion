@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../data/trash_service.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
@@ -35,30 +36,16 @@ class _TrashDialogState extends State<TrashDialog> {
   Future<void> _confirmEmpty(BuildContext context) async {
     final items = await _items;
     if (items.isEmpty || !context.mounted) return;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Empty trash?'),
-        content: Text(
-          'This permanently deletes ${items.length} '
-          '${items.length == 1 ? "file" : "files"}. This cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFCB5A4F),
-            ),
-            child: const Text('Delete forever'),
-          ),
-        ],
-      ),
+    final ok = await showQuillConfirm(
+      context,
+      title: 'Empty trash?',
+      sub:
+          'This permanently deletes ${items.length} ${items.length == 1 ? "file" : "files"}. This cannot be undone.',
+      icon: 'trash',
+      confirmLabel: 'Delete forever',
+      danger: true,
     );
-    if (ok != true) return;
+    if (!ok) return;
     for (final item in items) {
       await _service.deleteForever(item);
     }
@@ -224,9 +211,7 @@ class _TrashDialogState extends State<TrashDialog> {
               context
                   .read<VaultBloc>()
                   .add(const ReindexVault());
-              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                SnackBar(content: Text('Restored to $newPath')),
-              );
+              context.toastSuccess('Restored', sub: newPath, subMono: true);
               _refresh();
             },
             child: Text('Restore', style: TextStyle(color: tokens.accent)),
@@ -235,9 +220,7 @@ class _TrashDialogState extends State<TrashDialog> {
             onPressed: () async {
               final ok = await _service.deleteForever(item);
               if (!ok || !mounted) return;
-              ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                SnackBar(content: Text('Deleted ${item.basename}')),
-              );
+              context.toastSuccess('Deleted', sub: item.basename, subMono: true);
               _refresh();
             },
             child: Text('Delete', style: TextStyle(color: tokens.text2)),

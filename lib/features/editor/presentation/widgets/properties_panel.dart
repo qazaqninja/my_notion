@@ -8,6 +8,7 @@ import '../../../vault/data/pdf_exporter.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/relation_chip.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/domain/entities/frontmatter.dart';
@@ -305,27 +306,17 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
     final abs = '${vault.rootPath}/${widget.page.relativePath}';
     final ok = await Reveal.show(abs);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Could not reveal $abs')),
-      );
+      context.toastError('Could not reveal', sub: abs, subMono: true);
     }
   }
 
   Future<void> _copyUlid(BuildContext context) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    // Copy via the system clipboard channel.
-    // Using `Clipboard.setData` from package:flutter/services.
-    // (Local import here keeps the rest of the file uncluttered.)
-    // ignore: prefer_const_constructors
     await ClipboardSetter.set(widget.page.ulid);
-    messenger?.showSnackBar(
-      SnackBar(content: Text('Copied ${widget.page.ulid}'), duration: const Duration(seconds: 2)),
-    );
+    if (context.mounted) context.toastSuccess('Copied ${widget.page.ulid}', subMono: true);
   }
 
   Future<void> _printPage(BuildContext context) async {
     final page = widget.page;
-    final messenger = ScaffoldMessenger.maybeOf(context);
     try {
       final bytes = await const PdfExporter().exportSingle(
         title: page.title,
@@ -336,15 +327,15 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
         onLayout: (_) async => Uint8List.fromList(bytes),
       );
     } catch (e) {
-      messenger?.showSnackBar(SnackBar(content: Text('Print failed: $e')));
+      if (context.mounted) context.toastError('Print failed', sub: '$e');
     }
   }
 
   Future<void> _openComments(BuildContext context) async {
     final vault = context.read<VaultBloc>().state;
     if (vault is! VaultLoaded) return;
-    await showDialog<void>(
-      context: context,
+    await showQuillModal<void>(
+      context,
       builder: (_) => CommentsDialog(
         vaultRoot: vault.rootPath,
         pageUlid: widget.page.ulid,
@@ -827,18 +818,15 @@ class _TypeDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    return DropdownButton<fe.FrontmatterType>(
+    return QuillSelect<fe.FrontmatterType>(
       value: value,
-      onChanged: (v) {
-        if (v != null) onChanged(v);
-      },
-      isDense: true,
-      underline: const SizedBox.shrink(),
-      style: mono(fontSize: 12, color: tokens.text2),
-      items: [
+      onChanged: onChanged,
+      dense: true,
+      mono: true,
+      width: 120,
+      options: [
         for (final t in _editableTypes)
-          DropdownMenuItem(value: t, child: Text(_labelForType(t))),
+          QuillSelectOption(value: t, label: _labelForType(t)),
       ],
     );
   }

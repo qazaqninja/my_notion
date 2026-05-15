@@ -11,6 +11,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/segment.dart';
 import '../../../vault/data/indexer.dart';
@@ -137,25 +138,24 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     final isGrouped = _query.groupBy == columnKey;
     final isHidden =
         _visibleOverride != null && !_visibleOverride!.contains(columnKey);
-    final action = await showMenu<String>(
+    final action = await showQuillMenu<String>(
       context: context,
-      position: RelativeRect.fromRect(
-        Rect.fromLTWH(globalPosition.dx, globalPosition.dy, 1, 1),
-        Offset.zero & overlay.size,
-      ),
+      position: quillMenuPosition(context, globalPosition),
+      width: 232,
       items: [
-        const PopupMenuItem(value: 'sort-asc', child: Text('Sort ascending')),
-        const PopupMenuItem(value: 'sort-desc', child: Text('Sort descending')),
-        const PopupMenuItem(value: 'sort-clear', child: Text('Clear sort')),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-            value: 'group',
-            child: Text(isGrouped ? 'Ungroup' : 'Group by this column')),
-        const PopupMenuItem(
-            value: 'filter', child: Text('Filter by this column…')),
-        const PopupMenuDivider(),
+        const QuillMenuItem(icon: 'sort', label: 'Sort ascending', value: 'sort-asc'),
+        const QuillMenuItem(icon: 'sort', label: 'Sort descending', value: 'sort-desc'),
+        const QuillMenuItem(icon: 'sort', label: 'Clear sort', value: 'sort-clear'),
+        QuillMenuItem.separator<String>(),
+        QuillMenuItem(
+          icon: 'group',
+          label: isGrouped ? 'Ungroup' : 'Group by this column',
+          value: 'group',
+        ),
+        const QuillMenuItem(icon: 'filter', label: 'Filter by this column…', value: 'filter'),
+        QuillMenuItem.separator<String>(),
         if (!isHidden && columnKey != 'title')
-          const PopupMenuItem(value: 'hide', child: Text('Hide column')),
+          const QuillMenuItem(icon: 'eye', label: 'Hide column', hint: '⌘H', value: 'hide'),
       ],
     );
     if (action == null) return;
@@ -184,12 +184,8 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
           _visibleOverride = {...current}..remove(columnKey);
         });
         if (!mounted) return;
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text('Hid column "$columnKey" — Properties to restore'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        context.toastSuccess('Hid column "$columnKey"',
+            sub: 'Properties to restore');
     }
   }
 
@@ -230,35 +226,21 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Cell update failed: $e')),
-      );
+      context.toastError('Cell update failed', sub: '$e');
     }
   }
 
   Future<void> _trashRow(DatabasePageRow row) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Move row to trash?'),
-        content: Text(
-            'The .md file moves to .trash/<YYYY-MM>/. You can restore '
-            'it from the Trash dialog later.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style:
-                TextButton.styleFrom(foregroundColor: const Color(0xFFCB5A4F)),
-            child: const Text('Move to trash'),
-          ),
-        ],
-      ),
+    final confirmed = await showQuillConfirm(
+      context,
+      title: 'Move row to trash?',
+      sub:
+          'The .md file moves to .trash/<YYYY-MM>/. You can restore it from the Trash dialog later.',
+      icon: 'trash',
+      confirmLabel: 'Move to trash',
+      danger: true,
     );
-    if (confirmed != true || !mounted) return;
+    if (!confirmed || !mounted) return;
     if (!context.mounted) return;
     context.read<VaultBloc>().add(MoveToTrash(row.ulid));
     setState(() => _rows = _rows?.where((r) => r.ulid != row.ulid).toList());
@@ -268,17 +250,12 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     final schema = _schema;
     if (schema == null) return;
     final router = GoRouter.of(context);
-    final messenger = ScaffoldMessenger.maybeOf(context);
+    final scope = context;
     context.read<VaultBloc>().add(DuplicatePage(
           row.ulid,
           targetFolder: schema.folderPath,
           onCreated: (newUlid) {
-            messenger?.showSnackBar(
-              const SnackBar(
-                content: Text('Row duplicated'),
-                duration: Duration(seconds: 2),
-              ),
-            );
+            if (scope.mounted) scope.toastSuccess('Row duplicated');
             router.go('/editor/$newUlid');
           },
         ));
@@ -289,46 +266,28 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     final schema = _schema;
     if (root == null || schema == null) return;
     final title = await _promptForTitle();
-    if (title == null || title.trim().isEmpty) return;
+    if (title == null || title.isEmpty) return;
     try {
       final row = await _repo.createRow(
         schema: schema,
-        title: title.trim(),
+        title: title,
         vaultRoot: root,
       );
       if (!mounted) return;
       setState(() => _rows = [...?_rows, row]);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Create failed: $e')),
-      );
+      context.toastError('Create failed', sub: '$e');
     }
   }
 
   Future<String?> _promptForTitle() async {
-    final controller = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New page'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(hintText: 'Title'),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    return showQuillPrompt(
+      context,
+      title: 'New page',
+      icon: 'file-md',
+      label: 'Title',
+      confirmLabel: 'Create',
     );
   }
 
@@ -674,7 +633,6 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
     final rows = _rows;
     if (rows == null) return;
     final filtered = ApplyQuery.apply(rows, _query, schema);
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final picked = await FilePicker.platform.saveFile(
       dialogTitle: 'Save CSV…',
       fileName: '${schema.name}.csv',
@@ -688,13 +646,15 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         schema: schema,
         rows: filtered,
       );
-      messenger?.showSnackBar(
-        SnackBar(
-            content:
-                Text('Exported $n ${n == 1 ? 'row' : 'rows'} → $picked')),
-      );
+      if (mounted) {
+        context.toastSuccess(
+          'Exported $n ${n == 1 ? 'row' : 'rows'}',
+          sub: picked,
+          subMono: true,
+        );
+      }
     } catch (e) {
-      messenger?.showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      if (mounted) context.toastError('Export failed', sub: '$e');
     }
   }
 

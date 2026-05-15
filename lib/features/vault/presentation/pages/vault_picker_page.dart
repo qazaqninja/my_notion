@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/quill_overlays.dart';
 import '../../data/seed_templates.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
@@ -87,7 +88,6 @@ class _SampleVaultButton extends StatelessWidget {
   }
 
   Future<void> _create(BuildContext context) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
     final bloc = context.read<VaultBloc>();
     try {
       final docs = await getApplicationDocumentsDirectory();
@@ -96,9 +96,9 @@ class _SampleVaultButton extends StatelessWidget {
       await const SeedTemplates().install(dir);
       bloc.add(LoadFromPath(dir.path));
     } catch (e) {
-      messenger?.showSnackBar(
-        SnackBar(content: Text('Could not create sample vault: $e')),
-      );
+      if (context.mounted) {
+        context.toastError('Could not create sample vault', sub: '$e');
+      }
     }
   }
 }
