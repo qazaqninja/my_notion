@@ -409,6 +409,7 @@ class _EditableFrontmatterRow extends StatefulWidget {
 class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
   late final TextEditingController _controller;
   late final FocusNode _focus;
+  bool _hover = false;
 
   @override
   void initState() {
@@ -497,41 +498,54 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final type = widget.entry.type;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 96,
-            child: Row(
-              children: [
-                QuillIcon(_iconForType(type), size: 12, strokeWidth: 1.7, color: tokens.text3),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    widget.entry.key,
-                    style: mono(fontSize: 12, color: tokens.text3),
-                    overflow: TextOverflow.ellipsis,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 96,
+              child: Row(
+                children: [
+                  QuillIcon(_iconForType(type),
+                      size: 12, strokeWidth: 1.7, color: tokens.text3),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      widget.entry.key,
+                      style: mono(fontSize: 12, color: tokens.text3),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(child: _input(tokens)),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            onPressed: widget.onRemove,
-            padding: const EdgeInsets.all(2),
-            constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-            icon: QuillIcon('x', size: 11, strokeWidth: 1.7, color: tokens.text3),
-            tooltip: 'Remove field',
-          ),
-        ],
+            const SizedBox(width: 8),
+            Expanded(child: _input(tokens)),
+            Visibility(
+              visible: _hover,
+              maintainSize: true,
+              maintainState: true,
+              maintainAnimation: true,
+              child: IconButton(
+                visualDensity: VisualDensity.compact,
+                onPressed: widget.onRemove,
+                padding: const EdgeInsets.all(2),
+                constraints:
+                    const BoxConstraints(minWidth: 22, minHeight: 22),
+                icon: QuillIcon('x',
+                    size: 11, strokeWidth: 1.7, color: tokens.text3),
+                tooltip: 'Remove field',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
