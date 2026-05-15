@@ -100,13 +100,21 @@ class _CommentsDialogState extends State<CommentsDialog> {
                   Expanded(
                     child: Row(
                       children: [
-                        Text('COMMENTS',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.0,
-                              color: tokens.text3,
-                            )),
+                        FutureBuilder<List<PageComment>>(
+                          future: _items,
+                          builder: (context, snap) {
+                            final n = snap.data?.length ?? 0;
+                            return Text(
+                              n == 0 ? 'COMMENTS' : 'COMMENTS · $n',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.0,
+                                color: tokens.text3,
+                              ),
+                            );
+                          },
+                        ),
                         if (widget.blockId != null) ...[
                           const SizedBox(width: 8),
                           Container(
