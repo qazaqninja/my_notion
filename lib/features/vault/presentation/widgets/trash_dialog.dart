@@ -46,9 +46,13 @@ class _TrashDialogState extends State<TrashDialog> {
       danger: true,
     );
     if (!ok) return;
+    var deleted = 0;
     for (final item in items) {
-      await _service.deleteForever(item);
+      if (await _service.deleteForever(item)) deleted++;
     }
+    if (!context.mounted) return;
+    context.toastSuccess(
+        'Emptied trash · $deleted ${deleted == 1 ? "file" : "files"}');
     _refresh();
   }
 
