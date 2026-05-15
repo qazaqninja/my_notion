@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
@@ -1070,12 +1071,11 @@ class _VaultShellPageState extends State<VaultShellPage> {
     }
     final ulids = const UlidGenerator();
     final id = ulids.generate();
-    // Quote `name:` so YAML-unsafe characters in the user's input (`:`,
-    // `#`, leading `>`/`[`/`{`, etc.) don't break the database schema
-    // reload on next reindex.
-    final escapedName = trimmed.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    // yamlSafeScalar wraps the name in double quotes only when needed
+    // — same correctness contract as M685's inline escape, less
+    // bespoke logic.
     final yaml = '''id: $id
-name: "$escapedName"
+name: ${yamlSafeScalar(trimmed)}
 icon: 📊
 color: "#6B8E7F"
 schema:
