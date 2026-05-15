@@ -3272,10 +3272,16 @@ class _BlockDragWrapState extends State<_BlockDragWrap> {
                             ),
                             child: MouseRegion(
                               cursor: SystemMouseCursors.grab,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: Icon(Icons.drag_indicator,
-                                    size: 14, color: tokens.text3),
+                              child: Tooltip(
+                                message: 'Drag to reorder',
+                                waitDuration:
+                                    const Duration(milliseconds: 500),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.only(top: 6),
+                                  child: Icon(Icons.drag_indicator,
+                                      size: 14, color: tokens.text3),
+                                ),
                               ),
                             ),
                           )
