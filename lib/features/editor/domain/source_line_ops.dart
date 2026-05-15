@@ -440,3 +440,14 @@ SortLinesResult dedupeLinesIn(String text, int start, int end) =>
 /// flipping a sort or rendering a list bottom-up.
 SortLinesResult reverseLinesIn(String text, int start, int end) =>
     _transformLinesIn(text, start, end, (lines) => lines.reversed.toList());
+
+/// Strip trailing whitespace (spaces, tabs) from every line in the
+/// selected block. Common cleanup before committing — many tools
+/// reject trailing whitespace and it's invisible in the editor.
+SortLinesResult trimTrailingWhitespaceIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text,
+      start,
+      end,
+      (lines) => [for (final l in lines) l.replaceFirst(RegExp(r'[ \t]+$'), '')],
+    );

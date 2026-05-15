@@ -17,6 +17,10 @@ enum SlashAction {
   /// match with its emoji glyph (`:tada:` → 🎉). Unknown shortcodes
   /// stay verbatim.
   expandEmojiShortcodes,
+  /// Strip trailing whitespace from every line in the selection (or
+  /// the entire body when no selection is active). Common cleanup
+  /// before committing — many tools reject trailing whitespace.
+  trimTrailingWhitespace,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -299,6 +303,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: ':tada: → 🎉',
     action: SlashAction.expandEmojiShortcodes,
     keywords: ['emoji', 'shortcode', 'expand', 'replace', 'tada', 'fire'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Trim trailing whitespace',
+    hint: 'cleanup',
+    action: SlashAction.trimTrailingWhitespace,
+    keywords: ['trim', 'whitespace', 'cleanup', 'strip', 'tabs'],
   ),
   SlashEntry(
     icon: 'tag',

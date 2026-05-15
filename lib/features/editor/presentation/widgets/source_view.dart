@@ -851,6 +851,17 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart.clamp(0, expanded.length),
           ),
         );
+      case SlashAction.trimTrailingWhitespace:
+        // Strip the `/trim` trigger first, then run the whitespace
+        // cleanup on the whole body.
+        final cleared = text.replaceRange(stripStart, caret, '');
+        final trimmed = trimTrailingWhitespaceIn(cleared, 0, cleared.length);
+        _controller.value = TextEditingValue(
+          text: trimmed.text,
+          selection: TextSelection.collapsed(
+            offset: stripStart.clamp(0, trimmed.text.length),
+          ),
+        );
     }
   }
 

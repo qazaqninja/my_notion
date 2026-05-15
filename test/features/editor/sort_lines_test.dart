@@ -85,6 +85,32 @@ void main() {
     });
   });
 
+  group('trimTrailingWhitespaceIn', () {
+    test('strips trailing spaces on every line', () {
+      const text = 'one  \ntwo\t\nthree   \n';
+      final r = trimTrailingWhitespaceIn(text, 0, text.length);
+      expect(r.text, 'one\ntwo\nthree\n');
+    });
+
+    test('leaves leading whitespace alone (it carries meaning in lists)', () {
+      const text = '  - indented item   \n  more  \n';
+      final r = trimTrailingWhitespaceIn(text, 0, text.length);
+      expect(r.text, '  - indented item\n  more\n');
+    });
+
+    test('a line with only whitespace becomes empty', () {
+      const text = 'first\n   \nthird\n';
+      final r = trimTrailingWhitespaceIn(text, 0, text.length);
+      expect(r.text, 'first\n\nthird\n');
+    });
+
+    test('no-op when no trailing whitespace exists', () {
+      const text = 'clean\nlines\nhere\n';
+      final r = trimTrailingWhitespaceIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
