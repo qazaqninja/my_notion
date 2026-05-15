@@ -333,6 +333,7 @@ class TreeNodeWidget extends StatelessWidget {
       {required String folderPath}) async {
     final router = GoRouter.of(context);
     final bloc = context.read<VaultBloc>();
+    final scope = context;
     final title = await showQuillPrompt(
       context,
       title: 'New subpage',
@@ -345,7 +346,13 @@ class TreeNodeWidget extends StatelessWidget {
     bloc.add(CreatePage(
       title: title,
       folderPath: folderPath,
-      onCreated: (ulid) => router.go('/editor/$ulid'),
+      onCreated: (ulid) {
+        if (scope.mounted) {
+          scope.toastSuccess('Created "$title" in $folderPath/',
+              sub: 'ULID: $ulid', subMono: true);
+        }
+        router.go('/editor/$ulid');
+      },
     ));
   }
 }
