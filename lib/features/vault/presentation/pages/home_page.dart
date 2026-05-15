@@ -255,27 +255,34 @@ class _StatsStripState extends State<_StatsStrip> {
         ];
         return Row(
           children: [
-            for (var i = 0; i < pieces.length; i++) ...[
-              if (i > 0)
-                Text('  ·  ',
-                    style: mono(fontSize: 12, color: tokens.text3)),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: () => _searchPalette(context, pieces[i].$5),
-                  child: Tooltip(
-                    message: 'Click → ⌘K with "${pieces[i].$5}" pre-filled',
-                    child: Text(
-                      '${pieces[i].$3} ${pieces[i].$3 == 1 ? pieces[i].$1 : pieces[i].$2}',
-                      style: mono(
-                          fontSize: 12,
-                          color: pieces[i].$4 ?? tokens.text2),
+            Expanded(
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  for (var i = 0; i < pieces.length; i++) ...[
+                    if (i > 0)
+                      Text('  ·  ',
+                          style: mono(fontSize: 12, color: tokens.text3)),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => _searchPalette(context, pieces[i].$5),
+                        child: Tooltip(
+                          message:
+                              'Click → ⌘K with "${pieces[i].$5}" pre-filled',
+                          child: Text(
+                            '${pieces[i].$3} ${pieces[i].$3 == 1 ? pieces[i].$1 : pieces[i].$2}',
+                            style: mono(
+                                fontSize: 12,
+                                color: pieces[i].$4 ?? tokens.text2),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  ],
+                ],
               ),
-            ],
-            const Spacer(),
+            ),
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
@@ -629,7 +636,13 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
               ),
               const SizedBox(width: 10),
               Tooltip(
-                message: 'Due ${e.due.toIso8601String().split("T").first}',
+                message: overdue
+                    ? 'Due ${e.due.toIso8601String().split("T").first} (${-days} ${(-days) == 1 ? "day" : "days"} overdue)'
+                    : isToday
+                        ? 'Due today (${e.due.toIso8601String().split("T").first})'
+                        : days == 1
+                            ? 'Due tomorrow (${e.due.toIso8601String().split("T").first})'
+                            : 'Due ${e.due.toIso8601String().split("T").first} (in $days ${days == 1 ? "day" : "days"})',
                 waitDuration: const Duration(milliseconds: 500),
                 child: Text(label, style: mono(fontSize: 11, color: fg)),
               ),
