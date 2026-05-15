@@ -72,7 +72,7 @@ class RollupCompute {
         final raw = r.cells[targetKey];
         if (raw == null) continue;
         if (raw is String && raw.isEmpty) continue;
-        values.add(raw);
+        values.add(raw as Object);
       }
     }
     return _aggregate(values, column.rollupAgg);

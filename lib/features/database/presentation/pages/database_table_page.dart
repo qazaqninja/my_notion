@@ -170,7 +170,10 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         await _openFilterPopover(context, _schema!);
       case 'hide':
         final current = _visibleOverride ??
-            {for (final c in (_schema?.columns ?? const [])) c.key};
+            <String>{
+              for (final c in (_schema?.columns ?? const <ColumnDef>[]))
+                c.key,
+            };
         final next = {...current}..remove(columnKey);
         await _setVisibleOverride(next);
         if (!mounted) return;

@@ -2958,9 +2958,9 @@ class _DatabaseEmbedBlockState extends State<_DatabaseEmbedBlock> {
       if (extras.length >= 3) break;
     }
     return InkWell(
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+      onTap: () => Navigator.of(context).push<void>(MaterialPageRoute<void>(
         builder: (_) => const SizedBox.shrink(),
-      )).then((_) {}),
+      )),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
         child: Row(

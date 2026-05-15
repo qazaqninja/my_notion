@@ -10,6 +10,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/db/quill_database.dart' as db_models
+    show Page;
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
@@ -1232,7 +1234,7 @@ views:
   /// page on tap.
   Future<void> _showHygieneDialog({
     required BuildContext context,
-    required List<dynamic> pages,
+    required List<db_models.Page> pages,
     required String headingFull,
     required String headingEmpty,
     required String subtitleFull,

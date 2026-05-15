@@ -65,7 +65,7 @@ class RoamToMarkdown {
     return out;
   }
 
-  static void _walk(List children, int depth, List<String> out) {
+  static void _walk(List<dynamic> children, int depth, List<String> out) {
     for (final node in children) {
       if (node is! Map) continue;
       final s = '${node['string'] ?? ''}';

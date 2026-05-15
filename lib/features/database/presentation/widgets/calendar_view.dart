@@ -196,8 +196,8 @@ class _CalendarViewState extends State<CalendarView> {
             weekendStyle: TextStyle(fontSize: 11, color: tokens.text3),
           ),
           calendarBuilders: widget.subGroupBy == null
-              ? const CalendarBuilders()
-              : CalendarBuilders(
+              ? const CalendarBuilders<DatabasePageRow>()
+              : CalendarBuilders<DatabasePageRow>(
                   markerBuilder: (context, day, events) {
                     if (events.isEmpty) return null;
                     final rows = events.cast<DatabasePageRow>();

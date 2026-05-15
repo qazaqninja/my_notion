@@ -194,7 +194,7 @@ class _StreamListenable extends ChangeNotifier {
   _StreamListenable(Stream<void> stream) {
     _sub = stream.listen((_) => notifyListeners());
   }
-  late final StreamSubscription _sub;
+  late final StreamSubscription<void> _sub;
   @override
   void dispose() {
     _sub.cancel();

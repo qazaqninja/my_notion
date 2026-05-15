@@ -115,7 +115,8 @@ class FrontmatterRow extends StatelessWidget {
       case FrontmatterDisplayType.select:
         return TagChip(label: '$value', color: tagColor ?? TagColor.gray);
       case FrontmatterDisplayType.multi:
-        final values = (value is List) ? value : <dynamic>[];
+        final values =
+            (value is List) ? (value as List<dynamic>) : <dynamic>[];
         final palette = [
           TagColor.blue, TagColor.green, TagColor.orange,
           TagColor.purple, TagColor.pink, TagColor.yellow,
