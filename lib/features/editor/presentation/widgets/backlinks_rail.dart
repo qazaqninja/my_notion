@@ -43,7 +43,14 @@ class BacklinksRail extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text('${links.length}', style: mono(fontSize: 11, color: tokens.text3)),
+                  Tooltip(
+                    message: links.length == 1
+                        ? '1 page links here'
+                        : '${links.length} pages link here',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Text('${links.length}',
+                        style: mono(fontSize: 11, color: tokens.text3)),
+                  ),
                 ],
               ),
             ),
