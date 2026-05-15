@@ -64,6 +64,28 @@ const Color kCalloutImportant = Color(0xFF8E5CD0);
 const Color kCalloutWarning = Color(0xFFD08F3D);
 const Color kCalloutDanger = Color(0xFFCB5A4F);
 
+/// Stage / status colours for sales-pipeline-shaped databases. The five
+/// hues match `tokens.jsx:stage` exactly. Used by the timeline-view bar
+/// renderer and any other "deal stage"-like grouping.
+const Color kStageWon = kCalloutTip;     // green = won / expand
+const Color kStageChurn = Color(0xFFA8584C); // slightly muted red
+const Color kStagePilot = kCalloutInfo;  // blue
+const Color kStageEval = Color(0xFFB39342); // ochre
+const Color kStageNegot = Color(0xFFB46F4F); // terracotta
+
+/// Resolve a sales-stage substring to its bar/dot colour. Walks in
+/// priority order — first match wins. Returns null when nothing matches
+/// so the caller can fall back to a theme accent.
+Color? stageColor(String stage) {
+  final s = stage.toLowerCase();
+  if (s.contains('won') || s.contains('expand')) return kStageWon;
+  if (s.contains('churn')) return kStageChurn;
+  if (s.contains('pilot')) return kStagePilot;
+  if (s.contains('eval')) return kStageEval;
+  if (s.contains('negot')) return kStageNegot;
+  return null;
+}
+
 /// Resolve a callout kind keyword (note/tip/important/warning/warn/
 /// caution/danger) to its accent colour. Returns null for unknown kinds
 /// so the caller can fall back to its theme accent.

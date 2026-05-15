@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/database_schema.dart';
@@ -480,15 +481,8 @@ class _RowState extends State<_Row> {
     );
   }
 
-  Color _barColor(String stage, QuillTokens tokens) {
-    final s = stage.toLowerCase();
-    if (s.contains('won') || s.contains('expand')) return const Color(0xFF5A8F6E);
-    if (s.contains('churn')) return const Color(0xFFA8584C);
-    if (s.contains('pilot')) return const Color(0xFF5A82B4);
-    if (s.contains('eval')) return const Color(0xFFB39342);
-    if (s.contains('negot')) return const Color(0xFFB46F4F);
-    return tokens.accent;
-  }
+  Color _barColor(String stage, QuillTokens tokens) =>
+      stageColor(stage) ?? tokens.accent;
 }
 
 
