@@ -4,6 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/database_schema.dart';
 import '../../domain/repositories/database_repository.dart';
 import '../../domain/row_display.dart';
@@ -228,12 +229,37 @@ class _CalendarViewState extends State<CalendarView> {
           child: selectedRows.isEmpty
               ? Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Text(
-                      _selected == null
-                          ? 'Pick a day to see its pages.'
-                          : 'No pages on ${_selected!.toIso8601String().split("T").first}.',
-                      style: TextStyle(fontSize: 12.5, color: tokens.text3),
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        QuillIcon(
+                            _selected == null ? 'calendar' : 'calendar',
+                            size: 24,
+                            strokeWidth: 1.4,
+                            color: tokens.text3),
+                        const SizedBox(height: 10),
+                        Text(
+                          _selected == null
+                              ? 'Pick a day'
+                              : 'No pages on this day',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.text2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _selected == null
+                              ? 'Click a date in the calendar to see its pages.'
+                              : _selected!
+                                  .toIso8601String()
+                                  .split('T')
+                                  .first,
+                          style: TextStyle(fontSize: 12, color: tokens.text3),
+                        ),
+                      ],
                     ),
                   ),
                 )
