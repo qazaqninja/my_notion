@@ -267,9 +267,15 @@ class _SubGroupedGallery extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    '${entry.value.length}',
-                    style: mono(fontSize: 11, color: tokens.text3),
+                  Tooltip(
+                    message: entry.value.length == 1
+                        ? '1 card in ${entry.key}'
+                        : '${entry.value.length} cards in ${entry.key}',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Text(
+                      '${entry.value.length}',
+                      style: mono(fontSize: 11, color: tokens.text3),
+                    ),
                   ),
                 ],
               ),
