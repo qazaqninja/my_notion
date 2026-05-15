@@ -947,7 +947,15 @@ class _EditorBodyState extends State<_EditorBody> {
         }
         final loaded = state as EditorLoaded;
         final page = loaded.page;
+        // Strip the `.md` extension from the trailing breadcrumb so
+        // the header reads "Operations / Customers / Acmeco" instead
+        // of "… / Acmeco.md". File-on-disk path is still surfaced via
+        // the editor kebab → Reveal in Finder for power users.
         final crumbs = page.relativePath.split('/');
+        if (crumbs.isNotEmpty && crumbs.last.endsWith('.md')) {
+          crumbs[crumbs.length - 1] = crumbs.last
+              .substring(0, crumbs.last.length - 3);
+        }
         final mobile = isMobileWidth(context);
         final locked = EditorBloc.isLocked(loaded);
         return CallbackShortcuts(
