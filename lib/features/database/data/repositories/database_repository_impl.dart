@@ -283,7 +283,7 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
       ),
       FrontmatterEntry(
         key: 'title',
-        rawScalar: title,
+        rawScalar: _yamlSafeScalar(title),
         type: FrontmatterType.text,
         value: title,
       ),
@@ -410,6 +410,20 @@ class DatabaseRepositoryImpl implements DatabaseRepository {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
     return stripped.isEmpty ? 'Untitled' : stripped;
+  }
+
+  /// Wrap a string in double quotes when it contains YAML-unsafe glyphs.
+  /// Mirrors VaultBloc._yamlSafeScalar (M686) so DB createRow rows with
+  /// titles like "foo: bar" or "#tag" round-trip correctly.
+  static String _yamlSafeScalar(String value) {
+    if (value.isEmpty) return value;
+    final needs = RegExp(r'''[#:>\[\]\{\}\|"'`%@&!*]''').hasMatch(value) ||
+        value.startsWith(' ') ||
+        value.endsWith(' ');
+    if (!needs) return value;
+    final escaped =
+        value.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+    return '"$escaped"';
   }
 
   Map<String, dynamic> _decodeCells(String fmJson) {
