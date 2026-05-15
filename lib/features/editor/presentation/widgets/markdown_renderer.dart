@@ -1568,7 +1568,13 @@ class _SubpageCard extends StatelessWidget {
       builder: (context, snap) {
         final page = snap.data;
         final title = page?.title ?? 'Untitled (${ulid.substring(20)})';
-        final path = page?.relativePath ?? '';
+        final rawPath = page?.relativePath ?? '';
+        // Drop the `.md` suffix from the sub-card's path line so it
+        // matches every other page-listing surface (sidebar tree,
+        // PageHeader breadcrumb M307, etc.).
+        final path = rawPath.endsWith('.md')
+            ? rawPath.substring(0, rawPath.length - 3)
+            : rawPath;
         final emoji = page == null
             ? null
             : emojiFromFrontmatterJson(page.frontmatterJson);

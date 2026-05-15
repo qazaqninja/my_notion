@@ -97,7 +97,10 @@ class BacklinksRail extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          bl.relativePath,
+                          bl.relativePath.endsWith('.md')
+                              ? bl.relativePath.substring(
+                                  0, bl.relativePath.length - 3)
+                              : bl.relativePath,
                           style: mono(fontSize: 10.5, color: tokens.text3),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,

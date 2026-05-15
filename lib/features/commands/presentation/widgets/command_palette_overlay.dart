@@ -185,7 +185,10 @@ class _Panel extends StatelessWidget {
                             icon: 'file-md',
                             emojiIcon: state.pages[i].emojiIcon,
                             label: state.pages[i].title,
-                            hint: state.pages[i].relativePath,
+                            hint: state.pages[i].relativePath.endsWith('.md')
+                                ? state.pages[i].relativePath.substring(
+                                    0, state.pages[i].relativePath.length - 3)
+                                : state.pages[i].relativePath,
                             selected: state.selectedIndex == i,
                             onTap: () => onPickPage(state.pages[i]),
                           ),
