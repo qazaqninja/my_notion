@@ -271,7 +271,7 @@ class ChartView extends StatelessWidget {
                           ? '\n${numCol.key}: ${sums[label] ?? 0}'
                           : '';
                       return BarTooltipItem(
-                        '$label\n$c rows$s',
+                        '$label\n$c ${c == 1 ? 'row' : 'rows'}$s',
                         TextStyle(
                           fontSize: 11.5,
                           color: tokens.text,
