@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/quill_icon.dart';
 import '../../data/trash_service.dart';
 import '../bloc/vault_bloc.dart';
 import '../bloc/vault_event.dart';
@@ -104,6 +105,7 @@ class _TrashDialogState extends State<TrashDialog> {
                     visualDensity: VisualDensity.compact,
                     icon: const Icon(Icons.close, size: 18),
                     onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Close',
                   ),
                 ],
               ),
@@ -125,9 +127,30 @@ class _TrashDialogState extends State<TrashDialog> {
                   final items = snap.data!;
                   if (items.isEmpty) {
                     return Center(
-                      child: Text(
-                        'Trash is empty.',
-                        style: TextStyle(fontSize: 13, color: tokens.text3),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            QuillIcon('trash',
+                                size: 24,
+                                strokeWidth: 1.4,
+                                color: tokens.text3),
+                            const SizedBox(height: 10),
+                            Text('Trash is empty',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: tokens.text2,
+                                )),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Deleted pages will appear here.',
+                              style: TextStyle(
+                                  fontSize: 12, color: tokens.text3),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   }
