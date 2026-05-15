@@ -71,7 +71,7 @@ void main() {
     test('today() returns ISO date', () {
       final v = evaluateFormula('today()', row);
       expect(v, isA<String>());
-      expect(RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(v as String), isTrue);
+      expect(RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch('$v'), isTrue);
     });
 
     test('division by zero returns FormulaError', () {

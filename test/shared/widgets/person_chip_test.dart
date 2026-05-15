@@ -42,9 +42,10 @@ void main() {
     ));
     final containers = tester
         .widgetList<Container>(find.byType(Container))
-        .where((c) => c.decoration is BoxDecoration)
-        .map((c) => (c.decoration as BoxDecoration).color)
-        .where((c) => c != null)
+        .map((c) => c.decoration)
+        .whereType<BoxDecoration>()
+        .map((d) => d.color)
+        .whereType<Color>()
         .toList();
     expect(containers.length, greaterThanOrEqualTo(2));
     expect(containers[0], equals(containers[1]));
