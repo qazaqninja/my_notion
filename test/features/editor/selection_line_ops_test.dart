@@ -2035,6 +2035,38 @@ void main() {
     });
   });
 
+  group('renumberListLinesIn', () {
+    test('renumbers a numbered block from 1', () {
+      const text = '7. apple\n42. banana\n3. cherry\n';
+      final r = renumberListLinesIn(text, 0, text.length);
+      expect(r.text, '1. apple\n2. banana\n3. cherry\n');
+    });
+
+    test('non-numbered lines pass through', () {
+      const text = '1. apple\nintro\n2. banana\n';
+      final r = renumberListLinesIn(text, 0, text.length);
+      // Non-numbered line in the middle keeps the renumbering going.
+      expect(r.text, '1. apple\nintro\n2. banana\n');
+    });
+
+    test('preserves leading indent', () {
+      const text = '  5. one\n  9. two\n';
+      final r = renumberListLinesIn(text, 0, text.length);
+      expect(r.text, '  1. one\n  2. two\n');
+    });
+
+    test('blank lines do not consume a number', () {
+      const text = '5. one\n\n7. two\n';
+      final r = renumberListLinesIn(text, 0, text.length);
+      expect(r.text, '1. one\n\n2. two\n');
+    });
+
+    test('non-list block is a no-op', () {
+      const text = 'plain\nprose\n';
+      expect(renumberListLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

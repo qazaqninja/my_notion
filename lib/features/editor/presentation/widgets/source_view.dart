@@ -1096,6 +1096,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, htmlUncommentLinesIn,
         );
+      case SlashAction.renumberListLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, renumberListLinesIn,
+        );
     }
   }
 

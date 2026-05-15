@@ -1906,6 +1906,27 @@ SortLinesResult toggleTaskPrefixIn(String text, int start, int end) =>
       ];
     });
 
+/// Re-number every selected line that already starts with `N. `
+/// so the block reads 1, 2, 3, … sequentially from the top. Non-
+/// numbered lines pass through. Useful after inserting / deleting
+/// items mid-list to fix the numbering without doing two
+/// toggleNumberedPrefixIn passes (which would touch every line).
+SortLinesResult renumberListLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final numPattern = RegExp(r'^(\s*)\d+\. (.*)$');
+      var n = 1;
+      return [
+        for (final l in lines)
+          (() {
+            final m = numPattern.firstMatch(l);
+            if (m == null) return l;
+            final indent = m.group(1) ?? '';
+            final body = m.group(2) ?? '';
+            return '$indent${n++}. $body';
+          })(),
+      ];
+    });
+
 /// Toggle a `N. ` numbered-list prefix on every line in the selected
 /// block.
 ///

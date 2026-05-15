@@ -195,6 +195,8 @@ enum SlashAction {
   htmlCommentLines,
   /// Strip a `<!-- … -->` wrapper from every selected line.
   htmlUncommentLines,
+  /// Re-number every selected `N. ` line sequentially from 1.
+  renumberListLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -918,6 +920,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '<!-- a --> → a',
     action: SlashAction.htmlUncommentLines,
     keywords: ['html', 'uncomment', 'unwrap', 'show'],
+  ),
+  SlashEntry(
+    icon: 'list',
+    label: 'Renumber list',
+    hint: '7, 3, 9 → 1, 2, 3',
+    action: SlashAction.renumberListLines,
+    keywords: ['renumber', 'list', 'ordered', 'fix', 'sequence'],
   ),
   SlashEntry(
     icon: 'hash',
