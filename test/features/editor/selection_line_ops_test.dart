@@ -1053,6 +1053,45 @@ void main() {
     });
   });
 
+  group('zeroPadLinesIn', () {
+    test('auto width: pads all lines to the longest in the block', () {
+      const text = '5\n50\n500\n';
+      final r = zeroPadLinesIn(text, 0, text.length);
+      expect(r.text, '005\n050\n500\n');
+    });
+
+    test('explicit width pads up to that width', () {
+      const text = '5\n50\n';
+      final r = zeroPadLinesIn(text, 0, text.length, width: 4);
+      expect(r.text, '0005\n0050\n');
+    });
+
+    test('lines longer than the width pass through unchanged', () {
+      const text = '5\n500000\n';
+      final r = zeroPadLinesIn(text, 0, text.length, width: 4);
+      expect(r.text, '0005\n500000\n');
+    });
+
+    test('zero-pad lets numeric lines sort lexicographically', () {
+      // Without padding: "5" > "50" lex. With padding: "005" < "050".
+      const text = '5\n50\n500\n';
+      final padded = zeroPadLinesIn(text, 0, text.length).text;
+      final lines = padded.split('\n').where((l) => l.isNotEmpty).toList()
+        ..sort();
+      expect(lines, ['005', '050', '500']);
+    });
+
+    test('blank lines stay blank', () {
+      const text = '1\n\n22\n';
+      final r = zeroPadLinesIn(text, 0, text.length);
+      expect(r.text, '01\n\n22\n');
+    });
+
+    test('empty input is a no-op', () {
+      expect(zeroPadLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

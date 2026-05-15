@@ -965,6 +965,8 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, convertBinaryToDecimalLinesIn,
         );
+      case SlashAction.zeroPadLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, zeroPadLinesIn);
     }
   }
 

@@ -109,6 +109,9 @@ enum SlashAction {
   /// Convert `0b1010`-prefixed binary on every selected line to
   /// decimal.
   binaryToDecimal,
+  /// Left-pad every selected line with `0` so it reaches the
+  /// length of the longest line in the block (auto width).
+  zeroPadLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -587,6 +590,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '0b101 → 5',
     action: SlashAction.binaryToDecimal,
     keywords: ['binary', 'decimal', 'convert', 'base2', 'bits'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Zero-pad lines',
+    hint: '5 → 005',
+    action: SlashAction.zeroPadLines,
+    keywords: ['pad', 'zero', 'leading', 'align', 'right-align', 'numeric'],
   ),
   SlashEntry(
     icon: 'edit',

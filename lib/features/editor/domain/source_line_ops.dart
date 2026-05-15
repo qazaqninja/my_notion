@@ -835,6 +835,29 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
+/// Left-pad every selected line with `0` so all lines reach at
+/// least [width] characters. Useful when you want a column of
+/// integers to sort lexicographically the same way they sort
+/// numerically (so `5` doesn't come after `50` after a string sort).
+///
+/// When [width] is `null` we auto-detect: pad to the longest line's
+/// length in the block. Lines longer than the target width pass
+/// through unchanged. Blank lines stay blank.
+SortLinesResult zeroPadLinesIn(
+  String text,
+  int start,
+  int end, {
+  int? width,
+}) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final target = width ??
+          lines.fold<int>(0, (max, l) => l.length > max ? l.length : max);
+      return [
+        for (final l in lines)
+          if (l.isEmpty) l else l.padLeft(target, '0'),
+      ];
+    });
+
 /// Convert every selected line that parses as a non-negative
 /// decimal integer into binary (`0b…`). Negative or non-numeric
 /// lines are left untouched.
