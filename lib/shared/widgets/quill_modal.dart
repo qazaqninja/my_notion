@@ -413,7 +413,9 @@ Future<T?> showQuillModal<T>(
   return showDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
-    barrierColor: Colors.black.withValues(alpha: tokens.isDark ? 0.55 : 0.32),
+    barrierColor: Theme.of(context).colorScheme.shadow.withValues(
+          alpha: tokens.isDark ? 0.55 : 0.32,
+        ),
     builder: (ctx) {
       return CallbackShortcuts(
         bindings: {

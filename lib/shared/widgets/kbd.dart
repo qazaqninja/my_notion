@@ -17,9 +17,10 @@ class Kbd extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: tokens.isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.04),
+        // Inverse-of-bg wash so the chiclet shows up against the
+        // surface. `tokens.text` is dark on light, light on dark —
+        // evaluates identically to the inverted black/white pattern.
+        color: tokens.text.withValues(alpha: tokens.isDark ? 0.05 : 0.04),
         borderRadius: const BorderRadius.all(Radius.circular(3)),
         border: Border.all(color: tokens.divider2, width: 0.5),
       ),

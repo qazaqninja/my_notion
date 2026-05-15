@@ -19,9 +19,9 @@ class ImagePlaceholder extends StatelessWidget {
       width: double.infinity,
       child: CustomPaint(
         painter: _StripesPainter(
-          stripe: tokens.isDark
-              ? Colors.white.withValues(alpha: 0.025)
-              : Colors.black.withValues(alpha: 0.025),
+          // Inverse-of-bg stripe wash — same evaluation as the
+          // black/white toggle pattern.
+          stripe: tokens.text.withValues(alpha: 0.025),
           border: tokens.divider2,
         ),
         child: Center(

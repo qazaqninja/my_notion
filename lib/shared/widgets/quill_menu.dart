@@ -32,7 +32,10 @@ class QuillSurface extends StatelessWidget {
           border: Border.all(color: tokens.divider2, width: 0.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: dark ? 0.55 : 0.12),
+              color: Theme.of(context)
+                  .colorScheme
+                  .shadow
+                  .withValues(alpha: dark ? 0.55 : 0.12),
               offset: const Offset(0, 16),
               blurRadius: 48,
             ),
