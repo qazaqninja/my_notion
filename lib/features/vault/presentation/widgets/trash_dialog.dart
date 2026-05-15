@@ -79,13 +79,22 @@ class _TrashDialogState extends State<TrashDialog> {
                       future: _items,
                       builder: (context, snap) {
                         final n = snap.data?.length ?? 0;
-                        return Text(
-                          n == 0 ? 'TRASH' : 'TRASH · $n',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.0,
-                            color: tokens.text3,
+                        return Tooltip(
+                          message: n == 0
+                              ? 'Trash is empty'
+                              : n == 1
+                                  ? '1 trashed item'
+                                  : '$n trashed items',
+                          waitDuration:
+                              const Duration(milliseconds: 500),
+                          child: Text(
+                            n == 0 ? 'TRASH' : 'TRASH · $n',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 1.0,
+                              color: tokens.text3,
+                            ),
                           ),
                         );
                       },
