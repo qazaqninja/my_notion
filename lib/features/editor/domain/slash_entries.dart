@@ -176,6 +176,10 @@ enum SlashAction {
   csvLinesToMarkdownTable,
   /// Inverse: convert a GFM pipe-table block back into CSV rows.
   markdownTableToCsv,
+  /// Demote every selected `# ` heading by one level.
+  demoteHeadings,
+  /// Promote every selected heading by one level (up to `# `).
+  promoteHeadings,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -836,6 +840,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '| a | b | → a,b',
     action: SlashAction.markdownTableToCsv,
     keywords: ['csv', 'table', 'pipe', 'extract', 'unmark'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Demote headings (#→##)',
+    hint: '## → ###',
+    action: SlashAction.demoteHeadings,
+    keywords: ['demote', 'heading', 'h1', 'h2', 'deeper', 'nest'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Promote headings (##→#)',
+    hint: '### → ##',
+    action: SlashAction.promoteHeadings,
+    keywords: ['promote', 'heading', 'h2', 'h1', 'shallower', 'flatten'],
   ),
   SlashEntry(
     icon: 'hash',

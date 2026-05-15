@@ -1814,6 +1814,48 @@ void main() {
     });
   });
 
+  group('demoteHeadingsIn / promoteHeadingsIn', () {
+    test('demote bumps each heading one level deeper', () {
+      const text = '# H1\n## H2\n##### H5\n';
+      final r = demoteHeadingsIn(text, 0, text.length);
+      expect(r.text, '## H1\n### H2\n###### H5\n');
+    });
+
+    test('demote leaves H6 unchanged (cap)', () {
+      const text = '###### h6\n';
+      expect(demoteHeadingsIn(text, 0, text.length).text, text);
+    });
+
+    test('promote bumps each heading one level shallower', () {
+      const text = '## H2\n### H3\n###### H6\n';
+      final r = promoteHeadingsIn(text, 0, text.length);
+      expect(r.text, '# H2\n## H3\n##### H6\n');
+    });
+
+    test('promote leaves H1 unchanged (cap)', () {
+      const text = '# h1\n';
+      expect(promoteHeadingsIn(text, 0, text.length).text, text);
+    });
+
+    test('non-heading lines pass through both transforms', () {
+      const text = 'plain text\nstill plain\n';
+      expect(demoteHeadingsIn(text, 0, text.length).text, text);
+      expect(promoteHeadingsIn(text, 0, text.length).text, text);
+    });
+
+    test('demote then promote is identity for H2–H5', () {
+      const text = '## H2\n### H3\n#### H4\n##### H5\n';
+      final demoted = demoteHeadingsIn(text, 0, text.length).text;
+      final back = promoteHeadingsIn(demoted, 0, demoted.length).text;
+      expect(back, text);
+    });
+
+    test('requires the space after # — `#hash` is not a heading', () {
+      const text = '#hashtag\n';
+      expect(demoteHeadingsIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

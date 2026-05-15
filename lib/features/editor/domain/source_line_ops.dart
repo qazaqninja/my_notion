@@ -580,6 +580,44 @@ SortLinesResult strikethroughLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Bump every selected line that starts with one or more `#`
+/// followed by a space **down** one level (H1 → H2, etc.). Lines at
+/// the maximum heading depth (`###### `) stay put. Non-heading
+/// lines pass through. Useful when copy-pasting a section into a
+/// larger document and needing to push every heading one deeper.
+SortLinesResult demoteHeadingsIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final headingPattern = RegExp(r'^(#{1,6}) ');
+      return [
+        for (final l in lines)
+          (() {
+            final m = headingPattern.firstMatch(l);
+            if (m == null) return l;
+            final hashes = m.group(1)!;
+            if (hashes.length == 6) return l; // can't demote further
+            return '$hashes#${l.substring(hashes.length)}';
+          })(),
+      ];
+    });
+
+/// Inverse of [demoteHeadingsIn]. Bump every selected heading line
+/// **up** one level (H2 → H1, etc.). Lines already at H1 (`# `) stay
+/// put. Non-heading lines pass through.
+SortLinesResult promoteHeadingsIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final headingPattern = RegExp(r'^(#{1,6}) ');
+      return [
+        for (final l in lines)
+          (() {
+            final m = headingPattern.firstMatch(l);
+            if (m == null) return l;
+            final hashes = m.group(1)!;
+            if (hashes.length == 1) return l; // can't promote further
+            return '${hashes.substring(1)}${l.substring(hashes.length)}';
+          })(),
+      ];
+    });
+
 /// Convert a block of CSV-shaped lines into a GFM pipe table. The
 /// first line is treated as the header row and produces the
 /// `| --- | --- |` divider underneath. Each cell is trimmed of
