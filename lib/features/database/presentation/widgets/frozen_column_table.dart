@@ -677,7 +677,13 @@ class _FrozenColumnTableState extends State<FrozenColumnTable> {
           const PopupMenuItem(value: 'duplicate', child: Text('Duplicate row')),
         if (widget.onTrashRow != null) ...[
           const PopupMenuDivider(),
-          const PopupMenuItem(value: 'trash', child: Text('Move to trash')),
+          const PopupMenuItem(
+            value: 'trash',
+            child: Text(
+              'Move to trash',
+              style: TextStyle(color: Color(0xFFCB5A4F)),
+            ),
+          ),
         ],
       ],
     );

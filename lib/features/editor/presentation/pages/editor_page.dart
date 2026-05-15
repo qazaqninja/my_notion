@@ -339,7 +339,13 @@ class _EditorBodyState extends State<_EditorBody> {
         PopupMenuItem(value: 'clear-reminder', child: Text('Clear reminder')),
         PopupMenuItem(value: 'set-goal', child: Text('Set word count goal…')),
         PopupMenuDivider(),
-        PopupMenuItem(value: 'trash', child: Text('Move to trash')),
+        PopupMenuItem(
+          value: 'trash',
+          child: Text(
+            'Move to trash',
+            style: TextStyle(color: Color(0xFFCB5A4F)),
+          ),
+        ),
         PopupMenuItem(value: 'reindex', child: Text('Reindex vault')),
       ],
     );

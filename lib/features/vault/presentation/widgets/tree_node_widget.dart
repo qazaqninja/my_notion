@@ -241,7 +241,13 @@ class TreeNodeWidget extends StatelessWidget {
           ),
         ),
         const PopupMenuDivider(),
-        const PopupMenuItem(value: 'trash', child: Text('Move to trash')),
+        const PopupMenuItem(
+          value: 'trash',
+          child: Text(
+            'Move to trash',
+            style: TextStyle(color: Color(0xFFCB5A4F)),
+          ),
+        ),
       ],
     );
     if (!context.mounted) return;
