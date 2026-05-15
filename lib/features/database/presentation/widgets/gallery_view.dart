@@ -21,41 +21,27 @@ import '../../domain/row_display.dart';
 
 enum GalleryCardSize { small, medium, large }
 
-class _CardMetrics {
+enum _CardMetrics {
+  small(cardWidth: 180, cardHeight: 150, coverHeight: 60, titleSize: 12.5),
+  medium(cardWidth: 260, cardHeight: 220, coverHeight: 92, titleSize: 13.5),
+  large(cardWidth: 340, cardHeight: 300, coverHeight: 140, titleSize: 14.5);
+
   const _CardMetrics({
     required this.cardWidth,
     required this.cardHeight,
     required this.coverHeight,
     required this.titleSize,
   });
+
   final double cardWidth;
   final double cardHeight;
   final double coverHeight;
   final double titleSize;
 
-  static const _small = _CardMetrics(
-    cardWidth: 180,
-    cardHeight: 150,
-    coverHeight: 60,
-    titleSize: 12.5,
-  );
-  static const _medium = _CardMetrics(
-    cardWidth: 260,
-    cardHeight: 220,
-    coverHeight: 92,
-    titleSize: 13.5,
-  );
-  static const _large = _CardMetrics(
-    cardWidth: 340,
-    cardHeight: 300,
-    coverHeight: 140,
-    titleSize: 14.5,
-  );
-
   static _CardMetrics forSize(GalleryCardSize s) => switch (s) {
-        GalleryCardSize.small => _small,
-        GalleryCardSize.medium => _medium,
-        GalleryCardSize.large => _large,
+        GalleryCardSize.small => _CardMetrics.small,
+        GalleryCardSize.medium => _CardMetrics.medium,
+        GalleryCardSize.large => _CardMetrics.large,
       };
 }
 
