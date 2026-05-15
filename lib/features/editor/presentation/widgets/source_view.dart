@@ -31,8 +31,18 @@ import 'slash_menu_overlay.dart';
 /// Watches for `[[` typed before the cursor and pops the relation picker
 /// to splice `[[ULID]]` once a target is chosen.
 class SourceView extends StatefulWidget {
-  const SourceView({super.key, required this.initialText});
+  const SourceView({
+    super.key,
+    required this.initialText,
+    this.locked = false,
+  });
   final String initialText;
+
+  /// When true, the TextField is read-only and the controller listener
+  /// skips dispatching EditBody (which would otherwise be silently
+  /// swallowed by EditorBloc, see editor_bloc.dart:112). Mirrors the
+  /// kebab/title/properties-panel locked guards (M679–M681).
+  final bool locked;
 
   @override
   State<SourceView> createState() => _SourceViewState();
@@ -80,6 +90,11 @@ class _SourceViewState extends State<SourceView> {
   }
 
   void _onChanged() {
+    // When the page is locked, EditorBloc.EditBody silently returns and
+    // the local controller would drift ahead of the saved page. The
+    // TextField is also read-only at the widget level — this guard is
+    // belt-and-suspenders for any programmatic mutations.
+    if (widget.locked) return;
     context.read<EditorBloc>().add(EditBody(_controller.text));
 
     final text = _controller.text;
@@ -931,8 +946,11 @@ class _SourceViewState extends State<SourceView> {
                   focusNode: _focus,
                   maxLines: null,
                   minLines: 8,
+                  readOnly: widget.locked,
                   decoration: InputDecoration.collapsed(
-                    hintText: 'Type / for the slash menu, or markdown directly',
+                    hintText: widget.locked
+                        ? 'Page is locked · unlock to edit'
+                        : 'Type / for the slash menu, or markdown directly',
                     hintStyle:
                         mono(fontSize: 13.5, color: tokens.text3),
                   ),

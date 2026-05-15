@@ -1459,6 +1459,7 @@ class _EditorBodyState extends State<_EditorBody> {
                                 SourceView(
                                   key: ValueKey('source-${page.ulid}'),
                                   initialText: page.body,
+                                  locked: locked,
                                 ),
                               if (mobile) ...[
                                 const SizedBox(height: 24),
