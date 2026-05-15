@@ -1132,6 +1132,8 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, medianNumericLinesIn,
         );
+      case SlashAction.countLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, countLinesIn);
     }
   }
 

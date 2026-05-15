@@ -834,6 +834,16 @@ SortLinesResult minNumericLinesIn(String text, int start, int end) =>
       return [best.toString()];
     });
 
+/// Replace the selected block with the integer count of its non-
+/// blank lines. Useful for "how many items did I just paste?"
+/// scratch work — pairs with the M938–M940 statistics quartet so a
+/// column of values gives both the aggregate and the cardinality.
+SortLinesResult countLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final n = lines.where((l) => l.trim().isNotEmpty).length;
+      return [n.toString()];
+    });
+
 /// Sum every selected line that parses as a number (int or double).
 /// Non-numeric lines are skipped. Outputs a single line with the
 /// running total — integer when the sum has no fractional part,

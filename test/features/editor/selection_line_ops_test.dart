@@ -2327,6 +2327,32 @@ void main() {
     });
   });
 
+  group('countLinesIn', () {
+    test('counts non-blank lines', () {
+      const text = 'a\nb\nc\n';
+      expect(countLinesIn(text, 0, text.length).text, '3\n');
+    });
+
+    test('blank lines do not count', () {
+      const text = 'a\n\nb\n\n\nc\n';
+      expect(countLinesIn(text, 0, text.length).text, '3\n');
+    });
+
+    test('whitespace-only lines are treated as blank', () {
+      const text = 'a\n   \n\t\nb\n';
+      expect(countLinesIn(text, 0, text.length).text, '2\n');
+    });
+
+    test('empty input yields 0', () {
+      expect(countLinesIn('', 0, 0).text, '');
+    });
+
+    test('all-blank input yields 0', () {
+      const text = '\n\n\n';
+      expect(countLinesIn(text, 0, text.length).text, '0\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

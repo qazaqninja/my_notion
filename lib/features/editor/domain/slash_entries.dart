@@ -216,6 +216,8 @@ enum SlashAction {
   minNumericLines,
   /// Compute the median of every numeric line.
   medianNumericLines,
+  /// Replace the selection with the count of its non-blank lines.
+  countLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1009,6 +1011,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '1 / 5 / 3 → 3',
     action: SlashAction.medianNumericLines,
     keywords: ['median', 'middle', 'math', 'numeric', 'stats'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Count non-blank lines',
+    hint: 'tally',
+    action: SlashAction.countLines,
+    keywords: ['count', 'tally', 'how many', 'cardinality'],
   ),
   SlashEntry(
     icon: 'hash',
