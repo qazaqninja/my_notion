@@ -360,9 +360,13 @@ class _DayPageRowState extends State<_DayPageRow> {
                   ),
                 ),
               ),
-              Text(
-                widget.dateText,
-                style: mono(fontSize: 11, color: tokens.text3),
+              Tooltip(
+                message: 'Due ${widget.dateText}',
+                waitDuration: const Duration(milliseconds: 500),
+                child: Text(
+                  widget.dateText,
+                  style: mono(fontSize: 11, color: tokens.text3),
+                ),
               ),
             ],
           ),
