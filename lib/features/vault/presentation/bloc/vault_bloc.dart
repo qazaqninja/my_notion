@@ -161,6 +161,10 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     final root = Directory(loaded.rootPath);
     final ulid = _ulids.generate();
     final safe = _safeFileName(e.title);
+    // Title in frontmatter should match the human-friendly form: same
+    // .md-strip that `_safeFileName` does, so "foo.md" entered into the
+    // prompt produces title "foo" + file foo.md (not title "foo.md").
+    final displayTitle = _stripMdExtension(e.title);
     final relativePath = e.folderPath.isEmpty ? '$safe.md' : p.join(e.folderPath, '$safe.md');
     final today = DateTime.now();
     final iso =
@@ -169,7 +173,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     final page = Page(
       ulid: ulid,
       relativePath: relativePath,
-      title: e.title,
+      title: displayTitle,
       frontmatter: Frontmatter(entries: [
         FrontmatterEntry(
           key: 'id',
@@ -179,9 +183,9 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
         ),
         FrontmatterEntry(
           key: 'title',
-          rawScalar: e.title,
+          rawScalar: displayTitle,
           type: FrontmatterType.text,
-          value: e.title,
+          value: displayTitle,
         ),
         FrontmatterEntry(
           key: 'created_at',
@@ -466,6 +470,17 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
       stripped = stripped.substring(0, stripped.length - 3).trim();
     }
     return stripped.isEmpty ? 'Untitled' : stripped;
+  }
+
+  /// Strip a trailing `.md` so the title in frontmatter / display
+  /// doesn't get the extension when the user typed "foo.md" in the
+  /// new-page prompt.
+  String _stripMdExtension(String title) {
+    final trimmed = title.trim();
+    if (trimmed.toLowerCase().endsWith('.md')) {
+      return trimmed.substring(0, trimmed.length - 3).trim();
+    }
+    return trimmed;
   }
 
   /// In-place refresh. Unlike [LoadFromPath], does NOT emit VaultLoading,
