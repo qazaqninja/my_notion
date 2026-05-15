@@ -708,6 +708,12 @@ class _EditorBodyState extends State<_EditorBody> {
       }
     }
     if (!context.mounted) return;
+    if (actuallyNew.isEmpty) {
+      // Every tag the user entered was already on the page — skip the
+      // no-op bloc dispatch and inform via toast.
+      context.toastInfo('All tags already on this page');
+      return;
+    }
     final bloc = context.read<EditorBloc>();
     final raw = '[${merged.join(', ')}]';
     if (existing == null) {
@@ -723,13 +729,9 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: raw, value: merged),
       ));
     }
-    if (actuallyNew.isEmpty) {
-      context.toastInfo('All tags already on this page');
-    } else {
-      context.toastSuccess(
-          'Added ${actuallyNew.length} ${actuallyNew.length == 1 ? "tag" : "tags"}',
-          sub: actuallyNew.join(', '));
-    }
+    context.toastSuccess(
+        'Added ${actuallyNew.length} ${actuallyNew.length == 1 ? "tag" : "tags"}',
+        sub: actuallyNew.join(', '));
   }
 
   Future<void> _setWordGoal(
