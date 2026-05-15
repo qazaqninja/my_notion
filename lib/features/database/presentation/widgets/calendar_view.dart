@@ -269,10 +269,7 @@ class _CalendarViewState extends State<CalendarView> {
                         Text(
                           _selected == null
                               ? 'Click a date in the calendar to see its pages.'
-                              : _selected!
-                                  .toIso8601String()
-                                  .split('T')
-                                  .first,
+                              : 'Nothing scheduled for ${_selected!.toIso8601String().split("T").first}.',
                           style: TextStyle(fontSize: 12, color: tokens.text3),
                         ),
                       ],
