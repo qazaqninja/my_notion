@@ -49,6 +49,22 @@ String _iconForType(ColumnType t) => switch (t) {
       ColumnType.lastEditedTime => 'calendar',
     };
 
+String _labelForType(ColumnType t) => switch (t) {
+      ColumnType.text => 'text',
+      ColumnType.number => 'number',
+      ColumnType.date => 'date',
+      ColumnType.select => 'select',
+      ColumnType.multi => 'multi-select',
+      ColumnType.relation => 'relation',
+      ColumnType.checkbox => 'checkbox',
+      ColumnType.formula => 'formula',
+      ColumnType.rollup => 'rollup',
+      ColumnType.person => 'person',
+      ColumnType.file => 'file',
+      ColumnType.createdTime => 'created time',
+      ColumnType.lastEditedTime => 'last edited time',
+    };
+
 const double _rowHeight = 36;
 const double _headerHeight = 30;
 const double _titleColWidth = 220;
@@ -1299,12 +1315,13 @@ class _ColumnHeaderCellState extends State<_ColumnHeaderCell> {
       child: body,
     );
     if (!hoverable) return body;
+    final typeLabel = _labelForType(c.type);
     body = Tooltip(
       message: widget.isSorted
           ? (widget.sortAscending
-              ? 'Sorted ascending · click to flip · right-click for options'
-              : 'Sorted descending · click to clear · right-click for options')
-          : 'Click to sort · right-click for options',
+              ? '$typeLabel · sorted ascending · click to flip · right-click for options'
+              : '$typeLabel · sorted descending · click to clear · right-click for options')
+          : '$typeLabel · click to sort · right-click for options',
       waitDuration: const Duration(milliseconds: 600),
       child: body,
     );
