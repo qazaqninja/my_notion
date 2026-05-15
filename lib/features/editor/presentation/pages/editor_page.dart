@@ -284,6 +284,7 @@ class _EditorBodyState extends State<_EditorBody> {
       items: const [
         PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
         PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
+        PopupMenuItem(value: 'copy-path', child: Text('Copy file path')),
         PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder')),
         PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
         PopupMenuItem(value: 'rename', child: Text('Rename file…')),
@@ -319,6 +320,17 @@ class _EditorBodyState extends State<_EditorBody> {
         await Clipboard.setData(ClipboardData(text: '[[$ulid]]'));
         messenger?.showSnackBar(
           SnackBar(content: Text('Copied [[$ulid]]'),
+              duration: const Duration(seconds: 2)),
+        );
+      case 'copy-path':
+        final vault = context.read<VaultBloc>().state;
+        final path = vault is VaultLoaded
+            ? '${vault.rootPath}/${loaded.page.relativePath}'
+            : loaded.page.relativePath;
+        await Clipboard.setData(ClipboardData(text: path));
+        messenger?.showSnackBar(
+          SnackBar(
+              content: Text('Copied $path'),
               duration: const Duration(seconds: 2)),
         );
       case 'reveal':
