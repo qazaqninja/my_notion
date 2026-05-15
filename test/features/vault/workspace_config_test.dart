@@ -38,6 +38,36 @@ favorites:
         equals(['01HX0V9R5N6E8L3P7Q8S9U2X4B', '01HX0VEY5T6K7R9X4Y8Z0A3D4G']));
   });
 
+  test('save YAML-escapes unsafe characters in user-typed fields (M697)',
+      () async {
+    // Workspace name with ':' and '#' both of which would break the YAML
+    // if emitted unquoted. Same risk for user names / emails.
+    const cfg = WorkspaceConfig(
+      name: 'Lead: Vault #1',
+      icon: '📊',
+      users: [
+        WorkspaceUser(
+            name: 'Alice: Lead', email: 'alice@example.com #internal'),
+      ],
+      sidebarOrder: ['workspace', 'favorites: pinned'],
+    );
+    await cfg.save(tmp);
+    final raw = await File(p.join(tmp.path, '.quill.yaml')).readAsString();
+    // Every unsafe field must be double-quoted on disk.
+    expect(raw, contains('name: "Lead: Vault #1"'));
+    expect(raw, contains('- name: "Alice: Lead"'));
+    expect(raw, contains('email: "alice@example.com #internal"'));
+    expect(raw, contains('- "favorites: pinned"'));
+    // And the load() path round-trips back to the verbatim originals.
+    final reloaded = await WorkspaceConfig.load(tmp);
+    expect(reloaded.name, equals('Lead: Vault #1'));
+    expect(reloaded.users.single.name, equals('Alice: Lead'));
+    expect(reloaded.users.single.email,
+        equals('alice@example.com #internal'));
+    expect(reloaded.sidebarOrder,
+        equals(['workspace', 'favorites: pinned']));
+  });
+
   test('save then load round-trips fields', () async {
     const cfg = WorkspaceConfig(
       name: 'Test Vault',
