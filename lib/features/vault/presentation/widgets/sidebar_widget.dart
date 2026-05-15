@@ -628,10 +628,24 @@ class _FavoritesList extends StatelessWidget {
         final rows = snap.data ?? const [];
         if (rows.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Text(
-              'No favorites',
-              style: TextStyle(fontSize: 11.5, color: tokens.text3),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No favorites',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: tokens.text2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '⌘⇧D in the editor to pin the open page.',
+                  style: TextStyle(fontSize: 11, color: tokens.text3),
+                ),
+              ],
             ),
           );
         }
