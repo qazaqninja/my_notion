@@ -65,4 +65,56 @@ void main() {
     await db.close();
     await tmp.delete(recursive: true);
   });
+
+  test('CreatePage YAML-escapes titles containing reserved glyphs (M686)',
+      () async {
+    final tmp =
+        await Directory.systemTemp.createTemp('quill_create_page_unsafe_');
+    final db = QuillDatabase.forTesting(NativeDatabase.memory());
+    final repo = VaultRepositoryImpl(
+      VaultFsDatasource(ulids: const UlidGenerator()),
+    );
+    final indexer = Indexer(db, repo.datasource);
+    final bloc = VaultBloc(repo: repo, indexer: indexer, db: db);
+
+    bloc.add(LoadFromPath(tmp.path));
+    final loadedAt = DateTime.now();
+    while (bloc.state is! VaultLoaded) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      if (DateTime.now().difference(loadedAt).inSeconds > 3) {
+        fail('Vault never reached VaultLoaded: ${bloc.state}');
+      }
+    }
+
+    // A title with both `:` and `#` — without escape, the on-disk YAML
+    // would look like `title: foo: bar #tag` which parses back as a
+    // nested map / comment-stripped string, losing the original.
+    const unsafe = 'foo: bar #tag';
+    String? created;
+    bloc.add(CreatePage(title: unsafe, onCreated: (u) => created = u));
+    final createdAt = DateTime.now();
+    while (created == null) {
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      if (DateTime.now().difference(createdAt).inSeconds > 3) {
+        fail('onCreated never fired');
+      }
+    }
+
+    // _safeFileName collapses `:`/`#` to `-`; the on-disk filename is
+    // sanitised but the title preserved verbatim through the YAML
+    // double-quote escape.
+    final files =
+        await tmp.list().where((f) => f.path.endsWith('.md')).toList();
+    expect(files, hasLength(1));
+    final raw = await File(files.first.path).readAsString();
+    expect(raw, contains('title: "foo: bar #tag"'),
+        reason: 'title scalar must be double-quoted on disk');
+    final parsed = FrontmatterParser.parse(raw);
+    expect(parsed.frontmatter.title, equals(unsafe),
+        reason: 'round-trip must recover the original title verbatim');
+
+    await bloc.close();
+    await db.close();
+    await tmp.delete(recursive: true);
+  });
 }
