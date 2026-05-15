@@ -65,6 +65,14 @@ class _EmojiPickerDialog extends StatefulWidget {
 }
 
 class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
+  final _customCtl = TextEditingController();
+
+  @override
+  void dispose() {
+    _customCtl.dispose();
+    super.dispose();
+  }
+
   List<String> _filtered() {
     // No semantic search (no labels) — just return all unless we add a
     // name index later.
@@ -110,6 +118,33 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+              child: TextField(
+                controller: _customCtl,
+                autofocus: false,
+                style: TextStyle(fontSize: 14, color: tokens.text),
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 8),
+                  filled: true,
+                  fillColor: tokens.inputBg,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5),
+                    borderSide: BorderSide(color: tokens.divider2, width: 0.5),
+                  ),
+                  hintText: 'Or paste any emoji and press ↵',
+                  hintStyle: TextStyle(fontSize: 13, color: tokens.text3),
+                ),
+                onSubmitted: (v) {
+                  final s = v.trim();
+                  if (looksLikeEmoji(s)) {
+                    Navigator.of(context).pop(s);
+                  }
+                },
               ),
             ),
             Expanded(
