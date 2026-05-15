@@ -122,6 +122,12 @@ class CellRenderer extends StatelessWidget {
         return Align(alignment: align, child: TagChip(label: '$v', color: _tagFor('$v')));
       case ColumnType.multi:
         final values = _parseList(v);
+        if (values.isEmpty) {
+          return Align(
+            alignment: align,
+            child: Text('—', style: TextStyle(fontSize: 12, color: tokens.text3)),
+          );
+        }
         final palette = [
           TagColor.blue, TagColor.green, TagColor.orange,
           TagColor.purple, TagColor.pink, TagColor.yellow,
