@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/ui/anchor_rect.dart';
+import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
@@ -868,6 +869,14 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(stripStart, caret, lowercaseLinesIn);
       case SlashAction.titleCaseSelectedLines:
         _applyLinesTransformAfterSlash(stripStart, caret, titleCaseLinesIn);
+      case SlashAction.insertUlid:
+        // Strip the trigger first, then splice a freshly-generated ULID.
+        final ulid = const UlidGenerator().generate();
+        final cleared = text.replaceRange(stripStart, caret, ulid);
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart + ulid.length),
+        );
     }
   }
 

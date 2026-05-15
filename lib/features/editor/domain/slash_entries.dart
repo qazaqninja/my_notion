@@ -27,6 +27,10 @@ enum SlashAction {
   lowercaseSelectedLines,
   /// Title-case the lines touched by the selection.
   titleCaseSelectedLines,
+  /// Insert a freshly-generated ULID at the caret. Useful for users
+  /// who want a stable placeholder identifier before they decide what
+  /// the linked page will be.
+  insertUlid,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -337,6 +341,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'Title Case',
     action: SlashAction.titleCaseSelectedLines,
     keywords: ['title', 'case', 'caps', 'capitalize', 'headline'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Insert ULID',
+    hint: '26 chars',
+    action: SlashAction.insertUlid,
+    keywords: ['ulid', 'id', 'uuid', 'identifier', 'random'],
   ),
   SlashEntry(
     icon: 'tag',
