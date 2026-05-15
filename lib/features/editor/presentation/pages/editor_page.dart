@@ -1065,6 +1065,7 @@ class _EditorBodyState extends State<_EditorBody> {
 
   void _toggleLock(BuildContext context, EditorLoaded loaded) {
     final bloc = context.read<EditorBloc>();
+    final messenger = ScaffoldMessenger.maybeOf(context);
     final wasLocked = EditorBloc.isLocked(loaded);
     final fm = loaded.page.frontmatter;
     final existing = fm.find('locked');
@@ -1082,6 +1083,12 @@ class _EditorBodyState extends State<_EditorBody> {
         existing.copyWith(rawScalar: next, value: !wasLocked),
       ));
     }
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(wasLocked ? 'Page unlocked' : 'Page locked'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _togglePin(BuildContext context, EditorLoaded loaded) {
