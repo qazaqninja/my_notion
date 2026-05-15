@@ -577,13 +577,41 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
         value: _currentView,
         onChanged: (v) => setState(() => _currentView = v),
         options: const [
-          SegmentOption(value: ViewType.table, label: 'Table', icon: 'table'),
-          SegmentOption(value: ViewType.list, label: 'List', icon: 'note'),
-          SegmentOption(value: ViewType.gallery, label: 'Gallery', icon: 'gallery'),
-          SegmentOption(value: ViewType.board, label: 'Board', icon: 'board'),
-          SegmentOption(value: ViewType.timeline, label: 'Timeline', icon: 'timeline'),
-          SegmentOption(value: ViewType.calendar, label: 'Calendar', icon: 'calendar'),
-          SegmentOption(value: ViewType.chart, label: 'Chart', icon: 'chart'),
+          SegmentOption(
+              value: ViewType.table,
+              label: 'Table',
+              icon: 'table',
+              tooltip: 'Rows × columns with sort, filter, footer aggregations'),
+          SegmentOption(
+              value: ViewType.list,
+              label: 'List',
+              icon: 'note',
+              tooltip: 'Single-line rows; compact reading view'),
+          SegmentOption(
+              value: ViewType.gallery,
+              label: 'Gallery',
+              icon: 'gallery',
+              tooltip: 'Cards with cover image, icon + title'),
+          SegmentOption(
+              value: ViewType.board,
+              label: 'Board',
+              icon: 'board',
+              tooltip: 'Kanban columns grouped by a select column'),
+          SegmentOption(
+              value: ViewType.timeline,
+              label: 'Timeline',
+              icon: 'timeline',
+              tooltip: 'Bars per row by date with dependency arrows'),
+          SegmentOption(
+              value: ViewType.calendar,
+              label: 'Calendar',
+              icon: 'calendar',
+              tooltip: 'Month grid; click a day to see its rows'),
+          SegmentOption(
+              value: ViewType.chart,
+              label: 'Chart',
+              icon: 'chart',
+              tooltip: 'Bar chart of row counts grouped by a select column'),
         ],
       ),
       if (!mobile) const Spacer(),
