@@ -138,15 +138,18 @@ class _GalleryViewState extends State<GalleryView> {
                   SegmentOption(
                       value: GalleryCardSize.small,
                       label: 'S',
-                      icon: 'gallery'),
+                      icon: 'gallery',
+                      tooltip: 'Small cards'),
                   SegmentOption(
                       value: GalleryCardSize.medium,
                       label: 'M',
-                      icon: 'gallery'),
+                      icon: 'gallery',
+                      tooltip: 'Medium cards'),
                   SegmentOption(
                       value: GalleryCardSize.large,
                       label: 'L',
-                      icon: 'gallery'),
+                      icon: 'gallery',
+                      tooltip: 'Large cards'),
                 ],
               ),
             ],

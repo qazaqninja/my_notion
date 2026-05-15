@@ -4,10 +4,19 @@ import '../theme/quill_tokens.dart';
 import 'quill_icon.dart';
 
 class SegmentOption<T> {
-  const SegmentOption({required this.value, required this.label, this.icon});
+  const SegmentOption({
+    required this.value,
+    required this.label,
+    this.icon,
+    this.tooltip,
+  });
   final T value;
   final String label;
   final String? icon;
+
+  /// Optional hover hint. Useful when `label` is a one-letter abbreviation
+  /// (S/M/L on a card-size switcher) — the tooltip can carry the full word.
+  final String? tooltip;
 }
 
 /// Segmented control — view switcher, mode toggle, etc. Matches `Segment`
@@ -45,7 +54,7 @@ class Segment<T> extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: options.map((o) {
           final selected = o.value == value;
-          return MouseRegion(
+          Widget tile = MouseRegion(
             cursor: selected
                 ? SystemMouseCursors.basic
                 : SystemMouseCursors.click,
@@ -87,6 +96,14 @@ class Segment<T> extends StatelessWidget {
               ),
             ),
           );
+          if (o.tooltip != null) {
+            tile = Tooltip(
+              message: o.tooltip!,
+              waitDuration: const Duration(milliseconds: 500),
+              child: tile,
+            );
+          }
+          return tile;
         }).toList(),
       ),
     );
