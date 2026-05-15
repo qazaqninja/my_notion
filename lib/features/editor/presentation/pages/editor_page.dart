@@ -120,6 +120,21 @@ String _wordCountTooltip(String body, int words, int chars, int mins) {
       '~$mins min read at 220 wpm';
 }
 
+/// Hover-tooltip helper for the PageFooter date lines. Tries to
+/// parse [iso] as a full DateTime; falls back to "no date" when the
+/// value is empty, and to the raw input when parsing fails (date-only
+/// strings like `2026-05-15` already parse cleanly, so this mostly
+/// catches user-typed garbage gracefully).
+String _dateAgoTooltip(String iso) {
+  if (iso.trim().isEmpty) return 'No date set';
+  final parsed = DateTime.tryParse(iso);
+  if (parsed == null) return iso;
+  final delta = DateTime.now().difference(parsed);
+  if (delta.inDays < 1 && delta.inDays > -1) return 'today  ·  $parsed';
+  if (delta.inDays > 0) return '${delta.inDays}d ago  ·  $parsed';
+  return 'in ${-delta.inDays}d  ·  $parsed';
+}
+
 String _slugify(String s) {
   final lower = s.toLowerCase();
   final cleaned = lower.replaceAll(RegExp(r'[^a-z0-9]+'), '-');
@@ -2019,25 +2034,31 @@ class _PageFooter extends StatelessWidget {
           ],
           if (createdAt.isNotEmpty || createdBy.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              [
-                if (createdAt.isNotEmpty) 'Created: $createdAt',
-                if (createdBy.isNotEmpty) 'by $createdBy',
-              ].join(' '),
-              style: mono(fontSize: 11, color: tokens.text3),
+            Tooltip(
+              message: _dateAgoTooltip(createdAt),
+              child: Text(
+                [
+                  if (createdAt.isNotEmpty) 'Created: $createdAt',
+                  if (createdBy.isNotEmpty) 'by $createdBy',
+                ].join(' '),
+                style: mono(fontSize: 11, color: tokens.text3),
+              ),
             ),
           ],
           if ((lastEditedAt.isNotEmpty && lastEditedAt != createdAt) ||
               (lastEditedBy.isNotEmpty && lastEditedBy != createdBy)) ...[
             const SizedBox(height: 2),
-            Text(
-              [
-                if (lastEditedAt.isNotEmpty && lastEditedAt != createdAt)
-                  'Last edited: $lastEditedAt',
-                if (lastEditedBy.isNotEmpty && lastEditedBy != createdBy)
-                  'by $lastEditedBy',
-              ].join(' '),
-              style: mono(fontSize: 11, color: tokens.text3),
+            Tooltip(
+              message: _dateAgoTooltip(lastEditedAt),
+              child: Text(
+                [
+                  if (lastEditedAt.isNotEmpty && lastEditedAt != createdAt)
+                    'Last edited: $lastEditedAt',
+                  if (lastEditedBy.isNotEmpty && lastEditedBy != createdBy)
+                    'by $lastEditedBy',
+                ].join(' '),
+                style: mono(fontSize: 11, color: tokens.text3),
+              ),
             ),
           ],
         ],
