@@ -1571,14 +1571,22 @@ class _BookmarkCardState extends State<_BookmarkCard> {
 
 /// Sub-page card. Looks up the page's title and icon from drift and
 /// renders a clickable Notion-style row with icon + title + path.
-class _SubpageCard extends StatelessWidget {
+class _SubpageCard extends StatefulWidget {
   const _SubpageCard({required this.ulid});
   final String ulid;
+
+  @override
+  State<_SubpageCard> createState() => _SubpageCardState();
+}
+
+class _SubpageCardState extends State<_SubpageCard> {
+  bool _hover = false;
 
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final db = context.read<QuillDatabase>();
+    final ulid = widget.ulid;
     return FutureBuilder(
       future: (db.select(db.pages)..where((p) => p.ulid.equals(ulid)))
           .getSingleOrNull(),
@@ -1589,15 +1597,20 @@ class _SubpageCard extends StatelessWidget {
         final emoji = page == null
             ? null
             : emojiFromFrontmatterJson(page.frontmatterJson);
-        return GestureDetector(
-          onTap: () => Navigator.of(context).pushReplacementNamed('/editor/$ulid'),
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _hover = true),
+          onExit: (_) => setState(() => _hover = false),
+          child: GestureDetector(
+            onTap: () => Navigator.of(context)
+                .pushReplacementNamed('/editor/$ulid'),
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
-                color: tokens.surface,
-                border: Border.all(color: tokens.divider2, width: 0.5),
+                color: _hover ? tokens.surface2 : tokens.surface,
+                border: Border.all(
+                    color: _hover ? tokens.accent : tokens.divider2,
+                    width: 0.5),
                 borderRadius: const BorderRadius.all(Radius.circular(6)),
               ),
               child: Row(
