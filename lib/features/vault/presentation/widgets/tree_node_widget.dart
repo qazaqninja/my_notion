@@ -219,6 +219,7 @@ class TreeNodeWidget extends StatelessWidget {
         const PopupMenuItem(value: 'copy-ulid', child: Text('Copy ULID')),
         const PopupMenuItem(value: 'copy-link', child: Text('Copy [[link]]')),
         const PopupMenuItem(value: 'duplicate', child: Text('Duplicate page')),
+        const PopupMenuItem(value: 'rename', child: Text('Rename file…')),
         const PopupMenuItem(value: 'history', child: Text('Page history')),
         PopupMenuItem(
           value: 'pin',
@@ -262,6 +263,9 @@ class TreeNodeWidget extends StatelessWidget {
             fl.ulid,
             onCreated: (newUlid) => router.go('/editor/$newUlid'),
           ));
+    } else if (selected == 'rename') {
+      if (fl.ulid.isEmpty) return;
+      await _promptRenameFile(context, fl);
     } else if (selected == 'pin') {
       if (fl.ulid.isEmpty) return;
       context.read<VaultBloc>().add(ToggleFavorite(fl.ulid));
@@ -279,6 +283,41 @@ class TreeNodeWidget extends StatelessWidget {
     messenger?.showSnackBar(SnackBar(
         content: Text(ulid.isEmpty ? 'No ULID for this page' : 'Copied $ulid'),
         duration: const Duration(seconds: 2)));
+  }
+
+  Future<void> _promptRenameFile(BuildContext context, VaultFile fl) async {
+    final basename = p.basenameWithoutExtension(fl.relativePath);
+    final controller = TextEditingController(text: basename);
+    controller.selection =
+        TextSelection(baseOffset: 0, extentOffset: basename.length);
+    final bloc = context.read<VaultBloc>();
+    final picked = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Rename file'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'new-name (without .md)',
+            helperText: 'ULID is unchanged — wikilinks survive the rename.',
+          ),
+          onSubmitted: (v) => Navigator.of(ctx).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Rename'),
+          ),
+        ],
+      ),
+    );
+    if (picked == null || picked.trim().isEmpty) return;
+    bloc.add(RenamePage(ulid: fl.ulid, newBasename: picked.trim()));
   }
 
   Future<void> _promptNewSubpage(BuildContext context,
