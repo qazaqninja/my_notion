@@ -177,6 +177,45 @@ class _VaultShellPageState extends State<VaultShellPage> {
               context.go('/home'),
           const SingleActivator(LogicalKeyboardKey.period, meta: true): () =>
               _openQuickCapture(context),
+          // ⌘1..⌘9 — jump to the Nth pinned page (1-based). Power-user
+          // shortcut common in browsers / Notion. No-op when the
+          // workspace has fewer than N favorites.
+          const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () =>
+              _jumpToFavorite(context, 1),
+          const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () =>
+              _jumpToFavorite(context, 2),
+          const SingleActivator(LogicalKeyboardKey.digit3, meta: true): () =>
+              _jumpToFavorite(context, 3),
+          const SingleActivator(LogicalKeyboardKey.digit4, meta: true): () =>
+              _jumpToFavorite(context, 4),
+          const SingleActivator(LogicalKeyboardKey.digit5, meta: true): () =>
+              _jumpToFavorite(context, 5),
+          const SingleActivator(LogicalKeyboardKey.digit6, meta: true): () =>
+              _jumpToFavorite(context, 6),
+          const SingleActivator(LogicalKeyboardKey.digit7, meta: true): () =>
+              _jumpToFavorite(context, 7),
+          const SingleActivator(LogicalKeyboardKey.digit8, meta: true): () =>
+              _jumpToFavorite(context, 8),
+          const SingleActivator(LogicalKeyboardKey.digit9, meta: true): () =>
+              _jumpToFavorite(context, 9),
+          const SingleActivator(LogicalKeyboardKey.digit1, control: true): () =>
+              _jumpToFavorite(context, 1),
+          const SingleActivator(LogicalKeyboardKey.digit2, control: true): () =>
+              _jumpToFavorite(context, 2),
+          const SingleActivator(LogicalKeyboardKey.digit3, control: true): () =>
+              _jumpToFavorite(context, 3),
+          const SingleActivator(LogicalKeyboardKey.digit4, control: true): () =>
+              _jumpToFavorite(context, 4),
+          const SingleActivator(LogicalKeyboardKey.digit5, control: true): () =>
+              _jumpToFavorite(context, 5),
+          const SingleActivator(LogicalKeyboardKey.digit6, control: true): () =>
+              _jumpToFavorite(context, 6),
+          const SingleActivator(LogicalKeyboardKey.digit7, control: true): () =>
+              _jumpToFavorite(context, 7),
+          const SingleActivator(LogicalKeyboardKey.digit8, control: true): () =>
+              _jumpToFavorite(context, 8),
+          const SingleActivator(LogicalKeyboardKey.digit9, control: true): () =>
+              _jumpToFavorite(context, 9),
           const SingleActivator(LogicalKeyboardKey.period, control: true): () =>
               _openQuickCapture(context),
           const SingleActivator(LogicalKeyboardKey.keyO,
@@ -291,6 +330,18 @@ class _VaultShellPageState extends State<VaultShellPage> {
     }
   }
 
+  /// Jump to the Nth pinned page (1-based) from `.quill.yaml` favorites.
+  /// Out-of-range no-ops silently so the user isn't surprised when they
+  /// hold ⌘1 with no favorites yet.
+  void _jumpToFavorite(BuildContext context, int oneBasedIndex) {
+    final state = context.read<VaultBloc>().state;
+    if (state is! VaultLoaded) return;
+    final favorites = state.workspace.favorites;
+    final i = oneBasedIndex - 1;
+    if (i < 0 || i >= favorites.length) return;
+    context.go('/editor/${favorites[i]}');
+  }
+
   Future<void> _showShortcuts(BuildContext context) async {
     if (!context.mounted) return;
     final maxH = MediaQuery.of(context).size.height * 0.85;
@@ -363,6 +414,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 _kbRow(tokens, 'F2', 'Rename current page file'),
                 _kbRow(tokens, '⌘P', 'Print current page'),
                 _kbRow(tokens, '⌘V', 'Smart paste — wraps selection as [sel](url) if clipboard is a URL (source)'),
+                _kbRow(tokens, '⌘1..9', 'Jump to the Nth pinned page (favorites)'),
                 _kbRow(tokens, '⌘⇧H', 'Wrap selection in ==highlight== (source)'),
                 _kbRow(tokens, '⌘K', 'Insert link — URL pre-fills from clipboard (source)'),
                 _kbRow(tokens, '⌘D', 'Duplicate current line (source)'),
