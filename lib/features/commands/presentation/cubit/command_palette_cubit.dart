@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:drift/drift.dart' show OrderingMode, OrderingTerm;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -187,19 +185,8 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     return out;
   }
 
-  static List<String> _readTags(String json) {
-    if (json.isEmpty) return const [];
-    try {
-      final m = jsonDecode(json);
-      if (m is! Map) return const [];
-      final raw = m['tags'];
-      if (raw is List) {
-        return [for (final t in raw) '$t'];
-      }
-      if (raw is String) return [raw];
-    } catch (_) {/* fall through */}
-    return const [];
-  }
+  static List<String> _readTags(String json) =>
+      listValueFromFrontmatterJson(json, 'tags');
 
   static const _baseActions = <CommandEntry>[
     CommandEntry(group: CommandGroup.actions, icon: 'plus', label: 'Quick capture', hint: '⌘.'),

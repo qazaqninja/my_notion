@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
@@ -218,16 +217,10 @@ class _StatsStripState extends State<_StatsStrip> {
     for (final p in pages) {
       if (!linked.contains(p.ulid)) orphans++;
       if (p.mtimeMs < staleCutoff) stale++;
-      if (p.frontmatterJson.isEmpty) continue;
-      try {
-        final m = jsonDecode(p.frontmatterJson);
-        if (m is Map && m['tags'] is List) {
-          for (final t in (m['tags'] as List)) {
-            final s = '$t'.trim();
-            if (s.isNotEmpty) tagSet.add(s);
-          }
-        }
-      } catch (_) {}
+      for (final t in listValueFromFrontmatterJson(p.frontmatterJson, 'tags')) {
+        final s = t.trim();
+        if (s.isNotEmpty) tagSet.add(s);
+      }
     }
     return _StripCounts(
       pages: pages.length,
@@ -550,11 +543,23 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
     final horizon = today.add(const Duration(days: 7));
     final out = <_ReminderEntry>[];
     for (final r in rows) {
-      // Hand-parse `reminder:` from the frontmatter_json blob.
-      final m = RegExp(r'"reminder"\s*:\s*"([^"]+)"')
-          .firstMatch(r.frontmatterJson);
-      if (m == null) continue;
-      final raw = m.group(1)?.trim() ?? '';
+      // Walk the structured `{entries: […]}` blob via the shared helper.
+      // A previous regex-based pass looked for `"reminder":"…"` at the
+      // top level, which never matches our nested shape (`"reminder"`
+      // only surfaces as the *value* of a key field), so the section
+      // was permanently empty.
+      var raw = rawScalarFromFrontmatterJson(r.frontmatterJson, 'reminder');
+      if (raw == null) continue;
+      raw = raw.trim();
+      if (raw.isEmpty) continue;
+      // Strip surrounding YAML quotes — `reminder: "2026-05-20"` round-
+      // trips verbatim through the parser and would otherwise fail
+      // DateTime.tryParse on the bare string.
+      if (raw.length >= 2 &&
+          ((raw.startsWith('"') && raw.endsWith('"')) ||
+              (raw.startsWith("'") && raw.endsWith("'")))) {
+        raw = raw.substring(1, raw.length - 1);
+      }
       final due = DateTime.tryParse(raw);
       if (due == null) continue;
       final dueDay = DateTime(due.year, due.month, due.day);

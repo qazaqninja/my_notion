@@ -1,9 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -35,31 +34,23 @@ class _TagsPageState extends State<TagsPage> {
     final db = context.read<QuillDatabase>();
     final rows = await db.select(db.pages).get();
     final counts = <String, int>{};
+    // Keys whose values look categorical — these get aggregated as tags
+    // regardless of whether they're stored as scalars or flow lists.
+    // The structured-cache walker treats both shapes uniformly.
+    const categoricalKeys = {
+      'tags',
+      'status',
+      'stage',
+      'category',
+      'kind',
+      'type',
+      'labels',
+    };
     for (final row in rows) {
-      final Map<String, dynamic> fm;
-      try {
-        fm = json.decode(row.frontmatterJson) as Map<String, dynamic>;
-      } catch (_) {
-        continue;
-      }
-      // Treat keys that smell like categorical fields as tag sources:
-      // tags, status, stage, kind, type, category, labels, multi-* etc.
-      // Also accept any list value regardless of key.
-      for (final entry in fm.entries) {
-        final v = entry.value;
-        if (v is List) {
-          for (final item in v) {
-            final s = '$item'.trim();
-            if (s.isEmpty) continue;
-            counts[s] = (counts[s] ?? 0) + 1;
-          }
-        } else if (entry.key == 'tags' ||
-            entry.key == 'status' ||
-            entry.key == 'stage' ||
-            entry.key == 'category' ||
-            entry.key == 'kind' ||
-            entry.key == 'type') {
-          final s = '${v ?? ''}'.trim();
+      for (final key in categoricalKeys) {
+        for (final v
+            in listValueFromFrontmatterJson(row.frontmatterJson, key)) {
+          final s = v.trim();
           if (s.isEmpty) continue;
           counts[s] = (counts[s] ?? 0) + 1;
         }

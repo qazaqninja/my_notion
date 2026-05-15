@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../core/ulid/ulid_generator.dart';
@@ -1153,16 +1154,8 @@ views:
   Future<void> _showUntitledDialog(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final pages = await db.select(db.pages).get();
-    bool hasExplicitTitle(String json) {
-      if (json.isEmpty) return false;
-      try {
-        final m = jsonDecode(json);
-        if (m is! Map) return false;
-        final raw = m['title'];
-        if (raw is String) return raw.trim().isNotEmpty;
-      } catch (_) {/* fall through */}
-      return false;
-    }
+    bool hasExplicitTitle(String json) =>
+        hasNonEmptyFrontmatterValue(json, 'title');
 
     final untitled = [
       for (final p in pages)
@@ -1309,22 +1302,10 @@ views:
     // Aggregate frontmatter `tags:` lists across pages → frequency map.
     final tagCounts = <String, int>{};
     for (final p in pages) {
-      if (p.frontmatterJson.isEmpty) continue;
-      try {
-        final m = jsonDecode(p.frontmatterJson);
-        if (m is! Map) continue;
-        final raw = m['tags'];
-        if (raw is List) {
-          for (final t in raw) {
-            final s = '$t'.trim();
-            if (s.isNotEmpty) {
-              tagCounts[s] = (tagCounts[s] ?? 0) + 1;
-            }
-          }
-        } else if (raw is String && raw.trim().isNotEmpty) {
-          tagCounts[raw.trim()] = (tagCounts[raw.trim()] ?? 0) + 1;
-        }
-      } catch (_) {/* malformed cached frontmatter */}
+      for (final t in listValueFromFrontmatterJson(p.frontmatterJson, 'tags')) {
+        final s = t.trim();
+        if (s.isNotEmpty) tagCounts[s] = (tagCounts[s] ?? 0) + 1;
+      }
     }
     final topTags = tagCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
