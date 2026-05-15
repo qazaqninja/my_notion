@@ -128,8 +128,16 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
     for (final r in ranges) {
       next = next.replaceRange(r.$1, r.$2, '');
     }
+    final count = ranges.length;
     _selected.clear();
     onBodyChange?.call(next);
+    if (!mounted) return;
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text('Deleted $count ${count == 1 ? 'block' : 'blocks'}'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _copySelected(List<_Block> blocks) async {
