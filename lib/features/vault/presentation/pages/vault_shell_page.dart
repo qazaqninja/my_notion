@@ -297,18 +297,21 @@ class _VaultShellPageState extends State<VaultShellPage> {
   Future<void> _showShortcuts(BuildContext context) async {
     if (!context.mounted) return;
     final tokens = QuillTokens.of(context);
+    final maxH = MediaQuery.of(context).size.height * 0.85;
     await showDialog<void>(
       context: context,
       builder: (_) => Dialog(
         backgroundColor: tokens.surface,
         child: SizedBox(
           width: 460,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 Text('KEYBOARD SHORTCUTS',
                     style: TextStyle(
                       fontSize: 11,
@@ -388,6 +391,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),
