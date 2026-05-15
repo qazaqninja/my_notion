@@ -891,6 +891,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, toggleTaskPrefixIn,
         );
+      case SlashAction.toggleNumberedList:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, toggleNumberedPrefixIn,
+        );
     }
   }
 

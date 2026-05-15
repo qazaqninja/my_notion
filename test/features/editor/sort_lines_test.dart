@@ -293,6 +293,58 @@ void main() {
     });
   });
 
+  group('toggleNumberedPrefixIn', () {
+    test('adds "1. 2. 3. " to plain lines, renumbered from 1', () {
+      const text = 'apple\nbanana\ncherry\n';
+      final r = toggleNumberedPrefixIn(text, 0, text.length);
+      expect(r.text, '1. apple\n2. banana\n3. cherry\n');
+    });
+
+    test('strips numbered prefixes when every line is numbered', () {
+      const text = '1. apple\n2. banana\n3. cherry\n';
+      final r = toggleNumberedPrefixIn(text, 0, text.length);
+      expect(r.text, 'apple\nbanana\ncherry\n');
+    });
+
+    test('round-trips back to plain text', () {
+      const text = 'one\ntwo\nthree\n';
+      final on = toggleNumberedPrefixIn(text, 0, text.length);
+      final off = toggleNumberedPrefixIn(on.text, 0, on.text.length);
+      expect(off.text, text);
+    });
+
+    test('renumbers across mixed-numbered input', () {
+      // 7. and 42. are wrong — toggle should restart at 1.
+      const text = '7. apple\nbanana\n42. cherry\n';
+      final r = toggleNumberedPrefixIn(text, 0, text.length);
+      expect(r.text, '1. apple\n2. banana\n3. cherry\n');
+    });
+
+    test('preserves leading indent on add', () {
+      const text = '  one\n  two\n';
+      final r = toggleNumberedPrefixIn(text, 0, text.length);
+      expect(r.text, '  1. one\n  2. two\n');
+    });
+
+    test('preserves leading indent on strip', () {
+      const text = '  1. one\n  2. two\n';
+      final r = toggleNumberedPrefixIn(text, 0, text.length);
+      expect(r.text, '  one\n  two\n');
+    });
+
+    test('blank lines do not consume a number', () {
+      const text = 'a\n\nb\n';
+      final r = toggleNumberedPrefixIn(text, 0, text.length);
+      expect(r.text, '1. a\n\n2. b\n');
+    });
+
+    test('strips multi-digit numbers (10., 11., …)', () {
+      const text = '10. ten\n11. eleven\n';
+      final r = toggleNumberedPrefixIn(text, 0, text.length);
+      expect(r.text, 'ten\neleven\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

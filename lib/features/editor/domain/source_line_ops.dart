@@ -558,6 +558,49 @@ SortLinesResult toggleTaskPrefixIn(String text, int start, int end) =>
       ];
     });
 
+/// Toggle a `N. ` numbered-list prefix on every line in the selected
+/// block.
+///
+/// Differs from [toggleBulletPrefixIn] in that adding the prefix
+/// **renumbers** every non-empty line from 1 — the user's intent is a
+/// single ordered list, not an alternating count. Stripping recognises
+/// any `\d+\. ` prefix (allowing leading indent). Blank lines and
+/// existing indentation are preserved in both directions.
+SortLinesResult toggleNumberedPrefixIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final numPattern = RegExp(r'^\d+\. ');
+      bool startsWithNumber(String l) => numPattern.hasMatch(l.trimLeft());
+
+      final nonEmpty = [for (final l in lines) if (l.trim().isNotEmpty) l];
+      final allNumbered =
+          nonEmpty.isNotEmpty && nonEmpty.every(startsWithNumber);
+
+      final out = <String>[];
+      var n = 1;
+      for (final l in lines) {
+        if (l.trim().isEmpty) {
+          out.add(l);
+          continue;
+        }
+        final indent = l.substring(0, l.length - l.trimLeft().length);
+        final body = l.trimLeft();
+        if (allNumbered) {
+          // Strip "<digits>. " prefix.
+          final m = numPattern.firstMatch(body);
+          out.add('$indent${body.substring(m!.end)}');
+        } else if (startsWithNumber(l)) {
+          // Re-number this line so the whole block reads 1,2,3,…
+          final m = numPattern.firstMatch(body);
+          out.add('$indent$n. ${body.substring(m!.end)}');
+          n++;
+        } else {
+          out.add('$indent$n. $body');
+          n++;
+        }
+      }
+      return out;
+    });
+
 /// Title-case every line in the selected block: capitalise the first
 /// letter of each whitespace-separated word, lowercase the rest. Words
 /// shorter than 4 chars in the middle of a line (and, or, the, of, …)

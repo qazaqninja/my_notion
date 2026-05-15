@@ -45,6 +45,10 @@ enum SlashAction {
   /// Strips when every line is already a task; adds an unchecked
   /// checkbox otherwise.
   toggleTaskList,
+  /// Toggle a `N. ` numbered-list prefix on every line in the
+  /// selection. Adding renumbers from 1; stripping recognises any
+  /// `\d+. ` prefix.
+  toggleNumberedList,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -341,6 +345,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '- [ ] …',
     action: SlashAction.toggleTaskList,
     keywords: ['task', 'todo', 'checkbox', 'list', 'toggle', 'check'],
+  ),
+  SlashEntry(
+    icon: 'list',
+    label: 'Toggle numbered list',
+    hint: '1. …',
+    action: SlashAction.toggleNumberedList,
+    keywords: ['number', 'numbered', 'ordered', 'list', 'toggle', 'ol'],
   ),
   SlashEntry(
     icon: 'tag',
