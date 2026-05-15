@@ -115,7 +115,7 @@ class TextPageImporter {
     }
     fmBuf.writeln('---');
     fmBuf.writeln();
-    await out.writeAsString('${fmBuf.toString()}${parsed.body.trimRight()}\n');
+    await out.writeAsString('$fmBuf${parsed.body.trimRight()}\n');
     return ImportedTextSummary(
         ulid: ulid, relativePath: rel, title: title);
   }

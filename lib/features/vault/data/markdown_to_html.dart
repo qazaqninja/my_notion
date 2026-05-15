@@ -33,7 +33,7 @@ String markdownToHtml(String body) {
       // Escape the language hint so a fence like ```"><script> can't
       // close the class attribute and inject HTML on export.
       out.write(
-          '<pre><code class="lang-${_escape(lang)}">${buf.toString()}</code></pre>\n');
+          '<pre><code class="lang-${_escape(lang)}">$buf</code></pre>\n');
       continue;
     }
 

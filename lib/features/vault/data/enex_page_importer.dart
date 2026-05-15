@@ -63,7 +63,7 @@ class EnexPageImporter {
         fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
         fmBuf.writeln('---');
         fmBuf.writeln();
-        await out.writeAsString('${fmBuf.toString()}${body.trim()}\n');
+        await out.writeAsString('$fmBuf${body.trim()}\n');
         written.add(ImportedEnexNote(
           ulid: ulid,
           relativePath: rel,

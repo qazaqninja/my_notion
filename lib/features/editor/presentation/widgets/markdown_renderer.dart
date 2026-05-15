@@ -1052,7 +1052,7 @@ class _MarkdownRendererState extends State<MarkdownRenderer> {
         if (i < lines.length) i++; // skip </details>
         out.add(_Block(
           kind: _BlockKind.toggle,
-          text: '$summary\n${buf.toString()}',
+          text: '$summary\n$buf',
           sourceStart: start,
           sourceEnd: endOf(i),
         ));

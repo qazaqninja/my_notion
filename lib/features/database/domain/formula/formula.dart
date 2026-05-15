@@ -232,7 +232,7 @@ class _Lexer {
     }
     if (_i >= src.length) throw const FormulaError('unterminated string');
     _i++; // closing quote
-    return _Tok(_TT.string, '"${buf.toString()}"', buf.toString());
+    return _Tok(_TT.string, '"$buf"', buf.toString());
   }
 
   _Tok _readNumber() {

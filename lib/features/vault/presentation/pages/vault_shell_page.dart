@@ -1346,8 +1346,10 @@ views:
     final pages = await db.select(db.pages).get();
     final databases = await db.select(db.databases).get();
     final relations = await db.select(db.relations).get();
-    final totalBytes =
-        pages.fold<int>(0, (sum, p) => sum + (p.bodyText.length + p.frontmatterJson.length).toInt());
+    final totalBytes = pages.fold<int>(
+      0,
+      (sum, p) => sum + p.bodyText.length + p.frontmatterJson.length,
+    );
     final largest = [...pages]
       ..sort((a, b) => b.bodyText.length.compareTo(a.bodyText.length));
     // Aggregate frontmatter `tags:` lists across pages → frequency map.

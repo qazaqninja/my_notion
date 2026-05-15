@@ -47,7 +47,7 @@ class RoamPageImporter {
         if (createdAt != null) fmBuf.writeln('created_at: $createdAt');
         fmBuf.writeln('---');
         fmBuf.writeln();
-        await out.writeAsString('${fmBuf.toString()}${page.body.trim()}\n');
+        await out.writeAsString('$fmBuf${page.body.trim()}\n');
         written.add(ImportedRoamPage(
           ulid: ulid,
           relativePath: rel,

@@ -63,7 +63,7 @@ class TrelloDatabaseImporter {
         fmBuf.writeln('imported_from: ${yamlSafeScalar(imported)}');
         fmBuf.writeln('---');
         fmBuf.writeln();
-        await out.writeAsString('${fmBuf.toString()}${card.body.trim()}\n');
+        await out.writeAsString('$fmBuf${card.body.trim()}\n');
         written.add(ImportedTrelloCard(
           ulid: ulid,
           relativePath: rel,
