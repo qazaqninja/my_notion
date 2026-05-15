@@ -271,21 +271,27 @@ class _NavButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: const BorderRadius.all(Radius.circular(5)),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          border: Border.all(color: tokens.divider2, width: 0.5),
-          borderRadius: const BorderRadius.all(Radius.circular(5)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: tokens.text,
+    return Tooltip(
+      message: label == 'Today'
+          ? 'Jump to ${DateTime.now().toIso8601String().substring(0, 10)}'
+          : label,
+      waitDuration: const Duration(milliseconds: 500),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: const BorderRadius.all(Radius.circular(5)),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            border: Border.all(color: tokens.divider2, width: 0.5),
+            borderRadius: const BorderRadius.all(Radius.circular(5)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: tokens.text,
+            ),
           ),
         ),
       ),
