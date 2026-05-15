@@ -1509,11 +1509,15 @@ class _SidebarDragHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.resizeColumn,
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onHorizontalDragUpdate: (d) => onDrag(d.delta.dx),
-        onHorizontalDragEnd: (_) => onDragEnd(),
-        child: const SizedBox(width: 4, height: double.infinity),
+      child: Tooltip(
+        message: 'Drag to resize sidebar',
+        waitDuration: const Duration(milliseconds: 800),
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onHorizontalDragUpdate: (d) => onDrag(d.delta.dx),
+          onHorizontalDragEnd: (_) => onDragEnd(),
+          child: const SizedBox(width: 4, height: double.infinity),
+        ),
       ),
     );
   }
