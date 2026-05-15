@@ -158,6 +158,8 @@ enum SlashAction {
   /// Strip outer markdown-formatting marks (`**…**`, `*…*`, `~~…~~`,
   /// `==…==`, `` `…` ``) from each line.
   unwrapInlineFormatting,
+  /// Insert a 16-char random password at the caret.
+  insertPassword,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -762,6 +764,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '**a** → a',
     action: SlashAction.unwrapInlineFormatting,
     keywords: ['unwrap', 'strip', 'bold', 'italic', 'code', 'plain'],
+  ),
+  SlashEntry(
+    icon: 'lock',
+    label: 'Insert password',
+    hint: '16 chars',
+    action: SlashAction.insertPassword,
+    keywords: ['password', 'secret', 'random', 'generate', 'pwd'],
   ),
   SlashEntry(
     icon: 'hash',

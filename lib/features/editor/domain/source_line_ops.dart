@@ -1085,6 +1085,31 @@ SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
+/// Generate a cryptographically-weak random password of [length]
+/// characters drawn from a pool of upper / lower / digit / symbol
+/// glyphs. The default 16-char output mixes all four classes; pass
+/// a different [length] to grow / shrink it.
+///
+/// **Not** cryptographically secure — uses [math.Random] with a
+/// system seed. Fine for placeholder passwords, throwaway secrets,
+/// and test data, but the user should swap to `Random.secure()` for
+/// real credentials. Kept pure-Dart so the helper can be unit-tested
+/// without a widget tree.
+String generatePassword({int length = 16, math.Random? random}) {
+  if (length <= 0) return '';
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const digits = '0123456789';
+  const symbols = '!@#\$%^&*()-_=+[]{}<>?';
+  const pool = '$upper$lower$digits$symbols';
+  final rng = random ?? math.Random();
+  final buf = StringBuffer();
+  for (var i = 0; i < length; i++) {
+    buf.writeCharCode(pool.codeUnitAt(rng.nextInt(pool.length)));
+  }
+  return buf.toString();
+}
+
 /// Aggregate statistics about a slice of body text: words, character
 /// count (without surrogate splits — counted by code-unit), and the
 /// number of non-blank lines. Lightweight, pure-Dart, intentionally

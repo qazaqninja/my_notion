@@ -1590,6 +1590,34 @@ void main() {
     });
   });
 
+  group('generatePassword', () {
+    test('defaults to 16-char output', () {
+      expect(generatePassword(random: Random(1)).length, 16);
+    });
+
+    test('explicit length is honoured', () {
+      expect(generatePassword(length: 32, random: Random(1)).length, 32);
+    });
+
+    test('seeded calls are deterministic', () {
+      final a = generatePassword(random: Random(42));
+      final b = generatePassword(random: Random(42));
+      expect(a, b);
+    });
+
+    test('length 0 returns the empty string', () {
+      expect(generatePassword(length: 0, random: Random(1)), '');
+    });
+
+    test('characters are drawn from the documented pool', () {
+      final pw = generatePassword(length: 200, random: Random(99));
+      final pool = RegExp(r'[A-Za-z0-9!@#$%^&*()\-_=+\[\]{}<>?]');
+      for (final c in pw.split('')) {
+        expect(pool.hasMatch(c), isTrue, reason: 'unexpected glyph "$c"');
+      }
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

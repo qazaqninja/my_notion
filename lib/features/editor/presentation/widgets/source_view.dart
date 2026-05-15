@@ -1035,6 +1035,14 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, unwrapInlineFormattingLinesIn,
         );
+      case SlashAction.insertPassword:
+        // Strip the slash trigger then splice a fresh random password.
+        final pw = generatePassword();
+        final cleared = text.replaceRange(stripStart, caret, pw);
+        _controller.value = TextEditingValue(
+          text: cleared,
+          selection: TextSelection.collapsed(offset: stripStart + pw.length),
+        );
     }
   }
 
