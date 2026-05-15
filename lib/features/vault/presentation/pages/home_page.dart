@@ -997,7 +997,7 @@ class _SectionHeader extends StatelessWidget {
           child: GestureDetector(
             onTap: onRefresh,
             child: Tooltip(
-              message: 'Refresh',
+              message: 'Refresh ${label.toLowerCase()}',
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Icon(Icons.refresh, size: 12, color: tokens.text3),
