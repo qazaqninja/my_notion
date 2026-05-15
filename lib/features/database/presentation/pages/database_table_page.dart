@@ -422,9 +422,16 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                   const SizedBox(height: 2),
                   Padding(
                     padding: const EdgeInsets.only(left: 32),
-                    child: Text(
-                      '${rows.length} ${rows.length == 1 ? 'page' : 'pages'} · ${schema.folderPath}/',
-                      style: mono(fontSize: 12, color: tokens.text3),
+                    child: Tooltip(
+                      message:
+                          'Schema: ${schema.folderPath}/.database.yaml',
+                      waitDuration: const Duration(milliseconds: 600),
+                      child: Text(
+                        '${rows.length} ${rows.length == 1 ? 'page' : 'pages'} · ${schema.folderPath}/',
+                        style: mono(fontSize: 12, color: tokens.text3),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 14),
