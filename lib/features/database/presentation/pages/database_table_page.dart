@@ -464,7 +464,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                   Padding(
                     padding: const EdgeInsets.only(left: 32),
                     child: Text(
-                      '${rows.length} pages · ${schema.folderPath}/',
+                      '${rows.length} ${rows.length == 1 ? 'page' : 'pages'} · ${schema.folderPath}/',
                       style: mono(fontSize: 12, color: tokens.text3),
                     ),
                   ),

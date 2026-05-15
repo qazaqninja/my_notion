@@ -259,15 +259,16 @@ class _StatsStripState extends State<_StatsStrip> {
       builder: (context, snap) {
         if (!snap.hasData) return const SizedBox(height: 18);
         final c = snap.data!;
-        // (label, count, color?, palette-query)
-        final pieces = <(String, int, Color?, String)>[
-          ('pages', c.pages, null, 'vault stats'),
-          ('databases', c.databases, null, 'browse all databases'),
-          ('tags', c.tags, null, 'browse tags'),
-          ('orphans', c.orphans,
+        // (singular, plural, count, color?, palette-query)
+        final pieces = <(String, String, int, Color?, String)>[
+          ('page', 'pages', c.pages, null, 'vault stats'),
+          ('database', 'databases', c.databases, null,
+              'browse all databases'),
+          ('tag', 'tags', c.tags, null, 'browse tags'),
+          ('orphan', 'orphans', c.orphans,
               c.orphans == 0 ? null : const Color(0xFFCB5A4F),
               'show orphan'),
-          ('stale', c.stale, null, 'show stale'),
+          ('stale', 'stale', c.stale, null, 'show stale'),
         ];
         return Row(
           children: [
@@ -278,14 +279,14 @@ class _StatsStripState extends State<_StatsStrip> {
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
-                  onTap: () => _searchPalette(context, pieces[i].$4),
+                  onTap: () => _searchPalette(context, pieces[i].$5),
                   child: Tooltip(
-                    message: 'Click → ⌘K with "${pieces[i].$4}" pre-filled',
+                    message: 'Click → ⌘K with "${pieces[i].$5}" pre-filled',
                     child: Text(
-                      '${pieces[i].$2} ${pieces[i].$1}',
+                      '${pieces[i].$3} ${pieces[i].$3 == 1 ? pieces[i].$1 : pieces[i].$2}',
                       style: mono(
                           fontSize: 12,
-                          color: pieces[i].$3 ?? tokens.text2),
+                          color: pieces[i].$4 ?? tokens.text2),
                     ),
                   ),
                 ),
