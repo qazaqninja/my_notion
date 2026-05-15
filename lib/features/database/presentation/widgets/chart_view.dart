@@ -178,14 +178,22 @@ class ChartView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'COUNT BY ${groupCol.key.toUpperCase()}'
-            '${numCol != null ? ' · sum of ${numCol.key}' : ''}',
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.0,
-              color: tokens.text3,
+          Tooltip(
+            message: numCol == null
+                ? 'Bars: row count per ${groupCol.key} value'
+                : 'Bars: row count per ${groupCol.key} value\nTooltip on hover also shows the sum of ${numCol.key}',
+            waitDuration: const Duration(milliseconds: 500),
+            child: Text(
+              'COUNT BY ${groupCol.key.toUpperCase()}'
+              '${numCol != null ? ' · sum of ${numCol.key}' : ''}',
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.0,
+                color: tokens.text3,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           const SizedBox(height: 16),
