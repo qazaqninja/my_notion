@@ -526,13 +526,22 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           )
         else ...[
-          for (final u in users)
-            _UserRow(
-              user: u,
-              tokens: tokens,
-              onSetDefault: () => _setDefaultUser(state, u.name),
-              onRemove: () => _removeUser(state, u.name),
-            ),
+          if (users.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'No users yet. Add one below to start auto-stamping pages.',
+                style: TextStyle(fontSize: 12, color: tokens.text3),
+              ),
+            )
+          else
+            for (final u in users)
+              _UserRow(
+                user: u,
+                tokens: tokens,
+                onSetDefault: () => _setDefaultUser(state, u.name),
+                onRemove: () => _removeUser(state, u.name),
+              ),
           const SizedBox(height: 12),
           _AddUserField(onAdd: (name) => _addUser(state, name)),
         ],
