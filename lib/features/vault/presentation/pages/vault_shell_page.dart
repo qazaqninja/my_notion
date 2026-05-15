@@ -482,12 +482,18 @@ class _VaultShellPageState extends State<VaultShellPage> {
       placeholder: 'Capture a thought…',
       confirmLabel: 'Capture',
     );
-    if (text == null || text.isEmpty) return;
+    if (text == null) return;
+    // Whitespace-only used to slip past the isEmpty check and hit
+    // QuickCapture.append, which throws FormatException('empty
+    // capture') — the user saw 'Capture failed: ...' rather than
+    // 'nothing to capture'. Trim once, bail silently if empty.
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
     try {
-      await QuickCapture.append(text, Directory(state.rootPath));
+      await QuickCapture.append(trimmed, Directory(state.rootPath));
       vaultBloc.add(const RefreshFromDisk());
       if (context.mounted) {
-        final preview = text.trim().replaceAll(RegExp(r'\s+'), ' ');
+        final preview = trimmed.replaceAll(RegExp(r'\s+'), ' ');
         final excerpt = preview.length > 60
             ? '${preview.substring(0, 60)}…'
             : preview;
