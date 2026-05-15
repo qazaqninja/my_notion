@@ -206,6 +206,8 @@ enum SlashAction {
   linesToJsonArray,
   /// Parse a JSON array of strings into one element per line.
   jsonArrayToLines,
+  /// Sum every numeric line in the selection into a single total.
+  sumNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -964,6 +966,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '["a","b"] → a / b',
     action: SlashAction.jsonArrayToLines,
     keywords: ['json', 'array', 'explode', 'deserialize'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Sum numeric lines',
+    hint: '1 / 2 / 3 → 6',
+    action: SlashAction.sumNumericLines,
+    keywords: ['sum', 'total', 'add', 'math', 'numeric'],
   ),
   SlashEntry(
     icon: 'hash',

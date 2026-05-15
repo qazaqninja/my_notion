@@ -2188,6 +2188,51 @@ void main() {
     });
   });
 
+  group('sumNumericLinesIn', () {
+    test('sums simple integers into a single integer line', () {
+      const text = '1\n2\n3\n';
+      final r = sumNumericLinesIn(text, 0, text.length);
+      expect(r.text, '6\n');
+    });
+
+    test('sums doubles and emits a decimal', () {
+      const text = '1.5\n2.5\n';
+      final r = sumNumericLinesIn(text, 0, text.length);
+      expect(r.text, '4.0\n');
+    });
+
+    test('mixed int + double totals as decimal when any input is fractional', () {
+      const text = '3\n0.5\n';
+      final r = sumNumericLinesIn(text, 0, text.length);
+      expect(r.text, '3.5\n');
+    });
+
+    test('skips non-numeric lines', () {
+      const text = '1\nhello\n2\nworld\n';
+      final r = sumNumericLinesIn(text, 0, text.length);
+      expect(r.text, '3\n');
+    });
+
+    test('block with zero numeric lines is a no-op', () {
+      const text = 'hello\nworld\n';
+      expect(sumNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('negative numbers are supported', () {
+      const text = '10\n-3\n-2\n';
+      final r = sumNumericLinesIn(text, 0, text.length);
+      expect(r.text, '5\n');
+    });
+
+    test('decimals that algebraically cancel render with .0', () {
+      const text = '1.5\n-1.5\n';
+      // Both inputs were fractional, so emit the .0 form rather than
+      // hiding that we did decimal arithmetic.
+      final r = sumNumericLinesIn(text, 0, text.length);
+      expect(r.text, '0.0\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

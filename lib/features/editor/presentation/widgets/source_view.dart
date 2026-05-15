@@ -1112,6 +1112,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, jsonArrayToLinesIn,
         );
+      case SlashAction.sumNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, sumNumericLinesIn,
+        );
     }
   }
 

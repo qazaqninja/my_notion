@@ -745,6 +745,33 @@ SortLinesResult quoteLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Sum every selected line that parses as a number (int or double).
+/// Non-numeric lines are skipped. Outputs a single line with the
+/// running total — integer when the sum has no fractional part,
+/// fixed-point otherwise. Returns the source unchanged when no line
+/// parses as a number (preserves block structure).
+SortLinesResult sumNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      var hasNumber = false;
+      var hasFraction = false;
+      double total = 0;
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v == null) continue;
+        hasNumber = true;
+        if (v != v.truncateToDouble()) hasFraction = true;
+        total += v;
+      }
+      if (!hasNumber) return lines;
+      // Pick an integer rendering when the total has no fractional
+      // part AND no input had one. (3.0 + (-3.0) = 0 but the user
+      // gave us decimals, so render "0.0" not "0".)
+      if (!hasFraction && total == total.truncateToDouble()) {
+        return [total.toInt().toString()];
+      }
+      return [total.toString()];
+    });
+
 /// Inverse of [linesToJsonArrayIn]. Parse the selected block as a
 /// JSON array of strings and emit one element per line. The whole
 /// selection is concatenated before parsing so a multi-line array
