@@ -3230,11 +3230,16 @@ class _SelectionToolbar extends StatelessWidget {
           color: tokens.surface,
           border: Border.all(color: tokens.divider2, width: 0.5),
           borderRadius: const BorderRadius.all(Radius.circular(20)),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x22000000),
+              // M3 semantic shadow slot at 0x22 / 0xff ≈ 13% alpha,
+              // matching the previous Color(0x22000000) literal.
+              color: Theme.of(context)
+                  .colorScheme
+                  .shadow
+                  .withValues(alpha: 0x22 / 0xff),
               blurRadius: 8,
-              offset: Offset(0, 2),
+              offset: const Offset(0, 2),
             ),
           ],
         ),

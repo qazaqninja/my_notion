@@ -9,6 +9,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/paths.dart';
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
@@ -252,7 +253,7 @@ class _StatsStripState extends State<_StatsStrip> {
               'browse all databases'),
           ('tag', 'tags', c.tags, null, 'browse tags'),
           ('orphan', 'orphans', c.orphans,
-              c.orphans == 0 ? null : const Color(0xFFCB5A4F),
+              c.orphans == 0 ? null : kCalloutDanger,
               'show orphan'),
           ('stale', 'stale', c.stale, null, 'show stale'),
         ];
@@ -615,7 +616,7 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
                 ? 'in ${days}d'
                 : '${-days}d overdue';
     final fg = overdue
-        ? const Color(0xFFCB5A4F)
+        ? kCalloutDanger
         : isToday
             ? tokens.accent
             : tokens.text2;
