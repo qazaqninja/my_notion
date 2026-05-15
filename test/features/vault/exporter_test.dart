@@ -49,4 +49,41 @@ void main() {
     await const VaultExporter().export(src: src, dest: dest);
     expect(File(p.join(dest.path, 'x.md')).readAsStringSync(), original);
   });
+
+  test('includes attachments/<file> so embedded media survives (M718)',
+      () async {
+    File(p.join(src.path, 'page.md'))
+        .writeAsStringSync('![cover](attachments/01HX.png)\n');
+    Directory(p.join(src.path, 'attachments')).createSync(recursive: true);
+    File(p.join(src.path, 'attachments', '01HX.png'))
+        .writeAsStringSync('PNG-bytes');
+    File(p.join(src.path, 'attachments', '01HY.pdf'))
+        .writeAsStringSync('PDF-bytes');
+    // Stray top-level non-md file outside attachments/ should still
+    // be skipped — only attachments/ binaries get carried over.
+    File(p.join(src.path, 'scratch.png')).writeAsStringSync('x');
+
+    final n = await const VaultExporter().export(src: src, dest: dest);
+    expect(n, 3, reason: 'page + 2 attachments');
+    expect(
+        File(p.join(dest.path, 'attachments', '01HX.png')).existsSync(),
+        isTrue);
+    expect(
+        File(p.join(dest.path, 'attachments', '01HY.pdf')).existsSync(),
+        isTrue);
+    expect(File(p.join(dest.path, 'scratch.png')).existsSync(), isFalse);
+  });
+
+  test('skips .trash/ contents (M718)', () async {
+    File(p.join(src.path, 'live.md')).writeAsStringSync('live');
+    Directory(p.join(src.path, '.trash', '2026-05')).createSync(recursive: true);
+    File(p.join(src.path, '.trash', '2026-05', 'old.md'))
+        .writeAsStringSync('old');
+
+    final n = await const VaultExporter().export(src: src, dest: dest);
+    expect(n, 1, reason: 'only the live page exports');
+    expect(File(p.join(dest.path, 'live.md')).existsSync(), isTrue);
+    expect(
+        Directory(p.join(dest.path, '.trash')).existsSync(), isFalse);
+  });
 }
