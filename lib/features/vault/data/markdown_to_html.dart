@@ -202,8 +202,9 @@ String markdownToHtml(String body) {
     final url =
         RegExp(r'^(https?://[^\s\<\>\[\]\(\)]+)$').firstMatch(text.trim());
     if (url != null) {
+      final escaped = _escape(url.group(1) ?? '');
       out.write(
-          '<a class="bookmark" href="${url.group(1)}" target="_blank">${url.group(1)}</a>\n');
+          '<a class="bookmark" href="$escaped" target="_blank">$escaped</a>\n');
       continue;
     }
     out.write('<p>${_inline(text)}</p>\n');
