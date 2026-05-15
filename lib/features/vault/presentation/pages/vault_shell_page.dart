@@ -34,7 +34,7 @@ import '../../data/roam_page_importer.dart';
 import '../../data/text_page_importer.dart';
 import '../../data/trello_database_importer.dart';
 import '../../data/url_bookmark.dart';
-import '../../../database/data/repositories/database_repository_impl.dart';
+import '../../../database/domain/repositories/database_repository.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../../shared/widgets/responsive_layout.dart';
 import '../../data/exporter.dart';
@@ -92,7 +92,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
   CommandPaletteCubit _cubit(BuildContext context) {
     return _palette ??= CommandPaletteCubit(
       searchPages: SearchPages(context.read<QuillDatabase>()),
-      dbRepo: DatabaseRepositoryImpl(context.read<QuillDatabase>()),
+      dbRepo: context.read<DatabaseRepository>(),
       db: context.read<QuillDatabase>(),
     );
   }
