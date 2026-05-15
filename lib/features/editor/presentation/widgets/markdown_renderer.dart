@@ -2444,16 +2444,20 @@ class _TocLinkState extends State<_TocLink> {
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
         onTap: () => _jump(context),
-        child: Padding(
-          padding:
-              EdgeInsets.only(left: (level - 1) * 14.0, top: 3, bottom: 1),
-          child: Text(
-            widget.text,
-            style: TextStyle(
-              fontSize: level == 1 ? 14 : (level == 2 ? 13 : 12.5),
-              fontWeight: level == 1 ? FontWeight.w600 : FontWeight.w500,
-              color: _hover ? tokens.accent : tokens.text2,
-              decoration: TextDecoration.none,
+        child: Tooltip(
+          message: 'Jump to ${widget.text}',
+          waitDuration: const Duration(milliseconds: 600),
+          child: Padding(
+            padding:
+                EdgeInsets.only(left: (level - 1) * 14.0, top: 3, bottom: 1),
+            child: Text(
+              widget.text,
+              style: TextStyle(
+                fontSize: level == 1 ? 14 : (level == 2 ? 13 : 12.5),
+                fontWeight: level == 1 ? FontWeight.w600 : FontWeight.w500,
+                color: _hover ? tokens.accent : tokens.text2,
+                decoration: TextDecoration.none,
+              ),
             ),
           ),
         ),
