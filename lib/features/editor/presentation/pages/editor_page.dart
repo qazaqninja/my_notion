@@ -994,8 +994,12 @@ class _EditorBodyState extends State<_EditorBody> {
         ? state.workspace.favorites.contains(ulid)
         : false;
     vault.add(ToggleFavorite(ulid));
+    final label = loaded.page.title.isEmpty
+        ? loaded.page.relativePath
+        : loaded.page.title;
     context.toastSuccess(
-        wasPinned ? 'Unpinned from favorites' : 'Pinned to favorites');
+        wasPinned ? 'Unpinned from favorites' : 'Pinned to favorites',
+        sub: label);
   }
 
   void _toggleFullWidth(BuildContext context, EditorLoaded loaded) {
