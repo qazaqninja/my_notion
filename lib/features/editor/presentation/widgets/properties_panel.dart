@@ -323,8 +323,11 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
   }
 
   Future<void> _copyUlid(BuildContext context) async {
-    await ClipboardSetter.set(widget.page.ulid);
-    if (context.mounted) context.toastSuccess('Copied ${widget.page.ulid}', subMono: true);
+    // Label says "Copy ULID link" — that's the wikilink form, not the
+    // bare ULID. (Bare ULID lives in the kebab menu's "Copy ULID".)
+    final link = '[[${widget.page.ulid}]]';
+    await ClipboardSetter.set(link);
+    if (context.mounted) context.toastSuccess('Copied $link', subMono: true);
   }
 
   Future<void> _printPage(BuildContext context) async {
