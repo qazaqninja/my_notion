@@ -753,7 +753,10 @@ class _SourceViewState extends State<SourceView> {
       );
       // Label = original filename so the rendered card / chip carries
       // a meaningful name even after the ULID-rename inside attachments/.
-      final label = picked.name;
+      // Escape `[` and `]` so a filename like "report [v2].pdf" doesn't
+      // truncate the alt at the first `]`. The URL part is always
+      // attachments/<ULID>.<ext> which is ASCII-safe.
+      final label = _escapeMarkdownAlt(picked.name);
       final snippet = '![$label]($relative)';
       final text = _controller.text;
       final at = insertAt.clamp(0, text.length);
@@ -766,6 +769,15 @@ class _SourceViewState extends State<SourceView> {
       if (mounted) context.toastError('File copy failed', sub: '$e');
     }
   }
+
+  /// Escape `[` `]` `\` in image / file alt text so the markdown
+  /// `![alt](url)` form survives a filename like "report [v2].pdf".
+  /// Order matters: backslashes first, then the brackets, otherwise
+  /// the bracket escapes get double-escaped.
+  static String _escapeMarkdownAlt(String name) => name
+      .replaceAll(r'\', r'\\')
+      .replaceAll('[', r'\[')
+      .replaceAll(']', r'\]');
 
   Future<void> _pickAndInsertImage(int insertAt) async {
     final vault = context.read<VaultBloc>().state;
