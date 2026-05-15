@@ -119,8 +119,15 @@ class _PropertiesPanelState extends State<PropertiesPanel> {
                   value: _view,
                   onChanged: (v) => setState(() => _view = v),
                   options: const [
-                    SegmentOption(value: PropertiesView.fields, label: 'Fields'),
-                    SegmentOption(value: PropertiesView.yaml, label: 'YAML', icon: 'code'),
+                    SegmentOption(
+                        value: PropertiesView.fields,
+                        label: 'Fields',
+                        tooltip: 'Edit each frontmatter field with a typed input'),
+                    SegmentOption(
+                        value: PropertiesView.yaml,
+                        label: 'YAML',
+                        icon: 'code',
+                        tooltip: 'Edit the raw YAML frontmatter block'),
                   ],
                 ),
                 const Spacer(),
