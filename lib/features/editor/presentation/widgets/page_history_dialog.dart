@@ -116,7 +116,9 @@ class _PageHistoryDialogState extends State<PageHistoryDialog> {
                           ),
                         ),
                         child: Text(
-                          'HISTORY',
+                          commits.length == 1
+                              ? 'HISTORY · 1 commit'
+                              : 'HISTORY · ${commits.length} commits',
                           style: TextStyle(
                             fontSize: 10.5,
                             fontWeight: FontWeight.w600,
