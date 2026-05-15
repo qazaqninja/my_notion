@@ -512,6 +512,49 @@ SortLinesResult dedupeLinesIn(String text, int start, int end) =>
 SortLinesResult reverseLinesIn(String text, int start, int end) =>
     _transformLinesIn(text, start, end, (lines) => lines.reversed.toList());
 
+/// Convert a single line into a URL-safe slug:
+///
+///   "My Cool Title!" → "my-cool-title"
+///   "v1.2.3 (final)" → "v1-2-3-final"
+///   "Hello — World"   → "hello-world"
+///
+/// Rules: lowercase, replace any run of non-ASCII-alphanumeric chars
+/// with a single `-`, then trim leading/trailing `-`. Exposed so the
+/// per-line transform can call into it; lives next to the line ops
+/// so callers don't import a separate helper file.
+String slugifyLine(String line) {
+  final lower = line.toLowerCase();
+  final buf = StringBuffer();
+  var inDash = false;
+  for (var i = 0; i < lower.length; i++) {
+    final c = lower.codeUnitAt(i);
+    final isAlnum =
+        (c >= 0x30 && c <= 0x39) || (c >= 0x61 && c <= 0x7a);
+    if (isAlnum) {
+      buf.writeCharCode(c);
+      inDash = false;
+    } else if (!inDash) {
+      buf.write('-');
+      inDash = true;
+    }
+  }
+  var out = buf.toString();
+  if (out.startsWith('-')) out = out.substring(1);
+  if (out.endsWith('-')) out = out.substring(0, out.length - 1);
+  return out;
+}
+
+/// Apply [slugifyLine] to every line in the selected block — useful
+/// for converting a list of titles into a list of permalink fragments
+/// in one gesture. Blank lines stay blank.
+SortLinesResult slugifyLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else slugifyLine(l),
+      ];
+    });
+
 /// Shuffle the lines in the selected block uniformly at random.
 ///
 /// When [random] is `null`, a system-seeded [Random] is used; tests

@@ -479,6 +479,54 @@ void main() {
     });
   });
 
+  group('slugifyLine', () {
+    test('basic title', () {
+      expect(slugifyLine('My Cool Title'), 'my-cool-title');
+    });
+
+    test('trailing punctuation does not leak a dash', () {
+      expect(slugifyLine('Hello!'), 'hello');
+    });
+
+    test('runs of non-alphanumerics collapse to one dash', () {
+      expect(slugifyLine('A — B   C…D'), 'a-b-c-d');
+    });
+
+    test('leading and trailing non-alphanumerics are stripped', () {
+      expect(slugifyLine('  --hello world!!  '), 'hello-world');
+    });
+
+    test('numbers are kept', () {
+      expect(slugifyLine('v1.2.3 final'), 'v1-2-3-final');
+    });
+
+    test('case-folded to lowercase', () {
+      expect(slugifyLine('CamelCase'), 'camelcase');
+    });
+
+    test('empty input returns empty', () {
+      expect(slugifyLine(''), '');
+    });
+
+    test('all-punctuation input collapses to empty', () {
+      expect(slugifyLine('!!!---???'), '');
+    });
+  });
+
+  group('slugifyLinesIn', () {
+    test('slugifies every non-empty line', () {
+      const text = 'My First Page\nSecond Page!!\n';
+      final r = slugifyLinesIn(text, 0, text.length);
+      expect(r.text, 'my-first-page\nsecond-page\n');
+    });
+
+    test('preserves blank lines', () {
+      const text = 'one\n\ntwo\n';
+      final r = slugifyLinesIn(text, 0, text.length);
+      expect(r.text, 'one\n\ntwo\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

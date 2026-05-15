@@ -57,6 +57,9 @@ enum SlashAction {
   toggleBlockquote,
   /// Shuffle the lines touched by the selection uniformly at random.
   shuffleLines,
+  /// Slugify every line in the selection (e.g. "My Cool Title" →
+  /// "my-cool-title"). Useful for generating URL fragments.
+  slugifyLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -381,6 +384,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '🎲',
     action: SlashAction.shuffleLines,
     keywords: ['shuffle', 'random', 'reorder', 'mix', 'randomize', 'lines'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Slugify selected lines',
+    hint: 'a-b-c',
+    action: SlashAction.slugifyLines,
+    keywords: ['slug', 'slugify', 'url', 'permalink', 'anchor', 'kebab'],
   ),
   SlashEntry(
     icon: 'tag',
