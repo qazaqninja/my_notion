@@ -203,6 +203,53 @@ void main() {
     });
   });
 
+  group('toggleBulletPrefixIn', () {
+    test('adds "- " to plain lines', () {
+      const text = 'apple\nbanana\ncherry\n';
+      final r = toggleBulletPrefixIn(text, 0, text.length);
+      expect(r.text, '- apple\n- banana\n- cherry\n');
+    });
+
+    test('strips "- " when every non-empty line is already bulleted', () {
+      const text = '- apple\n- banana\n- cherry\n';
+      final r = toggleBulletPrefixIn(text, 0, text.length);
+      expect(r.text, 'apple\nbanana\ncherry\n');
+    });
+
+    test('toggle twice is the identity (round-trips)', () {
+      const text = 'foo\nbar\nbaz\n';
+      final once = toggleBulletPrefixIn(text, 0, text.length);
+      final twice = toggleBulletPrefixIn(once.text, 0, once.text.length);
+      expect(twice.text, text);
+    });
+
+    test('preserves leading indentation when toggling on', () {
+      const text = '  foo\n  bar\n';
+      final r = toggleBulletPrefixIn(text, 0, text.length);
+      expect(r.text, '  - foo\n  - bar\n');
+    });
+
+    test('preserves leading indentation when toggling off', () {
+      const text = '  - foo\n  - bar\n';
+      final r = toggleBulletPrefixIn(text, 0, text.length);
+      expect(r.text, '  foo\n  bar\n');
+    });
+
+    test('blank lines stay blank in both directions', () {
+      const text = 'a\n\nb\n';
+      final on = toggleBulletPrefixIn(text, 0, text.length);
+      expect(on.text, '- a\n\n- b\n');
+      final off = toggleBulletPrefixIn(on.text, 0, on.text.length);
+      expect(off.text, text);
+    });
+
+    test('mixed lines (some bulleted, some not) → all get bulleted', () {
+      const text = '- apple\nbanana\n- cherry\n';
+      final r = toggleBulletPrefixIn(text, 0, text.length);
+      expect(r.text, '- apple\n- banana\n- cherry\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

@@ -476,6 +476,48 @@ SortLinesResult lowercaseLinesIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) l.toLowerCase()],
     );
 
+/// Toggle a `- ` bullet prefix on every line in the selected block.
+///
+/// The toggle is idempotent in pairs: if **every** non-empty line in the
+/// block already starts with `- ` (allowing the standard leading-indent
+/// pattern `  - `), the prefix is **stripped** from every line. Otherwise
+/// the prefix is **added** to every non-empty line. Blank lines stay
+/// blank in both directions. Existing leading indentation is preserved
+/// — `  foo` becomes `  - foo`.
+///
+/// Mirrors the Notion / VS Code "toggle bullet" gesture.
+SortLinesResult toggleBulletPrefixIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      bool startsWithBullet(String l) {
+        final stripped = l.trimLeft();
+        return stripped.startsWith('- ');
+      }
+
+      final nonEmpty = [for (final l in lines) if (l.trim().isNotEmpty) l];
+      final allBulleted =
+          nonEmpty.isNotEmpty && nonEmpty.every(startsWithBullet);
+
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty)
+            l
+          else if (allBulleted)
+            // Strip the bullet, preserving leading indent.
+            (() {
+              final indent = l.substring(0, l.length - l.trimLeft().length);
+              final after = l.trimLeft().substring(2); // drop "- "
+              return '$indent$after';
+            })()
+          else if (startsWithBullet(l))
+            l
+          else
+            (() {
+              final indent = l.substring(0, l.length - l.trimLeft().length);
+              return '$indent- ${l.trimLeft()}';
+            })(),
+      ];
+    });
+
 /// Title-case every line in the selected block: capitalise the first
 /// letter of each whitespace-separated word, lowercase the rest. Words
 /// shorter than 4 chars in the middle of a line (and, or, the, of, …)

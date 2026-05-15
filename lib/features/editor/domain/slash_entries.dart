@@ -38,6 +38,9 @@ enum SlashAction {
   /// Sort the lines touched by the selection in descending order
   /// (Z→A, case-insensitive).
   sortLinesDescending,
+  /// Toggle a `- ` bullet prefix on every line in the selection. Strips
+  /// the prefix when every line already has it; adds it otherwise.
+  toggleBulletList,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -320,6 +323,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'Z → A',
     action: SlashAction.sortLinesDescending,
     keywords: ['sort', 'desc', 'descending', 'reverse', 'z-a', 'lines'],
+  ),
+  SlashEntry(
+    icon: 'list',
+    label: 'Toggle bullet list',
+    hint: '- …',
+    action: SlashAction.toggleBulletList,
+    keywords: ['bullet', 'list', 'toggle', 'unordered', 'ul', 'dash'],
   ),
   SlashEntry(
     icon: 'tag',
