@@ -180,9 +180,11 @@ class _ToastClose extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
-    return Tooltip(
-      message: 'Dismiss',
-      waitDuration: const Duration(milliseconds: 500),
+    // No Material Tooltip: QuillToastHost is inside MaterialApp.builder,
+    // outside the router's Navigator/Overlay, so Tooltip can't mount here.
+    return Semantics(
+      label: 'Dismiss',
+      button: true,
       child: InkWell(
         onTap: onTap,
         borderRadius: const BorderRadius.all(Radius.circular(4)),
@@ -307,7 +309,13 @@ class _QuillToastHostState extends State<QuillToastHost> {
           Positioned(
             right: 24,
             bottom: 24,
-            child: _ToastStack(controller: _controller),
+            // Material ancestor for InkWells inside the toast card.
+            // QuillToastHost sits in MaterialApp.builder, above the router's
+            // Scaffold, so we provide one here. Transparent → no background.
+            child: Material(
+              type: MaterialType.transparency,
+              child: _ToastStack(controller: _controller),
+            ),
           ),
         ],
       ),
