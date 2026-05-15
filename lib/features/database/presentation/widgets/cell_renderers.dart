@@ -500,39 +500,47 @@ class _FileChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     if (_isImage) {
-      return GestureDetector(
-        onTap: () => _open(context),
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: _thumb(context, tokens),
+      return Tooltip(
+        message: value,
+        waitDuration: const Duration(milliseconds: 500),
+        child: GestureDetector(
+          onTap: () => _open(context),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: _thumb(context, tokens),
+          ),
         ),
       );
     }
-    return GestureDetector(
-      onTap: () => _open(context),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: tokens.surface2,
-            border: Border.all(color: tokens.divider2, width: 0.5),
-            borderRadius: const BorderRadius.all(Radius.circular(3)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                _isUrl ? Icons.link : Icons.attach_file,
-                size: 11,
-                color: tokens.text3,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                _label,
-                style: TextStyle(fontSize: 11.5, color: tokens.text2),
-              ),
-            ],
+    return Tooltip(
+      message: value,
+      waitDuration: const Duration(milliseconds: 500),
+      child: GestureDetector(
+        onTap: () => _open(context),
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: tokens.surface2,
+              border: Border.all(color: tokens.divider2, width: 0.5),
+              borderRadius: const BorderRadius.all(Radius.circular(3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _isUrl ? Icons.link : Icons.attach_file,
+                  size: 11,
+                  color: tokens.text3,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _label,
+                  style: TextStyle(fontSize: 11.5, color: tokens.text2),
+                ),
+              ],
+            ),
           ),
         ),
       ),
