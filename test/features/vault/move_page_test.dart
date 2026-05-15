@@ -37,14 +37,20 @@ void main() {
     }
     expect(await File(p.join(tmp.path, 'Doc.md')).exists(), isTrue);
 
-    // Move to Archive/
+    // Move to Archive/. Wait for BOTH the filesystem move AND the
+    // indexer's database row to land — the indexer updates the row
+    // a tick after the FS rename, and under load the bare FS-only
+    // poll can return early and trip the row assertion below.
     bloc.add(MovePage(ulid: ulid!, targetFolder: 'Archive'));
-    final deadline = DateTime.now().add(const Duration(seconds: 2));
+    final deadline = DateTime.now().add(const Duration(seconds: 5));
     while (DateTime.now().isBefore(deadline)) {
-      if (await File(p.join(tmp.path, 'Archive', 'Doc.md')).exists() &&
-          !await File(p.join(tmp.path, 'Doc.md')).exists()) {
-        break;
-      }
+      final fsMoved =
+          await File(p.join(tmp.path, 'Archive', 'Doc.md')).exists() &&
+              !await File(p.join(tmp.path, 'Doc.md')).exists();
+      final row = await (db.select(db.pages)
+            ..where((p) => p.ulid.equals(ulid!)))
+          .getSingleOrNull();
+      if (fsMoved && row?.relativePath == 'Archive/Doc.md') break;
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     expect(await File(p.join(tmp.path, 'Doc.md')).exists(), isFalse);
@@ -57,14 +63,17 @@ void main() {
     expect(row, isNotNull);
     expect(row!.relativePath, equals('Archive/Doc.md'));
 
-    // Move back to root.
+    // Move back to root. Same dual-poll pattern.
     bloc.add(MovePage(ulid: ulid!, targetFolder: ''));
-    final deadline2 = DateTime.now().add(const Duration(seconds: 2));
+    final deadline2 = DateTime.now().add(const Duration(seconds: 5));
     while (DateTime.now().isBefore(deadline2)) {
-      if (await File(p.join(tmp.path, 'Doc.md')).exists() &&
-          !await File(p.join(tmp.path, 'Archive', 'Doc.md')).exists()) {
-        break;
-      }
+      final fsMoved =
+          await File(p.join(tmp.path, 'Doc.md')).exists() &&
+              !await File(p.join(tmp.path, 'Archive', 'Doc.md')).exists();
+      final row2 = await (db.select(db.pages)
+            ..where((p) => p.ulid.equals(ulid!)))
+          .getSingleOrNull();
+      if (fsMoved && row2?.relativePath == 'Doc.md') break;
       await Future<void>.delayed(const Duration(milliseconds: 20));
     }
     expect(await File(p.join(tmp.path, 'Doc.md')).exists(), isTrue);
