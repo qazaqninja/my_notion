@@ -104,9 +104,15 @@ class TreeNodeWidget extends StatelessWidget {
         alwaysTrailing: pinned
             ? Padding(
                 padding: const EdgeInsets.only(left: 4),
-                child: Icon(Icons.star,
-                    size: 11,
-                    color: QuillTokens.of(context).accent.withValues(alpha: 0.85)),
+                child: Tooltip(
+                  message: 'Pinned to favorites',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: Icon(Icons.star,
+                      size: 11,
+                      color: QuillTokens.of(context)
+                          .accent
+                          .withValues(alpha: 0.85)),
+                ),
               )
             : null,
       );
