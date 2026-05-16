@@ -19,6 +19,7 @@ import '../../../../shared/theme/accent.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
+import '../../../sync/domain/usecases/collect_bulk_push_entries.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
 import '../../../sync/presentation/widgets/sync_connected_card.dart';
@@ -261,6 +262,43 @@ class _SettingsPageState extends State<SettingsPage> {
     context.read<VaultBloc>().add(const CloseVault());
     // Settings is mounted inside the vault shell; once the bloc transitions
     // to VaultInitial the shell router will replace it with the picker.
+  }
+
+  /// E32 — walk the vault tree, read every `.md` file, compute sha256,
+  /// and dispatch `SyncPushAllRequested`. The bloc handler skips
+  /// entries whose local sha already matches `knownShas[relpath]`, so
+  /// re-clicking the button after a successful seed is a no-op.
+  Future<void> _onPushAllUnsynced(BuildContext context) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) {
+      context.toastWarn('No vault open',
+          sub: 'Pick a vault folder first.');
+      return;
+    }
+    final sync = context.read<SyncBloc>();
+    if (!sync.state.isAuthed) {
+      context.toastWarn('Not logged in',
+          sub: 'Sign in to the v2 backend first.');
+      return;
+    }
+    final entries = await collectBulkPushEntries(
+      tree: vault.tree,
+      vaultRoot: vault.rootPath,
+    );
+    if (entries.isEmpty) {
+      if (context.mounted) {
+        context.toastInfo('No files to push',
+            sub: 'Vault is empty.');
+      }
+      return;
+    }
+    sync.add(SyncPushAllRequested(entries));
+    if (context.mounted) {
+      context.toastInfo(
+        'Bulk push queued',
+        sub: '${entries.length} file${entries.length == 1 ? '' : 's'}',
+      );
+    }
   }
 
   Future<void> _exportVault(BuildContext context) async {
@@ -851,7 +889,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 18),
             if (state.isAuthed)
-              SyncConnectedCard(state: state, tokens: tokens)
+              SyncConnectedCard(
+                state: state,
+                tokens: tokens,
+                onPushAll: () => _onPushAllUnsynced(context),
+              )
             else
               _SyncLoginCard(state: state, tokens: tokens),
             if (state.lastError != null && state.lastError != 'conflict') ...[

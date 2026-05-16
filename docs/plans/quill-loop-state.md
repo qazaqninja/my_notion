@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E32 — Wire "Push all unsynced" button in SyncConnectedCard to walk the vault tree
+- **Task:** E33 — Sync wire-up sanity: provider override + token rotation
 - **Status:** pending
 
 ## Last completed
 
-- **M1334 — E31** (vault-wide bulk push event + handler)
+- **M1335 — E32** (bulk push button + vault-walk usecase)
 - Committed: (this iteration)
-- TaskList ID: 53
-- Notes: New value-object `SyncBulkPushEntry({relpath, body, sha256})` + new `SyncPushAllRequested(List<SyncBulkPushEntry>)` event. Handler `_onPushAll` short-circuits with `not_authenticated` when no token; otherwise iterates entries and dispatches a `SyncPushFileRequested` only when the entry's local sha256 doesn't already match `knownShas[relpath]` (so a bulk re-run after a successful seed is a no-op). Reuses the existing E30 queue-depth wiring — `pendingPushes` reflects the dispatched-but-not-yet-completed count. The next slice (E32) walks `VaultBloc`'s tree to materialize the entry list and exposes a "Push all unsynced" button in the sync card. 4 new bloc_test cases (not-authed-emits-error, dispatches-one-per-entry, skip-already-in-sync, empty-list-noop). 51/51 sync_bloc tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 54
+- Notes: `SyncConnectedCard` gains optional `VoidCallback? onPushAll`; when non-null, renders an "Push all unsynced" `OutlinedButton` next to "Log out". New domain usecase `lib/features/sync/domain/usecases/collect_bulk_push_entries.dart` walks a `VaultTree` recursively, reads every `.md` file at `<vaultRoot>/<relpath>`, computes sha256 (new direct dep `crypto: ^3.0.6`, was already transitively pulled in), and returns a list of `SyncBulkPushEntry`. Reading errors are swallowed (file missing / locked → skipped, no abort). `_onPushAllUnsynced` in settings_page.dart wires it: VaultBloc.state check, SyncBloc.isAuthed check, collect entries, dispatch `SyncPushAllRequested`, info toast with count. 2 new widget tests (button-hidden-when-onPushAll-null, button-visible+tap-fires) + 3 new usecase tests (emits-one-per-file-with-sha, skips-unreadable-files, empty-tree-empty-list). 19/19 sync card + usecase tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

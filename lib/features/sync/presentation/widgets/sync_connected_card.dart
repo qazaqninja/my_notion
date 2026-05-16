@@ -19,10 +19,16 @@ class SyncConnectedCard extends StatelessWidget {
     super.key,
     required this.state,
     required this.tokens,
+    this.onPushAll,
   });
 
   final SyncState state;
   final QuillTokens tokens;
+
+  /// E32 — optional handler for "Push all unsynced". When null the
+  /// button is hidden, keeping the card minimal in contexts (tests,
+  /// component-sheet previews) that don't have a vault to walk.
+  final VoidCallback? onPushAll;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +65,13 @@ class SyncConnectedCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onPushAll != null) ...[
+                OutlinedButton(
+                  onPressed: onPushAll,
+                  child: const Text('Push all unsynced'),
+                ),
+                const SizedBox(width: 8),
+              ],
               OutlinedButton(
                 onPressed: () => context
                     .read<SyncBloc>()

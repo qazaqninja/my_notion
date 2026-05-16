@@ -127,6 +127,49 @@ void main() {
     });
   });
 
+  group('SyncConnectedCard push-all button (E32)', () {
+    testWidgets('onPushAll == null → button hidden', (tester) async {
+      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+      await tester.pumpWidget(pumpCard(state, bloc));
+      expect(find.text('Push all unsynced'), findsNothing);
+    });
+
+    testWidgets('onPushAll provided → button visible and tap fires it',
+        (tester) async {
+      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+      var called = false;
+      final theme = makeTheme(Brightness.light, AccentKey.sage);
+      final tokens = theme.extension<QuillTokens>()!;
+      await tester.pumpWidget(MaterialApp(
+        theme: theme,
+        home: Scaffold(
+          body: BlocProvider<SyncBloc>.value(
+            value: bloc,
+            child: Center(
+              child: SizedBox(
+                width: 600,
+                child: SyncConnectedCard(
+                  state: state,
+                  tokens: tokens,
+                  onPushAll: () => called = true,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ));
+
+      expect(find.text('Push all unsynced'), findsOneWidget);
+      await tester.tap(find.text('Push all unsynced'));
+      await tester.pumpAndSettle();
+      expect(called, isTrue);
+    });
+  });
+
   group('SyncConnectedCard push queue depth (E30)', () {
     testWidgets('pendingPushes == 0 → no "Syncing…" row', (tester) async {
       const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');

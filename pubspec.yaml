@@ -18,6 +18,11 @@ dependencies:
   flutter:
     sdk: flutter
   archive: ^4.0.7
+  # SHA-256 hashing for the E31/E32 vault-wide bulk push (decides which
+  # files need to be sent vs already match the server). Already pulled
+  # in transitively by drift / http_parser; promoting to a direct dep
+  # so the bulk-push code can `import 'package:crypto/crypto.dart'`.
+  crypto: ^3.0.6
   # Inline audio playback for M201 audio cards (B2 of the 1m-loop plan).
   audioplayers: ^6.6.0
   # OS notifications for reminders (B4 of the 1m-loop plan). Capped at
