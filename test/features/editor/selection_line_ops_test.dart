@@ -3695,6 +3695,80 @@ void main() {
     });
   });
 
+  group('extractPhoneNumbersFromLinesIn', () {
+    test('plain E.164 with no separators extracts', () {
+      const text = 'reach me at +15551234567 anytime\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '+15551234567\n');
+    });
+
+    test('dash-separated form extracts', () {
+      const text = 'call +1-555-123-4567 today\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '+1-555-123-4567\n');
+    });
+
+    test('dot-separated form extracts', () {
+      const text = 'fax +1.555.123.4567 instead\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '+1.555.123.4567\n');
+    });
+
+    test('space-separated UK form extracts', () {
+      const text = 'desk +44 20 1234 5678 weekdays\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '+44 20 1234 5678\n');
+    });
+
+    test('three-digit country code extracts', () {
+      const text = 'China +8613800138000 standard\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '+8613800138000\n');
+    });
+
+    test('too few digits is NOT a phone', () {
+      // `+12` is way under E.164 length; the regex requires
+      // 1-3 digit country code + at least 6 more digits.
+      const text = 'short +12 only\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('embedded in word context is NOT a phone', () {
+      // The lookbehind `(?<!\w)` rejects matches preceded by
+      // a word char — so `bob+15551234567@example.com` does
+      // NOT yield a phone extraction (the `+` is part of an
+      // email local-part).
+      const text = 'mail bob+15551234567@example.com sent\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple phones on one line each extract', () {
+      const text = 'pair +15551234567 and +442012345678 listed\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '+15551234567\n+442012345678\n');
+    });
+
+    test('non-prefix form `555-1234` is NOT extracted', () {
+      // The `+` is the canonical international marker; bare
+      // local-format phones are out of scope for v1.
+      const text = 'local 555-1234 only\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without phones dropped from output', () {
+      const text = 'plain prose\nring +15551234567 today\nmore prose\n';
+      final r = extractPhoneNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '+15551234567\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractPhoneNumbersFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

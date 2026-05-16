@@ -1540,6 +1540,48 @@ SortLinesResult extractGitShasFromLinesIn(
       return out;
     });
 
+/// Extract every E.164-ish international phone number from
+/// each selected line. Useful for contact-info harvesting,
+/// directory audits, and "which phone numbers does this doc
+/// cite?" scrapes.
+///
+/// Recognition: `(?<!\w)\+\d{1,3}(?:[\s\-.]?\d){6,14}`
+/// - `+` literal opener with lookbehind `(?<!\w)` blocking
+///   matches embedded in word context (so `bob+15551234567@`
+///   email local-parts are NOT mis-captured as phones).
+/// - Country code: 1 to 3 leading digits after `+`.
+/// - 6 to 14 more digits, each optionally preceded by a
+///   single whitespace, dash, or period separator. This
+///   captures common formattings:
+///     `+15551234567` (no separators)
+///     `+1-555-123-4567` (dashes)
+///     `+1.555.123.4567` (dots)
+///     `+44 20 1234 5678` (spaces)
+///
+/// Strict E.164 caps total digits at 15; this regex allows up
+/// to 17 to be tolerant of formatting irregularities (extra
+/// digits in extensions, fax-number suffixes, etc.). Acceptable
+/// for v1.
+///
+/// Forms without the `+` prefix (`(555) 123-4567` US-style,
+/// `555-1234`) are out of scope — the `+` is the canonical
+/// internationalization marker and disambiguates from row
+/// references, math expressions, etc.
+///
+/// 32nd member of the extraction family.
+SortLinesResult extractPhoneNumbersFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?<!\w)\+\d{1,3}(?:[\s\-.]?\d){6,14}');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

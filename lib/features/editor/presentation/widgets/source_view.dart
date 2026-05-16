@@ -1380,6 +1380,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractGitShasFromLinesIn,
         );
+      case SlashAction.extractPhoneNumbersFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractPhoneNumbersFromLinesIn,
+        );
       case SlashAction.extractMarkdownLinkLabelsFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownLinkLabelsFromLinesIn,

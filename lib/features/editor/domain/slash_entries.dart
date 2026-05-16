@@ -363,6 +363,9 @@ enum SlashAction {
   /// Extract every git-short-SHA substring (7–40 lowercase hex
   /// chars with at least one letter) from each selected line.
   extractGitShasFromLines,
+  /// Extract every E.164-ish international phone number from each
+  /// selected line.
+  extractPhoneNumbersFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1819,6 +1822,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractGitShasFromLines,
     keywords: ['extract', 'git', 'sha', 'commit', 'hash', 'short',
         'hex', 'revision'],
+  ),
+  SlashEntry(
+    icon: 'users',
+    label: 'Extract phone numbers',
+    hint: '+1-555-123-4567',
+    action: SlashAction.extractPhoneNumbersFromLines,
+    keywords: ['extract', 'phone', 'number', 'e164', 'tel',
+        'mobile', 'contact'],
   ),
   SlashEntry(
     icon: 'edit',
