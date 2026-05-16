@@ -1075,6 +1075,37 @@ SortLinesResult extractMacAddressesFromLinesIn(
       return out;
     });
 
+/// Extract every backtick-delimited inline code span
+/// (`` `foo` `` → `foo`) from each selected line. Useful for
+/// pulling identifier mentions out of prose — code-review
+/// comments, design docs, API summaries — without the
+/// surrounding narrative.
+///
+/// Single-backtick form only (the dominant case for inline
+/// code). Multi-backtick delimiters (CommonMark allows
+/// `` ``foo`` `` for spans containing a literal backtick)
+/// are not supported in v1 — those land in the leftover
+/// prose and are skipped.
+///
+/// The regex requires at least one non-backtick, non-newline
+/// char between the delimiters, so empty `` `` `` does NOT
+/// match (it isn't a meaningful code span). Distinct from
+/// [extractMarkdownLinkLabelsFromLinesIn] (M1068 link labels)
+/// and [extractMarkdownImageAltsFromLinesIn] (M1073 image alts)
+/// — different markdown surfaces, different transforms.
+SortLinesResult extractMarkdownCodeSpansFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'`([^`\n]+)`');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

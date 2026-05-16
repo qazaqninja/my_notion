@@ -320,6 +320,9 @@ enum SlashAction {
   /// Extract every MAC-address-shaped substring (`XX:XX:XX:XX:XX:XX`
   /// or `XX-XX-XX-XX-XX-XX`) from each selected line.
   extractMacAddressesFromLines,
+  /// Extract every backtick-delimited inline code span
+  /// (`` `foo` `` → `foo`) from each selected line.
+  extractMarkdownCodeSpansFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1654,6 +1657,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMacAddressesFromLines,
     keywords: ['extract', 'mac', 'address', 'ethernet', 'network',
         'hardware', 'nic'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'Extract markdown code spans',
+    hint: '`foo` → foo',
+    action: SlashAction.extractMarkdownCodeSpansFromLines,
+    keywords: ['extract', 'code', 'inline', 'backtick', 'span',
+        'markdown', 'identifier'],
   ),
   SlashEntry(
     icon: 'edit',

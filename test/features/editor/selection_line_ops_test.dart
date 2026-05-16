@@ -2704,6 +2704,70 @@ void main() {
     });
   });
 
+  group('extractMarkdownCodeSpansFromLinesIn', () {
+    test('strips the backticks and keeps the span content', () {
+      const text = 'call `foo()` and `bar.baz` to start\n';
+      final r = extractMarkdownCodeSpansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo()\nbar.baz\n');
+    });
+
+    test('two adjacent backticks (no content between) NOT matched', () {
+      // `[^`\n]+` requires at least one non-backtick char between
+      // delimiters, so a zero-content span isn't a meaningful
+      // citation and is skipped. Stricter than CommonMark's
+      // multi-backtick span rules (`` `` `` for spans containing
+      // a literal backtick) which v1 of this extractor does not
+      // implement.
+      const text = 'see `` for trivia\n';
+      final r = extractMarkdownCodeSpansFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('span with internal spaces preserved', () {
+      const text = 'note `if let Some(x) = opt` works\n';
+      final r = extractMarkdownCodeSpansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'if let Some(x) = opt\n');
+    });
+
+    test('multiple spans on one line each extract', () {
+      const text = '`a` then `b` then `c` chain\n';
+      final r = extractMarkdownCodeSpansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a\nb\nc\n');
+    });
+
+    test('span with punctuation and symbols passes through', () {
+      const text = 'use `obj.method(arg1, arg2)` syntax\n';
+      final r = extractMarkdownCodeSpansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'obj.method(arg1, arg2)\n');
+    });
+
+    test('unterminated backtick is NOT matched', () {
+      // Opening backtick with no closing delimiter on the line
+      // doesn't match — `[^`\n]+` would need a trailing `` ` ``.
+      const text = 'lone `unclosed text here\n';
+      final r = extractMarkdownCodeSpansFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('spans never cross a line boundary', () {
+      // `[^`\n]+` rejects `\n`, so an unterminated span on one
+      // line + opening backtick on the next does NOT splice.
+      const text = 'one `foo`\nbar `baz` end\n';
+      final r = extractMarkdownCodeSpansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbaz\n');
+    });
+
+    test('lines without code spans dropped from output', () {
+      const text = 'plain prose\nwith `code` mark\nmore prose\n';
+      final r = extractMarkdownCodeSpansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'code\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownCodeSpansFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
