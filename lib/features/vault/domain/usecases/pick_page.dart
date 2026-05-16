@@ -15,10 +15,23 @@
 // presentation logic moves down here.
 
 /// Minimum subset of page columns the navigation pickers need.
-typedef PageRef = ({String ulid, String title, int bodyLen, int mtimeMs});
+typedef PageRef = ({
+  String ulid,
+  String title,
+  int bodyLen,
+  int mtimeMs,
+  List<String> tags,
+});
 
 /// Minimum subset of relation columns the most-linked picker needs.
 typedef RelationRef = ({String fromUlid, String toUlid});
+
+/// Filter to the pages whose `tags` list is empty. Pure-Dart so the
+/// command-palette "Open random untagged page" entry can pick a
+/// random element off the result without mixing concerns. Order is
+/// preserved from the input.
+List<PageRef> filterUntagged(List<PageRef> pages) =>
+    [for (final p in pages) if (p.tags.isEmpty) p];
 
 /// Pick the page with the highest `bodyLen`. Returns `null` for an
 /// empty input. Ties broken by most-recent `mtimeMs`.

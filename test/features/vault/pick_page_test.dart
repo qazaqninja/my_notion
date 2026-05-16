@@ -6,8 +6,15 @@ PageRef _p({
   String title = '',
   int bodyLen = 0,
   int mtimeMs = 0,
+  List<String> tags = const [],
 }) =>
-    (ulid: ulid, title: title, bodyLen: bodyLen, mtimeMs: mtimeMs);
+    (
+      ulid: ulid,
+      title: title,
+      bodyLen: bodyLen,
+      mtimeMs: mtimeMs,
+      tags: tags,
+    );
 
 void main() {
   group('pickLargest', () {
@@ -69,6 +76,45 @@ void main() {
         _p(ulid: 'c', mtimeMs: 2000),
       ];
       expect(pickLastEdited(pages)?.ulid, 'b');
+    });
+  });
+
+  group('filterUntagged', () {
+    test('keeps only pages with no tags', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['work']),
+        _p(ulid: 'b'),
+        _p(ulid: 'c', tags: ['personal', 'todo']),
+        _p(ulid: 'd', tags: []),
+      ];
+      expect(
+        filterUntagged(pages).map((p) => p.ulid).toList(),
+        ['b', 'd'],
+      );
+    });
+
+    test('preserves input order', () {
+      final pages = [
+        _p(ulid: 'z'),
+        _p(ulid: 'a', tags: ['x']),
+        _p(ulid: 'y'),
+      ];
+      expect(
+        filterUntagged(pages).map((p) => p.ulid).toList(),
+        ['z', 'y'],
+      );
+    });
+
+    test('returns empty list when every page is tagged', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['x']),
+        _p(ulid: 'b', tags: ['y']),
+      ];
+      expect(filterUntagged(pages), isEmpty);
+    });
+
+    test('returns empty list on empty input', () {
+      expect(filterUntagged([]), isEmpty);
     });
   });
 

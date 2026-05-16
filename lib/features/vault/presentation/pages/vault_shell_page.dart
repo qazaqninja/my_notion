@@ -496,17 +496,15 @@ class _VaultShellPageState extends State<VaultShellPage> {
             title: p.title,
             bodyLen: p.bodyText.length,
             mtimeMs: p.mtimeMs,
+            tags: listValueFromFrontmatterJson(p.frontmatterJson, 'tags'),
           ),
       ];
 
   Future<void> _openRandomUntaggedPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
-    final rows = await db.select(db.pages).get();
-    final untagged = [
-      for (final p in rows)
-        if (listValueFromFrontmatterJson(p.frontmatterJson, 'tags').isEmpty) p,
-    ];
+    final untagged =
+        filterUntagged(_toPageRefs(await db.select(db.pages).get()));
     if (untagged.isEmpty) {
       if (context.mounted) {
         context.toastInfo('Every page is tagged. Nothing to triage.');
