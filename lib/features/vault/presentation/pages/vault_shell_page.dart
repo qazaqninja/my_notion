@@ -700,6 +700,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show pages with open todos':
         if (!context.mounted) return;
         await _showOpenTodosDialog(context);
+      case 'Show duplicate page titles':
+        if (!context.mounted) return;
+        await _showDuplicateTitlesDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           context.toastError('No vault open');
@@ -1183,6 +1186,44 @@ views:
           'Pages not edited in 90+ days. Oldest first — candidates for archive or refresh.',
       subtitleEmpty:
           'Every indexed page has been edited within the last 90 days.',
+    );
+  }
+
+  Future<void> _showDuplicateTitlesDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    // Group by case-folded title so "Project" and "project" collide
+    // (the common shape of accidental duplication). Empty titles are
+    // already surfaced by the "Show pages without a title" entry, so
+    // skip them here to avoid double-reporting.
+    final byKey = <String, List<db_models.Page>>{};
+    for (final p in pages) {
+      final t = p.title.trim();
+      if (t.isEmpty) continue;
+      byKey.putIfAbsent(t.toLowerCase(), () => []).add(p);
+    }
+    // Keep only buckets with 2+ pages; flatten back out, sorted so
+    // duplicates with the same title stay adjacent and the
+    // most-recently-edited duplicate appears first within each
+    // bucket. Buckets themselves are ordered by title alphabetically.
+    final dups = <db_models.Page>[];
+    final keys = byKey.keys.where((k) => byKey[k]!.length >= 2).toList()
+      ..sort();
+    for (final k in keys) {
+      final bucket = byKey[k]!
+        ..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+      dups.addAll(bucket);
+    }
+    if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: dups,
+      headingFull: 'DUPLICATE TITLES',
+      headingEmpty: 'NO DUPLICATE TITLES',
+      subtitleFull:
+          'Pages whose title (case-insensitive) is shared by another page. Sorted by title, then last-edited.',
+      subtitleEmpty:
+          'Every page title is unique across the vault (case-insensitive). Nice.',
     );
   }
 
