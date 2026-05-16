@@ -524,6 +524,34 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Sort the lines touched by the selection by the **sum of every
+/// signed number** found anywhere in each line, ascending. Useful
+/// for ranking tabular rows where the per-row total is the metric
+/// (`alice 10 20 30` outsorts `bob 5 5 5` on the sum 60 vs 15).
+/// Lines with no number contribute 0 and sort accordingly; ties are
+/// broken by original input order.
+SortLinesResult sortLinesBySumOfNumbersIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'-?\d+(?:\.\d+)?');
+      double sumLine(String l) {
+        var total = 0.0;
+        for (final m in re.allMatches(l)) {
+          final v = double.tryParse(m.group(0)!);
+          if (v != null) total += v;
+        }
+        return total;
+      }
+      // Decorate-sort-undecorate so the comparator stays cheap.
+      final decorated = [
+        for (final l in lines) (sumLine(l), l),
+      ];
+      // `compareTo` on `double` is stable for our purposes — same key
+      // means equal in the sort, and `List.sort` is stable in Dart.
+      decorated.sort((a, b) => a.$1.compareTo(b.$1));
+      return [for (final p in decorated) p.$2];
+    });
+
 /// Sort the lines touched by the selection by **word count**
 /// ascending (fewest words first). Words are whitespace-separated
 /// non-empty runs, matching the convention from `countLinesIn` and

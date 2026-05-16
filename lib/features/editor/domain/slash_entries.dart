@@ -235,6 +235,10 @@ enum SlashAction {
   /// Sort by the LAST signed number found anywhere in each line;
   /// lines with no number drop to the bottom.
   sortLinesByLastNumber,
+  /// Sort by the SUM of every signed number found in each line,
+  /// ascending. Lines with no number sum to 0 and sort with the
+  /// other zero-sum lines.
+  sortLinesBySumOfNumbers,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1394,6 +1398,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'value-then-label rows',
     action: SlashAction.sortLinesByLastNumber,
     keywords: ['sort', 'last', 'number', 'trailing', 'score', 'log'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort by sum of numbers in line',
+    hint: 'per-row total ascending',
+    action: SlashAction.sortLinesBySumOfNumbers,
+    keywords: ['sort', 'sum', 'total', 'numbers', 'row', 'tabular'],
   ),
   SlashEntry(
     icon: 'sync',

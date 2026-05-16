@@ -2181,6 +2181,41 @@ void main() {
     });
   });
 
+  group('sortLinesBySumOfNumbersIn', () {
+    test('sums every number and sorts ascending', () {
+      const text = 'alice 10 20 30\nbob 5 5 5\ncarol 100\n';
+      // alice = 60, bob = 15, carol = 100 → bob, alice, carol.
+      final r = sortLinesBySumOfNumbersIn(text, 0, text.length);
+      expect(
+        r.text,
+        'bob 5 5 5\nalice 10 20 30\ncarol 100\n',
+      );
+    });
+
+    test('signed numbers contribute to the sum', () {
+      const text = 'a 10 -5\nb 5 -10\nc 100 -200\n';
+      // a = 5, b = -5, c = -100 → c, b, a.
+      final r = sortLinesBySumOfNumbersIn(text, 0, text.length);
+      expect(r.text, 'c 100 -200\nb 5 -10\na 10 -5\n');
+    });
+
+    test('lines with no numbers sort with the zero-sum group', () {
+      const text = 'foo\nbar\nbaz 0\n';
+      // All three sum to 0; stable sort preserves input order.
+      final r = sortLinesBySumOfNumbersIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\nbaz 0\n');
+    });
+
+    test('single-line input passes through', () {
+      const text = 'lonely 42\n';
+      expect(sortLinesBySumOfNumbersIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(sortLinesBySumOfNumbersIn('', 0, 0).text, '');
+    });
+  });
+
   group('sortLinesByLastNumberIn', () {
     test('sorts value-then-label rows by the trailing score', () {
       const text = 'alice scored 87\nbob scored 42\neve scored 100\n';
