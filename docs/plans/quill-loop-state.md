@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1262 — D1 slices 11+12** (sub-page + transclusion cards bundled)
-- Committed: df7ca9a
+- **M1264 — D1 slice 13** (column fences :::cols / :::col / :::)
+- Committed: 67330f7
 - TaskList ID: 22 (still in_progress)
-- Notes: `[[ULID]]` / `[[ULID#anchor]]` → `subPageAttribution`. `![[ULID]]` → `transclusionAttribution`. ULID regex matches Crockford base32, length 26. Inline wikilinks stay paragraph text. 54 cases total across 12 block-level slices. Remaining: columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
+- Notes: Nesting-aware fence parser (depth tracked through `:::cols`/`:::col` open + `:::` close). Body holds raw multi-line markdown via custom `columnsAttribution`. 57 cases total. Remaining: breadcrumb + toc + buttons (14-15), inline marks (16-22), interactions (23-27), cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
