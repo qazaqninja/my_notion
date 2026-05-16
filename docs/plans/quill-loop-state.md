@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1258 — D1 slice 9** (file attachment cards — non-image extensions)
-- Committed: 3a4b334
+- **M1260 — D1 slice 10** (bookmark cards — standalone http(s) URL)
+- Committed: e80d9fc
 - TaskList ID: 22 (still in_progress)
-- Notes: Extension-aware branching: jpg/jpeg/png/gif/webp/bmp/svg/heic/no-ext → ImageNode; everything else (.pdf, .mp4, .mp3, archives, docs) → ParagraphNode with `fileAttachmentAttribution` + label + path metadata. Raw markdown preserved in body for byte-identical round-trip. 45 cases total. Remaining: bookmark cards (10), sub-page + transclusion cards (11-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
+- Notes: Standalone http(s) URL line → ParagraphNode with `bookmarkAttribution`. Ordering: bookmark check runs before image/file-attachment branch so a URL ending in `.png` isn't misclassified as an image. URL inside sentence stays paragraph. 49 cases total. Remaining: sub-page + transclusion cards (11-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
