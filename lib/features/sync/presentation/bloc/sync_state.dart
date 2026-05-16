@@ -14,6 +14,7 @@ class SyncState extends Equatable {
     this.lastError,
     this.lastConflict,
     this.lastPush,
+    this.knownShas = const <String, String>{},
   });
 
   final SyncStatus status;
@@ -22,7 +23,18 @@ class SyncState extends Equatable {
   final SyncFileSummary? lastConflict; // populated on 409
   final SyncFileSummary? lastPush; // populated after a successful push
 
+  /// Map of `relpath → sha256` for the last-known server-side version
+  /// of each file the client has pushed or had a conflict on. Used to
+  /// stamp `If-Match` on subsequent pushes so concurrent edits from
+  /// another device surface as 409 conflicts instead of overwriting.
+  final Map<String, String> knownShas;
+
   bool get isAuthed => token != null && token!.isNotEmpty;
+
+  /// Last-known server sha for [relpath], or null if we've never seen
+  /// it. Callers wire this into `ifMatch` of the next push for the
+  /// same relpath.
+  String? knownShaFor(String relpath) => knownShas[relpath];
 
   SyncState copyWith({
     SyncStatus? status,
@@ -30,6 +42,7 @@ class SyncState extends Equatable {
     String? lastError,
     SyncFileSummary? lastConflict,
     SyncFileSummary? lastPush,
+    Map<String, String>? knownShas,
     bool clearError = false,
     bool clearConflict = false,
   }) {
@@ -39,10 +52,11 @@ class SyncState extends Equatable {
       lastError: clearError ? null : (lastError ?? this.lastError),
       lastConflict: clearConflict ? null : (lastConflict ?? this.lastConflict),
       lastPush: lastPush ?? this.lastPush,
+      knownShas: knownShas ?? this.knownShas,
     );
   }
 
   @override
   List<Object?> get props =>
-      [status, token, lastError, lastConflict, lastPush];
+      [status, token, lastError, lastConflict, lastPush, knownShas];
 }

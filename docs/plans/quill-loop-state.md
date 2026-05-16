@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E19 — Track last-known server sha per relpath
+- **Task:** E20 — Pull-on-app-start: hydrate knownShas from `GET /sync/list` after restore/login
 - **Status:** pending
 
 ## Last completed
 
-- **M1320 — E18** (editor save → SyncBloc push + conflict toast)
-- Committed: bb3f27e
-- TaskList ID: 40
-- Notes: `MultiBlocListener` wrapping three presentation-layer bridges. Save → push bridge fires when EditorBloc transitions out of `saving: true` and if SyncBloc.isAuthed, dispatches `SyncPushFileRequested(relpath, body)` (no ifMatch yet — E19 adds that). Conflict bridge listens for `lastError == 'conflict'` transitions and shows a non-blocking toast with relpath + first-8 of server sha. End-to-end loop closed: open page → edit → debounced save → fire-and-forget push to v2 → backend probe flips `is_public` if `public:` frontmatter changed. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1322 — E19** (per-relpath If-Match tracking in pushes)
+- Committed: (this iteration)
+- TaskList ID: 41
+- Notes: `SyncState` gains `Map<String, String> knownShas` (relpath → sha256) plus `knownShaFor(relpath)` accessor. `_onPush` falls back to `state.knownShaFor(e.relpath)` when caller omits `ifMatch`. `SyncPutSuccess` merges `summary.sha256` into the tracker; `SyncPutConflict` merges `current.sha256` so the next push for the same relpath sees the latest server view rather than re-conflicting on the same stale sha. Logout drops the entire map by emitting `const SyncState()`. 5 new bloc_test cases (record-on-success, fall-back-to-tracker, explicit-event-wins, conflict-updates-map, logout-clears) — 18/18 sync_bloc tests pass. flutter analyze clean. Real concurrent edits across devices now surface as 409 toasts rather than silent overwrites. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

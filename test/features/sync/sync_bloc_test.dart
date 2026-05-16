@@ -210,6 +210,137 @@ void main() {
     );
   });
 
+  group('SyncBloc per-relpath If-Match tracking (E19)', () {
+    blocTest<SyncBloc, SyncState>(
+      'Successful push records the returned sha in knownShas[relpath]',
+      build: () => SyncBloc(
+        repo: _FakeRepo()
+          ..putOutcome = SyncPutSuccess(
+            SyncFileSummary(
+              relpath: 'a.md',
+              sha256: 'sha-v1',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          ),
+      ),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+      ),
+      act: (bloc) => bloc.add(
+        const SyncPushFileRequested(relpath: 'a.md', body: '# v1'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.knownShas, {'a.md': 'sha-v1'});
+        expect(bloc.state.knownShaFor('a.md'), 'sha-v1');
+        expect(bloc.state.knownShaFor('missing.md'), isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Second push reuses tracked sha as If-Match when caller passes none',
+      build: () {
+        final repo = _FakeRepo()
+          ..putOutcome = SyncPutSuccess(
+            SyncFileSummary(
+              relpath: 'a.md',
+              sha256: 'sha-v2',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          );
+        return SyncBloc(repo: repo);
+      },
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-v1'},
+      ),
+      act: (bloc) => bloc.add(
+        // No explicit ifMatch — bloc must fall back to knownShas['a.md'].
+        const SyncPushFileRequested(relpath: 'a.md', body: '# v2'),
+      ),
+      verify: (bloc) {
+        // Repo received the tracked sha.
+        // ignore: avoid_dynamic_calls
+        expect((bloc.state.knownShas)['a.md'], 'sha-v2');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Explicit ifMatch from the event still wins over the tracker',
+      build: () {
+        final repo = _FakeRepo()
+          ..putOutcome = SyncPutSuccess(
+            SyncFileSummary(
+              relpath: 'a.md',
+              sha256: 'sha-v3',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          );
+        return SyncBloc(repo: repo);
+      },
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-tracked'},
+      ),
+      act: (bloc) => bloc.add(
+        const SyncPushFileRequested(
+          relpath: 'a.md',
+          body: '# v3',
+          ifMatch: 'sha-explicit',
+        ),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.knownShas['a.md'], 'sha-v3');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Push conflict updates knownShas with server-side sha',
+      build: () => SyncBloc(
+        repo: _FakeRepo()
+          ..putOutcome = SyncPutConflict(
+            SyncFileSummary(
+              relpath: 'a.md',
+              sha256: 'server-fresh',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          ),
+      ),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-stale'},
+      ),
+      act: (bloc) => bloc.add(
+        const SyncPushFileRequested(relpath: 'a.md', body: '# stale'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'conflict');
+        // Tracker now reflects the latest server sha so the client can
+        // pick a reconciliation strategy and push again without
+        // immediately re-conflicting on the same stale value.
+        expect(bloc.state.knownShas['a.md'], 'server-fresh');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Logout drops all tracked shas',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-a', 'b.md': 'sha-b'},
+      ),
+      act: (bloc) => bloc.add(const SyncLogoutRequested()),
+      verify: (bloc) {
+        expect(bloc.state.knownShas, isEmpty);
+      },
+    );
+  });
+
   group('SyncBloc token persistence (E15)', () {
     blocTest<SyncBloc, SyncState>(
       'Login success writes the token to SharedPreferences',

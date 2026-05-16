@@ -86,6 +86,8 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     Emitter<SyncState> emit,
   ) async {
     await _clearToken();
+    // Returning the default SyncState() also clears knownShas — fresh
+    // login starts with a clean tracker.
     emit(const SyncState());
   }
 
@@ -115,17 +117,27 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     }
     emit(state.copyWith(status: SyncStatus.busy, clearError: true));
     try {
+      // E19: if the caller didn't provide an explicit ifMatch, fall back
+      // to the bloc's tracked last-known-server-sha for this relpath.
+      // Result: edits made on another device since our last push surface
+      // as conflicts rather than silently overwriting.
+      final effectiveIfMatch =
+          e.ifMatch ?? state.knownShaFor(e.relpath);
       final outcome = await _repo.put(
         token: token,
         relpath: e.relpath,
         body: e.body,
-        ifMatch: e.ifMatch,
+        ifMatch: effectiveIfMatch,
       );
       switch (outcome) {
         case SyncPutSuccess(:final summary):
           emit(state.copyWith(
             status: SyncStatus.connected,
             lastPush: summary,
+            knownShas: {
+              ...state.knownShas,
+              summary.relpath: summary.sha256,
+            },
             clearConflict: true,
           ));
         case SyncPutConflict(:final current):
@@ -133,6 +145,14 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
             status: SyncStatus.error,
             lastError: 'conflict',
             lastConflict: current,
+            // Update the tracker to the server's view so the next push
+            // for this relpath won't immediately re-conflict on the same
+            // stale sha — the client picks reconciliation strategy
+            // (rebase / overwrite) and pushes again.
+            knownShas: {
+              ...state.knownShas,
+              current.relpath: current.sha256,
+            },
           ));
       }
     } on SyncAuthException {
