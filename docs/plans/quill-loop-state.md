@@ -7,14 +7,14 @@
 
 - **Phase:** C (V1 Polish — Platform)
 - **Task:** C1 — Mermaid native rendering (webview_flutter + vendored mermaid.min.js)
-- **Status:** pending
+- **Status:** in_progress (slice 1 of ~3 done at M1232)
 
-## Last completed
+## Last completed slice
 
-- **M1230 — B4 slice 4 (closes B4 + Phase B)** (per-platform notification permission config + docs)
-- Committed: 5c1cb67
-- TaskList ID: 18 (closed)
-- Notes: Phase B closed end-to-end. 8 commits M1215→M1230. B1 video, B2 audio, B3 PDF, B4 reminders all shipped. Two FEATURES.md ✅ flips at this iteration: "Mention dates (creates reminders)" and "Reminders (with notifications)" both leave 🚧.
+- **M1232 — C1 slice 1** (webview_flutter + MermaidView widget skeleton)
+- Committed: c02ad61
+- TaskList ID: 19 (still in_progress)
+- Notes: `webview_flutter ^4.13.1` covers iOS/Android/macOS. MermaidView at `lib/shared/widgets/mermaid_view.dart` — WebView host on supported platforms, styled-card fallback on Linux/Windows/test. HTML scaffold prepared with mermaid.initialize+run JS; slice 2 vendors mermaid.min.js asset, slice 3 wires into markdown_renderer.dart's M200 _MermaidPlaceholder.
 
 ## Backlog (Phase A — Foundation)
 
