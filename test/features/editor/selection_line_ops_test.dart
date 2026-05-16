@@ -8899,6 +8899,74 @@ void main() {
     });
   });
 
+  group('extractIssnFromLinesIn', () {
+    test('Nature ISSN 0028-0836 extracts', () {
+      const text = 'cite 0028-0836 Nature journal\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      expect(r.text, '0028-0836\n');
+    });
+
+    test('JSC ISSN 1469-5448 extracts', () {
+      const text = 'ref 1469-5448 science comm\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      expect(r.text, '1469-5448\n');
+    });
+
+    test('Library Hi Tech ISSN extracts', () {
+      const text = 'see 0024-9319 today\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      expect(r.text, '0024-9319\n');
+    });
+
+    test('X check digit ISSN extracts', () {
+      const text = 'cite 2049-632X published\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      expect(r.text, '2049-632X\n');
+    });
+
+    test('wrong shape NNN-NNNNN rejected', () {
+      // ISSN is strictly 4-3-1. `123-45678` is 3-5 form.
+      const text = 'fake 123-45678 not ISSN\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('NNNNN-NNN form rejected', () {
+      // 5-3 form is not ISSN.
+      const text = 'wrong 12345-678 ignored\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('embedded in longer numeric run rejected', () {
+      // The lookbehind `(?<!\d)` prevents matches that
+      // would start inside a longer digit run.
+      const text = 'long 12345-6789 here\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      // `12345-6789` — leading `1` has nothing before (space ok),
+      // but the regex tries `\d{4}-\d{3}[\dX]`. `1234` (4d) +
+      // `-` is at pos 5? `12345` has 5 digits, no `-` after 4
+      // before continuing. So no match.
+      expect(r.text, '\n');
+    });
+
+    test('multiple ISSNs on one line each extract', () {
+      const text = 'cite 0028-0836 and 1469-5448 both\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      expect(r.text, '0028-0836\n1469-5448\n');
+    });
+
+    test('lines without ISSNs dropped from output', () {
+      const text = 'plain prose\nref 0024-9319 here\nbye\n';
+      final r = extractIssnFromLinesIn(text, 0, text.length);
+      expect(r.text, '0024-9319\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractIssnFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

@@ -552,6 +552,9 @@ enum SlashAction {
   /// Extract every ISBN-10 identifier (`0-306-40615-2`,
   /// `030640615X`) from each selected line.
   extractIsbn10FromLines,
+  /// Extract every ISSN (International Standard Serial
+  /// Number, `0028-0836`) from each selected line.
+  extractIssnFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2546,6 +2549,15 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractIsbn10FromLines,
     keywords: ['extract', 'isbn', 'isbn10', 'book',
         'library', 'catalog', 'bibliography', 'reference'],
+  ),
+  SlashEntry(
+    icon: 'newspaper',
+    label: 'Extract ISSN identifiers',
+    hint: '0028-0836 / 2049-632X',
+    action: SlashAction.extractIssnFromLines,
+    keywords: ['extract', 'issn', 'periodical', 'journal',
+        'magazine', 'serial', 'library', 'catalog',
+        'bibliography'],
   ),
   SlashEntry(
     icon: 'calendar',

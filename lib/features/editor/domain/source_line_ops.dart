@@ -3746,6 +3746,46 @@ SortLinesResult extractIsbn10FromLinesIn(
       return out;
     });
 
+/// Extract every ISSN (International Standard Serial Number)
+/// from each selected line. Useful for periodical / journal
+/// catalog audits, bibliography triage, and library-system
+/// reference harvests.
+///
+/// Recognition: `(?<!\d)\d{4}-\d{3}[\dX](?!\d)`
+/// - 4 digits (group prefix), hyphen, 3 digits (group suffix),
+///   1 check digit (0-9 or `X`).
+/// - Total 8 digit-equivalents, hyphen at position 4.
+/// - Lookarounds reject matches embedded inside longer numeric
+///   runs.
+///
+/// Matches:
+/// - `0028-0836`        — Nature
+/// - `1469-5448`        — Journal of Science Communication
+/// - `0024-9319`        — Library Hi Tech
+/// - `2049-632X`        — example with X check digit
+///
+/// ISSN check-digit validity (mod-11) is NOT verified — that's
+/// a downstream semantic check. The regex enforces shape only.
+///
+/// Distinct from [extractIsbn10FromLinesIn] (M1165 — book
+/// identifier with hyphenated 4-group layout) and the
+/// existing ISBN-13 extractor. ISSN's strict 4-3-check shape
+/// has no overlap with those.
+///
+/// 102nd member of the extraction family.
+SortLinesResult extractIssnFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?<!\d)\d{4}-\d{3}[\dX](?!\d)');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
