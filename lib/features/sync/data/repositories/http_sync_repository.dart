@@ -90,6 +90,9 @@ class HttpSyncRepository implements SyncRepository {
       );
     }
     if (res.statusCode == 401) throw const SyncAuthException();
+    if (res.statusCode == 503) {
+      throw const SyncNetworkException('backend_unhealthy_db');
+    }
     if (res.statusCode != 200) {
       throw SyncException('put ${res.statusCode}: ${res.body}');
     }
@@ -117,6 +120,9 @@ class HttpSyncRepository implements SyncRepository {
     if (res.statusCode == 204) return true;
     if (res.statusCode == 404) return false;
     if (res.statusCode == 401) throw const SyncAuthException();
+    if (res.statusCode == 503) {
+      throw const SyncNetworkException('backend_unhealthy_db');
+    }
     throw SyncException('delete ${res.statusCode}: ${res.body}');
   }
 
@@ -138,8 +144,9 @@ class HttpSyncRepository implements SyncRepository {
   // ── helpers ──────────────────────────────────────────────────────────
 
   Future<http.Response> _post(String path, Map<String, dynamic> body) async {
+    http.Response res;
     try {
-      return await _client.post(
+      res = await _client.post(
         Uri.parse('$baseUrl$path'),
         headers: const {'content-type': 'application/json'},
         body: jsonEncode(body),
@@ -147,6 +154,10 @@ class HttpSyncRepository implements SyncRepository {
     } catch (e) {
       throw SyncNetworkException(e.toString());
     }
+    if (res.statusCode == 503) {
+      throw const SyncNetworkException('backend_unhealthy_db');
+    }
+    return res;
   }
 
   Future<http.Response> _get(String path, {required String token}) async {
@@ -160,6 +171,13 @@ class HttpSyncRepository implements SyncRepository {
       throw SyncNetworkException(e.toString());
     }
     if (res.statusCode == 401) throw const SyncAuthException();
+    // F8: backend's dbExceptionToResponse middleware emits 503 when a
+    // Postgres transport error fires mid-request. Surface as a network
+    // exception with a distinct marker so the sync-card banner can
+    // render "Backend database unreachable" instead of the raw status.
+    if (res.statusCode == 503) {
+      throw const SyncNetworkException('backend_unhealthy_db');
+    }
     return res;
   }
 

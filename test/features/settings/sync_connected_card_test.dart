@@ -263,6 +263,34 @@ void main() {
     });
   });
 
+  group('friendlyNetworkErrorLabel (F8)', () {
+    test('backend_unhealthy_db → backend-DB copy', () {
+      expect(
+        friendlyNetworkErrorLabel('backend_unhealthy_db'),
+        contains('database unreachable'),
+      );
+    });
+
+    test('backend_unhealthy → ping-failure copy', () {
+      expect(
+        friendlyNetworkErrorLabel('backend_unhealthy'),
+        contains('reporting an unhealthy'),
+      );
+    });
+
+    test('Unknown codes fall through to the raw string', () {
+      expect(
+        friendlyNetworkErrorLabel('connection_timed_out'),
+        'connection_timed_out',
+      );
+    });
+
+    test('null + empty → empty label', () {
+      expect(friendlyNetworkErrorLabel(null), '');
+      expect(friendlyNetworkErrorLabel(''), '');
+    });
+  });
+
   group('SyncConnectedCard network error banner (E28)', () {
     testWidgets('un-classified lastError renders banner + Retry now',
         (tester) async {

@@ -210,7 +210,7 @@ class SyncConnectedCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          state.lastError ?? '',
+                          friendlyNetworkErrorLabel(state.lastError),
                           style: TextStyle(
                             fontSize: 12,
                             color: tokens.text2,
@@ -261,6 +261,26 @@ bool isNetworkError(String? code) {
 /// the activity row from blowing up on placeholder hashes in tests.
 String _shortSha(String sha) =>
     sha.length >= 8 ? sha.substring(0, 8) : sha;
+
+/// F8 — converts the bloc's `lastError` code into a human-friendly
+/// label for the E28 network-error banner. Known transient backend
+/// failures get specific copy; everything else falls back to the raw
+/// code so a future error case still shows *something* useful while
+/// it's being triaged.
+String friendlyNetworkErrorLabel(String? code) {
+  switch (code) {
+    case 'backend_unhealthy':
+      return 'Backend reachable but reporting an unhealthy '
+          'database. Will retry automatically.';
+    case 'backend_unhealthy_db':
+      return 'Backend database unreachable. Will retry automatically.';
+    case null:
+    case '':
+      return '';
+    default:
+      return code;
+  }
+}
 
 class _ActivityRow extends StatelessWidget {
   const _ActivityRow({

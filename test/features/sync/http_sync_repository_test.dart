@@ -186,5 +186,54 @@ void main() {
         throwsA(isA<SyncNetworkException>()),
       );
     });
+
+    // F8: backend's dbExceptionToResponse middleware emits 503 on a
+    // Postgres transport failure. Each HTTP method should surface that
+    // as a SyncNetworkException carrying the `backend_unhealthy_db`
+    // marker so the UI banner can show specific copy.
+    test('F8: list 503 throws SyncNetworkException(backend_unhealthy_db)',
+        () async {
+      final client = MockClient((_) async => http.Response('', 503));
+      await expectLater(
+        () => repo(client).list(token: 't'),
+        throwsA(
+          isA<SyncNetworkException>().having(
+            (e) => e.message,
+            'message',
+            'backend_unhealthy_db',
+          ),
+        ),
+      );
+    });
+
+    test('F8: put 503 throws SyncNetworkException(backend_unhealthy_db)',
+        () async {
+      final client = MockClient((_) async => http.Response('', 503));
+      await expectLater(
+        () => repo(client).put(token: 't', relpath: 'a.md', body: 'x'),
+        throwsA(
+          isA<SyncNetworkException>().having(
+            (e) => e.message,
+            'message',
+            'backend_unhealthy_db',
+          ),
+        ),
+      );
+    });
+
+    test('F8: delete 503 throws SyncNetworkException(backend_unhealthy_db)',
+        () async {
+      final client = MockClient((_) async => http.Response('', 503));
+      await expectLater(
+        () => repo(client).delete(token: 't', relpath: 'a.md'),
+        throwsA(
+          isA<SyncNetworkException>().having(
+            (e) => e.message,
+            'message',
+            'backend_unhealthy_db',
+          ),
+        ),
+      );
+    });
   });
 }

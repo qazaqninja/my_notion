@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F8 — Pick-next: smoke-test backend on a live docker compose stack (manual sanity per docs/phase-e-sanity-checklist.md) OR Phase F UI tightening (e.g. surface Flutter sync-error toasts when backend returns 503)
+- **Task:** F9 — Pick-next survey after F-stretch: live docker-compose smoke OR Phase G (mobile editor toolbar / home_widget / D1 cutover) OR phase H (rich CRDT)
 - **Status:** pending
 
 ## Last completed
+
+- **M1365 — F8** (surface 503 db_unavailable in Flutter sync card)
+- Committed: (this iteration)
+- TaskList ID: 84
+- Notes: Closes the round-trip on F7's backend hardening. Now whenever the F7 middleware emits `503 {"error":"db_unavailable","op":<msg>}`, the Flutter client lifts that into the E28 network-error banner with specific human-friendly copy instead of the raw error code. `HttpSyncRepository._get` + `_post` + the inline `put` / `delete` paths all detect `res.statusCode == 503` and throw `SyncNetworkException('backend_unhealthy_db')`. `HttpFormsRepository.listSubmissions` mirrors the same mapping with `FormsNetworkException`. The bloc's existing `_onPush` / `_onList` / `_onPing` paths route this through `lastError` unchanged. New `friendlyNetworkErrorLabel(code)` helper in `sync_connected_card.dart` maps `backend_unhealthy_db → "Backend database unreachable. Will retry automatically."`, `backend_unhealthy → "Backend reachable but reporting an unhealthy database. Will retry automatically."`, unknown codes fall through to the raw string, null/empty → empty label. Banner now reads through the helper instead of `state.lastError ?? ''`. 8 new tests (4 helper + 3 sync repo 503 across GET/PUT/DELETE + 1 forms repo 503). 121/121 sync + forms + card tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1364 — F7** (DbException wrap extended to Sync + User + middleware-driven 503 mapping)
 - Committed: (this iteration)

@@ -63,6 +63,22 @@ void main() {
       );
     });
 
+    test('F8: 503 throws FormsNetworkException(backend_unhealthy_db)',
+        () async {
+      final client = MockClient((req) async => http.Response('', 503));
+      final repo = HttpFormsRepository(baseUrl: baseUrl, client: client);
+      await expectLater(
+        () => repo.listSubmissions(token: token, ulid: ulid),
+        throwsA(
+          isA<FormsNetworkException>().having(
+            (e) => e.message,
+            'message',
+            'backend_unhealthy_db',
+          ),
+        ),
+      );
+    });
+
     test('403 throws FormsNotOwnerException', () async {
       final client = MockClient(
         (req) async => http.Response(

@@ -33,6 +33,12 @@ class HttpFormsRepository implements FormsRepository {
     }
     if (res.statusCode == 401) throw const FormsAuthException();
     if (res.statusCode == 403) throw const FormsNotOwnerException();
+    if (res.statusCode == 503) {
+      // F8: backend's dbExceptionToResponse middleware emits 503 on
+      // a Postgres transport failure. Surface as a network error
+      // with a distinct marker so the UI can render specific copy.
+      throw const FormsNetworkException('backend_unhealthy_db');
+    }
     if (res.statusCode != 200) {
       throw FormsException('list ${res.statusCode}: ${res.body}');
     }
