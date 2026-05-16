@@ -18,6 +18,7 @@ import '../../../reminders/presentation/bloc/reminders_event.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
 import '../../../sync/presentation/bloc/sync_state.dart';
+import '../../../sync/presentation/widgets/pull_reconcile_dialog.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
@@ -150,6 +151,40 @@ class EditorPage extends StatelessWidget {
                 'Sync conflict on ${state.lastConflict!.relpath}',
                 sub: 'server sha ${state.lastConflict!.sha256.substring(0, 8)}…',
                 subMono: true,
+              );
+            },
+          ),
+          // E24 (M1327): lastFetched transition null → non-null opens
+          // the diff/replace dialog so the user can choose between the
+          // server body and their local body. The dialog dispatches
+          // EditBody(server) on "Use server version" or just clears
+          // lastFetched on "Keep local".
+          BlocListener<SyncBloc, SyncState>(
+            listenWhen: (prev, next) =>
+                prev.lastFetched == null && next.lastFetched != null,
+            listener: (context, state) {
+              final fetched = state.lastFetched;
+              if (fetched == null) return;
+              final editor = context.read<EditorBloc>();
+              final editorState = editor.state;
+              final localBody = editorState is EditorLoaded
+                  ? editorState.page.body
+                  : '';
+              final sync = context.read<SyncBloc>();
+              showDialog<void>(
+                context: context,
+                builder: (_) => PullReconcileDialog(
+                  serverBody: fetched,
+                  localBody: localBody,
+                  onUseServer: () {
+                    editor.add(EditBody(fetched.body));
+                    sync.add(const SyncFetchCleared());
+                    context.toastSuccess('Pulled server version',
+                        sub: fetched.summary.relpath);
+                  },
+                  onKeepLocal: () =>
+                      sync.add(const SyncFetchCleared()),
+                ),
               );
             },
           ),

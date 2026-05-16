@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E24 — Pull diff/replace dialog (UI for SyncState.lastFetched)
+- **Task:** E25 — Pull action on the conflict toast (one-tap recovery from 409)
 - **Status:** pending
 
 ## Last completed
 
-- **M1326 — E23** (editor "Pull from server" → GET /sync/get/<relpath>)
+- **M1327 — E24** (pull diff/replace dialog over SyncState.lastFetched)
 - Committed: (this iteration)
-- TaskList ID: 45
-- Notes: `SyncState` gains `SyncFileBody? lastFetched` + `clearFetched: true` copyWith flag. New `SyncFetchFileRequested(relpath)` event + `_onFetch` handler. Success populates `lastFetched` AND refreshes `knownShas[relpath]` so a subsequent push automatically uses the latest server sha as If-Match. 404 maps to `lastError = 'not_found'` and clears `lastFetched` (so the UI can distinguish "no server copy" from "fetch errored"); 401 clears the token; network failure surfaces `lastError` but keeps the token. Editor kebab gets a new "Pull from server" entry (icon: download) between Publish/Unpublish and the trash separator — emits a not-logged-in warn toast if `!isAuthed`, otherwise dispatches the event and toasts "Pulling latest from server…". The next slice (E24) renders the diff/replace dialog over `state.lastFetched`. 5 new bloc_test cases (not-authed, success-populates+refresh, 404-clears, 401-token-invalid, network-keeps-token); 36/36 sync_bloc tests pass. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 46
+- Notes: New `lib/features/sync/presentation/widgets/pull_reconcile_dialog.dart` — pure-presentational `PullReconcileDialog` with side-by-side (>=720 px) / stacked (<720 px) panels showing local vs server body and a sha+relpath header line. Identical-body case shows "Server copy matches local" header and disables the "Use server version" button. `SyncFetchCleared` event + `_onFetchCleared` handler so the UI can dismiss the dialog without leaking `lastFetched` into the next state cycle. Editor `MultiBlocListener` gains a fourth bridge: when `lastFetched` transitions from null → non-null, `showDialog` the reconcile dialog; on "Use server version" dispatch `EditBody(server.body)` + `SyncFetchCleared` + success toast, on "Keep local" just `SyncFetchCleared`. New `test/helpers/test_theme.dart` (themed MaterialApp wrapper for widget tests). 4 widget tests (shows-both-bodies-+-sha+relpath, use-server-callback, keep-local-callback, identical-disables-server-CTA). Sync tests 51/51, sync_bloc 36/36, flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

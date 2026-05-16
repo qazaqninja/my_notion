@@ -49,6 +49,14 @@ class SyncListRequested extends SyncEvent {
   const SyncListRequested();
 }
 
+/// Tell the bloc the UI has finished reading `SyncState.lastFetched`
+/// — drops the value so the pull dialog doesn't re-open on the next
+/// rebuild. Used by the E24 reconcile dialog's dismiss / "Keep local"
+/// branches and after a successful "Use server version" replace.
+class SyncFetchCleared extends SyncEvent {
+  const SyncFetchCleared();
+}
+
 /// Pull the latest server copy of [relpath]. Populates
 /// `SyncState.lastFetched` (E23) so the UI can diff against the local
 /// page body and offer "Use server version" / "Keep local". Used by the

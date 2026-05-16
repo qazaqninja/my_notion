@@ -30,6 +30,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<SyncPushFileRequested>(_onPush, transformer: sequential());
     on<SyncDeleteFileRequested>(_onDelete, transformer: sequential());
     on<SyncFetchFileRequested>(_onFetch, transformer: sequential());
+    on<SyncFetchCleared>(_onFetchCleared);
   }
 
   final SyncRepository _repo;
@@ -300,6 +301,14 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         lastError: err.message,
       ));
     }
+  }
+
+  void _onFetchCleared(
+    SyncFetchCleared e,
+    Emitter<SyncState> emit,
+  ) {
+    if (state.lastFetched == null) return;
+    emit(state.copyWith(clearFetched: true));
   }
 
   Future<void> _persistToken(String token) async {
