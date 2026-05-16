@@ -83,6 +83,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/fonts/
+    # mermaid.min.js (3.3 MB) is vendored offline so the macOS app sandbox
+    # doesn't block cdn.jsdelivr.net / unpkg.com. C1 slice 2 of the
+    # 1m-loop plan.
+    - assets/mermaid/mermaid.min.js
   fonts:
     - family: Inter
       fonts:

@@ -16,6 +16,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/audio_inline_player.dart';
+import '../../../../shared/widgets/mermaid_view.dart';
 import '../../../../shared/widgets/pdf_inline_preview.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
@@ -2578,25 +2579,17 @@ class _CodeBlockState extends State<_CodeBlock> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SelectableText(
-                    widget.text,
-                    style: mono(fontSize: 12.5, color: tokens.text2),
-                  ),
-                  if (isMermaid) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline,
-                            size: 11, color: tokens.text3),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Mermaid source · rendering needs a viewer',
-                          style: TextStyle(
-                              fontSize: 10.5, color: tokens.text3),
-                        ),
-                      ],
+                  // C1 slice 2 (M1234): for mermaid blocks, render the
+                  // diagram via the WebView-backed MermaidView. The widget
+                  // falls back to a source-text card on Linux/Windows where
+                  // webview_flutter is not supported.
+                  if (isMermaid)
+                    MermaidView(source: widget.text)
+                  else
+                    SelectableText(
+                      widget.text,
+                      style: mono(fontSize: 12.5, color: tokens.text2),
                     ),
-                  ],
                 ],
               ),
             ),

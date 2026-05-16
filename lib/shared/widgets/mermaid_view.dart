@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../theme/tokens.dart';
@@ -62,23 +63,51 @@ class _MermaidViewState extends State<MermaidView> {
   void initState() {
     super.initState();
     if (_isSupportedPlatform) {
-      _controller = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..setBackgroundColor(const Color(0x00000000))
-        ..loadHtmlString(_htmlFor(widget.source));
+      _initController();
     }
   }
 
-  /// Build the HTML scaffold injected into the WebView. The body contains a
-  /// single `<div id="d">…</div>` whose text is the diagram source. The
-  /// vendored `mermaid.min.js` (slice 2 lands the asset) runs
-  /// `mermaid.initialize` + `mermaid.run` on DOMContentLoaded, replacing
-  /// the div's contents with rendered SVG.
-  String _htmlFor(String source) {
+  Future<void> _initController() async {
+    final mermaidJs = await _loadMermaidJs();
+    if (!mounted) return;
+    final controller = WebViewController();
+    await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
+    await controller.setBackgroundColor(const Color(0x00000000));
+    await controller.loadHtmlString(_htmlFor(widget.source, mermaidJs));
+    if (!mounted) return;
+    setState(() => _controller = controller);
+  }
+
+  /// Reads the vendored mermaid.min.js bytes from the asset bundle. Returns
+  /// an empty string if the asset is missing (lets the HTML scaffold fall
+  /// back to a "not vendored" notice without hard-crashing the WebView).
+  Future<String> _loadMermaidJs() async {
+    try {
+      return await rootBundle.loadString('assets/mermaid/mermaid.min.js');
+    } catch (_) {
+      return '';
+    }
+  }
+
+  /// Build the HTML scaffold injected into the WebView. The vendored
+  /// `mermaid.min.js` is inlined into a `<script>` block (rather than loaded
+  /// via `<script src=>`) because `loadHtmlString` has no asset-relative
+  /// URL resolution — it serves a string from a synthetic `about:blank`
+  /// origin where relative paths point nowhere.
+  ///
+  /// On DOMContentLoaded the inlined script runs `mermaid.initialize` +
+  /// `mermaid.run`, replacing the `<div class="mermaid">` source with
+  /// rendered SVG.
+  String _htmlFor(String source, String mermaidJs) {
     final escaped = source
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;');
+    final mermaidBlock = mermaidJs.isEmpty
+        ? '<script>document.body.innerHTML += '
+            "' <p style=\"color:#c00;font-size:12px\">mermaid.min.js not vendored yet (assets/mermaid/mermaid.min.js)</p>';"
+            ' </script>'
+        : '<script>$mermaidJs</script>';
     return '''
 <!doctype html>
 <html><head>
@@ -91,12 +120,10 @@ class _MermaidViewState extends State<MermaidView> {
 </head>
 <body>
   <div class="mermaid">$escaped</div>
-  <script src="mermaid.min.js"></script>
+  $mermaidBlock
   <script>
     if (window.mermaid) {
       mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
-    } else {
-      document.body.innerHTML += '<p style="color:#c00;font-size:12px">mermaid.min.js not vendored yet (C1 slice 2)</p>';
     }
   </script>
 </body></html>
@@ -108,9 +135,21 @@ class _MermaidViewState extends State<MermaidView> {
     if (!_isSupportedPlatform) {
       return _fallbackCard(context);
     }
+    final controller = _controller;
+    if (controller == null) {
+      // _initController is still resolving the asset bundle. Render a
+      // fixed-height placeholder so layout doesn't jump when the WebView
+      // finally appears.
+      return SizedBox(
+        height: widget.height,
+        child: const Center(
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
     return SizedBox(
       height: widget.height,
-      child: WebViewWidget(controller: _controller!),
+      child: WebViewWidget(controller: controller),
     );
   }
 
