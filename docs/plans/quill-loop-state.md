@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E13 — SyncBloc + provider wiring in app.dart
+- **Task:** E14 — Settings → Sync pane (UI)
 - **Status:** pending
 
 ## Last completed
 
-- **M1308 — E12** (Flutter sync client — first cut)
-- Committed: 8fabda0
-- TaskList ID: 34
-- Notes: New `lib/features/sync/` Clean Architecture tree. `SyncFileSummary` + `SyncFileBody` entities (Equatable, JSON-coded). Abstract `SyncRepository` with `login/signup/list/get/put/delete`. `SyncPutOutcome` sealed union (`SyncPutSuccess(summary)` | `SyncPutConflict(current)`). Typed exceptions `SyncAuthException`/`SyncEmailTakenException`/`SyncNetworkException`. `HttpSyncRepository(baseUrl, http.Client?)` impl uses `http ^1.2.2`. 11 tests via `MockClient` from `package:http/testing`. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1310 — E13** (SyncBloc + provider wiring)
+- Committed: 0768f90
+- TaskList ID: 35
+- Notes: `SyncBloc` with `sequential()` transformers on Login/Signup/Push (BL-10). Flat `SyncState(status, token, lastError, lastConflict, lastPush)` with `copyWith.clearError/clearConflict` flags. Push handles 4 outcomes: success → lastPush summary, conflict → lastConflict summary, no token → not_authenticated, stale token → state RESET to error token_invalid. `app.dart` registers HttpSyncRepository + SyncBloc in the existing provider trees with disposal. 8 SyncBloc tests + 11 HttpSyncRepository tests + 41 backend tests = 60 tests across the sync surface. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
