@@ -8606,6 +8606,93 @@ void main() {
     });
   });
 
+  group('extractLinuxSignalsFromLinesIn', () {
+    test('SIGTERM extracts', () {
+      const text = 'send SIGTERM to pid 42 now\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SIGTERM\n');
+    });
+
+    test('SIGKILL extracts', () {
+      const text = 'force SIGKILL the runaway proc\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SIGKILL\n');
+    });
+
+    test('SIGSEGV (crash signal) extracts', () {
+      const text = 'memory bug SIGSEGV in worker\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SIGSEGV\n');
+    });
+
+    test('SIGCHLD / SIGCONT / SIGSTOP extract', () {
+      const text = 'flow SIGCHLD SIGCONT SIGSTOP cycle\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SIGCHLD\nSIGCONT\nSIGSTOP\n');
+    });
+
+    test('SIGWINCH (terminal resize) extracts', () {
+      const text = 'redraw SIGWINCH from xterm\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SIGWINCH\n');
+    });
+
+    test('SIGUSR1 / SIGUSR2 extract', () {
+      const text = 'app SIGUSR1 SIGUSR2 toggles\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SIGUSR1\nSIGUSR2\n');
+    });
+
+    test('unknown signal SIGFOO rejected', () {
+      // `SIGFOO` is not a real signal.
+      const text = 'fake SIGFOO not real\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('real-time SIGRTMIN NOT matched (documented)', () {
+      // Real-time signals are parametric and rarely appear by
+      // name in doc audits; out of scope for this extractor.
+      const text = 'rt SIGRTMIN+5 unsupported here\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('lowercase sigterm rejected', () {
+      // Signal names are conventionally uppercase.
+      const text = 'shy sigterm sent here\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple signals on one line each extract', () {
+      const text = 'use SIGTERM then SIGKILL if needed\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SIGTERM\nSIGKILL\n');
+    });
+
+    test('lines without signals dropped from output', () {
+      const text = 'plain prose\nfire SIGHUP reload\nbye\n';
+      final r = extractLinuxSignalsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SIGHUP\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractLinuxSignalsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

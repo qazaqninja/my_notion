@@ -540,6 +540,9 @@ enum SlashAction {
   /// Extract every Digital Object Identifier (DOI, e.g.
   /// `10.1038/nature12373`) from each selected line.
   extractDoisFromLines,
+  /// Extract every POSIX / Linux signal name (`SIGTERM`,
+  /// `SIGKILL`, `SIGHUP`) from each selected line.
+  extractLinuxSignalsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2500,6 +2503,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'doi', 'citation', 'paper',
         'reference', 'research', 'academic', 'arxiv',
         'publication', 'journal'],
+  ),
+  SlashEntry(
+    icon: 'zap',
+    label: 'Extract Linux signal names',
+    hint: 'SIGTERM / SIGKILL / SIGHUP',
+    action: SlashAction.extractLinuxSignalsFromLines,
+    keywords: ['extract', 'signal', 'sigterm', 'sigkill',
+        'sighup', 'posix', 'linux', 'unix', 'kernel',
+        'debug', 'crash'],
   ),
   SlashEntry(
     icon: 'calendar',

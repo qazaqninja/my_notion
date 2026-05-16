@@ -3544,6 +3544,47 @@ SortLinesResult extractDoisFromLinesIn(
       return out;
     });
 
+/// Extract every POSIX / Linux signal name (`SIGTERM`,
+/// `SIGKILL`, `SIGHUP`) from each selected line. Useful for
+/// kernel-trace audits, crash-postmortem incident inventories,
+/// debugging-runbook scrapes, and signal-handler doc reviews.
+///
+/// Recognition: `\bSIG(?:HUP|INT|QUIT|ILL|TRAP|ABRT|BUS|FPE|`
+/// `KILL|USR1|SEGV|USR2|PIPE|ALRM|TERM|STKFLT|CHLD|CONT|STOP|`
+/// `TSTP|TTIN|TTOU|URG|XCPU|XFSZ|VTALRM|PROF|WINCH|IO|PWR|`
+/// `SYS)\b` — `SIG` prefix plus an enumerated alternation of
+/// the 31 standard Linux signals (per the kernel-side `signal(7)`
+/// manpage).
+///
+/// Matches:
+/// - `SIGTERM` `SIGKILL` `SIGINT`     — the well-known three
+/// - `SIGSEGV` `SIGBUS` `SIGFPE`      — crash signals
+/// - `SIGCHLD` `SIGCONT` `SIGSTOP`    — process control
+/// - `SIGWINCH` `SIGIO`               — IO / terminal events
+///
+/// Real-time signals `SIGRTMIN+N` / `SIGRTMAX-N` are NOT
+/// matched — they're parametric rather than enumerated and
+/// rarely appear by name in doc audits.
+///
+/// 98th member of the extraction family.
+SortLinesResult extractLinuxSignalsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\bSIG(?:HUP|INT|QUIT|ILL|TRAP|ABRT|BUS|FPE|KILL|USR1|'
+        r'SEGV|USR2|PIPE|ALRM|TERM|STKFLT|CHLD|CONT|STOP|TSTP|'
+        r'TTIN|TTOU|URG|XCPU|XFSZ|VTALRM|PROF|WINCH|IO|PWR|'
+        r'SYS)\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
