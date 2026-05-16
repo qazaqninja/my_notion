@@ -3207,6 +3207,46 @@ SortLinesResult extractEmojiShortcodesFromLinesIn(
       return out;
     });
 
+/// Extract every AWS S3 URI (`s3://bucket[/key]`) from each
+/// selected line. Useful for cloud-storage doc audits, IAM
+/// policy authoring, and bucket inventory inside runbooks.
+///
+/// Recognition: `\bs3://[a-z0-9][a-z0-9.\-]*[a-z0-9](?:/\S*)?`
+/// - Literal `s3://` scheme prefix (canonical lowercase).
+/// - Bucket name: starts and ends with lowercase alphanumeric;
+///   middle characters may be lowercase letters, digits, dots,
+///   or hyphens. (Minimum 2 chars per the regex; AWS's real
+///   3-char minimum is not enforced here — out-of-band invalid
+///   names are an edge case that doesn't appear in prose docs.)
+/// - Optional key path: `/` followed by any non-whitespace
+///   characters. The path is included in the captured token.
+///
+/// Examples that match:
+/// - `s3://my-bucket`
+/// - `s3://my-bucket/path/to/key.txt`
+/// - `s3://example.com/index.html` (dotted bucket)
+///
+/// Uppercase bucket names (`S3://Foo`) and HTTPS S3 endpoints
+/// (`https://s3.amazonaws.com/...`) are NOT matched — those are
+/// distinct surfaces. Filter HTTPS via a URL extractor; the
+/// canonical `s3://` URI scheme is the doc-audit target here.
+///
+/// 90th member of the extraction family — round-number
+/// milestone.
+SortLinesResult extractS3UrisFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\bs3://[a-z0-9][a-z0-9.\-]*[a-z0-9]'
+          r'(?:/\S*)?',);
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

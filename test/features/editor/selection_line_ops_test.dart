@@ -7939,6 +7939,90 @@ void main() {
     });
   });
 
+  group('extractS3UrisFromLinesIn', () {
+    test('bare bucket URI extracts', () {
+      const text = 'upload to s3://my-bucket today\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, 's3://my-bucket\n');
+    });
+
+    test('bucket with key path extracts (path included)', () {
+      const text = 'fetch s3://my-bucket/path/to/key.txt now\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, 's3://my-bucket/path/to/key.txt\n');
+    });
+
+    test('dotted bucket name extracts', () {
+      const text = 'serve s3://example.com/index.html alive\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, 's3://example.com/index.html\n');
+    });
+
+    test('hyphenated bucket name extracts', () {
+      const text = 'store s3://my-org-data-2026 here\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, 's3://my-org-data-2026\n');
+    });
+
+    test('uppercase S3 scheme rejected', () {
+      // `S3://Foo` is not canonical; the regex is case-sensitive.
+      const text = 'fake S3://Foo not real\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('HTTPS S3 endpoint NOT matched', () {
+      // The virtual-hosted-style `https://...amazonaws.com/...`
+      // endpoint is a different surface; only the canonical
+      // `s3://` URI scheme is extracted here.
+      const text = 'old https://s3.amazonaws.com/bucket/key here\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('bucket starting with hyphen rejected', () {
+      // The regex requires the bucket to start with an
+      // alphanumeric, so `s3://-bad` doesn't match.
+      const text = 'invalid s3://-bad ignore\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple URIs on one line each extract', () {
+      const text = 'sync s3://src-bk/key1 to s3://dst-bk/key2 ok\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, 's3://src-bk/key1\ns3://dst-bk/key2\n');
+    });
+
+    test('URI followed by space stops at whitespace', () {
+      // The optional key portion uses `\S*`, so the capture ends
+      // at the first whitespace character.
+      const text = 'see s3://bucket/key then more text\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, 's3://bucket/key\n');
+    });
+
+    test('single-character bucket NOT matched (2-char minimum)', () {
+      // The regex `[a-z0-9][a-z0-9.\-]*[a-z0-9]` requires the
+      // bucket name to be 2+ chars. `s3://a` is technically a
+      // valid AWS scheme but uncommon in practice; documented
+      // here so future readers know why it doesn't extract.
+      const text = 'edge s3://a alone here\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without S3 URIs dropped from output', () {
+      const text = 'plain prose\nuse s3://bk/key\nmore prose\n';
+      final r = extractS3UrisFromLinesIn(text, 0, text.length);
+      expect(r.text, 's3://bk/key\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractS3UrisFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

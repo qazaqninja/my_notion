@@ -514,6 +514,9 @@ enum SlashAction {
   /// Extract every emoji shortcode token (`:smile:`,
   /// `:thumbs_up:`, `:+1:`) from each selected line.
   extractEmojiShortcodesFromLines,
+  /// Extract every AWS S3 URI (`s3://bucket[/key]`) from each
+  /// selected line.
+  extractS3UrisFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2404,6 +2407,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractEmojiShortcodesFromLines,
     keywords: ['extract', 'emoji', 'shortcode', 'reaction',
         'slack', 'github', 'discord', 'chat', 'colon'],
+  ),
+  SlashEntry(
+    icon: 'database',
+    label: 'Extract S3 URIs',
+    hint: 's3://bucket / s3://bucket/key',
+    action: SlashAction.extractS3UrisFromLines,
+    keywords: ['extract', 's3', 'aws', 'bucket', 'uri',
+        'storage', 'cloud', 'amazon', 'object'],
   ),
   SlashEntry(
     icon: 'calendar',
