@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** B (V1 Polish — Media)
-- **Task:** B1 — Inline video playback (video_player)
-- **Status:** in_progress (slice 1 of ~3 done at M1215+M1216)
+- **Task:** B2 — Inline audio playback (audioplayers)
+- **Status:** pending
 
-## Last completed slice
+## Last completed
 
-- **M1215+M1216 — B1 slice 1** (video_player ^2.10.0 pubspec + VideoInlinePlayer widget skeleton + smoke test + lint cleanup)
-- Committed: 400a20b, cfe3e7c
-- TaskList ID: 15 (still in_progress)
-- Notes: video_player capped at ^2.10.0 (2.11.x needs SDK 3.10; we have 3.9.2). Widget at `lib/shared/widgets/video_inline_player.dart` — loads VideoPlayerController.file, shows loading placeholder + CircularProgressIndicator during init, renders AspectRatio(VideoPlayer + play overlay) when ready, disposes controller on tear-down. Smoke verifies the pre-init render shape. Slice 2 wires it into `_VideoCard` in `markdown_renderer.dart` (~line 2018+). Slice 3 may handle stale-controller-on-rebuild semantics.
+- **M1218 — B1 slice 2** (wire VideoInlinePlayer into _FileAttachment video band — B1 closed)
+- Committed: 59e8a38
+- TaskList ID: 15 (closed)
+- Notes: B1 shipped across 4 commits (M1215 video_player + skeleton, M1216 lint, M1218 renderer integration, M1219 state advance). For local mp4/mov/webm/avi/mkv files, the terracotta-banded M201 card's top region now embeds `VideoInlinePlayer` with play/pause overlay; metadata-row tap still opens externally. FEATURES.md 🚧 → ✅ flipped at this iteration.
 
 ## Backlog (Phase A — Foundation)
 
