@@ -8534,6 +8534,78 @@ void main() {
     });
   });
 
+  group('extractDoisFromLinesIn', () {
+    test('classic Nature DOI extracts', () {
+      const text = 'cite 10.1038/nature12373 today\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1038/nature12373\n');
+    });
+
+    test('ACM DOI with dot in suffix extracts', () {
+      const text = 'ref 10.1145/3236024.3236084 here\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1145/3236024.3236084\n');
+    });
+
+    test('arXiv DOI extracts', () {
+      const text = 'paper 10.48550/arXiv.2305.13245 wrap\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.48550/arXiv.2305.13245\n');
+    });
+
+    test('IEEE DOI extracts', () {
+      const text = 'see 10.1109/TIT.2006.871582 paper\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1109/TIT.2006.871582\n');
+    });
+
+    test('DOI inside parens captured up to closing paren', () {
+      // The suffix excludes `)` so a trailing paren bounds
+      // the match cleanly.
+      const text = 'cite (10.1145/3236024.3236084) here\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1145/3236024.3236084\n');
+    });
+
+    test('not-a-DOI 11.xxxx rejected', () {
+      // Only `10.` namespace is registered.
+      const text = 'fake 11.1234/something not real\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('registrant code too short rejected', () {
+      // Need at least 4 digits after `10.`. `10.123/foo` has 3.
+      const text = 'short 10.123/foo ignore\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('missing suffix rejected', () {
+      // No `/suffix` means no DOI — `10.1234` alone is not a
+      // complete identifier.
+      const text = 'incomplete 10.1234 alone\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple DOIs on one line each extract', () {
+      const text = 'cite 10.1038/foo and 10.1145/bar today\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1038/foo\n10.1145/bar\n');
+    });
+
+    test('lines without DOIs dropped from output', () {
+      const text = 'plain prose\nref 10.1038/abc\nbye\n';
+      final r = extractDoisFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1038/abc\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractDoisFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

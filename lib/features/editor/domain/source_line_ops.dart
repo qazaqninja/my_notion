@@ -3500,6 +3500,50 @@ SortLinesResult extractAwsRegionsFromLinesIn(
       return out;
     });
 
+/// Extract every Digital Object Identifier (DOI) from each
+/// selected line. Useful for research-note triage, citation
+/// inventory, literature-review scrapes, and reference
+/// harvests for papers / preprints / books.
+///
+/// Recognition: `\b10\.\d{4,9}/[^\s,;()<>\[\]"']+`
+/// - Literal `10.` namespace prefix (the registered DOI
+///   directory at doi.org).
+/// - 4-9 digit registrant code.
+/// - `/` separator.
+/// - Suffix: any non-whitespace, non-bracket, non-quote
+///   characters. The suffix is captured greedily up to the
+///   first delimiter.
+///
+/// Trailing punctuation often appears at the end of citations
+/// (e.g. `... doi:10.1234/abc.`). The pattern excludes
+/// commas, semicolons, parentheses, angle brackets, square
+/// brackets, and quotes from the suffix; periods inside the
+/// suffix (like `10.1234/file.json`) ARE allowed. A pure
+/// trailing-period boundary is left to downstream callers
+/// since DOI suffixes can legitimately end in a period.
+///
+/// Matches:
+/// - `10.1038/nature12373`
+/// - `10.1145/3236024.3236084`
+/// - `10.48550/arXiv.2305.13245`
+/// - `10.1109/TIT.2006.871582`
+///
+/// 97th member of the extraction family.
+SortLinesResult extractDoisFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b10\.\d{4,9}/[^\s,;()<>\[\]"' "'" r']+',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

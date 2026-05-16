@@ -537,6 +537,9 @@ enum SlashAction {
   /// Extract every AWS region code (`us-east-1`, `eu-west-2`,
   /// `ap-southeast-3`) from each selected line.
   extractAwsRegionsFromLines,
+  /// Extract every Digital Object Identifier (DOI, e.g.
+  /// `10.1038/nature12373`) from each selected line.
+  extractDoisFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2488,6 +2491,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'aws', 'region', 'cloud',
         'amazon', 'datacenter', 'availability', 'zone',
         'ops', 'infrastructure'],
+  ),
+  SlashEntry(
+    icon: 'book',
+    label: 'Extract DOIs',
+    hint: '10.1038/nature... / 10.1145/...',
+    action: SlashAction.extractDoisFromLines,
+    keywords: ['extract', 'doi', 'citation', 'paper',
+        'reference', 'research', 'academic', 'arxiv',
+        'publication', 'journal'],
   ),
   SlashEntry(
     icon: 'calendar',
