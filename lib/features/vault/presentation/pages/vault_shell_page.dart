@@ -589,6 +589,40 @@ class _VaultShellPageState extends State<VaultShellPage> {
     router.go('/editor/${pick.ulid}');
   }
 
+  Future<void> _openRandomPageByTagPrompt(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final scope = context;
+    final tag = await showQuillPrompt(
+      context,
+      title: 'Open random page by tag',
+      icon: 'tag',
+      label: 'Tag',
+      placeholder: 'e.g. reading-list',
+      confirmLabel: 'Open',
+    );
+    if (tag == null || tag.trim().isEmpty) return;
+    final refs = _toPageRefs(await db.select(db.pages).get());
+    final tagged = filterByTag(refs, tag);
+    final pick = pickRandom(
+      tagged,
+      math.Random(DateTime.now().microsecondsSinceEpoch.abs()),
+    );
+    if (pick == null) {
+      if (scope.mounted) {
+        scope.toastError('No pages tagged "$tag"');
+      }
+      return;
+    }
+    if (scope.mounted) {
+      scope.toastInfo(
+        'Tagged "$tag" · ${tagged.length} ${tagged.length == 1 ? "page" : "pages"}',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openPageByTitlePrompt(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -839,6 +873,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openOldestPage(context);
       case 'Open page by title…':
         await _openPageByTitlePrompt(context);
+      case 'Open random page by tag…':
+        await _openRandomPageByTagPrompt(context);
       case 'Open largest page':
         await _openLargestPage(context);
       case 'Open most-linked page':
