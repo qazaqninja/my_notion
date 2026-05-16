@@ -140,6 +140,44 @@ void main() {
     });
   });
 
+  group('stripEmojiLinesIn', () {
+    test('strips single-codepoint pictograph emoji', () {
+      const text = 'hello 👋 world 🌍\n';
+      // The space surrounding the emoji survives the strip.
+      final r = stripEmojiLinesIn(text, 0, text.length);
+      expect(r.text, 'hello  world \n');
+    });
+
+    test('strips dingbat block (e.g. ✓ ✗)', () {
+      const text = 'done ✓ failed ✗\n';
+      final r = stripEmojiLinesIn(text, 0, text.length);
+      expect(r.text, 'done  failed \n');
+    });
+
+    test('strips ZWJ-composed sequences (family emoji)', () {
+      // 👨‍👩‍👧 is U+1F468 + ZWJ + U+1F469 + ZWJ + U+1F467.
+      // After stripping pictographs + ZWJs the line is empty before the
+      // trailing newline.
+      const text = '👨‍👩‍👧\n';
+      final r = stripEmojiLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain ASCII text is the identity', () {
+      const text = 'no emoji here, just ASCII!\n';
+      expect(stripEmojiLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('non-Latin scripts without emoji pass through', () {
+      const text = '日本 안녕 مرحبا\n';
+      expect(stripEmojiLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(stripEmojiLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('joinLinesWithSpaceIn', () {
     test('three sentences glue back into one paragraph', () {
       const text = 'Hello world.\nGoodbye now.\nSee you later.\n';

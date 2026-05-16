@@ -14,6 +14,34 @@
 
 import 'source_line_ops.dart';
 
+/// Strip emoji glyphs from every selected line. Covers the major
+/// Unicode emoji blocks (`U+1F000`-`U+1FAFF` for pictographs, plus
+/// `U+2600`-`U+27BF` for Misc Symbols / Dingbats), along with the
+/// variation selectors (`U+FE0E` / `U+FE0F`) and zero-width joiner
+/// (`U+200D`) used to compose flag / family / profession sequences.
+/// Plain ASCII text and most non-Latin scripts pass through.
+///
+/// Useful when emoji leaked into a paste that needs to be plain
+/// prose (slugs, IDs, log lines). Completes the emoji slash-menu
+/// trio alongside `pickEmoji` (insert) and `expandEmojiShortcodes`
+/// (`:rocket:` → 🚀).
+///
+///   'hello 👋 world 🌍'  →  'hello  world '
+SortLinesResult stripEmojiLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Single character class covering the high-codepoint pictograph
+      // ranges, the dingbats / misc-symbols block, the regional
+      // indicator letters (`U+1F1E6`-`U+1F1FF` for country flags),
+      // and the joiner / variation selectors. `unicode: true` lets
+      // `\u{1FAFF}`-style escapes resolve as single codepoints rather
+      // than UTF-16 surrogate pairs.
+      final emoji = RegExp(
+        r'[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{FE0E}\u{FE0F}\u{200D}]',
+        unicode: true,
+      );
+      return [for (final l in lines) l.replaceAll(emoji, '')];
+    });
+
 /// Strip markdown emphasis / decoration markers from every selected
 /// line: `**bold**` / `__bold__`, `*italic*` / `_italic_`,
 /// `~~strike~~`, `==highlight==`, and `` `inline code` `` all become

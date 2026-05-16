@@ -54,6 +54,9 @@ enum SlashAction {
   /// Join every non-blank selected line into a single space-separated
   /// paragraph. Inverse of `splitLinesOnSentences`.
   joinLinesWithSpace,
+  /// Strip emoji glyphs (Unicode pictograph + dingbat blocks plus
+  /// joiner / variation selectors) from every selected line.
+  stripEmojiLines,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1404,6 +1407,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'glue lines with spaces',
     action: SlashAction.joinLinesWithSpace,
     keywords: ['join', 'merge', 'paragraph', 'glue', 'concat', 'flow'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Strip emoji',
+    hint: 'hello 👋 → hello',
+    action: SlashAction.stripEmojiLines,
+    keywords: ['strip', 'emoji', 'remove', 'plain', 'unicode'],
   ),
   SlashEntry(
     icon: 'link',
