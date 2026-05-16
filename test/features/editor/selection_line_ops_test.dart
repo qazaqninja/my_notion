@@ -140,6 +140,22 @@ void main() {
     });
   });
 
+  group('kLoremIpsumParagraph', () {
+    test('is one paragraph, no internal line breaks', () {
+      expect(kLoremIpsumParagraph.contains('\n'), isFalse);
+    });
+
+    test('starts with the canonical "Lorem ipsum" phrase', () {
+      expect(kLoremIpsumParagraph.startsWith('Lorem ipsum'), isTrue);
+    });
+
+    test('is three sentences (three terminating periods)', () {
+      final endings =
+          RegExp(r'\.').allMatches(kLoremIpsumParagraph).length;
+      expect(endings, 3);
+    });
+  });
+
   group('removeAccentsLinesIn', () {
     test('folds common French diacritics', () {
       const text = 'café résumé naïve\n';

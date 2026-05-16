@@ -60,6 +60,9 @@ enum SlashAction {
   /// Fold accented Latin characters to their ASCII base letter on
   /// every selected line. `café` → `cafe`, `Œuvre` → `OEuvre`.
   removeAccentsLines,
+  /// Insert a classic three-sentence lorem-ipsum paragraph at the
+  /// caret. Useful for layout testing and template stubs.
+  insertLoremIpsum,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1424,6 +1427,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'café → cafe',
     action: SlashAction.removeAccentsLines,
     keywords: ['accent', 'accents', 'diacritic', 'ascii', 'fold', 'normalize'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Insert lorem ipsum',
+    hint: 'placeholder paragraph',
+    action: SlashAction.insertLoremIpsum,
+    keywords: ['lorem', 'ipsum', 'placeholder', 'fill', 'stub', 'dummy'],
   ),
   SlashEntry(
     icon: 'link',

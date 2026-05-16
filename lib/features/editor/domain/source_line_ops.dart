@@ -2263,6 +2263,16 @@ String formatIsoDateTime(DateTime when) {
 String formatEpochTimestamp(DateTime when) =>
     (when.millisecondsSinceEpoch ~/ 1000).toString();
 
+/// The canonical lorem-ipsum paragraph used by the `/lorem` slash
+/// entry. Three sentences, ~30 words each — enough to test
+/// layout/spacing without overwhelming a small block. Held as a
+/// constant so the slash dispatch stays one line.
+const String kLoremIpsumParagraph =
+    'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+    'Sed do eiusmod tempor incididunt ut labore et dolore magna '
+    'aliqua. Ut enim ad minim veniam, quis nostrud exercitation '
+    'ullamco laboris nisi ut aliquip ex ea commodo consequat.';
+
 /// Format a [DateTime] as the ISO 8601 year-week tag used by the
 /// `/week` slash entry (e.g. `2026-W20`). The week number follows
 /// the ISO 8601 rule: week 1 is the week containing the first

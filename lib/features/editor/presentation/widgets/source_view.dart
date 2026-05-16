@@ -965,6 +965,16 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, removeAccentsLinesIn,
         );
+      case SlashAction.insertLoremIpsum:
+        final newText = text.replaceRange(
+          stripStart, caret, kLoremIpsumParagraph,
+        );
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + kLoremIpsumParagraph.length,
+          ),
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,
