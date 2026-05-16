@@ -12,6 +12,8 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
+import '../../../reminders/presentation/bloc/reminders_bloc.dart';
+import '../../../reminders/presentation/bloc/reminders_event.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
@@ -74,7 +76,37 @@ class EditorPage extends StatelessWidget {
         bloc.add(OpenEditor(ulid));
         return bloc;
       },
-      child: _EditorBody(anchor: anchor),
+      // B4 slice 3 (M1228): listen for `reminder:` frontmatter changes and
+      // bridge to RemindersBloc so the OS-level notification stays in sync
+      // with the page state. CA-06 says blocs can't depend on other blocs,
+      // so the bridge lives in the presentation layer via BlocListener.
+      child: BlocListener<EditorBloc, EditorState>(
+        listenWhen: (prev, next) {
+          if (prev is! EditorLoaded || next is! EditorLoaded) return false;
+          return prev.page.frontmatter.get('reminder') !=
+              next.page.frontmatter.get('reminder');
+        },
+        listener: (context, state) {
+          if (state is! EditorLoaded) return;
+          final reminders = context.read<RemindersBloc>();
+          final value = state.page.frontmatter.get('reminder');
+          final raw = value?.toString().trim() ?? '';
+          if (raw.isEmpty) {
+            reminders.add(CancelReminder(state.page.ulid));
+            return;
+          }
+          final when = DateTime.tryParse(raw);
+          if (when == null) return; // unparseable → leave state untouched
+          reminders.add(
+            ScheduleReminder(
+              ulid: state.page.ulid,
+              title: state.page.title,
+              when: when,
+            ),
+          );
+        },
+        child: _EditorBody(anchor: anchor),
+      ),
     );
   }
 }

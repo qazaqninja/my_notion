@@ -15,6 +15,8 @@ import 'features/relations/data/relations_repository_impl.dart';
 import 'features/relations/domain/repositories/relations_repository.dart';
 import 'features/database/presentation/pages/database_table_page.dart';
 import 'features/database/presentation/pages/databases_page.dart';
+import 'features/reminders/data/datasources/notification_scheduler.dart';
+import 'features/reminders/presentation/bloc/reminders_bloc.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
 import 'features/editor/presentation/pages/editor_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
@@ -47,6 +49,8 @@ class _QuillAppState extends State<QuillApp> {
   late final Indexer _indexer;
   late final VaultBloc _vaultBloc;
   late final ThemeCubit _themeCubit;
+  late final NotificationScheduler _scheduler;
+  late final RemindersBloc _remindersBloc;
   late final GoRouter _router;
 
   @override
@@ -59,6 +63,12 @@ class _QuillAppState extends State<QuillApp> {
     _relationsRepo = RelationsRepositoryImpl(_db);
     _vaultBloc = VaultBloc(repo: _repo, indexer: _indexer, db: _db);
     _themeCubit = ThemeCubit()..load();
+    // Reminders: B4 of the 1m-loop plan. The platform-channel init is
+    // fire-and-forget — schedule()/cancel() each guard their own
+    // _initialised flag, so the bloc doesn't block on init completion.
+    _scheduler = LocalNotificationScheduler();
+    unawaited(_scheduler.init());
+    _remindersBloc = RemindersBloc(scheduler: _scheduler);
     _router = _buildRouter(_vaultBloc);
     // Restore last-opened vault.
     _vaultBloc.tryRestore();
@@ -66,6 +76,7 @@ class _QuillAppState extends State<QuillApp> {
 
   @override
   void dispose() {
+    _remindersBloc.close();
     _vaultBloc.close();
     _themeCubit.close();
     _db.close();
@@ -84,11 +95,13 @@ class _QuillAppState extends State<QuillApp> {
         RepositoryProvider<DatabaseRepository>.value(value: _dbRepo),
         RepositoryProvider<RelationsRepository>.value(value: _relationsRepo),
         RepositoryProvider<Indexer>.value(value: _indexer),
+        RepositoryProvider<NotificationScheduler>.value(value: _scheduler),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider.value(value: _themeCubit),
           BlocProvider.value(value: _vaultBloc),
+          BlocProvider.value(value: _remindersBloc),
         ],
         child: BlocBuilder<ThemeCubit, ThemeState>(
           builder: (context, themeState) {
