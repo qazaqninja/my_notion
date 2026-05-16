@@ -2744,6 +2744,25 @@ void main() {
     });
   });
 
+  group('signNumericLinesIn', () {
+    test('emits +, -, or 0 per numeric line', () {
+      const text = '5\n-3\n0\n7.5\n-0.0\n';
+      final r = signNumericLinesIn(text, 0, text.length);
+      // Note: -0.0 parses as 0 numerically.
+      expect(r.text, '+\n-\n0\n+\n0\n');
+    });
+
+    test('non-numeric lines pass through', () {
+      const text = '5\nlabel\n-3\n';
+      final r = signNumericLinesIn(text, 0, text.length);
+      expect(r.text, '+\nlabel\n-\n');
+    });
+
+    test('empty input is a no-op', () {
+      expect(signNumericLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

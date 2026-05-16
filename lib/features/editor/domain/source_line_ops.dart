@@ -969,6 +969,24 @@ SortLinesResult negateNumericLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Replace every numeric line with its sign as `+`, `-`, or `0`
+/// (matching the `signum` mathematical operator). Non-numeric
+/// lines pass through. Useful for collapsing a noisy column of
+/// values down to a sparkline-style trend indicator.
+SortLinesResult signNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            if (v > 0) return '+';
+            if (v < 0) return '-';
+            return '0';
+          })(),
+      ];
+    });
+
 /// Floor every selected numeric line — round toward negative
 /// infinity. `3.7 → 3`, `-3.7 → -4`. Result is always an integer
 /// rendered without decimals. Non-numeric lines pass through.

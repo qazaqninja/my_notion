@@ -49,10 +49,11 @@ jobs:
       - name: Enforce coverage threshold (57%)
         # Baseline at M821 was 53.9%. Ratchet history:
         #   50 → 55 (M900) → 56 (M934) → 57 (M956).
-        # By M963 actual is 57.92%. Holding the gate at 57 — bumping
-        # to 58 would put the gate slightly above current actual and
-        # flap CI. Next stop 60% once the presentation layer gets
-        # meaningful widget-test coverage.
+        # By M965 actual is 58.02% (just crossed 58 from below).
+        # Holding 57 for now — 0.02pp margin above 58 would flap
+        # CI on a single regression. Will bump to 58 once actual
+        # holds at ≥58.5% across two consecutive measurements.
+        # Next stop 60% once presentation-layer widget tests land.
         uses: VeryGoodOpenSource/very_good_coverage@v3
         with:
           path: coverage/lcov.info

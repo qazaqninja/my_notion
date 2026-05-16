@@ -249,6 +249,8 @@ enum SlashAction {
   ceilNumericLines,
   /// Truncate every numeric line (round toward zero).
   truncateNumericLines,
+  /// Replace every numeric line with its sign (`+`, `-`, or `0`).
+  signNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1147,6 +1149,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '3.7 → 3 / -3.7 → -3',
     action: SlashAction.truncateNumericLines,
     keywords: ['truncate', 'integer', 'drop', 'fraction'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Sign of numeric lines',
+    hint: '5 / -3 / 0 → + / - / 0',
+    action: SlashAction.signNumericLines,
+    keywords: ['sign', 'signum', 'positive', 'negative', 'trend'],
   ),
   SlashEntry(
     icon: 'hash',
