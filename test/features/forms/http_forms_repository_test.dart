@@ -57,7 +57,7 @@ void main() {
     test('401 throws FormsAuthException', () async {
       final client = MockClient((req) async => http.Response('', 401));
       final repo = HttpFormsRepository(baseUrl: baseUrl, client: client);
-      expect(
+      await expectLater(
         () => repo.listSubmissions(token: token, ulid: ulid),
         throwsA(isA<FormsAuthException>()),
       );
@@ -72,7 +72,7 @@ void main() {
         ),
       );
       final repo = HttpFormsRepository(baseUrl: baseUrl, client: client);
-      expect(
+      await expectLater(
         () => repo.listSubmissions(token: token, ulid: ulid),
         throwsA(isA<FormsNotOwnerException>()),
       );
@@ -83,7 +83,7 @@ void main() {
         (req) async => http.Response('boom', 500),
       );
       final repo = HttpFormsRepository(baseUrl: baseUrl, client: client);
-      expect(
+      await expectLater(
         () => repo.listSubmissions(token: token, ulid: ulid),
         throwsA(isA<FormsException>()
             .having((e) => e.message, 'message', contains('500'))),
@@ -95,7 +95,7 @@ void main() {
         throw const FormatException('connection refused');
       });
       final repo = HttpFormsRepository(baseUrl: baseUrl, client: client);
-      expect(
+      await expectLater(
         () => repo.listSubmissions(token: token, ulid: ulid),
         throwsA(isA<FormsNetworkException>()),
       );
@@ -114,17 +114,23 @@ void main() {
       expect(list, isEmpty);
     });
 
-    test('Missing submissions key defaults to empty list', () async {
+    test('200 with no `submissions` key throws FormsException', () async {
+      // The list endpoint contract always wraps the result in
+      // `{"submissions": [...]}`; a payload that omits the key is
+      // malformed and we'd rather surface a typed error than silently
+      // hand the caller an empty list.
       final client = MockClient(
         (req) async => http.Response(
-          jsonEncode(<String, dynamic>{'submissions': <Object>[]}),
+          jsonEncode(<String, dynamic>{'other': 'field'}),
           200,
           headers: const {'content-type': 'application/json'},
         ),
       );
       final repo = HttpFormsRepository(baseUrl: baseUrl, client: client);
-      final list = await repo.listSubmissions(token: token, ulid: ulid);
-      expect(list, isEmpty);
+      await expectLater(
+        () => repo.listSubmissions(token: token, ulid: ulid),
+        throwsA(isA<Object>()),
+      );
     });
   });
 }

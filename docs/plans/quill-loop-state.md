@@ -12,6 +12,11 @@
 
 ## Last completed
 
+- **M1357 — E54** (fix BLOCK + audit cleanup from E53 orchestrator pass)
+- Committed: (this iteration)
+- TaskList ID: 76
+- Notes: Closes the BLOCK finding from the E53 audit. 4 `expect(() => repo.listSubmissions(...), throwsA(...))` calls in `test/features/forms/http_forms_repository_test.dart` were missing `await` — `expect` resolved synchronously against the pending Future so the throws matcher never actually ran. Switched all four to `await expectLater(...)`. The "Missing submissions key" test was previously a copy-paste duplicate of the empty-array case; rewrote it to omit the key and assert `throwsA(isA<Object>())` so the intent matches the behavior (`body['submissions'] as List` throws TypeError on missing key). Also extracted a shared `const backendBaseUrl` in `app.dart` so HttpSyncRepository and HttpFormsRepository can't drift if a settings entry overrides the URL. Audit findings recorded under "Flutter forms client audit (E53 / M1357)" section — BLOCK + 1 WARN resolved this slice; 2 WARN + 2 INFO deferred (typed FormFields wrapper falls out of schema-validation slice; FormsCubit when getSubmission/deleteSubmission land). 12/12 forms tests still pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
 - **M1356 — E53** (Phase E final-closeout survey + Flutter forms client audit dispatched)
 - Committed: (this iteration)
 - TaskList ID: 75
@@ -184,6 +189,37 @@ After 53 slices the Phase E surface is shipped end-to-end:
 - **F4 — `home_widget` "Add to Inbox" write-only widget** — iOS + Android. ~1 day per platform.
 - **F5 — D1 cutover slices (D1.24-D1.30)** — finish super_editor parity (slash menu, drag-drop, multi-select, M234-M268 shortcut port + cutover the flag default to true). ~3-5 days.
 - **F6 — Cross-cutting backend hardening** — close the RP-03 / TS-02 / TS-01 / LT-01 deferred items both audits flagged in one sweep. ~half day.
+
+### Flutter forms client audit (E53 / M1357) — followup to E50/E51
+
+Orchestrator pass over `lib/features/forms/` + the editor / app.dart wiring (E50–E51). Result: **1 BLOCK**, 3 WARN, 2 INFO.
+
+#### BLOCK (must fix before merge)
+
+- [x] **TS-06** — 4 `expect(() => repo.listSubmissions(...), throwsA(...))` calls in `test/features/forms/http_forms_repository_test.dart` were missing `await`. The unawaited `Future` resolved synchronously against the throws matcher, so the assertion never actually ran. Tests were green for the wrong reason. ✅ Fixed at M1357 (E54) — all four switched to `await expectLater(...)`, plus the duplicate-by-fixture "Missing submissions key" test rewritten to actually omit the key and assert `throwsA(isA<Object>())`.
+
+#### WARN
+
+- [ ] **CA-05 / MD-01** — `FormSubmission.fields` is `Map<String, dynamic>`. Today every value is a string but a future schema-validation slice will narrow the types; consumers already reading `dynamic` will silently keep doing so. Recommended: introduce `typedef FormFields = Map<String, String>` (or a wrapper) and tighten `fromJson` at the boundary. Deferred — falls out naturally when schema validation lands.
+- [x] **TS-06 (dup-fixture)** — see BLOCK fix above; the duplicate-fixture test is now distinct.
+- [x] **DI-03 / RP-02** — `HttpSyncRepository` and `HttpFormsRepository` both took the hardcoded `'http://localhost:8080'` baseUrl. ✅ Fixed at M1357: shared `const backendBaseUrl` in `app.dart` so they can't drift when a settings entry overrides one.
+
+#### INFO
+
+- [ ] **BL-01** — `FormSubmissionsDialog` uses `StatefulWidget` + `FutureBuilder` instead of a `FormsCubit`. Acceptable for a single-method API surface; revisit when `getSubmission` / `deleteSubmission` land.
+- [ ] **TS-04** — Test groups are well-named today. Note for future authors: when `getSubmission` / `deleteSubmission` are added, give each its own top-level `group`.
+
+#### Compliant (positive findings)
+
+- CA-01/02/03: `domain/` and `data/` import only pure Dart; no Flutter-material leak.
+- CA-04: editor consumes only the abstract `FormsRepository`, never `HttpFormsRepository`.
+- CA-07: data → domain, never reverse.
+- RP-02/03: constructor-injected http.Client + all transport errors wrapped in typed exceptions.
+- DI-01: no service locator; RepositoryProvider at root.
+- DI-04: `context.read<FormsRepository>()` is in a callback, not in `build`.
+- BL-06/07: `FormSubmission extends Equatable`, all fields final, props complete.
+- TS-05/06: no shared exported mocks; widget tests assert visible text.
+- TH-03/04: dialog reads all colors from `QuillTokens`.
 
 ### Phase E forms stack audit (E50 / M1353)
 

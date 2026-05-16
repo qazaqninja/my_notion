@@ -85,8 +85,12 @@ class _QuillAppState extends State<QuillApp> {
     // V2 backend client (Phase E E12-E13). baseUrl currently hard-coded
     // to localhost — a settings page (slice E14+) will let users set
     // their own self-hosted endpoint.
-    _syncRepo = HttpSyncRepository(baseUrl: 'http://localhost:8080');
-    _formsRepo = HttpFormsRepository(baseUrl: 'http://localhost:8080');
+    // E54: shared backend base URL — keeps Sync and Forms repos from
+    // drifting if/when a settings entry lets users override it.
+    // Configure once, read twice.
+    const backendBaseUrl = 'http://localhost:8080';
+    _syncRepo = HttpSyncRepository(baseUrl: backendBaseUrl);
+    _formsRepo = HttpFormsRepository(baseUrl: backendBaseUrl);
     _syncBloc = SyncBloc(repo: _syncRepo)
       // E15: restore the persisted JWT (if any) so a quit + relaunch
       // doesn't force users to re-authenticate.
