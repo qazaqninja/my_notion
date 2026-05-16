@@ -5,6 +5,7 @@ import 'package:my_notion/features/sync/domain/repositories/sync_repository.dart
 import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:my_notion/features/sync/presentation/bloc/sync_event.dart';
 import 'package:my_notion/features/sync/presentation/bloc/sync_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeRepo implements SyncRepository {
   _FakeRepo();
@@ -62,6 +63,13 @@ class _FakeRepo implements SyncRepository {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    // Reset prefs between cases so persistence tests don't bleed.
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('SyncBloc (E13)', () {
     blocTest<SyncBloc, SyncState>(
       'Login → busy → connected with token',
@@ -198,6 +206,79 @@ void main() {
         expect(bloc.state.status, SyncStatus.error);
         expect(bloc.state.lastError, 'token_invalid');
         expect(bloc.state.token, isNull);
+      },
+    );
+  });
+
+  group('SyncBloc token persistence (E15)', () {
+    blocTest<SyncBloc, SyncState>(
+      'Login success writes the token to SharedPreferences',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      act: (bloc) => bloc.add(
+        const SyncLoginRequested(
+          email: 'a@quill',
+          password: 'correct-horse',
+        ),
+      ),
+      verify: (_) async {
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('sync.token'), 'jwt-a@quill');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Logout clears the persisted token',
+      setUp: () => SharedPreferences.setMockInitialValues({
+        'sync.token': 'jwt-stale',
+      }),
+      build: () => SyncBloc(repo: _FakeRepo()),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-stale',
+      ),
+      act: (bloc) => bloc.add(const SyncLogoutRequested()),
+      verify: (_) async {
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('sync.token'), isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Restore hydrates state.token from prefs on boot',
+      setUp: () => SharedPreferences.setMockInitialValues({
+        'sync.token': 'jwt-restored',
+      }),
+      build: () => SyncBloc(repo: _FakeRepo()),
+      act: (bloc) => bloc.add(const SyncRestoreRequested()),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.token, 'jwt-restored');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Restore with no stored token is a no-op',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      act: (bloc) => bloc.add(const SyncRestoreRequested()),
+      expect: () => const <SyncState>[],
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Push with stale token also clears the persisted token',
+      setUp: () => SharedPreferences.setMockInitialValues({
+        'sync.token': 'jwt-stale',
+      }),
+      build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnPush = true),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-stale',
+      ),
+      act: (bloc) => bloc.add(
+        const SyncPushFileRequested(relpath: 'a.md', body: '# body'),
+      ),
+      verify: (_) async {
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('sync.token'), isNull);
       },
     );
   });

@@ -20,6 +20,7 @@ import 'features/reminders/presentation/bloc/reminders_bloc.dart';
 import 'features/sync/data/repositories/http_sync_repository.dart';
 import 'features/sync/domain/repositories/sync_repository.dart';
 import 'features/sync/presentation/bloc/sync_bloc.dart';
+import 'features/sync/presentation/bloc/sync_event.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
 import 'features/editor/presentation/pages/editor_beta_page.dart';
 import 'features/editor/presentation/pages/editor_page.dart';
@@ -79,7 +80,10 @@ class _QuillAppState extends State<QuillApp> {
     // to localhost — a settings page (slice E14+) will let users set
     // their own self-hosted endpoint.
     _syncRepo = HttpSyncRepository(baseUrl: 'http://localhost:8080');
-    _syncBloc = SyncBloc(repo: _syncRepo);
+    _syncBloc = SyncBloc(repo: _syncRepo)
+      // E15: restore the persisted JWT (if any) so a quit + relaunch
+      // doesn't force users to re-authenticate.
+      ..add(const SyncRestoreRequested());
     _router = _buildRouter(_vaultBloc);
     // Restore last-opened vault.
     _vaultBloc.tryRestore();

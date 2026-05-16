@@ -31,6 +31,14 @@ class SyncLogoutRequested extends SyncEvent {
   const SyncLogoutRequested();
 }
 
+/// Boot-time: if SharedPreferences has a stored token, hydrate the bloc
+/// into a `connected` state without round-tripping login. Used by
+/// `app.dart` on construction so a quit + relaunch doesn't force the
+/// user to re-authenticate.
+class SyncRestoreRequested extends SyncEvent {
+  const SyncRestoreRequested();
+}
+
 /// Upload a single file body to the backend. Used by the editor's save
 /// path (slice E14) and by manual "Push now" actions. If `ifMatch` is
 /// set the server may reject with conflict — that surfaces as a
