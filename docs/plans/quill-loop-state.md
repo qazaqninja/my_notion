@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1252 — D1 slice 6** (math blocks + mermaid coverage)
-- Committed: 2f0f2b3
+- **M1254 — D1 slice 7** (GFM pipe tables — raw round-trip)
+- Committed: 70102c7
 - TaskList ID: 22 (still in_progress)
-- Notes: Single-line `$$body$$` and multi-line `$$\n…\n$$` → ParagraphNode with custom `mathBlockAttribution` blockType. Body holds raw LaTeX. Mermaid `\`\`\`mermaid` already covered by slice 4's code-fence path; slice 6 added a coverage test that the language tag round-trips. 31 cases total. Remaining: tables (7), image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
+- Notes: Pipe tables detected by two-line signature (`|...|` header + `|---|---|` separator). Raw multi-line table source preserved in ParagraphNode.text under custom `tableAttribution` for byte-identical round-trip. Alignment colons survive. A lone `|`-prefixed line without separator falls through to paragraph. 35 cases total. Remaining: image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
