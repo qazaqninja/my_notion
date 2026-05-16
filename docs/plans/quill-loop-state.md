@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1266 — D1 slices 14+15 (closes block-level coverage)** (breadcrumb + toc + button bundled)
-- Committed: 38b7710
+- **M1268 — D1 slice 16 (inline marks pass starts)** (bold + inline code)
+- Committed: ac38898
 - TaskList ID: 22 (still in_progress)
-- Notes: 3 block types bundled — `[breadcrumb]`/`[[breadcrumb]]` (M162), `[toc]` (M68), `:::button…:::` fence (M70). 62 cases total. **Block-level coverage closed.** Remaining for D1: inline marks (16-22 = bold/italic/strike/underline/inline-code/highlight/sub/sup/colors/wikilink/mention/date), interactions (23-27 = slash menu, drag, multi-select, M234-M268 shortcuts), cutover (28-30 = flag default true, delete old route).
+- Notes: `_parseInline(String)→AttributedText` + `_serializeInline(AttributedText)→String` helpers handle `**bold**` and `` `code` ``. Routed through paragraph + heading + blockquote bodies; other "raw-text-preserving" blocks bypass. Code beats bold inside a code run (asterisks suppressed). 68 cases total. Remaining inline-marks: italic (17), strike (17), underline (18), highlight ==/<mark> (19), sub/sup (20), color (21), wikilink chip/mention/date (22). Then interactions (23-27) + cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
