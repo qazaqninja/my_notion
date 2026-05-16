@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** C (V1 Polish — Platform)
-- **Task:** C1 — Mermaid native rendering (webview_flutter + vendored mermaid.min.js)
-- **Status:** in_progress (slice 1 of ~3 done at M1232)
+- **Task:** C2 — macOS security-scoped bookmark persistence
+- **Status:** pending
 
-## Last completed slice
+## Last completed
 
-- **M1232 — C1 slice 1** (webview_flutter + MermaidView widget skeleton)
-- Committed: c02ad61
-- TaskList ID: 19 (still in_progress)
-- Notes: `webview_flutter ^4.13.1` covers iOS/Android/macOS. MermaidView at `lib/shared/widgets/mermaid_view.dart` — WebView host on supported platforms, styled-card fallback on Linux/Windows/test. HTML scaffold prepared with mermaid.initialize+run JS; slice 2 vendors mermaid.min.js asset, slice 3 wires into markdown_renderer.dart's M200 _MermaidPlaceholder.
+- **M1234 — C1 slices 2+3 (closes C1)** (vendor mermaid.min.js + wire renderer)
+- Committed: ffdc4ce
+- TaskList ID: 19 (closed)
+- Notes: C1 shipped in 3 commits (M1232 skeleton, M1234 vendoring + integration, M1235 state advance — pending). mermaid@10.9.4 (3.3 MB) lives at `assets/mermaid/mermaid.min.js` and loads inline via rootBundle. M200 placeholder in markdown_renderer.dart now hosts MermaidView. Linux/Windows fall back to source-text card. FEATURES.md "Mermaid diagrams in code blocks" 🚧 → ✅.
 
 ## Backlog (Phase A — Foundation)
 

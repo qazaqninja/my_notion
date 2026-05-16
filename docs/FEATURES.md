@@ -254,7 +254,7 @@ If your feature wants to store something new, the answer is almost always "add a
 ## Misc
 
 - ✅ Math/equation rendering (LaTeX via KaTeX) — M32, `flutter_math_fork`.
-- 🚧 Mermaid diagrams in code blocks — M200 styles fenced ```mermaid blocks with an accent border / pill / "rendering needs a viewer" hint, source remains selectable for paste into mermaid.live. Native Flutter rendering needs `flutter_mermaid` or a webview.
+- ✅ Mermaid diagrams in code blocks — M200 styles fenced ```mermaid blocks with an accent border. M1232-M1234 wire native rendering via `webview_flutter` hosting a vendored `assets/mermaid/mermaid.min.js` (mermaid@10.9.4, offline-only — no CDN dependency for the macOS sandbox). iOS/Android/macOS render the diagram; Linux/Windows fall back to a styled source-text card.
 - ✅ Color and background highlights — Inline `<span style>` for colours + `<mark>` (M80) for soft-yellow highlight; callouts for block-level colour.
 - ✅ Emoji picker — M62, `lib/shared/widgets/emoji_picker.dart`. Used by page icons (M26) and workspace icon (M107).
 - ✅ Undo/redo (Cmd+Z) — Native TextField undo in source mode + bloc-level `UndoEdit`/`RedoEdit` (M179): bounded 50-entry stacks, ⌘Z / ⌘⇧Z, every body + frontmatter mutation pushes the prior Page snapshot.
