@@ -589,6 +589,26 @@ class _VaultShellPageState extends State<VaultShellPage> {
     router.go('/editor/${pick.ulid}');
   }
 
+  Future<void> _openOldestPage(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final pick = pickOldest(_toPageRefs(await db.select(db.pages).get()));
+    if (pick == null) {
+      if (context.mounted) context.toastInfo('No pages to pick from yet.');
+      return;
+    }
+    final days = DateTime.now()
+            .difference(DateTime.fromMillisecondsSinceEpoch(pick.mtimeMs))
+            .inDays;
+    if (context.mounted) {
+      context.toastInfo(
+        'Oldest page · last touched $days ${days == 1 ? "day" : "days"} ago',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openLastEditedPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -785,6 +805,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openRandomPage(context);
       case 'Open last edited page':
         await _openLastEditedPage(context);
+      case 'Open oldest page':
+        await _openOldestPage(context);
       case 'Open largest page':
         await _openLargestPage(context);
       case 'Open most-linked page':

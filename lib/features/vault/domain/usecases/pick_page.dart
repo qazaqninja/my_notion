@@ -257,6 +257,16 @@ PageRef? pickLastEdited(List<PageRef> pages) {
   return pages.reduce((a, b) => a.mtimeMs > b.mtimeMs ? a : b);
 }
 
+/// Pick the page with the lowest `mtimeMs` (oldest — hasn't been
+/// touched the longest). Returns `null` for an empty input. Mirror
+/// of [pickLastEdited]; surfaces the same archive-or-refresh
+/// candidate the M987 "stale (90+ days)" hygiene dialog browses,
+/// but as a single-shot jump.
+PageRef? pickOldest(List<PageRef> pages) {
+  if (pages.isEmpty) return null;
+  return pages.reduce((a, b) => a.mtimeMs < b.mtimeMs ? a : b);
+}
+
 /// Pick the page with the most inbound wikilinks, returning both the
 /// page and the count so the caller can render `· N inbound links`
 /// in a confirmation toast. Returns `null` when no page has any

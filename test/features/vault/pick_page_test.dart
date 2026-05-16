@@ -68,6 +68,26 @@ void main() {
     });
   });
 
+  group('pickOldest', () {
+    test('returns null on empty input', () {
+      expect(pickOldest([]), isNull);
+    });
+
+    test('picks the lowest mtimeMs', () {
+      final pages = [
+        _p(ulid: 'a', mtimeMs: 3000),
+        _p(ulid: 'b', mtimeMs: 1000),
+        _p(ulid: 'c', mtimeMs: 2000),
+      ];
+      expect(pickOldest(pages)?.ulid, 'b');
+    });
+
+    test('single-page input returns that page', () {
+      final pages = [_p(ulid: 'a', mtimeMs: 9999)];
+      expect(pickOldest(pages)?.ulid, 'a');
+    });
+  });
+
   group('pickLastEdited', () {
     test('returns null on empty input', () {
       expect(pickLastEdited([]), isNull);
