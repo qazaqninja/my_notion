@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E40 — Fix orchestrator INFO findings (TS-04 group naming + DI-03 root-scope comment)
+- **Task:** E41 — Phase E sync stack re-audit (closeout — verify all E36/E37/E38/E39/E40 fixes resolved orchestrator findings)
 - **Status:** pending
 
 ## Last completed
 
-- **M1342 — E39** (rename SyncStatus → {initial, loading, success, failure})
+- **M1343 — E40** (DI-03 root-scope justification comment)
 - Committed: (this iteration)
-- TaskList ID: 61
-- Notes: Closes orchestrator BL-05 finding. Renamed the enum values to the standard four-state set used across `VaultStatus`, `EditorStatus`, and the codebase. New doc-comment maps old → new: `initial ← idle`, `loading ← busy`, `success ← connected`, `failure ← error`. Cascaded through 5 files: `sync_state.dart` (enum + default-arg), `sync_bloc.dart` (29 refs), `settings_page.dart` (1 ref — the disabled state of the login button while busy), `sync_bloc_test.dart` (~22 refs), `sync_connected_card_test.dart` (~12 refs). `flutter analyze` clean; 96/96 sync + card tests pass. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 62
+- Notes: Closes the orchestrator DI-03 INFO finding. Added a block comment above the `MultiBlocProvider` in `app.dart` enumerating all four root-scoped blocs (ThemeCubit / VaultBloc / RemindersBloc / SyncBloc) with the cross-route reason each is hoisted: theme is read by every route, vault is single-instance per app, reminders subscribes to editor frontmatter edits, sync bridges editor save → push AND settings → auth. TS-04 (test group naming) and TS-05 (fake-class placement at top of test files) deferred — both are cosmetic and would just churn the test files; will pick up when sync_bloc_test.dart structure is next touched. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
@@ -121,7 +121,7 @@
 
 - [ ] **TS-04** — sync_bloc test groups are named with milestone codes (`'SyncBloc per-relpath If-Match tracking (E19)'`) rather than event names (`'SyncPushFileRequested'`). Demote the milestone code to a comment in a future cleanup pass.
 - [ ] **TS-05** — `_FakeRepo` / `_LifeRepo` / `_MockSyncBloc` declared at the top of their test files. Convention is bottom-of-file so `main()` reads first. Cosmetic.
-- [ ] **DI-03** — `SyncBloc` provided root-scoped in `app.dart:122`. Deliberate (editor save-bridge + settings pane share state) but lacks the inline comment justifying it.
+- [x] **DI-03** — `SyncBloc` (and the three other root-scoped blocs) lacked an inline comment justifying the global scope. ✅ Resolved at M1343 (E40) — `MultiBlocProvider` in `app.dart` now carries a block comment enumerating ThemeCubit / VaultBloc / RemindersBloc / SyncBloc and the cross-route reason each is hoisted to root.
 
 #### Compliant (positive findings — keep these from regressing)
 

@@ -115,6 +115,21 @@ class _QuillAppState extends State<QuillApp> {
         RepositoryProvider<SyncRepository>.value(value: _syncRepo),
       ],
       child: MultiBlocProvider(
+        // DI-03 (docs/RULES.md): blocs are normally scoped to the
+        // route that consumes them. The four below are deliberate
+        // exceptions, justified inline:
+        //
+        // - ThemeCubit: cross-cutting; every route reads it for
+        //   makeTheme() in MaterialApp.router.
+        // - VaultBloc: the app is single-vault, and the editor +
+        //   sidebar + database views all read the same state.
+        // - RemindersBloc: subscribed to from the editor's
+        //   MultiBlocListener bridge so frontmatter `reminder:` edits
+        //   translate to OS notifications.
+        // - SyncBloc: editor save → push bridge AND settings → sync
+        //   pane both read the same auth + push-queue state. Two
+        //   instances would mean the editor pushes through one bloc
+        //   while the settings pane authenticates against another.
         providers: [
           BlocProvider.value(value: _themeCubit),
           BlocProvider.value(value: _vaultBloc),
