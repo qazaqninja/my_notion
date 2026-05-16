@@ -1402,6 +1402,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownTableCellsFromLinesIn,
         );
+      case SlashAction.jsonStringEncodeLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, jsonStringEncodeLinesIn,
+        );
       case SlashAction.extractMarkdownLinkLabelsFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownLinkLabelsFromLinesIn,

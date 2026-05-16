@@ -2161,6 +2161,29 @@ SortLinesResult quoteLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// JSON-encode each selected line as a string literal. Uses
+/// `dart:convert`'s `jsonEncode` so all escape rules (`"` → `\"`,
+/// `\` → `\\`, control chars → `\uXXXX` or named escapes) are
+/// applied correctly.
+///
+/// Stricter than [quoteLinesIn] (which only wraps with `"…"` and
+/// preserves internal `"` verbatim — producing invalid JSON if
+/// the source contains a quote). This transform produces output
+/// suitable for direct JSON-array construction: pipe through
+/// `joinLinesWithComma` and wrap with `[…]` for a ready-to-paste
+/// JSON array.
+///
+/// Blank-line passthrough mirrors the other "wrap each line"
+/// transforms (`quoteLines`, `bold`, `italic`).
+SortLinesResult jsonStringEncodeLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          if (l.trim().isEmpty) l else jsonEncode(l),
+      ];
+    });
+
 /// Compute the arithmetic mean of every selected line that parses
 /// as a number. Non-numeric lines are skipped. Always returns a
 /// fixed-point result (means generally aren't whole numbers, so we

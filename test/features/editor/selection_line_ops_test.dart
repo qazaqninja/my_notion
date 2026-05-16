@@ -4095,6 +4095,60 @@ void main() {
     });
   });
 
+  group('jsonStringEncodeLinesIn', () {
+    test('plain line wraps with quotes', () {
+      const text = 'hello\n';
+      final r = jsonStringEncodeLinesIn(text, 0, text.length);
+      expect(r.text, '"hello"\n');
+    });
+
+    test('internal double-quote escapes', () {
+      const text = 'say "hi"\n';
+      final r = jsonStringEncodeLinesIn(text, 0, text.length);
+      expect(r.text, r'"say \"hi\""' '\n');
+    });
+
+    test('internal backslash escapes', () {
+      const text = r'path\to\file' '\n';
+      final r = jsonStringEncodeLinesIn(text, 0, text.length);
+      expect(r.text, r'"path\\to\\file"' '\n');
+    });
+
+    test('tab character escapes as `\\t`', () {
+      const text = 'a\tb\n';
+      final r = jsonStringEncodeLinesIn(text, 0, text.length);
+      expect(r.text, r'"a\tb"' '\n');
+    });
+
+    test('unicode chars above U+001F pass through unescaped', () {
+      const text = 'café — 🦀\n';
+      final r = jsonStringEncodeLinesIn(text, 0, text.length);
+      expect(r.text, '"café — 🦀"\n');
+    });
+
+    test('multiple lines each encode independently', () {
+      const text = 'first\nsecond\nthird\n';
+      final r = jsonStringEncodeLinesIn(text, 0, text.length);
+      expect(r.text, '"first"\n"second"\n"third"\n');
+    });
+
+    test('blank lines pass through (skip convention)', () {
+      const text = 'a\n\nb\n';
+      final r = jsonStringEncodeLinesIn(text, 0, text.length);
+      expect(r.text, '"a"\n\n"b"\n');
+    });
+
+    test('produces valid JSON-string forms for piping', () {
+      const text = 'foo\nbar"baz\n';
+      final r = jsonStringEncodeLinesIn(text, 0, text.length);
+      expect(r.text, r'"foo"' '\n' r'"bar\"baz"' '\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(jsonStringEncodeLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

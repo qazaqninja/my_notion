@@ -378,6 +378,9 @@ enum SlashAction {
   /// Extract every cell from every markdown-table row line
   /// (`| a | b | c |` → `a`, `b`, `c`) on each selected line.
   extractMarkdownTableCellsFromLines,
+  /// JSON-encode each selected line as a string literal (`hello` →
+  /// `"hello"`, with proper escape of `"`, `\`, and control chars).
+  jsonStringEncodeLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1314,6 +1317,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a → "a"',
     action: SlashAction.quoteLines,
     keywords: ['quote', 'string', 'csv', 'wrap', 'json'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'JSON-encode each line',
+    hint: 'a"b → "a\\"b"',
+    action: SlashAction.jsonStringEncodeLines,
+    keywords: ['json', 'encode', 'string', 'escape', 'quote',
+        'literal', 'serialize'],
   ),
   SlashEntry(
     icon: 'quote',
