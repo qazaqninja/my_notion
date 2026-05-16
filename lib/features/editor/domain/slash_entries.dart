@@ -252,6 +252,9 @@ enum SlashAction {
   /// Min-max normalise every numeric line into the [0, 1] range
   /// using `(x - min) / (max - min)`.
   normalizeNumericLines,
+  /// Replace every numeric line with its 1-based rank (ascending,
+  /// competition ranking: ties share, next rank skips).
+  rankNumericLines,
   /// Round every numeric line to 2 decimal places.
   roundNumericLines,
   /// Replace every numeric line with its absolute value.
@@ -1147,6 +1150,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '(x - min) / (max - min)',
     action: SlashAction.normalizeNumericLines,
     keywords: ['normalize', 'normalise', 'minmax', 'scale', 'range', 'rescale'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Rank per line',
+    hint: 'leaderboard order, ties share',
+    action: SlashAction.rankNumericLines,
+    keywords: ['rank', 'leaderboard', 'position', 'order', 'ordinal'],
   ),
   SlashEntry(
     icon: 'hash',

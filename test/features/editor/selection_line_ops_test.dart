@@ -2668,6 +2668,46 @@ void main() {
     });
   });
 
+  group('rankNumericLinesIn', () {
+    test('ascending ranks preserve input position', () {
+      const text = '30\n10\n20\n';
+      final r = rankNumericLinesIn(text, 0, text.length);
+      expect(r.text, '3\n1\n2\n');
+    });
+
+    test('ties share rank and the next rank skips (competition)', () {
+      // 1, 3, 3, 7 → ranks 1, 2, 2, 4 (not 1, 2, 2, 3).
+      const text = '3\n1\n3\n7\n';
+      final r = rankNumericLinesIn(text, 0, text.length);
+      expect(r.text, '2\n1\n2\n4\n');
+    });
+
+    test('label lines pass through unchanged', () {
+      const text = 'score\n10\n20\n';
+      final r = rankNumericLinesIn(text, 0, text.length);
+      final lines = r.text.split('\n');
+      expect(lines[0], 'score');
+      expect(lines[1], '1');
+      expect(lines[2], '2');
+    });
+
+    test('single numeric line gets rank 1', () {
+      const text = '42\n';
+      expect(rankNumericLinesIn(text, 0, text.length).text, '1\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(rankNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('negative values rank below positives', () {
+      const text = '5\n-3\n0\n';
+      final r = rankNumericLinesIn(text, 0, text.length);
+      expect(r.text, '3\n1\n2\n');
+    });
+  });
+
   group('normalizeNumericLinesIn', () {
     test('three values across a 0..100 range scale into [0, 1]', () {
       const text = '0\n25\n100\n';

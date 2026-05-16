@@ -1247,6 +1247,42 @@ SortLinesResult zScoreNumericLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Replace each numeric line with its **rank** (1-based, ascending)
+/// using **competition ranking**: ties share the same rank and the
+/// next rank skips by the count of ties (`1, 2, 2, 4`). This matches
+/// how leaderboards work and is the most intuitive default for a
+/// terse "rank these values" gesture. Non-numeric lines pass through
+/// unchanged. Returns the source unchanged when no line parses.
+///
+///   3            2
+///   1     →      1
+///   3            2
+///   7            4
+SortLinesResult rankNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final values = <double>[];
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v != null) values.add(v);
+      }
+      if (values.isEmpty) return lines;
+      final sorted = [...values]..sort();
+      // For each unique value, record its competition rank (1-based
+      // position of its first occurrence in the sorted list).
+      final rankOf = <double, int>{};
+      for (var i = 0; i < sorted.length; i++) {
+        rankOf.putIfAbsent(sorted[i], () => i + 1);
+      }
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            return rankOf[v]!.toString();
+          })(),
+      ];
+    });
+
 /// Replace each numeric line with its **min-max normalised** value,
 /// scaled to the [0, 1] range: `(x - min) / (max - min)`. Non-numeric
 /// lines pass through unchanged so header rows and dividers survive.
