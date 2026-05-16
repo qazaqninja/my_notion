@@ -2843,6 +2843,46 @@ void main() {
     });
   });
 
+  group('cumulativeProductLinesIn', () {
+    test('basic running product', () {
+      const text = '2\n3\n4\n';
+      final r = cumulativeProductLinesIn(text, 0, text.length);
+      expect(r.text, '2\n6\n24\n');
+    });
+
+    test('non-numeric lines pass through', () {
+      const text = '2\nlabel\n3\n';
+      final r = cumulativeProductLinesIn(text, 0, text.length);
+      expect(r.text, '2\nlabel\n6\n');
+    });
+
+    test('decimal input renders decimal', () {
+      const text = '2.0\n3.0\n';
+      final r = cumulativeProductLinesIn(text, 0, text.length);
+      expect(r.text, '2.0\n6.0\n');
+    });
+
+    test('zero in the middle shorts subsequent rows to zero', () {
+      const text = '5\n0\n10\n';
+      final r = cumulativeProductLinesIn(text, 0, text.length);
+      expect(r.text, '5\n0\n0\n');
+    });
+
+    test('last running product equals the M942 product', () {
+      const text = '3\n7\n5\n';
+      final cum = cumulativeProductLinesIn(text, 0, text.length).text;
+      final prod = productNumericLinesIn(text, 0, text.length).text;
+      final lastCum = cum.split('\n').where((l) => l.isNotEmpty).last;
+      final prodLine = prod.split('\n').where((l) => l.isNotEmpty).single;
+      expect(lastCum, prodLine);
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(cumulativeProductLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

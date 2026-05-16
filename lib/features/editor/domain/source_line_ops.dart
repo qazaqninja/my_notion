@@ -1238,6 +1238,46 @@ SortLinesResult deltaNumericLinesIn(String text, int start, int end) =>
       return out;
     });
 
+/// Replace every numeric line with the running product of itself
+/// and every preceding numeric line. Multiplicative companion to
+/// [cumulativeSumLinesIn]. Non-numeric lines pass through and do
+/// NOT advance the counter.
+///
+///   2            2
+///   3     →      6
+///   4            24
+///
+/// Integer / decimal rendering follows the family convention.
+SortLinesResult cumulativeProductLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      var anyDecimalInput = false;
+      var anyNumeric = false;
+      double product = 1;
+      final out = <String>[];
+      for (final l in lines) {
+        final trimmed = l.trim();
+        final v = double.tryParse(trimmed);
+        if (v == null) {
+          out.add(l);
+          continue;
+        }
+        anyNumeric = true;
+        if (trimmed.contains('.')) anyDecimalInput = true;
+        product *= v;
+        if (!anyDecimalInput && product == product.truncateToDouble()) {
+          out.add(product.toInt().toString());
+        } else {
+          out.add(product.toString());
+        }
+      }
+      if (!anyNumeric) return lines;
+      return out;
+    });
+
 /// Replace every numeric line with the running total of all
 /// preceding numeric lines plus itself. Non-numeric lines pass
 /// through and don't advance the counter. Useful for "sum to date"
