@@ -52,4 +52,19 @@ const _migrations = <_Migration>[
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   '''),
+  _Migration(2, '''
+    -- E8 (M1300): sync layer's canonical vault file store.
+    -- Composite PK (user_id, relpath) — one row per file in the user's
+    -- mirrored vault. `sha256` lets clients compute deltas without
+    -- transferring the full body. `mtime` is server-side write time.
+    CREATE TABLE vault_files (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      relpath TEXT NOT NULL,
+      sha256  TEXT NOT NULL,
+      body    TEXT NOT NULL,
+      mtime   TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, relpath)
+    );
+    CREATE INDEX idx_vault_files_user_mtime ON vault_files(user_id, mtime DESC);
+  '''),
 ];

@@ -1,11 +1,14 @@
 import 'dart:io';
 
+import 'package:backend/auth/middleware.dart';
 import 'package:backend/auth/password.dart';
 import 'package:backend/auth/routes.dart';
 import 'package:backend/auth/tokens.dart';
 import 'package:backend/db/connection.dart';
 import 'package:backend/db/migrations.dart';
+import 'package:backend/db/sync.dart';
 import 'package:backend/db/users.dart';
+import 'package:backend/sync/routes.dart' as sync_routes;
 import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -58,21 +61,33 @@ void main(List<String> args) async {
     ..get('/echo/<message>', _echoHandler)
     ..get('/health', _healthHandler);
 
-  // Auth sub-router — only mounted when the DB is up. Without a
-  // connection, /auth/* returns 503 via a fallback shim so clients see
-  // a clean error rather than a stack trace.
+  // Auth + sync sub-routers — only mounted when the DB is up. Without a
+  // connection, /auth/* and /sync/* return 503 via a fallback shim so
+  // clients see a clean error rather than a stack trace.
   final conn = _conn;
   if (conn != null) {
+    final users = UserRepository(conn);
+    final tokens = TokenIssuer();
     router.mount(
       '/auth/',
       buildAuthRouter(
-        users: UserRepository(conn),
+        users: users,
         hasher: const PasswordHasher(),
-        tokens: TokenIssuer(),
+        tokens: tokens,
       ).call,
     );
+    final syncPipeline = Pipeline()
+        .addMiddleware(requireAuth(users: users, tokens: tokens))
+        .addHandler(
+          sync_routes
+              .buildSyncRouter(sync: SyncRepository(conn))
+              .call,
+        );
+    router.mount('/sync/', syncPipeline);
   } else {
     router.all('/auth/<ignored|.*>',
+        (Request req) => Response(503, body: 'db: not connected\n'));
+    router.all('/sync/<ignored|.*>',
         (Request req) => Response(503, body: 'db: not connected\n'));
   }
 
