@@ -33,6 +33,29 @@ typedef RelationRef = ({String fromUlid, String toUlid});
 List<PageRef> filterUntagged(List<PageRef> pages) =>
     [for (final p in pages) if (p.tags.isEmpty) p];
 
+/// Filter to the pages with no inbound AND no outbound wikilinks —
+/// the "orphan" set the M988 / dialog hygiene entry surfaces. Order
+/// is preserved from the input; callers typically sort by
+/// most-recent-edit afterward.
+List<PageRef> filterOrphan(
+  List<PageRef> pages,
+  List<RelationRef> relations,
+) {
+  final linked = <String>{};
+  for (final r in relations) {
+    linked.add(r.fromUlid);
+    linked.add(r.toUlid);
+  }
+  return [for (final p in pages) if (!linked.contains(p.ulid)) p];
+}
+
+/// Filter to the pages whose `mtimeMs` is older than the given
+/// cutoff. Mirrors the "stale (90+ days)" hygiene entry: callers
+/// pass `DateTime.now().subtract(...).millisecondsSinceEpoch` as the
+/// cutoff and get back the candidates for archive / refresh review.
+List<PageRef> filterStale(List<PageRef> pages, int cutoffMs) =>
+    [for (final p in pages) if (p.mtimeMs < cutoffMs) p];
+
 /// Pick the page with the highest `bodyLen`. Returns `null` for an
 /// empty input. Ties broken by most-recent `mtimeMs`.
 PageRef? pickLargest(List<PageRef> pages) {
