@@ -18,6 +18,11 @@ dependencies:
   flutter:
     sdk: flutter
   archive: ^4.0.7
+  # bcrypt hashing for E44's "Publish with password…" flow — the
+  # client hashes the chosen password before stamping it into
+  # frontmatter, so the backend never sees the plaintext. Same
+  # package the backend uses, pure-Dart so no native channel needed.
+  bcrypt: ^1.2.0
   # SHA-256 hashing for the E31/E32 vault-wide bulk push (decides which
   # files need to be sent vs already match the server). Already pulled
   # in transitively by drift / http_parser; promoting to a direct dep

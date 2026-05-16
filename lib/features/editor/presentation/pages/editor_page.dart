@@ -15,6 +15,7 @@ import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../reminders/presentation/bloc/reminders_bloc.dart';
 import '../../../reminders/presentation/bloc/reminders_event.dart';
+import '../../../sync/domain/usecases/build_public_password_entries.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
 import '../../../sync/presentation/bloc/sync_state.dart';
@@ -500,9 +501,18 @@ class _EditorBodyState extends State<_EditorBody> {
         if (_isPublic(loaded))
           const QuillMenuItem(
               icon: 'link', label: 'Unpublish', value: 'unpublish')
-        else
+        else ...[
           const QuillMenuItem(
               icon: 'link', label: 'Publish & copy link', value: 'publish'),
+          // E44 — password-protected variant. Prompts for a password
+          // and stamps `public: true` + `public_password: <bcrypt>`
+          // into frontmatter; backend E43 gate then demands the
+          // unlock cookie before serving the rendered HTML.
+          const QuillMenuItem(
+              icon: 'lock',
+              label: 'Publish with password…',
+              value: 'publish-password'),
+        ],
         // E23 — pull the latest server copy for conflict reconciliation.
         // Only meaningful when logged in; entry is always present but
         // emits a non-blocking error toast when offline.
@@ -604,6 +614,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _setWordGoal(context, loaded);
       case 'publish':
         await _publishPage(context, loaded);
+      case 'publish-password':
+        await _publishPageWithPassword(context, loaded);
       case 'unpublish':
         await _unpublishPage(context, loaded);
       case 'pull':
@@ -1219,7 +1231,88 @@ class _EditorBodyState extends State<_EditorBody> {
     final bloc = context.read<EditorBloc>();
     if (loaded.page.frontmatter.find('public') == null) return;
     bloc.add(const RemoveFrontmatterField('public'));
+    // E44: when unpublishing, also drop any lingering password hash so
+    // a re-Publish without a password doesn't accidentally inherit the
+    // old gate.
+    if (loaded.page.frontmatter.find('public_password') != null) {
+      bloc.add(const RemoveFrontmatterField('public_password'));
+    }
     if (context.mounted) context.toastSuccess('Unpublished');
+  }
+
+  /// E44 — prompts for a password, bcrypt-hashes it (synchronously,
+  /// pure-Dart `bcrypt`), and stamps `public: true` +
+  /// `public_password: "<hash>"` into the page's frontmatter. Save flow
+  /// then routes the new body through SyncBloc's push pipeline; the
+  /// backend's E43 probe stores the hash and gates `/public/<ulid>`.
+  Future<void> _publishPageWithPassword(
+      BuildContext context, EditorLoaded loaded) async {
+    final ulid = loaded.page.ulid;
+    if (ulid.isEmpty) {
+      context.toastError('Cannot publish', sub: 'page has no ULID');
+      return;
+    }
+    final password = await _promptForPassword(context);
+    if (password == null || password.isEmpty || !context.mounted) return;
+    final entries = buildPublicPasswordEntries(password);
+    final bloc = context.read<EditorBloc>();
+    final fm = loaded.page.frontmatter;
+    if (fm.find('public') == null) {
+      bloc.add(AddFrontmatterField(entries.publicFlag));
+    } else {
+      bloc.add(EditFrontmatterField('public', entries.publicFlag));
+    }
+    if (fm.find('public_password') == null) {
+      bloc.add(AddFrontmatterField(entries.passwordHash));
+    } else {
+      bloc.add(EditFrontmatterField('public_password', entries.passwordHash));
+    }
+    final url = '$_publicShareBase/$ulid';
+    await Clipboard.setData(ClipboardData(text: url));
+    if (context.mounted) {
+      context.toastSuccess(
+        'Published (password-protected)',
+        sub: url,
+        subMono: true,
+      );
+    }
+  }
+
+  /// Modal text field prompt for E44 password publishing. Returns
+  /// null on dismiss / cancel, the entered string otherwise.
+  Future<String?> _promptForPassword(BuildContext context) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Set page password'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            obscureText: true,
+            decoration: const InputDecoration(
+              hintText: 'Password',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (v) => Navigator.of(dialogContext).pop(v),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(controller.text),
+              child: const Text('Publish'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    return result;
   }
 
   /// C3 of the 1m-loop plan: route the current page through the OS share

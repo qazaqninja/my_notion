@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E44 — Flutter side of E43: editor kebab "Publish with password…" → bcrypt hash → frontmatter
+- **Task:** E45 — End-to-end manual sanity for the password-publish flow (docs/checklist + smoke against running backend if available)
 - **Status:** pending
 
 ## Last completed
 
-- **M1346 — E43** (public route password protection: probe + DB column + gate + unlock POST)
+- **M1347 — E44** (Flutter side of password-protected publish)
 - Committed: (this iteration)
-- TaskList ID: 65
-- Notes: Backend side of the per-page password-protection flow. `FrontmatterProbe` gains a `publicPasswordHash` field + `isPasswordProtected` convenience getter; new `_isBcryptHash(s)` validates `$2[abxy]$NN$` + 53 trailing base64 chars defensively. New migration v4 adds `vault_files.public_password_hash TEXT NULL`; sync upsert writes it. `public/routes.dart` gets a second handler `POST /public/<ulid>/unlock` that bcrypt-checks the form-encoded `password` field and sets a `Set-Cookie: quill_unlock_<ulid>=<hash>; HttpOnly; SameSite=Lax; Max-Age=2592000` on success (cookie value is the hash itself — rotating the password mismatches old cookies and re-prompts). `GET /public/<ulid>` now returns the rendered HTML when the cookie matches, the unlock form when password is set but the cookie is absent/wrong. Cookie comparison handles missing/multiple cookies, no JS. 4 new probe tests (valid-bcrypt-captured, malformed-ignored, public-false-not-protected, plus the existing ones still pass). 76/76 backend tests pass; backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 66
+- Notes: Closes the round-trip. New `bcrypt: ^1.2.0` direct dep on the client (same package the backend uses, pure-Dart). New domain usecase `lib/features/sync/domain/usecases/build_public_password_entries.dart` — pure function that takes a password and returns a record `({publicFlag, passwordHash})` of two `FrontmatterEntry`s ready to dispatch as `AddFrontmatterField` / `EditFrontmatterField`. Empty-password throws `ArgumentError`. The `public_password` raw scalar is quoted to keep `$`-laden bcrypt hashes round-tripping unambiguously through the YAML parser. Editor kebab gets a new entry "Publish with password…" with a lock icon (positioned just below "Publish & copy link" — both shown when the page is not yet public). New `_publishPageWithPassword` method opens a modal `AlertDialog` with an obscured `TextField`, hashes the entered password, stamps both frontmatter entries, copies the public URL, and shows a "Published (password-protected)" success toast. `_unpublishPage` now also removes any lingering `public_password` field so re-publishing without a password doesn't accidentally inherit the old gate. 4 new helper tests (entry-shape, hash-valid-and-matches-plaintext, empty-password-throws, different-salts-on-repeat). flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
