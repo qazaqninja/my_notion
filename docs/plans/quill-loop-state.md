@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1272+M1273 — D1 slice 18** (underline `<u>X</u>` implementation + tests)
-- Committed: 905c890, 2a442b2
+- **M1275 — D1 slice 19** (highlight `==X==` / `<mark>X</mark>`)
+- Committed: 0904ba4
 - TaskList ID: 22 (still in_progress)
-- Notes: M80's raw-HTML underline tag `<u>X</u>` now maps to super_editor's `underlineAttribution`. New `under` per-character flag in `_serializeInline`; open order: …→underline, close order: underline→… so nested marks like `<u>**bold**</u>` stack cleanly. Test edit landed in a follow-up M1273 (M1272's same-iteration test Edit hit a stale-read race). 76 cases total. **Session ops continue**: cron `09bb8317`, ggshield `--no-verify` override authorised. Remaining inline-marks: highlight (19), sub/sup (20), colors (21), wikilink/mention/date chips (22).
+- Notes: New custom `highlightAttribution` (super_editor doesn't ship one). `==X==` Pandoc form and `<mark>X</mark>` HTML form both parse to it; canonical output is `==X==`. Composes with bold/italic/etc; code still suppresses. 79 cases total. Session ops continue (cron `09bb8317`, `--no-verify` override). Remaining inline-marks: sub/sup (20), colors (21), wikilink/mention/date chips (22).
 
 ## Backlog (Phase A — Foundation)
 
