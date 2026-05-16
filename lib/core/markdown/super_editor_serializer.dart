@@ -70,12 +70,13 @@ class SuperEditorSerializer {
   ///   - Standalone `![[ULID]]` (image-style transclusion) →
   ///     `ParagraphNode` with `blockType: transclusionAttribution`.
   /// - Slice 13: column fences.
-  ///   - `:::cols\n:::col\n…\n:::\n:::col\n…\n:::\n:::` → `ParagraphNode`
-  ///     with `blockType: columnsAttribution`. Body text is the raw
-  ///     multi-line fence content so the existing
-  ///     `markdown_renderer.dart` columns path (M66) keeps rendering;
-  ///     super_editor migration preserves the structure for cell-level
-  ///     editing later.
+  ///   - `:::cols / :::col / :::` (per M66) → `columnsAttribution`.
+  /// - Slice 14: meta-blocks.
+  ///   - `[breadcrumb]` or `[[breadcrumb]]` → `breadcrumbAttribution`.
+  ///   - `[toc]` → `tocAttribution`.
+  /// - Slice 15: button fences.
+  ///   - `:::button\n…\n:::` (M70) → `buttonAttribution`. Body holds the
+  ///     raw fence content (multi-line YAML/keys).
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -146,6 +147,54 @@ class SuperEditorSerializer {
             'blockType': codeAttribution,
             if (lang.isNotEmpty) 'language': lang,
           },
+        ));
+        continue;
+      }
+      // Meta-blocks: standalone `[breadcrumb]` / `[[breadcrumb]]` and
+      // `[toc]` on their own line. Renders as a path/outline inline.
+      final trimmed = line.trim();
+      if (trimmed == '[breadcrumb]' || trimmed == '[[breadcrumb]]') {
+        flushBuffer();
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(trimmed),
+          metadata: const {'blockType': breadcrumbAttribution},
+        ));
+        i += 1;
+        continue;
+      }
+      if (trimmed == '[toc]') {
+        flushBuffer();
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(trimmed),
+          metadata: const {'blockType': tocAttribution},
+        ));
+        i += 1;
+        continue;
+      }
+      // Button fence? `:::button` opens a multi-line button definition;
+      // a matching `:::` closes it.
+      if (line.trimRight() == ':::button') {
+        flushBuffer();
+        final body = StringBuffer(line);
+        i += 1;
+        while (i < lines.length && lines[i].trimRight() != ':::') {
+          body
+            ..write('\n')
+            ..write(lines[i]);
+          i += 1;
+        }
+        if (i < lines.length) {
+          body
+            ..write('\n')
+            ..write(lines[i]);
+          i += 1;
+        }
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(body.toString()),
+          metadata: const {'blockType': buttonAttribution},
         ));
         continue;
       }
@@ -403,7 +452,10 @@ class SuperEditorSerializer {
             block == bookmarkAttribution ||
             block == subPageAttribution ||
             block == transclusionAttribution ||
-            block == columnsAttribution) {
+            block == columnsAttribution ||
+            block == buttonAttribution ||
+            block == breadcrumbAttribution ||
+            block == tocAttribution) {
           // Body holds the raw markdown — emit verbatim.
           out.write(node.text.toPlainText());
         } else if (block == codeAttribution) {
@@ -554,6 +606,20 @@ const transclusionAttribution = NamedAttribution('transclusion');
 /// cell-level WYSIWYG editing of the columns themselves would need a
 /// nested-document super_editor model (v2).
 const columnsAttribution = NamedAttribution('columns');
+
+/// Custom block-type attribution for a standalone `[breadcrumb]` or
+/// `[[breadcrumb]]` line — M162 renders the page's vault-relative path
+/// inline as mono crumbs.
+const breadcrumbAttribution = NamedAttribution('breadcrumb');
+
+/// Custom block-type attribution for a standalone `[toc]` line — M68
+/// renders an outline of headings with clickable jump targets.
+const tocAttribution = NamedAttribution('toc');
+
+/// Custom block-type attribution for `:::button` fences (M70). Body
+/// holds the raw multi-line button definition (url / copy / reveal /
+/// page action keys); the existing button renderer parses on read.
+const buttonAttribution = NamedAttribution('button');
 
 /// Returns true when [url] has an extension this serializer treats as an
 /// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no

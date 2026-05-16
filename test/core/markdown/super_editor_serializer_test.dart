@@ -600,4 +600,54 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer meta + button blocks (D1 slices 14+15)', () {
+    test('[breadcrumb] → breadcrumb paragraph', () {
+      const md = '[breadcrumb]';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), breadcrumbAttribution);
+      expect(node.text.toPlainText(), '[breadcrumb]');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('[[breadcrumb]] (alternate syntax) also recognized', () {
+      const md = '[[breadcrumb]]';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), breadcrumbAttribution);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('[toc] → toc paragraph', () {
+      const md = '[toc]';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), tocAttribution);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test(':::button fence round-trips with multi-line body', () {
+      const md = ':::button\n'
+          'action: url\n'
+          'url: https://example.com\n'
+          'label: Open\n'
+          ':::';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), buttonAttribution);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('paragraph + breadcrumb + toc + button round-trip', () {
+      const md = 'intro\n\n[breadcrumb]\n\n[toc]\n\n'
+          ':::button\n'
+          'label: Click\n'
+          ':::\n\n'
+          'end';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.toList(), hasLength(5));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
