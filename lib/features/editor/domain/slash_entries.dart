@@ -375,6 +375,9 @@ enum SlashAction {
   /// Extract every American-style calendar date (`January 1, 2024`,
   /// `Jan 1, 2024`, `Apr 1st, 2024`) from each selected line.
   extractCalendarDatesFromLines,
+  /// Extract every ISO 8601 week-number substring (`YYYY-Www`,
+  /// e.g. `2024-W12`) from each selected line.
+  extractIsoWeeksFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1904,6 +1907,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractCalendarDatesFromLines,
     keywords: ['extract', 'date', 'calendar', 'month', 'day',
         'year', 'citation', 'prose'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Extract ISO weeks',
+    hint: 'YYYY-Www, e.g. 2024-W12',
+    action: SlashAction.extractIsoWeeksFromLines,
+    keywords: ['extract', 'iso', 'week', 'sprint', 'schedule',
+        '8601'],
   ),
   SlashEntry(
     icon: 'calendar',

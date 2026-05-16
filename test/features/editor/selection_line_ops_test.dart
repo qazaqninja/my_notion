@@ -4824,6 +4824,66 @@ void main() {
     });
   });
 
+  group('extractIsoWeeksFromLinesIn', () {
+    test('plain ISO week extracts', () {
+      const text = 'sprint 2024-W12 active\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024-W12\n');
+    });
+
+    test('lower-bound week 01 extracts', () {
+      const text = 'planning 2024-W01 kickoff\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024-W01\n');
+    });
+
+    test('upper-bound week 53 extracts (no semantic check)', () {
+      const text = 'last 2024-W53 wrap-up\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024-W53\n');
+    });
+
+    test('single-digit week is NOT a match', () {
+      const text = 'fake 2024-W1 form\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('3-digit week is NOT a match', () {
+      const text = 'invalid 2024-W123 shape\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lowercase `w` is NOT a match', () {
+      const text = 'wrong 2024-w12 case\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('ISO date `2024-01-15` is NOT an ISO week', () {
+      const text = 'date 2024-01-15 form\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple weeks on one line each extract', () {
+      const text = 'from 2024-W01 to 2024-W12 to 2024-W26 stretch\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024-W01\n2024-W12\n2024-W26\n');
+    });
+
+    test('lines without weeks dropped from output', () {
+      const text = 'plain prose\nsprint 2024-W08 cut\nmore prose\n';
+      final r = extractIsoWeeksFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024-W08\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractIsoWeeksFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

@@ -1397,6 +1397,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractCalendarDatesFromLinesIn,
         );
+      case SlashAction.extractIsoWeeksFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractIsoWeeksFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

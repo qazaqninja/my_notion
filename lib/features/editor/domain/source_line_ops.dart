@@ -1685,6 +1685,43 @@ SortLinesResult extractCalendarDatesFromLinesIn(
       return out;
     });
 
+/// Extract every ISO 8601 week-number substring (`YYYY-Www`,
+/// e.g. `2024-W12`) from each selected line. Useful for project
+/// planning, sprint scheduling, and CI-build calendars.
+///
+/// Recognition: `\b\d{4}-W\d{2}\b`
+/// - 4-digit year.
+/// - Literal `-W` (uppercase `W` per ISO 8601 spec).
+/// - 2-digit week number.
+/// - Word boundaries on each end reject single-digit weeks
+///   (`2024-W1`) and 3+ digit weeks (`2024-W123`).
+///
+/// No semantic validation — `2024-W54` matches even though
+/// ISO years have at most 53 weeks. Acceptable for v1; the
+/// downstream calendar layer can validate.
+///
+/// Lowercase `w` (`2024-w12`) is NOT matched — ISO 8601
+/// requires uppercase `W`. If users want case-insensitive
+/// matching, they can run `caseSensitive: false` toggle
+/// downstream.
+///
+/// Distinct from M1062 ISO-date (`YYYY-MM-DD` month-day form),
+/// M1100 year-only, and M1106 calendar-date prose form.
+///
+/// 45th member of the extraction family.
+SortLinesResult extractIsoWeeksFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b\d{4}-W\d{2}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
