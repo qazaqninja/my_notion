@@ -251,6 +251,8 @@ enum SlashAction {
   truncateNumericLines,
   /// Replace every numeric line with its sign (`+`, `-`, or `0`).
   signNumericLines,
+  /// Format every numeric line with `,`-grouped thousands separators.
+  withThousandSeparatorsLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1156,6 +1158,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '5 / -3 / 0 → + / - / 0',
     action: SlashAction.signNumericLines,
     keywords: ['sign', 'signum', 'positive', 'negative', 'trend'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Thousands separators',
+    hint: '1234567 → 1,234,567',
+    action: SlashAction.withThousandSeparatorsLines,
+    keywords: ['thousands', 'separator', 'comma', 'format', 'readable'],
   ),
   SlashEntry(
     icon: 'hash',

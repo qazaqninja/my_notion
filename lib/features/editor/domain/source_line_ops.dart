@@ -969,6 +969,49 @@ SortLinesResult negateNumericLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Format every numeric line with `,`-grouped thousands separators
+/// for readability. `1234567 → 1,234,567`. The decimal portion (if
+/// any) is left untouched. Negative numbers keep their leading `-`.
+/// Non-numeric lines pass through.
+SortLinesResult withThousandSeparatorsLinesIn(
+  String text,
+  int start,
+  int end,
+) =>
+    _transformLinesIn(text, start, end, (lines) {
+      String groupInteger(String digits) {
+        if (digits.length <= 3) return digits;
+        // Collect groups from the right, then reverse so the
+        // most-significant group lands at the start of the output.
+        final groups = <String>[];
+        var i = digits.length;
+        while (i > 3) {
+          groups.add(digits.substring(i - 3, i));
+          i -= 3;
+        }
+        groups.add(digits.substring(0, i));
+        return groups.reversed.join(',');
+      }
+
+      return [
+        for (final l in lines)
+          (() {
+            final trimmed = l.trim();
+            final v = double.tryParse(trimmed);
+            if (v == null) return l;
+            // Use the source string rather than v.toString() so that
+            // 1234.50 keeps its trailing zero (toString would drop it).
+            var src = trimmed;
+            final neg = src.startsWith('-');
+            if (neg) src = src.substring(1);
+            final dot = src.indexOf('.');
+            final intPart = dot == -1 ? src : src.substring(0, dot);
+            final fracPart = dot == -1 ? '' : src.substring(dot);
+            return '${neg ? '-' : ''}${groupInteger(intPart)}$fracPart';
+          })(),
+      ];
+    });
+
 /// Replace every numeric line with its sign as `+`, `-`, or `0`
 /// (matching the `signum` mathematical operator). Non-numeric
 /// lines pass through. Useful for collapsing a noisy column of

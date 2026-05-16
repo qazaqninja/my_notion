@@ -2763,6 +2763,42 @@ void main() {
     });
   });
 
+  group('withThousandSeparatorsLinesIn', () {
+    test('groups large integers with commas', () {
+      const text = '1234567\n42\n';
+      final r = withThousandSeparatorsLinesIn(text, 0, text.length);
+      expect(r.text, '1,234,567\n42\n');
+    });
+
+    test('numbers under 1000 are untouched', () {
+      const text = '999\n100\n0\n';
+      expect(
+        withThousandSeparatorsLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+
+    test('preserves the decimal portion verbatim', () {
+      const text = '1234567.89\n1000.50\n';
+      final r = withThousandSeparatorsLinesIn(text, 0, text.length);
+      expect(r.text, '1,234,567.89\n1,000.50\n');
+    });
+
+    test('negative numbers keep the leading minus', () {
+      const text = '-1234567\n';
+      expect(
+        withThousandSeparatorsLinesIn(text, 0, text.length).text,
+        '-1,234,567\n',
+      );
+    });
+
+    test('non-numeric lines pass through', () {
+      const text = '1234\nlabel\n5678\n';
+      final r = withThousandSeparatorsLinesIn(text, 0, text.length);
+      expect(r.text, '1,234\nlabel\n5,678\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
