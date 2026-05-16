@@ -928,6 +928,26 @@ SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
       return [range.toString()];
     });
 
+/// Compute the **population** variance of every selected numeric
+/// line: `mean((x - mean(x))^2)`. The square of [stdDevNumericLinesIn]'s
+/// result. Always rendered as decimal. Non-numeric lines are
+/// skipped; no-numeric is a no-op.
+SortLinesResult varianceNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final values = <double>[];
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v != null) values.add(v);
+      }
+      if (values.isEmpty) return lines;
+      final mean = values.reduce((a, b) => a + b) / values.length;
+      final variance = values
+              .map((v) => (v - mean) * (v - mean))
+              .reduce((a, b) => a + b) /
+          values.length;
+      return [variance.toString()];
+    });
+
 /// Compute the **population** standard deviation of every selected
 /// numeric line: `sqrt(mean((x - mean(x))^2))`. Non-numeric lines
 /// are skipped. Returns the source unchanged when no line parses

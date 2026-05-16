@@ -2612,6 +2612,29 @@ void main() {
     });
   });
 
+  group('varianceNumericLinesIn', () {
+    test('variance of textbook example is std-dev squared (4)', () {
+      // [2,4,4,4,5,5,7,9] has σ = 2, so variance = 4.
+      const text = '2\n4\n4\n4\n5\n5\n7\n9\n';
+      expect(varianceNumericLinesIn(text, 0, text.length).text, '4.0\n');
+    });
+
+    test('single value has zero variance', () {
+      const text = '42\n';
+      expect(varianceNumericLinesIn(text, 0, text.length).text, '0.0\n');
+    });
+
+    test('skips non-numeric lines', () {
+      const text = '5\nlabel\n5\n';
+      expect(varianceNumericLinesIn(text, 0, text.length).text, '0.0\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(varianceNumericLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

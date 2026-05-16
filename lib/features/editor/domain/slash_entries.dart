@@ -235,6 +235,8 @@ enum SlashAction {
   /// Compute the population standard deviation of every numeric
   /// line.
   stdDevNumericLines,
+  /// Compute the population variance of every numeric line.
+  varianceNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1084,6 +1086,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'σ (population)',
     action: SlashAction.stdDevNumericLines,
     keywords: ['std', 'standard', 'deviation', 'sigma', 'stats'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Variance',
+    hint: 'σ² (population)',
+    action: SlashAction.varianceNumericLines,
+    keywords: ['variance', 'sigma', 'squared', 'stats'],
   ),
   SlashEntry(
     icon: 'hash',

@@ -1160,6 +1160,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, stdDevNumericLinesIn,
         );
+      case SlashAction.varianceNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, varianceNumericLinesIn,
+        );
     }
   }
 
