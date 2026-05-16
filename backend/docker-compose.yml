@@ -1,0 +1,60 @@
+# Phase E E1 of the 1m-loop plan: Quill V2 backend infrastructure.
+#
+# Services:
+# - postgres: Postgres 16 (the canonical store; vault data + auth + sync).
+# - pgadmin:  Web admin at http://localhost:5050 (login admin@quill / admin).
+# - server:   The Dart shelf/Frog server (built from this directory's Dockerfile).
+#
+# Usage:
+#   docker compose up -d        # start everything
+#   docker compose logs -f      # tail logs
+#   docker compose down -v      # stop + wipe volumes (destructive)
+#
+# Production deploys (slice E66+) will swap pgadmin for a managed-DB endpoint
+# and run server behind a TLS-terminating reverse proxy.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: quill
+      POSTGRES_PASSWORD: quill
+      POSTGRES_DB: quill
+    ports:
+      - "5432:5432"
+    volumes:
+      - quill_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quill"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@quill
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  server:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgres://quill:quill@postgres:5432/quill
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  quill_pgdata: {}
