@@ -242,6 +242,9 @@ enum SlashAction {
   /// Sort by the LARGEST signed number found anywhere in each
   /// line, ascending. Lines with no number drop to the bottom.
   sortLinesByMaxNumber,
+  /// Sort by the SMALLEST signed number found anywhere in each
+  /// line, ascending. Lines with no number drop to the bottom.
+  sortLinesByMinNumber,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1415,6 +1418,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'per-row peak ascending',
     action: SlashAction.sortLinesByMaxNumber,
     keywords: ['sort', 'max', 'maximum', 'peak', 'highest', 'numbers'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort by min number in line',
+    hint: 'per-row trough ascending',
+    action: SlashAction.sortLinesByMinNumber,
+    keywords: ['sort', 'min', 'minimum', 'trough', 'lowest', 'numbers'],
   ),
   SlashEntry(
     icon: 'sync',

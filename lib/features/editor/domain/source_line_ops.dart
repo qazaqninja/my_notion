@@ -524,6 +524,33 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Sort the lines touched by the selection by the **smallest signed
+/// number** that appears anywhere in each line, ascending. Mirror of
+/// [sortLinesByMaxNumberIn] — picks the per-row trough rather than
+/// the peak. Useful for rows where the worst-case value carries the
+/// meaning (`min latency`, `low-water-mark`, `floor price`).
+SortLinesResult sortLinesByMinNumberIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'-?\d+(?:\.\d+)?');
+      final numeric = <(double, String)>[];
+      final nonNumeric = <String>[];
+      for (final l in lines) {
+        double? minVal;
+        for (final m in re.allMatches(l)) {
+          final v = double.tryParse(m.group(0)!);
+          if (v == null) continue;
+          if (minVal == null || v < minVal) minVal = v;
+        }
+        if (minVal == null) {
+          nonNumeric.add(l);
+        } else {
+          numeric.add((minVal, l));
+        }
+      }
+      numeric.sort((a, b) => a.$1.compareTo(b.$1));
+      return [...numeric.map((p) => p.$2), ...nonNumeric];
+    });
+
 /// Sort the lines touched by the selection by the **largest signed
 /// number** that appears anywhere in each line, ascending. Useful
 /// when each row has multiple numbers and the peak (e.g. "max load",
