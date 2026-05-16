@@ -28,6 +28,9 @@ dependencies:
   # Companion to flutter_local_notifications for scheduling at a specific
   # local time across DST/timezone boundaries.
   timezone: ^0.10.0
+  # OS share-sheet integration (C3 of the 1m-loop plan). Capped at ^12.0.2
+  # — 13.x requires SDK ^3.10.0 (we have 3.9.2).
+  share_plus: ^12.0.2
   # WebView host for mermaid diagram rendering (C1 of the 1m-loop plan).
   # iOS / Android / macOS supported natively; Linux / Windows fall back to
   # the styled placeholder card (M200).

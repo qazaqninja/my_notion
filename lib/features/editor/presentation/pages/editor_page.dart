@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/yaml_scalar.dart';
@@ -392,6 +393,7 @@ class _EditorBodyState extends State<_EditorBody> {
         const QuillMenuItem(icon: 'export', label: 'Export as .md…', value: 'export-md'),
         const QuillMenuItem(icon: 'export', label: 'Export as .html…', value: 'export-html'),
         const QuillMenuItem(icon: 'export', label: 'Print page…', value: 'print-page'),
+        const QuillMenuItem(icon: 'export', label: 'Share…', value: 'share'),
         QuillMenuItem.separator<String>(),
         const QuillMenuItem(icon: 'tag', label: 'Add tags…', value: 'add-tags'),
         const QuillMenuItem(icon: 'edit', label: 'Set page font…', value: 'set-font'),
@@ -466,6 +468,8 @@ class _EditorBodyState extends State<_EditorBody> {
         await _exportPageAsHtml(context, loaded);
       case 'print-page':
         await _printPage(context, loaded);
+      case 'share':
+        await _sharePage(context, loaded);
       case 'add-tags':
         await _addTags(context, loaded);
       case 'set-font':
@@ -1036,6 +1040,47 @@ class _EditorBodyState extends State<_EditorBody> {
     final ok = await Reveal.show(path);
     if (!ok && context.mounted) {
       context.toastError('Could not reveal', sub: path, subMono: true);
+    }
+  }
+
+  /// C3 of the 1m-loop plan: route the current page through the OS share
+  /// sheet via `package:share_plus`. Tries `shareXFiles` first (works
+  /// natively on iOS / macOS / Android — the share sheet handles AirDrop,
+  /// Messages, email attachments, etc.). On platforms where file-sharing
+  /// isn't supported (notably plain Linux), falls back to `share` with
+  /// the page body as plain text so the entry isn't a dead end.
+  Future<void> _sharePage(BuildContext context, EditorLoaded loaded) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final relPath = loaded.page.relativePath;
+    final path = '${vault.rootPath}/$relPath';
+    final source = File(path);
+    if (!await source.exists()) {
+      if (context.mounted) {
+        context.toastError('Cannot share', sub: 'File not found', subMono: true);
+      }
+      return;
+    }
+    try {
+      // share_plus 12.x: `Share.shareXFiles` accepts a list of XFile + an
+      // optional subject. The share sheet UI is platform-native.
+      final params = ShareParams(
+        files: [XFile(path, name: loaded.page.title)],
+        subject: loaded.page.title,
+      );
+      await SharePlus.instance.share(params);
+    } catch (e) {
+      // Fallback: try plain-text share of the body so the entry isn't a
+      // total dead end on platforms without file-share support.
+      try {
+        await SharePlus.instance.share(
+          ShareParams(text: loaded.page.body, subject: loaded.page.title),
+        );
+      } catch (_) {
+        if (context.mounted) {
+          context.toastError('Share failed', sub: '$e');
+        }
+      }
     }
   }
 
