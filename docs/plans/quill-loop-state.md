@@ -7,14 +7,14 @@
 
 - **Phase:** B (V1 Polish — Media)
 - **Task:** B1 — Inline video playback (video_player)
-- **Status:** pending
+- **Status:** in_progress (slice 1 of ~3 done at M1215+M1216)
 
-## Last completed
+## Last completed slice
 
-- **M1213 — A14** (add CONTRIBUTING.md — closes Phase A)
-- Committed: fa686a3
-- TaskList ID: 14
-- Notes: CONTRIBUTING.md documents the drift `*.g.dart` policy (MD-03) and the 62% coverage ratchet with full M821→M1156 history (TS-07 deviation policy-acknowledged). Phase A is now closed end-to-end — 14/14 tasks shipped across M1187-M1213, all 4 ERROR baselines resolved or documented.
+- **M1215+M1216 — B1 slice 1** (video_player ^2.10.0 pubspec + VideoInlinePlayer widget skeleton + smoke test + lint cleanup)
+- Committed: 400a20b, cfe3e7c
+- TaskList ID: 15 (still in_progress)
+- Notes: video_player capped at ^2.10.0 (2.11.x needs SDK 3.10; we have 3.9.2). Widget at `lib/shared/widgets/video_inline_player.dart` — loads VideoPlayerController.file, shows loading placeholder + CircularProgressIndicator during init, renders AspectRatio(VideoPlayer + play overlay) when ready, disposes controller on tear-down. Smoke verifies the pre-init render shape. Slice 2 wires it into `_VideoCard` in `markdown_renderer.dart` (~line 2018+). Slice 3 may handle stale-controller-on-rebuild semantics.
 
 ## Backlog (Phase A — Foundation)
 
