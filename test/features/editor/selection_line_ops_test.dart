@@ -140,6 +140,33 @@ void main() {
     });
   });
 
+  group('kOneOnOneScaffold', () {
+    test('contains the four canonical 1:1 section headings', () {
+      expect(kOneOnOneScaffold.contains('## Their topics\n'), isTrue);
+      expect(kOneOnOneScaffold.contains('## My topics\n'), isTrue);
+      expect(kOneOnOneScaffold.contains('## Career\n'), isTrue);
+      expect(kOneOnOneScaffold.contains('## Action items\n'), isTrue);
+    });
+
+    test('"Their topics" precedes "My topics" (report-first ordering)', () {
+      final iTheir = kOneOnOneScaffold.indexOf('## Their topics');
+      final iMine = kOneOnOneScaffold.indexOf('## My topics');
+      expect(iTheir < iMine, isTrue);
+    });
+
+    test('action items use the GFM unchecked-todo form', () {
+      expect(kOneOnOneScaffold.contains('- [ ] '), isTrue);
+    });
+
+    test('caret offset (18) sits right after the first "- "', () {
+      const caretInScaffold = 18;
+      expect(
+        kOneOnOneScaffold.substring(0, caretInScaffold),
+        '## Their topics\n- ',
+      );
+    });
+  });
+
   group('kAdrNotesScaffold', () {
     test('contains the three canonical ADR section headings', () {
       expect(kAdrNotesScaffold.contains('## Context\n'), isTrue);

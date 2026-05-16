@@ -75,6 +75,9 @@ enum SlashAction {
   /// Insert a three-section ADR (Architecture Decision Record)
   /// scaffold at the caret (Context / Decision / Consequences).
   insertAdrScaffold,
+  /// Insert a four-section 1:1 meeting scaffold at the caret
+  /// (Their topics / My topics / Career / Action items).
+  insertOneOnOneScaffold,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1474,6 +1477,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'context / decision / consequences',
     action: SlashAction.insertAdrScaffold,
     keywords: ['adr', 'decision', 'architecture', 'record', 'template', 'scaffold'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: '1:1 scaffold',
+    hint: 'their topics / mine / career / actions',
+    action: SlashAction.insertOneOnOneScaffold,
+    keywords: ['1on1', '1:1', 'oneonone', 'one-on-one', 'sync',
+        'manager', 'report', 'template', 'scaffold'],
   ),
   SlashEntry(
     icon: 'link',

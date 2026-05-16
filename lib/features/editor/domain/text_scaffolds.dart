@@ -67,6 +67,26 @@ const String kRetroNotesScaffold =
     '## Action items\n'
     '- [ ] \n';
 
+/// Four-section 1:1 meeting scaffold dropped at the caret by the
+/// `/1on1` slash entry: Their topics / My topics / Career / Action
+/// items. The classic manager-report sync shape — Their first so the
+/// conversation starts with the report's agenda, not the manager's,
+/// and Career as its own section to keep development discussion from
+/// being squeezed by tactical noise. Action items pre-seeded as GFM
+/// unchecked-todos so they surface in the M985 "open todos" palette.
+const String kOneOnOneScaffold =
+    '## Their topics\n'
+    '- \n'
+    '\n'
+    '## My topics\n'
+    '- \n'
+    '\n'
+    '## Career\n'
+    '- \n'
+    '\n'
+    '## Action items\n'
+    '- [ ] \n';
+
 /// Three-section ADR (Architecture Decision Record) scaffold dropped
 /// at the caret by the `/adr` slash entry: Context / Decision /
 /// Consequences. The Michael Nygard form, minus the Status section

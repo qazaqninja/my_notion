@@ -1031,6 +1031,20 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart + caretInScaffold,
           ),
         );
+      case SlashAction.insertOneOnOneScaffold:
+        final newText = text.replaceRange(
+          stripStart, caret, kOneOnOneScaffold,
+        );
+        // Land caret right after the first "- " under "## Their
+        // topics" (offset = "## Their topics\n- ".length = 18) —
+        // typing begins on the report's first agenda item.
+        const caretInScaffold = 18;
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + caretInScaffold,
+          ),
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,
