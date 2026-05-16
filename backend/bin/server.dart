@@ -1,34 +1,63 @@
 import 'dart:io';
 
+import 'package:backend/db/connection.dart';
+import 'package:backend/db/migrations.dart';
+import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 
-// Configure routes.
-final _router = Router()
-  ..get('/', _rootHandler)
-  ..get('/echo/<message>', _echoHandler);
+/// Single shared connection. `null` until openDatabase() resolves or
+/// `DATABASE_URL` is missing (allowed in plain `dart run` mode so
+/// `bin/server.dart` still boots without a DB).
+Connection? _conn;
 
-Response _rootHandler(Request req) {
-  return Response.ok('Hello, World!\n');
-}
+Response _rootHandler(Request req) => Response.ok('Hello, World!\n');
 
-Response _echoHandler(Request request) {
-  final message = request.params['message'];
+Response _echoHandler(Request req) {
+  final message = req.params['message'];
   return Response.ok('$message\n');
 }
 
+Future<Response> _healthHandler(Request req) async {
+  final conn = _conn;
+  if (conn == null) {
+    return Response(503, body: 'db: not connected\n');
+  }
+  try {
+    final row = await conn.execute('SELECT 1');
+    if (row.isEmpty) {
+      return Response(503, body: 'db: empty response\n');
+    }
+    return Response.ok('ok\n');
+  } catch (e) {
+    return Response(503, body: 'db: $e\n');
+  }
+}
+
 void main(List<String> args) async {
-  // Use any available host or container IP (usually `0.0.0.0`).
   final ip = InternetAddress.anyIPv4;
 
-  // Configure a pipeline that logs requests.
-  final handler = Pipeline()
-      .addMiddleware(logRequests())
-      .addHandler(_router.call);
+  // Try to connect to Postgres on boot. If the DB isn't reachable we
+  // continue anyway so `/health` can report the failure rather than
+  // crashing the process — friendlier dev UX.
+  try {
+    _conn = await openDatabase();
+    await runMigrations(_conn!);
+    stdout.writeln('database: connected + migrations applied');
+  } catch (e) {
+    stderr.writeln('database: failed to connect ($e). /health will report.');
+  }
 
-  // For running in containers, we respect the PORT environment variable.
+  final router = Router()
+    ..get('/', _rootHandler)
+    ..get('/echo/<message>', _echoHandler)
+    ..get('/health', _healthHandler);
+
+  final handler =
+      Pipeline().addMiddleware(logRequests()).addHandler(router.call);
+
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
   final server = await serve(handler, ip, port);
-  print('Server listening on port ${server.port}');
+  stdout.writeln('Server listening on port ${server.port}');
 }
