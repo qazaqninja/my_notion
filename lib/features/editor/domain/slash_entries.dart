@@ -468,6 +468,9 @@ enum SlashAction {
   /// Extract every CSS `hsl(...)` / `hsla(...)` color expression
   /// from each selected line.
   extractHslColorsFromLines,
+  /// Extract every Linux absolute-path substring from each
+  /// selected line (`/etc/passwd`-style).
+  extractLinuxPathsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2237,6 +2240,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractHslColorsFromLines,
     keywords: ['extract', 'hsl', 'hsla', 'color', 'css',
         'design', 'hue'],
+  ),
+  SlashEntry(
+    icon: 'file',
+    label: 'Extract Linux paths',
+    hint: '/etc/passwd / /usr/local/bin/x',
+    action: SlashAction.extractLinuxPathsFromLines,
+    keywords: ['extract', 'linux', 'path', 'file', 'unix',
+        'absolute', 'sysadmin'],
   ),
   SlashEntry(
     icon: 'calendar',

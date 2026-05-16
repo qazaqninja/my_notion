@@ -6833,6 +6833,71 @@ void main() {
     });
   });
 
+  group('extractLinuxPathsFromLinesIn', () {
+    test('classic `/etc/passwd` extracts', () {
+      const text = 'check /etc/passwd today\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '/etc/passwd\n');
+    });
+
+    test('long path with multiple segments extracts', () {
+      const text = 'run /usr/local/bin/myapp daily\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '/usr/local/bin/myapp\n');
+    });
+
+    test('hidden file (leading dot) preserved', () {
+      const text = 'edit /home/user/.bashrc here\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '/home/user/.bashrc\n');
+    });
+
+    test('hyphenated segment preserved', () {
+      const text = 'see /var/log/cron-daemon.log inline\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '/var/log/cron-daemon.log\n');
+    });
+
+    test('single-segment `/usr` is NOT a match', () {
+      // Requires 2+ segments to disambiguate from generic
+      // tokens.
+      const text = 'bare /usr only\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('math `1/2/3` (no leading-from-word-boundary) is NOT a match', () {
+      // Lookbehind blocks word-preceded `/`.
+      const text = 'ratio 1/2/3 inline\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('relative path `path/to/file` is NOT matched', () {
+      // No leading `/` — relative paths are out of scope.
+      const text = 'edit path/to/file inline\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple paths on one line each extract', () {
+      const text =
+          'copy /etc/passwd to /tmp/backup.txt now\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '/etc/passwd\n/tmp/backup.txt\n');
+    });
+
+    test('lines without paths dropped from output', () {
+      const text = 'plain prose\nedit /etc/hosts\nmore prose\n';
+      final r = extractLinuxPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '/etc/hosts\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractLinuxPathsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

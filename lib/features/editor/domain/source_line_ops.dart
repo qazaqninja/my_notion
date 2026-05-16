@@ -2671,6 +2671,37 @@ SortLinesResult extractHslColorsFromLinesIn(
       return out;
     });
 
+/// Extract every Linux absolute-path substring from each
+/// selected line (`/etc/passwd`, `/usr/local/bin/foo`, etc.).
+/// Useful for sysadmin docs, config-audit notes, deployment
+/// playbooks.
+///
+/// Recognition: `(?<![\w/])/[\w.-]+(?:/[\w.-]+)+`
+/// - Lookbehind blocks matches preceded by a word or `/`
+///   char — `1/2/3` (math) is correctly skipped.
+/// - Leading `/`.
+/// - First segment: alphanumeric + `_` + `-` + `.`.
+/// - At least ONE additional `/segment` (so single-segment
+///   `/usr` doesn't match — requires `/usr/local` minimum).
+///
+/// Distinct from URL paths (M1054 / M1099) — those start with
+/// a protocol scheme. Distinct from Windows paths (backslash
+/// separator).
+///
+/// 75th member of the extraction family.
+SortLinesResult extractLinuxPathsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?<![\w/])/[\w.-]+(?:/[\w.-]+)+');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
