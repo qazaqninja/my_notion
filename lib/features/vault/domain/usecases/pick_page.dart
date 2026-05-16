@@ -38,6 +38,36 @@ typedef RelationRef = ({String fromUlid, String toUlid});
 List<PageRef> filterUntagged(List<PageRef> pages) =>
     [for (final p in pages) if (p.tags.isEmpty) p];
 
+/// Look up a single page by ULID, returning `null` when no match.
+/// Linear scan — fine for vault sizes Quill targets (a few thousand
+/// pages max); callers that need O(1) lookup over a hot loop should
+/// build a `{for (p in pages) p.ulid: p}` map themselves.
+PageRef? pickByUlid(List<PageRef> pages, String ulid) {
+  for (final p in pages) {
+    if (p.ulid == ulid) return p;
+  }
+  return null;
+}
+
+/// Count occurrences of each tag across the page set, returning a
+/// frequency map keyed by the trimmed-non-empty raw tag string
+/// (case preserved — callers that want case-folded counts can
+/// lowercase the keys themselves). Empty / whitespace-only tag
+/// entries are skipped so a stray `tags: ['  ']` doesn't pollute
+/// the output. Mirrors the inline computation `_showVaultStats`
+/// does today.
+Map<String, int> countTagFrequency(List<PageRef> pages) {
+  final counts = <String, int>{};
+  for (final p in pages) {
+    for (final t in p.tags) {
+      final s = t.trim();
+      if (s.isEmpty) continue;
+      counts[s] = (counts[s] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
+
 /// Filter to the pages that carry the given tag (case-insensitive
 /// match against entries in their `tags` list). Tag whitespace is
 /// trimmed on both sides before comparison — matches the convention

@@ -120,6 +120,85 @@ void main() {
     });
   });
 
+  group('pickByUlid', () {
+    test('returns the matching page', () {
+      final pages = [
+        _p(ulid: 'a', title: 'Alpha'),
+        _p(ulid: 'b', title: 'Beta'),
+      ];
+      expect(pickByUlid(pages, 'b')?.title, 'Beta');
+    });
+
+    test('returns null when no match', () {
+      final pages = [_p(ulid: 'a')];
+      expect(pickByUlid(pages, 'ghost'), isNull);
+    });
+
+    test('returns null on empty input', () {
+      expect(pickByUlid([], 'a'), isNull);
+    });
+
+    test('returns the first match if duplicates exist (defensive)', () {
+      final pages = [
+        _p(ulid: 'a', title: 'First'),
+        _p(ulid: 'a', title: 'Second'),
+      ];
+      // ULID collisions shouldn't happen in production but the
+      // function shouldn't blow up if they do — first wins.
+      expect(pickByUlid(pages, 'a')?.title, 'First');
+    });
+  });
+
+  group('countTagFrequency', () {
+    test('sums occurrences across pages', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['work', 'urgent']),
+        _p(ulid: 'b', tags: ['work', 'personal']),
+        _p(ulid: 'c', tags: ['urgent']),
+      ];
+      final f = countTagFrequency(pages);
+      expect(f['work'], 2);
+      expect(f['urgent'], 2);
+      expect(f['personal'], 1);
+    });
+
+    test('preserves tag case (callers fold if they need)', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['Work']),
+        _p(ulid: 'b', tags: ['work']),
+      ];
+      final f = countTagFrequency(pages);
+      expect(f['Work'], 1);
+      expect(f['work'], 1);
+    });
+
+    test('skips empty / whitespace-only tag entries', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['  ', '']),
+        _p(ulid: 'b', tags: ['real']),
+      ];
+      final f = countTagFrequency(pages);
+      expect(f.containsKey(''), isFalse);
+      expect(f.containsKey('  '), isFalse);
+      expect(f['real'], 1);
+    });
+
+    test('trims surrounding whitespace before counting', () {
+      // Both pages have the same logical tag after trim; the count
+      // collapses to a single key.
+      final pages = [
+        _p(ulid: 'a', tags: ['  work  ']),
+        _p(ulid: 'b', tags: ['work']),
+      ];
+      final f = countTagFrequency(pages);
+      expect(f['work'], 2);
+    });
+
+    test('empty input returns empty map', () {
+      expect(countTagFrequency([]), isEmpty);
+    });
+  });
+
   group('filterByTag', () {
     test('keeps pages whose tag list contains the query', () {
       final pages = [
