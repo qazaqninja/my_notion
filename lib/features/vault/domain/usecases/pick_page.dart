@@ -38,6 +38,21 @@ typedef RelationRef = ({String fromUlid, String toUlid});
 List<PageRef> filterUntagged(List<PageRef> pages) =>
     [for (final p in pages) if (p.tags.isEmpty) p];
 
+/// Filter to the pages that carry the given tag (case-insensitive
+/// match against entries in their `tags` list). Tag whitespace is
+/// trimmed on both sides before comparison — matches the convention
+/// used by `_showVaultStats`' frequency map. Empty `tag` argument
+/// returns an empty list (a wildcard query would invite confusion
+/// with `filterUntagged`'s inverse).
+List<PageRef> filterByTag(List<PageRef> pages, String tag) {
+  final needle = tag.trim().toLowerCase();
+  if (needle.isEmpty) return [];
+  return [
+    for (final p in pages)
+      if (p.tags.any((t) => t.trim().toLowerCase() == needle)) p,
+  ];
+}
+
 /// Filter to the pages with no inbound AND no outbound wikilinks —
 /// the "orphan" set the M988 / dialog hygiene entry surfaces. Order
 /// is preserved from the input; callers typically sort by

@@ -120,6 +120,50 @@ void main() {
     });
   });
 
+  group('filterByTag', () {
+    test('keeps pages whose tag list contains the query', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['work', 'urgent']),
+        _p(ulid: 'b', tags: ['personal']),
+        _p(ulid: 'c', tags: ['work']),
+      ];
+      expect(
+        filterByTag(pages, 'work').map((p) => p.ulid).toSet(),
+        {'a', 'c'},
+      );
+    });
+
+    test('matches case-insensitively', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['Work']),
+        _p(ulid: 'b', tags: ['WORK']),
+      ];
+      expect(filterByTag(pages, 'work').length, 2);
+    });
+
+    test('trims whitespace on both sides of the comparison', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['  work  ']),
+      ];
+      expect(filterByTag(pages, '  Work').length, 1);
+    });
+
+    test('empty query returns empty (no wildcard semantics)', () {
+      final pages = [_p(ulid: 'a', tags: ['x'])];
+      expect(filterByTag(pages, ''), isEmpty);
+      expect(filterByTag(pages, '   '), isEmpty);
+    });
+
+    test('empty pages returns empty', () {
+      expect(filterByTag([], 'work'), isEmpty);
+    });
+
+    test('no match returns empty', () {
+      final pages = [_p(ulid: 'a', tags: ['x'])];
+      expect(filterByTag(pages, 'y'), isEmpty);
+    });
+  });
+
   group('filterOrphan', () {
     test('keeps pages absent from both endpoint sets', () {
       final pages = [_p(ulid: 'a'), _p(ulid: 'b'), _p(ulid: 'c')];
