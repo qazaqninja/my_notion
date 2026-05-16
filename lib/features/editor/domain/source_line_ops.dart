@@ -1939,6 +1939,36 @@ SortLinesResult extractWikilinkAnchorsFromLinesIn(
       return out;
     });
 
+/// Extract every YouTube video ID from each selected line. Useful
+/// for video-list audits, embed-roster scrapes, and bulk
+/// playlist building from prose notes.
+///
+/// Supported URL surfaces:
+/// - `youtu.be/VIDEO_ID` (short form)
+/// - `youtube.com/watch?v=VIDEO_ID` (full form)
+/// - `youtube.com/embed/VIDEO_ID` (iframe embed form)
+///
+/// All forms with or without `https://` / `http://` / `www.`
+/// prefix. The video ID is exactly 11 chars from
+/// `[A-Za-z0-9_-]` per YouTube's spec.
+///
+/// 53rd member of the extraction family.
+SortLinesResult extractYoutubeIdsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/embed/)'
+        r'([A-Za-z0-9_-]{11})',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

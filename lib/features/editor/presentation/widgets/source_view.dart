@@ -1430,6 +1430,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractWikilinkAnchorsFromLinesIn,
         );
+      case SlashAction.extractYoutubeIdsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractYoutubeIdsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

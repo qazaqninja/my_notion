@@ -5354,6 +5354,78 @@ void main() {
     });
   });
 
+  group('extractYoutubeIdsFromLinesIn', () {
+    test('youtu.be short form extracts ID', () {
+      const text = 'watch https://youtu.be/dQw4w9WgXcQ today\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'dQw4w9WgXcQ\n');
+    });
+
+    test('full watch?v= form extracts ID', () {
+      const text =
+          'see https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10s\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'dQw4w9WgXcQ\n');
+    });
+
+    test('embed iframe URL extracts', () {
+      // No trailing newline in input — transformLinesIn preserves
+      // the no-newline shape, so the output has no trailing `\n`
+      // either.
+      const text = '<iframe src="https://youtube.com/embed/abc123XYZ-_">';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'abc123XYZ-_');
+    });
+
+    test('protocol-less youtu.be still matches', () {
+      const text = 'short youtu.be/abc123def45 link\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'abc123def45\n');
+    });
+
+    test('plain 11-char string with no URL is NOT a match', () {
+      const text = 'random dQw4w9WgXcQ inline\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('mixed surfaces on one line each extract', () {
+      const text = 'pair https://youtu.be/ABCDEFGHIJK and '
+          'https://youtube.com/watch?v=LMNOPQRSTUV\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'ABCDEFGHIJK\nLMNOPQRSTUV\n');
+    });
+
+    test('underscore and hyphen chars in ID preserved', () {
+      const text = 'see youtu.be/abc_def-XYZ link\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'abc_def-XYZ\n');
+    });
+
+    test('ID shorter than 11 chars not captured', () {
+      // YouTube IDs are exactly 11 chars; shorter doesn't match.
+      const text = 'short youtu.be/abcdef bad\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('non-YouTube URL is NOT matched', () {
+      const text = 'see https://vimeo.com/12345 different\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without YouTube URLs dropped from output', () {
+      const text = 'plain prose\nwatch youtu.be/dQw4w9WgXcQ\nmore prose\n';
+      final r = extractYoutubeIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'dQw4w9WgXcQ\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractYoutubeIdsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

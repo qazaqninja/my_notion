@@ -400,6 +400,10 @@ enum SlashAction {
   /// Extract the anchor slug from every wikilink that has one
   /// (`[[ULID#anchor]]` → `anchor`) on each selected line.
   extractWikilinkAnchorsFromLines,
+  /// Extract every YouTube video ID (from any of `youtu.be/`,
+  /// `youtube.com/watch?v=`, `youtube.com/embed/` URL surfaces)
+  /// on each selected line.
+  extractYoutubeIdsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1993,6 +1997,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractWikilinkAnchorsFromLines,
     keywords: ['extract', 'wikilink', 'anchor', 'section', 'slug',
         'deeplink'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract YouTube video IDs',
+    hint: 'youtu.be/XXX → XXX',
+    action: SlashAction.extractYoutubeIdsFromLines,
+    keywords: ['extract', 'youtube', 'video', 'id', 'watch',
+        'embed'],
   ),
   SlashEntry(
     icon: 'calendar',
