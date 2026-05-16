@@ -127,6 +127,70 @@ void main() {
     });
   });
 
+  group('SyncConnectedCard network error banner (E28)', () {
+    testWidgets('un-classified lastError renders banner + Retry now',
+        (tester) async {
+      const state = SyncState(
+        status: SyncStatus.error,
+        token: 'jwt-t',
+        lastError: 'connection_timed_out',
+      );
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+
+      await tester.pumpWidget(pumpCard(state, bloc));
+
+      expect(find.text('Network error'), findsOneWidget);
+      expect(find.text('connection_timed_out'), findsOneWidget);
+
+      await tester.tap(find.text('Retry now'));
+      await tester.pumpAndSettle();
+      verify(() => bloc.add(any(that: isA<SyncListRequested>())))
+          .called(1);
+    });
+
+    testWidgets('structured errors do NOT render the network banner',
+        (tester) async {
+      // conflict is rendered by the "Unresolved conflict" banner, not
+      // the network one.
+      final state = SyncState(
+        status: SyncStatus.error,
+        token: 'jwt-t',
+        lastError: 'conflict',
+        lastConflict: SyncFileSummary(
+          relpath: 'a.md',
+          sha256: 'sha-x',
+          mtime: DateTime.utc(2026, 5, 17),
+        ),
+      );
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+
+      await tester.pumpWidget(pumpCard(state, bloc));
+      expect(find.text('Network error'), findsNothing);
+    });
+
+    test('isNetworkError classifies known codes correctly', () {
+      expect(isNetworkError('connection_timed_out'), isTrue);
+      expect(isNetworkError('socket_closed'), isTrue);
+      // Structured codes filtered out.
+      for (final code in [
+        'conflict',
+        'not_found',
+        'token_invalid',
+        'not_authenticated',
+        'invalid_credentials',
+        'invalid_signup',
+        'email_taken',
+      ]) {
+        expect(isNetworkError(code), isFalse,
+            reason: '$code should be classified as structured, not network');
+      }
+      expect(isNetworkError(null), isFalse);
+      expect(isNetworkError(''), isFalse);
+    });
+  });
+
   group('syncRelativeTime (E26)', () {
     test('< 5 s → "now"', () {
       final t = DateTime.now().subtract(const Duration(seconds: 2));

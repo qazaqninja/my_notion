@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E28 — Sync error pane: surface long-lived network failures with a manual retry
+- **Task:** E29 — Surface push/delete/fetch errors via the sync card banner too (not just toasts)
 - **Status:** pending
 
 ## Last completed
 
-- **M1330 — E27** (periodic background /sync/list ping)
+- **M1331 — E28** (network error banner + manual retry in sync card)
 - Committed: (this iteration)
-- TaskList ID: 49
-- Notes: `SyncBloc` gains a `_listPingTimer` (Timer.periodic) plus an injectable `listPingInterval` (`kDefaultSyncListPingInterval = 60s` for prod, tests inject 20–50 ms). `_startListPing` arms after each successful login/signup/restore; `_stopListPing` runs on logout, on every 401-recovery path (list/push/delete/fetch), and in the bloc's `close()` override. Each tick re-dispatches `SyncListRequested` only when `state.isAuthed` (so a race against logout-mid-tick is a no-op). 3 new tests (timer-dispatches-list-after-login, logout-cancels-timer, close-cancels-timer — `repo.listCallCount` doesn't grow after `close()`). 39/39 sync_bloc tests pass; flutter analyze clean. External edits made on another device now flow into `knownShas` automatically within the ping window and surface as `If-Match` conflicts on the next save instead of silent overwrites. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 50
+- Notes: `SyncConnectedCard` gains a third banner that renders when `state.lastError` is non-null AND not in the structured-codes set (`conflict / not_found / token_invalid / not_authenticated / invalid_credentials / invalid_signup / email_taken`). Layout: surface-tinted box with a "Network error" header, the raw error message, and a `Retry now` button that dispatches `SyncListRequested` — the next /sync/list call clears `lastError` on success or refreshes the banner on failure. New `isNetworkError(code)` predicate (also exported) and a defensive `_shortSha` helper that handles placeholder sha strings <8 chars (test-only safety; production shas are 64). 3 new tests (un-classified-renders-banner-+-retry-dispatch, structured-errors-do-not-render, `isNetworkError` classifies 9 codes); 11/11 sync card tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

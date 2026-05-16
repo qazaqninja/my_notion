@@ -75,7 +75,7 @@ class SyncConnectedCard extends StatelessWidget {
                 : '${lastPush.relpath} · ${syncRelativeTime(lastPush.mtime)}',
             sub: lastPush == null
                 ? null
-                : 'sha ${lastPush.sha256.substring(0, 8)}…',
+                : 'sha ${_shortSha(lastPush.sha256)}…',
             tokens: tokens,
           ),
           if (conflict != null) ...[
@@ -104,7 +104,7 @@ class SyncConnectedCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           '${conflict.relpath} · server sha '
-                          '${conflict.sha256.substring(0, 8)}…',
+                          '${_shortSha(conflict.sha256)}…',
                           style: TextStyle(
                             fontSize: 12,
                             color: tokens.text2,
@@ -124,11 +124,87 @@ class SyncConnectedCard extends StatelessWidget {
               ),
             ),
           ],
+          // E28 — un-classified `lastError` (anything except the four
+          // structured codes we already render elsewhere) is treated as
+          // a transient network failure. Surface it inline with a
+          // 'Retry now' button so the user can re-arm the sync round-
+          // trip without restarting the app.
+          if (isNetworkError(state.lastError)) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: tokens.surface,
+                border: Border.all(color: tokens.divider2, width: 0.5),
+                borderRadius: const BorderRadius.all(Radius.circular(4)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Network error',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: tokens.text,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          state.lastError ?? '',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: tokens.text2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton.tonal(
+                    onPressed: () => context
+                        .read<SyncBloc>()
+                        .add(const SyncListRequested()),
+                    child: const Text('Retry now'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 }
+
+/// Error codes the rest of the UI already renders structurally
+/// (toasts, dialogs, banners). Anything else gets treated as a generic
+/// network error by `SyncConnectedCard` and surfaced with a Retry now.
+const _kStructuredSyncErrors = <String>{
+  'conflict',
+  'not_found',
+  'token_invalid',
+  'not_authenticated',
+  'invalid_credentials',
+  'invalid_signup',
+  'email_taken',
+};
+
+/// Whether [code] (typically `SyncState.lastError`) represents a
+/// generic / network-class error that should surface in the sync card
+/// rather than a flow-specific toast or banner.
+bool isNetworkError(String? code) {
+  if (code == null || code.isEmpty) return false;
+  return !_kStructuredSyncErrors.contains(code);
+}
+
+/// First 8 chars of a sha, or the whole thing if it's shorter — keeps
+/// the activity row from blowing up on placeholder hashes in tests.
+String _shortSha(String sha) =>
+    sha.length >= 8 ? sha.substring(0, 8) : sha;
 
 class _ActivityRow extends StatelessWidget {
   const _ActivityRow({
