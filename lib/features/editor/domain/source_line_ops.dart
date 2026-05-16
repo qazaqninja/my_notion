@@ -2774,6 +2774,40 @@ SortLinesResult extractPemBlockTypesFromLinesIn(
       return out;
     });
 
+/// Extract every JWT (JSON Web Token) substring from each
+/// selected line. Useful for auth log triage, debugging
+/// session-token issues, and "is there a leaked token in
+/// this paste-in?" sweeps.
+///
+/// Recognition:
+///   `\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`
+/// - `eyJ` prefix: base64-url encoding of `{"` — the
+///   canonical JWT-header opener, present in every JWT.
+/// - First two segments must start with `eyJ` (the header
+///   and payload, both JSON objects).
+/// - Third segment: base64-url chars only (the signature).
+/// - Dot separators between segments.
+///
+/// The `eyJ` prefix on both header and payload segments is
+/// what disambiguates JWTs from arbitrary 3-part dot-separated
+/// base64-url strings.
+///
+/// 78th member of the extraction family.
+SortLinesResult extractJwtFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

@@ -477,6 +477,9 @@ enum SlashAction {
   /// Extract every PEM block type (`-----BEGIN <TYPE>-----`)
   /// from each selected line.
   extractPemBlockTypesFromLines,
+  /// Extract every JWT (JSON Web Token) substring from each
+  /// selected line.
+  extractJwtFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2270,6 +2273,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractPemBlockTypesFromLines,
     keywords: ['extract', 'pem', 'cert', 'certificate', 'key',
         'pki', 'crypto'],
+  ),
+  SlashEntry(
+    icon: 'lock',
+    label: 'Extract JWTs',
+    hint: 'eyJ...eyJ...sig',
+    action: SlashAction.extractJwtFromLines,
+    keywords: ['extract', 'jwt', 'token', 'auth', 'session',
+        'bearer'],
   ),
   SlashEntry(
     icon: 'calendar',

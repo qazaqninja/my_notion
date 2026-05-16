@@ -7040,6 +7040,84 @@ void main() {
     });
   });
 
+  group('extractJwtFromLinesIn', () {
+    test('canonical JWT extracts', () {
+      // Header + payload + signature (all sufficient chars).
+      const text =
+          'token eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.signature123\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.signature123\n',
+      );
+    });
+
+    test('JWT with base64-url chars (- and _) extracts', () {
+      const text =
+          'tok eyJhbGc_iOiJIUzI1NiJ9.eyJzdWI-iOiJ4In0.sig-val_here\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'eyJhbGc_iOiJIUzI1NiJ9.eyJzdWI-iOiJ4In0.sig-val_here\n',
+      );
+    });
+
+    test('single segment (no dots) is NOT a JWT', () {
+      const text = 'fake eyJhbGciOiJIUzI1NiJ9 only\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('payload without `eyJ` prefix is NOT a JWT', () {
+      // Second segment must start with `eyJ` too — the
+      // payload is always a JSON object.
+      const text =
+          'fake eyJhbGciOiJIUzI1NiJ9.foopayload.sig only\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('header without `eyJ` prefix is NOT a JWT', () {
+      const text = 'fake notjwt.eyJzdWIiOiJ4In0.sig only\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple JWTs on one line each extract', () {
+      const text =
+          'pair eyJaaa.eyJbbb.sig1 and eyJccc.eyJddd.sig2 cached\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(r.text, 'eyJaaa.eyJbbb.sig1\neyJccc.eyJddd.sig2\n');
+    });
+
+    test('Authorization-header style with Bearer prefix', () {
+      const text =
+          'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJ_payload.sig\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'eyJhbGciOiJIUzI1NiJ9.eyJ_payload.sig\n',
+      );
+    });
+
+    test('plain English prose is NOT a JWT', () {
+      const text = 'no token in this prose at all\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without JWTs dropped from output', () {
+      const text =
+          'plain prose\ntok eyJa.eyJb.sig here\nmore prose\n';
+      final r = extractJwtFromLinesIn(text, 0, text.length);
+      expect(r.text, 'eyJa.eyJb.sig\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractJwtFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

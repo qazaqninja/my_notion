@@ -1531,6 +1531,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractPemBlockTypesFromLinesIn,
         );
+      case SlashAction.extractJwtFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractJwtFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,
