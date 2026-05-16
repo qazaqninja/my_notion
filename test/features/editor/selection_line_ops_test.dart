@@ -5139,6 +5139,83 @@ void main() {
     });
   });
 
+  group('extractEmailLocalPartsFromLinesIn', () {
+    test('plain email yields local-part', () {
+      const text = 'contact user@example.com today\n';
+      final r =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'user\n');
+    });
+
+    test('first.last format extracts intact', () {
+      const text = 'reply first.last@example.com soon\n';
+      final r =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'first.last\n');
+    });
+
+    test('plus-tag format extracts intact', () {
+      const text = 'cc tag+orders@shop.com inline\n';
+      final r =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'tag+orders\n');
+    });
+
+    test('multiple emails on one line each yield local-part', () {
+      const text = 'pair alice@a.test and bob@b.test direct\n';
+      final r =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alice\nbob\n');
+    });
+
+    test('email triplet: full + domain + local cross-check', () {
+      // Demonstrates the design: each extractor surfaces a
+      // different slice of the same email shape.
+      const text = 'cc alice@example.com\ncc bob@example.com\n';
+      final emails = extractEmailsFromLinesIn(text, 0, text.length);
+      final domains =
+          extractEmailDomainsFromLinesIn(text, 0, text.length);
+      final locals =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(emails.text,
+          'alice@example.com\nbob@example.com\n');
+      expect(domains.text, 'example.com\nexample.com\n');
+      expect(locals.text, 'alice\nbob\n');
+    });
+
+    test('underscore-and-digit local-part extracts intact', () {
+      const text = 'ping user_42@svc.io reach\n';
+      final r =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'user_42\n');
+    });
+
+    test('bare `@only` is NOT a match', () {
+      const text = 'tag @only here\n';
+      final r =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('local without `@domain` is NOT a match', () {
+      const text = 'just user no domain\n';
+      final r =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without emails dropped from output', () {
+      const text = 'plain prose\ncc user@example.com\nmore prose\n';
+      final r =
+          extractEmailLocalPartsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'user\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractEmailLocalPartsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

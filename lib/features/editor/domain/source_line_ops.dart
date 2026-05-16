@@ -1838,6 +1838,39 @@ SortLinesResult extractEmailDomainsFromLinesIn(
       return out;
     });
 
+/// Extract the LOCAL-PART (the part before `@`) from every email
+/// address on each selected line (`user@example.com` → `user`).
+/// Completes the email triplet:
+/// - M1053 `extractEmailsFromLinesIn` — full `user@example.com`
+/// - M1112 `extractEmailDomainsFromLinesIn` — `example.com`
+/// - M1113 `extractEmailLocalPartsFromLinesIn` — `user`
+///
+/// Useful for username-convention audits, "what are the
+/// dominant local-part shapes in this contact list?" and
+/// PII-anonymization passes that keep the structure but
+/// scrub the domain.
+///
+/// Recognition mirrors M1053/M1112 with the local-part as the
+/// captured group:
+/// `([A-Za-z0-9._%+\-]+)@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}`
+///
+/// 50th member of the extraction family — round-number
+/// milestone for the family.
+SortLinesResult extractEmailLocalPartsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'([A-Za-z0-9._%+\-]+)@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

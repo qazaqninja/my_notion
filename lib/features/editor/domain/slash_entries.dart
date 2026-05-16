@@ -390,6 +390,9 @@ enum SlashAction {
   /// Extract the domain portion from every email address on each
   /// selected line (`user@example.com` → `example.com`).
   extractEmailDomainsFromLines,
+  /// Extract the local-part portion from every email address on
+  /// each selected line (`user@example.com` → `user`).
+  extractEmailLocalPartsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1958,6 +1961,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'user@example.com → example.com',
     action: SlashAction.extractEmailDomainsFromLines,
     keywords: ['extract', 'email', 'domain', 'provider', 'contact',
+        'mail'],
+  ),
+  SlashEntry(
+    icon: 'users',
+    label: 'Extract email local-parts',
+    hint: 'user@example.com → user',
+    action: SlashAction.extractEmailLocalPartsFromLines,
+    keywords: ['extract', 'email', 'local', 'username', 'contact',
         'mail'],
   ),
   SlashEntry(
