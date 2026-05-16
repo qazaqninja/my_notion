@@ -81,6 +81,10 @@ class SuperEditorSerializer {
   ///   Bold (`**`) is checked before italic (`*`) so the greedier match
   ///   wins. Strikethrough's `~~` opens and closes a strikethroughAttribution
   ///   span the same way.
+  /// - Slice 18: inline marks — underline (`<u>X</u>`) per M80. Quill
+  ///   stores underline as a raw HTML tag in the markdown body so the
+  ///   round-trip is byte-identical; the existing `markdown_renderer.dart`
+  ///   inline-HTML pass reads it back unchanged.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -592,6 +596,21 @@ AttributedText _parseInline(String src) {
         continue;
       }
     }
+    // Underline `<u>X</u>` (M80 — raw HTML tag, Quill's canonical form).
+    if (i + 2 < src.length && src.substring(i, i + 3) == '<u>') {
+      final close = src.indexOf('</u>', i + 3);
+      if (close > i + 2) {
+        final inner = src.substring(i + 3, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(underlineAttribution, start, end));
+        }
+        i = close + 4;
+        continue;
+      }
+    }
     // Strikethrough `~~X~~`.
     if (i + 1 < src.length && src[i] == '~' && src[i + 1] == '~') {
       final close = src.indexOf('~~', i + 2);
@@ -660,12 +679,14 @@ String _serializeInline(AttributedText text) {
   final italic = List<bool>.filled(plain.length, false);
   final strike = List<bool>.filled(plain.length, false);
   final code = List<bool>.filled(plain.length, false);
+  final under = List<bool>.filled(plain.length, false);
   for (var i = 0; i < plain.length; i++) {
     final attrs = text.getAllAttributionsAt(i);
     if (attrs.contains(boldAttribution)) bold[i] = true;
     if (attrs.contains(italicsAttribution)) italic[i] = true;
     if (attrs.contains(strikethroughAttribution)) strike[i] = true;
     if (attrs.contains(codeAttribution)) code[i] = true;
+    if (attrs.contains(underlineAttribution)) under[i] = true;
   }
   final out = StringBuffer();
   for (var i = 0; i < plain.length; i++) {
@@ -676,10 +697,12 @@ String _serializeInline(AttributedText text) {
       if (bold[i] && (i == 0 || !bold[i - 1])) out.write('**');
       if (italic[i] && (i == 0 || !italic[i - 1])) out.write('*');
       if (strike[i] && (i == 0 || !strike[i - 1])) out.write('~~');
+      if (under[i] && (i == 0 || !under[i - 1])) out.write('<u>');
     }
     out.write(plain[i]);
     final isLast = i == plain.length - 1;
     if (!code[i]) {
+      if (under[i] && (isLast || !under[i + 1])) out.write('</u>');
       if (strike[i] && (isLast || !strike[i + 1])) out.write('~~');
       if (italic[i] && (isLast || !italic[i + 1])) out.write('*');
       if (bold[i] && (isLast || !bold[i + 1])) out.write('**');
