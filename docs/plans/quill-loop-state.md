@@ -5,16 +5,16 @@
 
 ## Current
 
-- **Phase:** D (V1 Polish — WYSIWYG via super_editor)
-- **Task:** D1 — Bring `super_editor` into the tree + serializer skeleton
-- **Status:** in_progress (slice 1 of ~30+ done at M1242)
+- **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
+- **Task:** E2 — Postgres migrations / db package + health endpoint
+- **Status:** pending
 
-## Last completed slice
+## Last completed
 
-- **M1284 — D1 slice 23** (`/editor-beta/<ulid>` route mounts SuperEditor end-to-end)
-- Committed: e8a3e76
-- TaskList ID: 22 (still in_progress)
-- Notes: New EditorBetaPage at `lib/features/editor/presentation/pages/editor_beta_page.dart`. Reuses EditorBloc's OpenEditor + drift + repo.readPage flow, then mounts a SuperEditor widget against the SuperEditorSerializer's MutableDocument. AppBar carries a "BETA" chip. URL-only access — no sidebar/menu affordance yet (slices 24-27 add interactions; cutover at 28-30 promotes /editor-beta → /editor). Session ops continue (cron `09bb8317`, `--no-verify`). Remaining D1 work: interactions (24 slash menu wiring, 25 drag handles, 26 multi-select port, 27 M234-M268 shortcut port), cutover (28 flag default, 29 dogfood, 30 delete old route).
+- **M1286 — E1 (Phase E begins)** (bootstrap backend/ workspace)
+- Committed: 90d4c24
+- TaskList ID: 23
+- Notes: `dart create -t server-shelf backend` scaffolds Dart server (shelf + shelf_router). Hand-written `docker-compose.yml` orchestrates Postgres 16 + pgAdmin + server with healthcheck-gated startup. Quill-specific README replaces template stub. Dart Frog migration deferred (CLI not installed). Phase D D1 closes at functional-read-only milestone (M1284 /editor-beta route); D1 slices 24-30 (interactions + cutover) move to v1.x backlog. Session ops continue (cron `09bb8317`, `--no-verify`).
 
 ## Backlog (Phase A — Foundation)
 
