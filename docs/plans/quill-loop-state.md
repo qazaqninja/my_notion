@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E52 — Phase E end-to-end walkthrough doc + manual sanity-check checklist
+- **Task:** E53 — Open Phase E final closeout: orchestrator pass + Pick-next survey for what's left
 - **Status:** pending
 
 ## Last completed
+
+- **M1355 — E52** (Phase E forms walkthrough docs + manual sanity checklist)
+- Committed: (this iteration)
+- TaskList ID: 74
+- Notes: Added a "Forms contract (E46–E51)" section to `backend/README.md` mirroring the "Public sharing contract" section's structure: frontmatter fields (id / public / forms), the four routes (POST submit, GET thanks, GET owner/submissions, plus the standard 503 fallback), storage (vault_files.has_forms + form_submissions table + matching partial index), source-IP capture rules, cookie semantics ("forms do NOT use cookies"), and the 7-step end-to-end submit-a-form walkthrough. Also created `docs/phase-e-sanity-checklist.md` — one-screen reference with three sections (Sync E1-E40, Public sharing E16/E21/E43/E44, Forms E46-E51) of ticked-box manual test steps plus `docker compose up -d / down -v` instructions for the live stack. Fixed an unused-import warning in the E51 widget test as cleanup. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1354 — E51** (Flutter forms client wired into editor kebab + dialog)
 - Committed: (this iteration)
