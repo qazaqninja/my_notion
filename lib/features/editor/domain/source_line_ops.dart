@@ -3812,6 +3812,35 @@ SortLinesResult extractIssnFromLinesIn(
 /// were retired by SPDX in v3.0. Use the modern modifier
 /// forms when authoring SPDX expressions.
 ///
+/// 103rd member of the extraction family.
+SortLinesResult extractSpdxLicensesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:'
+        r'MIT|'
+        r'Apache-2\.0|'
+        r'BSD-2-Clause|BSD-3-Clause|BSD-4-Clause|0BSD|'
+        r'ISC|Unlicense|Zlib|WTFPL|'
+        r'GPL-2\.0-(?:only|or-later)|'
+        r'GPL-3\.0-(?:only|or-later)|'
+        r'LGPL-2\.1-(?:only|or-later)|'
+        r'LGPL-3\.0-(?:only|or-later)|'
+        r'AGPL-3\.0-(?:only|or-later)|'
+        r'MPL-2\.0|'
+        r'CC0-1\.0|'
+        r'CC-BY-4\.0|CC-BY-SA-4\.0|CC-BY-NC-4\.0|CC-BY-ND-4\.0'
+        r')\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every SHA-256 hash (64 hex chars) from each
 /// selected line. Useful for content-addressing audits,
 /// file-integrity reference inventories, container-image
@@ -3841,35 +3870,6 @@ SortLinesResult extractSha256FromLinesIn(
         String text, int start, int end,) =>
     transformLinesIn(text, start, end, (lines) {
       final re = RegExp(r'\b[0-9a-fA-F]{64}\b');
-      final out = <String>[];
-      for (final l in lines) {
-        for (final m in re.allMatches(l)) {
-          out.add(m.group(0)!);
-        }
-      }
-      return out;
-    });
-
-/// 103rd member of the extraction family.
-SortLinesResult extractSpdxLicensesFromLinesIn(
-        String text, int start, int end,) =>
-    transformLinesIn(text, start, end, (lines) {
-      final re = RegExp(
-        r'\b(?:'
-        r'MIT|'
-        r'Apache-2\.0|'
-        r'BSD-2-Clause|BSD-3-Clause|BSD-4-Clause|0BSD|'
-        r'ISC|Unlicense|Zlib|WTFPL|'
-        r'GPL-2\.0-(?:only|or-later)|'
-        r'GPL-3\.0-(?:only|or-later)|'
-        r'LGPL-2\.1-(?:only|or-later)|'
-        r'LGPL-3\.0-(?:only|or-later)|'
-        r'AGPL-3\.0-(?:only|or-later)|'
-        r'MPL-2\.0|'
-        r'CC0-1\.0|'
-        r'CC-BY-4\.0|CC-BY-SA-4\.0|CC-BY-NC-4\.0|CC-BY-ND-4\.0'
-        r')\b',
-      );
       final out = <String>[];
       for (final l in lines) {
         for (final m in re.allMatches(l)) {
