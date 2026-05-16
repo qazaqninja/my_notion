@@ -765,4 +765,35 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer inline marks — underline (D1 slice 18)', () {
+    test('<u>X</u> round-trips with underlineAttribution', () {
+      const md = 'click <u>here</u> now';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'click here now');
+      expect(node.text.getAllAttributionsAt(6), contains(underlineAttribution));
+      expect(node.text.getAllAttributionsAt(9), contains(underlineAttribution));
+      expect(node.text.getAllAttributionsAt(5),
+          isNot(contains(underlineAttribution)));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('underline combines with bold in the same span', () {
+      const md = '<u>**both bold and underlined**</u>';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.getAllAttributionsAt(0), contains(boldAttribution));
+      expect(node.text.getAllAttributionsAt(0), contains(underlineAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('two separate underline runs', () {
+      const md = '<u>first</u> and <u>second</u>';
+      final doc = serializer.markdownToDocument(md);
+      expect((doc.first as ParagraphNode).text.toPlainText(),
+          'first and second');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
