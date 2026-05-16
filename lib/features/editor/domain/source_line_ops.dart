@@ -3812,6 +3812,44 @@ SortLinesResult extractIssnFromLinesIn(
 /// were retired by SPDX in v3.0. Use the modern modifier
 /// forms when authoring SPDX expressions.
 ///
+/// Extract every SHA-256 hash (64 hex chars) from each
+/// selected line. Useful for content-addressing audits,
+/// file-integrity reference inventories, container-image
+/// digest harvests (`@sha256:...`), and supply-chain
+/// verification trails.
+///
+/// Recognition: `\b[0-9a-fA-F]{64}\b` — exactly 64
+/// hexadecimal characters, surrounded by word boundaries.
+/// Mixed case allowed (canonical is lowercase but some tools
+/// emit uppercase).
+///
+/// Matches:
+/// - `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+///   (SHA-256 of empty string)
+/// - Bare container image digests after the `sha256:` prefix
+///   in `image@sha256:<digest>` form (the prefix itself is
+///   not captured).
+///
+/// Distinct from [extractGitShasFromLinesIn] (M1063 — 7-40
+/// hex chars for git SHA-1) and
+/// [extractEthereumAddressesFromLinesIn] (M1157 — `0x`-prefixed
+/// 40 hex). The exact 64-char length disambiguates from those
+/// neighbouring surfaces.
+///
+/// 104th member of the extraction family.
+SortLinesResult extractSha256FromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b[0-9a-fA-F]{64}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// 103rd member of the extraction family.
 SortLinesResult extractSpdxLicensesFromLinesIn(
         String text, int start, int end,) =>

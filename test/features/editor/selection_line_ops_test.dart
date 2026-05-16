@@ -9052,6 +9052,90 @@ void main() {
     });
   });
 
+  group('extractSha256FromLinesIn', () {
+    test('canonical SHA-256 of empty string extracts', () {
+      const sha = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e464'
+          '9b934ca495991b7852b855';
+      const text = 'digest $sha here\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '$sha\n');
+    });
+
+    test('uppercase hex SHA-256 extracts', () {
+      const sha = 'E3B0C44298FC1C149AFBF4C8996FB92427AE41E464'
+          '9B934CA495991B7852B855';
+      const text = 'cap $sha here\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '$sha\n');
+    });
+
+    test('mixed-case SHA-256 extracts', () {
+      const sha = 'AbCdEf0123456789AbCdEf0123456789'
+          'AbCdEf0123456789AbCdEf0123456789';
+      const text = 'mix $sha today\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '$sha\n');
+    });
+
+    test('63 hex chars rejected (too short)', () {
+      // 63 hex chars — one short of the required 64.
+      const sha = '0123456789abcdef0123456789abcdef'
+          '0123456789abcdef0123456789abcde';
+      const text = 'short $sha here\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('65 hex chars rejected (too long)', () {
+      // 65 hex chars — one over the required 64. The exact
+      // {64} quantifier plus `\b` rejects.
+      const sha = '0123456789abcdef0123456789abcdef'
+          '0123456789abcdef0123456789abcdef0';
+      const text = 'long $sha here\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('40-char git SHA NOT matched here', () {
+      // 40-char SHA-1 / git form is its own extractor.
+      const sha = '0123456789abcdef0123456789abcdef01234567';
+      const text = 'commit $sha here\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('non-hex character rejected', () {
+      // `z` is not a hex digit; truncates the candidate.
+      const sha = 'z123456789abcdef0123456789abcdef'
+          '0123456789abcdef0123456789abcdef';
+      const text = 'bad $sha here\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple SHA-256s on one line each extract', () {
+      const a = '1111111111111111111111111111111111111111'
+          '111111111111111111111111';
+      const b = '2222222222222222222222222222222222222222'
+          '222222222222222222222222';
+      const text = 'src $a to $b ok\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '$a\n$b\n');
+    });
+
+    test('lines without SHA-256 dropped from output', () {
+      const sha = 'abcdef0123456789abcdef0123456789'
+          'abcdef0123456789abcdef0123456789';
+      const text = 'plain prose\nsee $sha here\nbye\n';
+      final r = extractSha256FromLinesIn(text, 0, text.length);
+      expect(r.text, '$sha\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractSha256FromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

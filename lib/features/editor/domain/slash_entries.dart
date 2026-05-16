@@ -558,6 +558,9 @@ enum SlashAction {
   /// Extract every SPDX license identifier (`MIT`,
   /// `Apache-2.0`, `GPL-3.0-only`) from each selected line.
   extractSpdxLicensesFromLines,
+  /// Extract every SHA-256 hash (64 hex chars) from each
+  /// selected line.
+  extractSha256FromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2570,6 +2573,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'spdx', 'license', 'legal',
         'opensource', 'oss', 'mit', 'apache', 'gpl', 'bsd',
         'creative-commons', 'compliance'],
+  ),
+  SlashEntry(
+    icon: 'shield',
+    label: 'Extract SHA-256 hashes',
+    hint: '64 hex chars — content addressing / digests',
+    action: SlashAction.extractSha256FromLines,
+    keywords: ['extract', 'sha256', 'sha2', 'hash',
+        'digest', 'integrity', 'checksum', 'container',
+        'supply-chain'],
   ),
   SlashEntry(
     icon: 'calendar',
