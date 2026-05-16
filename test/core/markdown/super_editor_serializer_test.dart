@@ -459,4 +459,42 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer bookmark cards (D1 slice 10)', () {
+    test('standalone https URL → bookmark paragraph', () {
+      const md = 'https://example.com';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), bookmarkAttribution);
+      expect(node.text.toPlainText(), 'https://example.com');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('http (non-secure) also recognized', () {
+      const md = 'http://localhost:8080/api';
+      final doc = serializer.markdownToDocument(md);
+      expect(
+        (doc.first as ParagraphNode).getMetadataValue('blockType'),
+        bookmarkAttribution,
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('URL inside a sentence stays a regular paragraph', () {
+      const md = 'See https://example.com for details.';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), isNot(bookmarkAttribution));
+      expect(node.text.toPlainText(),
+          'See https://example.com for details.');
+    });
+
+    test('paragraph, bookmark, paragraph round-trip', () {
+      const md =
+          'Reference:\n\nhttps://docs.flutter.dev/perf\n\nis useful.';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.toList(), hasLength(3));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }

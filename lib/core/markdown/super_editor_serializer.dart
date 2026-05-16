@@ -57,10 +57,14 @@ class SuperEditorSerializer {
   /// - Slice 9: file attachment cards.
   ///   - Standalone `![label](file.pdf)` (or `.mp4`, `.mp3`, `.zip`,
   ///     etc.) — non-image extensions → `ParagraphNode` with `blockType:
-  ///     fileAttachmentAttribution` and `label` / `path` metadata. The
-  ///     existing markdown_renderer.dart M76/M201 cards render this via
-  ///     the same `_FileAttachment` widget; super_editor migration
-  ///     preserves the structure for cell-level editing later.
+  ///     fileAttachmentAttribution` and `label` / `path` metadata.
+  /// - Slice 10: bookmark cards.
+  ///   - Standalone `https://example.com` (line is exactly an http(s)
+  ///     URL with no other text) → `ParagraphNode` with `blockType:
+  ///     bookmarkAttribution`. Body text is the URL. The existing
+  ///     markdown_renderer.dart M42 path already renders these as
+  ///     bookmark cards with host + URL; super_editor migration keeps
+  ///     the structure so future slices can show a rich preview.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -132,6 +136,20 @@ class SuperEditorSerializer {
             if (lang.isNotEmpty) 'language': lang,
           },
         ));
+        continue;
+      }
+      // Bookmark card? Line is exactly an http(s) URL with no other
+      // text. The existing M42 renderer picks this up; serializer keeps
+      // a bookmarkAttribution paragraph so future slices can layer in
+      // host/title metadata without changing the round-trip contract.
+      if (RegExp(r'^https?://\S+$').hasMatch(line.trim())) {
+        flushBuffer();
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(line.trim()),
+          metadata: const {'blockType': bookmarkAttribution},
+        ));
+        i += 1;
         continue;
       }
       // Standalone media card? Line is exactly `![label](url)`. Branch
@@ -316,7 +334,8 @@ class SuperEditorSerializer {
       } else if (node is ParagraphNode) {
         final block = node.getMetadataValue('blockType');
         if (block == tableAttribution ||
-            block == fileAttachmentAttribution) {
+            block == fileAttachmentAttribution ||
+            block == bookmarkAttribution) {
           // Body holds the raw markdown — emit verbatim.
           out.write(node.text.toPlainText());
         } else if (block == codeAttribution) {
@@ -445,6 +464,11 @@ bool _isTableSeparator(String line) {
 /// markdown for round-trip; metadata fields `label` and `path` are
 /// available for cell-level editing later.
 const fileAttachmentAttribution = NamedAttribution('fileAttachment');
+
+/// Custom block-type attribution for standalone http(s) URL lines, which
+/// the existing markdown_renderer.dart M42 path renders as bookmark
+/// cards (host + URL preview). The body text holds the URL verbatim.
+const bookmarkAttribution = NamedAttribution('bookmark');
 
 /// Returns true when [url] has an extension this serializer treats as an
 /// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no
