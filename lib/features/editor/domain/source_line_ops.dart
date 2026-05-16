@@ -3169,6 +3169,44 @@ SortLinesResult extractKubernetesResourcesFromLinesIn(
       return out;
     });
 
+/// Extract every emoji shortcode token (`:smile:`, `:thumbs_up:`,
+/// `:fire:`) from each selected line. Useful for chat-log triage,
+/// reaction inventory in standup notes, and emoji-vocab audits.
+///
+/// Recognition: `:(?:\+1|-1|[a-z][a-z0-9_]*):` — a colon, then
+/// either:
+/// - The two punctuation special cases `+1` / `-1` (canonical
+///   thumbs-up / thumbs-down shortcodes), or
+/// - An identifier starting with a letter and containing
+///   letters, digits, and underscores.
+/// And a closing colon.
+///
+/// Requiring a letter-first identifier prevents the regex from
+/// accidentally matching time-of-day strings like `12:34:56` —
+/// the digits between colons don't satisfy the leading `[a-z]`.
+///
+/// Matches: `:smile:`, `:rocket:`, `:thumbs_up:`,
+/// `:woman_health_worker:`, `:+1:`, `:-1:`, `:100:` — wait no,
+/// `:100:` has a numeric body and won't match. Document that as
+/// a known limitation if it surfaces; rare in practice.
+///
+/// Case-sensitive (lowercase) per the convention used by Slack,
+/// GitHub, Discord, and most emoji shortcode dictionaries.
+///
+/// 89th member of the extraction family.
+SortLinesResult extractEmojiShortcodesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r':(?:\+1|-1|[a-z][a-z0-9_]*):');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

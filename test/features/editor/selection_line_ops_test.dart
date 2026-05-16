@@ -7848,6 +7848,97 @@ void main() {
     });
   });
 
+  group('extractEmojiShortcodesFromLinesIn', () {
+    test(':smile: extracts', () {
+      const text = 'great :smile: today\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, ':smile:\n');
+    });
+
+    test(':rocket: extracts', () {
+      const text = 'launch :rocket: now\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, ':rocket:\n');
+    });
+
+    test('multi-word shortcode with underscore extracts', () {
+      const text = 'nice :thumbs_up: here\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, ':thumbs_up:\n');
+    });
+
+    test('long compound shortcode extracts', () {
+      const text = 'meet :woman_health_worker: today\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, ':woman_health_worker:\n');
+    });
+
+    test('special-case :+1: extracts', () {
+      const text = 'approve :+1: now\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, ':+1:\n');
+    });
+
+    test('special-case :-1: extracts', () {
+      const text = 'reject :-1: now\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, ':-1:\n');
+    });
+
+    test('time-of-day 12:34:56 is NOT mistaken for shortcode', () {
+      // The regex requires the first identifier character to be
+      // a letter, so the `:34:` substring inside `12:34:56` does
+      // not match.
+      const text = 'meet 12:34:56 today\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('uppercase shortcode rejected', () {
+      // Shortcodes are conventionally lowercase across Slack /
+      // GitHub / Discord. `:SMILE:` is not standard.
+      const text = 'fake :SMILE: ignore\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('digit-first body rejected', () {
+      // `:100:` has a numeric body; not matched because the regex
+      // requires a leading letter (with the +1/-1 special cases).
+      const text = 'score :100: ignore\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple shortcodes on one line each extract', () {
+      const text = 'react :smile: and :rocket: ship\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, ':smile:\n:rocket:\n');
+    });
+
+    test('lines without shortcodes dropped from output', () {
+      const text = 'plain prose\nlater :fire:\nmore prose\n';
+      final r = extractEmojiShortcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, ':fire:\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+          extractEmojiShortcodesFromLinesIn('', 0, 0).text, '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

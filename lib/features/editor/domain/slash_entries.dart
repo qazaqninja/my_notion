@@ -511,6 +511,9 @@ enum SlashAction {
   /// (`pod/web`, `deployment/api`, `service/db`) from each
   /// selected line.
   extractKubernetesResourcesFromLines,
+  /// Extract every emoji shortcode token (`:smile:`,
+  /// `:thumbs_up:`, `:+1:`) from each selected line.
+  extractEmojiShortcodesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2393,6 +2396,14 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'kubernetes', 'k8s', 'kubectl',
         'pod', 'deployment', 'service', 'resource', 'ops',
         'cluster'],
+  ),
+  SlashEntry(
+    icon: 'smile',
+    label: 'Extract emoji shortcodes',
+    hint: ':smile: / :thumbs_up: / :+1:',
+    action: SlashAction.extractEmojiShortcodesFromLines,
+    keywords: ['extract', 'emoji', 'shortcode', 'reaction',
+        'slack', 'github', 'discord', 'chat', 'colon'],
   ),
   SlashEntry(
     icon: 'calendar',
