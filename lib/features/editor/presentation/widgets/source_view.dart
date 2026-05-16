@@ -1296,6 +1296,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractHexColorsFromLinesIn,
         );
+      case SlashAction.extractIpv4FromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractIpv4FromLinesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,

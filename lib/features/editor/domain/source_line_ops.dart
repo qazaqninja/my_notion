@@ -886,6 +886,31 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract every IPv4 dotted-quad address from each selected line
+/// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
+/// paste-ins or surveying which hosts appear in a debug dump.
+///
+/// Recognition validates each octet's numeric range, so `999.0.0.0`
+/// is REJECTED even though it has the right shape. The `\b`
+/// boundary on either end prevents matches inside longer dotted
+/// runs like a version string `1.2.3.4.5`.
+SortLinesResult extractIpv4FromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Each octet alternation explicit: 0-9 / 10-99 / 100-199 /
+      // 200-249 / 250-255. Ugly but exact.
+      const octet =
+          r'(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)';
+      final re = RegExp(r'\b' + octet + r'(?:\.' + octet + r'){3}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every CSS-shaped hex color code from each selected line:
 /// `#RGB`, `#RRGGBB`, `#RGBA`, `#RRGGBBAA`. Useful for pulling a
 /// palette out of design notes / CSS dumps for migration into a

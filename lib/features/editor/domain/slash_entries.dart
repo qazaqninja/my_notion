@@ -297,6 +297,9 @@ enum SlashAction {
   /// Extract every CSS hex color code (`#RGB` / `#RRGGBB` / `#RGBA`
   /// / `#RRGGBBAA`) from each selected line.
   extractHexColorsFromLines,
+  /// Extract every IPv4 dotted-quad (`a.b.c.d`, each octet 0..255)
+  /// from each selected line.
+  extractIpv4FromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1589,6 +1592,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '#RGB / #RRGGBB / etc.',
     action: SlashAction.extractHexColorsFromLines,
     keywords: ['extract', 'color', 'hex', 'palette', 'rgb', 'css'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract IPv4 addresses',
+    hint: 'a.b.c.d per line',
+    action: SlashAction.extractIpv4FromLines,
+    keywords: ['extract', 'ip', 'ipv4', 'address', 'host', 'network'],
   ),
   SlashEntry(
     icon: 'sync',
