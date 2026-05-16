@@ -46,24 +46,23 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --reporter expanded
 
-      - name: Enforce coverage threshold (60%)
+      - name: Enforce coverage threshold (61%)
         # Baseline at M821 was 53.9%. Ratchet history:
         #   50 → 55 (M900) → 56 (M934) → 57 (M956) → 58 (M981)
-        #     → 59 (M1024) → 60 (M1067).
-        # M1067 bump triggered: M1066 measured 60.51%, M1067 measures
-        # 60.54% — two consecutive observations ≥60.5% (per the rule
-        # documented at M981) clears the 60 step. The M1052-M1066
-        # extraction-family stretch was the main contributor: ten
-        # new well-tested regex extractors (numbers / emails / URLs /
-        # hashtags / mentions / wikilinks / open-todos / done-todos /
-        # ISO dates / ULIDs / hex colors / IPv4) lifted line-coverage
-        # from 59.59% to 60.54%.
-        # Next ratchet (61) requires the same two-consecutive-≥61.5%
+        #     → 59 (M1024) → 60 (M1067) → 61 (M1110).
+        # M1110 bump triggered: M1108 measured 61.51%, M1109 measures
+        # 61.53% — two consecutive observations ≥61.5% (per the rule
+        # documented at M981) clears the 61 step. The M1080-M1109
+        # extraction-family stretch was the main contributor: a
+        # 30-milestone run added ~17 new well-tested regex extractors
+        # plus normalize/encode helpers, lifting line-coverage from
+        # 60.54% (M1067) to 61.53% (M1109).
+        # Next ratchet (62) requires the same two-consecutive-≥62.5%
         # rule.
         uses: VeryGoodOpenSource/very_good_coverage@v3
         with:
           path: coverage/lcov.info
-          min_coverage: 60
+          min_coverage: 61
 
       - name: Upload coverage artifact
         if: always()
