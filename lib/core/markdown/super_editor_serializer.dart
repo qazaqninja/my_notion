@@ -35,9 +35,14 @@ class SuperEditorSerializer {
   ///     a single paragraph at the blockquote level.
   ///   - `> [!NOTE]\n> body` (GFM admonition) → same blockquote node but
   ///     with metadata key `callout: note|tip|important|warning|caution`.
-  ///     The renderer in the existing `markdown_renderer.dart` already
-  ///     surfaces these as coloured blocks; serializer keeps the kind
-  ///     so a round-trip preserves the admonition tag.
+  /// - Slice 6: math blocks.
+  ///   - `$$E=mc^2$$` (single-line) and multi-line `$$\n…\n$$` →
+  ///     `ParagraphNode` with `blockType: mathBlockAttribution`. Body is
+  ///     the LaTeX source without surrounding `$$`. Inline math `$…$` is
+  ///     part of the inline-marks pass (slices 16-22).
+  ///   - Mermaid diagrams (```` ```mermaid…``` ````) already round-trip
+  ///     via slice 4's code-fence path: language tag `mermaid` is
+  ///     preserved in `metadata.language`. No extra work in this slice.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -55,6 +60,38 @@ class SuperEditorSerializer {
     var i = 0;
     while (i < lines.length) {
       final line = lines[i];
+      // Math block — `$$body$$` (single-line) or `$$\n…\n$$` (multi-line).
+      // Match single-line first to avoid the multi-line consumer eating a
+      // closing `$$` on the same line as the open.
+      final singleLineMath =
+          RegExp(r'^\$\$(.+)\$\$\s*$').firstMatch(line);
+      if (singleLineMath != null) {
+        flushBuffer();
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(singleLineMath.group(1)!.trim()),
+          metadata: const {'blockType': mathBlockAttribution},
+        ));
+        i += 1;
+        continue;
+      }
+      if (line.trim() == r'$$') {
+        flushBuffer();
+        final body = StringBuffer();
+        i += 1;
+        while (i < lines.length && lines[i].trimRight() != r'$$') {
+          if (body.isNotEmpty) body.write('\n');
+          body.write(lines[i]);
+          i += 1;
+        }
+        if (i < lines.length) i += 1; // consume closing $$
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(body.toString()),
+          metadata: const {'blockType': mathBlockAttribution},
+        ));
+        continue;
+      }
       // Code fence open?
       final fenceOpen = RegExp(r'^```([\w-]*)$').firstMatch(line);
       if (fenceOpen != null) {
@@ -213,6 +250,17 @@ class SuperEditorSerializer {
           out.write('```$lang\n');
           out.write(node.text.toPlainText());
           out.write('\n```');
+        } else if (block == mathBlockAttribution) {
+          final body = node.text.toPlainText();
+          if (body.contains('\n')) {
+            out.write(r'$$' '\n');
+            out.write(body);
+            out.write('\n' r'$$');
+          } else {
+            out.write(r'$$');
+            out.write(body);
+            out.write(r'$$');
+          }
         } else if (block == blockquoteAttribution) {
           final callout =
               node.getMetadataValue('callout') as String? ?? '';
@@ -293,6 +341,12 @@ class _HeadingMatch {
   final String text;
   final NamedAttribution attribution;
 }
+
+/// Custom block-type attribution for math blocks (`$$ … $$`). super_editor
+/// doesn't ship a math node, so we tag a `ParagraphNode` with this
+/// attribution and the renderer (`markdown_renderer.dart`'s existing
+/// `flutter_math_fork` path at M32) interprets it on read.
+const mathBlockAttribution = NamedAttribution('mathBlock');
 
 // Slice 3 list matchers — module-private extension functions on
 // `SuperEditorSerializer` would have been nicer but Dart doesn't allow

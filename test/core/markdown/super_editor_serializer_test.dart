@@ -275,4 +275,40 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer math + mermaid (D1 slice 6)', () {
+    test('single-line math \$\$E=mc^2\$\$ round-trips', () {
+      const md = r'$$E = mc^2$$';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), mathBlockAttribution);
+      expect(node.text.toPlainText(), 'E = mc^2');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('multi-line math block round-trips with internal newlines', () {
+      const md = '\$\$\n\\int_0^1 x dx = \\frac{1}{2}\n\$\$';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), mathBlockAttribution);
+      expect(node.text.toPlainText(), r'\int_0^1 x dx = \frac{1}{2}');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('mermaid code block preserves the language tag (slice 4 path)', () {
+      const md = '```mermaid\ngraph TD\n  A-->B\n```';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), codeAttribution);
+      expect(node.getMetadataValue('language'), 'mermaid');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('paragraph, math, paragraph round-trip', () {
+      const md = 'see equation:\n\n\$\$x = 1\$\$\n\nbelow.';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.toList(), hasLength(3));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
