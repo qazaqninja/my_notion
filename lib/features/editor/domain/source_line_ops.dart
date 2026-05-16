@@ -2980,6 +2980,41 @@ SortLinesResult extractSlackMentionsFromLinesIn(
       return out;
     });
 
+/// Extract every Discord-style mention/channel/role reference
+/// from each selected line. Companion to M1147's Slack-format
+/// extractor — Discord uses purely numeric snowflake IDs.
+///
+/// Supported Discord reference forms:
+/// - User mention:    `<@123>` (with or without `!` nickname
+///                              prefix for `<@!123>`)
+/// - Role mention:    `<@&123>`
+/// - Channel mention: `<#123>`
+///
+/// Recognition: `<(?:@!?|@&|#)\d+>`
+/// - `<` opener.
+/// - Sigil: `@`, `@!` (nickname mention), `@&` (role), or `#`.
+/// - Numeric snowflake ID (typically 17-19 digits but
+///   unvalidated here).
+/// - `>` closer.
+///
+/// Slack mentions (`<@U12345>` with letter-prefix IDs) are
+/// NOT matched — they're M1147's surface. The numeric-vs-
+/// letter ID prefix disambiguates the two platforms.
+///
+/// 84th member of the extraction family.
+SortLinesResult extractDiscordMentionsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'<(?:@!?|@&|#)\d+>');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

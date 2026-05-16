@@ -7462,6 +7462,68 @@ void main() {
     });
   });
 
+  group('extractDiscordMentionsFromLinesIn', () {
+    test('user mention `<@123>` extracts', () {
+      const text = 'ping <@123456789> now\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@123456789>\n');
+    });
+
+    test('nickname mention `<@!123>` extracts', () {
+      const text = 'see <@!987654321> reply\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@!987654321>\n');
+    });
+
+    test('role mention `<@&456>` extracts', () {
+      const text = 'page <@&456789012> on-call\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@&456789012>\n');
+    });
+
+    test('channel mention `<#789>` extracts', () {
+      const text = 'see <#789012345> general\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<#789012345>\n');
+    });
+
+    test('Slack mention `<@U12345>` is NOT matched', () {
+      // Slack IDs use letter prefixes; Discord uses pure
+      // numeric snowflakes.
+      const text = 'cite <@U12345> elsewhere\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain `@user` (no brackets) is NOT a Discord mention', () {
+      const text = 'hi @user today\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple mentions on one line each extract', () {
+      const text = 'cc <@123> <@&456> in <#789> chat\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@123>\n<@&456>\n<#789>\n');
+    });
+
+    test('non-numeric mention `<@abc>` is NOT matched', () {
+      const text = 'fake <@abc> bad\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without Discord mentions dropped from output', () {
+      const text = 'plain prose\nping <@123>\nmore prose\n';
+      final r = extractDiscordMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@123>\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractDiscordMentionsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

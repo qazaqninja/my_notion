@@ -495,6 +495,9 @@ enum SlashAction {
   /// Extract every Slack-style mention/channel reference
   /// (`<@U12345>`, `<#C12345>`) from each selected line.
   extractSlackMentionsFromLines,
+  /// Extract every Discord-style mention/channel/role reference
+  /// (`<@123>`, `<@&123>`, `<#123>`) from each selected line.
+  extractDiscordMentionsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2336,6 +2339,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractSlackMentionsFromLines,
     keywords: ['extract', 'slack', 'mention', 'channel', 'user',
         'export'],
+  ),
+  SlashEntry(
+    icon: 'users',
+    label: 'Extract Discord mentions',
+    hint: '<@123> / <@&123> / <#123>',
+    action: SlashAction.extractDiscordMentionsFromLines,
+    keywords: ['extract', 'discord', 'mention', 'channel', 'role',
+        'user'],
   ),
   SlashEntry(
     icon: 'calendar',
