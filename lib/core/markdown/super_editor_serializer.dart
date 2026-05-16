@@ -75,8 +75,11 @@ class SuperEditorSerializer {
   ///   - `[breadcrumb]` or `[[breadcrumb]]` → `breadcrumbAttribution`.
   ///   - `[toc]` → `tocAttribution`.
   /// - Slice 15: button fences.
-  ///   - `:::button\n…\n:::` (M70) → `buttonAttribution`. Body holds the
-  ///     raw fence content (multi-line YAML/keys).
+  ///   - `:::button\n…\n:::` (M70) → `buttonAttribution`.
+  /// - Slice 16: inline marks — bold (`**X**`) and inline code (`` `X` ``).
+  ///   Markers are stripped from the plain text; matching character
+  ///   ranges in `AttributedText` get `boldAttribution` / `codeAttribution`
+  ///   so super_editor renders them with the correct style.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -86,7 +89,7 @@ class SuperEditorSerializer {
       if (buffer.isEmpty) return;
       nodes.add(ParagraphNode(
         id: Editor.createNodeId(),
-        text: AttributedText(buffer.toString().trimRight()),
+        text: _parseInline(buffer.toString().trimRight()),
       ));
       buffer.clear();
     }
@@ -389,7 +392,7 @@ class SuperEditorSerializer {
         flushBuffer();
         nodes.add(ParagraphNode(
           id: Editor.createNodeId(),
-          text: AttributedText(heading.text),
+          text: _parseInline(heading.text),
           metadata: {'blockType': heading.attribution},
         ));
         continue;
@@ -477,12 +480,10 @@ class SuperEditorSerializer {
         } else if (block == blockquoteAttribution) {
           final callout =
               node.getMetadataValue('callout') as String? ?? '';
-          final body = node.text.toPlainText();
+          final body = _serializeInline(node.text);
           if (callout.isNotEmpty) {
             out.write('> [!${callout.toUpperCase()}]\n');
           }
-          // Prefix every newline in the body with `> ` so multi-line
-          // quotes round-trip cleanly.
           final bodyLines = body.split('\n');
           for (var j = 0; j < bodyLines.length; j++) {
             if (j > 0) out.write('\n');
@@ -491,7 +492,7 @@ class SuperEditorSerializer {
         } else {
           final prefix = _headingPrefix(node);
           if (prefix.isNotEmpty) out.write('$prefix ');
-          out.write(node.text.toPlainText());
+          out.write(_serializeInline(node.text));
         }
       }
       if (i < n - 1) {
@@ -553,6 +554,96 @@ class _HeadingMatch {
   const _HeadingMatch({required this.text, required this.attribution});
   final String text;
   final NamedAttribution attribution;
+}
+
+/// Scan [src] for inline markdown marks recognised so far and return an
+/// `AttributedText` with the visible text (markers stripped) plus
+/// attribution spans on the corresponding character ranges.
+///
+/// Slice 16 handles:
+/// - `**X**` → boldAttribution
+/// - `` `X` `` → codeAttribution (inline code; distinct from code-block
+///   blockType which uses the same NamedAttribution but on metadata)
+///
+/// Inline code is greedily matched first so backticked content doesn't
+/// participate in further mark scanning (`` `**not bold**` `` stays code).
+AttributedText _parseInline(String src) {
+  final out = StringBuffer();
+  final spans = <_InlineSpan>[];
+  var i = 0;
+  while (i < src.length) {
+    if (i + 1 < src.length && src[i] == '*' && src[i + 1] == '*') {
+      final close = src.indexOf('**', i + 2);
+      if (close > i + 1) {
+        final inner = src.substring(i + 2, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(boldAttribution, start, end));
+        }
+        i = close + 2;
+        continue;
+      }
+    }
+    if (src[i] == '`') {
+      final close = src.indexOf('`', i + 1);
+      if (close > i) {
+        final inner = src.substring(i + 1, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(codeAttribution, start, end));
+        }
+        i = close + 1;
+        continue;
+      }
+    }
+    out.write(src[i]);
+    i += 1;
+  }
+  final text = AttributedText(out.toString());
+  for (final s in spans) {
+    text.addAttribution(s.attr, SpanRange(s.start, s.end));
+  }
+  return text;
+}
+
+/// Walk an `AttributedText` and emit markdown with the inline marks
+/// added in slice 16 (bold + inline code) re-wrapped. Other attributions
+/// land in later slices (italic / strike / underline / highlight / sub /
+/// sup / color / wikilink chip / mention / date pill).
+String _serializeInline(AttributedText text) {
+  final plain = text.toPlainText();
+  if (plain.isEmpty) return '';
+  // Build a per-character flag set for each tracked attribution.
+  final bold = List<bool>.filled(plain.length, false);
+  final code = List<bool>.filled(plain.length, false);
+  for (var i = 0; i < plain.length; i++) {
+    final attrs = text.getAllAttributionsAt(i);
+    if (attrs.contains(boldAttribution)) bold[i] = true;
+    if (attrs.contains(codeAttribution)) code[i] = true;
+  }
+  final out = StringBuffer();
+  for (var i = 0; i < plain.length; i++) {
+    // Code beats bold: inline code is literal text; suppress bold markers
+    // inside a code run so the source comes out clean.
+    if (code[i] && (i == 0 || !code[i - 1])) out.write('`');
+    if (!code[i] && bold[i] && (i == 0 || !bold[i - 1])) out.write('**');
+    out.write(plain[i]);
+    final isLast = i == plain.length - 1;
+    if (!code[i] && bold[i] && (isLast || !bold[i + 1])) out.write('**');
+    if (code[i] && (isLast || !code[i + 1])) out.write('`');
+  }
+  return out.toString();
+}
+
+class _InlineSpan {
+  const _InlineSpan(this.attr, this.start, this.end);
+  final NamedAttribution attr;
+  final int start;
+  final int end;
 }
 
 /// Custom block-type attribution for math blocks (`$$ … $$`). super_editor

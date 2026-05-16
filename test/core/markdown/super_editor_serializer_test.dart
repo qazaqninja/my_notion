@@ -650,4 +650,67 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer inline marks — bold + code (D1 slice 16)', () {
+    test('**bold** wraps a bold attribution span', () {
+      const md = 'hello **world** today';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'hello world today');
+      // 'world' starts at index 6 (after 'hello '), runs 5 chars to
+      // index 10. Bold attribution must cover that exact range.
+      expect(node.text.getAllAttributionsAt(6), contains(boldAttribution));
+      expect(node.text.getAllAttributionsAt(10), contains(boldAttribution));
+      expect(node.text.getAllAttributionsAt(5), isNot(contains(boldAttribution)));
+      expect(node.text.getAllAttributionsAt(11), isNot(contains(boldAttribution)));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('multiple bold spans in one paragraph', () {
+      const md = '**hi** there **friend**';
+      final doc = serializer.markdownToDocument(md);
+      expect((doc.first as ParagraphNode).text.toPlainText(),
+          'hi there friend');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('`inline code` wraps a code attribution span', () {
+      const md = 'try `flutter pub get` first';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'try flutter pub get first');
+      expect(node.text.getAllAttributionsAt(4), contains(codeAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('bold + code in same paragraph', () {
+      const md = '**bold** and `code`';
+      final doc = serializer.markdownToDocument(md);
+      expect((doc.first as ParagraphNode).text.toPlainText(),
+          'bold and code');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('inline code suppresses bold marker emission inside the code run', () {
+      // If a code span coincides with a bold attribution, we emit the
+      // backticks but suppress the asterisks so the source is clean.
+      final doc = MutableDocument(nodes: [
+        ParagraphNode(
+          id: '1',
+          text: AttributedText('a'),
+        ),
+      ]);
+      final p = doc.first as ParagraphNode;
+      // Mark the whole character as both bold and code.
+      p.text.addAttribution(boldAttribution, const SpanRange(0, 0));
+      p.text.addAttribution(codeAttribution, const SpanRange(0, 0));
+      expect(serializer.documentToMarkdown(doc), '`a`');
+    });
+
+    test('plain text without marks round-trips byte-identical', () {
+      const md = 'just plain prose with no marks at all.';
+      final doc = serializer.markdownToDocument(md);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
