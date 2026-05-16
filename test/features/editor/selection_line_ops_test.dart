@@ -9220,6 +9220,87 @@ void main() {
     });
   });
 
+  group('extractUkPostcodesFromLinesIn', () {
+    test('royal postcode SW1A 1AA extracts', () {
+      const text = 'palace SW1A 1AA address\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SW1A 1AA\n');
+    });
+
+    test('Manchester M1 1AE extracts (short outward)', () {
+      const text = 'office M1 1AE today\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'M1 1AE\n');
+    });
+
+    test('London EC1A 1BB extracts (A9A form)', () {
+      const text = 'old EC1A 1BB site here\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'EC1A 1BB\n');
+    });
+
+    test('Birmingham B33 8TH extracts (single-letter outward)', () {
+      const text = 'midlands B33 8TH delivery\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'B33 8TH\n');
+    });
+
+    test('South Croydon CR2 6XH extracts', () {
+      const text = 'south CR2 6XH border\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'CR2 6XH\n');
+    });
+
+    test('lowercase postcode rejected', () {
+      // Royal Mail uses uppercase canonically; lowercase
+      // strings would be normalised before printing.
+      const text = 'shy sw1a 1aa here\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('missing space separator rejected', () {
+      // Single space is the canonical separator. `SW1A1AA`
+      // (no space) is not accepted.
+      const text = 'nospace SW1A1AA invalid\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('wrong inward-code shape rejected', () {
+      // `1A1` (digit-letter-digit) isn't a valid inward code.
+      const text = 'fake SW1A 1A1 invalid\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple postcodes on one line each extract', () {
+      const text = 'send SW1A 1AA and EC1A 1BB both\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'SW1A 1AA\nEC1A 1BB\n');
+    });
+
+    test('lines without postcodes dropped from output', () {
+      const text = 'plain prose\noffice M1 1AE here\nbye\n';
+      final r = extractUkPostcodesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'M1 1AE\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractUkPostcodesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

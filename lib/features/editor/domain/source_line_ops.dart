@@ -3922,6 +3922,49 @@ SortLinesResult extractShieldsBadgesFromLinesIn(
       return out;
     });
 
+/// Extract every UK postcode from each selected line. Useful
+/// for address-list audits, location inventory in CRM notes,
+/// and contact-info scrapes.
+///
+/// Recognition: `\b[A-Z]{1,2}\d[A-Z\d]?\s\d[A-Z]{2}\b`
+/// - Outward code: 1-2 uppercase letters, 1 digit, optional
+///   trailing letter or digit. Examples: `SW1A`, `M1`,
+///   `EC1A`, `B33`.
+/// - Single literal space separator.
+/// - Inward code: 1 digit, 2 uppercase letters. Examples:
+///   `1AA`, `1AE`, `8TH`.
+///
+/// Matches:
+/// - `SW1A 1AA`     — Buckingham Palace area (royal)
+/// - `M1 1AE`       — Manchester
+/// - `EC1A 1BB`     — London (City)
+/// - `B33 8TH`      — Birmingham
+/// - `CR2 6XH`      — South Croydon
+///
+/// Case-sensitive (uppercase only) per Royal Mail's canonical
+/// presentation. Lowercase strings would be normalised before
+/// printing addresses. Single-space separator only —
+/// hyphenated or no-separator forms are non-standard.
+///
+/// The pattern covers all real UK formats (A9, A9A, AA9, AA9A,
+/// AA99) by the optional `[A-Z\d]?` in the outward code.
+/// Validity against the Royal Mail's PAF database is NOT
+/// checked — that's a downstream lookup beyond regex scope.
+///
+/// 106th member of the extraction family.
+SortLinesResult extractUkPostcodesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b[A-Z]{1,2}\d[A-Z\d]?\s\d[A-Z]{2}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

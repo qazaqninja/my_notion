@@ -564,6 +564,9 @@ enum SlashAction {
   /// Extract every shields.io badge URL (`https://img.shields.io/...`)
   /// from each selected line.
   extractShieldsBadgesFromLines,
+  /// Extract every UK postcode (`SW1A 1AA`, `M1 1AE`) from
+  /// each selected line.
+  extractUkPostcodesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2593,6 +2596,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractShieldsBadgesFromLines,
     keywords: ['extract', 'shields', 'badge', 'readme',
         'status', 'ci', 'build', 'github', 'open-source'],
+  ),
+  SlashEntry(
+    icon: 'mail',
+    label: 'Extract UK postcodes',
+    hint: 'SW1A 1AA / M1 1AE / EC1A 1BB',
+    action: SlashAction.extractUkPostcodesFromLines,
+    keywords: ['extract', 'uk', 'postcode', 'address',
+        'mail', 'royal-mail', 'britain', 'gb', 'crm'],
   ),
   SlashEntry(
     icon: 'calendar',
