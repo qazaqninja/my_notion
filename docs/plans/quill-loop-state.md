@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** A (Foundation)
-- **Task:** A9 — Port `slash_menu_cubit` test to `bloc_test`
+- **Task:** A10 — Write NEW `vault_bloc_test.dart` from scratch (TS-03)
 - **Status:** pending
 
 ## Last completed
 
-- **M1200 — A8** (port relation_picker_cubit_test to bloc_test)
-- Committed: 02e2b74
-- TaskList ID: 8
-- Notes: 7 cases ported. Established `expect: () => <State>[], verify: verifyNever(...)` pattern for "no-op when closed" cases — the canonical bloc_test idiom for asserting both no emissions AND no mock interactions.
+- **M1202 — A9** (port slash_menu_cubit_test to bloc_test)
+- Committed: 8ec74dc
+- TaskList ID: 9
+- Notes: 6 cases ported. Third and final cubit port (after theme M1198, relation_picker M1200). All three pre-existing dedicated cubit tests now run on bloc_test. Next: A10 + A11 are larger "write from scratch" tasks covering VaultBloc and EditorBloc which lack any existing dedicated tests.
 
 ## Backlog (Phase A — Foundation)
 
@@ -26,7 +26,7 @@
 - [x] A6 — Add `mockingjay` dev dependency (TS-09) (M1196 / bdfcec7)
 - [x] A7 — Port `theme_cubit_test` to bloc_test (M1198 / df304c6) — re-scoped from vault_bloc
 - [x] A8 — Port `relation_picker_cubit_test` to bloc_test (M1200 / 02e2b74) — re-scoped from editor_bloc
-- [ ] A9 — Port `slash_menu_cubit_test` to bloc_test
+- [x] A9 — Port `slash_menu_cubit_test` to bloc_test (M1202 / 8ec74dc)
 - [ ] A10 — Write NEW `vault_bloc_test.dart` from scratch (was: port) — VaultBloc has no test today
 - [ ] A11 — Write NEW `editor_bloc_test.dart` from scratch (was: port) — EditorBloc has no test today
 - [ ] A12 — Re-run flutter-arch-orchestrator end-to-end (Phase A gate)
