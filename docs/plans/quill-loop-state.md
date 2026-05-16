@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1264 — D1 slice 13** (column fences :::cols / :::col / :::)
-- Committed: 67330f7
+- **M1266 — D1 slices 14+15 (closes block-level coverage)** (breadcrumb + toc + button bundled)
+- Committed: 38b7710
 - TaskList ID: 22 (still in_progress)
-- Notes: Nesting-aware fence parser (depth tracked through `:::cols`/`:::col` open + `:::` close). Body holds raw multi-line markdown via custom `columnsAttribution`. 57 cases total. Remaining: breadcrumb + toc + buttons (14-15), inline marks (16-22), interactions (23-27), cutover (28-30).
+- Notes: 3 block types bundled — `[breadcrumb]`/`[[breadcrumb]]` (M162), `[toc]` (M68), `:::button…:::` fence (M70). 62 cases total. **Block-level coverage closed.** Remaining for D1: inline marks (16-22 = bold/italic/strike/underline/inline-code/highlight/sub/sup/colors/wikilink/mention/date), interactions (23-27 = slash menu, drag, multi-select, M234-M268 shortcuts), cutover (28-30 = flag default true, delete old route).
 
 ## Backlog (Phase A — Foundation)
 
