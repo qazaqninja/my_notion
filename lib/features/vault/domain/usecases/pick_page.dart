@@ -105,6 +105,20 @@ PageRef? pickRandom(List<PageRef> pages, math.Random random) {
   return pages[random.nextInt(pages.length)];
 }
 
+/// Filter to pages whose title **starts with** the prefix
+/// (case-insensitive, both sides trimmed). Empty prefix returns
+/// empty — same convention as [filterByTag] / [filterTitleContains].
+/// Order is preserved from the input. Useful for "Project: …"
+/// category-tag-in-title navigation.
+List<PageRef> filterTitleStartsWith(List<PageRef> pages, String prefix) {
+  final needle = prefix.trim().toLowerCase();
+  if (needle.isEmpty) return [];
+  return [
+    for (final p in pages)
+      if (p.title.trim().toLowerCase().startsWith(needle)) p,
+  ];
+}
+
 /// Filter to pages whose title contains the query (case-insensitive
 /// substring match, trimmed on both sides). Empty query returns
 /// empty rather than wildcarding — same convention as

@@ -294,6 +294,48 @@ void main() {
     });
   });
 
+  group('filterTitleStartsWith', () {
+    test('keeps pages whose title begins with the prefix', () {
+      final pages = [
+        _p(ulid: 'a', title: 'Project: alpha'),
+        _p(ulid: 'b', title: 'Other'),
+        _p(ulid: 'c', title: 'Project: beta'),
+      ];
+      expect(
+        filterTitleStartsWith(pages, 'Project:').map((p) => p.ulid).toSet(),
+        {'a', 'c'},
+      );
+    });
+
+    test('case-insensitive', () {
+      final pages = [
+        _p(ulid: 'a', title: 'PROJECT: foo'),
+        _p(ulid: 'b', title: 'project: bar'),
+      ];
+      expect(filterTitleStartsWith(pages, 'project:').length, 2);
+    });
+
+    test('trims surrounding whitespace on the prefix', () {
+      final pages = [_p(ulid: 'a', title: 'Foo')];
+      expect(filterTitleStartsWith(pages, '  foo').length, 1);
+    });
+
+    test('empty prefix returns empty (no wildcard)', () {
+      final pages = [_p(ulid: 'a', title: 'anything')];
+      expect(filterTitleStartsWith(pages, ''), isEmpty);
+      expect(filterTitleStartsWith(pages, '   '), isEmpty);
+    });
+
+    test('substring match in the middle does NOT count', () {
+      final pages = [_p(ulid: 'a', title: 'My Project: foo')];
+      expect(filterTitleStartsWith(pages, 'Project'), isEmpty);
+    });
+
+    test('empty pages returns empty', () {
+      expect(filterTitleStartsWith([], 'foo'), isEmpty);
+    });
+  });
+
   group('filterTitleContains', () {
     test('matches substrings case-insensitively', () {
       final pages = [
