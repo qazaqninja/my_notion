@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E16 — Public page sharing (`GET /public/<ulid>` route + frontmatter `public: true`)
+- **Task:** E17 — Client-side "Publish" toggle in editor kebab
 - **Status:** pending
 
 ## Last completed
 
-- **M1314 — E15** (token persistence + auto-restore + 401-clears-prefs)
-- Committed: d572cbf
-- TaskList ID: 37
-- Notes: `SyncRestoreRequested` event reads `sync.token` from SharedPreferences and hydrates `SyncStatus.connected` optimistically (a subsequent 401 trips the existing stale-token handler which now also clears prefs). `app.dart` dispatches the event immediately after constructing the bloc. Login/signup persist, logout + 401 clear. Plain-text storage matches the existing `vault.path` / `vault.bookmark` posture (M1238). 5 new persistence tests; 13 SyncBloc tests total. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1316 — E16** (public page sharing — backend)
+- Committed: 9bf75b1
+- TaskList ID: 38
+- Notes: Migration v3 adds `vault_files.ulid` + `is_public` + partial index `(ulid) WHERE is_public = true`. `FrontmatterProbe.fromBody` extracts `id:` (ULID-validated) + `public: true|yes` via regex (no YAML dep). Sync upsert populates both columns from the probe; ON CONFLICT updates them so toggling public in frontmatter flips on next save. `GET /public/<ulid>` route — NO auth — returns 200 HTML (`<pre>` wrap for now; E17+ swaps in proper rendering) or 404. 9 probe tests + 51 total backend tests pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
