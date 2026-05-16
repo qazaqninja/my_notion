@@ -485,6 +485,27 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  Future<void> _openSmallestPage(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final rows = await db.select(db.pages).get();
+    if (rows.isEmpty) {
+      if (context.mounted) context.toastInfo('No pages to pick from yet.');
+      return;
+    }
+    // Smallest by bodyText length. Empty bodies count as 0 — typically
+    // the user IS looking for those stubs to flesh out.
+    final pick =
+        rows.reduce((a, b) => a.bodyText.length < b.bodyText.length ? a : b);
+    if (context.mounted) {
+      context.toastInfo(
+        'Smallest page · ${pick.bodyText.length} chars',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openMostLinkedPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -744,6 +765,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openLargestPage(context);
       case 'Open most-linked page':
         await _openMostLinkedPage(context);
+      case 'Open smallest page':
+        await _openSmallestPage(context);
       case "Open today's daily note":
         if (vaultPath == null) {
           context.toastError('No vault open');
