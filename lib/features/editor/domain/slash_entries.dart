@@ -34,6 +34,10 @@ enum SlashAction {
   /// `~~`, `==`, backticks) from every selected line so the inner
   /// text remains as plain prose.
   stripMarkdownEmphasisLines,
+  /// Strip markdown link / image syntax from every selected line:
+  /// `[label](url)` → `label`, `![alt](src)` → `alt`. Wikilinks
+  /// `[[ULID]]` are preserved (they're the canonical Quill relation).
+  stripMarkdownLinksLines,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -1315,6 +1319,13 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.stripMarkdownEmphasisLines,
     keywords: ['strip', 'plain', 'unwrap', 'emphasis', 'bold', 'italic',
         'markdown', 'remove'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Strip markdown links',
+    hint: '[label](url) → label',
+    action: SlashAction.stripMarkdownLinksLines,
+    keywords: ['strip', 'unlink', 'link', 'url', 'markdown', 'plain'],
   ),
   SlashEntry(
     icon: 'link',

@@ -140,6 +140,48 @@ void main() {
     });
   });
 
+  group('stripMarkdownLinksLinesIn', () {
+    test('strips a plain link and keeps the label', () {
+      const text = '[Click here](http://example.com)\n';
+      final r = stripMarkdownLinksLinesIn(text, 0, text.length);
+      expect(r.text, 'Click here\n');
+    });
+
+    test('strips an image and keeps the alt text', () {
+      const text = '![diagram](attachments/foo.png)\n';
+      final r = stripMarkdownLinksLinesIn(text, 0, text.length);
+      expect(r.text, 'diagram\n');
+    });
+
+    test('wikilinks are preserved (Quill-internal relation)', () {
+      const text = '[[01H7ABCDEFGH]] referenced\n';
+      expect(stripMarkdownLinksLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('transcluded wikilinks are preserved', () {
+      const text = '![[01H7ABCDEFGH]]\n';
+      expect(stripMarkdownLinksLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('mixed link + emphasis only touches the link', () {
+      // Emphasis stays — caller can chain `stripMarkdownEmphasisLines`.
+      const text = '**important** [page](url) note\n';
+      final r = stripMarkdownLinksLinesIn(text, 0, text.length);
+      expect(r.text, '**important** page note\n');
+    });
+
+    test('plain prose is the identity', () {
+      const text = 'no links here\n';
+      expect(stripMarkdownLinksLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty image alt becomes empty string', () {
+      const text = '![](img.png) caption\n';
+      final r = stripMarkdownLinksLinesIn(text, 0, text.length);
+      expect(r.text, ' caption\n');
+    });
+  });
+
   group('stripMarkdownEmphasisLinesIn', () {
     test('strips bold + italic + strike + highlight + code', () {
       const text = '**bold** _italic_ ~~strike~~ ==hi== `code`\n';

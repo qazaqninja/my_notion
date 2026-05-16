@@ -2713,6 +2713,34 @@ SortLinesResult stripMarkdownEmphasisLinesIn(
       ];
     });
 
+/// Strip markdown links and images from every selected line, keeping
+/// the visible label. `[Click here](url)` becomes `Click here`;
+/// `![alt text](path)` becomes `alt text`. Quill-internal wikilinks
+/// (`[[ULID]]` / `![[ULID]]` / `[[ULID#anchor]]` / `[[ULID|alias]]`)
+/// are deliberately **not** touched — their ULID payload is the
+/// canonical relation identifier and stripping it would permanently
+/// lose the link target.
+///
+/// Useful when copy-pasting Markdown into a section that should read
+/// as plain prose without clickable URLs. Often run before or after
+/// [stripMarkdownEmphasisLinesIn] depending on whether the user
+/// wants formatting first or links first.
+SortLinesResult stripMarkdownLinksLinesIn(
+        String text, int start, int end,) =>
+    _transformLinesIn(text, start, end, (lines) {
+      // Order matters: images first (the `!` prefix is more specific),
+      // then regular links. Negative lookbehind keeps wikilinks safe
+      // from the bracket regex.
+      final image = RegExp(r'!\[([^\]\n]*)\]\([^)\n]*\)');
+      final link = RegExp(r'(?<!\[)\[([^\]\n]+)\]\(([^)\n]*)\)');
+      return [
+        for (final l in lines)
+          l
+              .replaceAllMapped(image, (m) => m.group(1) ?? '')
+              .replaceAllMapped(link, (m) => m.group(1)!),
+      ];
+    });
+
 /// Toggle the case of every cased character on every selected line:
 /// uppercase becomes lowercase and vice versa, character-by-character.
 /// Non-cased characters (digits, punctuation, whitespace, symbols, and
