@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F9 — Pick-next survey after F-stretch: live docker-compose smoke OR Phase G (mobile editor toolbar / home_widget / D1 cutover) OR phase H (rich CRDT)
+- **Task:** G4 — Live docker-compose smoke pass per docs/phase-e-sanity-checklist.md (validates F-stretch backend changes end-to-end)
 - **Status:** pending
 
 ## Last completed
+
+- **M1366 — F9** (Phase F closeout survey + Phase G/H pick-next; orchestrator audit dispatched)
+- Committed: (this iteration)
+- TaskList ID: 85
+- Notes: Phase F (F1-F8) is shipped: inbound share-sheet (Dart-side complete, Android wired, iOS docs), schema-aware form validation, backend RP-03 hardening via runDb + dbExceptionToResponse middleware across all 4 db-backed pipelines, 503 → friendly banner copy on the client. Surveyed CLAUDE.md + greps to confirm what's actually un-shipped — 4 G-track candidates (G1 home_widget skeleton, G2 mobile editor toolbar, G3 touch-tuned slash menu, G4 live docker-compose smoke pass) and 2 H-track (H1 y_crdt PoC, H2 WebSocket sub for multiplayer). Recommended order: G4 first (validates F-stretch end-to-end against a real Postgres before more building), then G1/G2 UI polish, then H1 CRDT foundation. flutter-arch-orchestrator dispatched in background over M1358-M1365 — findings will append to "Phase F closeout" loop-state section when the agent reports back. No code changes this slice; survey + task queue + audit dispatch only. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1365 — F8** (surface 503 db_unavailable in Flutter sync card)
 - Committed: (this iteration)
@@ -212,6 +217,32 @@
 - BL-11: side effects (toasts, dialogs) live in `BlocListener`s, not in build().
 - BL-12: all four `BlocListener`s use `listenWhen`.
 - RP-02 / RP-03: `HttpSyncRepository` injects its `http.Client`; all I/O errors wrap in typed exceptions.
+
+### Phase F closeout + Phase G/H pick-next (F9 / M1366)
+
+Phase F shipped (F1-F8) closed:
+- Inbound share-sheet: Dart-side complete, Android wired, iOS manual-config doc.
+- Schema-aware form validation: `.database.yaml` resolution + per-field type checks.
+- Cross-cutting backend hardening: `runDb` + typed `DbException` + `dbExceptionToResponse` middleware across all 4 db-backed pipelines (auth/sync/public/forms).
+- Round-trip 503 → `backend_unhealthy_db` → friendly banner copy on the Flutter side.
+
+**Remaining un-shipped backlog** (verified from pubspec + lib/ greps):
+
+| ID | Phase | Slice | Lift |
+|----|-------|-------|------|
+| G1 | UI    | `home_widget` Add-to-Inbox skeleton (Dart wrapper + iOS / Android widget targets via docs) | ~half day |
+| G2 | UI    | Mobile-tuned editor toolbar — sticky bottom-bar for the kebab's most-used actions | ~half day |
+| G3 | UI    | Touch-tuned slash menu — larger hit targets, sheet on narrow widths | ~half day |
+| G4 | Ops   | Live docker-compose smoke pass per `docs/phase-e-sanity-checklist.md` | ~1 hour |
+| H1 | CRDT  | `y_crdt` Dart port — add dep + minimal proof-of-concept doc + serializer skeleton | ~1 day |
+| H2 | CRDT  | WebSocket subscription endpoint + per-page Yjs updates wired into SyncBloc | multi-slice |
+
+**Recommendation: G4 → G1 → G2 → H1 in that order.**
+- G4 first: validates the F-stretch work end-to-end against a real Postgres before we keep building.
+- G1 + G2: small, user-visible polish wins.
+- H1: foundation for multiplayer; the largest remaining unshipped feature in the original plan.
+
+Audit dispatched (background) over M1358-M1365; findings will append below when the agent reports back.
 
 ### Phase E final-closeout survey (E53 / M1356)
 
