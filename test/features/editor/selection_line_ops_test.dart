@@ -3936,6 +3936,85 @@ void main() {
     });
   });
 
+  group('extractMarkdownReferenceLinkLabelsFromLinesIn', () {
+    test('plain `[foo]: url` extracts label', () {
+      const text = '[foo]: https://x.test\n';
+      final r = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'foo\n');
+    });
+
+    test('label with internal spaces extracts intact', () {
+      // CommonMark allows multi-word labels like `[Click here]`.
+      const text = '[Click here]: /landing\n';
+      final r = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'Click here\n');
+    });
+
+    test('hyphenated and digit labels extract intact', () {
+      const text = '[ref-1]: https://1.test\n[doc-v2]: /v2\n';
+      final r = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'ref-1\ndoc-v2\n');
+    });
+
+    test('definition with title extracts only the label', () {
+      const text = '[baz]: https://x.test "Title"\n';
+      final r = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'baz\n');
+    });
+
+    test('indented definition (up to 3 spaces) matches', () {
+      const text = '   [foo]: url\n';
+      final r = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'foo\n');
+    });
+
+    test('inline link `[text](url)` is NOT a definition', () {
+      const text = 'see [docs](https://x.test) inline\n';
+      final r = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('shortcut form `[foo]` alone is NOT a definition', () {
+      const text = '[foo] short ref\n';
+      final r = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('paired with URL extractor for orphan-ref audit', () {
+      // Demonstrates the M1094/M1095 pairing — same input
+      // yields parallel label+url sequences for cross-check.
+      const text = '[a]: https://1.test\n[b]: https://2.test\n'
+          '[c]: https://3.test\n';
+      final labels = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      final urls = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(labels.text, 'a\nb\nc\n');
+      expect(urls.text, 'https://1.test\nhttps://2.test\nhttps://3.test\n');
+    });
+
+    test('plain prose lines dropped from output', () {
+      const text = 'plain prose\n[ref]: https://x.test\nmore prose\n';
+      final r = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'ref\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownReferenceLinkLabelsFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

@@ -372,6 +372,9 @@ enum SlashAction {
   /// Extract the URL from every markdown reference-link
   /// definition line (`[label]: url`).
   extractMarkdownReferenceLinkUrlsFromLines,
+  /// Extract the label from every markdown reference-link
+  /// definition line (`[label]: url` → `label`).
+  extractMarkdownReferenceLinkLabelsFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1851,6 +1854,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[label]: url → url',
     action: SlashAction.extractMarkdownReferenceLinkUrlsFromLines,
     keywords: ['extract', 'reference', 'ref', 'link', 'url',
+        'definition', 'def', 'shortcut', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Extract reference-link labels',
+    hint: '[label]: url → label',
+    action: SlashAction.extractMarkdownReferenceLinkLabelsFromLines,
+    keywords: ['extract', 'reference', 'ref', 'link', 'label',
         'definition', 'def', 'shortcut', 'markdown'],
   ),
   SlashEntry(

@@ -1653,6 +1653,37 @@ SortLinesResult extractMarkdownReferenceLinkUrlsFromLinesIn(
       return out;
     });
 
+/// Extract the LABEL from every markdown reference-link
+/// definition line on each selected line (`[label]: url` →
+/// `label`). Companion to
+/// [extractMarkdownReferenceLinkUrlsFromLinesIn] (M1094) —
+/// paired output enables a "labels vs URLs" cross-check:
+/// orphan refs (defined but never used), missing defs
+/// (referenced but undefined), duplicate labels.
+///
+/// Recognition mirrors M1094 (same line shape, same indent
+/// tolerance, same title support); only the captured group
+/// differs — this transform pulls the bracketed label rather
+/// than the URL.
+///
+/// Labels with internal spaces are CommonMark-legal
+/// (`[Click here]: url`) and pass through intact.
+///
+/// 34th member of the extraction family.
+SortLinesResult extractMarkdownReferenceLinkLabelsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'^\s*\[([^\]\n]+)\]:\s+\S+(?:\s+"[^"\n]*")?\s*$',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(1)!);
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

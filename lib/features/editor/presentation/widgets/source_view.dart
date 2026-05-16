@@ -1393,6 +1393,11 @@ class _SourceViewState extends State<SourceView> {
           stripStart, caret,
           extractMarkdownReferenceLinkUrlsFromLinesIn,
         );
+      case SlashAction.extractMarkdownReferenceLinkLabelsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret,
+          extractMarkdownReferenceLinkLabelsFromLinesIn,
+        );
       case SlashAction.extractMarkdownLinkLabelsFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownLinkLabelsFromLinesIn,
