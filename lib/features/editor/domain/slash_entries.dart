@@ -504,6 +504,9 @@ enum SlashAction {
   /// Extract every HTTP method + path token (`GET /api/x`,
   /// `POST /v1/login`) from each selected line.
   extractHttpMethodsFromLines,
+  /// Extract every MIME type token (`application/json`,
+  /// `text/html`, `image/png`) from each selected line.
+  extractMimeTypesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2369,6 +2372,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractHttpMethodsFromLines,
     keywords: ['extract', 'http', 'method', 'route', 'api',
         'rest', 'endpoint', 'get', 'post'],
+  ),
+  SlashEntry(
+    icon: 'tag',
+    label: 'Extract MIME types',
+    hint: 'application/json / text/html / image/png',
+    action: SlashAction.extractMimeTypesFromLines,
+    keywords: ['extract', 'mime', 'type', 'content',
+        'header', 'accept', 'json', 'html', 'iana', 'subtype'],
   ),
   SlashEntry(
     icon: 'calendar',

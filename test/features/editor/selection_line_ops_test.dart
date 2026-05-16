@@ -7659,6 +7659,93 @@ void main() {
     });
   });
 
+  group('extractMimeTypesFromLinesIn', () {
+    test('application/json extracts', () {
+      const text = 'header: application/json today\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'application/json\n');
+    });
+
+    test('text/html extracts', () {
+      const text = 'Content-Type: text/html here\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'text/html\n');
+    });
+
+    test('image/png extracts', () {
+      const text = 'upload image/png file\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'image/png\n');
+    });
+
+    test('vendor subtype with plus suffix extracts', () {
+      // `application/vnd.api+json` is a real-world IANA type.
+      const text = 'JSON-API: application/vnd.api+json wrap\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'application/vnd.api+json\n');
+    });
+
+    test('x- prefixed subtype extracts', () {
+      // `application/x-www-form-urlencoded` is a common legacy type.
+      const text = 'form: application/x-www-form-urlencoded body\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'application/x-www-form-urlencoded\n');
+    });
+
+    test('all ten IANA roots are recognized', () {
+      const text =
+          'application/json audio/mpeg font/woff2 example/foo '
+          'image/png message/rfc822 model/gltf+json '
+          'multipart/form-data text/html video/mp4\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'application/json\naudio/mpeg\nfont/woff2\nexample/foo\n'
+        'image/png\nmessage/rfc822\nmodel/gltf+json\n'
+        'multipart/form-data\ntext/html\nvideo/mp4\n',
+      );
+    });
+
+    test('charset parameter is NOT included in capture', () {
+      // The `; charset=utf-8` parameter portion is dropped — only
+      // the bare `type/subtype` token is returned.
+      const text = 'header: text/html; charset=utf-8 inline\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'text/html\n');
+    });
+
+    test('unknown top-level type rejected', () {
+      // `foo/bar` is not one of the ten IANA roots.
+      const text = 'fake foo/bar not a real type\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('subtype starting with dot rejected', () {
+      // The regex requires subtype to start with an alphanumeric,
+      // so `text/.html` should not match.
+      const text = 'malformed text/.html ignore\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple types on one line each extract', () {
+      const text = 'accept: text/html, application/json then\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'text/html\napplication/json\n');
+    });
+
+    test('lines without MIME types dropped from output', () {
+      const text = 'plain prose\nuse application/json\nmore prose\n';
+      final r = extractMimeTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'application/json\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMimeTypesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

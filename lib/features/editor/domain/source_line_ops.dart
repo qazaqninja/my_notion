@@ -3080,6 +3080,45 @@ SortLinesResult extractHttpMethodsFromLinesIn(
       return out;
     });
 
+/// Extract every MIME type token from each selected line.
+/// Useful for HTTP doc audits, Content-Type header harvests,
+/// OpenAPI spec authoring, and accept-header inventory.
+///
+/// Recognition: `\b(application|audio|font|example|image|message|
+/// model|multipart|text|video)/[A-Za-z0-9][A-Za-z0-9.\-+]*\b`
+/// - Top-level type is one of the ten IANA-registered roots.
+/// - Slash separator (required).
+/// - Subtype starts with an alphanumeric and may contain `.`,
+///   `-`, `+` afterward. Examples that match: `application/json`,
+///   `application/vnd.api+json`, `text/html`, `image/png`,
+///   `application/x-www-form-urlencoded`, `model/gltf+json`.
+///
+/// The parameter portion (`; charset=utf-8`) is NOT captured —
+/// only the bare `type/subtype` token is returned, which is
+/// almost always what doc audits want. Filter parameters
+/// downstream with a separate pass if needed.
+///
+/// Top-level types are matched case-sensitively (lowercase per
+/// IANA convention); subtypes allow mixed case to keep historical
+/// names like `application/JSON` matchable.
+///
+/// 87th member of the extraction family.
+SortLinesResult extractMimeTypesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:application|audio|font|example|image|message|model|'
+        r'multipart|text|video)/[A-Za-z0-9][A-Za-z0-9.\-+]*\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
