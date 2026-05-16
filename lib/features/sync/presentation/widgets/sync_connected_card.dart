@@ -68,6 +68,34 @@ class SyncConnectedCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          // E30 — push queue depth. Only renders while > 0 so the
+          // card stays compact when idle. Sits above the activity
+          // rows so it's the first thing the user sees while syncing.
+          if (state.pendingPushes > 0) ...[
+            Row(
+              children: [
+                SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.6,
+                    color: tokens.accent,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  state.pendingPushes == 1
+                      ? 'Syncing 1 file…'
+                      : 'Syncing ${state.pendingPushes} files…',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: tokens.text2,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+          ],
           // E29 — backend liveness indicator.
           _ActivityRow(
             label: 'Backend',

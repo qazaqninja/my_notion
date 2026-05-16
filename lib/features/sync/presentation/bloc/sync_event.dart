@@ -49,6 +49,19 @@ class SyncListRequested extends SyncEvent {
   const SyncListRequested();
 }
 
+/// Internal event used by `SyncBloc` to bump `pendingPushes` up or
+/// down as pushes are dispatched and complete (E30). Library-private:
+/// the rest of the app should not dispatch it directly. The `+1` is
+/// emitted from the override of `add()` so it captures queue depth
+/// (events waiting on the sequential transformer), not just in-flight
+/// count.
+class SyncPendingPushDelta extends SyncEvent {
+  const SyncPendingPushDelta(this.delta);
+  final int delta;
+  @override
+  List<Object?> get props => [delta];
+}
+
 /// E29 — backend liveness check. Hits `GET /health` and updates
 /// `SyncState.lastPingAt` (success) or `lastError` (network failure
 /// or non-200 status). Auth-agnostic; works before login too.

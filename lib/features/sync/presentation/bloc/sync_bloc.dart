@@ -43,6 +43,28 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<SyncFetchFileRequested>(_onFetch, transformer: sequential());
     on<SyncFetchCleared>(_onFetchCleared);
     on<SyncPingRequested>(_onPing, transformer: sequential());
+    on<SyncPendingPushDelta>(_onPendingDelta);
+  }
+
+  /// E30 — overrides Bloc.add so a `+1` to `pendingPushes` is observed
+  /// at dispatch time (capturing queued-but-not-yet-running pushes)
+  /// rather than only when the handler enters the `sequential()` slot.
+  @override
+  void add(SyncEvent event) {
+    if (event is SyncPushFileRequested) {
+      super.add(const SyncPendingPushDelta(1));
+    }
+    super.add(event);
+  }
+
+  void _onPendingDelta(
+    SyncPendingPushDelta e,
+    Emitter<SyncState> emit,
+  ) {
+    final next = state.pendingPushes + e.delta;
+    // Defensive clamp — counters should never go negative even if a
+    // failure path forgets to dispatch its -1.
+    emit(state.copyWith(pendingPushes: next < 0 ? 0 : next));
   }
 
   final SyncRepository _repo;
@@ -215,6 +237,9 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         status: SyncStatus.error,
         lastError: 'not_authenticated',
       ));
+      // The +1 was dispatched in add(); we still need a -1 here so the
+      // counter doesn't drift even when auth fails fast.
+      add(const SyncPendingPushDelta(-1));
       return;
     }
     emit(state.copyWith(status: SyncStatus.busy, clearError: true));
@@ -270,6 +295,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         status: SyncStatus.error,
         lastError: err.message,
       ));
+    } finally {
+      // E30 — pair every +1 (dispatched in add()) with a -1, regardless
+      // of how _onPush exited. Reset emitted by the 401 branch already
+      // zeroes pendingPushes via const SyncState(), but it's harmless
+      // to enqueue another -1: _onPendingDelta clamps at 0.
+      add(const SyncPendingPushDelta(-1));
     }
   }
 

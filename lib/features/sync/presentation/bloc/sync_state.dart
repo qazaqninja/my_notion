@@ -16,6 +16,7 @@ class SyncState extends Equatable {
     this.lastPush,
     this.lastFetched,
     this.lastPingAt,
+    this.pendingPushes = 0,
     this.knownShas = const <String, String>{},
   });
 
@@ -35,6 +36,13 @@ class SyncState extends Equatable {
   /// in the sync card as "Backend reachable · X ago". Null until the
   /// first ping resolves successfully; reset to null on logout.
   final DateTime? lastPingAt;
+
+  /// E30 — count of `SyncPushFileRequested` events whose handler is
+  /// currently executing OR queued behind one. The push handler uses a
+  /// `sequential()` transformer so the count caps at one in-flight
+  /// plus however many are queued. The sync card renders "Syncing N
+  /// file(s)…" while > 0.
+  final int pendingPushes;
 
   /// Map of `relpath → sha256` for the last-known server-side version
   /// of each file the client has pushed or had a conflict on. Used to
@@ -57,6 +65,7 @@ class SyncState extends Equatable {
     SyncFileSummary? lastPush,
     SyncFileBody? lastFetched,
     DateTime? lastPingAt,
+    int? pendingPushes,
     Map<String, String>? knownShas,
     bool clearError = false,
     bool clearConflict = false,
@@ -70,6 +79,7 @@ class SyncState extends Equatable {
       lastPush: lastPush ?? this.lastPush,
       lastFetched: clearFetched ? null : (lastFetched ?? this.lastFetched),
       lastPingAt: lastPingAt ?? this.lastPingAt,
+      pendingPushes: pendingPushes ?? this.pendingPushes,
       knownShas: knownShas ?? this.knownShas,
     );
   }
@@ -83,6 +93,7 @@ class SyncState extends Equatable {
         lastPush,
         lastFetched,
         lastPingAt,
+        pendingPushes,
         knownShas,
       ];
 }

@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E30 — Sync metrics: queue-depth indicator while pushes are inflight
+- **Task:** E31 — Vault-wide bulk push: "Push all unsynced files" action
 - **Status:** pending
 
 ## Last completed
 
-- **M1332 — E29** (backend `/health` ping + reachable indicator in sync card)
+- **M1333 — E30** (push queue-depth indicator)
 - Committed: (this iteration)
-- TaskList ID: 51
-- Notes: New abstract `SyncRepository.ping()` method + `HttpSyncRepository.ping()` impl hitting `GET /health` (auth-agnostic). `SyncState` gains `DateTime? lastPingAt`. New `SyncPingRequested` event + `_onPing` handler — success records `lastPingAt = now()` and clears prior network error; 503 (server up, DB down) maps to `lastError = 'backend_unhealthy'`; transport failure passes the exception message through. The E27 periodic timer now fires `SyncPingRequested` alongside `SyncListRequested` on each tick, so the reachable indicator stays fresh while idle. `SyncConnectedCard` gets a "Backend · reachable · X ago" `_ActivityRow` above the existing "Last push" row (falls back to "not yet pinged" before first ping). 4 new bloc_test cases (success-sets-lastPingAt-and-clears-error, 503-flips-backend_unhealthy, network-failure-passes-message, auth-agnostic-no-token). 69/69 sync tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 52
+- Notes: `SyncState` gains `int pendingPushes = 0`. New internal `SyncPendingPushDelta(±1)` event + `_onPendingDelta` handler with a defensive clamp at zero. `SyncBloc.add()` is overridden so a `+1` is dispatched at the *same time* as the original `SyncPushFileRequested` — captures queue depth (events waiting on the `sequential()` transformer), not just in-flight count. `_onPush` decrements via a `finally` block — even the not-authed early-return and the conflict path pair their +1 with a -1. `SyncConnectedCard` renders a small spinner row "Syncing N file(s)…" above the activity rows when `pendingPushes > 0` (hidden when idle, singular/plural copy). 4 new bloc_test cases (three-concurrent-go-to-zero, push-completes-counter-resets, not-authed-still-decrements, conflict-still-decrements) + 3 widget tests (0 hides row, 1 singular, 4 plural). 47/47 sync_bloc tests pass; 14/14 sync card tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

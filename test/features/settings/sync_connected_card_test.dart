@@ -127,6 +127,40 @@ void main() {
     });
   });
 
+  group('SyncConnectedCard push queue depth (E30)', () {
+    testWidgets('pendingPushes == 0 → no "Syncing…" row', (tester) async {
+      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+      await tester.pumpWidget(pumpCard(state, bloc));
+      expect(find.textContaining('Syncing'), findsNothing);
+    });
+
+    testWidgets('pendingPushes == 1 → "Syncing 1 file…"', (tester) async {
+      const state = SyncState(
+        status: SyncStatus.busy,
+        token: 'jwt-t',
+        pendingPushes: 1,
+      );
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+      await tester.pumpWidget(pumpCard(state, bloc));
+      expect(find.text('Syncing 1 file…'), findsOneWidget);
+    });
+
+    testWidgets('pendingPushes == 4 → plural copy', (tester) async {
+      const state = SyncState(
+        status: SyncStatus.busy,
+        token: 'jwt-t',
+        pendingPushes: 4,
+      );
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+      await tester.pumpWidget(pumpCard(state, bloc));
+      expect(find.text('Syncing 4 files…'), findsOneWidget);
+    });
+  });
+
   group('SyncConnectedCard network error banner (E28)', () {
     testWidgets('un-classified lastError renders banner + Retry now',
         (tester) async {
