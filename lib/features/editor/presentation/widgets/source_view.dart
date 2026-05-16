@@ -1360,6 +1360,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownFootnoteIdsFromLinesIn,
         );
+      case SlashAction.extractMarkdownFootnoteBodiesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractMarkdownFootnoteBodiesFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

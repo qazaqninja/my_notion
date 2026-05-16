@@ -348,6 +348,9 @@ enum SlashAction {
   /// Extract every markdown footnote ID (`[^id]` → `id`) from
   /// each selected line.
   extractMarkdownFootnoteIdsFromLines,
+  /// Extract the body text from every markdown footnote
+  /// definition line (`[^id]: text` → `text`).
+  extractMarkdownFootnoteBodiesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1805,6 +1808,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownFootnoteIdsFromLines,
     keywords: ['extract', 'footnote', 'id', 'ref', 'reference',
         'definition', 'markdown', 'gfm', 'pandoc'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Extract footnote bodies',
+    hint: '[^1]: text → text',
+    action: SlashAction.extractMarkdownFootnoteBodiesFromLines,
+    keywords: ['extract', 'footnote', 'body', 'text', 'definition',
+        'def', 'markdown', 'gfm', 'pandoc'],
   ),
   SlashEntry(
     icon: 'calendar',

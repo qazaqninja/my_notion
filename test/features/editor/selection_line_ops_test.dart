@@ -4149,6 +4149,85 @@ void main() {
     });
   });
 
+  group('extractMarkdownFootnoteBodiesFromLinesIn', () {
+    test('numeric footnote body extracts', () {
+      const text = '[^1]: This is the footnote text\n';
+      final r = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'This is the footnote text\n');
+    });
+
+    test('alphanumeric ID with multi-word body', () {
+      const text = '[^note]: Multi-word footnote body here\n';
+      final r = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'Multi-word footnote body here\n');
+    });
+
+    test('in-prose reference `[^1]` (no `:`) is NOT a definition', () {
+      // References lack the `:` body marker; only definitions
+      // produce output.
+      const text = 'see footnote [^1] inline\n';
+      final r = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('mixed ref + def: only def emits body', () {
+      const text = 'see [^1] inline\n[^1]: actual definition body\n';
+      final r = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'actual definition body\n');
+    });
+
+    test('body with internal punctuation preserved', () {
+      const text = '[^1]: Q1, Q2 (final) — see [link](url) ref.\n';
+      final r = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'Q1, Q2 (final) — see [link](url) ref.\n');
+    });
+
+    test('indented definition (up to 3 spaces) matches', () {
+      const text = '   [^1]: indented body\n';
+      final r = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'indented body\n');
+    });
+
+    test('multiple definitions across lines all extract', () {
+      const text = '[^a]: first body\n[^b]: second body\n[^c]: third\n';
+      final r = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'first body\nsecond body\nthird\n');
+    });
+
+    test('plain prose lines dropped from output', () {
+      const text = 'plain prose\n[^1]: foot body\nmore prose\n';
+      final r = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'foot body\n');
+    });
+
+    test('paired with ID extractor: (id, body) tuples', () {
+      // Documents the design pairing — same input yields
+      // parallel id+body sequences for tuple analysis.
+      const text = '[^1]: first body\n[^2]: second body\n';
+      final ids = extractMarkdownFootnoteIdsFromLinesIn(
+          text, 0, text.length);
+      final bodies = extractMarkdownFootnoteBodiesFromLinesIn(
+          text, 0, text.length);
+      expect(ids.text, '1\n2\n');
+      expect(bodies.text, 'first body\nsecond body\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownFootnoteBodiesFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

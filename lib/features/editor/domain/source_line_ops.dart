@@ -1365,6 +1365,40 @@ SortLinesResult extractMarkdownFootnoteIdsFromLinesIn(
       return out;
     });
 
+/// Extract the body text from every markdown footnote
+/// DEFINITION line on each selected line (`[^id]: text` →
+/// `text`). Companion to M1086's footnote-ID extractor —
+/// pair them to get `(id, body)` tuples for analysis,
+/// glossary export, or footnote-content audits.
+///
+/// Recognition: `^\s*\[\^[^\]\n]+\]:\s+(.+)$`
+/// - Optional leading whitespace.
+/// - `[^id]` opener (any non-`]`, non-newline id chars).
+/// - Literal `:` then at least one whitespace.
+/// - Body content captured (at least one char).
+///
+/// In-prose footnote REFERENCES (`see [^1]`) are NOT matched
+/// — they lack the `:` body marker. Only definition lines
+/// produce output.
+///
+/// Multi-line footnote bodies (where continuation lines are
+/// indented under the definition) are out of scope: the
+/// extractor sees one line at a time, so only the first
+/// line of a multi-line body is captured.
+///
+/// 36th member of the extraction family.
+SortLinesResult extractMarkdownFootnoteBodiesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'^\s*\[\^[^\]\n]+\]:\s+(.+)$');
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(1)!);
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
