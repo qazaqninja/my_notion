@@ -18,6 +18,8 @@ dependencies:
   flutter:
     sdk: flutter
   archive: ^4.0.7
+  # Inline audio playback for M201 audio cards (B2 of the 1m-loop plan).
+  audioplayers: ^6.6.0
   # `bloc_concurrency` adds the named event transformers (droppable,
   # sequential, restartable) that flutter_bloc itself doesn't ship.
   # We use them to guard I/O-heavy handlers (editor open / save) from

@@ -15,6 +15,7 @@ import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
+import '../../../../shared/widgets/audio_inline_player.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/relation_chip.dart';
@@ -2021,16 +2022,16 @@ class _FileAttachment extends StatelessWidget {
     // inline preview than a passing reference. Non-media files keep
     // the compact chip from M76.
     if (accent != null) {
-      // B1 (M1218): inline video playback. For local video files, resolve
-      // the path against the vault root and embed a VideoInlinePlayer where
-      // the 64-px terracotta band used to live. Tap-on-video toggles
-      // play/pause via the player's own gesture overlay; taps elsewhere on
-      // the card still bubble up to _open() for external launch.
-      String? inlineVideoPath;
-      if (_isVideo && !_isUrl) {
+      // B1 (M1218) / B2 (M1220): inline video / audio playback. For local
+      // media files, resolve the path against the vault root and embed an
+      // inline player where the 64-px coloured band used to live. The
+      // player's own gesture overlay catches play/pause taps; taps elsewhere
+      // on the card still bubble up to _open() for external launch.
+      String? inlineMediaPath;
+      if ((_isVideo || _isAudio) && !_isUrl) {
         final vault = context.read<VaultBloc>().state;
         if (vault is VaultLoaded) {
-          inlineVideoPath = src.startsWith('/')
+          inlineMediaPath = src.startsWith('/')
               ? src
               : '${vault.rootPath}/$src';
         }
@@ -2048,11 +2049,20 @@ class _FileAttachment extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (inlineVideoPath != null)
+                if (inlineMediaPath != null && _isVideo)
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(6)),
-                    child: VideoInlinePlayer(filePath: inlineVideoPath),
+                    child: VideoInlinePlayer(filePath: inlineMediaPath),
+                  )
+                else if (inlineMediaPath != null && _isAudio)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.16),
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(6)),
+                    ),
+                    child: AudioInlinePlayer(filePath: inlineMediaPath),
                   )
                 else
                 Container(
