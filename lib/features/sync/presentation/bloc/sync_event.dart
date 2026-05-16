@@ -39,6 +39,16 @@ class SyncRestoreRequested extends SyncEvent {
   const SyncRestoreRequested();
 }
 
+/// Boot / post-login: fetch the full server-side listing and merge each
+/// `(relpath, sha256)` into `SyncState.knownShas`. After this completes
+/// the first push for any of those relpaths already carries a real
+/// `If-Match` instead of a stale local guess, so concurrent edits made
+/// from another device while the app was closed surface as conflicts
+/// (E19+E20) rather than silent overwrites.
+class SyncListRequested extends SyncEvent {
+  const SyncListRequested();
+}
+
 /// Upload a single file body to the backend. Used by the editor's save
 /// path (slice E14) and by manual "Push now" actions. If `ifMatch` is
 /// set the server may reject with conflict — that surfaces as a

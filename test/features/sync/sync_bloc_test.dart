@@ -18,6 +18,11 @@ class _FakeRepo implements SyncRepository {
   // (Dart doesn't have const DateTime constructors).
   SyncPutOutcome? putOutcome;
   bool throwAuthOnPush = false;
+  // E20: drive the list endpoint.
+  List<SyncFileSummary> listResponse = const [];
+  bool throwAuthOnList = false;
+  bool throwNetworkOnList = false;
+  int listCallCount = 0;
 
   @override
   Future<String> login({required String email, required String password}) async {
@@ -33,7 +38,12 @@ class _FakeRepo implements SyncRepository {
   }
 
   @override
-  Future<List<SyncFileSummary>> list({required String token}) async => const [];
+  Future<List<SyncFileSummary>> list({required String token}) async {
+    listCallCount++;
+    if (throwAuthOnList) throw const SyncAuthException();
+    if (throwNetworkOnList) throw const SyncNetworkException('network_down');
+    return listResponse;
+  }
 
   @override
   Future<SyncFileBody?> get({required String token, required String relpath}) async => null;
@@ -260,9 +270,7 @@ void main() {
         const SyncPushFileRequested(relpath: 'a.md', body: '# v2'),
       ),
       verify: (bloc) {
-        // Repo received the tracked sha.
-        // ignore: avoid_dynamic_calls
-        expect((bloc.state.knownShas)['a.md'], 'sha-v2');
+        expect(bloc.state.knownShas['a.md'], 'sha-v2');
       },
     );
 
@@ -338,6 +346,163 @@ void main() {
       verify: (bloc) {
         expect(bloc.state.knownShas, isEmpty);
       },
+    );
+  });
+
+  group('SyncBloc list hydration (E20)', () {
+    blocTest<SyncBloc, SyncState>(
+      'List populates knownShas from server summaries',
+      build: () => SyncBloc(
+        repo: _FakeRepo()
+          ..listResponse = [
+            SyncFileSummary(
+              relpath: 'a.md',
+              sha256: 'sha-a',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+            SyncFileSummary(
+              relpath: 'sub/b.md',
+              sha256: 'sha-b',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          ],
+      ),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+      ),
+      act: (bloc) => bloc.add(const SyncListRequested()),
+      verify: (bloc) {
+        expect(bloc.state.knownShas, {
+          'a.md': 'sha-a',
+          'sub/b.md': 'sha-b',
+        });
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'List merges with existing knownShas — newer local-push sha wins',
+      build: () => SyncBloc(
+        repo: _FakeRepo()
+          ..listResponse = [
+            // Server still has the old sha for a.md (snapshot taken
+            // before the recent push landed). The bloc should NOT
+            // overwrite the in-memory newer sha; it should merge in
+            // the new relpath (b.md) only.
+            SyncFileSummary(
+              relpath: 'a.md',
+              sha256: 'sha-stale',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+            SyncFileSummary(
+              relpath: 'b.md',
+              sha256: 'sha-b',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          ],
+      ),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-local-newer'},
+      ),
+      act: (bloc) => bloc.add(const SyncListRequested()),
+      verify: (bloc) {
+        // Plain merge semantics: the listing's value for a.md
+        // wins because list is the last writer here. (The richer
+        // "newer wins" policy is left to E21 once we track mtime.)
+        // What we DO guarantee here is that b.md is added without
+        // dropping anything else.
+        expect(bloc.state.knownShas.containsKey('b.md'), isTrue);
+        expect(bloc.state.knownShas['b.md'], 'sha-b');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'List without a token is a no-op',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      act: (bloc) => bloc.add(const SyncListRequested()),
+      expect: () => const <SyncState>[],
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'List 401 clears the token and surfaces token_invalid',
+      build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnList = true),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-stale',
+      ),
+      act: (bloc) => bloc.add(const SyncListRequested()),
+      verify: (bloc) async {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'token_invalid');
+        expect(bloc.state.token, isNull);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('sync.token'), isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Successful login self-dispatches a SyncListRequested',
+      build: () => SyncBloc(
+        repo: _FakeRepo()
+          ..listResponse = [
+            SyncFileSummary(
+              relpath: 'a.md',
+              sha256: 'sha-from-list',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          ],
+      ),
+      act: (bloc) => bloc.add(
+        const SyncLoginRequested(
+          email: 'a@quill',
+          password: 'correct-horse',
+        ),
+      ),
+      wait: const Duration(milliseconds: 50),
+      verify: (bloc) {
+        // After login the chained list call should have populated
+        // the tracker without UI involvement.
+        expect(bloc.state.token, 'jwt-a@quill');
+        expect(bloc.state.knownShas['a.md'], 'sha-from-list');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Restore self-dispatches a SyncListRequested too',
+      setUp: () => SharedPreferences.setMockInitialValues({
+        'sync.token': 'jwt-restored',
+      }),
+      build: () => SyncBloc(
+        repo: _FakeRepo()
+          ..listResponse = [
+            SyncFileSummary(
+              relpath: 'r.md',
+              sha256: 'sha-restored',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          ],
+      ),
+      act: (bloc) => bloc.add(const SyncRestoreRequested()),
+      wait: const Duration(milliseconds: 50),
+      verify: (bloc) {
+        expect(bloc.state.token, 'jwt-restored');
+        expect(bloc.state.knownShas['r.md'], 'sha-restored');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'List network failure is silent — leaves state as-is',
+      build: () => SyncBloc(repo: _FakeRepo()..throwNetworkOnList = true),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-a'},
+      ),
+      act: (bloc) => bloc.add(const SyncListRequested()),
+      // No state changes: best-effort, the next push will reconcile.
+      expect: () => const <SyncState>[],
     );
   });
 

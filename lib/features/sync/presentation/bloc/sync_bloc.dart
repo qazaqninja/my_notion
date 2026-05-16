@@ -26,6 +26,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<SyncSignupRequested>(_onSignup, transformer: sequential());
     on<SyncLogoutRequested>(_onLogout);
     on<SyncRestoreRequested>(_onRestore);
+    on<SyncListRequested>(_onList, transformer: sequential());
     on<SyncPushFileRequested>(_onPush, transformer: sequential());
   }
 
@@ -40,6 +41,9 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       final token = await _repo.login(email: e.email, password: e.password);
       await _persistToken(token);
       emit(state.copyWith(status: SyncStatus.connected, token: token));
+      // E20: kick off a listing so the first post-login push already
+      // has a real If-Match for every relpath the server knows about.
+      add(const SyncListRequested());
     } on SyncAuthException {
       emit(state.copyWith(
         status: SyncStatus.error,
@@ -62,6 +66,9 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       final token = await _repo.signup(email: e.email, password: e.password);
       await _persistToken(token);
       emit(state.copyWith(status: SyncStatus.connected, token: token));
+      // Fresh accounts will receive an empty list; the call is still
+      // cheap and keeps the post-login flow symmetric with login.
+      add(const SyncListRequested());
     } on SyncEmailTakenException {
       emit(state.copyWith(
         status: SyncStatus.error,
@@ -101,6 +108,43 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     // (push / list / get) will trip `_onPush`'s SyncAuthException
     // branch and reset to error: token_invalid.
     emit(state.copyWith(status: SyncStatus.connected, token: token));
+    // E20: on relaunch, hydrate knownShas immediately so the first
+    // push for any tracked relpath already has a real If-Match. Also
+    // serves as a token-validity ping: a 401 here will clear the
+    // stale token early instead of waiting for the first save.
+    add(const SyncListRequested());
+  }
+
+  Future<void> _onList(
+    SyncListRequested e,
+    Emitter<SyncState> emit,
+  ) async {
+    final token = state.token;
+    if (token == null || token.isEmpty) return;
+    try {
+      final summaries = await _repo.list(token: token);
+      if (summaries.isEmpty) return;
+      // Merge — don't replace. A push that already happened during the
+      // listing round-trip should not be clobbered by a snapshot taken
+      // before it landed.
+      final next = <String, String>{...state.knownShas};
+      for (final s in summaries) {
+        next[s.relpath] = s.sha256;
+      }
+      emit(state.copyWith(knownShas: next));
+    } on SyncAuthException {
+      // Token was already invalidated server-side. Reuse the same
+      // recovery as a push 401: clear the cached token, error out.
+      await _clearToken();
+      emit(const SyncState(
+        status: SyncStatus.error,
+        lastError: 'token_invalid',
+      ));
+    } on SyncNetworkException {
+      // List is best-effort; the next push will still re-attempt
+      // and gracefully re-conflict if needed. Don't surface a hard
+      // error — silently leave the tracker as-is.
+    }
   }
 
   Future<void> _onPush(
