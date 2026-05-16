@@ -524,6 +524,28 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Extract every http/https/ftp URL from each selected line and emit
+/// them one-per-line. Useful for harvesting links from prose
+/// paste-ins ahead of bulk-bookmarking or building a links-only
+/// reference list.
+///
+/// Distinct from M977 `stripMarkdownLinksLines` (which UNWRAPS
+/// `[label](url)` markdown to keep the label) and M1011
+/// `removeUrlsLines` (which DROPS bare URLs from prose). This op
+/// KEEPS only the URLs themselves, dropping everything else.
+SortLinesResult extractUrlsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?:https?|ftp)://\S+');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every email-shaped substring from each selected line and
 /// emit them one-per-line in original order. Useful for bulk-pulling
 /// contact addresses out of prose / paste-ins where the user wants

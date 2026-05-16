@@ -2234,6 +2234,37 @@ void main() {
     });
   });
 
+  group('extractUrlsFromLinesIn', () {
+    test('one URL per line: emits each on its own line', () {
+      const text = 'see https://example.com\nand http://other.test\n';
+      final r = extractUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://example.com\nhttp://other.test\n');
+    });
+
+    test('multiple URLs per line: all extracted in order', () {
+      const text = 'a https://x.test and ftp://y.test b\n';
+      final r = extractUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://x.test\nftp://y.test\n');
+    });
+
+    test('lines without a URL are dropped from output', () {
+      const text = 'no link here\nyes https://x.test\n';
+      final r = extractUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('rejects non-supported schemes', () {
+      const text = 'mailto:foo@x.test\nhttps://x.test\nfile:///etc/hosts\n';
+      // Only http/https/ftp are matched.
+      final r = extractUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractUrlsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractEmailsFromLinesIn', () {
     test('one email per line: emits each on its own line', () {
       const text = 'contact alice@x.test\nor bob@y.org\n';

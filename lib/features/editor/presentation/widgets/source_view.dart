@@ -1248,6 +1248,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractEmailsFromLinesIn,
         );
+      case SlashAction.extractUrlsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractUrlsFromLinesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,

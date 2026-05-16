@@ -260,6 +260,9 @@ enum SlashAction {
   /// Extract every email-shaped substring from each selected line
   /// and emit them one-per-line.
   extractEmailsFromLines,
+  /// Extract every http/https/ftp URL from each selected line and
+  /// emit them one-per-line.
+  extractUrlsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1468,6 +1471,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'one address per line',
     action: SlashAction.extractEmailsFromLines,
     keywords: ['extract', 'pull', 'email', 'address', 'contact'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract URLs',
+    hint: 'one link per line',
+    action: SlashAction.extractUrlsFromLines,
+    keywords: ['extract', 'pull', 'url', 'link', 'http', 'https'],
   ),
   SlashEntry(
     icon: 'sync',
