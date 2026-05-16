@@ -341,6 +341,10 @@ enum SlashAction {
   /// Extract the content of every markdown bold span
   /// (`**foo**` or `__foo__` → `foo`) from each selected line.
   extractMarkdownBoldFromLines,
+  /// Extract the content of every markdown single-delimiter
+  /// italic span (`*foo*` or `_foo_` → `foo`) from each selected
+  /// line.
+  extractMarkdownItalicFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1741,6 +1745,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownBoldFromLines,
     keywords: ['extract', 'bold', 'strong', 'emphasis', 'markdown',
         'asterisk', 'underscore'],
+  ),
+  SlashEntry(
+    icon: 'italic',
+    label: 'Extract italic content',
+    hint: '*foo* / _foo_ → foo',
+    action: SlashAction.extractMarkdownItalicFromLines,
+    keywords: ['extract', 'italic', 'emphasis', 'markdown',
+        'asterisk', 'underscore', 'em'],
   ),
   SlashEntry(
     icon: 'edit',

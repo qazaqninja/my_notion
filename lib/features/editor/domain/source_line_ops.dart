@@ -1297,6 +1297,41 @@ SortLinesResult extractMarkdownBoldFromLinesIn(
       return out;
     });
 
+/// Extract the content of every markdown single-delimiter italic
+/// span (`*foo*` or `_foo_` → `foo`) from each selected line.
+/// Natural companion to [extractMarkdownBoldFromLinesIn] (M1084,
+/// the doubled-delimiter form).
+///
+/// Recognition (both forms supported):
+/// - `*…*`: single asterisks, neither flanked by another `*`.
+/// - `_…_`: single underscores, neither flanked by another `_`.
+/// The lookbehind / lookahead guards `(?<!\*)…(?!\*)` (and
+/// `_` variant) ensure the doubled-delimiter bold form is NOT
+/// captured by accident.
+///
+/// `***bold italic***` produces NO match here — every `*` is
+/// flanked by another `*`, so the italic regex rejects all
+/// positions. Use the bold extractor instead, which captures
+/// the inner content as a single bold span.
+///
+/// 25th member of the extraction family. The emphasis pair
+/// (bold M1084 + italic M1085) is now complete; chain both
+/// transforms when both gestures need to be harvested.
+SortLinesResult extractMarkdownItalicFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'(?<!\*)\*([^*\n]+)\*(?!\*)|(?<!_)_([^_\n]+)_(?!_)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add((m.group(1) ?? m.group(2))!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

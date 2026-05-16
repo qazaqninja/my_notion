@@ -3215,6 +3215,80 @@ void main() {
     });
   });
 
+  group('extractMarkdownItalicFromLinesIn', () {
+    test('asterisk-form `*foo*` extracts content', () {
+      const text = 'plan is *tentative* still\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, 'tentative\n');
+    });
+
+    test('underscore-form `_foo_` extracts content', () {
+      const text = 'see _italic_ tag\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, 'italic\n');
+    });
+
+    test('doubled-delimiter bold forms are NOT matched', () {
+      // `**foo**` and `__foo__` are bold in CommonMark; lookbehind/
+      // lookahead guards keep them out of the italic pool.
+      const text = '**bold only** and __bold too__\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('mixed asterisk + underscore italic spans on one line', () {
+      const text = '*first* and _second_\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, 'first\nsecond\n');
+    });
+
+    test('bold-italic `***foo***` produces no italic match', () {
+      // Every `*` in this run is flanked by another `*` (either
+      // before or after), so the lookbehind / lookahead rejects
+      // all candidate positions. The bold extractor handles
+      // this case; italic is correctly silent.
+      const text = '***bold italic***\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('zero-content `**` / `__` does NOT match italic either', () {
+      // No content between the delimiters — `[^*\n]+` and
+      // `[^_\n]+` both require at least one char.
+      const text = 'gap **  __\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('span never crosses a line boundary', () {
+      const text = 'one *foo*\nbar *baz* end\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbaz\n');
+    });
+
+    test('content with internal punctuation passes through', () {
+      const text = 'note *Q1, Q2 (draft)* trail\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Q1, Q2 (draft)\n');
+    });
+
+    test('unterminated `*` is NOT a match', () {
+      const text = 'lone *unclosed text here\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without italic dropped from output', () {
+      const text = 'plain prose\nwith *italic*\nmore prose\n';
+      final r = extractMarkdownItalicFromLinesIn(text, 0, text.length);
+      expect(r.text, 'italic\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownItalicFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
