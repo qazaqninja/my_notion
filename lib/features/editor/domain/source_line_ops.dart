@@ -2285,6 +2285,34 @@ SortLinesResult extractLatLngFromLinesIn(
       return out;
     });
 
+/// Extract every Ethereum-style hex address substring
+/// (`0x` + 40 hex chars) from each selected line. Useful for
+/// smart-contract documentation, wallet-list audits, and
+/// blockchain reference scraping.
+///
+/// Recognition: `\b0x[a-fA-F0-9]{40}\b`
+/// - Literal `0x` prefix (the Ethereum address marker).
+/// - Exactly 40 hex digits (the address itself — 20 bytes /
+///   160 bits per the EVM spec).
+/// - Word boundaries on each end.
+///
+/// Case is preserved — both lowercase (`0xabc...`) and EIP-55
+/// mixed-case checksum forms (`0xAbC...`) extract intact.
+///
+/// 63rd member of the extraction family.
+SortLinesResult extractEthAddressesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b0x[a-fA-F0-9]{40}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

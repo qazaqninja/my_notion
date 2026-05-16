@@ -6011,6 +6011,71 @@ void main() {
     });
   });
 
+  group('extractEthAddressesFromLinesIn', () {
+    test('lowercase hex address extracts', () {
+      const text = 'wallet 0x742d35cc6634c0532925a3b844bc9e7595f8b8c7 here\n';
+      final r = extractEthAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '0x742d35cc6634c0532925a3b844bc9e7595f8b8c7\n');
+    });
+
+    test('EIP-55 mixed-case checksum form extracts intact', () {
+      const text = 'see 0x742d35Cc6634C0532925a3b844Bc9e7595f8b8C7 today\n';
+      final r = extractEthAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '0x742d35Cc6634C0532925a3b844Bc9e7595f8b8C7\n');
+    });
+
+    test('too-short (39 hex) is NOT an address', () {
+      const text = 'short 0x742d35cc6634c0532925a3b844bc9e7595f8b8c bad\n';
+      final r = extractEthAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('too-long (41 hex) is NOT an address', () {
+      const text =
+          'long 0x742d35cc6634c0532925a3b844bc9e7595f8b8c77 invalid\n';
+      final r = extractEthAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('missing `0x` prefix is NOT an address', () {
+      const text =
+          'bare 742d35cc6634c0532925a3b844bc9e7595f8b8c7 only\n';
+      final r = extractEthAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple addresses on one line each extract', () {
+      const text =
+          'from 0x742d35cc6634c0532925a3b844bc9e7595f8b8c7 '
+          'to 0x111111111111111111111111111111111111dead today\n';
+      final r = extractEthAddressesFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        '0x742d35cc6634c0532925a3b844bc9e7595f8b8c7\n'
+        '0x111111111111111111111111111111111111dead\n',
+      );
+    });
+
+    test('non-hex char in address is NOT a match', () {
+      // `Z` is not in `[a-fA-F0-9]`.
+      const text =
+          'fake 0x742d35Zc6634c0532925a3b844bc9e7595f8b8c7 bad\n';
+      final r = extractEthAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without ETH addresses dropped from output', () {
+      const text =
+          'plain prose\nwallet 0x742d35cc6634c0532925a3b844bc9e7595f8b8c7\nmore prose\n';
+      final r = extractEthAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '0x742d35cc6634c0532925a3b844bc9e7595f8b8c7\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractEthAddressesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
