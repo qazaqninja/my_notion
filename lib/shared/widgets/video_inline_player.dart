@@ -68,7 +68,7 @@ class _VideoInlinePlayerState extends State<VideoInlinePlayer> {
       return _Placeholder(
         height: 160,
         child: Text(
-          'Inline video unavailable\n${_initError.toString()}',
+          'Inline video unavailable\n$_initError',
           style: const TextStyle(fontSize: 12),
           textAlign: TextAlign.center,
         ),
@@ -133,9 +133,9 @@ class _PlayPauseOverlayState extends State<_PlayPauseOverlay> {
         reverseDuration: const Duration(milliseconds: 200),
         child: widget.controller.value.isPlaying
             ? const SizedBox.shrink()
-            : Container(
+            : const ColoredBox(
                 color: Colors.black26,
-                child: const Center(
+                child: Center(
                   child: Icon(
                     Icons.play_arrow_rounded,
                     color: Colors.white,
