@@ -18,6 +18,7 @@ import 'features/database/presentation/pages/databases_page.dart';
 import 'features/reminders/data/datasources/notification_scheduler.dart';
 import 'features/reminders/presentation/bloc/reminders_bloc.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
+import 'features/editor/presentation/pages/editor_beta_page.dart';
 import 'features/editor/presentation/pages/editor_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/vault/data/indexer.dart';
@@ -171,6 +172,17 @@ GoRouter _buildRouter(VaultBloc vault) {
                   '${state.pathParameters['ulid']}#${state.uri.queryParameters['anchor'] ?? ''}'),
               ulid: state.pathParameters['ulid']!,
               anchor: state.uri.queryParameters['anchor'],
+            ),
+          ),
+          // Phase D D1 slice 23 (M1284): beta WYSIWYG editor backed by
+          // super_editor + SuperEditorSerializer. Lives at /editor-beta/
+          // until interaction parity (slices 24-27) + cutover (28-30)
+          // promote it to the default /editor route.
+          GoRoute(
+            path: '/editor-beta/:ulid',
+            builder: (context, state) => EditorBetaPage(
+              key: ValueKey('beta-${state.pathParameters['ulid']}'),
+              ulid: state.pathParameters['ulid']!,
             ),
           ),
           GoRoute(
