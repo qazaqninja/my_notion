@@ -444,6 +444,8 @@ enum SlashAction {
   /// Extract the OUI (first 3 octets, vendor/manufacturer prefix)
   /// from every MAC address on each selected line.
   extractMacOuisFromLines,
+  /// Extract every Twitter/X status ID from each selected line.
+  extractTwitterStatusIdsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2149,6 +2151,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMacOuisFromLines,
     keywords: ['extract', 'mac', 'oui', 'vendor', 'manufacturer',
         'prefix', 'network'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract Twitter/X status IDs',
+    hint: 'twitter.com/u/status/N → N',
+    action: SlashAction.extractTwitterStatusIdsFromLines,
+    keywords: ['extract', 'twitter', 'x', 'tweet', 'status',
+        'id'],
   ),
   SlashEntry(
     icon: 'calendar',

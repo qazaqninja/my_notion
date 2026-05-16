@@ -2410,6 +2410,41 @@ SortLinesResult extractMacOuisFromLinesIn(
       return out;
     });
 
+/// Extract every Twitter/X status ID from each selected line.
+/// Useful for tweet-list audits, citation harvest, and bulk
+/// embed-roster building from prose notes.
+///
+/// Supports both URL surfaces:
+/// - `twitter.com/USER/status/ID` (legacy)
+/// - `x.com/USER/status/ID` (post-rebrand)
+///
+/// Recognition:
+///   `(?:twitter\.com|x\.com)/[\w.]+/status/(\d+)`
+/// - Either `twitter.com` or `x.com` domain anchor.
+/// - Username segment (alphanumeric + `_` + `.`).
+/// - Literal `/status/` path marker.
+/// - Numeric tweet ID captured as group 1.
+///
+/// Optional `https://` / `http://` / `www.` URL prefix is
+/// captured implicitly — the regex doesn't require it, so
+/// both protocol-prefixed and bare forms match.
+///
+/// 67th member of the extraction family.
+SortLinesResult extractTwitterStatusIdsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'(?:twitter\.com|x\.com)/[\w.]+/status/(\d+)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

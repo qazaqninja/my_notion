@@ -6273,6 +6273,81 @@ void main() {
     });
   });
 
+  group('extractTwitterStatusIdsFromLinesIn', () {
+    test('twitter.com URL extracts status ID', () {
+      const text = 'see https://twitter.com/jack/status/20 today\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '20\n');
+    });
+
+    test('x.com (post-rebrand) URL extracts ID', () {
+      const text =
+          'cite https://x.com/jack/status/1234567890123456789 ref\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '1234567890123456789\n');
+    });
+
+    test('protocol-less form still matches', () {
+      const text = 'tweet twitter.com/foo/status/100 short\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '100\n');
+    });
+
+    test('non-Twitter URL is NOT matched', () {
+      const text = 'other site.com/foo/status/123 not Twitter\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain `/status/N` (no domain anchor) is NOT matched', () {
+      const text = 'fake /status/123 only path\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple tweet URLs on one line each extract', () {
+      const text = 'pair twitter.com/a/status/100 and '
+          'x.com/b/status/200 cited\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '100\n200\n');
+    });
+
+    test('username with underscore preserved', () {
+      const text = 'see twitter.com/my_user/status/42 today\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '42\n');
+    });
+
+    test('username with dot preserved', () {
+      const text = 'see twitter.com/some.user/status/99 today\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '99\n');
+    });
+
+    test('lines without Twitter URLs dropped from output', () {
+      const text =
+          'plain prose\nsee twitter.com/x/status/1 today\nmore prose\n';
+      final r = extractTwitterStatusIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '1\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractTwitterStatusIdsFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
