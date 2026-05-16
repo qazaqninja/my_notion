@@ -1969,6 +1969,38 @@ SortLinesResult extractYoutubeIdsFromLinesIn(
       return out;
     });
 
+/// Extract every `owner/repo` path from GitHub URLs on each
+/// selected line. Useful for repo-list audits, dependency
+/// inventory, and PR-link harvesting.
+///
+/// Recognition: `github\.com/([A-Za-z0-9](?:[A-Za-z0-9-]{0,38}[A-Za-z0-9])?/[A-Za-z0-9._-]+)`
+/// - `github.com/` literal anchor (the URL surface that
+///   distinguishes GitHub from generic `owner/repo` strings).
+/// - Username: starts with alphanumeric, can contain hyphens,
+///   max 39 chars total, can't end with hyphen (per GitHub's
+///   username rules).
+/// - Single literal `/`.
+/// - Repo name: alphanumeric plus `_`, `-`, `.` per GitHub's
+///   repo-name rules.
+///
+/// 54th member of the extraction family.
+SortLinesResult extractGithubRepoPathsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'github\.com/'
+        r'([A-Za-z0-9](?:[A-Za-z0-9-]{0,38}[A-Za-z0-9])?'
+        r'/[A-Za-z0-9._-]+)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

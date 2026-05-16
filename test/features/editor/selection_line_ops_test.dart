@@ -5426,6 +5426,79 @@ void main() {
     });
   });
 
+  group('extractGithubRepoPathsFromLinesIn', () {
+    test('full HTTPS URL extracts owner/repo', () {
+      const text = 'see https://github.com/flutter/flutter today\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'flutter/flutter\n');
+    });
+
+    test('owner with hyphen preserved', () {
+      const text = 'fork https://github.com/dart-lang/sdk source\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'dart-lang/sdk\n');
+    });
+
+    test('repo name with dot preserved', () {
+      const text = 'see github.com/qazaqninja/my.notion repo\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'qazaqninja/my.notion\n');
+    });
+
+    test('protocol-less form still matches', () {
+      const text = 'check github.com/foo/bar quickly\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo/bar\n');
+    });
+
+    test('multiple repos on one line each extract', () {
+      const text =
+          'cite github.com/foo/bar and github.com/baz/qux today\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo/bar\nbaz/qux\n');
+    });
+
+    test('plain `path/file.txt` (not a GitHub URL) is NOT matched', () {
+      // The `github.com/` anchor is what disambiguates from
+      // generic two-segment paths.
+      const text = 'open path/file.txt now\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('different domain (gitlab.com) is NOT matched', () {
+      const text = 'mirror gitlab.com/foo/bar elsewhere\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('underscores in repo name preserved', () {
+      const text = 'use github.com/foo/some_repo here\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo/some_repo\n');
+    });
+
+    test('extra path segments NOT included in capture', () {
+      // The regex captures only `owner/repo`, not the trailing
+      // `/blob/main/...` path.
+      const text =
+          'docs https://github.com/foo/bar/blob/main/README.md\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo/bar\n');
+    });
+
+    test('lines without GitHub URLs dropped from output', () {
+      const text =
+          'plain prose\nfork github.com/foo/bar\nmore prose\n';
+      final r = extractGithubRepoPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo/bar\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractGithubRepoPathsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

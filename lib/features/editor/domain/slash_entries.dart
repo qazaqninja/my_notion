@@ -404,6 +404,9 @@ enum SlashAction {
   /// `youtube.com/watch?v=`, `youtube.com/embed/` URL surfaces)
   /// on each selected line.
   extractYoutubeIdsFromLines,
+  /// Extract every `owner/repo` path from GitHub URLs on each
+  /// selected line.
+  extractGithubRepoPathsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2005,6 +2008,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractYoutubeIdsFromLines,
     keywords: ['extract', 'youtube', 'video', 'id', 'watch',
         'embed'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract GitHub repo paths',
+    hint: 'github.com/foo/bar → foo/bar',
+    action: SlashAction.extractGithubRepoPathsFromLines,
+    keywords: ['extract', 'github', 'repo', 'repository', 'owner',
+        'slug'],
   ),
   SlashEntry(
     icon: 'calendar',
