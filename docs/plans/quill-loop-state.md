@@ -7,14 +7,14 @@
 
 - **Phase:** C (V1 Polish — Platform)
 - **Task:** C2 — macOS security-scoped bookmark persistence
-- **Status:** pending
+- **Status:** in_progress (slice 1 of ~2 done at M1236)
 
-## Last completed
+## Last completed slice
 
-- **M1234 — C1 slices 2+3 (closes C1)** (vendor mermaid.min.js + wire renderer)
-- Committed: ffdc4ce
-- TaskList ID: 19 (closed)
-- Notes: C1 shipped in 3 commits (M1232 skeleton, M1234 vendoring + integration, M1235 state advance — pending). mermaid@10.9.4 (3.3 MB) lives at `assets/mermaid/mermaid.min.js` and loads inline via rootBundle. M200 placeholder in markdown_renderer.dart now hosts MermaidView. Linux/Windows fall back to source-text card. FEATURES.md "Mermaid diagrams in code blocks" 🚧 → ✅.
+- **M1236 — C2 slice 1** (Swift MethodChannel + Dart wrapper + 4-case test)
+- Committed: 6b64326
+- TaskList ID: 20 (still in_progress)
+- Notes: AppDelegate.swift registers `quill/bookmarks` with save(path) and resolve(bookmark) methods using `URL.bookmarkData(.withSecurityScope,…)` / `URL(resolvingBookmarkData:.withSecurityScope,…)`. Dart wrapper at `lib/core/platform/security_scoped_bookmarks.dart` is mockable via MethodChannel injection (RP-02). PlatformException → null mapping so callers degrade gracefully. Slice 2 wires this into VaultBloc's tryRestore + PickVault flows (persist Base64 bookmark in SharedPreferences under `vault.bookmark`, prefer over raw `vault.path` on macOS).
 
 ## Backlog (Phase A — Foundation)
 
