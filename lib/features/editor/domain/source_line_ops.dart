@@ -2230,6 +2230,35 @@ String formatIsoDateTime(DateTime when) {
 String formatEpochTimestamp(DateTime when) =>
     (when.millisecondsSinceEpoch ~/ 1000).toString();
 
+/// Format a [DateTime] as the ISO 8601 year-week tag used by the
+/// `/week` slash entry (e.g. `2026-W20`). The week number follows
+/// the ISO 8601 rule: week 1 is the week containing the first
+/// Thursday of the year, weeks start on Monday, and some years span
+/// 53 weeks. The year portion is the **ISO week-numbering year** —
+/// usually the calendar year, but on late-December or early-January
+/// dates it can roll over (e.g. `2026-01-01` falls in `2026-W01`,
+/// but `2027-01-01` would fall in `2026-W53` since 2026 is a 53-week
+/// year). That subtle reroll matters when filing weekly notes near
+/// the year boundary.
+String formatIsoYearWeek(DateTime when) {
+  // Step to the Thursday of the same ISO week — that anchors the
+  // year/week pair unambiguously (because weeks are defined by which
+  // Thursday they contain).
+  final thursday =
+      when.add(Duration(days: DateTime.thursday - when.weekday));
+  // First Thursday of `thursday`'s calendar year is week 1 by
+  // definition. weekday 1..7; (4 - jan1.weekday + 7) % 7 == days
+  // until the first Thursday of the year.
+  final jan1 = DateTime(thursday.year, 1, 1);
+  final daysToFirstThursday = (DateTime.thursday - jan1.weekday + 7) % 7;
+  final firstThursday = jan1.add(Duration(days: daysToFirstThursday));
+  final week =
+      (thursday.difference(firstThursday).inDays ~/ 7) + 1;
+  final yyyy = thursday.year.toString().padLeft(4, '0');
+  final ww = week.toString().padLeft(2, '0');
+  return '$yyyy-W$ww';
+}
+
 /// Format a [DateTime] as the `YYYY-Qn` quarter tag used in the sample
 /// vault's QBR notes (e.g. `2026-Q2`). Quarter boundaries follow the
 /// standard calendar definition: Q1 = Jan–Mar, Q2 = Apr–Jun,

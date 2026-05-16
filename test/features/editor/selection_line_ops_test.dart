@@ -2376,6 +2376,30 @@ void main() {
       expect(formatYearMonth(DateTime(2026, 1, 1)), '2026-01');
       expect(formatYearMonth(DateTime(2026, 12, 31)), '2026-12');
     });
+
+    test('formatIsoYearWeek emits YYYY-Www with zero-padding', () {
+      // 2026-05-16 is a Saturday in week 20 (Thursday 2026-05-14).
+      expect(formatIsoYearWeek(DateTime(2026, 5, 16)), '2026-W20');
+    });
+
+    test('formatIsoYearWeek handles January week 01', () {
+      // 2026-01-01 is a Thursday — it IS the first Thursday of 2026,
+      // so it lives in week 01 of the ISO year 2026.
+      expect(formatIsoYearWeek(DateTime(2026, 1, 1)), '2026-W01');
+    });
+
+    test('formatIsoYearWeek rolls late-Dec dates back into previous year', () {
+      // 2025-12-29 is a Monday. Thursday of that week is 2026-01-01,
+      // which lives in ISO week 01 of 2026 — so a Monday before the
+      // year flip already belongs to the new ISO year.
+      expect(formatIsoYearWeek(DateTime(2025, 12, 29)), '2026-W01');
+    });
+
+    test('formatIsoYearWeek rolls early-Jan dates into prior 53-week year', () {
+      // 2027-01-01 is a Friday; Thursday of that week is 2026-12-31.
+      // 2026 was a 53-week ISO year, so 2026-12-31 sits in 2026-W53.
+      expect(formatIsoYearWeek(DateTime(2027, 1, 1)), '2026-W53');
+    });
   });
 
   group('renumberListLinesIn', () {

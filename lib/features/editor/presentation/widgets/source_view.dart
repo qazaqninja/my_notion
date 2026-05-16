@@ -795,6 +795,14 @@ class _SourceViewState extends State<SourceView> {
           selection:
               TextSelection.collapsed(offset: stripStart + snippet.length),
         );
+      case SlashAction.insertIsoYearWeek:
+        final snippet = formatIsoYearWeek(DateTime.now());
+        final newText = text.replaceRange(stripStart, caret, snippet);
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection:
+              TextSelection.collapsed(offset: stripStart + snippet.length),
+        );
       case SlashAction.pickEmoji:
         // Strip the `/...` trigger first so the picker opens with a
         // clean caret position.

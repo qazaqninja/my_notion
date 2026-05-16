@@ -52,6 +52,8 @@ enum SlashAction {
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
   insertYearMonth,
+  /// Insert the current ISO year-week tag (`YYYY-Www`) at the caret.
+  insertIsoYearWeek,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -576,6 +578,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '2026-05',
     action: SlashAction.insertYearMonth,
     keywords: ['month', 'monthly', 'review', 'period'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Current ISO week',
+    hint: '2026-W20',
+    action: SlashAction.insertIsoYearWeek,
+    keywords: ['week', 'iso', 'weekly', 'review', 'w20'],
   ),
   SlashEntry(
     icon: 'users',
