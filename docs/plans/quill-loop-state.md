@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F4 — Form schema validation (resolve `forms:` ref → walk linked .database.yaml schema → per-field type checks on POST /forms/<ulid>/submit)
+- **Task:** F5 — Wire FormSchema/validateSubmission into POST /forms/<ulid>/submit (replace "any non-empty body" with the validator + 422 on errors)
 - **Status:** pending
 
 ## Last completed
+
+- **M1361 — F4** (form schema parser + validator pure functions)
+- Committed: (this iteration)
+- TaskList ID: 80
+- Notes: Lays the validation foundation before wiring it into the route. New `backend/lib/forms/form_schema.dart` with: (1) `FormFieldType { text, number, checkbox, select }` enum; (2) `FormFieldDef({name, type, required, options})` value class; (3) `FormSchema` + `FormSchema.empty` fallback that matches the legacy "accept any non-empty body" behavior; (4) `parseFormSchema(yaml)` — hand-rolled regex/state-machine parser over `.database.yaml`'s `columns:` block, matching the existing `FrontmatterProbe` no-yaml-dep pattern. Handles `- name:` opening lines, indented key:value attrs, type synonyms (integer/int/float → number, bool/boolean → checkbox, enum → select, unknown → text default), required flag (`true`/`yes`), inline-flow `options: [a, b, c]`, quoted names + values, top-level key after columns terminates block. (5) `validateSubmission(schema, raw) → FormValidationResult({errors, normalized, isValid})` — required-field missing → `errors['name']='required'`, number parses + rejects NaN/Infinity explicitly, checkbox accepts {true,on,yes,1}/{false,off,no,0}, select rejects values not in options, extras outside the schema are silently dropped from the normalized output (lax). Multiple errors accumulate per field. 17 new tests cover the full matrix; 116/116 backend tests pass; backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1360 — F3** (Android intent-filters + iOS Share Extension docs)
 - Committed: (this iteration)
