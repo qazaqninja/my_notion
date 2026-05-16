@@ -68,7 +68,16 @@ class IncomingShareBinder {
       _activeSource = source;
       _activeListener = listener;
       _activeRoot = state.rootPath;
-      await listener.start();
+      // F9 / orchestrator BL-11: guard `listener.start()` so a crash
+      // inside the share-plugin's initial-payload read doesn't kill
+      // the bloc-stream subscription on the way out. We swallow the
+      // error here — the next VaultLoaded emission will re-create
+      // the listener from scratch.
+      try {
+        await listener.start();
+      } catch (_) {
+        await _stopActive();
+      }
     } else {
       // VaultPicking / VaultError / VaultInitial — tear down anything
       // we previously spun up; nothing to bind to.

@@ -242,7 +242,16 @@ Phase F shipped (F1-F8) closed:
 - G1 + G2: small, user-visible polish wins.
 - H1: foundation for multiplayer; the largest remaining unshipped feature in the original plan.
 
-Audit dispatched (background) over M1358-M1365; findings will append below when the agent reports back.
+**F-stretch audit findings (F9 / M1367, ran post-commit M1365):**
+
+- **0 BLOCK.** `dart analyze --fatal-warnings` + `custom_lint` clean.
+- **WARN: BL-11** — `IncomingShareBinder._react` called `await listener.start()` unguarded; a throw from the share-plugin's initial-payload read would have leaked into the bloc-stream subscription's onError (no handler) and killed the binding. ✅ Resolved at M1367 — wrapped in try/catch that runs `_stopActive()` and lets the next `VaultLoaded` re-attempt.
+- **WARN: TS-05** — `_FakeSource` duplicated across binder + listener tests with subtly different internal state (`closeCalls` int vs `closed` bool). Acceptable per the rule (private + per-file), flagged as a consistency note. Deferred — not blocking.
+- **INFO: RP-02** — `backendBaseUrl` is still a compile-time `const` in `app.dart`. Pre-flagged for the settings-page URL-override slice; refactor it to a SharedPreferences-backed mutable when that lands.
+- **INFO: runDb call ergonomics** — trailing-lambda style with `op:` named first reads inverted (`runDb(op: 'sync.listFor', () async { ... })`). Could reorder to `runDb(() async { ... }, op: '…')`. Cosmetic; defer.
+- **INFO: dbExceptionToResponse middleware** — mounted per-pipeline (5 instances). Composing once at the outer router level would make a future 6th pipeline harder to forget. Stateless closure factory so no shared-state hazard exists today. Defer.
+
+Compliant areas to preserve: feature-first folder structure for sharing/, no Flutter imports in domain/, constructor-injected http.Client + bloc.stream listener pattern correct, EmailAlreadyTakenException → DbException subtype hierarchy sound, dbExceptionToResponse covers every db-backed pipeline.
 
 ### Phase E final-closeout survey (E53 / M1356)
 
