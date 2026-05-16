@@ -4061,6 +4061,50 @@ SortLinesResult extractStripeIdsFromLinesIn(
       return out;
     });
 
+/// Extract every DMS (degree-minute-second) coordinate from
+/// each selected line. Useful for travel-note triage, surveyor
+/// field-report scrapes, maritime / aviation log harvests, and
+/// legacy GPS reference inventories.
+///
+/// Recognition:
+/// `\b\d{1,3}°\d{1,2}'\d{1,2}(?:\.\d+)?"[NSEW]`
+/// - 1-3 digit degrees, then literal `°` (degree sign).
+/// - 1-2 digit minutes, then literal `'` (apostrophe).
+/// - 1-2 digit seconds, optional decimal fraction, then literal
+///   `"` (double quote).
+/// - Cardinal direction: `N`, `S`, `E`, or `W`.
+///
+/// Matches:
+/// - `40°26'46"N`           — classic NY-style
+/// - `74°00'21"W`
+/// - `40°26'46.5"N`         — with decimal seconds
+/// - `33°51'34"S`           — southern hemisphere
+///
+/// Distinct from [extractGeoCoordinatesFromLinesIn] (M1158 —
+/// decimal-degree form `lat,lon`). DMS uses the
+/// degree-minute-second triple with explicit cardinal direction
+/// instead of a sign.
+///
+/// Unicode degree sign `°` (U+00B0) is required. ASCII `o` and
+/// asterisk `*` workarounds (`40o26'46"N`) are NOT matched.
+/// Authorial notes should use the canonical Unicode symbols.
+///
+/// 109th member of the extraction family.
+SortLinesResult extractDmsCoordinatesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r"""\b\d{1,3}°\d{1,2}'\d{1,2}(?:\.\d+)?"[NSEW]""",
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

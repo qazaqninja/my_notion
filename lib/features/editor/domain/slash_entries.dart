@@ -573,6 +573,9 @@ enum SlashAction {
   /// Extract every Stripe API object identifier (`pi_...`,
   /// `cus_...`, `sk_test_...`) from each selected line.
   extractStripeIdsFromLines,
+  /// Extract every DMS (degree-minute-second) coordinate
+  /// (`40°26'46"N`, `74°00'21"W`) from each selected line.
+  extractDmsCoordinatesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2628,6 +2631,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'stripe', 'payment', 'webhook',
         'api', 'finance', 'billing', 'subscription',
         'invoice', 'customer'],
+  ),
+  SlashEntry(
+    icon: 'compass',
+    label: 'Extract DMS coordinates',
+    hint: "40°26'46\"N / 74°00'21\"W",
+    action: SlashAction.extractDmsCoordinatesFromLines,
+    keywords: ['extract', 'dms', 'degree', 'minute', 'second',
+        'coordinate', 'gps', 'sextant', 'navigation',
+        'maritime', 'aviation'],
   ),
   SlashEntry(
     icon: 'calendar',

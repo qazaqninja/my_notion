@@ -9465,6 +9465,86 @@ void main() {
     });
   });
 
+  group('extractDmsCoordinatesFromLinesIn', () {
+    test('classic NY DMS extracts', () {
+      const text = "see 40°26'46\"N landmark\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, "40°26'46\"N\n");
+    });
+
+    test('western longitude extracts', () {
+      const text = "lon 74°00'21\"W today\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, "74°00'21\"W\n");
+    });
+
+    test('decimal seconds extract', () {
+      const text = "precise 40°26'46.5\"N here\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, "40°26'46.5\"N\n");
+    });
+
+    test('southern hemisphere extracts', () {
+      const text = "sydney 33°51'34\"S harbour\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, "33°51'34\"S\n");
+    });
+
+    test('east longitude extracts', () {
+      const text = "tokyo 139°41'30\"E here\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, "139°41'30\"E\n");
+    });
+
+    test('ASCII-only workaround o NOT matched', () {
+      // Unicode `°` (U+00B0) required; lookalike `o` is not.
+      const text = "old 40o26'46\"N legacy\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('missing cardinal direction rejected', () {
+      // `40°26'46"` without N/S/E/W is incomplete.
+      const text = "incomplete 40°26'46\" alone\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('invalid cardinal like X rejected', () {
+      // Only N/S/E/W are valid cardinals.
+      const text = "fake 40°26'46\"X invalid\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('lat + lon pair on one line each extract', () {
+      const text = "ny 40°26'46\"N 74°00'21\"W full\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, "40°26'46\"N\n74°00'21\"W\n");
+    });
+
+    test('lines without DMS dropped from output', () {
+      const text = "plain prose\nlat 40°26'46\"N here\nbye\n";
+      final r = extractDmsCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, "40°26'46\"N\n");
+    });
+
+    test('empty input stays empty', () {
+      expect(
+          extractDmsCoordinatesFromLinesIn('', 0, 0).text, '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
