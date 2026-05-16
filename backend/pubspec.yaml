@@ -7,6 +7,8 @@ environment:
   sdk: ^3.9.2
 
 dependencies:
+  bcrypt: ^1.2.0
+  dart_jsonwebtoken: ^3.4.1
   postgres: ^3.5.11
   shelf: ^1.4.2
   shelf_router: ^1.1.2
