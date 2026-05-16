@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E9 — PUT /sync/put/[relpath] (first write path)
+- **Task:** E10 — GET /sync/get/[relpath]
 - **Status:** pending
 
 ## Last completed
 
-- **M1300 — E8** (vault_files table + GET /sync/list)
-- Committed: 4b77d89
-- TaskList ID: 30
-- Notes: Migration v2 lands `vault_files(user_id, relpath, sha256, body, mtime)` with composite PK + CASCADE on user delete + index on (user_id, mtime DESC). `FileSummary` DTO (relpath/sha256/mtime — body excluded for cheap listings). `SyncRepositoryBase.listFor(userId)` interface; `SyncRepository(conn)` impl runs the indexed query. `GET /sync/list` route mounted at `/sync/` BEHIND `requireAuth` so `currentUser` is safe. Per-user scoping test (Bob's row doesn't leak into Alice's listing) guards against future query bugs. 33/33 backend tests pass. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1302 — E9** (PUT /sync/put/[relpath] upserts body + server sha256)
+- Committed: 92dbe10
+- TaskList ID: 31
+- Notes: `SyncRepositoryBase.upsert(userId, relpath, body, sha256)` interface + Postgres INSERT … ON CONFLICT DO UPDATE impl. Route consumes the relpath suffix via `<relpath|.*>`, computes sha256 server-side with `crypto: ^3.0.6`, returns FileSummary. `_isSafeRelpath` defense-in-depth check rejects `..` / empty segments / absolute paths; Dart Uri.parse already normalises traversal segments (RFC 3986 §5.2.4) so the check is a belt-and-suspenders second line. 35/35 backend tests pass.
 
 ## Backlog (Phase A — Foundation)
 
