@@ -86,15 +86,15 @@ class SuperEditorSerializer {
   ///   per M80 / M243.
   /// - Slice 20: inline marks — subscript `~X~` + superscript `^X^` per
   ///   M244 (Pandoc extensions).
-  /// - Slice 21: inline color / background spans
-  ///   (`<span style="color:…;background-color:…">X</span>`, M80). The
-  ///   serializer carries the raw `<span …>X</span>` markdown verbatim
-  ///   through paragraph text — the WYSIWYG view shows the HTML tags
-  ///   literally, but the existing `markdown_renderer.dart` inline-HTML
-  ///   pass renders the styled text correctly. A future styled-attribution
-  ///   pass will store the style as a `StyleSpanAttribution(style)` so
-  ///   super_editor can render the colors natively; for now byte-identical
-  ///   source preservation is the priority.
+  /// - Slice 21: inline color / background spans.
+  /// - Slice 22: inline wikilink chips + date pills.
+  ///   - Inline `[[ULID]]` or `[[ULID#anchor]]` (mid-paragraph) gets
+  ///     `inlineWikilinkAttribution` on the matching character range.
+  ///     The literal `[[…]]` text is kept verbatim — the attribution is
+  ///     purely a styling hint for super_editor to render a chip.
+  ///   - Inline `@YYYY-MM-DD` gets `inlineDateAttribution` per M83.
+  ///   - Standalone `[[ULID]]` / `![[ULID]]` continue to upgrade to the
+  ///     subPage / transclusion block attributions (slices 11+12).
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -732,6 +732,34 @@ AttributedText _parseInline(String src) {
         continue;
       }
     }
+    // Inline wikilink chip — `[[ULID]]` or `[[ULID#anchor]]`. Keep the
+    // raw `[[…]]` text in the body; just attach an attribution span so
+    // super_editor's WYSIWYG renders a chip while the markdown source
+    // stays unchanged.
+    final inlineWiki = RegExp(r'^\[\[([0-9A-HJKMNP-TV-Z]{26})(#[^\]]*)?\]\]')
+        .matchAsPrefix(src, i);
+    if (inlineWiki != null) {
+      final whole = inlineWiki.group(0)!;
+      final start = out.length;
+      out.write(whole);
+      final end = out.length - 1;
+      spans.add(_InlineSpan(inlineWikilinkAttribution, start, end));
+      i += whole.length;
+      continue;
+    }
+    // Inline date pill — `@YYYY-MM-DD` per M83. Keep the literal text;
+    // attach an attribution span for styled rendering.
+    final inlineDate =
+        RegExp(r'^@(\d{4})-(\d{2})-(\d{2})\b').matchAsPrefix(src, i);
+    if (inlineDate != null) {
+      final whole = inlineDate.group(0)!;
+      final start = out.length;
+      out.write(whole);
+      final end = out.length - 1;
+      spans.add(_InlineSpan(inlineDateAttribution, start, end));
+      i += whole.length;
+      continue;
+    }
     out.write(src[i]);
     i += 1;
   }
@@ -882,6 +910,18 @@ const highlightAttribution = NamedAttribution('highlight');
 // `superscriptAttribution` (ScriptAttribution variants). No locally
 // declared duplicates — earlier slice's local consts were dropped at
 // M1280 when the test surface caught the ambiguous-import collision.
+
+/// Custom inline attribution for `[[ULID]]` / `[[ULID#anchor]]` wikilink
+/// chips that appear mid-paragraph (the standalone form upgrades to a
+/// sub-page block via `subPageAttribution`). The raw `[[…]]` text stays
+/// in the body — the attribution is a styling hint so super_editor can
+/// render a chip without touching the source.
+const inlineWikilinkAttribution = NamedAttribution('inlineWikilink');
+
+/// Custom inline attribution for `@YYYY-MM-DD` date pills per M83. The
+/// literal `@2026-05-17` stays in the body text; the styling pass
+/// renders the run as a pill.
+const inlineDateAttribution = NamedAttribution('inlineDate');
 
 /// Returns true when [url] has an extension this serializer treats as an
 /// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no

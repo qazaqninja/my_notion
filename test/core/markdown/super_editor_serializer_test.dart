@@ -903,4 +903,67 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer inline chips — wikilink + date (D1 slice 22)',
+      () {
+    const ulid = '01HX0V0000000000000000000A';
+
+    test('inline [[ULID]] mid-paragraph attaches inlineWikilinkAttribution', () {
+      final md = 'See [[$ulid]] for the design doc.';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      // Body text is unchanged.
+      expect(node.text.toPlainText(), md);
+      // 'See ' is 4 chars; the wikilink starts at index 4 and runs 30
+      // chars (`[[` + 26 ULID + `]]`).
+      expect(node.text.getAllAttributionsAt(4),
+          contains(inlineWikilinkAttribution));
+      expect(node.text.getAllAttributionsAt(33),
+          contains(inlineWikilinkAttribution));
+      expect(node.text.getAllAttributionsAt(3),
+          isNot(contains(inlineWikilinkAttribution)));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('inline [[ULID#anchor]] keeps the anchor in the chip span', () {
+      final md = 'jump to [[$ulid#section]] now';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(
+        node.text.getAllAttributionsAt(8),
+        contains(inlineWikilinkAttribution),
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('inline @YYYY-MM-DD attaches inlineDateAttribution', () {
+      const md = 'meeting @2026-05-17 in the morning';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      // 'meeting ' is 8 chars; the date pill is 11 chars long.
+      expect(node.text.getAllAttributionsAt(8),
+          contains(inlineDateAttribution));
+      expect(node.text.getAllAttributionsAt(18),
+          contains(inlineDateAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('two date pills in the same paragraph', () {
+      const md = 'between @2026-05-17 and @2026-06-01';
+      final doc = serializer.markdownToDocument(md);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('standalone [[ULID]] still goes to the block-level sub-page path '
+        '(slice 11 contract still holds)', () {
+      final md = '[[$ulid]]';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      // Block-level attribution wins for standalone line.
+      expect(node.getMetadataValue('blockType'), subPageAttribution);
+      // No conflicting inline attribution either.
+      expect(node.text.getAllAttributionsAt(0),
+          isNot(contains(inlineWikilinkAttribution)));
+    });
+  });
 }
