@@ -36,6 +36,9 @@ enum SlashAction {
   /// Capitalize just the first letter of each selected line,
   /// leaving the rest untouched.
   capitalizeFirstLetterPerLine,
+  /// Strip every non-ASCII character from each selected line,
+  /// keeping only codepoints `U+0000`–`U+007F`.
+  asciiOnlyLines,
   /// Strip markdown emphasis / decoration markers (`**`, `*`, `_`,
   /// `~~`, `==`, backticks) from every selected line so the inner
   /// text remains as plain prose.
@@ -1685,6 +1688,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'leave the rest untouched',
     action: SlashAction.capitalizeFirstLetterPerLine,
     keywords: ['capitalize', 'cap', 'first', 'letter', 'bullet'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'ASCII only (drop non-ASCII)',
+    hint: 'aggressive Unicode strip',
+    action: SlashAction.asciiOnlyLines,
+    keywords: ['ascii', 'strip', 'unicode', 'plain', 'normalize'],
   ),
   SlashEntry(
     icon: 'edit',

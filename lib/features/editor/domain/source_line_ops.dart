@@ -3498,6 +3498,32 @@ SortLinesResult spacesToTabsIn(String text, int start, int end, {int width = 2})
   );
 }
 
+/// Strip every non-ASCII character from each selected line.
+/// Keeps the ASCII range (`U+0000`–`U+007F`) intact and drops
+/// everything else: emoji, accented Latin, CJK ideographs, smart
+/// quotes, em dashes — all gone. Useful for normalizing prose for
+/// systems that don't handle Unicode (legacy log pipelines, plain-
+/// text exports, ASCII-only databases).
+///
+/// More aggressive than `removeAccents` (M993 — folds Latin
+/// diacritics to their ASCII base letter) and `stripEmoji`
+/// (M992 — only the pictograph blocks). This one drops EVERYTHING
+/// outside the 0–127 codepoint range.
+SortLinesResult asciiOnlyLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final buf = StringBuffer();
+            for (var i = 0; i < l.length; i++) {
+              final c = l.codeUnitAt(i);
+              if (c < 128) buf.writeCharCode(c);
+            }
+            return buf.toString();
+          })(),
+      ];
+    });
+
 /// Capitalize the first letter of each selected line, leaving the
 /// rest of the line untouched. Mirrors the "start each bullet with
 /// a capital" copy-edit gesture. Differs from `titleCaseLinesIn`

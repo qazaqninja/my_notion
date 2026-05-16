@@ -1155,6 +1155,43 @@ void main() {
     });
   });
 
+  group('asciiOnlyLinesIn', () {
+    test('drops emoji and keeps ASCII text', () {
+      const text = 'hello 👋 world\n';
+      final r = asciiOnlyLinesIn(text, 0, text.length);
+      expect(r.text, 'hello  world\n');
+    });
+
+    test('drops accented Latin (does NOT fold to base letters)', () {
+      // Unlike removeAccents, this just drops the non-ASCII chars.
+      const text = 'café résumé\n';
+      final r = asciiOnlyLinesIn(text, 0, text.length);
+      expect(r.text, 'caf rsum\n');
+    });
+
+    test('drops CJK / Arabic / other scripts', () {
+      const text = 'mix 日本 안녕 مرحبا done\n';
+      final r = asciiOnlyLinesIn(text, 0, text.length);
+      expect(r.text, 'mix    done\n');
+    });
+
+    test('plain ASCII passes through unchanged', () {
+      const text = 'hello world 1234 !@#\n';
+      expect(asciiOnlyLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('smart quotes / em dashes are dropped', () {
+      // `‘` left single quote, `—` em dash — both >127.
+      const text = '‘hello’ — world\n';
+      final r = asciiOnlyLinesIn(text, 0, text.length);
+      expect(r.text, 'hello  world\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(asciiOnlyLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('capitalizeFirstLetterPerLineIn', () {
     test('capitalizes the first letter, leaves the rest', () {
       const text = 'hello world\nfoo BAR\n';
