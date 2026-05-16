@@ -219,6 +219,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'tag', label: 'Resume latest page by tag…', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Resume latest page in folder…', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'clock', label: 'Open oldest page in folder…', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Resume latest page by title prefix…', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Open largest page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'link', label: 'Open most-linked page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Open smallest page', hint: ''),

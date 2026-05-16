@@ -590,6 +590,39 @@ class _VaultShellPageState extends State<VaultShellPage> {
     router.go('/editor/${pick.ulid}');
   }
 
+  Future<void> _resumeLatestByTitlePrefixPrompt(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final scope = context;
+    final prefix = await showQuillPrompt(
+      context,
+      title: 'Resume latest page by title prefix',
+      icon: 'note',
+      label: 'Prefix',
+      placeholder: 'e.g. Project:',
+      confirmLabel: 'Open',
+    );
+    if (prefix == null || prefix.trim().isEmpty) return;
+    final refs = _toPageRefs(await db.select(db.pages).get());
+    final pick = latestByTitlePrefix(refs, prefix);
+    if (pick == null) {
+      if (scope.mounted) {
+        scope.toastError('No page title starts with "$prefix"');
+      }
+      return;
+    }
+    final days = DateTime.now()
+            .difference(DateTime.fromMillisecondsSinceEpoch(pick.mtimeMs))
+            .inDays;
+    if (scope.mounted) {
+      scope.toastInfo(
+        '"$prefix…" · last edited $days ${days == 1 ? "day" : "days"} ago',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openOldestInFolderPrompt(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -1053,6 +1086,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _resumeLatestInFolderPrompt(context);
       case 'Open oldest page in folder…':
         await _openOldestInFolderPrompt(context);
+      case 'Resume latest page by title prefix…':
+        await _resumeLatestByTitlePrefixPrompt(context);
       case 'Open largest page':
         await _openLargestPage(context);
       case 'Open most-linked page':
