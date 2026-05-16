@@ -345,6 +345,9 @@ enum SlashAction {
   /// italic span (`*foo*` or `_foo_` → `foo`) from each selected
   /// line.
   extractMarkdownItalicFromLines,
+  /// Extract every markdown footnote ID (`[^id]` → `id`) from
+  /// each selected line.
+  extractMarkdownFootnoteIdsFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1753,6 +1756,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownItalicFromLines,
     keywords: ['extract', 'italic', 'emphasis', 'markdown',
         'asterisk', 'underscore', 'em'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract footnote IDs',
+    hint: '[^1] → 1',
+    action: SlashAction.extractMarkdownFootnoteIdsFromLines,
+    keywords: ['extract', 'footnote', 'id', 'ref', 'reference',
+        'definition', 'markdown', 'gfm', 'pandoc'],
   ),
   SlashEntry(
     icon: 'edit',

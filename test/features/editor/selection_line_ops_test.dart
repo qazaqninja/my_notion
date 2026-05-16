@@ -3289,6 +3289,83 @@ void main() {
     });
   });
 
+  group('extractMarkdownFootnoteIdsFromLinesIn', () {
+    test('numeric `[^1]` ref extracts the ID', () {
+      const text = 'see footnote [^1] for details\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1\n');
+    });
+
+    test('alphanumeric label `[^note]` extracts the ID', () {
+      const text = 'cite [^note] here\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'note\n');
+    });
+
+    test('hyphenated label `[^foo-bar]` extracts intact', () {
+      const text = 'tagged [^foo-bar] mid-sentence\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo-bar\n');
+    });
+
+    test('definition line `[^1]: text` also yields its ID', () {
+      // The def-line head shares the `[^id]` shape with refs,
+      // so both surfaces contribute to the ID count.
+      const text = '[^1]: This is the footnote text\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1\n');
+    });
+
+    test('plain `[bracket]` without caret is NOT a footnote', () {
+      // The `[^` opener is literal — `[label]` is a reference
+      // link, not a footnote.
+      const text = 'note [bracket] no caret\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('empty `[^]` is NOT a match', () {
+      // `[^\]\n]+` requires at least one ID char.
+      const text = 'trivia [^] empty\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple footnotes on one line each extract', () {
+      const text = 'pair [^a] and [^b] and [^c] cite\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a\nb\nc\n');
+    });
+
+    test('mixed ref + def on one block all extract', () {
+      const text = 'see [^1] inline\n[^1]: definition\n[^2]: another\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1\n1\n2\n');
+    });
+
+    test('lines without footnotes dropped from output', () {
+      const text = 'plain prose\nwith [^1] ref\nmore prose\n';
+      final r =
+          extractMarkdownFootnoteIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownFootnoteIdsFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

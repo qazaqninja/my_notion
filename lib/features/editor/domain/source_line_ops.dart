@@ -1332,6 +1332,39 @@ SortLinesResult extractMarkdownItalicFromLinesIn(
       return out;
     });
 
+/// Extract every markdown footnote ID (`[^id]` → `id`) from each
+/// selected line. Useful for footnote audits: pulling every
+/// footnote ID a doc references / defines, so you can compare
+/// the two sets (orphan defs, missing refs, duplicate IDs).
+///
+/// Captures BOTH reference shapes equivalently:
+/// - In-prose ref `… see [^1]` → `1`
+/// - Definition-line head `[^1]: text` → `1`
+///
+/// The transform is "extract footnote IDs" rather than "extract
+/// refs OR defs separately" because both surfaces share the
+/// `[\^id\]` shape; a downstream sort+uniq counts each ID's
+/// total occurrences (a ref + a def = count 2; an orphan = 1).
+///
+/// Recognition:
+/// - Literal `[^` opener.
+/// - At least one non-`]`, non-newline ID char captured.
+/// - Literal `]` closer.
+///
+/// 26th member of the extraction family.
+SortLinesResult extractMarkdownFootnoteIdsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\[\^([^\]\n]+)\]');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
