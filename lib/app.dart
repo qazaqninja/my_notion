@@ -17,6 +17,9 @@ import 'features/database/presentation/pages/database_table_page.dart';
 import 'features/database/presentation/pages/databases_page.dart';
 import 'features/reminders/data/datasources/notification_scheduler.dart';
 import 'features/reminders/presentation/bloc/reminders_bloc.dart';
+import 'features/sync/data/repositories/http_sync_repository.dart';
+import 'features/sync/domain/repositories/sync_repository.dart';
+import 'features/sync/presentation/bloc/sync_bloc.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
 import 'features/editor/presentation/pages/editor_beta_page.dart';
 import 'features/editor/presentation/pages/editor_page.dart';
@@ -52,6 +55,8 @@ class _QuillAppState extends State<QuillApp> {
   late final ThemeCubit _themeCubit;
   late final NotificationScheduler _scheduler;
   late final RemindersBloc _remindersBloc;
+  late final SyncRepository _syncRepo;
+  late final SyncBloc _syncBloc;
   late final GoRouter _router;
 
   @override
@@ -70,6 +75,11 @@ class _QuillAppState extends State<QuillApp> {
     _scheduler = LocalNotificationScheduler();
     unawaited(_scheduler.init());
     _remindersBloc = RemindersBloc(scheduler: _scheduler);
+    // V2 backend client (Phase E E12-E13). baseUrl currently hard-coded
+    // to localhost — a settings page (slice E14+) will let users set
+    // their own self-hosted endpoint.
+    _syncRepo = HttpSyncRepository(baseUrl: 'http://localhost:8080');
+    _syncBloc = SyncBloc(repo: _syncRepo);
     _router = _buildRouter(_vaultBloc);
     // Restore last-opened vault.
     _vaultBloc.tryRestore();
@@ -77,6 +87,7 @@ class _QuillAppState extends State<QuillApp> {
 
   @override
   void dispose() {
+    _syncBloc.close();
     _remindersBloc.close();
     _vaultBloc.close();
     _themeCubit.close();
@@ -97,12 +108,14 @@ class _QuillAppState extends State<QuillApp> {
         RepositoryProvider<RelationsRepository>.value(value: _relationsRepo),
         RepositoryProvider<Indexer>.value(value: _indexer),
         RepositoryProvider<NotificationScheduler>.value(value: _scheduler),
+        RepositoryProvider<SyncRepository>.value(value: _syncRepo),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider.value(value: _themeCubit),
           BlocProvider.value(value: _vaultBloc),
           BlocProvider.value(value: _remindersBloc),
+          BlocProvider.value(value: _syncBloc),
         ],
         child: BlocBuilder<ThemeCubit, ThemeState>(
           builder: (context, themeState) {

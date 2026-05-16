@@ -26,7 +26,10 @@ void main() {
         expect(req.url.toString(), '$baseUrl/auth/signup');
         expect(jsonDecode(req.body),
             {'email': 'a@quill', 'password': 'correcthorse'});
-        return http.Response(jsonEncode({'token': 'jwt-abc', 'user': {}}), 201);
+        return http.Response(
+          jsonEncode({'token': 'jwt-abc', 'user': <String, dynamic>{}}),
+          201,
+        );
       });
       final token = await repo(client)
           .signup(email: 'a@quill', password: 'correcthorse');
