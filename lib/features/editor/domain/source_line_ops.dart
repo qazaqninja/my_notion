@@ -1002,6 +1002,47 @@ SortLinesResult extractUuidsFromLinesIn(
       return out;
     });
 
+/// Extract every semver-shaped version string from each selected
+/// line (`MAJOR.MINOR.PATCH` with optional `-PRERELEASE` and
+/// `+BUILD` metadata, per semver.org/2.0.0). Useful for scraping
+/// changelogs, `pubspec.yaml`/`package.json` paste-ins, and
+/// release-tag dumps.
+///
+/// Strict-ish recognition:
+/// - All three numeric segments are required (`1.2` won't match).
+/// - No leading zeros in MAJOR/MINOR/PATCH (`01.2.3` rejected).
+/// - Pre-release / build identifiers are `[0-9A-Za-z-]+` segments
+///   joined by dots (so `1.2.3-rc.1+build.abc-def` matches).
+/// - Negative lookahead `(?!\.\d)` after PATCH rejects 4-segment
+///   versions like `1.2.3.4` so a partial match isn't returned.
+/// - An optional `v` immediately before the major is accepted and
+///   INCLUDED in the match (`v1.2.3` is the dominant changelog /
+///   Git-tag form and dropping it loses the tag's identity). The
+///   leading position must be preceded by a non-word, non-`.`
+///   char (or start-of-line) so `foo1.2.3` does NOT match.
+///
+/// Distinct from [extractNumbersFromLinesIn] (M1052) which catches
+/// any integer/decimal anywhere; this one ONLY emits well-formed
+/// semvers — making it safe to pipe into a dependency-update
+/// audit or release-grep without filtering noise.
+SortLinesResult extractSemverFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'(?<![\w.])v?(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)'
+        r'(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?'
+        r'(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?'
+        r'(?!\.\d)\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

@@ -313,6 +313,10 @@ enum SlashAction {
   /// Extract every UUID-shaped substring (`8-4-4-4-12` hex form)
   /// from each selected line.
   extractUuidsFromLines,
+  /// Extract every semver-shaped version string (`MAJOR.MINOR.PATCH`
+  /// with optional `-PRERELEASE` and `+BUILD`) from each selected
+  /// line.
+  extractSemverFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1631,6 +1635,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: '8-4-4-4-12 hex per line',
     action: SlashAction.extractUuidsFromLines,
     keywords: ['extract', 'uuid', 'guid', 'id', 'identifier'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract semver versions',
+    hint: '1.2.3 / 1.2.3-rc.1+build.42',
+    action: SlashAction.extractSemverFromLines,
+    keywords: ['extract', 'semver', 'version', 'release', 'tag',
+        'major', 'minor', 'patch'],
   ),
   SlashEntry(
     icon: 'edit',

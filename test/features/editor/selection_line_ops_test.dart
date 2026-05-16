@@ -2529,6 +2529,98 @@ void main() {
     });
   });
 
+  group('extractSemverFromLinesIn', () {
+    test('plain `1.2.3` extracts', () {
+      const text = 'release 1.2.3 shipped\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.2.3\n');
+    });
+
+    test('pre-release tag included', () {
+      const text = 'cut 1.2.3-rc.1 today\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.2.3-rc.1\n');
+    });
+
+    test('build metadata included', () {
+      const text = 'build 1.2.3+sha.abcdef trail\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.2.3+sha.abcdef\n');
+    });
+
+    test('combined pre-release AND build metadata', () {
+      const text = 'tag 1.2.3-rc.1+sha.abc123 fixed\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.2.3-rc.1+sha.abc123\n');
+    });
+
+    test('leading `v` Git-tag form is captured with the `v`', () {
+      // `v1.2.3` is the dominant Git-tag / changelog form;
+      // the regex's `v?` arm picks it up and the `v` is
+      // included in the match (it identifies the tag).
+      const text = 'tag v1.2.3 release\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, 'v1.2.3\n');
+    });
+
+    test('4-segment versions are NOT matched as partial semver', () {
+      // `(?!\.\d)` after PATCH rejects 4-segment versions
+      // like `1.2.3.4` — we do NOT emit "1.2.3" for those.
+      // `transformLinesIn` re-emits a trailing `\n` even when
+      // no matches were found (documented helper behaviour).
+      const text = 'kernel 5.15.0.123 build\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('leading zeros in segments are NOT semver-valid', () {
+      // Per semver.org, MAJOR/MINOR/PATCH segments may not
+      // have leading zeros (except for the literal `0`).
+      const text = '01.2.3 and 1.02.3 and 1.2.03 are invalid\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('two-segment versions are NOT semver', () {
+      const text = 'partial 1.2 missing patch\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('digits attached to a word are NOT matched', () {
+      // The lookbehind `(?<![\w.])` rejects matches where the
+      // preceding char is a word char or `.`, so `foo1.2.3`
+      // (no separator) is correctly skipped.
+      const text = 'attached foo1.2.3 thing\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple semvers on one line each extract', () {
+      const text = 'from 1.0.0 to 2.3.4-beta to 10.20.30 done\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.0.0\n2.3.4-beta\n10.20.30\n');
+    });
+
+    test('hyphenated pre-release identifier handled', () {
+      // `foo-bar` is a single semver-valid pre-release identifier
+      // (the dash is part of `[0-9A-Za-z-]+`).
+      const text = '1.2.3-foo-bar baseline\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.2.3-foo-bar\n');
+    });
+
+    test('lines without semver dropped from output', () {
+      const text = 'plain prose\n1.2.3 shipped\nmore prose\n';
+      final r = extractSemverFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.2.3\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractSemverFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
