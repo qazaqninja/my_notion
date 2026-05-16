@@ -2996,6 +2996,68 @@ void main() {
     });
   });
 
+  group('extractMarkdownStrikethroughFromLinesIn', () {
+    test('strips the `~~` delimiters and keeps content', () {
+      const text = 'plan ~~abandoned~~ and ~~superseded~~ items\n';
+      final r =
+          extractMarkdownStrikethroughFromLinesIn(text, 0, text.length);
+      expect(r.text, 'abandoned\nsuperseded\n');
+    });
+
+    test('single tilde is NOT a GFM strikethrough', () {
+      // GFM requires exact `~~` doubled tildes on each side.
+      const text = 'partial ~one~ tilde only\n';
+      final r =
+          extractMarkdownStrikethroughFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('zero-content `~~~~` does NOT match', () {
+      // `[^~\n]+` requires at least one non-tilde char between.
+      const text = 'see ~~~~ trivia\n';
+      final r =
+          extractMarkdownStrikethroughFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('span never crosses a line boundary', () {
+      // `[^~\n]+` rejects `\n`, so an unterminated span on one
+      // line + opening `~~` on next does NOT splice.
+      const text = 'one ~~foo~~\nbar ~~baz~~ end\n';
+      final r =
+          extractMarkdownStrikethroughFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbaz\n');
+    });
+
+    test('span with internal spaces and punctuation', () {
+      const text = 'note ~~Q1, Q2 (canceled)~~ trail\n';
+      final r =
+          extractMarkdownStrikethroughFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Q1, Q2 (canceled)\n');
+    });
+
+    test('unterminated `~~` is NOT a match', () {
+      const text = 'lone ~~unclosed text here\n';
+      final r =
+          extractMarkdownStrikethroughFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without strikethrough dropped from output', () {
+      const text = 'plain prose\nwith ~~strike~~\nmore prose\n';
+      final r =
+          extractMarkdownStrikethroughFromLinesIn(text, 0, text.length);
+      expect(r.text, 'strike\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownStrikethroughFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

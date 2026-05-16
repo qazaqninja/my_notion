@@ -1198,6 +1198,37 @@ SortLinesResult extractMarkdownListContentFromLinesIn(
       return out;
     });
 
+/// Extract the content of every GFM strikethrough span
+/// (`~~struck~~` → `struck`) from each selected line. Useful
+/// for harvesting crossed-off / superseded items from a doc
+/// — meeting notes where decisions changed, design pivots,
+/// reverted action items.
+///
+/// Recognition:
+/// - Exact double tilde `~~` on both sides (GFM rule). Single
+///   tildes are NOT matched.
+/// - At least one non-tilde, non-newline char between (so
+///   `~~~~` zero-content span does NOT match).
+/// - Span never crosses a newline (the `[^~\n]+` class
+///   excludes `\n`).
+///
+/// 22nd member of the extraction family. Distinct from code
+/// spans (M1077, backtick-delimited) and emphasis (a future
+/// `**bold**` / `*italic*` extractor) — different markdown
+/// surfaces.
+SortLinesResult extractMarkdownStrikethroughFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'~~([^~\n]+)~~');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

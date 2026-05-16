@@ -332,6 +332,9 @@ enum SlashAction {
   /// Extract the item content from every markdown list line
   /// (`- foo` / `* foo` / `+ foo` / `1. foo` → `foo`).
   extractMarkdownListContentFromLines,
+  /// Extract the content of every GFM strikethrough span
+  /// (`~~struck~~` → `struck`) from each selected line.
+  extractMarkdownStrikethroughFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1698,6 +1701,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownListContentFromLines,
     keywords: ['extract', 'list', 'bullet', 'item', 'ordered',
         'unordered', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'strikethrough',
+    label: 'Extract strikethrough content',
+    hint: '~~struck~~ → struck',
+    action: SlashAction.extractMarkdownStrikethroughFromLines,
+    keywords: ['extract', 'strikethrough', 'strike', 'crossed',
+        'gfm', 'markdown', 'tilde'],
   ),
   SlashEntry(
     icon: 'edit',
