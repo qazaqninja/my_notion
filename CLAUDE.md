@@ -14,7 +14,7 @@ Branded as "Quill" inside the app; package name `my_notion`.
 
 ## Status
 
-**v1 + Pick-next #1/#3/#4/#6/#9 shipped (M0–M29).** Latest commit on `main` is M29 (CSV import). 86 tests passing, `flutter analyze` clean.
+**v1 mostly shipped (M0–M1186+).** Latest commit on `main` is M1186 (Stripe doc example to .env-loaded test fixture). The original Pick-next queue (items 1/3/4/6/9 from FEATURES.md) is fully landed; subsequent milestones extended through 1,200+ commits adding block-editor depth, database polish, slash-menu extractors (M1100–M1186 series — ~110 source-text extractors), and many more features. ~2,600+ tests passing across 91 test files, `flutter analyze` clean.
 
 For the full roadmap and prioritized backlog read `docs/FEATURES.md`. It's the authoritative source for what's shipped, what's queued, and what's out of scope. The Pick-next queue at the bottom is the work list to follow.
 
@@ -25,7 +25,7 @@ Live verified end-to-end on macOS via the picker → vault tree → editor → p
 ```bash
 flutter pub get
 flutter analyze            # expect "No issues found"
-flutter test               # expect "All tests passed!" (43 tests)
+flutter test               # expect "All tests passed!" (~2,600 tests across 91 files)
 flutter build macos --debug
 open build/macos/Build/Products/Debug/my_notion.app
 ```
