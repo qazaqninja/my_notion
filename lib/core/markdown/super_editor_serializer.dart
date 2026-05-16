@@ -43,6 +43,14 @@ class SuperEditorSerializer {
   ///   - Mermaid diagrams (```` ```mermaid…``` ````) already round-trip
   ///     via slice 4's code-fence path: language tag `mermaid` is
   ///     preserved in `metadata.language`. No extra work in this slice.
+  /// - Slice 7: GFM pipe tables.
+  ///   - `| h1 | h2 |\n|---|---|\n| a | b |` → `ParagraphNode` with
+  ///     `blockType: tableAttribution`. The raw multi-line markdown is
+  ///     preserved in the body text so the renderer (existing
+  ///     `markdown_renderer.dart` GFM-pipe-table path) gets the source
+  ///     unmodified and round-trip stays byte-identical. Cell-level
+  ///     editing inside super_editor would need a dedicated TableNode —
+  ///     that's a v2 concern.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -113,6 +121,26 @@ class SuperEditorSerializer {
             'blockType': codeAttribution,
             if (lang.isNotEmpty) 'language': lang,
           },
+        ));
+        continue;
+      }
+      // GFM pipe table? Detected by two-line signature: header row
+      // starts with `|` and the next line is a separator like `|---|---|`
+      // (optionally with alignment colons `|:---|---:|`).
+      if (i + 1 < lines.length &&
+          line.startsWith('|') &&
+          _isTableSeparator(lines[i + 1])) {
+        flushBuffer();
+        final tableLines = <String>[line, lines[i + 1]];
+        i += 2;
+        while (i < lines.length && lines[i].startsWith('|')) {
+          tableLines.add(lines[i]);
+          i += 1;
+        }
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(tableLines.join('\n')),
+          metadata: const {'blockType': tableAttribution},
         ));
         continue;
       }
@@ -245,7 +273,10 @@ class SuperEditorSerializer {
         out.write('---');
       } else if (node is ParagraphNode) {
         final block = node.getMetadataValue('blockType');
-        if (block == codeAttribution) {
+        if (block == tableAttribution) {
+          // Body is the raw multi-line table markdown — emit verbatim.
+          out.write(node.text.toPlainText());
+        } else if (block == codeAttribution) {
           final lang = node.getMetadataValue('language') as String? ?? '';
           out.write('```$lang\n');
           out.write(node.text.toPlainText());
@@ -347,6 +378,22 @@ class _HeadingMatch {
 /// attribution and the renderer (`markdown_renderer.dart`'s existing
 /// `flutter_math_fork` path at M32) interprets it on read.
 const mathBlockAttribution = NamedAttribution('mathBlock');
+
+/// Custom block-type attribution for GFM pipe tables. The ParagraphNode's
+/// `text` carries the entire raw table markdown (header + separator +
+/// body rows), preserving column alignment markers byte-identical so the
+/// renderer can parse it without ambiguity. Cell-level editing would need
+/// a dedicated TableNode — left as v2 work.
+const tableAttribution = NamedAttribution('table');
+
+/// `|---|---|` separator (optionally with alignment colons `|:---|---:|`).
+/// Used by the markdown parser to detect a GFM pipe table.
+bool _isTableSeparator(String line) {
+  if (!line.startsWith('|')) return false;
+  final cells = line.split('|').where((s) => s.trim().isNotEmpty);
+  if (cells.isEmpty) return false;
+  return cells.every((c) => RegExp(r'^:?-+:?\s*$').hasMatch(c.trim()));
+}
 
 // Slice 3 list matchers — module-private extension functions on
 // `SuperEditorSerializer` would have been nicer but Dart doesn't allow

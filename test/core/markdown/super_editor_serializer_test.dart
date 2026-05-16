@@ -311,4 +311,35 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer pipe tables (D1 slice 7)', () {
+    test('simple 2-column table round-trips byte-identical', () {
+      const md = '| name | age |\n|---|---|\n| Alice | 30 |\n| Bob | 25 |';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), tableAttribution);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('table with alignment colons preserves them', () {
+      const md = '| left | mid | right |\n|:---|:---:|---:|\n| a | b | c |';
+      final doc = serializer.markdownToDocument(md);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('paragraph above and below a table', () {
+      const md = 'intro\n\n| h |\n|---|\n| v |\n\noutro';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.toList(), hasLength(3));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('lone `|`-prefixed line without separator stays a paragraph', () {
+      const md = '| not | a | table';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), isNot(tableAttribution));
+      // No table attribution → treated as plain text.
+    });
+  });
 }
