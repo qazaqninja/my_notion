@@ -3585,6 +3585,51 @@ SortLinesResult extractLinuxSignalsFromLinesIn(
       return out;
     });
 
+/// Extract every shell environment variable reference
+/// (`$VAR` or `${VAR}`) from each selected line. Useful for
+/// shell-script audits, Dockerfile inventory, configuration-doc
+/// reviews, and `.env` template scrapes.
+///
+/// Recognition (two shapes):
+/// - `$VAR_NAME`       — bare form, identifier-letter or `_`
+///                        start, alphanumeric / underscore body.
+/// - `${VAR_NAME}`     — braced form, same identifier rules
+///                        inside the curlies.
+///
+/// Identifier rules: starts with a letter or underscore, may
+/// contain letters, digits, and underscores. Positional params
+/// like `$1`, `$2`, special vars like `$?`, `$!`, `$#`, and the
+/// pipe alias `$$` are NOT matched — those are shell-specific
+/// indicators, not named variables, and a separate extractor
+/// could target them.
+///
+/// Matches:
+/// - `$PATH`           — common shell variable
+/// - `$HOME`           — XDG / user home
+/// - `${DATABASE_URL}` — braced form
+/// - `$my_variable`    — lowercase / mixed snake_case
+///
+/// Both upper-case (`$PATH`) and lower-case (`$my_var`) ids
+/// match — environment variable naming conventions vary
+/// between shells, languages, and config systems.
+///
+/// 99th member of the extraction family.
+SortLinesResult extractEnvVarsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Two-arm alternation: braced form OR bare form.
+      final re = RegExp(
+        r'\$(?:\{[a-zA-Z_][a-zA-Z0-9_]*\}|[a-zA-Z_][a-zA-Z0-9_]*)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

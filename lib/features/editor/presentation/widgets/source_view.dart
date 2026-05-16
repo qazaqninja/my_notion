@@ -1615,6 +1615,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractLinuxSignalsFromLinesIn,
         );
+      case SlashAction.extractEnvVarsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractEnvVarsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

@@ -8693,6 +8693,75 @@ void main() {
     });
   });
 
+  group('extractEnvVarsFromLinesIn', () {
+    test(r'bare $PATH extracts', () {
+      const text = r'echo $PATH gives directories' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$PATH' '\n');
+    });
+
+    test(r'braced ${HOME} extracts', () {
+      const text = r'cd ${HOME}/Documents today' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'${HOME}' '\n');
+    });
+
+    test(r'lowercase $my_variable extracts', () {
+      const text = r'use $my_variable today' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$my_variable' '\n');
+    });
+
+    test(r'mixed-case ${DATABASE_URL} extracts', () {
+      const text = r'connect ${DATABASE_URL} now' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'${DATABASE_URL}' '\n');
+    });
+
+    test(r'positional $1 NOT matched', () {
+      // `$1` is a shell positional parameter, not a named var.
+      const text = r'first $1 alone' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test(r'special $? NOT matched', () {
+      // `$?` is exit-status, not a named env var.
+      const text = r'check $? exit code' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test(r'$PROCESS_PID with digits extracts', () {
+      const text = r'see $PROCESS_PID2 here' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$PROCESS_PID2' '\n');
+    });
+
+    test(r'$_underscore_start extracts', () {
+      const text = r'use $_private var' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$_private' '\n');
+    });
+
+    test('multiple env vars on one line each extract', () {
+      const text = r'set $PATH and ${HOME} both' '\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$PATH' '\n' r'${HOME}' '\n');
+    });
+
+    test('lines without env vars dropped from output', () {
+      const text = 'plain prose\n'
+          r'use $TERM_PROGRAM today' '\nbye\n';
+      final r = extractEnvVarsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$TERM_PROGRAM' '\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractEnvVarsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

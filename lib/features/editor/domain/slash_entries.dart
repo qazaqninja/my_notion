@@ -543,6 +543,9 @@ enum SlashAction {
   /// Extract every POSIX / Linux signal name (`SIGTERM`,
   /// `SIGKILL`, `SIGHUP`) from each selected line.
   extractLinuxSignalsFromLines,
+  /// Extract every shell environment variable reference
+  /// (`$PATH`, `${HOME}`) from each selected line.
+  extractEnvVarsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2512,6 +2515,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'signal', 'sigterm', 'sigkill',
         'sighup', 'posix', 'linux', 'unix', 'kernel',
         'debug', 'crash'],
+  ),
+  SlashEntry(
+    icon: 'terminal',
+    label: 'Extract env var references',
+    hint: r'$PATH / ${HOME} / $DATABASE_URL',
+    action: SlashAction.extractEnvVarsFromLines,
+    keywords: ['extract', 'env', 'environment', 'variable',
+        'shell', 'bash', 'dotenv', 'docker', 'config',
+        'export', 'expand'],
   ),
   SlashEntry(
     icon: 'calendar',
