@@ -486,6 +486,9 @@ enum SlashAction {
   /// Extract every Cisco-style MAC address (dot-separated
   /// `XXXX.XXXX.XXXX`) from each selected line.
   extractMacAddressesCiscoFromLines,
+  /// Extract every HTML entity reference (`&amp;`, `&#39;`,
+  /// `&#x27;`) from each selected line.
+  extractHtmlEntitiesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2303,6 +2306,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMacAddressesCiscoFromLines,
     keywords: ['extract', 'mac', 'cisco', 'dotted', 'address',
         'network'],
+  ),
+  SlashEntry(
+    icon: 'tag',
+    label: 'Extract HTML entities',
+    hint: '&amp; / &#39; / &#x27;',
+    action: SlashAction.extractHtmlEntitiesFromLines,
+    keywords: ['extract', 'html', 'entity', 'character',
+        'reference', 'amp', 'nbsp'],
   ),
   SlashEntry(
     icon: 'calendar',

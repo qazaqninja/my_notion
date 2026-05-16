@@ -7266,6 +7266,74 @@ void main() {
     });
   });
 
+  group('extractHtmlEntitiesFromLinesIn', () {
+    test('named entity `&amp;` extracts', () {
+      const text = 'AT&amp;T inline\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '&amp;\n');
+    });
+
+    test('named entity `&lt;` and `&gt;` both extract', () {
+      const text = 'compare &lt; and &gt; markers\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '&lt;\n&gt;\n');
+    });
+
+    test('numeric decimal entity `&#39;` extracts', () {
+      const text = "isn&#39;t it\n";
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '&#39;\n');
+    });
+
+    test('numeric hex entity `&#x27;` extracts', () {
+      const text = 'don&#x27;t worry\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '&#x27;\n');
+    });
+
+    test('multi-char named entity `&copy;` extracts', () {
+      const text = 'license &copy; 2024 inline\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '&copy;\n');
+    });
+
+    test('plain `&` (no entity body) is NOT a match', () {
+      const text = 'symbol & alone here\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('unterminated `&amp` (no semicolon) is NOT a match', () {
+      const text = 'fake &amp without semi\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple entities on one line each extract', () {
+      const text = 'wrap &lt;tag&gt; &amp; close\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '&lt;\n&gt;\n&amp;\n');
+    });
+
+    test('single-letter entity body is NOT a match', () {
+      // The named-entity arm requires letter + at-least-one
+      // alphanumeric, so `&a;` (single letter) fails.
+      const text = 'short &a; only\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without entities dropped from output', () {
+      const text = 'plain prose\n&copy; 2024\nmore prose\n';
+      final r = extractHtmlEntitiesFromLinesIn(text, 0, text.length);
+      expect(r.text, '&copy;\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractHtmlEntitiesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

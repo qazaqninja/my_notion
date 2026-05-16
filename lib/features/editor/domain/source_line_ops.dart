@@ -2876,6 +2876,40 @@ SortLinesResult extractMacAddressesCiscoFromLinesIn(
       return out;
     });
 
+/// Extract every HTML entity reference from each selected
+/// line. Useful for entity-usage audit, decoding prep, and
+/// "what character references does this scraped HTML use?"
+/// surveys.
+///
+/// Recognition:
+///   `&(?:[a-zA-Z][a-zA-Z0-9]+|#\d+|#x[0-9a-fA-F]+);`
+/// - Literal `&` opener.
+/// - One of three entity forms:
+///   - Named: alphabetic start + alphanumeric tail
+///     (e.g. `amp`, `lt`, `gt`, `nbsp`, `copy`).
+///   - Numeric decimal: `#` + digits (e.g. `#39`).
+///   - Numeric hex: `#x` + hex digits (e.g. `#x27`).
+/// - Literal `;` closer.
+///
+/// Plain `&` (no entity body) and unterminated entities
+/// (no closing `;`) are correctly skipped.
+///
+/// 81st member of the extraction family.
+SortLinesResult extractHtmlEntitiesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'&(?:[a-zA-Z][a-zA-Z0-9]+|#\d+|#x[0-9a-fA-F]+);',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
