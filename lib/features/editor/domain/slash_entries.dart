@@ -413,6 +413,9 @@ enum SlashAction {
   /// Extract every DOI (Digital Object Identifier) substring
   /// (`10.NNNN/suffix`) from each selected line.
   extractDoiFromLines,
+  /// Extract every file extension substring (`pic.png` → `png`)
+  /// from each selected line.
+  extractFileExtensionsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2038,6 +2041,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractDoiFromLines,
     keywords: ['extract', 'doi', 'citation', 'paper', 'academic',
         'bibliography'],
+  ),
+  SlashEntry(
+    icon: 'file',
+    label: 'Extract file extensions',
+    hint: 'pic.png → png',
+    action: SlashAction.extractFileExtensionsFromLines,
+    keywords: ['extract', 'file', 'extension', 'ext', 'type',
+        'filename', 'asset'],
   ),
   SlashEntry(
     icon: 'calendar',

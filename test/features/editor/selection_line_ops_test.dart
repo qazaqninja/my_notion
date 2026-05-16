@@ -5612,6 +5612,71 @@ void main() {
     });
   });
 
+  group('extractFileExtensionsFromLinesIn', () {
+    test('common image extension extracts', () {
+      const text = 'open pic.png today\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'png\n');
+    });
+
+    test('script extension extracts', () {
+      const text = 'run script.js daily\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'js\n');
+    });
+
+    test('mixed-alphanumeric ext like `7z` extracts', () {
+      const text = 'pack archive.7z compressed\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '7z\n');
+    });
+
+    test('case preserved (uppercase `PDF`)', () {
+      const text = 'open report.PDF print\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'PDF\n');
+    });
+
+    test('multi-extension files yield both segments', () {
+      // `archive.tar.gz` yields `tar` and `gz` as separate
+      // captures. Document the v1 behaviour — filter
+      // downstream if you want just the final extension.
+      const text = 'pack archive.tar.gz today\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'tar\ngz\n');
+    });
+
+    test('decimal number `1.5` is NOT a file extension', () {
+      // Lookahead requires at least one letter — pure digits
+      // are decimals, not extensions.
+      const text = 'note value 1.5 only\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('version-like `version.1.2.3` is NOT an extension', () {
+      const text = 'version 1.2.3 cut\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple files on one line each extract', () {
+      const text = 'compare pic.jpg and pic.png and data.csv\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'jpg\npng\ncsv\n');
+    });
+
+    test('lines without files dropped from output', () {
+      const text = 'plain prose\nopen pic.png\nmore prose\n';
+      final r = extractFileExtensionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'png\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractFileExtensionsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

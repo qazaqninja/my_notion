@@ -2075,6 +2075,43 @@ SortLinesResult extractDoiFromLinesIn(
       return out;
     });
 
+/// Extract every file extension substring from each selected
+/// line. Useful for filename audits, asset-type counting, and
+/// "what file types does this doc reference?" surveys.
+///
+/// Recognition: `\.(?=[a-zA-Z0-9]*[a-zA-Z])([a-zA-Z0-9]{1,6})\b`
+/// - Literal `.` opener.
+/// - Lookahead requires AT LEAST ONE letter somewhere in the
+///   extension — this is what distinguishes `1.5` (decimal,
+///   skipped) from `archive.7z` (file ext with mixed digits +
+///   letter, captured).
+/// - 1-6 alphanumeric chars captured (the extension text
+///   without the leading dot).
+/// - Word boundary on close.
+///
+/// Multi-extension files (`archive.tar.gz`) yield BOTH
+/// extensions as separate captures (`tar` and `gz`) — the
+/// regex matches each `.ext` independently. Filter to "last
+/// per filename" downstream if you need just the final.
+///
+/// Case is preserved: `report.PDF` → `PDF` (not lowercased).
+///
+/// 57th member of the extraction family.
+SortLinesResult extractFileExtensionsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\.(?=[a-zA-Z0-9]*[a-zA-Z])([a-zA-Z0-9]{1,6})\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
