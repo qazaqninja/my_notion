@@ -257,6 +257,9 @@ enum SlashAction {
   /// Extract every signed-decimal number from each selected line
   /// and emit them one-per-line.
   extractNumbersFromLines,
+  /// Extract every email-shaped substring from each selected line
+  /// and emit them one-per-line.
+  extractEmailsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1458,6 +1461,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'one number per output line',
     action: SlashAction.extractNumbersFromLines,
     keywords: ['extract', 'pull', 'numbers', 'numeric', 'column'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Extract email addresses',
+    hint: 'one address per line',
+    action: SlashAction.extractEmailsFromLines,
+    keywords: ['extract', 'pull', 'email', 'address', 'contact'],
   ),
   SlashEntry(
     icon: 'sync',

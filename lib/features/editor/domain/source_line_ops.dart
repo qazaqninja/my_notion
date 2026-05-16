@@ -524,6 +524,30 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Extract every email-shaped substring from each selected line and
+/// emit them one-per-line in original order. Useful for bulk-pulling
+/// contact addresses out of prose / paste-ins where the user wants
+/// just the addresses ahead of dedupe / sort / CSV-import.
+///
+/// Recognition: `local@domain.tld` with the standard URL-safe
+/// `local` characters and a 2+ character TLD. Lines without an
+/// email pass through silently (dropped from the output) — same
+/// convention as [extractNumbersFromLinesIn].
+SortLinesResult extractEmailsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // RFC 5322 in full is genuinely awful; this approximation
+      // covers the 99% case that's interesting at vault scale.
+      final re = RegExp(r'[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every signed-decimal number from each selected line and
 /// emit them one-per-line in original order. Useful for pulling a
 /// numeric column out of tabular prose (`alice scored 87` →

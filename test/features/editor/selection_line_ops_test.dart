@@ -2234,6 +2234,42 @@ void main() {
     });
   });
 
+  group('extractEmailsFromLinesIn', () {
+    test('one email per line: emits each on its own line', () {
+      const text = 'contact alice@x.test\nor bob@y.org\n';
+      final r = extractEmailsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alice@x.test\nbob@y.org\n');
+    });
+
+    test('multiple emails per line: all extracted in order', () {
+      const text = 'cc alice@x.test, bob@y.org for review\n';
+      final r = extractEmailsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alice@x.test\nbob@y.org\n');
+    });
+
+    test('addresses with plus + dots are kept intact', () {
+      const text = 'alice.smith+filter@example.co.uk wrote in\n';
+      final r = extractEmailsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alice.smith+filter@example.co.uk\n');
+    });
+
+    test('lines without an email are dropped from output', () {
+      const text = 'no address here\nyes alice@x.test\n';
+      final r = extractEmailsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alice@x.test\n');
+    });
+
+    test('rejects malformed shapes (no TLD, missing @, etc.)', () {
+      const text = 'bare@nodot\n@missing.local\nstillvalid@ok.test\n';
+      final r = extractEmailsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'stillvalid@ok.test\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractEmailsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractNumbersFromLinesIn', () {
     test('one number per line: emits each on its own line', () {
       const text = 'alice 87\nbob 42\neve 100\n';
