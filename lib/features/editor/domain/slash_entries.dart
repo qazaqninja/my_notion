@@ -351,6 +351,9 @@ enum SlashAction {
   /// Extract the body text from every markdown footnote
   /// definition line (`[^id]: text` → `text`).
   extractMarkdownFootnoteBodiesFromLines,
+  /// Extract every bare-domain URL (no protocol prefix) from each
+  /// selected line.
+  extractBareUrlsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1816,6 +1819,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownFootnoteBodiesFromLines,
     keywords: ['extract', 'footnote', 'body', 'text', 'definition',
         'def', 'markdown', 'gfm', 'pandoc'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract bare URLs',
+    hint: 'example.com/path',
+    action: SlashAction.extractBareUrlsFromLines,
+    keywords: ['extract', 'bare', 'url', 'domain', 'host', 'site',
+        'noprotocol'],
   ),
   SlashEntry(
     icon: 'calendar',

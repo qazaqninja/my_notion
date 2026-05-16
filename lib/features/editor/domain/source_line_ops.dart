@@ -1399,6 +1399,43 @@ SortLinesResult extractMarkdownFootnoteBodiesFromLinesIn(
       return out;
     });
 
+/// Extract every bare-domain URL (no protocol prefix) from each
+/// selected line. Distinct from M1054 `extractUrlsFromLinesIn`
+/// which requires `https?://` or `ftp://`. This one catches the
+/// `example.com/path` style users write in casual prose.
+///
+/// Recognition: `\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:/[^\s)]*)?`
+/// (case-insensitive)
+/// - At least one subdomain segment of lowercase-alphanumeric
+///   chars (and hyphens), each followed by `.`.
+/// - TLD: at least 2 alphabetic chars (so `1.5` and `192.168.1.1`
+///   don't match — the TLD must be letters, not digits).
+/// - Optional `/path…` consumes non-whitespace, non-`)` chars
+///   (closing paren ends the URL — common at the end of a
+///   parenthetical citation).
+///
+/// May overlap with M1054 for `https://example.com` paste-ins —
+/// the protocol-prefixed form matches M1054 AND the trailing
+/// `example.com` matches this extractor. De-dupe downstream
+/// with sort+uniq if needed.
+///
+/// 37th member of the extraction family.
+SortLinesResult extractBareUrlsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:/[^\s)]*)?',
+        caseSensitive: false,
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

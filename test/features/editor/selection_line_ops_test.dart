@@ -4228,6 +4228,77 @@ void main() {
     });
   });
 
+  group('extractBareUrlsFromLinesIn', () {
+    test('plain `example.com` extracts', () {
+      const text = 'see example.com for context\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'example.com\n');
+    });
+
+    test('subdomain extracts intact', () {
+      const text = 'docs.example.com is great\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'docs.example.com\n');
+    });
+
+    test('domain with path extracts', () {
+      const text = 'fetch example.com/api/v1 quickly\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'example.com/api/v1\n');
+    });
+
+    test('multiple bare URLs on one line each extract', () {
+      const text = 'compare foo.com to bar.org and baz.io\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo.com\nbar.org\nbaz.io\n');
+    });
+
+    test('decimal number `1.5` is NOT a bare URL', () {
+      // The TLD `[a-z]{2,}` requires alphabetic chars; `1.5`
+      // has digit `5` as the "TLD" position. No match.
+      const text = 'value 1.5 only\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('IPv4 address `192.168.1.42` is NOT a bare URL', () {
+      // Same TLD-must-be-letters rule rejects IPv4 dotted-quads.
+      const text = 'host 192.168.1.42 inline\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('parenthetical citation stops at closing paren', () {
+      // `[^\s)]*` excludes `)` from the path so a trailing
+      // `)` in `(see example.com/page)` doesn't get pulled in.
+      const text = '(see example.com/page)\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'example.com/page\n');
+    });
+
+    test('hyphens in subdomain segments preserved', () {
+      const text = 'my-site.co.uk lives now\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'my-site.co.uk\n');
+    });
+
+    test('case-insensitive matching of domain chars', () {
+      const text = 'visit Example.COM today\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Example.COM\n');
+    });
+
+    test('lines without bare URLs dropped from output', () {
+      const text = 'plain prose\nsee example.com inline\nmore prose\n';
+      final r = extractBareUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'example.com\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractBareUrlsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
