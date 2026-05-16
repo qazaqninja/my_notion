@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** A (Foundation)
-- **Task:** A6 — Add `mockingjay` dev dependency (TS-09)
+- **Task:** A7 — Port `vault_bloc` test to `bloc_test` (TS-03)
 - **Status:** pending
 
 ## Last completed
 
-- **M1194 — A5** (add alchemist ^0.12.1 + golden test harness)
-- Committed: 8a67992
-- TaskList ID: 4
-- Notes: Created `test/flutter_test_config.dart` with `AlchemistConfig` (platform goldens disabled, CI goldens enabled), `dart_test.yaml` declaring alchemist's `golden` tag, smoke at `test/foundation/golden_smoke_test.dart` rendering two colored squares with PNG baseline at `test/foundation/goldens/ci/golden_smoke_squares.png`.
+- **M1196 — A6** (add mockingjay ^2.0.0 dev dependency)
+- Committed: bdfcec7
+- TaskList ID: 5
+- Notes: Pin bumped from plan's ^0.6.0 to ^2.0.0 (latest compatible with SDK 3.9.2; 2.1.0 needs SDK 3.10). mockingjay 2.x exports `MockNavigator` only — go_router mocking via local `_MockGoRouter extends Mock implements GoRouter`. Smoke at `test/foundation/mockingjay_smoke_test.dart` covers both styles.
 
 ## Backlog (Phase A — Foundation)
 
@@ -23,6 +23,7 @@
 - [x] A3 — Audit FEATURES.md 🚧 entries (M1190 / 8f0a2b1)
 - [x] A4 — Add `bloc_test` dev dependency (TS-03) (M1192 / 5cf2869)
 - [x] A5 — Add `alchemist` + golden config (TS-08) (M1194 / 8a67992)
+- [x] A6 — Add `mockingjay` dev dependency (TS-09) (M1196 / bdfcec7)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
 - [ ] A6 — Add `mockingjay` dev dependency (TS-09)
 - [ ] A7 — Port `vault_bloc` test to `bloc_test` (TS-03)
@@ -74,6 +75,7 @@
 - [ ] **LT-03** — `custom_lint` not in `dev_dependencies` / CI. Add `custom_lint: ^0.x` + `dart run custom_lint` step in CI.
 - [x] **TS-03** — `bloc_test` package absent → no `blocTest<>` usage anywhere. ✅ Resolved at M1192 (A4) — `bloc_test: ^10.0.0` added to `pubspec.yaml` dev_dependencies; smoke test at `test/foundation/bloc_test_smoke_test.dart` proves the harness works. Subsequent tasks A7–A11 port existing hand-written bloc/cubit tests to the new harness.
 - [x] **TS-08** (preventive) — alchemist was not in pubspec; no goldens existed so no formal violation yet, but RULES.md TS-08 mandates alchemist for any future golden. ✅ Resolved at M1194 (A5) — `alchemist: ^0.12.1` added, `test/flutter_test_config.dart` wires the config, `dart_test.yaml` declares the `golden` tag, smoke golden at `test/foundation/golden_smoke_test.dart`.
+- [x] **TS-09** (preventive) — mockingjay was not in pubspec; no widget tests asserted Navigator/router calls yet, but RULES.md TS-09 mandates mockingjay for any future router-touching widget test. ✅ Resolved at M1196 (A6) — `mockingjay: ^2.0.0` added (pin capped by SDK 3.9.2 — 2.1.0 needs SDK 3.10). Smoke at `test/foundation/mockingjay_smoke_test.dart` shows both `MockNavigator` and the local `_MockGoRouter extends Mock implements GoRouter` patterns.
 
 ### WARN (informational)
 
