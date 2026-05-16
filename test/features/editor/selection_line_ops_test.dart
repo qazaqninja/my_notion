@@ -2234,6 +2234,36 @@ void main() {
     });
   });
 
+  group('extractMarkdownLinkLabelsFromLinesIn', () {
+    test('strips the wrapper and keeps the label', () {
+      const text = 'click [Docs](https://x.test) and [Wiki](https://y.test)\n';
+      final r = extractMarkdownLinkLabelsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Docs\nWiki\n');
+    });
+
+    test('wikilinks [[ULID]] are NOT matched (lookbehind rejects)', () {
+      const text = '[[01HABCDEFGHIJKLMNOPQRSTUVW]] and [Real](url)\n';
+      final r = extractMarkdownLinkLabelsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Real\n');
+    });
+
+    test('labels with internal punctuation pass through intact', () {
+      const text = '[Click, then read](url) trailing\n';
+      final r = extractMarkdownLinkLabelsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Click, then read\n');
+    });
+
+    test('lines without markdown links dropped from output', () {
+      const text = 'bare url https://x.test\n[label](https://y.test)\n';
+      final r = extractMarkdownLinkLabelsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'label\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownLinkLabelsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractUuidsFromLinesIn', () {
     test('extracts canonical hyphenated UUIDs', () {
       const u1 = '550e8400-e29b-41d4-a716-446655440000';

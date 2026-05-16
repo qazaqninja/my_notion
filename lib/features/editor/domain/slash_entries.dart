@@ -303,6 +303,9 @@ enum SlashAction {
   /// Extract every UUID-shaped substring (`8-4-4-4-12` hex form)
   /// from each selected line.
   extractUuidsFromLines,
+  /// Extract every markdown-link label (`[label](url)` → `label`)
+  /// from each selected line.
+  extractMarkdownLinkLabelsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1609,6 +1612,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '8-4-4-4-12 hex per line',
     action: SlashAction.extractUuidsFromLines,
     keywords: ['extract', 'uuid', 'guid', 'id', 'identifier'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Extract markdown link labels',
+    hint: '[label](url) → label',
+    action: SlashAction.extractMarkdownLinkLabelsFromLines,
+    keywords: ['extract', 'link', 'label', 'markdown', 'anchor', 'text'],
   ),
   SlashEntry(
     icon: 'sync',

@@ -886,6 +886,27 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract every markdown-link LABEL (`[label](url)` → `label`) from
+/// each selected line. Useful for harvesting click-text out of
+/// reference paste-ins — "what was each link called?" — without
+/// the URLs themselves.
+///
+/// Negative lookbehind on `[` rejects the `[[...]]` wikilink form
+/// so a Quill-internal relation doesn't fall into this extractor's
+/// pool (use [extractWikilinksFromLinesIn] for that).
+SortLinesResult extractMarkdownLinkLabelsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?<!\[)\[([^\]\n]+)\]\([^)\n]*\)');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every UUID-shaped substring from each selected line
 /// (`8-4-4-4-12` hex format, case-insensitive). Useful for pulling
 /// generated identifiers out of logs / debug paste-ins ahead of
