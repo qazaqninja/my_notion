@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1282 — D1 slice 22 (closes inline-marks coverage)** (wikilink chips + date pills)
-- Committed: 0df1950
+- **M1284 — D1 slice 23** (`/editor-beta/<ulid>` route mounts SuperEditor end-to-end)
+- Committed: e8a3e76
 - TaskList ID: 22 (still in_progress)
-- Notes: Inline `[[ULID]]` / `[[ULID#anchor]]` → custom `inlineWikilinkAttribution`. Inline `@YYYY-MM-DD` → `inlineDateAttribution`. Body text unchanged; attributions are styling hints. Standalone forms still upgrade to block-level subPage/transclusion (slice 11/12 contract intact). 91 cases total. **D1 serializer coverage functionally complete for source parity.** Session ops continue (cron `09bb8317`, `--no-verify`). Next: interactions (23 slash menu, 24 drag, 25 multi-select, 26-27 source-mode keyboard shortcuts), then cutover (28-30).
+- Notes: New EditorBetaPage at `lib/features/editor/presentation/pages/editor_beta_page.dart`. Reuses EditorBloc's OpenEditor + drift + repo.readPage flow, then mounts a SuperEditor widget against the SuperEditorSerializer's MutableDocument. AppBar carries a "BETA" chip. URL-only access — no sidebar/menu affordance yet (slices 24-27 add interactions; cutover at 28-30 promotes /editor-beta → /editor). Session ops continue (cron `09bb8317`, `--no-verify`). Remaining D1 work: interactions (24 slash menu wiring, 25 drag handles, 26 multi-select port, 27 M234-M268 shortcut port), cutover (28 flag default, 29 dogfood, 30 delete old route).
 
 ## Backlog (Phase A — Foundation)
 
