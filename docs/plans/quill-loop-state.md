@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E38 — Fix orchestrator TH-03: replace Colors.green.shade400 with QuillTokens.successColor
+- **Task:** E39 — Fix orchestrator BL-05: rename SyncStatus { idle, busy, connected, error } → { initial, loading, success, failure }
 - **Status:** pending
 
 ## Last completed
 
-- **M1340 — E37** (droppable() transformers on logout + push-all)
+- **M1341 — E38** (theme the connected dot via QuillTokens.success)
 - Committed: (this iteration)
-- TaskList ID: 59
-- Notes: Closes orchestrator BL-10 finding from the E35 audit. `on<SyncLogoutRequested>(_onLogout, transformer: droppable())` + `on<SyncPushAllRequested>(_onPushAll, transformer: droppable())`. Rationale comments inline next to each: rapid double-tap of "Log out" would otherwise hit SharedPreferences twice in flight; a second `SyncPushAllRequested` mid-loop would interleave dispatches with the first batch. `SyncRestoreRequested`, `SyncFetchCleared`, `SyncPendingPushDelta` remain default-concurrent intentionally (single-shot boot event, idempotent state-only, internal counter that must land in order with caller). 2 new bloc_test cases (double-logout-writes-prefs-once, double-bulk-push-only-enqueues-one-batch). 53/53 sync_bloc tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 60
+- Notes: Closes orchestrator TH-03 finding. The connected status dot in `SyncConnectedCard` previously used `Colors.green.shade400`, which bypassed the design-token system and wouldn't adapt to dark mode or accent changes. Swapped for `tokens.success` (an existing slot in `QuillTokens` — the same color already powers the unlock chevron). 2 new widget tests pump the card in both light and dark themes, locate the 8×8 BoxShape.circle Container, and assert `decoration.color == tokens.success` (and ≠ `Colors.green.shade400` in the light case). 18/18 sync card tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
@@ -114,7 +114,7 @@
 - [ ] **BL-05** — `SyncStatus { idle, busy, connected, error }` deviates from standard `{ initial, loading, success, failure }`. Cosmetic but inconsistent with `VaultStatus` / `EditorStatus`. Rename in a dedicated slice once nothing else is in flight; touch 7+ test files.
 - [x] **BL-10** — `SyncLogoutRequested` and `SyncPushAllRequested` were default-concurrent and could race themselves on rapid double-dispatch. ✅ Resolved at M1340 (E37) — both wired to `droppable()` from `bloc_concurrency`. `SyncRestoreRequested`, `SyncFetchCleared`, `SyncPendingPushDelta` remain default-concurrent intentionally: restore is single-shot at app boot, FetchCleared is idempotent state-only, PendingPushDelta is the internal counter event that has to land in order with its caller. Inline comments document each choice. 2 new bloc_test cases (double-logout-writes-prefs-once, double-bulk-push-only-enqueues-one-batch). 53/53 sync_bloc tests pass.
 - [ ] **BL-01** — Class-doc comment on `SyncBloc` should enumerate every event's transformer choice, not just the auth+push ones (the BL-01 prefix comment in `sync_bloc.dart`). Cosmetic; defer.
-- [ ] **TH-03** — `Colors.green.shade400` for the "connected" dot in `sync_connected_card.dart:55`. Bypasses theming; doesn't adapt to dark mode or accent change. Move to a `QuillTokens.successColor` (or reuse an existing token).
+- [x] **TH-03** — `Colors.green.shade400` for the connected dot in `sync_connected_card.dart`. ✅ Resolved at M1341 (E38) — swapped for `tokens.success` (already-existing QuillTokens slot for positive/success greens). 2 new widget tests verify both light + dark themes pick up the correct token color and the dot is no longer `Colors.green.shade400`.
 - [ ] **MD-01** — `SyncFileSummary` + `SyncFileBody` double-duty as DTOs (with `fromJson`/`toJson`) and as state fields on `SyncState`. Standard wants three separate types per layer boundary. Pragmatic compression for now; revisit when CRDT layer (E45+) lands and the wire format diverges from in-memory.
 
 #### INFO (style)

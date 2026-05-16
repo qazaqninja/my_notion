@@ -52,7 +52,11 @@ class SyncConnectedCard extends StatelessWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: Colors.green.shade400,
+                  // E38 — was Colors.green.shade400; promoted to the
+                  // QuillTokens success color so the connected dot
+                  // adapts to light/dark + accent variations
+                  // (orchestrator finding TH-03).
+                  color: tokens.success,
                   shape: BoxShape.circle,
                 ),
               ),

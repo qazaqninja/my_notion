@@ -127,6 +127,65 @@ void main() {
     });
   });
 
+  group('SyncConnectedCard connected dot color (E38)', () {
+    Color findDotColor(WidgetTester tester) {
+      final containers = tester.widgetList<Container>(find.byType(Container));
+      // The status dot is the only 8×8 BoxShape.circle Container.
+      for (final c in containers) {
+        final constraints = c.constraints;
+        if (constraints?.maxWidth == 8 && constraints?.maxHeight == 8) {
+          final deco = c.decoration as BoxDecoration?;
+          if (deco?.shape == BoxShape.circle) {
+            return deco!.color!;
+          }
+        }
+      }
+      throw StateError('Could not locate the 8x8 status dot Container');
+    }
+
+    testWidgets('light theme dot uses tokens.success (not Colors.green)',
+        (tester) async {
+      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+
+      final lightTheme = makeTheme(Brightness.light, AccentKey.sage);
+      final lightTokens = lightTheme.extension<QuillTokens>()!;
+
+      await tester.pumpWidget(MaterialApp(
+        theme: lightTheme,
+        home: Scaffold(
+          body: BlocProvider<SyncBloc>.value(
+            value: bloc,
+            child: SyncConnectedCard(state: state, tokens: lightTokens),
+          ),
+        ),
+      ));
+      expect(findDotColor(tester), lightTokens.success);
+      expect(findDotColor(tester), isNot(equals(Colors.green.shade400)));
+    });
+
+    testWidgets('dark theme dot also uses tokens.success', (tester) async {
+      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      final bloc = _MockSyncBloc();
+      when(() => bloc.state).thenReturn(state);
+
+      final darkTheme = makeTheme(Brightness.dark, AccentKey.sage);
+      final darkTokens = darkTheme.extension<QuillTokens>()!;
+
+      await tester.pumpWidget(MaterialApp(
+        theme: darkTheme,
+        home: Scaffold(
+          body: BlocProvider<SyncBloc>.value(
+            value: bloc,
+            child: SyncConnectedCard(state: state, tokens: darkTokens),
+          ),
+        ),
+      ));
+      expect(findDotColor(tester), darkTokens.success);
+    });
+  });
+
   group('SyncConnectedCard push-all button (E32)', () {
     testWidgets('onPushAll == null → button hidden', (tester) async {
       const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
