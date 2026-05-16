@@ -3015,6 +3015,39 @@ SortLinesResult extractDiscordMentionsFromLinesIn(
       return out;
     });
 
+/// Extract every NPM-style semver-range expression from each
+/// selected line. Useful for dependency audit, version-bump
+/// surveys, and `package.json` paste-in mining.
+///
+/// Supported range operators:
+/// - Caret:      `^1.2.3` (compatible with version)
+/// - Tilde:      `~1.2.3` (approximately equivalent)
+/// - Comparison: `>1.2.3`, `>=1.2.3`, `<2.0.0`, `<=1.2.3`
+/// - Exact:      `=1.2.3`
+///
+/// Recognition: `(?:[\^~]|[<>]=?|=)\d+\.\d+\.\d+`
+/// - One of the range operators (no boundary needed since
+///   the operators themselves are non-word chars).
+/// - Three-segment semver (MAJOR.MINOR.PATCH).
+///
+/// Pre-release and build metadata (`-rc.1`, `+sha.abc`) are
+/// out of scope for v1 — range pinning rarely needs them.
+/// Bare semvers without operators are M1074's surface.
+///
+/// 85th member of the extraction family.
+SortLinesResult extractNpmSemverRangesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?:[\^~]|[<>]=?|=)\d+\.\d+\.\d+');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

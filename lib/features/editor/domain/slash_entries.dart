@@ -498,6 +498,9 @@ enum SlashAction {
   /// Extract every Discord-style mention/channel/role reference
   /// (`<@123>`, `<@&123>`, `<#123>`) from each selected line.
   extractDiscordMentionsFromLines,
+  /// Extract every NPM-style semver-range expression
+  /// (`^1.2.3`, `~1.2.3`, `>=1.2.0`) from each selected line.
+  extractNpmSemverRangesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2347,6 +2350,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractDiscordMentionsFromLines,
     keywords: ['extract', 'discord', 'mention', 'channel', 'role',
         'user'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract npm semver ranges',
+    hint: '^1.2.3 / ~1.2.3 / >=1.2.0',
+    action: SlashAction.extractNpmSemverRangesFromLines,
+    keywords: ['extract', 'npm', 'semver', 'range', 'caret',
+        'tilde', 'version', 'dep'],
   ),
   SlashEntry(
     icon: 'calendar',

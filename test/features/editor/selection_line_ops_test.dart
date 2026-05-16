@@ -7524,6 +7524,69 @@ void main() {
     });
   });
 
+  group('extractNpmSemverRangesFromLinesIn', () {
+    test('caret range `^1.2.3` extracts', () {
+      const text = 'dep "react": "^18.2.0" today\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '^18.2.0\n');
+    });
+
+    test('tilde range `~1.2.3` extracts', () {
+      const text = 'pin lodash: ~4.17.21 stable\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '~4.17.21\n');
+    });
+
+    test('greater-than-equal `>=1.2.0` extracts', () {
+      const text = 'min node >=18.0.0 today\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '>=18.0.0\n');
+    });
+
+    test('less-than `<2.0.0` extracts', () {
+      const text = 'max <2.0.0 ceiling\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '<2.0.0\n');
+    });
+
+    test('less-than-equal `<=1.2.3` extracts', () {
+      const text = 'cap <=1.2.3 ok\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '<=1.2.3\n');
+    });
+
+    test('exact `=1.2.3` extracts', () {
+      const text = 'pin =1.2.3 exactly\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '=1.2.3\n');
+    });
+
+    test('bare semver `1.2.3` is NOT a range match', () {
+      // Bare semvers are M1074's surface; this extractor
+      // targets explicit range operators.
+      const text = 'bare 1.2.3 only\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple ranges on one line each extract', () {
+      const text =
+          'compat ^1.2.3 with >=1.0.0 and <2.0.0 here\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '^1.2.3\n>=1.0.0\n<2.0.0\n');
+    });
+
+    test('lines without ranges dropped from output', () {
+      const text = 'plain prose\ndep "x": "^1.2.3"\nmore prose\n';
+      final r = extractNpmSemverRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '^1.2.3\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractNpmSemverRangesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

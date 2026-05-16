@@ -1559,6 +1559,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractDiscordMentionsFromLinesIn,
         );
+      case SlashAction.extractNpmSemverRangesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractNpmSemverRangesFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,
