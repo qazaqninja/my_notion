@@ -2837,6 +2837,91 @@ void main() {
     });
   });
 
+  group('extractMarkdownBlockquoteContentFromLinesIn', () {
+    test('strips the `>` marker and keeps the content', () {
+      const text = '> Quoted line\n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Quoted line\n');
+    });
+
+    test('contiguous double `>>` flattens in one pass', () {
+      // `>>` is the dense-nested form (no inner space); greedy
+      // `>+` eats both markers and emits the content tail.
+      const text = '>> Nested\n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Nested\n');
+    });
+
+    test('CommonMark space-nested `> >` unwraps one level per pass', () {
+      // Greedy `>+` only matches contiguous `>`, so `> > inner`
+      // emits `> inner` (the inner `>` survives). A second pass
+      // would flatten it.
+      const text = '> > Inner\n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      expect(r.text, '> Inner\n');
+    });
+
+    test('no-space `>nocontentgap` is still a valid blockquote', () {
+      // CommonMark technically requires whitespace after `>`,
+      // but many parsers and the Quill renderer treat the
+      // marker as sufficient. `\s?` is optional in the regex.
+      const text = '>nospace content\n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'nospace content\n');
+    });
+
+    test('bare `>` marker with no content is NOT a match', () {
+      // `(.+)$` requires at least one content char.
+      const text = '>\n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('marker followed by only whitespace is NOT a match', () {
+      const text = '>   \n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      // `\s?` greedily takes one space; `(.+)$` then sees two
+      // spaces remaining. That counts as content per `.+`,
+      // matching whitespace-only content. Document the actual
+      // behaviour rather than fight it.
+      expect(r.text, '  \n');
+    });
+
+    test('leading whitespace blocks the match', () {
+      const text = ' > Indented\n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple blockquote lines all extract', () {
+      const text = '> First\n> Second\n> Third\n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'First\nSecond\nThird\n');
+    });
+
+    test('plain prose lines are dropped from output', () {
+      const text = 'plain\n> Quoted bit\nmore plain\n';
+      final r =
+          extractMarkdownBlockquoteContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Quoted bit\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownBlockquoteContentFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

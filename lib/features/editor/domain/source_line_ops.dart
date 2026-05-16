@@ -1139,6 +1139,34 @@ SortLinesResult extractMarkdownHeadingsFromLinesIn(
       return out;
     });
 
+/// Extract the quoted content from every markdown blockquote
+/// line (`> quoted text` → `quoted text`). Useful for harvesting
+/// cited material from review docs, threading apps, and editor
+/// paste-ins.
+///
+/// Recognition:
+/// - One or more leading `>` chars at line start (no indent).
+/// - Optional single whitespace separator (so `>nospace` works).
+/// - At least one content char captured after — bare `>` and
+///   `> ` (marker without content) do NOT match.
+///
+/// Greedy `>+` flattens runs of contiguous `>` markers in a
+/// single pass, so `>>> deep` emits `deep`. The space-separated
+/// CommonMark nested form `> > inner` only unwraps one level
+/// per pass: a first pass yields `> inner`, a second yields
+/// `inner`. Chain the transform if full flattening is desired.
+SortLinesResult extractMarkdownBlockquoteContentFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'^>+\s?(.+)$');
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(1)!);
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

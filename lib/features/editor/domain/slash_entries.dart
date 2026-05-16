@@ -326,6 +326,9 @@ enum SlashAction {
   /// Extract the title text from every ATX-style markdown heading
   /// (`# H1`, `## H2`, … `###### H6`) on each selected line.
   extractMarkdownHeadingsFromLines,
+  /// Extract the quoted content from every markdown blockquote
+  /// line (`> quoted text` → `quoted text`).
+  extractMarkdownBlockquoteContentFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1676,6 +1679,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownHeadingsFromLines,
     keywords: ['extract', 'heading', 'header', 'title', 'h1', 'h2',
         'h3', 'h4', 'h5', 'h6', 'toc', 'markdown', 'atx'],
+  ),
+  SlashEntry(
+    icon: 'quote',
+    label: 'Extract blockquote content',
+    hint: '> quoted → quoted',
+    action: SlashAction.extractMarkdownBlockquoteContentFromLines,
+    keywords: ['extract', 'blockquote', 'quote', 'cite', 'gt',
+        'markdown'],
   ),
   SlashEntry(
     icon: 'edit',
