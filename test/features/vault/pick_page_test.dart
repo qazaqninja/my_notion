@@ -237,6 +237,47 @@ void main() {
     });
   });
 
+  group('filterTitleContains', () {
+    test('matches substrings case-insensitively', () {
+      final pages = [
+        _p(ulid: 'a', title: 'Project Plan'),
+        _p(ulid: 'b', title: 'Random Notes'),
+        _p(ulid: 'c', title: 'project retrospective'),
+      ];
+      expect(
+        filterTitleContains(pages, 'proj').map((p) => p.ulid).toSet(),
+        {'a', 'c'},
+      );
+    });
+
+    test('preserves input order', () {
+      final pages = [
+        _p(ulid: 'z', title: 'Project A'),
+        _p(ulid: 'a', title: 'Other'),
+        _p(ulid: 'y', title: 'Project B'),
+      ];
+      expect(
+        filterTitleContains(pages, 'project').map((p) => p.ulid).toList(),
+        ['z', 'y'],
+      );
+    });
+
+    test('empty query returns empty (no wildcard)', () {
+      final pages = [_p(ulid: 'a', title: 'anything')];
+      expect(filterTitleContains(pages, ''), isEmpty);
+      expect(filterTitleContains(pages, '   '), isEmpty);
+    });
+
+    test('no match returns empty', () {
+      final pages = [_p(ulid: 'a', title: 'Foo')];
+      expect(filterTitleContains(pages, 'bar'), isEmpty);
+    });
+
+    test('empty input returns empty', () {
+      expect(filterTitleContains([], 'anything'), isEmpty);
+    });
+  });
+
   group('pickByUlid', () {
     test('returns the matching page', () {
       final pages = [

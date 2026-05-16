@@ -93,6 +93,19 @@ List<PageRef> topByBacklinkCount(
   return eligible.take(n).toList();
 }
 
+/// Filter to pages whose title contains the query (case-insensitive
+/// substring match, trimmed on both sides). Empty query returns
+/// empty rather than wildcarding — same convention as
+/// [filterByTag]. Order is preserved from the input.
+List<PageRef> filterTitleContains(List<PageRef> pages, String query) {
+  final needle = query.trim().toLowerCase();
+  if (needle.isEmpty) return [];
+  return [
+    for (final p in pages)
+      if (p.title.toLowerCase().contains(needle)) p,
+  ];
+}
+
 /// Look up a single page by ULID, returning `null` when no match.
 /// Linear scan — fine for vault sizes Quill targets (a few thousand
 /// pages max); callers that need O(1) lookup over a hot loop should

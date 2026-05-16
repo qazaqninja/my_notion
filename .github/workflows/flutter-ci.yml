@@ -46,19 +46,23 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --reporter expanded
 
-      - name: Enforce coverage threshold (58%)
+      - name: Enforce coverage threshold (59%)
         # Baseline at M821 was 53.9%. Ratchet history:
-        #   50 → 55 (M900) → 56 (M934) → 57 (M956) → 58 (M981).
-        # M981 bump triggered: M979 measured 58.71% and M980 / M981
-        # measured 58.76% — two consecutive observations ≥58.5%
-        # clears the safety margin (0.7pp) for the 58 step. Next
-        # ratchet (59) requires the same two-consecutive-≥59.5%
-        # rule. Next stop 60% once presentation-layer widget tests
-        # land.
+        #   50 → 55 (M900) → 56 (M934) → 57 (M956) → 58 (M981)
+        #     → 59 (M1024).
+        # M1024 bump triggered: M1023 measured 59.57%, M1024 measured
+        # 59.59% — two consecutive observations ≥59.5% (per the rule
+        # documented at M981) clears the 59 step. The picker-usecase
+        # extraction stretch (M1014-M1023) was the main contributor:
+        # 50+ new pure-Dart unit tests against domain helpers lifted
+        # the line-coverage steadily from 58.92% to 59.59%.
+        # Next ratchet (60) requires the same two-consecutive-≥60.5%
+        # rule. Once presentation-layer widget tests land that's
+        # realistic.
         uses: VeryGoodOpenSource/very_good_coverage@v3
         with:
           path: coverage/lcov.info
-          min_coverage: 58
+          min_coverage: 59
 
       - name: Upload coverage artifact
         if: always()
