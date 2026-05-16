@@ -1318,9 +1318,11 @@ views:
     final pages = await db.select(db.pages).get();
     final cutoff =
         DateTime.now().subtract(const Duration(days: 90)).millisecondsSinceEpoch;
+    final pickedUlids = {
+      for (final ref in filterStale(_toPageRefs(pages), cutoff)) ref.ulid,
+    };
     final stale = [
-      for (final p in pages)
-        if (p.mtimeMs < cutoff) p,
+      for (final p in pages) if (pickedUlids.contains(p.ulid)) p,
     ]..sort((a, b) => a.mtimeMs.compareTo(b.mtimeMs));
     if (!context.mounted) return;
     await _showHygieneDialog(
@@ -1342,9 +1344,11 @@ views:
     // Title and frontmatter are preserved — these are the placeholder
     // pages that got created but never filled in. Distinct from
     // "orphan" (no links) and "without a title" (no name).
+    final pickedUlids = {
+      for (final ref in filterEmpty(_toPageRefs(pages))) ref.ulid,
+    };
     final empties = [
-      for (final p in pages)
-        if (p.bodyText.trim().isEmpty) p,
+      for (final p in pages) if (pickedUlids.contains(p.ulid)) p,
     ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
     if (!context.mounted) return;
     await _showHygieneDialog(
@@ -1363,24 +1367,18 @@ views:
     final db = context.read<QuillDatabase>();
     final pages = await db.select(db.pages).get();
     final relations = await db.select(db.relations).get();
-    // Count incoming wikilinks per page. Multiple references from the
-    // same source still count as one — the relations table already
-    // dedupes (fromUlid, toUlid) pairs, so a `for` loop is enough.
-    final inbound = <String, int>{};
-    for (final r in relations) {
-      inbound[r.toUlid] = (inbound[r.toUlid] ?? 0) + 1;
-    }
-    // Keep only pages with ≥1 backlink, sort by count desc then
-    // most-recently-edited as a stable tie-break.
-    final hubs = [
-      for (final p in pages)
-        if ((inbound[p.ulid] ?? 0) > 0) p,
-    ]..sort((a, b) {
-        final cmp = (inbound[b.ulid] ?? 0).compareTo(inbound[a.ulid] ?? 0);
-        if (cmp != 0) return cmp;
-        return b.mtimeMs.compareTo(a.mtimeMs);
-      });
-    final topHubs = hubs.take(20).toList();
+    // Top-20 sort lives in the M1023 picker. Preserve its order
+    // (inbound-count-desc with mtime tie-break) by iterating the
+    // picker's ULID list and looking up the matching Drift row.
+    final byUlid = {for (final p in pages) p.ulid: p};
+    final topHubs = [
+      for (final ref in topByBacklinkCount(
+        _toPageRefs(pages),
+        [for (final r in relations) (fromUlid: r.fromUlid, toUlid: r.toUlid)],
+        20,
+      ))
+        byUlid[ref.ulid]!,
+    ];
     if (!context.mounted) return;
     await _showHygieneDialog(
       context: context,
@@ -1397,12 +1395,14 @@ views:
   Future<void> _showHeaviestPagesDialog(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final pages = await db.select(db.pages).get();
-    // Sort by body length descending and keep the top 20 — the
-    // long-tail rapidly stops being interesting and a 200-row dialog
-    // hurts scrolling more than it helps surfacing.
-    final byWeight = [...pages]
-      ..sort((a, b) => b.bodyText.length.compareTo(a.bodyText.length));
-    final topPages = byWeight.take(20).toList();
+    // Top-20 sort lives in the M1023 picker. Preserve its order
+    // (size-desc with mtime tie-break) by iterating the picker's
+    // ULID list and looking up the matching Drift row.
+    final byUlid = {for (final p in pages) p.ulid: p};
+    final topPages = [
+      for (final ref in topByBodyLen(_toPageRefs(pages), 20))
+        byUlid[ref.ulid]!,
+    ];
     if (!context.mounted) return;
     await _showHygieneDialog(
       context: context,
@@ -1419,28 +1419,15 @@ views:
   Future<void> _showDuplicateTitlesDialog(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final pages = await db.select(db.pages).get();
-    // Group by case-folded title so "Project" and "project" collide
-    // (the common shape of accidental duplication). Empty titles are
-    // already surfaced by the "Show pages without a title" entry, so
-    // skip them here to avoid double-reporting.
-    final byKey = <String, List<db_models.Page>>{};
-    for (final p in pages) {
-      final t = p.title.trim();
-      if (t.isEmpty) continue;
-      byKey.putIfAbsent(t.toLowerCase(), () => []).add(p);
-    }
-    // Keep only buckets with 2+ pages; flatten back out, sorted so
-    // duplicates with the same title stay adjacent and the
-    // most-recently-edited duplicate appears first within each
-    // bucket. Buckets themselves are ordered by title alphabetically.
-    final dups = <db_models.Page>[];
-    final keys = byKey.keys.where((k) => byKey[k]!.length >= 2).toList()
-      ..sort();
-    for (final k in keys) {
-      final bucket = byKey[k]!
-        ..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
-      dups.addAll(bucket);
-    }
+    // Detection + sort lives in the M1018 picker usecase. Preserve
+    // its output order (alphabetical buckets, freshest-first within
+    // each bucket) by iterating the picker's ULID list and looking
+    // up the matching Drift row.
+    final byUlid = {for (final p in pages) p.ulid: p};
+    final dups = [
+      for (final ref in filterDuplicateTitles(_toPageRefs(pages)))
+        byUlid[ref.ulid]!,
+    ];
     if (!context.mounted) return;
     await _showHygieneDialog(
       context: context,
@@ -1457,13 +1444,15 @@ views:
   Future<void> _showOpenTodosDialog(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final pages = await db.select(db.pages).get();
-    // Match the GFM open-todo marker anywhere in the body: optional
-    // leading indent, then `- [ ] ` / `* [ ] ` / `+ [ ] `. Multi-line
-    // mode so `^` matches every line start, not just file start.
-    final todoRe = RegExp(r'^[ \t]*[-*+] \[ \] ', multiLine: true);
+    // Detection logic lives in the M1018 picker usecase
+    // (`filterPagesWithOpenTodos`); map Drift → PageRef → filter →
+    // ULID set → back to the Drift rows the shared dialog wants.
+    final pickedUlids = {
+      for (final ref in filterPagesWithOpenTodos(_toPageRefs(pages)))
+        ref.ulid,
+    };
     final withTodos = [
-      for (final p in pages)
-        if (todoRe.hasMatch(p.bodyText)) p,
+      for (final p in pages) if (pickedUlids.contains(p.ulid)) p,
     ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
     if (!context.mounted) return;
     await _showHygieneDialog(
@@ -1534,12 +1523,11 @@ views:
   Future<void> _showUntaggedDialog(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final pages = await db.select(db.pages).get();
-    bool hasTag(String json) =>
-        listValueFromFrontmatterJson(json, 'tags').isNotEmpty;
-
+    final pickedUlids = {
+      for (final ref in filterUntagged(_toPageRefs(pages))) ref.ulid,
+    };
     final untagged = [
-      for (final p in pages)
-        if (!hasTag(p.frontmatterJson)) p,
+      for (final p in pages) if (pickedUlids.contains(p.ulid)) p,
     ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
     if (!context.mounted) return;
     await _showHygieneDialog(
@@ -1558,14 +1546,15 @@ views:
     final db = context.read<QuillDatabase>();
     final pages = await db.select(db.pages).get();
     final relations = await db.select(db.relations).get();
-    final linked = <String>{};
-    for (final r in relations) {
-      linked.add(r.fromUlid);
-      linked.add(r.toUlid);
-    }
+    final pickedUlids = {
+      for (final ref in filterOrphan(
+        _toPageRefs(pages),
+        [for (final r in relations) (fromUlid: r.fromUlid, toUlid: r.toUlid)],
+      ))
+        ref.ulid,
+    };
     final orphans = [
-      for (final p in pages)
-        if (!linked.contains(p.ulid)) p,
+      for (final p in pages) if (pickedUlids.contains(p.ulid)) p,
     ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
     if (!context.mounted) return;
     await _showHygieneDialog(
