@@ -456,6 +456,31 @@ void main() {
     });
   });
 
+  group('SyncBloc droppable transformer on restore (E42)', () {
+    blocTest<SyncBloc, SyncState>(
+      'Double-dispatch restore reaches a single restored state',
+      setUp: () => SharedPreferences.setMockInitialValues({
+        'sync.token': 'jwt-stored',
+      }),
+      build: () => SyncBloc(
+        repo: _FakeRepo(),
+        listPingInterval: const Duration(hours: 1),
+      ),
+      act: (bloc) {
+        // Two back-to-back restores. droppable() should drop the
+        // second one because the first is in flight. Final state must
+        // still reflect the persisted token.
+        bloc.add(const SyncRestoreRequested());
+        bloc.add(const SyncRestoreRequested());
+      },
+      wait: const Duration(milliseconds: 80),
+      verify: (bloc) {
+        expect(bloc.state.token, 'jwt-stored');
+        expect(bloc.state.isAuthed, isTrue);
+      },
+    );
+  });
+
   group('SyncBloc droppable transformers (E37)', () {
     blocTest<SyncBloc, SyncState>(
       'Double-dispatch logout only writes prefs once',

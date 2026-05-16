@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E42 — droppable() on SyncRestoreRequested (latent BL-10 caught by E41 re-audit)
+- **Task:** E43 — Public route password protection (`public_password:` frontmatter + bcrypt-checked cookie)
 - **Status:** pending
 
 ## Last completed
 
-- **M1344 — E41** (Phase E sync stack re-audit closeout)
+- **M1345 — E42** (droppable() on SyncRestoreRequested)
 - Committed: (this iteration)
-- TaskList ID: 63
-- Notes: Re-dispatched flutter-arch-orchestrator over the Phase E sync stack after the E36–E40 fix cycle. Verified all 5 actionable items resolved: CA-07+BL-06 (entity moved to domain/Equatable), BL-10 (droppable on logout+push-all), TH-03 (tokens.success), BL-05 (enum renamed), DI-03 (root-scope comment). No new violations introduced. Deferred items (MD-01, TS-04, TS-05, FS-03) unchanged. ONE latent observation flagged: `SyncRestoreRequested` performs I/O (reads SharedPreferences) without an explicit transformer — pre-existing, not part of E37 scope. Queued as E42 — single-shot droppable() is the right semantic. Findings recorded under "Phase E sync stack re-audit (E41 / M1344 — closeout)" section. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 64
+- Notes: Closes the lone latent BL-10 surfaced by the E41 re-audit. `on<SyncRestoreRequested>(_onRestore, transformer: droppable())` with an inline comment: restore is intentionally single-shot at app boot; a re-dispatch (e.g., the user opens Settings → Sync before initial restore completes) should be a no-op rather than a redundant SharedPreferences read. 1 new bloc_test case (double-dispatch-reaches-single-restored-state). 54/54 sync_bloc tests pass; flutter analyze clean. The Phase E sync stack is now fully architecturally clean against RULES.md (only the 4 documented deferred items remain). Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

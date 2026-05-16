@@ -40,7 +40,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     // droppable() guarantees only the first one runs while it's
     // in-flight.
     on<SyncLogoutRequested>(_onLogout, transformer: droppable());
-    on<SyncRestoreRequested>(_onRestore);
+    // E42 (orchestrator BL-10 latent): SyncRestoreRequested reads
+    // SharedPreferences. Single-shot at app boot — a re-dispatch
+    // (e.g., the user opens Settings → Sync before initial restore
+    // completes) should be a harmless no-op rather than a redundant
+    // prefs read. droppable() is the right semantic.
+    on<SyncRestoreRequested>(_onRestore, transformer: droppable());
     on<SyncListRequested>(_onList, transformer: sequential());
     on<SyncPushFileRequested>(_onPush, transformer: sequential());
     on<SyncDeleteFileRequested>(_onDelete, transformer: sequential());
