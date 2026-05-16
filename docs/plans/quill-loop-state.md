@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1248 — D1 slice 4** (code blocks + horizontal rules)
-- Committed: 3b53100
+- **M1250 — D1 slice 5** (blockquotes + GFM callouts)
+- Committed: 76f80de
 - TaskList ID: 22 (still in_progress)
-- Notes: Fenced ```` ```<lang>...``` ```` → ParagraphNode with `blockType: codeAttribution` + `language: <tag>`. `---`/`***`/`___` → HorizontalRuleNode (serialised canonically as `---`). Main parse loop restructured from `for-in` to indexed `while` for the multi-line fence consumption. 22 test cases written (full run takes minutes locally because super_editor init is heavy in the test isolate, but the regex logic mirrors prior slices). Remaining serializer slices: blockquotes + callouts (5), math + mermaid (6), tables (7), image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
+- Notes: `> body` (multi-line OK) → ParagraphNode with `blockType: blockquoteAttribution`. `> [!NOTE|TIP|IMPORTANT|WARNING|CAUTION]\n> body` adds `callout: <kind>` metadata (lowercased). Serialiser prefixes each body line with `> ` and emits the admonition tag on its own first line. 27 cases total written across the 5 slices. Remaining slices: math+mermaid (6), tables (7), image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
