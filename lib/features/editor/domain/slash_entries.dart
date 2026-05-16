@@ -422,6 +422,9 @@ enum SlashAction {
   /// Extract every JIRA-style ticket reference (`PROJ-1234`)
   /// from each selected line.
   extractJiraTicketsFromLines,
+  /// Extract every GitHub-style PR/issue reference (`#1234`)
+  /// from each selected line.
+  extractPrIssueRefsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2071,6 +2074,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractJiraTicketsFromLines,
     keywords: ['extract', 'jira', 'ticket', 'issue', 'sprint',
         'project'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract PR/issue refs',
+    hint: '#1234',
+    action: SlashAction.extractPrIssueRefsFromLines,
+    keywords: ['extract', 'pr', 'issue', 'github', 'reference',
+        'changelog'],
   ),
   SlashEntry(
     icon: 'calendar',

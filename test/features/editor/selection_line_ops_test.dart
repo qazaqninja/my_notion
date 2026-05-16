@@ -5808,6 +5808,76 @@ void main() {
     });
   });
 
+  group('extractPrIssueRefsFromLinesIn', () {
+    test('typical `#1234` reference extracts', () {
+      const text = 'fix #1234 today\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#1234\n');
+    });
+
+    test('single-digit reference extracts', () {
+      const text = 'see PR #1 milestone\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#1\n');
+    });
+
+    test('large-number reference extracts', () {
+      const text = 'issue #999999 reported\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#999999\n');
+    });
+
+    test('hashtag with letters is NOT a numeric ref', () {
+      // `#tag` is M1055's hashtag surface, not this one.
+      const text = 'tagged #bug-fix only\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('embedded in word `abc#123` is NOT matched', () {
+      // Lookbehind blocks word-preceded matches.
+      const text = 'token abc#123 inline\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('bare `#` (no digits) is NOT a match', () {
+      const text = 'symbol # alone trivia\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('hashtag-then-numeric `#tag-123` only matches the tag form', () {
+      // Lookbehind allows the `#` after space. Then `\d+` requires
+      // digits — `t` is not. Fail. Move on past `tag-123`.
+      const text = 'mixed #tag-123 surface\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple refs on one line each extract', () {
+      const text = 'merge #100, #200 and #300 batch\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#100\n#200\n#300\n');
+    });
+
+    test('punctuation-adjacent reference extracts', () {
+      const text = '(see #1234) for details\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#1234\n');
+    });
+
+    test('lines without refs dropped from output', () {
+      const text = 'plain prose\nfix #1234 today\nmore prose\n';
+      final r = extractPrIssueRefsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#1234\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractPrIssueRefsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

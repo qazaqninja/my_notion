@@ -2184,6 +2184,37 @@ SortLinesResult extractJiraTicketsFromLinesIn(
       return out;
     });
 
+/// Extract every GitHub-style PR/issue reference (`#1234`)
+/// from each selected line. Distinct from hashtags (`#word`)
+/// — this one specifically pulls numeric references commonly
+/// used in changelogs, release notes, and commit messages.
+///
+/// Recognition: `(?<!\w)#\d+\b`
+/// - Lookbehind blocks matches embedded in words (`abc#123`
+///   skipped).
+/// - Literal `#`.
+/// - One or more digits.
+/// - Word boundary on close.
+///
+/// Hashtags (`#tag`, `#bug-fix`) are NOT matched — those are
+/// M1055's surface (`extractHashtagsFromLinesIn`). The numeric
+/// constraint disambiguates.
+///
+/// 60th member of the extraction family — round-number
+/// milestone for the family count.
+SortLinesResult extractPrIssueRefsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?<!\w)#\d+\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
