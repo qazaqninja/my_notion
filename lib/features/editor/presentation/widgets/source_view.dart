@@ -803,6 +803,18 @@ class _SourceViewState extends State<SourceView> {
           selection:
               TextSelection.collapsed(offset: stripStart + snippet.length),
         );
+      case SlashAction.insertCheckpoint:
+        final snippet = formatCheckpointBlock(DateTime.now());
+        final newText = text.replaceRange(stripStart, caret, snippet);
+        // Caret lands on the empty body line — the last char of the
+        // snippet is `\n`, so the caret offset is `snippet.length - 1`
+        // (right before that final newline).
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + snippet.length - 1,
+          ),
+        );
       case SlashAction.pickEmoji:
         // Strip the `/...` trigger first so the picker opens with a
         // clean caret position.

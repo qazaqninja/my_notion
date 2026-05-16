@@ -3022,6 +3022,23 @@ void main() {
       expect(formatYearQuarter(DateTime(99, 4, 1)), '0099-Q2');
     });
 
+    test('formatCheckpointBlock emits `---` + bold timestamp + blank line',
+        () {
+      final when = DateTime(2026, 5, 16, 14, 23);
+      // `---\n**2026-05-16 14:23**\n\n` — caret-landing offset is
+      // (snippet.length - 1) so it sits before the final `\n`.
+      final snippet = formatCheckpointBlock(when);
+      expect(snippet.startsWith('---\n'), isTrue);
+      expect(snippet.contains('**2026-05-16 14:23**'), isTrue);
+      expect(snippet.endsWith('\n\n'), isTrue);
+    });
+
+    test('formatCheckpointBlock zero-pads single-digit times', () {
+      final when = DateTime(2026, 1, 3, 4, 5);
+      final snippet = formatCheckpointBlock(when);
+      expect(snippet.contains('**2026-01-03 04:05**'), isTrue);
+    });
+
     test('formatYearMonth emits YYYY-MM with zero-padding', () {
       expect(formatYearMonth(DateTime(2026, 5, 16)), '2026-05');
       expect(formatYearMonth(DateTime(2026, 1, 1)), '2026-01');

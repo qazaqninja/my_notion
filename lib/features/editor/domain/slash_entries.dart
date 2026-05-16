@@ -116,6 +116,9 @@ enum SlashAction {
   insertYearMonth,
   /// Insert the current ISO year-week tag (`YYYY-Www`) at the caret.
   insertIsoYearWeek,
+  /// Insert a session-checkpoint marker: a horizontal rule followed
+  /// by a bolded ISO timestamp, with the caret on the line below.
+  insertCheckpoint,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -647,6 +650,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '2026-W20',
     action: SlashAction.insertIsoYearWeek,
     keywords: ['week', 'iso', 'weekly', 'review', 'w20'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Session checkpoint',
+    hint: '--- + **timestamp**',
+    action: SlashAction.insertCheckpoint,
+    keywords: ['checkpoint', 'session', 'mark', 'divider', 'timestamp'],
   ),
   SlashEntry(
     icon: 'users',

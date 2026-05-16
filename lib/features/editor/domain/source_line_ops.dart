@@ -2438,6 +2438,14 @@ String formatYearQuarter(DateTime when) {
   return '$yyyy-Q$q';
 }
 
+/// Format a [DateTime] as a session-checkpoint block used by the
+/// `/checkpoint` slash entry: a markdown horizontal rule, a bolded
+/// timestamp on its own line, and an empty body line where the
+/// caret lands ready to type. Held as a function so the slash
+/// dispatch stays one line.
+String formatCheckpointBlock(DateTime when) =>
+    '---\n**${formatTimestamp(when)}**\n\n';
+
 /// Format a [DateTime] as the `YYYY-MM` year-month tag used by the
 /// monthly-review slash entry (e.g. `2026-05`).
 String formatYearMonth(DateTime when) {
