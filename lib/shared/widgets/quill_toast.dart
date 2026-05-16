@@ -451,15 +451,55 @@ extension QuillToastContext on BuildContext {
     );
   }
 
-  void toastSuccess(String title, {String? sub, bool subMono = false}) =>
-      quillToast(QuillToastKind.success, title, sub: sub, subMono: subMono);
+  void toastSuccess(
+    String title, {
+    String? sub,
+    bool subMono = false,
+    String? action,
+    VoidCallback? onAction,
+  }) =>
+      quillToast(QuillToastKind.success, title,
+          sub: sub,
+          subMono: subMono,
+          action: action,
+          onAction: onAction);
 
-  void toastError(String title, {String? sub, bool subMono = false}) =>
-      quillToast(QuillToastKind.error, title, sub: sub, subMono: subMono);
+  void toastError(
+    String title, {
+    String? sub,
+    bool subMono = false,
+    String? action,
+    VoidCallback? onAction,
+  }) =>
+      quillToast(QuillToastKind.error, title,
+          sub: sub,
+          subMono: subMono,
+          action: action,
+          onAction: onAction);
 
-  void toastInfo(String title, {String? sub, bool subMono = false}) =>
-      quillToast(QuillToastKind.info, title, sub: sub, subMono: subMono);
+  void toastInfo(
+    String title, {
+    String? sub,
+    bool subMono = false,
+    String? action,
+    VoidCallback? onAction,
+  }) =>
+      quillToast(QuillToastKind.info, title,
+          sub: sub,
+          subMono: subMono,
+          action: action,
+          onAction: onAction);
 
-  void toastWarn(String title, {String? sub, bool subMono = false}) =>
-      quillToast(QuillToastKind.warn, title, sub: sub, subMono: subMono);
+  void toastWarn(
+    String title, {
+    String? sub,
+    bool subMono = false,
+    String? action,
+    VoidCallback? onAction,
+  }) =>
+      quillToast(QuillToastKind.warn, title,
+          sub: sub,
+          subMono: subMono,
+          action: action,
+          onAction: onAction);
 }

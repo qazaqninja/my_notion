@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E25 — Pull action on the conflict toast (one-tap recovery from 409)
+- **Task:** E26 — Settings → Sync pane: surface last-push + last-conflict + retry button
 - **Status:** pending
 
 ## Last completed
 
-- **M1327 — E24** (pull diff/replace dialog over SyncState.lastFetched)
+- **M1328 — E25** (Pull action on the conflict toast)
 - Committed: (this iteration)
-- TaskList ID: 46
-- Notes: New `lib/features/sync/presentation/widgets/pull_reconcile_dialog.dart` — pure-presentational `PullReconcileDialog` with side-by-side (>=720 px) / stacked (<720 px) panels showing local vs server body and a sha+relpath header line. Identical-body case shows "Server copy matches local" header and disables the "Use server version" button. `SyncFetchCleared` event + `_onFetchCleared` handler so the UI can dismiss the dialog without leaking `lastFetched` into the next state cycle. Editor `MultiBlocListener` gains a fourth bridge: when `lastFetched` transitions from null → non-null, `showDialog` the reconcile dialog; on "Use server version" dispatch `EditBody(server.body)` + `SyncFetchCleared` + success toast, on "Keep local" just `SyncFetchCleared`. New `test/helpers/test_theme.dart` (themed MaterialApp wrapper for widget tests). 4 widget tests (shows-both-bodies-+-sha+relpath, use-server-callback, keep-local-callback, identical-disables-server-CTA). Sync tests 51/51, sync_bloc 36/36, flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 47
+- Notes: Extended `toastSuccess/Error/Info/Warn` convenience helpers on `BuildContext` to forward `action` + `onAction` to the underlying toast controller (the `_ToastAction` row already existed at line 149 of quill_toast.dart). Conflict-toast `BlocListener` in editor_page.dart now uses `toastWarn` (was toastInfo) and adds a "Pull" action that dispatches `SyncFetchFileRequested(relpath: conflict.relpath)`. The fetch success path automatically opens the E24 reconcile dialog via the existing `lastFetched` bridge — one-tap 409 recovery. 1 new widget test asserts the action button renders and fires `onAction` when tapped. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

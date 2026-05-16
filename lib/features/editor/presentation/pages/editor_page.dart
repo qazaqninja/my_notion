@@ -146,11 +146,21 @@ class EditorPage extends StatelessWidget {
                 prev.lastError != 'conflict' &&
                 next.lastConflict != null,
             listener: (context, state) {
-              if (state.lastConflict == null) return;
-              context.toastInfo(
-                'Sync conflict on ${state.lastConflict!.relpath}',
-                sub: 'server sha ${state.lastConflict!.sha256.substring(0, 8)}…',
+              final conflict = state.lastConflict;
+              if (conflict == null) return;
+              // E25 — give the conflict toast a one-tap "Pull" action
+              // that fetches the server copy. The E24 reconcile dialog
+              // then opens automatically via the lastFetched bridge
+              // below, letting the user choose server-vs-local.
+              final sync = context.read<SyncBloc>();
+              context.toastWarn(
+                'Sync conflict on ${conflict.relpath}',
+                sub: 'server sha ${conflict.sha256.substring(0, 8)}…',
                 subMono: true,
+                action: 'Pull',
+                onAction: () => sync.add(
+                  SyncFetchFileRequested(relpath: conflict.relpath),
+                ),
               );
             },
           ),
