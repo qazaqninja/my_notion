@@ -181,8 +181,8 @@ If your feature wants to store something new, the answer is almost always "add a
 
 - ✅ Markdown shortcuts (# for heading, ** for bold, etc.) — Native to source-mode editing.
 - ✅ Equation editor — M32 inline + block via `flutter_math_fork`.
-- 🚧 Mention dates (creates reminders) — Date pills render (M83). M89 surfaces a `reminder:` frontmatter badge in PageHeader. M211 lists upcoming reminders on the home page (7-day window, overdue → red). M230 adds a "Set reminder…" entry to the editor kebab — pops a date picker and writes/updates `reminder: <YYYY-MM-DD>` to the page's frontmatter. Native OS notification dispatch still 📋 (needs `flutter_local_notifications`).
-- 🚧 Reminders (with notifications) — M89 surfaces a per-page badge; M211 surfaces an in-app "Upcoming reminders" list on the home page (7-day window); M230 adds a one-click "Set reminder…" kebab entry. OS notifications still need `flutter_local_notifications` + per-platform setup.
+- ✅ Mention dates (creates reminders) — Date pills render (M83). M89 surfaces a `reminder:` frontmatter badge in PageHeader. M211 lists upcoming reminders on the home page (7-day window, overdue → red). M230 adds a "Set reminder…" entry to the editor kebab. M1224-M1230 ship OS notification dispatch via `flutter_local_notifications` + `lib/features/reminders/` Bloc + presentation-layer bridge in `editor_page.dart`.
+- ✅ Reminders (with notifications) — M89 / M211 / M230 surface badge / list / kebab; M1224-M1230 ship OS notifications via `flutter_local_notifications ^20.1.0`, `lib/features/reminders/` (NotificationScheduler datasource + RemindersBloc with sequential transformer), and a presentation-layer BlocListener in `editor_page.dart` that bridges EditorBloc `reminder:` frontmatter changes to RemindersBloc. Android POST_NOTIFICATIONS permission declared in manifest; iOS/macOS request via DarwinInitializationSettings.
 - ✅ Date with time and time zones — M82, ISO `YYYY-MM-DDTHH:MM[(Z|±HH:MM)]` formatted as `YYYY-MM-DD · HH:MM tz` in DB cells.
 - ✅ Date ranges — M74, `YYYY-MM-DD..YYYY-MM-DD` renders with arrow.
 - 🔮 Mention people (notifies them) — Notifications require backend.

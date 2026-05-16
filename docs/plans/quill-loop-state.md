@@ -5,16 +5,16 @@
 
 ## Current
 
-- **Phase:** B (V1 Polish — Media)
-- **Task:** B4 — OS notifications for reminders (flutter_local_notifications)
-- **Status:** in_progress (slice 1 of ~4 done at M1224)
+- **Phase:** C (V1 Polish — Platform)
+- **Task:** C1 — Mermaid native rendering (webview_flutter + vendored mermaid.min.js)
+- **Status:** pending
 
-## Last completed slice
+## Last completed
 
-- **M1228 — B4 slice 3** (provider wiring + EditorBloc → RemindersBloc bridge)
-- Committed: 89da166
-- TaskList ID: 18 (still in_progress)
-- Notes: LocalNotificationScheduler + RemindersBloc are now in `app.dart`'s MultiRepositoryProvider / MultiBlocProvider. `editor_page.dart` wraps `_EditorBody` in a BlocListener<EditorBloc, EditorState> whose `listenWhen` fires only on `reminder:` frontmatter changes; the listener dispatches ScheduleReminder or CancelReminder. The bridge satisfies CA-06 (no bloc-on-bloc dependency — wiring lives in the presentation layer). Slice 4 (final) lands per-platform permission config (Info.plist NSUserNotificationsUsageDescription on iOS/macOS, Android POST_NOTIFICATIONS permission, exact-alarm permission) + docs/platforms.md update.
+- **M1230 — B4 slice 4 (closes B4 + Phase B)** (per-platform notification permission config + docs)
+- Committed: 5c1cb67
+- TaskList ID: 18 (closed)
+- Notes: Phase B closed end-to-end. 8 commits M1215→M1230. B1 video, B2 audio, B3 PDF, B4 reminders all shipped. Two FEATURES.md ✅ flips at this iteration: "Mention dates (creates reminders)" and "Reminders (with notifications)" both leave 🚧.
 
 ## Backlog (Phase A — Foundation)
 
