@@ -961,6 +961,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripEmojiLinesIn,
         );
+      case SlashAction.removeAccentsLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, removeAccentsLinesIn,
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

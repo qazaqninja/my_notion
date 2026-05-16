@@ -140,6 +140,46 @@ void main() {
     });
   });
 
+  group('removeAccentsLinesIn', () {
+    test('folds common French diacritics', () {
+      const text = 'café résumé naïve\n';
+      final r = removeAccentsLinesIn(text, 0, text.length);
+      expect(r.text, 'cafe resume naive\n');
+    });
+
+    test('preserves case while folding', () {
+      const text = 'CAFÉ Naïve RÉSUMÉ\n';
+      final r = removeAccentsLinesIn(text, 0, text.length);
+      expect(r.text, 'CAFE Naive RESUME\n');
+    });
+
+    test('ligatures expand to two-letter ASCII forms', () {
+      const text = 'œuvre Æsop straße\n';
+      final r = removeAccentsLinesIn(text, 0, text.length);
+      expect(r.text, 'oeuvre AEsop strasse\n');
+    });
+
+    test('covers Slavic / German hooks (ł ø ß ž)', () {
+      const text = 'Łódź Brønnøysund Žižkov groß\n';
+      final r = removeAccentsLinesIn(text, 0, text.length);
+      expect(r.text, 'Lodz Bronnoysund Zizkov gross\n');
+    });
+
+    test('characters outside the cover set pass through (Greek/CJK)', () {
+      const text = 'αβγ 日本 안녕\n';
+      expect(removeAccentsLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('plain ASCII is the identity', () {
+      const text = 'hello world\n';
+      expect(removeAccentsLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(removeAccentsLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('stripEmojiLinesIn', () {
     test('strips single-codepoint pictograph emoji', () {
       const text = 'hello 👋 world 🌍\n';

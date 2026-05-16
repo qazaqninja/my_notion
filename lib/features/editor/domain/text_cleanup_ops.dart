@@ -14,6 +14,78 @@
 
 import 'source_line_ops.dart';
 
+/// Strip diacritics from every selected line, folding common
+/// Latin-Extended accented characters to their ASCII base letter.
+/// `café` → `cafe`, `naïve` → `naive`, `RÉSUMÉ` → `RESUME`.
+/// Ligatures expand to their two-letter form: `æ` → `ae`, `Œ` → `OE`,
+/// `ß` → `ss`. Characters outside the cover set (Greek, Cyrillic,
+/// CJK, etc.) pass through.
+///
+/// Useful for normalizing user-entered text before generating an ID
+/// or filename — sits alongside `slugifyLines`, which goes further
+/// (lowercase + non-alphanumeric → `-`). Run this first if you want
+/// to keep casing but lose the accents.
+SortLinesResult removeAccentsLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      // ASCII-fold table covering Latin-Extended-A (most of) and the
+      // commonly-seen Latin-1 Supplement diacritics. Multi-letter
+      // outputs (æ→ae, ß→ss) are intentional — the gesture is
+      // "preserve readable text," not "preserve byte count."
+      const fold = <String, String>{
+        'à': 'a', 'á': 'a', 'â': 'a', 'ã': 'a', 'ä': 'a', 'å': 'a',
+        'ā': 'a', 'ă': 'a', 'ą': 'a', 'ǎ': 'a', 'ǻ': 'a',
+        'À': 'A', 'Á': 'A', 'Â': 'A', 'Ã': 'A', 'Ä': 'A', 'Å': 'A',
+        'Ā': 'A', 'Ă': 'A', 'Ą': 'A', 'Ǎ': 'A', 'Ǻ': 'A',
+        'ç': 'c', 'ć': 'c', 'ĉ': 'c', 'ċ': 'c', 'č': 'c',
+        'Ç': 'C', 'Ć': 'C', 'Ĉ': 'C', 'Ċ': 'C', 'Č': 'C',
+        'đ': 'd', 'ď': 'd', 'Đ': 'D', 'Ď': 'D',
+        'è': 'e', 'é': 'e', 'ê': 'e', 'ë': 'e', 'ē': 'e', 'ĕ': 'e',
+        'ė': 'e', 'ę': 'e', 'ě': 'e',
+        'È': 'E', 'É': 'E', 'Ê': 'E', 'Ë': 'E', 'Ē': 'E', 'Ĕ': 'E',
+        'Ė': 'E', 'Ę': 'E', 'Ě': 'E',
+        'ĝ': 'g', 'ğ': 'g', 'ġ': 'g', 'ģ': 'g',
+        'Ĝ': 'G', 'Ğ': 'G', 'Ġ': 'G', 'Ģ': 'G',
+        'ĥ': 'h', 'ħ': 'h', 'Ĥ': 'H', 'Ħ': 'H',
+        'ì': 'i', 'í': 'i', 'î': 'i', 'ï': 'i', 'ĩ': 'i', 'ī': 'i',
+        'ĭ': 'i', 'į': 'i', 'ı': 'i',
+        'Ì': 'I', 'Í': 'I', 'Î': 'I', 'Ï': 'I', 'Ĩ': 'I', 'Ī': 'I',
+        'Ĭ': 'I', 'Į': 'I', 'İ': 'I',
+        'ĵ': 'j', 'Ĵ': 'J',
+        'ķ': 'k', 'Ķ': 'K',
+        'ĺ': 'l', 'ļ': 'l', 'ľ': 'l', 'ł': 'l',
+        'Ĺ': 'L', 'Ļ': 'L', 'Ľ': 'L', 'Ł': 'L',
+        'ñ': 'n', 'ń': 'n', 'ņ': 'n', 'ň': 'n',
+        'Ñ': 'N', 'Ń': 'N', 'Ņ': 'N', 'Ň': 'N',
+        'ò': 'o', 'ó': 'o', 'ô': 'o', 'õ': 'o', 'ö': 'o', 'ø': 'o',
+        'ō': 'o', 'ŏ': 'o', 'ő': 'o', 'ǒ': 'o',
+        'Ò': 'O', 'Ó': 'O', 'Ô': 'O', 'Õ': 'O', 'Ö': 'O', 'Ø': 'O',
+        'Ō': 'O', 'Ŏ': 'O', 'Ő': 'O', 'Ǒ': 'O',
+        'ŕ': 'r', 'ŗ': 'r', 'ř': 'r', 'Ŕ': 'R', 'Ŗ': 'R', 'Ř': 'R',
+        'ś': 's', 'ŝ': 's', 'ş': 's', 'š': 's', 'ș': 's',
+        'Ś': 'S', 'Ŝ': 'S', 'Ş': 'S', 'Š': 'S', 'Ș': 'S',
+        'ţ': 't', 'ť': 't', 'ŧ': 't', 'ț': 't',
+        'Ţ': 'T', 'Ť': 'T', 'Ŧ': 'T', 'Ț': 'T',
+        'ù': 'u', 'ú': 'u', 'û': 'u', 'ü': 'u', 'ũ': 'u', 'ū': 'u',
+        'ŭ': 'u', 'ů': 'u', 'ű': 'u', 'ų': 'u', 'ǔ': 'u',
+        'Ù': 'U', 'Ú': 'U', 'Û': 'U', 'Ü': 'U', 'Ũ': 'U', 'Ū': 'U',
+        'Ŭ': 'U', 'Ů': 'U', 'Ű': 'U', 'Ų': 'U', 'Ǔ': 'U',
+        'ŵ': 'w', 'Ŵ': 'W',
+        'ý': 'y', 'ÿ': 'y', 'ŷ': 'y', 'Ý': 'Y', 'Ÿ': 'Y', 'Ŷ': 'Y',
+        'ź': 'z', 'ż': 'z', 'ž': 'z', 'Ź': 'Z', 'Ż': 'Z', 'Ž': 'Z',
+        'ß': 'ss', 'æ': 'ae', 'Æ': 'AE', 'œ': 'oe', 'Œ': 'OE',
+      };
+      return [
+        for (final l in lines)
+          (() {
+            final buf = StringBuffer();
+            for (final c in l.split('')) {
+              buf.write(fold[c] ?? c);
+            }
+            return buf.toString();
+          })(),
+      ];
+    });
+
 /// Strip emoji glyphs from every selected line. Covers the major
 /// Unicode emoji blocks (`U+1F000`-`U+1FAFF` for pictographs, plus
 /// `U+2600`-`U+27BF` for Misc Symbols / Dingbats), along with the

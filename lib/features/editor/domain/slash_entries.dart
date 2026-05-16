@@ -57,6 +57,9 @@ enum SlashAction {
   /// Strip emoji glyphs (Unicode pictograph + dingbat blocks plus
   /// joiner / variation selectors) from every selected line.
   stripEmojiLines,
+  /// Fold accented Latin characters to their ASCII base letter on
+  /// every selected line. `café` → `cafe`, `Œuvre` → `OEuvre`.
+  removeAccentsLines,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1414,6 +1417,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'hello 👋 → hello',
     action: SlashAction.stripEmojiLines,
     keywords: ['strip', 'emoji', 'remove', 'plain', 'unicode'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Remove accents',
+    hint: 'café → cafe',
+    action: SlashAction.removeAccentsLines,
+    keywords: ['accent', 'accents', 'diacritic', 'ascii', 'fold', 'normalize'],
   ),
   SlashEntry(
     icon: 'link',
