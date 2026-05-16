@@ -217,6 +217,19 @@ PageRef? latestByTag(List<PageRef> pages, String tag) =>
 PageRef? latestInFolder(List<PageRef> pages, String folder) =>
     pickLastEdited(filterByFolder(pages, folder));
 
+/// Return the most-recently-edited page whose title begins with the
+/// given prefix. Composition of [filterTitleStartsWith] and
+/// [pickLastEdited]. Useful for "resume my latest Project: …"
+/// gestures where pages are filed by leading-token.
+PageRef? latestByTitlePrefix(List<PageRef> pages, String prefix) =>
+    pickLastEdited(filterTitleStartsWith(pages, prefix));
+
+/// Return the OLDEST page (lowest `mtimeMs`) under the given folder.
+/// Composition of [filterByFolder] and [pickOldest]. Useful for
+/// "what's the stalest thing in Operations/?" curation gestures.
+PageRef? oldestInFolder(List<PageRef> pages, String folder) =>
+    pickOldest(filterByFolder(pages, folder));
+
 /// Group pages by their top-level folder name, returning the full
 /// page-list per bucket rather than just the count. Useful for
 /// "browse-by-folder" surfaces that want to show the actual pages

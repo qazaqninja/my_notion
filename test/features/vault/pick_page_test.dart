@@ -536,6 +536,50 @@ void main() {
     });
   });
 
+  group('latestByTitlePrefix', () {
+    test('returns the most-recently-edited prefix match', () {
+      final pages = [
+        _p(ulid: 'a', title: 'Project: alpha', mtimeMs: 1000),
+        _p(ulid: 'b', title: 'Project: beta', mtimeMs: 3000),
+        _p(ulid: 'c', title: 'Other', mtimeMs: 9999),
+        _p(ulid: 'd', title: 'Project: gamma', mtimeMs: 2000),
+      ];
+      expect(latestByTitlePrefix(pages, 'Project:')?.ulid, 'b');
+    });
+
+    test('returns null when no title starts with the prefix', () {
+      final pages = [_p(ulid: 'a', title: 'Foo')];
+      expect(latestByTitlePrefix(pages, 'Bar'), isNull);
+    });
+
+    test('empty prefix returns null', () {
+      final pages = [_p(ulid: 'a', title: 'Foo')];
+      expect(latestByTitlePrefix(pages, ''), isNull);
+    });
+  });
+
+  group('oldestInFolder', () {
+    test('returns the oldest page under the folder', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Op/A.md', mtimeMs: 1000),
+        _p(ulid: 'b', relativePath: 'Op/B.md', mtimeMs: 3000),
+        _p(ulid: 'c', relativePath: 'Inbox.md', mtimeMs: 100),
+        _p(ulid: 'd', relativePath: 'Op/D.md', mtimeMs: 2000),
+      ];
+      expect(oldestInFolder(pages, 'Op')?.ulid, 'a');
+    });
+
+    test('returns null when no page is in the folder', () {
+      final pages = [_p(ulid: 'a', relativePath: 'Other.md')];
+      expect(oldestInFolder(pages, 'Op'), isNull);
+    });
+
+    test('empty folder returns null', () {
+      final pages = [_p(ulid: 'a', relativePath: 'Foo.md')];
+      expect(oldestInFolder(pages, ''), isNull);
+    });
+  });
+
   group('latestInFolder', () {
     test('returns the most-recently-edited page in the folder', () {
       final pages = [
