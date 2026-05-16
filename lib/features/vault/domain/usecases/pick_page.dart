@@ -210,6 +210,29 @@ PageRef? pickByUlid(List<PageRef> pages, String ulid) {
 PageRef? latestByTag(List<PageRef> pages, String tag) =>
     pickLastEdited(filterByTag(pages, tag));
 
+/// Return the most-recently-edited page that lives under the given
+/// folder, or `null` when no page matches. Composition of
+/// [filterByFolder] and [pickLastEdited]. Useful for "resume my
+/// latest Operations/ page" gestures.
+PageRef? latestInFolder(List<PageRef> pages, String folder) =>
+    pickLastEdited(filterByFolder(pages, folder));
+
+/// Group pages by their top-level folder name, returning the full
+/// page-list per bucket rather than just the count. Useful for
+/// "browse-by-folder" surfaces that want to show the actual pages
+/// per folder. Root pages bucket under `(root)`. Order within each
+/// bucket is the input order — callers sort per their UX.
+Map<String, List<PageRef>> groupByTopFolder(List<PageRef> pages) {
+  final out = <String, List<PageRef>>{};
+  for (final p in pages) {
+    final slash = p.relativePath.indexOf('/');
+    final folder =
+        slash == -1 ? '(root)' : p.relativePath.substring(0, slash);
+    out.putIfAbsent(folder, () => []).add(p);
+  }
+  return out;
+}
+
 /// Count occurrences of each tag across the page set, returning a
 /// frequency map keyed by the trimmed-non-empty raw tag string
 /// (case preserved — callers that want case-folded counts can

@@ -536,6 +536,66 @@ void main() {
     });
   });
 
+  group('latestInFolder', () {
+    test('returns the most-recently-edited page in the folder', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Operations/A.md', mtimeMs: 1000),
+        _p(ulid: 'b', relativePath: 'Operations/B.md', mtimeMs: 3000),
+        _p(ulid: 'c', relativePath: 'Inbox.md', mtimeMs: 9999),
+        _p(ulid: 'd', relativePath: 'Operations/D.md', mtimeMs: 2000),
+      ];
+      expect(latestInFolder(pages, 'Operations')?.ulid, 'b');
+    });
+
+    test('returns null when no page is in the folder', () {
+      final pages = [_p(ulid: 'a', relativePath: 'Other.md')];
+      expect(latestInFolder(pages, 'Operations'), isNull);
+    });
+
+    test('empty folder returns null (matches filterByFolder)', () {
+      final pages = [_p(ulid: 'a', relativePath: 'Foo.md')];
+      expect(latestInFolder(pages, ''), isNull);
+    });
+  });
+
+  group('groupByTopFolder', () {
+    test('groups pages by their top-level folder name', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Operations/A.md'),
+        _p(ulid: 'b', relativePath: 'Operations/B.md'),
+        _p(ulid: 'c', relativePath: 'Inbox.md'),
+      ];
+      final g = groupByTopFolder(pages);
+      expect(g['Operations']?.map((p) => p.ulid).toSet(), {'a', 'b'});
+      expect(g['(root)']?.map((p) => p.ulid).toSet(), {'c'});
+    });
+
+    test('deep nesting still bucket under top folder', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Op/Sub/Deep/X.md'),
+      ];
+      final g = groupByTopFolder(pages);
+      expect(g['Op']?.length, 1);
+      expect(g.length, 1);
+    });
+
+    test('preserves input order within each bucket', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Op/A.md'),
+        _p(ulid: 'c', relativePath: 'Op/C.md'),
+        _p(ulid: 'b', relativePath: 'Op/B.md'),
+      ];
+      expect(
+        groupByTopFolder(pages)['Op']!.map((p) => p.ulid).toList(),
+        ['a', 'c', 'b'],
+      );
+    });
+
+    test('empty input returns empty map', () {
+      expect(groupByTopFolder([]), isEmpty);
+    });
+  });
+
   group('latestByTag', () {
     test('returns the most-recently-edited page among the tagged set', () {
       final pages = [
