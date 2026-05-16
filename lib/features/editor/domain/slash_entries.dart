@@ -81,6 +81,11 @@ enum SlashAction {
   /// Insert a four-section incident post-mortem scaffold at the
   /// caret (Summary / Timeline / Root cause / Action items).
   insertPostMortemScaffold,
+  /// Add a two-space indent to every selected line.
+  indentLines,
+  /// Strip up to two leading spaces (one indent level) from every
+  /// selected line.
+  outdentLines,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1496,6 +1501,20 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.insertPostMortemScaffold,
     keywords: ['postmortem', 'post-mortem', 'incident', 'outage',
         'rca', 'root', 'cause', 'blameless', 'template', 'scaffold'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Indent lines',
+    hint: 'add 2 spaces',
+    action: SlashAction.indentLines,
+    keywords: ['indent', 'tab', 'nest', 'shift', 'right'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Outdent lines',
+    hint: 'strip 2 spaces',
+    action: SlashAction.outdentLines,
+    keywords: ['outdent', 'untab', 'unnest', 'shift', 'left', 'dedent'],
   ),
   SlashEntry(
     icon: 'link',

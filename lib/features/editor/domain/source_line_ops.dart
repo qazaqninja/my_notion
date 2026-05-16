@@ -1945,6 +1945,33 @@ SortLinesResult collapseSpacesIn(String text, int start, int end) =>
       ];
     });
 
+/// Add a two-space indent to the start of every selected line.
+/// Mirrors VS Code's Tab-with-multi-line-selection gesture. Empty
+/// lines are left blank — indenting them would add only trailing
+/// whitespace, which the user typically wants stripped, not added.
+SortLinesResult indentLinesIn(String text, int start, int end) =>
+    transformLinesIn(
+      text,
+      start,
+      end,
+      (lines) => [for (final l in lines) l.isEmpty ? l : '  $l'],
+    );
+
+/// Strip up to two leading spaces (one indent level) from every
+/// selected line. Inverse of [indentLinesIn]; mirrors VS Code's
+/// Shift-Tab gesture. Lines with one leading space lose just that
+/// one; lines flush at column 0 stay flush. Leading tabs are
+/// preserved (the tab/space mix is `tabsToSpaces`'s concern).
+SortLinesResult outdentLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      String stripOne(String l) {
+        if (l.startsWith('  ')) return l.substring(2);
+        if (l.startsWith(' ')) return l.substring(1);
+        return l;
+      }
+      return [for (final l in lines) stripOne(l)];
+    });
+
 /// Strip leading whitespace (spaces, tabs) from every line in the
 /// selected block. The trim-trailing's mirror — common when pasting
 /// pre-indented code into the editor and wanting a clean left margin.

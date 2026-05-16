@@ -1059,6 +1059,10 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart + caretInScaffold,
           ),
         );
+      case SlashAction.indentLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, indentLinesIn);
+      case SlashAction.outdentLines:
+        _applyLinesTransformAfterSlash(stripStart, caret, outdentLinesIn);
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

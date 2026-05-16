@@ -140,6 +140,53 @@ void main() {
     });
   });
 
+  group('indentLinesIn / outdentLinesIn', () {
+    test('indent adds 2-space prefix to every non-empty line', () {
+      const text = 'foo\nbar\n';
+      final r = indentLinesIn(text, 0, text.length);
+      expect(r.text, '  foo\n  bar\n');
+    });
+
+    test('indent leaves empty lines blank (no trailing whitespace)', () {
+      const text = 'foo\n\nbar\n';
+      final r = indentLinesIn(text, 0, text.length);
+      expect(r.text, '  foo\n\n  bar\n');
+    });
+
+    test('outdent strips two leading spaces when present', () {
+      const text = '  foo\n  bar\n';
+      final r = outdentLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\n');
+    });
+
+    test('outdent partial: one leading space loses just that one', () {
+      const text = ' foo\n   bar\n';
+      final r = outdentLinesIn(text, 0, text.length);
+      // " foo" → "foo" (1 space stripped), "   bar" → " bar" (2 stripped).
+      expect(r.text, 'foo\n bar\n');
+    });
+
+    test('outdent on a flush line is a no-op for that line', () {
+      const text = 'flush\n  indented\n';
+      final r = outdentLinesIn(text, 0, text.length);
+      expect(r.text, 'flush\nindented\n');
+    });
+
+    test('indent-then-outdent is the identity for ASCII text', () {
+      const text = 'one\ntwo\nthree\n';
+      final indented = indentLinesIn(text, 0, text.length);
+      final back =
+          outdentLinesIn(indented.text, 0, indented.text.length);
+      expect(back.text, text);
+    });
+
+    test('outdent preserves leading tabs (tab/space mix is its own op)', () {
+      const text = '\tfoo\n  bar\n';
+      final r = outdentLinesIn(text, 0, text.length);
+      expect(r.text, '\tfoo\nbar\n');
+    });
+  });
+
   group('kPostMortemScaffold', () {
     test('contains the four canonical post-mortem section headings', () {
       expect(kPostMortemScaffold.contains('## Summary\n'), isTrue);
