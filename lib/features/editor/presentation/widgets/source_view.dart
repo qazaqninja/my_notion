@@ -913,6 +913,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripMarkdownLinksLinesIn,
         );
+      case SlashAction.stripHtmlTagsLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, stripHtmlTagsLinesIn,
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

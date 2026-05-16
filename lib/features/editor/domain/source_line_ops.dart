@@ -2713,6 +2713,29 @@ SortLinesResult stripMarkdownEmphasisLinesIn(
       ];
     });
 
+/// Strip inline HTML tags from every selected line, leaving the
+/// text content between them. Closes the "make this paste plain"
+/// trilogy alongside [stripMarkdownEmphasisLinesIn] (M976) and
+/// [stripMarkdownLinksLinesIn] (M977). Useful when pasting
+/// Office/Word/Notion-export HTML or LLM output where formatting
+/// snuck through as raw `<tag>`s rather than markdown.
+///
+///   '<b>Hello</b> <span class="x">world</span>'  →  'Hello world'
+///
+/// Per-line scope: only tags whose open and close are on the same
+/// line are stripped. Multi-line block elements (`<div>` on one line,
+/// `</div>` on another) leave each line's tag chrome removed in
+/// isolation. HTML entities (`&amp;` etc.) pass through unchanged —
+/// unescaping is a separate gesture (`htmlUnescape`).
+SortLinesResult stripHtmlTagsLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      // `<[^>\n]+>` matches any `<` ... `>` run that stays on one
+      // line. Excluding `\n` keeps a stray unclosed `<` from
+      // swallowing the next line.
+      final tag = RegExp(r'<[^>\n]+>');
+      return [for (final l in lines) l.replaceAll(tag, '')];
+    });
+
 /// Strip markdown links and images from every selected line, keeping
 /// the visible label. `[Click here](url)` becomes `Click here`;
 /// `![alt text](path)` becomes `alt text`. Quill-internal wikilinks

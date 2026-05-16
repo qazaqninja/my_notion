@@ -140,6 +140,49 @@ void main() {
     });
   });
 
+  group('stripHtmlTagsLinesIn', () {
+    test('strips opening + closing tag wrappers, keeps inner text', () {
+      const text = '<b>Hello</b> <span>world</span>\n';
+      final r = stripHtmlTagsLinesIn(text, 0, text.length);
+      expect(r.text, 'Hello world\n');
+    });
+
+    test('drops self-closing tags entirely', () {
+      const text = 'line1<br/>line2 <hr>\n';
+      final r = stripHtmlTagsLinesIn(text, 0, text.length);
+      expect(r.text, 'line1line2 \n');
+    });
+
+    test('attribute-rich tags strip just as cleanly', () {
+      const text = 'before<a href="x" rel="nofollow">link</a>after\n';
+      final r = stripHtmlTagsLinesIn(text, 0, text.length);
+      expect(r.text, 'beforelinkafter\n');
+    });
+
+    test('HTML entities pass through unchanged', () {
+      // Unescaping is a separate gesture (htmlUnescape).
+      const text = '<b>foo</b> &amp; bar\n';
+      final r = stripHtmlTagsLinesIn(text, 0, text.length);
+      expect(r.text, 'foo &amp; bar\n');
+    });
+
+    test('a lone `<` without a closing `>` on the same line is kept', () {
+      const text = 'use the < operator\n';
+      expect(stripHtmlTagsLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('a `<` followed by `>` on the next line does not eat the newline', () {
+      // Per-line scope: `<foo\nbar>` is two separate lines.
+      const text = '<foo\nbar>\n';
+      final r = stripHtmlTagsLinesIn(text, 0, text.length);
+      expect(r.text, '<foo\nbar>\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(stripHtmlTagsLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('stripMarkdownLinksLinesIn', () {
     test('strips a plain link and keeps the label', () {
       const text = '[Click here](http://example.com)\n';

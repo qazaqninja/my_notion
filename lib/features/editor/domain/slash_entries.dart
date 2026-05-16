@@ -38,6 +38,9 @@ enum SlashAction {
   /// `[label](url)` → `label`, `![alt](src)` → `alt`. Wikilinks
   /// `[[ULID]]` are preserved (they're the canonical Quill relation).
   stripMarkdownLinksLines,
+  /// Strip inline HTML tags from every selected line, leaving the
+  /// text content between them.
+  stripHtmlTagsLines,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -1326,6 +1329,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[label](url) → label',
     action: SlashAction.stripMarkdownLinksLines,
     keywords: ['strip', 'unlink', 'link', 'url', 'markdown', 'plain'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Strip HTML tags',
+    hint: '<b>Hi</b> → Hi',
+    action: SlashAction.stripHtmlTagsLines,
+    keywords: ['strip', 'html', 'tag', 'unwrap', 'plain', 'remove'],
   ),
   SlashEntry(
     icon: 'link',
