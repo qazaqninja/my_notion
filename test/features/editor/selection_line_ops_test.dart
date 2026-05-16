@@ -5017,6 +5017,63 @@ void main() {
     });
   });
 
+  group('extractHtmlCommentsFromLinesIn', () {
+    test('basic `<!-- foo -->` extracts content', () {
+      const text = 'note <!-- hidden text --> visible\n';
+      final r = extractHtmlCommentsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'hidden text\n');
+    });
+
+    test('no-whitespace `<!--bar-->` form extracts', () {
+      const text = 'tight<!--bar-->fit\n';
+      final r = extractHtmlCommentsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'bar\n');
+    });
+
+    test('TODO marker convention extracts', () {
+      const text = '<!-- TODO: review next week -->\n';
+      final r = extractHtmlCommentsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'TODO: review next week\n');
+    });
+
+    test('multiple comments on one line each extract', () {
+      const text = '<!-- a -->mid<!-- b -->end<!-- c -->\n';
+      final r = extractHtmlCommentsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a\nb\nc\n');
+    });
+
+    test('leading and trailing whitespace trimmed', () {
+      const text = '<!--   spaced   -->\n';
+      final r = extractHtmlCommentsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'spaced\n');
+    });
+
+    test('unterminated `<!--` is NOT a match', () {
+      // Without `-->` the regex can't close — falls through.
+      const text = 'lone <!-- unclosed text here\n';
+      final r = extractHtmlCommentsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('non-greedy ensures FIRST `-->` closes the match', () {
+      // `<!-- a --> ... <!-- b -->` should yield two captures,
+      // not one giant match `a --> ... <!-- b`.
+      const text = '<!-- a --> filler <!-- b -->\n';
+      final r = extractHtmlCommentsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a\nb\n');
+    });
+
+    test('lines without comments dropped from output', () {
+      const text = 'plain prose\n<!-- todo -->\nmore prose\n';
+      final r = extractHtmlCommentsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'todo\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractHtmlCommentsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

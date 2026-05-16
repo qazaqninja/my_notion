@@ -1410,6 +1410,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractCidrFromLinesIn,
         );
+      case SlashAction.extractHtmlCommentsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractHtmlCommentsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

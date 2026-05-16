@@ -384,6 +384,9 @@ enum SlashAction {
   /// Extract every CIDR-notation IPv4 substring (`a.b.c.d/N`) from
   /// each selected line.
   extractCidrFromLines,
+  /// Extract the content of every HTML comment (`<!-- text -->` →
+  /// `text`) on each selected line.
+  extractHtmlCommentsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1937,6 +1940,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractCidrFromLines,
     keywords: ['extract', 'cidr', 'subnet', 'network', 'ipv4',
         'firewall', 'route'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Extract HTML comments',
+    hint: '<!-- foo --> → foo',
+    action: SlashAction.extractHtmlCommentsFromLines,
+    keywords: ['extract', 'html', 'comment', 'hidden', 'todo',
+        'note', 'audit'],
   ),
   SlashEntry(
     icon: 'calendar',

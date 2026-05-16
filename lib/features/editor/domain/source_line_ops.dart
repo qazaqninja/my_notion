@@ -1784,6 +1784,34 @@ SortLinesResult extractCidrFromLinesIn(
       return out;
     });
 
+/// Extract the content of every HTML comment (`<!-- text -->` →
+/// `text`) on each selected line. Useful for hidden-comment
+/// audits, harvesting `<!-- TODO: -->` notes, and reviewing
+/// content that lives inside HTML comments but doesn't render.
+///
+/// Recognition: `<!--\s*([^\n]*?)\s*-->`
+/// - Literal `<!--` opener.
+/// - Optional leading / trailing whitespace inside the comment
+///   (trimmed from the capture).
+/// - Content captured non-greedily so the FIRST closing `-->`
+///   ends the match — multi-comment-per-line still works.
+/// - `[^\n]` excludes newlines, so multi-line comments only
+///   yield the first line's content.
+///
+/// 48th member of the extraction family.
+SortLinesResult extractHtmlCommentsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'<!--\s*([^\n]*?)\s*-->');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
