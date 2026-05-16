@@ -5,16 +5,16 @@
 
 ## Current
 
-- **Phase:** A (Foundation)
-- **Task:** A12 — Re-run `flutter-arch-orchestrator` end-to-end (Phase A gate)
+- **Phase:** A (Foundation) — gating before Phase B
+- **Task:** A13 — Add `bloc_lint` + `custom_lint` (LT-02, LT-03)
 - **Status:** pending
 
 ## Last completed
 
-- **M1208 — A11 slice 1** (EditorBloc no-op contract — 9 events)
-- Committed: bd2e8fe
-- TaskList ID: 11 (closed at 9 cases passing)
-- Notes: A11 covers the early-return contract for the 9 events that no-op outside EditorLoaded. OpenEditor / SaveNow positive paths need a working drift in-memory db (mocktail `any()` can't bind drift's strongly-typed generics), which is heavier than a bite-sized slice. Deferred to a future iteration.
+- **M1210 — A12** (Phase A orchestrator gate — full re-audit, all three TS-* targets confirmed PASS)
+- Committed: (this commit)
+- TaskList ID: 12
+- Notes: Phase A delta confirmed. New info finding: TS-04 (event-level group nesting in vault_bloc/editor_bloc tests) — defer to A15 or later. Phase B readiness checks: reminders datasource belongs in `lib/features/reminders/data/datasources/`, not `lib/core/platform/`; no transitive `get_it` pulled in by video_player/audioplayers/pdfx/flutter_local_notifications/share_plus per `flutter pub deps`; pdfx may need a method-channel wrapper for testability.
 
 ## Backlog (Phase A — Foundation)
 
@@ -29,7 +29,10 @@
 - [x] A9 — Port `slash_menu_cubit_test` to bloc_test (M1202 / 8ec74dc)
 - [x] A10 — Write NEW `vault_bloc_test.dart` (M1204+M1206, 11 cases covering 9 no-op events + CloseVault + LoadFromPath missing-path; PickVault / load-happy-path deferred)
 - [x] A11 — Write NEW `editor_bloc_test.dart` (M1208, 9 cases covering no-op contract; OpenEditor / SaveNow positive paths deferred)
-- [ ] A12 — Re-run flutter-arch-orchestrator end-to-end (Phase A gate)
+- [x] A12 — Re-run flutter-arch-orchestrator (Phase A gate — TS-03/08/09 confirmed PASS; remaining ERRORs LT-02/LT-03/TS-07)
+- [ ] A13 — Add `bloc_lint` + `custom_lint` (LT-02, LT-03)
+- [ ] A14 — Write CONTRIBUTING.md (MD-03 + TS-07 ratchet policy)
+- [ ] A15 — (deferred / optional) sub-group vault_bloc_test + editor_bloc_test by event (TS-04 info)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
 - [ ] A6 — Add `mockingjay` dev dependency (TS-09)
 - [ ] A7 — Port `vault_bloc` test to `bloc_test` (TS-03)
@@ -76,9 +79,9 @@
 
 ### ERROR (block-severity)
 
-- [ ] **TS-07** — Coverage gate 62% vs RULES.md 95% default. Set in `.github/workflows/flutter-ci.yml:65` (`min_coverage: 62`). Intentional ratchet but formally non-compliant; document in CONTRIBUTING.md (MD-03 below) once that lands.
-- [ ] **LT-02** — `bloc_lint` not in pubspec / CI. **Resolves with A4** (add `bloc_test` + `bloc_lint` together since both are linked).
-- [ ] **LT-03** — `custom_lint` not in `dev_dependencies` / CI. Add `custom_lint: ^0.x` + `dart run custom_lint` step in CI.
+- [ ] **TS-07** — Coverage gate 62% vs RULES.md 95% default. Set in `.github/workflows/flutter-ci.yml:65` (`min_coverage: 62`). Intentional ratchet but formally non-compliant; A14 lands CONTRIBUTING.md documenting the ratchet path so the deviation is policy-acknowledged. Full 95% requires backfilling many feature areas.
+- [ ] **LT-02** — `bloc_lint` not in pubspec / CI. (Note: A4 added bloc_test only; LT-02 was decoupled and is now A13.) Resolves with A13.
+- [ ] **LT-03** — `custom_lint` not in `dev_dependencies` / CI. Resolves with A13 (same iteration as bloc_lint — both are lint-runner packages).
 - [x] **TS-03** — `bloc_test` package absent → no `blocTest<>` usage anywhere. ✅ Resolved at M1192 (A4) — `bloc_test: ^10.0.0` added to `pubspec.yaml` dev_dependencies; smoke test at `test/foundation/bloc_test_smoke_test.dart` proves the harness works. Subsequent tasks A7–A11 port existing hand-written bloc/cubit tests to the new harness.
 - [x] **TS-08** (preventive) — alchemist was not in pubspec; no goldens existed so no formal violation yet, but RULES.md TS-08 mandates alchemist for any future golden. ✅ Resolved at M1194 (A5) — `alchemist: ^0.12.1` added, `test/flutter_test_config.dart` wires the config, `dart_test.yaml` declares the `golden` tag, smoke golden at `test/foundation/golden_smoke_test.dart`.
 - [x] **TS-09** (preventive) — mockingjay was not in pubspec; no widget tests asserted Navigator/router calls yet, but RULES.md TS-09 mandates mockingjay for any future router-touching widget test. ✅ Resolved at M1196 (A6) — `mockingjay: ^2.0.0` added (pin capped by SDK 3.9.2 — 2.1.0 needs SDK 3.10). Smoke at `test/foundation/mockingjay_smoke_test.dart` shows both `MockNavigator` and the local `_MockGoRouter extends Mock implements GoRouter` patterns.
@@ -96,17 +99,17 @@
 - [ ] **BL-10** — `VaultBloc` handlers (`PickVault`, `LoadFromPath`, `ReindexVault`, `RefreshFromDisk`) have no explicit transformer; default `concurrent` is racy for I/O. Add `droppable` (or `sequential`) from `bloc_concurrency`. (`vault_bloc.dart` lines 41-45)
 - [ ] **NV-02** — Parameterised routes (`/editor/:ulid`, `/db/:dbId`, `/settings/:section`) use string-literal `GoRoute`, not `TypedGoRoute`. (`lib/app.dart` lines 154-186) — RULES.md only **prefers** typed routes; not strictly mandatory.
 - [ ] **TH-03** — Hex literals in `lib/shared/theme/{tokens,accent}.dart`. Borderline per rule intent (rule is about widget files; tokens.dart IS the token home).
-- [ ] **MD-03** — No `CONTRIBUTING.md` documenting generated-files policy for `quill_database.g.dart` (committed to repo). Policy exists in `analysis_options.yaml` comments only.
+- [ ] **MD-03** — No `CONTRIBUTING.md` documenting generated-files policy for `quill_database.g.dart` (committed to repo). Policy exists in `analysis_options.yaml` comments only. Resolves with A14.
 - [ ] **DI-03** — `VaultBloc` + `ThemeCubit` provided at root `MultiBlocProvider` in `app.dart:88`. Justifiable (single-vault app, cross-cutting theme) but should be documented inline.
 
 ### Notes for upcoming work
 
-- TS-03 + LT-02 are a single `pubspec.yaml` edit → A4 resolves both gaps simultaneously.
+- TS-04 (info) — Phase A introduced 18 blocTests across vault_bloc_test.dart + editor_bloc_test.dart inside a single top-level group. RULES.md TS-04 prefers nesting by event/method name. Cosmetic — A15 (optional) batches the cleanup if/when convenient.
 - TS-02 (mocktail, not mockito) is PASS. `mocktail: ^1.0.4` is present.
-- TS-04 (grouping) is largely satisfied — cubit tests use `group(...)` blocks.
 - TS-05 (private mocks) is PASS — all mocks are `_Mock*` prefixed within their own test file.
 - TS-06 (widget behavior) is largely satisfied where widget tests exist.
-- Adding `video_player`, `audioplayers`, `pdfx`, `flutter_local_notifications`, `share_plus`, `super_editor` is NOT rule-blocked. MD-02 only constrains code-gen tooling. Verify no transitive `get_it` via `flutter pub deps` after each add (DI-01).
+- Adding `video_player`, `audioplayers`, `pdfx`, `flutter_local_notifications`, `share_plus`, `super_editor` is NOT rule-blocked. MD-02 only constrains code-gen tooling. Verify no transitive `get_it` via `flutter pub deps` after each add (DI-01). Phase A audit confirmed clean as of M1210.
+- Phase B reminders feature: `RemindersBloc` (not Cubit — I/O transformer required for schedule/cancel), datasource at `lib/features/reminders/data/datasources/notifications_datasource.dart` (NOT `lib/core/platform/` — feature-scoped concern).
 - Phase E's `lib/features/auth/` + `lib/features/sync/` follow established Clean Architecture pattern. FS-03 caveat: cross-feature repo imports must be enforced by review (no `pub` boundary).
 
 ## Per-iteration protocol
