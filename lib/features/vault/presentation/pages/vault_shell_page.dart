@@ -709,6 +709,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show hub pages (most backlinks)':
         if (!context.mounted) return;
         await _showHubPagesDialog(context);
+      case 'Show empty pages':
+        if (!context.mounted) return;
+        await _showEmptyPagesDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           context.toastError('No vault open');
@@ -1192,6 +1195,30 @@ views:
           'Pages not edited in 90+ days. Oldest first — candidates for archive or refresh.',
       subtitleEmpty:
           'Every indexed page has been edited within the last 90 days.',
+    );
+  }
+
+  Future<void> _showEmptyPagesDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    // "Empty" means: no body content (whitespace-only counts as empty).
+    // Title and frontmatter are preserved — these are the placeholder
+    // pages that got created but never filled in. Distinct from
+    // "orphan" (no links) and "without a title" (no name).
+    final empties = [
+      for (final p in pages)
+        if (p.bodyText.trim().isEmpty) p,
+    ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+    if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: empties,
+      headingFull: 'EMPTY PAGES',
+      headingEmpty: 'NO EMPTY PAGES',
+      subtitleFull:
+          'Pages with a title but no body content. Drafts to flesh out — or orphans to delete.',
+      subtitleEmpty:
+          'Every indexed page has at least some body content.',
     );
   }
 
