@@ -2709,6 +2709,41 @@ void main() {
     });
   });
 
+  group('floorNumericLinesIn / ceilNumericLinesIn / truncateNumericLinesIn', () {
+    test('floor rounds toward -∞ (also negative inputs)', () {
+      const text = '3.7\n-3.7\n0\n';
+      final r = floorNumericLinesIn(text, 0, text.length);
+      expect(r.text, '3\n-4\n0\n');
+    });
+
+    test('ceil rounds toward +∞', () {
+      const text = '3.2\n-3.2\n0\n';
+      final r = ceilNumericLinesIn(text, 0, text.length);
+      expect(r.text, '4\n-3\n0\n');
+    });
+
+    test('truncate rounds toward zero — differs from floor on negatives', () {
+      const text = '3.7\n-3.7\n';
+      final r = truncateNumericLinesIn(text, 0, text.length);
+      expect(r.text, '3\n-3\n');
+    });
+
+    test('non-numeric lines pass through all three transforms', () {
+      const text = '3.5\nlabel\n';
+      expect(floorNumericLinesIn(text, 0, text.length).text, '3\nlabel\n');
+      expect(ceilNumericLinesIn(text, 0, text.length).text, '4\nlabel\n');
+      expect(truncateNumericLinesIn(text, 0, text.length).text,
+          '3\nlabel\n');
+    });
+
+    test('integer input is invariant under all three', () {
+      const text = '5\n-2\n';
+      expect(floorNumericLinesIn(text, 0, text.length).text, text);
+      expect(ceilNumericLinesIn(text, 0, text.length).text, text);
+      expect(truncateNumericLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

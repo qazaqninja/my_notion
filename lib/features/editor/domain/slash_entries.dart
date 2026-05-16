@@ -243,6 +243,12 @@ enum SlashAction {
   absNumericLines,
   /// Replace every numeric line with its negation.
   negateNumericLines,
+  /// Floor every numeric line (round toward −∞).
+  floorNumericLines,
+  /// Ceil every numeric line (round toward +∞).
+  ceilNumericLines,
+  /// Truncate every numeric line (round toward zero).
+  truncateNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1120,6 +1126,27 @@ const List<SlashEntry> kSlashEntries = [
     hint: '5 → -5',
     action: SlashAction.negateNumericLines,
     keywords: ['negate', 'flip', 'sign', 'invert', 'minus'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Floor (round to −∞)',
+    hint: '3.7 → 3',
+    action: SlashAction.floorNumericLines,
+    keywords: ['floor', 'round', 'down', 'negative'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Ceil (round to +∞)',
+    hint: '3.2 → 4',
+    action: SlashAction.ceilNumericLines,
+    keywords: ['ceil', 'ceiling', 'round', 'up', 'positive'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Truncate (toward zero)',
+    hint: '3.7 → 3 / -3.7 → -3',
+    action: SlashAction.truncateNumericLines,
+    keywords: ['truncate', 'integer', 'drop', 'fraction'],
   ),
   SlashEntry(
     icon: 'hash',

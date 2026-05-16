@@ -969,6 +969,52 @@ SortLinesResult negateNumericLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Floor every selected numeric line — round toward negative
+/// infinity. `3.7 → 3`, `-3.7 → -4`. Result is always an integer
+/// rendered without decimals. Non-numeric lines pass through.
+SortLinesResult floorNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            return v.floor().toString();
+          })(),
+      ];
+    });
+
+/// Ceil every selected numeric line — round toward positive
+/// infinity. `3.2 → 4`, `-3.2 → -3`. Result is always an integer.
+/// Non-numeric lines pass through.
+SortLinesResult ceilNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            return v.ceil().toString();
+          })(),
+      ];
+    });
+
+/// Truncate every selected numeric line — drop the fractional part
+/// (round toward zero). `3.7 → 3`, `-3.7 → -3`. Different from
+/// [floorNumericLinesIn] on negative inputs. Non-numeric lines
+/// pass through.
+SortLinesResult truncateNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            return v.truncate().toString();
+          })(),
+      ];
+    });
+
 /// Round every selected numeric line to [decimals] places. Uses
 /// banker's-friendly `toStringAsFixed` so a trailing 5 follows the
 /// platform's default-rounding behaviour (away-from-zero on most
