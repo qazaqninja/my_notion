@@ -145,12 +145,21 @@ User-visible polish in rough impact order (full breakdown in `~/.claude/plans/bu
 4. ~~**Filter / Sort / Group runtime in database table**~~ — ✅ Already shipped. `lib/features/database/domain/usecases/apply_query.dart` (`ApplyQuery.apply`) takes a `DatabaseQuery` (`FilterRule` / sort / group) and is called from `database_table_page.dart` (lines 470, 555, 710) plus `board_view.dart._groupRows`. Strike from the backlog.
 5. ~~**Relation picker keyboard navigation**~~ — ✅ Already shipped. `source_view.dart:663-690` wires Up/Down → `Cubit.move()`, Enter/Tab → `onPick(selected)`, Escape → `dismiss()`. Strike from the backlog.
 6. ~~**Command palette action handlers**~~ — ✅ Already shipped. `vault_shell_page.dart:_invokeAction` switches on the entry label and runs the matching handler for Reindex, Quick capture, Bookmark URL, Open random page, Open today's daily note, Toggle theme, Toggle compact mode, Show orphan/untagged/no-title/broken-wikilink/stale pages, Import CSV/HTML/text/Markdown/OPML, Export vault, Reveal vault in Finder, Show trash. Strike from the backlog.
-7. **macOS security-scoped bookmark persistence** — currently auto-restore fails on relaunch and silently falls back to picker. (1 day, Swift channel)
+7. **macOS security-scoped bookmark persistence** — currently auto-restore fails on relaunch and silently falls back to picker. `macos/Runner/` has no `SecurityScopedResource` calls; no `MethodChannel` for bookmark save/resolve. (1 day, Swift channel)
 8. ~~**Reveal in Finder / xdg-open / explorer.exe**~~ — ✅ Already shipped. `lib/core/platform/reveal.dart` dispatches `open` / `xdg-open` / `explorer.exe /select,` per-platform; called from the palette and editor breadcrumb. Strike from the backlog.
-9. **WYSIWYG editing via super_editor** — biggest single-feature lift. Source mode + read-only rendered work fine without it. (2–3 days incl. round-trip serializer audit)
-10. **Mobile editor + database screens** — desktop pages scale but no mobile-optimised UI. Only the responsive *shell* (drawer + tab bar) is done. (1.5–2 days)
+9. **WYSIWYG editing via super_editor** — biggest single-feature lift. Source mode + read-only rendered work fine without it. **Note:** `super_editor` is NOT yet in `pubspec.yaml` (was previously assumed to be a dependency); the migration starts with adding it. (2–3 days incl. round-trip serializer audit)
+10. 🚧 **Mobile editor + database screens** — Responsive *shell* (drawer + tab bar) shipped at M13/M20; mobile-shell FAB at M197; responsive command palette + slash menu widths at M206/M207; database table auto-falls-back to list rendering at M209. **Still pending:** per-page mobile-optimised editor toolbar, mobile-first properties panel, touch-tuned slash menu. (~1 day remaining)
 
-Settings page completion (most non-Vault sections are stubs), engineering quality (injectable DI, freezed entities, more tests), and v2 backend (Dart Frog/Serverpod + Postgres + Docker + sync) are all in the plan file.
+**Recent additions (not in original 10-item list):**
+
+11. **Inline video / audio / PDF playback** — M201 ships rich M201 cards (video terracotta band, audio blue band, PDF sage band) but `_open()` falls back to OS default player; no `video_player`, `audioplayers`, or `pdfx` in `pubspec.yaml`. (2–3 days for all three)
+12. **OS notifications for reminders** — M89 / M211 / M230 surface `reminder:` frontmatter in PageHeader + home-page list + kebab editor; no `flutter_local_notifications` dispatch. (1 day)
+13. **Mermaid native rendering** — M200 styles fenced ```mermaid blocks as a placeholder card; no `webview_flutter` or `flutter_mermaid` actually renders them. (~0.5 day with vendored mermaid.min.js + webview)
+14. **OS share-sheet integration** — M210 in-app Quick Capture covers the analogous workflow; no `share_plus` or `receive_sharing_intent`. (1 day)
+15. **Home-screen widgets (iOS / Android)** — write-only "Add to Inbox" widget would be the natural first. (~1 day per platform via `home_widget`)
+16. **bloc_test / alchemist / mockingjay test packages** — RULES.md TS-03 / TS-08 / TS-09 require these; none are currently in `pubspec.yaml`. Existing 91 test files are hand-written. (Foundation phase of the 1m-loop adds them + ports 5 existing bloc tests.)
+
+Settings page completion (Vault pane is solid; Appearance ✅ M100, Export ✅ M101, Advanced ✅ M102, Users ✅ M188, Sidebar ✅ M204; remaining non-Vault sections are mostly stubs), engineering quality (injectable DI, freezed entities, golden tests, bloc_test backfill), and v2 backend (Dart Frog/Serverpod + Postgres + Docker + sync) are all in the plan file `~/.claude/plans/1m-run-until-we-frolicking-thompson.md`.
 
 ## How to continue work in a new session
 
