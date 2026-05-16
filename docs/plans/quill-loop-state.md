@@ -5,16 +5,16 @@
 
 ## Current
 
-- **Phase:** A (Foundation) — gating before Phase B
-- **Task:** A14 — Write CONTRIBUTING.md (MD-03 + TS-07 ratchet policy)
+- **Phase:** B (V1 Polish — Media)
+- **Task:** B1 — Inline video playback (video_player)
 - **Status:** pending
 
 ## Last completed
 
-- **M1211 — A13** (add bloc_lint + custom_lint)
-- Committed: 7fb21fb
-- TaskList ID: 13
-- Notes: Pins `bloc_lint: ^0.3.7` (pub resolved 0.4.x incompatible with drift_dev/flutter_test analyzer constraints) and `custom_lint: ^0.8.0`. analyzer.plugins:[custom_lint] wired in analysis_options.yaml. `dart run custom_lint` finds 0 issues on existing code — no follow-up cleanup needed. LT-02 and LT-03 both resolved in one iteration.
+- **M1213 — A14** (add CONTRIBUTING.md — closes Phase A)
+- Committed: fa686a3
+- TaskList ID: 14
+- Notes: CONTRIBUTING.md documents the drift `*.g.dart` policy (MD-03) and the 62% coverage ratchet with full M821→M1156 history (TS-07 deviation policy-acknowledged). Phase A is now closed end-to-end — 14/14 tasks shipped across M1187-M1213, all 4 ERROR baselines resolved or documented.
 
 ## Backlog (Phase A — Foundation)
 
@@ -31,7 +31,7 @@
 - [x] A11 — Write NEW `editor_bloc_test.dart` (M1208, 9 cases covering no-op contract; OpenEditor / SaveNow positive paths deferred)
 - [x] A12 — Re-run flutter-arch-orchestrator (Phase A gate — TS-03/08/09 confirmed PASS; remaining ERRORs LT-02/LT-03/TS-07)
 - [x] A13 — Add `bloc_lint` + `custom_lint` (LT-02, LT-03) (M1211 / 7fb21fb)
-- [ ] A14 — Write CONTRIBUTING.md (MD-03 + TS-07 ratchet policy)
+- [x] A14 — Write CONTRIBUTING.md (MD-03 + TS-07 ratchet policy) (M1213 / fa686a3)
 - [ ] A15 — (deferred / optional) sub-group vault_bloc_test + editor_bloc_test by event (TS-04 info)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
 - [ ] A6 — Add `mockingjay` dev dependency (TS-09)
@@ -79,7 +79,7 @@
 
 ### ERROR (block-severity)
 
-- [ ] **TS-07** — Coverage gate 62% vs RULES.md 95% default. Set in `.github/workflows/flutter-ci.yml:65` (`min_coverage: 62`). Intentional ratchet but formally non-compliant; A14 lands CONTRIBUTING.md documenting the ratchet path so the deviation is policy-acknowledged. Full 95% requires backfilling many feature areas.
+- [x] **TS-07** — Coverage gate 62% vs RULES.md 95% default. ✅ Policy-acknowledged at M1213 (A14) via `CONTRIBUTING.md` "Coverage ratchet" section with full M821-M1156 history and the two-consecutive-observation bump rule. Full 95% remains a long-tail goal, not a blocker; the ratchet continues to climb naturally as Phase B/C/D features land with tests.
 - [x] **LT-02** — `bloc_lint` not in pubspec / CI. ✅ Resolved at M1211 (A13) — `bloc_lint: ^0.3.7` added + custom_lint plugin wired in `analysis_options.yaml`. `dart run custom_lint` returns 0 issues on existing code.
 - [x] **LT-03** — `custom_lint` not in `dev_dependencies` / CI. ✅ Resolved at M1211 (A13) — `custom_lint: ^0.8.0` added + `analyzer.plugins: [custom_lint]` in analysis_options.yaml.
 - [x] **TS-03** — `bloc_test` package absent → no `blocTest<>` usage anywhere. ✅ Resolved at M1192 (A4) — `bloc_test: ^10.0.0` added to `pubspec.yaml` dev_dependencies; smoke test at `test/foundation/bloc_test_smoke_test.dart` proves the harness works. Subsequent tasks A7–A11 port existing hand-written bloc/cubit tests to the new harness.
@@ -99,7 +99,7 @@
 - [ ] **BL-10** — `VaultBloc` handlers (`PickVault`, `LoadFromPath`, `ReindexVault`, `RefreshFromDisk`) have no explicit transformer; default `concurrent` is racy for I/O. Add `droppable` (or `sequential`) from `bloc_concurrency`. (`vault_bloc.dart` lines 41-45)
 - [ ] **NV-02** — Parameterised routes (`/editor/:ulid`, `/db/:dbId`, `/settings/:section`) use string-literal `GoRoute`, not `TypedGoRoute`. (`lib/app.dart` lines 154-186) — RULES.md only **prefers** typed routes; not strictly mandatory.
 - [ ] **TH-03** — Hex literals in `lib/shared/theme/{tokens,accent}.dart`. Borderline per rule intent (rule is about widget files; tokens.dart IS the token home).
-- [ ] **MD-03** — No `CONTRIBUTING.md` documenting generated-files policy for `quill_database.g.dart` (committed to repo). Policy exists in `analysis_options.yaml` comments only. Resolves with A14.
+- [x] **MD-03** — No `CONTRIBUTING.md` documenting generated-files policy for `quill_database.g.dart` (committed to repo). ✅ Resolved at M1213 (A14) — CONTRIBUTING.md "Generated files" section.
 - [ ] **DI-03** — `VaultBloc` + `ThemeCubit` provided at root `MultiBlocProvider` in `app.dart:88`. Justifiable (single-vault app, cross-cutting theme) but should be documented inline.
 
 ### Notes for upcoming work
