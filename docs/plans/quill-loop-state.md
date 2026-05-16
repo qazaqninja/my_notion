@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1224 — B4 slice 1** (NotificationScheduler datasource abstraction + package add)
-- Committed: e5645bf
+- **M1226 — B4 slice 2** (RemindersBloc + 5-case bloc_test)
+- Committed: 0b94885
 - TaskList ID: 18 (still in_progress)
-- Notes: `flutter_local_notifications ^20.1.0` (capped — 21.x needs SDK 3.10) + `timezone ^0.10.0`. New `lib/features/reminders/` feature folder following the orchestrator's FS-01 guidance (NOT placed in `lib/core/platform/`). Abstract `NotificationScheduler` with 4 methods (init/schedule/cancel/cancelAll) + concrete `LocalNotificationScheduler` for RP-02 constructor injection. Smoke test verifies the abstraction is mockable via mocktail. Slice 2 = RemindersBloc; slice 3 = EditorBloc EditFrontmatterField wiring for `reminder:` key; slice 4 = main.dart init + platform config (Info.plist permissions, etc.).
+- Notes: RemindersBloc handles ScheduleReminder / CancelReminder / CancelAllReminders, all with `sequential()` transformer (BL-10) since they do platform I/O. State is `RemindersState(scheduled: Set<String>)` — the *which pages have OS schedules* tracker; frontmatter `reminder:` remains source-of-truth for *when*. ID mapping uses `ulid.hashCode` for the int that flutter_local_notifications requires. Scheduler exceptions are caught + state still updated (best-effort UX). Slice 3 wires this bloc to EditorBloc's EditFrontmatterField for the `reminder:` key. Slice 4 lands main.dart init.
 
 ## Backlog (Phase A — Foundation)
 
