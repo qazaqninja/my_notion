@@ -1494,6 +1494,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractGithubIssuePrNumbersFromLinesIn,
         );
+      case SlashAction.extractNpmScopedPackagesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractNpmScopedPackagesFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

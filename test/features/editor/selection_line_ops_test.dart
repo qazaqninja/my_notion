@@ -6427,6 +6427,69 @@ void main() {
     });
   });
 
+  group('extractNpmScopedPackagesFromLinesIn', () {
+    test('standard `@scope/name` extracts', () {
+      const text = 'install @flutter/material today\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '@flutter/material\n');
+    });
+
+    test('hyphenated package name preserved', () {
+      const text = 'dep @scope/my-cool-package added\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '@scope/my-cool-package\n');
+    });
+
+    test('dotted package name preserved', () {
+      const text = 'use @types/node.js types\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '@types/node.js\n');
+    });
+
+    test('digit-starting scope/name extracts', () {
+      const text = 'see @123scope/4name today\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '@123scope/4name\n');
+    });
+
+    test('unscoped package (`react`) is NOT matched', () {
+      // Avoid English-word false positives — unscoped form
+      // is out of scope for v1.
+      const text = 'install react today\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('uppercase-scope is NOT matched', () {
+      // NPM convention is lowercase.
+      const text = 'fake @SCOPE/Material here\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple packages on one line each extract', () {
+      const text = 'pair @foo/bar and @baz/qux installed\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '@foo/bar\n@baz/qux\n');
+    });
+
+    test('bare `@scope` (no `/name`) is NOT matched', () {
+      const text = 'partial @scope only here\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without scoped packages dropped from output', () {
+      const text = 'plain prose\ninstall @vue/cli\nmore prose\n';
+      final r = extractNpmScopedPackagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '@vue/cli\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractNpmScopedPackagesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

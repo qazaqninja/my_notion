@@ -449,6 +449,9 @@ enum SlashAction {
   /// Extract every GitHub issue/PR number (from full-URL
   /// references) on each selected line.
   extractGithubIssuePrNumbersFromLines,
+  /// Extract every NPM scoped package name (`@scope/name`)
+  /// from each selected line.
+  extractNpmScopedPackagesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2170,6 +2173,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractGithubIssuePrNumbersFromLines,
     keywords: ['extract', 'github', 'issue', 'pr', 'number',
         'pull', 'request'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract NPM scoped packages',
+    hint: '@scope/name',
+    action: SlashAction.extractNpmScopedPackagesFromLines,
+    keywords: ['extract', 'npm', 'package', 'scope', 'dep',
+        'dependency'],
   ),
   SlashEntry(
     icon: 'calendar',

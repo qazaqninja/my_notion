@@ -2476,6 +2476,38 @@ SortLinesResult extractGithubIssuePrNumbersFromLinesIn(
       return out;
     });
 
+/// Extract every NPM scoped package name (`@scope/name`) from
+/// each selected line. Useful for dependency audit, package
+/// inventory, and migration tracking.
+///
+/// Recognition: `@[a-z0-9][\w.-]*/[a-z0-9][\w.-]*`
+/// - Literal `@` namespace marker.
+/// - Scope: lowercase alphanumeric start, then alphanumeric +
+///   `_` + `-` + `.`.
+/// - Literal `/`.
+/// - Package name: same shape as scope.
+///
+/// Lowercase enforced per NPM convention. Mixed-case forms
+/// (`@FLUTTER/Material`) are NOT matched. Unscoped packages
+/// (`react`, `lodash`) are NOT matched — they're too easily
+/// confused with English words; if a doc explicitly cites
+/// `react` as a dep, the `@scope/` form usually appears
+/// elsewhere for context.
+///
+/// 69th member of the extraction family.
+SortLinesResult extractNpmScopedPackagesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'@[a-z0-9][\w.-]*/[a-z0-9][\w.-]*');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
