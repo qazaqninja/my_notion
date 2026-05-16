@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1226 — B4 slice 2** (RemindersBloc + 5-case bloc_test)
-- Committed: 0b94885
+- **M1228 — B4 slice 3** (provider wiring + EditorBloc → RemindersBloc bridge)
+- Committed: 89da166
 - TaskList ID: 18 (still in_progress)
-- Notes: RemindersBloc handles ScheduleReminder / CancelReminder / CancelAllReminders, all with `sequential()` transformer (BL-10) since they do platform I/O. State is `RemindersState(scheduled: Set<String>)` — the *which pages have OS schedules* tracker; frontmatter `reminder:` remains source-of-truth for *when*. ID mapping uses `ulid.hashCode` for the int that flutter_local_notifications requires. Scheduler exceptions are caught + state still updated (best-effort UX). Slice 3 wires this bloc to EditorBloc's EditFrontmatterField for the `reminder:` key. Slice 4 lands main.dart init.
+- Notes: LocalNotificationScheduler + RemindersBloc are now in `app.dart`'s MultiRepositoryProvider / MultiBlocProvider. `editor_page.dart` wraps `_EditorBody` in a BlocListener<EditorBloc, EditorState> whose `listenWhen` fires only on `reminder:` frontmatter changes; the listener dispatches ScheduleReminder or CancelReminder. The bridge satisfies CA-06 (no bloc-on-bloc dependency — wiring lives in the presentation layer). Slice 4 (final) lands per-platform permission config (Info.plist NSUserNotificationsUsageDescription on iOS/macOS, Android POST_NOTIFICATIONS permission, exact-alarm permission) + docs/platforms.md update.
 
 ## Backlog (Phase A — Foundation)
 
