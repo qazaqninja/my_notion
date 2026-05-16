@@ -492,6 +492,9 @@ enum SlashAction {
   /// Extract the checkbox state (`x` / `X` / ` `) from every
   /// markdown task-list item on each selected line.
   extractMarkdownTaskStatesFromLines,
+  /// Extract every Slack-style mention/channel reference
+  /// (`<@U12345>`, `<#C12345>`) from each selected line.
+  extractSlackMentionsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2325,6 +2328,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownTaskStatesFromLines,
     keywords: ['extract', 'task', 'todo', 'checkbox', 'state',
         'done', 'open'],
+  ),
+  SlashEntry(
+    icon: 'users',
+    label: 'Extract Slack mentions',
+    hint: '<@U12345> / <#C12345>',
+    action: SlashAction.extractSlackMentionsFromLines,
+    keywords: ['extract', 'slack', 'mention', 'channel', 'user',
+        'export'],
   ),
   SlashEntry(
     icon: 'calendar',

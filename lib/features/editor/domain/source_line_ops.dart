@@ -2943,6 +2943,43 @@ SortLinesResult extractMarkdownTaskStatesFromLinesIn(
       return out;
     });
 
+/// Extract every Slack-style mention/channel reference from
+/// each selected line. Useful for Slack export audit,
+/// reaction-roster harvest, and "who/what does this thread
+/// reference?" surveys.
+///
+/// Supported Slack reference forms:
+/// - User mention:    `<@U12345>` (with optional `|alias`)
+/// - Channel mention: `<#C12345>` (with optional `|name`)
+/// - User-group:      `<!subteam^S12345>` (out of scope v1)
+///
+/// Recognition: `<[@#][A-Z][A-Z0-9]+(?:\|[^>]+)?>`
+/// - `<` opener.
+/// - `@` (user) or `#` (channel) sigil.
+/// - Slack ID: uppercase letter start + alphanumeric tail.
+///   Slack IDs are `U…` for users and `C…` for channels but
+///   the regex accepts any uppercase-leading ID for forward
+///   compat.
+/// - Optional `|alias` (consumed but kept in the match).
+/// - `>` closer.
+///
+/// Distinct from M1056 mentions (plain `@alice` form) which
+/// is the prose convention, not the export-format convention.
+///
+/// 83rd member of the extraction family.
+SortLinesResult extractSlackMentionsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'<[@#][A-Z][A-Z0-9]+(?:\|[^>]+)?>');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

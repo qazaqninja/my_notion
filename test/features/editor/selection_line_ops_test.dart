@@ -7399,6 +7399,69 @@ void main() {
     });
   });
 
+  group('extractSlackMentionsFromLinesIn', () {
+    test('user mention `<@U12345>` extracts', () {
+      const text = 'ping <@U12345> now\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@U12345>\n');
+    });
+
+    test('channel mention `<#C12345>` extracts', () {
+      const text = 'see <#C12345> for context\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<#C12345>\n');
+    });
+
+    test('user mention with alias `<@U12345|alice>` extracts', () {
+      const text = 'ping <@U12345|alice> here\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@U12345|alice>\n');
+    });
+
+    test('channel mention with name `<#C12345|general>` extracts', () {
+      const text = 'see <#C12345|general> chat\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<#C12345|general>\n');
+    });
+
+    test('plain `@alice` (no brackets) is NOT a Slack mention', () {
+      // Plain prose mentions are M1056's surface, not this one.
+      const text = 'hi @alice today\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('non-mention angle-bracket `<other>` is NOT matched', () {
+      // Must start with `@` or `#` after the `<`.
+      const text = 'tag <other> here\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lowercase-prefix `<@u12345>` is NOT matched', () {
+      // Slack IDs start with uppercase.
+      const text = 'fake <@u12345> bad\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple mentions on one line each extract', () {
+      const text = 'cc <@U1> and <@U2> in <#C1>\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@U1>\n<@U2>\n<#C1>\n');
+    });
+
+    test('lines without Slack mentions dropped from output', () {
+      const text = 'plain prose\nping <@U12345>\nmore prose\n';
+      final r = extractSlackMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, '<@U12345>\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractSlackMentionsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

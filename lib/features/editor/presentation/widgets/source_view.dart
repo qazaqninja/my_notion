@@ -1551,6 +1551,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownTaskStatesFromLinesIn,
         );
+      case SlashAction.extractSlackMentionsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractSlackMentionsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,
