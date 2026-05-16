@@ -6,6 +6,7 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:ulid/ulid.dart';
 
 import '../auth/middleware.dart';
+import '../db/exceptions.dart';
 import '../sync/frontmatter_probe.dart';
 import 'form_schema.dart';
 
@@ -126,124 +127,132 @@ class FormsRepository implements FormsRepositoryBase {
   final Connection _conn;
 
   @override
-  Future<bool> hasFormDefinition(String ulid) async {
-    final rows = await _conn.execute(
-      Sql.named('''
-        SELECT 1 FROM vault_files
-        WHERE ulid = @ulid AND is_public = true AND has_forms = true
-        LIMIT 1
-      '''),
-      parameters: {'ulid': ulid},
-    );
-    return rows.isNotEmpty;
-  }
+  Future<bool> hasFormDefinition(String ulid) async => runDb(
+        op: 'hasFormDefinition',
+        () async {
+          final rows = await _conn.execute(
+            Sql.named('''
+              SELECT 1 FROM vault_files
+              WHERE ulid = @ulid AND is_public = true AND has_forms = true
+              LIMIT 1
+            '''),
+            parameters: {'ulid': ulid},
+          );
+          return rows.isNotEmpty;
+        },
+      );
 
   @override
   Future<String> insertSubmission({
     required String pageUlid,
     required Map<String, Object?> fields,
     String? sourceIp,
-  }) async {
-    final id = Ulid().toString();
-    await _conn.execute(
-      Sql.named('''
-        INSERT INTO form_submissions (id, page_ulid, fields, source_ip)
-        VALUES (@id, @page, @fields, @ip)
-      '''),
-      parameters: {
-        'id': id,
-        'page': pageUlid,
-        // JSONB column: pass the JSON string; postgres adapter
-        // handles the conversion.
-        'fields': jsonEncode(fields),
-        'ip': sourceIp,
-      },
-    );
-    return id;
-  }
+  }) async =>
+      runDb(op: 'insertSubmission', () async {
+        final id = Ulid().toString();
+        await _conn.execute(
+          Sql.named('''
+            INSERT INTO form_submissions (id, page_ulid, fields, source_ip)
+            VALUES (@id, @page, @fields, @ip)
+          '''),
+          parameters: {
+            'id': id,
+            'page': pageUlid,
+            // JSONB column: pass the JSON string; postgres adapter
+            // handles the conversion.
+            'fields': jsonEncode(fields),
+            'ip': sourceIp,
+          },
+        );
+        return id;
+      });
 
   @override
-  Future<FormSchema?> loadSchemaFor(String ulid) async {
-    // 1. Find the form-bearing page and (a) confirm it's still
-    //    is_public + has_forms, (b) get its body so we can probe
-    //    the `forms:` ref, (c) get user_id so the linked
-    //    .database.yaml lookup stays scoped to the same vault.
-    final pageRows = await _conn.execute(
-      Sql.named('''
-        SELECT body, user_id FROM vault_files
-        WHERE ulid = @ulid AND is_public = true AND has_forms = true
-        LIMIT 1
-      '''),
-      parameters: {'ulid': ulid},
-    );
-    if (pageRows.isEmpty) return null;
-    final pageBody = pageRows.first[0]! as String;
-    final userId = pageRows.first[1]! as String;
-    final probe = FrontmatterProbe.fromBody(pageBody);
-    final ref = probe.formsRef;
-    // Bare `forms: true` (no ref) → empty schema, legacy fallback.
-    if (ref == null) return FormSchema.empty;
-    // 2. Look up the linked schema file in the same user's vault.
-    //    Forward-slashes are how the Flutter side serializes relpaths.
-    final schemaRows = await _conn.execute(
-      Sql.named('''
-        SELECT body FROM vault_files
-        WHERE user_id = @uid AND relpath = @rel
-        LIMIT 1
-      '''),
-      parameters: {'uid': userId, 'rel': ref},
-    );
-    if (schemaRows.isEmpty) {
-      // Page references a schema file that isn't synced yet — fall
-      // back to empty schema rather than blocking submissions.
-      return FormSchema.empty;
-    }
-    final schemaBody = schemaRows.first[0]! as String;
-    return parseFormSchema(schemaBody);
-  }
+  Future<FormSchema?> loadSchemaFor(String ulid) async => runDb(
+        op: 'loadSchemaFor',
+        () async {
+          // 1. Find the form-bearing page and (a) confirm it's still
+          //    is_public + has_forms, (b) get its body so we can probe
+          //    the `forms:` ref, (c) get user_id so the linked
+          //    .database.yaml lookup stays scoped to the same vault.
+          final pageRows = await _conn.execute(
+            Sql.named('''
+              SELECT body, user_id FROM vault_files
+              WHERE ulid = @ulid AND is_public = true AND has_forms = true
+              LIMIT 1
+            '''),
+            parameters: {'ulid': ulid},
+          );
+          if (pageRows.isEmpty) return null;
+          final pageBody = pageRows.first[0]! as String;
+          final userId = pageRows.first[1]! as String;
+          final probe = FrontmatterProbe.fromBody(pageBody);
+          final ref = probe.formsRef;
+          // Bare `forms: true` (no ref) → empty schema, legacy fallback.
+          if (ref == null) return FormSchema.empty;
+          // 2. Look up the linked schema file in the same user's vault.
+          //    Forward-slashes are how the Flutter side serializes relpaths.
+          final schemaRows = await _conn.execute(
+            Sql.named('''
+              SELECT body FROM vault_files
+              WHERE user_id = @uid AND relpath = @rel
+              LIMIT 1
+            '''),
+            parameters: {'uid': userId, 'rel': ref},
+          );
+          if (schemaRows.isEmpty) {
+            // Page references a schema file that isn't synced yet —
+            // fall back to empty schema rather than blocking submissions.
+            return FormSchema.empty;
+          }
+          final schemaBody = schemaRows.first[0]! as String;
+          return parseFormSchema(schemaBody);
+        },
+      );
 
   @override
   Future<List<FormSubmission>?> listSubmissionsFor({
     required String userId,
     required String pageUlid,
-  }) async {
-    // Verify ownership before reading any submission rows. The join
-    // against vault_files lets us answer "owns this page?" in one
-    // round-trip; we deliberately don't distinguish "page missing"
-    // from "not owner" in the response (the route maps both to 403)
-    // so visitors can't enumerate ULIDs.
-    final ownerCheck = await _conn.execute(
-      Sql.named('''
-        SELECT 1 FROM vault_files
-        WHERE ulid = @ulid AND user_id = @uid
-        LIMIT 1
-      '''),
-      parameters: {'ulid': pageUlid, 'uid': userId},
-    );
-    if (ownerCheck.isEmpty) return null;
-    final rows = await _conn.execute(
-      Sql.named('''
-        SELECT id, page_ulid, fields, source_ip, created_at
-        FROM form_submissions
-        WHERE page_ulid = @ulid
-        ORDER BY created_at DESC
-      '''),
-      parameters: {'ulid': pageUlid},
-    );
-    return rows
-        .map((r) => FormSubmission(
-              id: r[0]! as String,
-              pageUlid: r[1]! as String,
-              // `fields` comes back as JSONB; postgres adapter decodes
-              // to a Dart Map when the column type is jsonb.
-              fields: (r[2] is String)
-                  ? jsonDecode(r[2]! as String) as Map<String, dynamic>
-                  : (r[2]! as Map).cast<String, dynamic>(),
-              sourceIp: r[3] as String?,
-              createdAt: r[4]! as DateTime,
-            ))
-        .toList();
-  }
+  }) async =>
+      runDb(op: 'listSubmissionsFor', () async {
+        // Verify ownership before reading any submission rows. The join
+        // against vault_files lets us answer "owns this page?" in one
+        // round-trip; we deliberately don't distinguish "page missing"
+        // from "not owner" in the response (the route maps both to 403)
+        // so visitors can't enumerate ULIDs.
+        final ownerCheck = await _conn.execute(
+          Sql.named('''
+            SELECT 1 FROM vault_files
+            WHERE ulid = @ulid AND user_id = @uid
+            LIMIT 1
+          '''),
+          parameters: {'ulid': pageUlid, 'uid': userId},
+        );
+        if (ownerCheck.isEmpty) return null;
+        final rows = await _conn.execute(
+          Sql.named('''
+            SELECT id, page_ulid, fields, source_ip, created_at
+            FROM form_submissions
+            WHERE page_ulid = @ulid
+            ORDER BY created_at DESC
+          '''),
+          parameters: {'ulid': pageUlid},
+        );
+        return rows
+            .map((r) => FormSubmission(
+                  id: r[0]! as String,
+                  pageUlid: r[1]! as String,
+                  // `fields` comes back as JSONB; postgres adapter decodes
+                  // to a Dart Map when the column type is jsonb.
+                  fields: (r[2] is String)
+                      ? jsonDecode(r[2]! as String) as Map<String, dynamic>
+                      : (r[2]! as Map).cast<String, dynamic>(),
+                  sourceIp: r[3] as String?,
+                  createdAt: r[4]! as DateTime,
+                ))
+            .toList();
+      });
 }
 
 /// Maximum form-body size accepted by `POST /forms/<ulid>/submit`.
@@ -275,68 +284,18 @@ Router buildFormsRouter({required FormsRepositoryBase repo}) {
   final router = Router();
 
   router.post('/<ulid>/submit', (Request req) async {
-    final ulid = req.params['ulid'];
-    if (ulid == null || !_isUlid(ulid)) {
-      return Response(404, body: 'not_found');
+    try {
+      return await _handleSubmit(req, repo);
+    } on DbException catch (e) {
+      // F6: db transport failure mid-request → 503 with JSON shape.
+      return Response(
+        503,
+        body: jsonEncode({'error': 'db_unavailable', 'op': e.message}),
+        headers: const {'content-type': 'application/json'},
+      );
     }
-    if (!await repo.hasFormDefinition(ulid)) {
-      return Response(404, body: 'no_form_definition');
-    }
-    // Defensive size cap. Content-Length is advisory; we still cap on
-    // the actual read to defend against chunked encodings that lie.
-    final cl = req.contentLength;
-    if (cl != null && cl > _kMaxFormBodyBytes) {
-      return Response(413, body: 'body_too_large');
-    }
-    final raw = await req.readAsString();
-    if (raw.length > _kMaxFormBodyBytes) {
-      return Response(413, body: 'body_too_large');
-    }
-    final fields = _parseForm(raw);
-    // Strip blank values — a flat `?foo=&bar=` shouldn't count as
-    // a real submission.
-    fields.removeWhere((_, v) => v.isEmpty);
-    if (fields.isEmpty) {
-      return Response(400, body: 'empty_body');
-    }
-    // F5: schema-aware validation. An empty schema (legacy "any
-    // non-empty body" fallback) lets `fields` through unchanged.
-    final schema = await repo.loadSchemaFor(ulid);
-    final Map<String, Object?> toStore;
-    if (schema != null) {
-      final result = validateSubmission(schema, fields);
-      if (!result.isValid) {
-        return Response(
-          422,
-          body: jsonEncode({
-            'error': 'validation_failed',
-            'errors': result.errors,
-          }),
-          headers: const {'content-type': 'application/json'},
-        );
-      }
-      toStore = result.normalized;
-      // Coerced map may be empty if schema fields were all optional
-      // and the submission only carried out-of-schema keys.
-      if (toStore.isEmpty) {
-        return Response(400, body: 'empty_body');
-      }
-    } else {
-      toStore = Map<String, Object?>.from(fields);
-    }
-    final id = await repo.insertSubmission(
-      pageUlid: ulid,
-      fields: toStore,
-      sourceIp: _sourceIp(req),
-    );
-    return Response(
-      303,
-      headers: {'location': '/forms/$ulid/thanks?id=$id'},
-    );
   });
 
-  // Submission landing — minimal "Thanks!" page so the 303 doesn't
-  // dump the user on a blank tab.
   router.get('/<ulid>/thanks', (Request req) async {
     final ulid = req.params['ulid'];
     if (ulid == null || !_isUlid(ulid)) {
@@ -349,6 +308,68 @@ Router buildFormsRouter({required FormsRepositoryBase repo}) {
   });
 
   return router;
+}
+
+Future<Response> _handleSubmit(
+    Request req, FormsRepositoryBase repo) async {
+  final ulid = req.params['ulid'];
+  if (ulid == null || !_isUlid(ulid)) {
+    return Response(404, body: 'not_found');
+  }
+  if (!await repo.hasFormDefinition(ulid)) {
+    return Response(404, body: 'no_form_definition');
+  }
+  // Defensive size cap. Content-Length is advisory; we still cap on
+  // the actual read to defend against chunked encodings that lie.
+  final cl = req.contentLength;
+  if (cl != null && cl > _kMaxFormBodyBytes) {
+    return Response(413, body: 'body_too_large');
+  }
+  final raw = await req.readAsString();
+  if (raw.length > _kMaxFormBodyBytes) {
+    return Response(413, body: 'body_too_large');
+  }
+  final fields = _parseForm(raw);
+  // Strip blank values — a flat `?foo=&bar=` shouldn't count as
+  // a real submission.
+  fields.removeWhere((_, v) => v.isEmpty);
+  if (fields.isEmpty) {
+    return Response(400, body: 'empty_body');
+  }
+  // F5: schema-aware validation. An empty schema (legacy "any
+  // non-empty body" fallback) lets `fields` through unchanged.
+  final schema = await repo.loadSchemaFor(ulid);
+  final Map<String, Object?> toStore;
+  if (schema != null) {
+    final result = validateSubmission(schema, fields);
+    if (!result.isValid) {
+      return Response(
+        422,
+        body: jsonEncode({
+          'error': 'validation_failed',
+          'errors': result.errors,
+        }),
+        headers: const {'content-type': 'application/json'},
+      );
+    }
+    toStore = result.normalized;
+    // Coerced map may be empty if schema fields were all optional
+    // and the submission only carried out-of-schema keys.
+    if (toStore.isEmpty) {
+      return Response(400, body: 'empty_body');
+    }
+  } else {
+    toStore = Map<String, Object?>.from(fields);
+  }
+  final id = await repo.insertSubmission(
+    pageUlid: ulid,
+    fields: toStore,
+    sourceIp: _sourceIp(req),
+  );
+  return Response(
+    303,
+    headers: {'location': '/forms/$ulid/thanks?id=$id'},
+  );
 }
 
 /// E49 — owner-facing forms routes. Mounted at `/forms/owner/` behind
@@ -373,23 +394,33 @@ Router buildOwnerFormsRouter({required FormsRepositoryBase repo}) {
       );
     }
     final user = currentUser(req);
-    final submissions = await repo.listSubmissionsFor(
-      userId: user.id,
-      pageUlid: ulid,
-    );
-    if (submissions == null) {
+    try {
+      final submissions = await repo.listSubmissionsFor(
+        userId: user.id,
+        pageUlid: ulid,
+      );
+      if (submissions == null) {
+        return Response(
+          403,
+          body: jsonEncode({'error': 'not_owner'}),
+          headers: const {'content-type': 'application/json'},
+        );
+      }
+      return Response.ok(
+        jsonEncode({
+          'submissions': submissions.map((s) => s.toJson()).toList(),
+        }),
+        headers: const {'content-type': 'application/json'},
+      );
+    } on DbException catch (e) {
+      // F6: db transport failure → 503 with JSON shape, no stack
+      // trace leak.
       return Response(
-        403,
-        body: jsonEncode({'error': 'not_owner'}),
+        503,
+        body: jsonEncode({'error': 'db_unavailable', 'op': e.message}),
         headers: const {'content-type': 'application/json'},
       );
     }
-    return Response.ok(
-      jsonEncode({
-        'submissions': submissions.map((s) => s.toJson()).toList(),
-      }),
-      headers: const {'content-type': 'application/json'},
-    );
   });
 
   return router;

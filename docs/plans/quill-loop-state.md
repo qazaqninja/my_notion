@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F6 — Backend hardening pass (close cross-cutting RP-03 / TS-02 / TS-01 / LT-01 deferred items from both audits)
+- **Task:** F7 — Extend the F6 DbException wrap to SyncRepository + UserRepository handlers
 - **Status:** pending
 
 ## Last completed
+
+- **M1363 — F6** (typed DbException wrap on FormsRepository + 503 route mapping)
+- Committed: (this iteration)
+- TaskList ID: 82
+- Notes: Closes the RP-03 piece of the audit-deferred cross-cutting work for the forms surface. New `backend/lib/db/exceptions.dart` ships a typed `DbException` base + `DbUnavailableException` (transport failures) + a `runDb<T>(body, {op})` helper that wraps `await body()` and rethrows non-DbException exceptions as `DbUnavailableException(' failed: ', cause: e)`. Caller-thrown `DbException` subtypes pass through untouched so domain-specific failures stay distinguishable. All three FormsRepository methods (`hasFormDefinition`, `loadSchemaFor`, `insertSubmission`, `listSubmissionsFor`) now wrap their `_conn.execute` calls in `runDb`. Both route handlers (`POST /forms/<ulid>/submit` + `GET /forms/owner/<ulid>/submissions`) catch `DbException` and return 503 with `{"error":"db_unavailable","op":<message>}` JSON instead of letting a raw Postgres stack trace leak into the response. Route helper `_handleSubmit` extracted from the closure so the try/catch wrap stays clean. 4 new tests (3 `runDb` — wraps-raw, passes-through-typed, success-returns-value; 1 route — repo-throw-maps-to-503). 126/126 backend tests pass; backend dart analyze clean. The same wrap pattern queued for F7 across SyncRepository + UserRepository. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1362 — F5** (schema validation wired into POST /forms/<ulid>/submit)
 - Committed: (this iteration)

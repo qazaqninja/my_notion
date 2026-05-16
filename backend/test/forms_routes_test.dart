@@ -1,10 +1,38 @@
 import 'dart:convert';
 
 import 'package:backend/auth/user.dart';
+import 'package:backend/db/exceptions.dart';
 import 'package:backend/forms/form_schema.dart';
 import 'package:backend/forms/routes.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
+
+/// A repo that always claims to have a definition + an empty schema,
+/// but throws DbUnavailableException from insertSubmission. Used to
+/// verify the route's F6 503 mapping.
+class _ThrowingRepo implements FormsRepositoryBase {
+  @override
+  Future<bool> hasFormDefinition(String ulid) async => true;
+  @override
+  Future<FormSchema?> loadSchemaFor(String ulid) async => FormSchema.empty;
+  @override
+  Future<String> insertSubmission({
+    required String pageUlid,
+    required Map<String, Object?> fields,
+    String? sourceIp,
+  }) async =>
+      throw const DbUnavailableException(
+        'insertSubmission failed: connection refused',
+      );
+  @override
+  Future<List<FormSubmission>?> listSubmissionsFor({
+    required String userId,
+    required String pageUlid,
+  }) async =>
+      throw const DbUnavailableException(
+        'listSubmissionsFor failed: connection refused',
+      );
+}
 
 class _StubRepo implements FormsRepositoryBase {
   _StubRepo({
@@ -337,6 +365,23 @@ void main() {
       expect(res.statusCode, 400);
       expect(await res.readAsString(), 'empty_body');
       expect(repo.insertCount, 0);
+    });
+
+    test('F6: repo-thrown DbException maps to 503 db_unavailable', () async {
+      // Use a deliberately failing fake — its `insertSubmission` throws
+      // a DbException. The route's catch should swallow it and emit a
+      // 503 JSON body instead of leaking the stack trace.
+      final repo = _ThrowingRepo();
+      final res = await _hit(
+        '/$ulid/submit',
+        repo: repo,
+        body: 'name=Pat',
+      );
+      expect(res.statusCode, 503);
+      final body = jsonDecode(await res.readAsString())
+          as Map<String, dynamic>;
+      expect(body['error'], 'db_unavailable');
+      expect(body['op'], contains('insertSubmission'));
     });
   });
 
