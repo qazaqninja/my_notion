@@ -8108,6 +8108,93 @@ void main() {
     });
   });
 
+  group('extractDockerImagesFromLinesIn', () {
+    test('bare image with semver tag extracts', () {
+      const text = 'use nginx:1.21 now\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'nginx:1.21\n');
+    });
+
+    test('latest tag extracts', () {
+      const text = 'pull alpine:latest then build\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'alpine:latest\n');
+    });
+
+    test('hyphenated tag extracts', () {
+      const text = 'cache redis:7-alpine for sessions\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'redis:7-alpine\n');
+    });
+
+    test('registry + namespace + tag extracts', () {
+      const text = 'deploy ghcr.io/owner/repo:v1 today\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'ghcr.io/owner/repo:v1\n');
+    });
+
+    test('library/namespace image extracts', () {
+      const text = 'mirror library/nginx:1.21 to private\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'library/nginx:1.21\n');
+    });
+
+    test('time-of-day 12:34 NOT mistaken for image', () {
+      // The tag must contain at least one non-digit, so all-digit
+      // tags like the `34` in `12:34` are rejected.
+      const text = 'meet 12:34 today\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('bare image without tag rejected', () {
+      // `nginx` alone has no `:tag`; too ambiguous in prose.
+      const text = 'just nginx alone here\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('digit-leading image name rejected', () {
+      // The repo must start with a letter, so `42app:latest`
+      // doesn't match.
+      const text = 'invalid 42app:latest skip\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      // The regex skips the digit start. But `app:latest`
+      // following the digit would match starting at `app`.
+      // Word boundary `\b` at the start: between `2` and `a`,
+      // both are word chars, so no boundary -- so `app:latest`
+      // is not a separate match start. Document the observed
+      // behaviour: nothing extracts.
+      expect(r.text, '\n');
+    });
+
+    test('multiple images on one line each extract', () {
+      const text = 'sync nginx:1.21 and redis:7-alpine today\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'nginx:1.21\nredis:7-alpine\n');
+    });
+
+    test('lines without images dropped from output', () {
+      const text = 'plain prose\nuse alpine:3.18 build\nbye\n';
+      final r = extractDockerImagesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'alpine:3.18\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractDockerImagesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

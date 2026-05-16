@@ -1587,6 +1587,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractCronExpressionsFromLinesIn,
         );
+      case SlashAction.extractDockerImagesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractDockerImagesFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

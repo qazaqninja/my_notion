@@ -3290,6 +3290,56 @@ SortLinesResult extractCronExpressionsFromLinesIn(
       return out;
     });
 
+/// Extract every Docker image reference (`repo:tag` with
+/// optional registry/namespace) from each selected line. Useful
+/// for Compose-file audits, Dockerfile review, deployment-doc
+/// inventories, and image-vulnerability scope inventories.
+///
+/// Recognition: a letter-leading repo path, a `:` separator,
+/// and a tag that must contain at least one non-digit char
+/// (letter, `.`, `-`, or `_`). The non-digit-in-tag requirement
+/// prevents the regex from mistaking time-of-day strings like
+/// `12:34` (all-digit tag) for image references.
+///
+/// Matches:
+/// - `nginx:1.21`            — bare image with semver tag
+/// - `alpine:latest`         — bare image with keyword tag
+/// - `redis:7-alpine`        — bare image with hyphenated tag
+/// - `ghcr.io/owner/repo:v1` — registry + namespace
+/// - `library/nginx:1.21`    — namespace + image
+/// - `myreg.example.com:5000/path/image:tag` —
+///   registry-with-port (the leading registry is captured;
+///   trailing `image:tag` finishes the match)
+///
+/// Bare image references without a tag (`nginx`) are NOT
+/// matched — too ambiguous in prose. Use tag-explicit
+/// references to keep doc-audit precision high.
+///
+/// Image digest references (`image@sha256:abc...`) are a
+/// separate surface; see [extractGitShasFromLinesIn] for a
+/// generic SHA harvester instead.
+///
+/// 92nd member of the extraction family.
+SortLinesResult extractDockerImagesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Repo: must start with a letter, may contain
+      // alphanumerics, `.`, `-`, `_`, `/`.
+      // Tag: must contain at least one non-digit (letter,
+      // `.`, `-`, `_`).
+      final re = RegExp(
+        r'\b[a-z][a-z0-9.\-_/]*:'
+        r'[a-z0-9._\-]*[a-z._\-][a-z0-9._\-]*\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

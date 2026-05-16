@@ -520,6 +520,10 @@ enum SlashAction {
   /// Extract every cron expression (`* * * * *`, `0 0 * * *`,
   /// `*/15 * * * *`) from each selected line.
   extractCronExpressionsFromLines,
+  /// Extract every Docker image reference (`nginx:1.21`,
+  /// `alpine:latest`, `ghcr.io/owner/repo:v1`) from each
+  /// selected line.
+  extractDockerImagesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2427,6 +2431,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'cron', 'schedule', 'crontab',
         'job', 'periodic', 'unix', 'star', 'ops', 'kubernetes',
         'cronjob'],
+  ),
+  SlashEntry(
+    icon: 'package',
+    label: 'Extract Docker image references',
+    hint: 'nginx:1.21 / alpine:latest / ghcr.io/owner/repo:v1',
+    action: SlashAction.extractDockerImagesFromLines,
+    keywords: ['extract', 'docker', 'image', 'container',
+        'tag', 'registry', 'compose', 'dockerfile', 'oci',
+        'podman'],
   ),
   SlashEntry(
     icon: 'calendar',
