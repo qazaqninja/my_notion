@@ -59,12 +59,18 @@ class SuperEditorSerializer {
   ///     etc.) — non-image extensions → `ParagraphNode` with `blockType:
   ///     fileAttachmentAttribution` and `label` / `path` metadata.
   /// - Slice 10: bookmark cards.
-  ///   - Standalone `https://example.com` (line is exactly an http(s)
-  ///     URL with no other text) → `ParagraphNode` with `blockType:
-  ///     bookmarkAttribution`. Body text is the URL. The existing
-  ///     markdown_renderer.dart M42 path already renders these as
-  ///     bookmark cards with host + URL; super_editor migration keeps
-  ///     the structure so future slices can show a rich preview.
+  ///   - Standalone `https://example.com` → `ParagraphNode` with
+  ///     `blockType: bookmarkAttribution`.
+  /// - Slice 11: sub-page cards.
+  ///   - Standalone `[[ULID]]` or `[[ULID#anchor]]` (line is exactly a
+  ///     wikilink) → `ParagraphNode` with `blockType:
+  ///     subPageAttribution`. Body text holds the raw `[[…]]` so the
+  ///     existing `_SubpageCard` renderer keeps working.
+  /// - Slice 12: transclusion cards.
+  ///   - Standalone `![[ULID]]` (image-style transclusion) →
+  ///     `ParagraphNode` with `blockType: transclusionAttribution`.
+  ///     Inline `[[ULID]]` mid-paragraph stays as raw text — that's an
+  ///     inline mark (slices 16-22).
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -136,6 +142,33 @@ class SuperEditorSerializer {
             if (lang.isNotEmpty) 'language': lang,
           },
         ));
+        continue;
+      }
+      // Sub-page card? Standalone `[[ULID]]` or `[[ULID#anchor]]`.
+      // ULID is 26 Crockford-base32 chars; the wikilink is exactly that
+      // followed by optional `#anchor`. Inline wikilinks mid-paragraph
+      // are an inline mark (later slice).
+      if (RegExp(r'^\[\[([0-9A-HJKMNP-TV-Z]{26})(#[^\]]*)?\]\]$')
+          .hasMatch(line.trim())) {
+        flushBuffer();
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(line.trim()),
+          metadata: const {'blockType': subPageAttribution},
+        ));
+        i += 1;
+        continue;
+      }
+      // Transclusion card? Standalone `![[ULID]]`.
+      if (RegExp(r'^!\[\[([0-9A-HJKMNP-TV-Z]{26})\]\]$')
+          .hasMatch(line.trim())) {
+        flushBuffer();
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(line.trim()),
+          metadata: const {'blockType': transclusionAttribution},
+        ));
+        i += 1;
         continue;
       }
       // Bookmark card? Line is exactly an http(s) URL with no other
@@ -335,7 +368,9 @@ class SuperEditorSerializer {
         final block = node.getMetadataValue('blockType');
         if (block == tableAttribution ||
             block == fileAttachmentAttribution ||
-            block == bookmarkAttribution) {
+            block == bookmarkAttribution ||
+            block == subPageAttribution ||
+            block == transclusionAttribution) {
           // Body holds the raw markdown — emit verbatim.
           out.write(node.text.toPlainText());
         } else if (block == codeAttribution) {
@@ -469,6 +504,16 @@ const fileAttachmentAttribution = NamedAttribution('fileAttachment');
 /// the existing markdown_renderer.dart M42 path renders as bookmark
 /// cards (host + URL preview). The body text holds the URL verbatim.
 const bookmarkAttribution = NamedAttribution('bookmark');
+
+/// Custom block-type attribution for a standalone `[[ULID]]` or
+/// `[[ULID#anchor]]` wikilink — Quill renders these as sub-page cards
+/// with the linked page's title resolved at display time.
+const subPageAttribution = NamedAttribution('subPage');
+
+/// Custom block-type attribution for a standalone `![[ULID]]`
+/// transclusion — the linked page's body is rendered inline (cycle-safe
+/// up to maxDepth = 3 per CLAUDE.md).
+const transclusionAttribution = NamedAttribution('transclusion');
 
 /// Returns true when [url] has an extension this serializer treats as an
 /// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no

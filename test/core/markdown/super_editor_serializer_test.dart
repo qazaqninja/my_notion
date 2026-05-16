@@ -497,4 +497,59 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer wikilink cards (D1 slices 11+12)', () {
+    const ulid = '01HX0V0000000000000000000A';
+
+    test('standalone [[ULID]] → sub-page card', () {
+      final md = '[[$ulid]]';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), subPageAttribution);
+      expect(node.text.toPlainText(), '[[$ulid]]');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('[[ULID#anchor]] preserves the anchor', () {
+      final md = '[[$ulid#section-2]]';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), subPageAttribution);
+      expect(node.text.toPlainText(), '[[$ulid#section-2]]');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('standalone ![[ULID]] → transclusion card', () {
+      final md = '![[$ulid]]';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), transclusionAttribution);
+      expect(node.text.toPlainText(), '![[$ulid]]');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('inline [[ULID]] inside a paragraph stays raw text', () {
+      final md = 'See [[$ulid]] for details.';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), isNot(subPageAttribution));
+    });
+
+    test('paragraph + sub-page + transclusion + paragraph round-trip', () {
+      final md =
+          'before\n\n[[$ulid]]\n\n![[$ulid]]\n\nafter';
+      final doc = serializer.markdownToDocument(md);
+      final nodes = doc.toList();
+      expect(nodes, hasLength(4));
+      expect(
+        (nodes[1] as ParagraphNode).getMetadataValue('blockType'),
+        subPageAttribution,
+      );
+      expect(
+        (nodes[2] as ParagraphNode).getMetadataValue('blockType'),
+        transclusionAttribution,
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
