@@ -886,6 +886,23 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Split each selected line on whitespace runs, emitting one word
+/// per output line. Empty / whitespace-only lines drop out. Useful
+/// for word-level processing (sort, dedupe, count) starting from
+/// flowing prose. Natural inverse of `joinLinesWithSpace` (M991)
+/// on the dimension of "1 line ↔ N words".
+SortLinesResult splitOnSpacesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      final ws = RegExp(r'\s+');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final w in l.trim().split(ws)) {
+          if (w.isNotEmpty) out.add(w);
+        }
+      }
+      return out;
+    });
+
 /// Collapse runs of identical consecutive lines, prefixing each
 /// kept line with its count — Unix `uniq -c` semantics. The count
 /// is right-padded to the width of the largest count so columns

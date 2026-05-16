@@ -279,6 +279,9 @@ enum SlashAction {
   /// Collapse runs of identical consecutive lines, prefixing each
   /// kept line with its count (Unix `uniq -c` semantics).
   countConsecutiveDuplicates,
+  /// Split each selected line on whitespace runs, emitting one
+  /// word per output line.
+  splitOnSpaces,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1529,6 +1532,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'Unix uniq -c semantics',
     action: SlashAction.countConsecutiveDuplicates,
     keywords: ['uniq', 'count', 'consecutive', 'duplicate', 'run'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Split on whitespace',
+    hint: 'one word per line',
+    action: SlashAction.splitOnSpaces,
+    keywords: ['split', 'whitespace', 'words', 'tokens', 'break'],
   ),
   SlashEntry(
     icon: 'sync',

@@ -2234,6 +2234,43 @@ void main() {
     });
   });
 
+  group('splitOnSpacesIn', () {
+    test('emits one word per line for a single-line input', () {
+      const text = 'one two three\n';
+      final r = splitOnSpacesIn(text, 0, text.length);
+      expect(r.text, 'one\ntwo\nthree\n');
+    });
+
+    test('runs of whitespace collapse to a single boundary', () {
+      const text = 'a   b\t\tc\n';
+      final r = splitOnSpacesIn(text, 0, text.length);
+      expect(r.text, 'a\nb\nc\n');
+    });
+
+    test('multi-line input splits each line independently', () {
+      const text = 'one two\nthree\n';
+      final r = splitOnSpacesIn(text, 0, text.length);
+      expect(r.text, 'one\ntwo\nthree\n');
+    });
+
+    test('blank / whitespace-only lines are dropped', () {
+      const text = '   \nhello world\n\t\n';
+      final r = splitOnSpacesIn(text, 0, text.length);
+      expect(r.text, 'hello\nworld\n');
+    });
+
+    test('round-trips with joinLinesWithSpaceIn on a single-line input', () {
+      const text = 'one two three\n';
+      final split = splitOnSpacesIn(text, 0, text.length);
+      final joined = joinLinesWithSpaceIn(split.text, 0, split.text.length);
+      expect(joined.text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(splitOnSpacesIn('', 0, 0).text, '');
+    });
+  });
+
   group('countConsecutiveDuplicatesIn', () {
     test('collapses a run and prefixes with the count', () {
       const text = 'foo\nfoo\nfoo\nbar\n';
