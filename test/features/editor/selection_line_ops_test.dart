@@ -2799,6 +2799,50 @@ void main() {
     });
   });
 
+  group('scientificNotationLinesIn', () {
+    // Note: Dart's toStringAsExponential always emits a signed
+    // exponent (`e+3` / `e-4`), so all expectations match that.
+    test('default 3-digit mantissa', () {
+      const text = '1234\n';
+      expect(
+        scientificNotationLinesIn(text, 0, text.length).text,
+        '1.234e+3\n',
+      );
+    });
+
+    test('small numbers get negative exponent', () {
+      const text = '0.000567\n';
+      expect(
+        scientificNotationLinesIn(text, 0, text.length).text,
+        '5.670e-4\n',
+      );
+    });
+
+    test('zero renders consistently', () {
+      const text = '0\n';
+      expect(
+        scientificNotationLinesIn(text, 0, text.length).text,
+        '0.000e+0\n',
+      );
+    });
+
+    test('configurable mantissa width', () {
+      const text = '1234\n';
+      expect(
+        scientificNotationLinesIn(text, 0, text.length, digits: 5).text,
+        '1.23400e+3\n',
+      );
+    });
+
+    test('non-numeric lines pass through', () {
+      const text = '1234\nlabel\n';
+      expect(
+        scientificNotationLinesIn(text, 0, text.length).text,
+        '1.234e+3\nlabel\n',
+      );
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

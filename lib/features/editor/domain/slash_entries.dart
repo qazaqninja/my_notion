@@ -253,6 +253,8 @@ enum SlashAction {
   signNumericLines,
   /// Format every numeric line with `,`-grouped thousands separators.
   withThousandSeparatorsLines,
+  /// Format every numeric line in scientific notation.
+  scientificNotationLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1165,6 +1167,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '1234567 → 1,234,567',
     action: SlashAction.withThousandSeparatorsLines,
     keywords: ['thousands', 'separator', 'comma', 'format', 'readable'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Scientific notation',
+    hint: '1234 → 1.234e+3',
+    action: SlashAction.scientificNotationLines,
+    keywords: ['scientific', 'notation', 'exponent', 'mantissa', 'format'],
   ),
   SlashEntry(
     icon: 'hash',

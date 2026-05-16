@@ -969,6 +969,27 @@ SortLinesResult negateNumericLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Format every numeric line in scientific notation with `digits`
+/// digits after the mantissa decimal (default 3). `1234 → 1.234e3`,
+/// `0.000567 → 5.670e-4`. Non-numeric lines pass through.
+/// `0` is rendered as `0.000e0` so the format is consistent.
+SortLinesResult scientificNotationLinesIn(
+  String text,
+  int start,
+  int end, {
+  int digits = 3,
+}) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            return v.toStringAsExponential(digits);
+          })(),
+      ];
+    });
+
 /// Format every numeric line with `,`-grouped thousands separators
 /// for readability. `1234567 → 1,234,567`. The decimal portion (if
 /// any) is left untouched. Negative numbers keep their leading `-`.

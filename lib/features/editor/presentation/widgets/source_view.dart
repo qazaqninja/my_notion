@@ -1196,6 +1196,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, withThousandSeparatorsLinesIn,
         );
+      case SlashAction.scientificNotationLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, scientificNotationLinesIn,
+        );
     }
   }
 
