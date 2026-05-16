@@ -98,4 +98,78 @@ void main() {
       expect(node.text.toPlainText(), '#### Deep');
     });
   });
+
+  group('SuperEditorSerializer list round-trip (D1 slice 3)', () {
+    test('unordered list with `-` markers round-trips', () {
+      const md = '- alpha\n- beta\n- gamma';
+      final doc = serializer.markdownToDocument(md);
+      final nodes = doc.toList();
+      expect(nodes, hasLength(3));
+      expect(nodes.every((n) => n is ListItemNode), isTrue);
+      expect(
+        nodes.every(
+          (n) => (n as ListItemNode).type == ListItemType.unordered,
+        ),
+        isTrue,
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('unordered list with `*` markers normalises to `-`', () {
+      const md = '* alpha\n* beta';
+      final doc = serializer.markdownToDocument(md);
+      // Serialise emits `- ` for unordered items (canonical form).
+      expect(serializer.documentToMarkdown(doc), '- alpha\n- beta');
+    });
+
+    test('ordered list re-numbers from 1 on serialise', () {
+      const md = '7. seven\n8. eight\n9. nine';
+      final doc = serializer.markdownToDocument(md);
+      // Numbering is re-emitted as 1, 2, 3 regardless of source.
+      expect(serializer.documentToMarkdown(doc), '1. seven\n2. eight\n3. nine');
+    });
+
+    test('mixed ordered + unordered separated by blank line', () {
+      const md = '1. one\n2. two\n\n- a\n- b';
+      final doc = serializer.markdownToDocument(md);
+      final nodes = doc.toList();
+      expect(nodes, hasLength(4));
+      expect(
+        (nodes[0] as ListItemNode).type,
+        ListItemType.ordered,
+      );
+      expect(
+        (nodes[2] as ListItemNode).type,
+        ListItemType.unordered,
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('todo `- [ ] task` becomes incomplete TaskNode', () {
+      const md = '- [ ] write tests';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as TaskNode;
+      expect(node.isComplete, isFalse);
+      expect(node.text.toPlainText(), 'write tests');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('todo `- [x] task` becomes complete TaskNode', () {
+      const md = '- [x] done';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as TaskNode;
+      expect(node.isComplete, isTrue);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('mixed todos and bullets', () {
+      const md = '- [ ] todo one\n- bullet\n- [x] done';
+      final doc = serializer.markdownToDocument(md);
+      final nodes = doc.toList();
+      expect(nodes[0], isA<TaskNode>());
+      expect(nodes[1], isA<ListItemNode>());
+      expect(nodes[2], isA<TaskNode>());
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
