@@ -33,6 +33,9 @@ enum SlashAction {
   /// Toggle the case of every cased character on every selected line:
   /// uppercase becomes lowercase and vice versa.
   swapCaseSelectedLines,
+  /// Capitalize just the first letter of each selected line,
+  /// leaving the rest untouched.
+  capitalizeFirstLetterPerLine,
   /// Strip markdown emphasis / decoration markers (`**`, `*`, `_`,
   /// `~~`, `==`, backticks) from every selected line so the inner
   /// text remains as plain prose.
@@ -1671,6 +1674,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'aBC → AbC',
     action: SlashAction.swapCaseSelectedLines,
     keywords: ['swap', 'invert', 'case', 'toggle', 'flip'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Capitalize first letter per line',
+    hint: 'leave the rest untouched',
+    action: SlashAction.capitalizeFirstLetterPerLine,
+    keywords: ['capitalize', 'cap', 'first', 'letter', 'bullet'],
   ),
   SlashEntry(
     icon: 'edit',

@@ -3498,6 +3498,28 @@ SortLinesResult spacesToTabsIn(String text, int start, int end, {int width = 2})
   );
 }
 
+/// Capitalize the first letter of each selected line, leaving the
+/// rest of the line untouched. Mirrors the "start each bullet with
+/// a capital" copy-edit gesture. Differs from `titleCaseLinesIn`
+/// (which capitalizes every non-small word) and
+/// `sentenceCaseLinesIn` (which lowercases the rest after the first
+/// letter). Useful as a lighter-touch first-pass cleanup.
+SortLinesResult capitalizeFirstLetterPerLineIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      String cap(String l) {
+        // Find the first cased character (skip indentation /
+        // punctuation) so a bullet's body gets the cap, not the `-`.
+        for (var i = 0; i < l.length; i++) {
+          final c = l[i];
+          if (c == c.toUpperCase() && c == c.toLowerCase()) continue;
+          return '${l.substring(0, i)}${c.toUpperCase()}${l.substring(i + 1)}';
+        }
+        return l;
+      }
+      return [for (final l in lines) cap(l)];
+    });
+
 /// Uppercase every line in the selected block. Common power-user
 /// transform; mirrors VS Code's "Transform to Uppercase".
 SortLinesResult uppercaseLinesIn(String text, int start, int end) =>

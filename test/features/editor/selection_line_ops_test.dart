@@ -1124,6 +1124,34 @@ void main() {
     });
   });
 
+  group('capitalizeFirstLetterPerLineIn', () {
+    test('capitalizes the first letter, leaves the rest', () {
+      const text = 'hello world\nfoo BAR\n';
+      final r = capitalizeFirstLetterPerLineIn(text, 0, text.length);
+      expect(r.text, 'Hello world\nFoo BAR\n');
+    });
+
+    test('skips leading non-letter chars (bullet markers)', () {
+      const text = '- hello\n* world\n  + indented\n';
+      final r = capitalizeFirstLetterPerLineIn(text, 0, text.length);
+      expect(r.text, '- Hello\n* World\n  + Indented\n');
+    });
+
+    test('already-capitalized line is unchanged', () {
+      const text = 'Hello\nWorld\n';
+      expect(capitalizeFirstLetterPerLineIn(text, 0, text.length).text, text);
+    });
+
+    test('lines without any letters pass through unchanged', () {
+      const text = '   \n123\n!!\n';
+      expect(capitalizeFirstLetterPerLineIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(capitalizeFirstLetterPerLineIn('', 0, 0).text, '');
+    });
+  });
+
   group('swapCaseLinesIn', () {
     test('inverts upper/lower case per character', () {
       const text = 'Hello World\n';
