@@ -42,6 +42,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<SyncDeleteFileRequested>(_onDelete, transformer: sequential());
     on<SyncFetchFileRequested>(_onFetch, transformer: sequential());
     on<SyncFetchCleared>(_onFetchCleared);
+    on<SyncPingRequested>(_onPing, transformer: sequential());
   }
 
   final SyncRepository _repo;
@@ -60,7 +61,13 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     _listPingTimer = Timer.periodic(_listPingInterval, (_) {
       // Re-dispatch through the event system so the sequential
       // transformer on SyncListRequested keeps concurrent pings ordered.
-      if (state.isAuthed) add(const SyncListRequested());
+      // Also fire a /health ping each tick so the UI's "Backend
+      // reachable" indicator (E29) stays fresh even when the user
+      // isn't editing files.
+      if (state.isAuthed) {
+        add(const SyncListRequested());
+        add(const SyncPingRequested());
+      }
     });
   }
 
@@ -346,6 +353,35 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         status: SyncStatus.error,
         lastError: 'token_invalid',
       ));
+    } on SyncNetworkException catch (err) {
+      emit(state.copyWith(
+        status: SyncStatus.error,
+        lastError: err.message,
+      ));
+    }
+  }
+
+  Future<void> _onPing(
+    SyncPingRequested e,
+    Emitter<SyncState> emit,
+  ) async {
+    try {
+      final ok = await _repo.ping();
+      if (ok) {
+        emit(state.copyWith(
+          lastPingAt: DateTime.now(),
+          // Clear any previous network error so the banner dismisses
+          // automatically once the backend comes back.
+          clearError: true,
+        ));
+      } else {
+        // 503 — server up but DB down. Surface as a network-class
+        // error so the E28 banner highlights it.
+        emit(state.copyWith(
+          status: SyncStatus.error,
+          lastError: 'backend_unhealthy',
+        ));
+      }
     } on SyncNetworkException catch (err) {
       emit(state.copyWith(
         status: SyncStatus.error,

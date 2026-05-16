@@ -15,6 +15,7 @@ class SyncState extends Equatable {
     this.lastConflict,
     this.lastPush,
     this.lastFetched,
+    this.lastPingAt,
     this.knownShas = const <String, String>{},
   });
 
@@ -29,6 +30,11 @@ class SyncState extends Equatable {
   /// `lastError = 'not_found'` so the UI can distinguish "no server
   /// copy" from "fetch failed".
   final SyncFileBody? lastFetched;
+
+  /// E29 — timestamp of the last successful `/health` ping. Surfaced
+  /// in the sync card as "Backend reachable · X ago". Null until the
+  /// first ping resolves successfully; reset to null on logout.
+  final DateTime? lastPingAt;
 
   /// Map of `relpath → sha256` for the last-known server-side version
   /// of each file the client has pushed or had a conflict on. Used to
@@ -50,6 +56,7 @@ class SyncState extends Equatable {
     SyncFileSummary? lastConflict,
     SyncFileSummary? lastPush,
     SyncFileBody? lastFetched,
+    DateTime? lastPingAt,
     Map<String, String>? knownShas,
     bool clearError = false,
     bool clearConflict = false,
@@ -62,6 +69,7 @@ class SyncState extends Equatable {
       lastConflict: clearConflict ? null : (lastConflict ?? this.lastConflict),
       lastPush: lastPush ?? this.lastPush,
       lastFetched: clearFetched ? null : (lastFetched ?? this.lastFetched),
+      lastPingAt: lastPingAt ?? this.lastPingAt,
       knownShas: knownShas ?? this.knownShas,
     );
   }
@@ -74,6 +82,7 @@ class SyncState extends Equatable {
         lastConflict,
         lastPush,
         lastFetched,
+        lastPingAt,
         knownShas,
       ];
 }

@@ -49,6 +49,13 @@ class SyncListRequested extends SyncEvent {
   const SyncListRequested();
 }
 
+/// E29 — backend liveness check. Hits `GET /health` and updates
+/// `SyncState.lastPingAt` (success) or `lastError` (network failure
+/// or non-200 status). Auth-agnostic; works before login too.
+class SyncPingRequested extends SyncEvent {
+  const SyncPingRequested();
+}
+
 /// Tell the bloc the UI has finished reading `SyncState.lastFetched`
 /// — drops the value so the pull dialog doesn't re-open on the next
 /// rebuild. Used by the E24 reconcile dialog's dismiss / "Keep local"

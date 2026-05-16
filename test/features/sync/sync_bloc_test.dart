@@ -81,6 +81,17 @@ class _FakeRepo implements SyncRepository {
   bool throwNetworkOnDelete = false;
   String? lastDeleteRelpath;
 
+  bool pingReturns = true;
+  bool throwNetworkOnPing = false;
+  int pingCallCount = 0;
+
+  @override
+  Future<bool> ping() async {
+    pingCallCount++;
+    if (throwNetworkOnPing) throw const SyncNetworkException('ping_failed');
+    return pingReturns;
+  }
+
   @override
   Future<bool> delete({required String token, required String relpath}) async {
     lastDeleteRelpath = relpath;
@@ -443,6 +454,59 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 100));
       expect(repo.listCallCount, countAtClose);
     });
+  });
+
+  group('SyncBloc /health ping (E29)', () {
+    blocTest<SyncBloc, SyncState>(
+      'Ping success sets lastPingAt and clears prior network error',
+      build: () => SyncBloc(repo: _FakeRepo()..pingReturns = true),
+      seed: () => const SyncState(
+        status: SyncStatus.error,
+        token: 'jwt-t',
+        lastError: 'connection_timed_out',
+      ),
+      act: (bloc) => bloc.add(const SyncPingRequested()),
+      verify: (bloc) {
+        expect(bloc.state.lastPingAt, isNotNull);
+        expect(bloc.state.lastError, isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Ping 503 surfaces backend_unhealthy (so E28 banner lights up)',
+      build: () => SyncBloc(repo: _FakeRepo()..pingReturns = false),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+      ),
+      act: (bloc) => bloc.add(const SyncPingRequested()),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'backend_unhealthy');
+        // No lastPingAt update on unhealthy response.
+        expect(bloc.state.lastPingAt, isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Ping network failure surfaces SyncNetworkException message',
+      build: () => SyncBloc(repo: _FakeRepo()..throwNetworkOnPing = true),
+      act: (bloc) => bloc.add(const SyncPingRequested()),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'ping_failed');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Ping is auth-agnostic — works without a token',
+      build: () => SyncBloc(repo: _FakeRepo()..pingReturns = true),
+      // No seed → bloc starts with default token = null.
+      act: (bloc) => bloc.add(const SyncPingRequested()),
+      verify: (bloc) {
+        expect(bloc.state.lastPingAt, isNotNull);
+      },
+    );
   });
 
   group('SyncBloc fetch (E23)', () {

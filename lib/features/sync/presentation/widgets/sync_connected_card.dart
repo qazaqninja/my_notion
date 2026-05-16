@@ -68,6 +68,15 @@ class SyncConnectedCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
+          // E29 — backend liveness indicator.
+          _ActivityRow(
+            label: 'Backend',
+            value: state.lastPingAt == null
+                ? 'not yet pinged'
+                : 'reachable · ${syncRelativeTime(state.lastPingAt!)}',
+            tokens: tokens,
+          ),
+          const SizedBox(height: 4),
           _ActivityRow(
             label: 'Last push',
             value: lastPush == null

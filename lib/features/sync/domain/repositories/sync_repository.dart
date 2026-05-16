@@ -55,6 +55,13 @@ abstract class SyncRepository {
   /// Delete a file. Returns true iff the server removed something
   /// (false ↔ 404).
   Future<bool> delete({required String token, required String relpath});
+
+  /// E29 — backend liveness check. Hits `GET /health`. Returns `true`
+  /// when the server is reachable AND its DB is connected (200 OK).
+  /// `false` for 503 or any non-200. Throws `SyncNetworkException` for
+  /// transport-layer failures (DNS, timeout, refused connection).
+  /// Auth-agnostic — the endpoint does NOT require a token.
+  Future<bool> ping();
 }
 
 class SyncException implements Exception {

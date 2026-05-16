@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E29 — Surface push/delete/fetch errors via the sync card banner too (not just toasts)
+- **Task:** E30 — Sync metrics: queue-depth indicator while pushes are inflight
 - **Status:** pending
 
 ## Last completed
 
-- **M1331 — E28** (network error banner + manual retry in sync card)
+- **M1332 — E29** (backend `/health` ping + reachable indicator in sync card)
 - Committed: (this iteration)
-- TaskList ID: 50
-- Notes: `SyncConnectedCard` gains a third banner that renders when `state.lastError` is non-null AND not in the structured-codes set (`conflict / not_found / token_invalid / not_authenticated / invalid_credentials / invalid_signup / email_taken`). Layout: surface-tinted box with a "Network error" header, the raw error message, and a `Retry now` button that dispatches `SyncListRequested` — the next /sync/list call clears `lastError` on success or refreshes the banner on failure. New `isNetworkError(code)` predicate (also exported) and a defensive `_shortSha` helper that handles placeholder sha strings <8 chars (test-only safety; production shas are 64). 3 new tests (un-classified-renders-banner-+-retry-dispatch, structured-errors-do-not-render, `isNetworkError` classifies 9 codes); 11/11 sync card tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 51
+- Notes: New abstract `SyncRepository.ping()` method + `HttpSyncRepository.ping()` impl hitting `GET /health` (auth-agnostic). `SyncState` gains `DateTime? lastPingAt`. New `SyncPingRequested` event + `_onPing` handler — success records `lastPingAt = now()` and clears prior network error; 503 (server up, DB down) maps to `lastError = 'backend_unhealthy'`; transport failure passes the exception message through. The E27 periodic timer now fires `SyncPingRequested` alongside `SyncListRequested` on each tick, so the reachable indicator stays fresh while idle. `SyncConnectedCard` gets a "Backend · reachable · X ago" `_ActivityRow` above the existing "Last push" row (falls back to "not yet pinged" before first ping). 4 new bloc_test cases (success-sets-lastPingAt-and-clears-error, 503-flips-backend_unhealthy, network-failure-passes-message, auth-agnostic-no-token). 69/69 sync tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

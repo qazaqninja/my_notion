@@ -120,6 +120,21 @@ class HttpSyncRepository implements SyncRepository {
     throw SyncException('delete ${res.statusCode}: ${res.body}');
   }
 
+  @override
+  Future<bool> ping() async {
+    http.Response res;
+    try {
+      res = await _client.get(Uri.parse('$baseUrl/health'));
+    } catch (e) {
+      throw SyncNetworkException(e.toString());
+    }
+    // /health returns 200 'ok\n' when the server + DB are healthy and
+    // 503 when DB is down. Treat 200 as reachable, everything else as
+    // unhealthy (the network exception path catches connection
+    // failures separately).
+    return res.statusCode == 200;
+  }
+
   // ── helpers ──────────────────────────────────────────────────────────
 
   Future<http.Response> _post(String path, Map<String, dynamic> body) async {
