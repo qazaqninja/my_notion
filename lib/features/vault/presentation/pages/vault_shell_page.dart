@@ -614,6 +614,15 @@ class _VaultShellPageState extends State<VaultShellPage> {
         if (!ok && context.mounted) {
           context.toastError('Could not open', sub: vaultPath, subMono: true);
         }
+      case 'Copy vault path':
+        if (vaultPath == null) {
+          context.toastError('No vault open');
+          return;
+        }
+        await Clipboard.setData(ClipboardData(text: vaultPath));
+        if (context.mounted) {
+          context.toastSuccess('Copied vault path', sub: vaultPath, subMono: true);
+        }
       case 'Export vault to folder':
         if (vaultPath == null) {
           context.toastError('No vault open');
