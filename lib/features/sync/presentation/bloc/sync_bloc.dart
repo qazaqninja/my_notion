@@ -44,6 +44,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<SyncFetchCleared>(_onFetchCleared);
     on<SyncPingRequested>(_onPing, transformer: sequential());
     on<SyncPendingPushDelta>(_onPendingDelta);
+    on<SyncPushAllRequested>(_onPushAll);
   }
 
   /// E30 — overrides Bloc.add so a `+1` to `pendingPushes` is observed
@@ -55,6 +56,30 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       super.add(const SyncPendingPushDelta(1));
     }
     super.add(event);
+  }
+
+  void _onPushAll(
+    SyncPushAllRequested e,
+    Emitter<SyncState> emit,
+  ) {
+    if (!state.isAuthed) {
+      emit(state.copyWith(
+        status: SyncStatus.error,
+        lastError: 'not_authenticated',
+      ));
+      return;
+    }
+    for (final entry in e.entries) {
+      // Skip relpaths whose tracker already matches the local sha — no
+      // need to round-trip the body to land an empty change. The first
+      // push for any new relpath has no tracker entry yet, so this
+      // check naturally returns false and the push is dispatched.
+      if (state.knownShaFor(entry.relpath) == entry.sha256) continue;
+      add(SyncPushFileRequested(
+        relpath: entry.relpath,
+        body: entry.body,
+      ));
+    }
   }
 
   void _onPendingDelta(

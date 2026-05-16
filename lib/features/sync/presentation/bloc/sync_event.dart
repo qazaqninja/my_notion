@@ -49,6 +49,33 @@ class SyncListRequested extends SyncEvent {
   const SyncListRequested();
 }
 
+/// One entry in a `SyncPushAllRequested` batch: the local body the
+/// caller wants the server to mirror, plus its current sha256 so the
+/// bloc can skip relpaths whose `knownShas` value already matches.
+class SyncBulkPushEntry {
+  const SyncBulkPushEntry({
+    required this.relpath,
+    required this.body,
+    required this.sha256,
+  });
+  final String relpath;
+  final String body;
+  final String sha256;
+}
+
+/// E31 — vault-wide bulk push. Used by "Push all unsynced files" so
+/// a fresh login can seed the server with the user's existing vault
+/// in one click. The handler iterates [entries] and dispatches a
+/// `SyncPushFileRequested` for each one whose local sha differs from
+/// the bloc's tracked `knownShas[relpath]` (or has no tracker entry
+/// yet). Already-in-sync entries are skipped — bulk push is idempotent.
+class SyncPushAllRequested extends SyncEvent {
+  const SyncPushAllRequested(this.entries);
+  final List<SyncBulkPushEntry> entries;
+  @override
+  List<Object?> get props => [entries];
+}
+
 /// Internal event used by `SyncBloc` to bump `pendingPushes` up or
 /// down as pushes are dispatched and complete (E30). Library-private:
 /// the rest of the app should not dispatch it directly. The `+1` is
