@@ -375,6 +375,9 @@ enum SlashAction {
   /// Extract the label from every markdown reference-link
   /// definition line (`[label]: url` → `label`).
   extractMarkdownReferenceLinkLabelsFromLines,
+  /// Extract every cell from every markdown-table row line
+  /// (`| a | b | c |` → `a`, `b`, `c`) on each selected line.
+  extractMarkdownTableCellsFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1863,6 +1866,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownReferenceLinkLabelsFromLines,
     keywords: ['extract', 'reference', 'ref', 'link', 'label',
         'definition', 'def', 'shortcut', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'table',
+    label: 'Extract table cells',
+    hint: '| a | b | → a / b',
+    action: SlashAction.extractMarkdownTableCellsFromLines,
+    keywords: ['extract', 'table', 'cell', 'row', 'pipe',
+        'markdown', 'data'],
   ),
   SlashEntry(
     icon: 'edit',

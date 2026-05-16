@@ -4015,6 +4015,86 @@ void main() {
     });
   });
 
+  group('extractMarkdownTableCellsFromLinesIn', () {
+    test('three-cell row splits into three outputs', () {
+      const text = '| a | b | c |\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a\nb\nc\n');
+    });
+
+    test('two-cell row splits into two outputs', () {
+      const text = '| name | age |\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'name\nage\n');
+    });
+
+    test('cells with internal spaces preserved', () {
+      const text = '| full name | birth year |\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'full name\nbirth year\n');
+    });
+
+    test('separator row `|---|---|` is extracted as cells', () {
+      // Documented behaviour — keeps the extractor simple
+      // and row-count consistent. Pipe through a "drop lines
+      // matching ---" transform downstream to filter.
+      const text = '|---|---|\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, '---\n---\n');
+    });
+
+    test('row without outer pipes is NOT a match (v1)', () {
+      // CommonMark allows `a | b | c` without outer pipes;
+      // v1 of this extractor requires outer pipes.
+      const text = 'a | b | c\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('row with one cell `| a |` is NOT a match', () {
+      // 2 pipes total — under the 3-pipe minimum (so the
+      // shape is unambiguously table-like).
+      const text = '| a |\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multi-row table all cells extract', () {
+      const text =
+          '| name | age |\n|---|---|\n| Alice | 30 |\n| Bob | 25 |\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'name\nage\n---\n---\nAlice\n30\nBob\n25\n',
+      );
+    });
+
+    test('whitespace around pipes is trimmed in output', () {
+      const text = '|   spaced   |   too   |\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'spaced\ntoo\n');
+    });
+
+    test('plain prose lines dropped from output', () {
+      const text = 'prose\n| h1 | h2 |\nmore prose\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'h1\nh2\n');
+    });
+
+    test('empty cells emit as empty lines', () {
+      // `||` between content yields an empty cell — preserved
+      // as a blank output line to keep row-shape information
+      // recoverable.
+      const text = '| a |  | c |\n';
+      final r = extractMarkdownTableCellsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a\n\nc\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownTableCellsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

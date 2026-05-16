@@ -1684,6 +1684,47 @@ SortLinesResult extractMarkdownReferenceLinkLabelsFromLinesIn(
       return out;
     });
 
+/// Extract every cell from every markdown-table row line on
+/// each selected line. Useful for harvesting table data into
+/// a flat list — feeding a downstream sort / dedupe / search,
+/// converting table values into a CSV-style stream, etc.
+///
+/// Recognition (per line):
+/// - Trimmed line must start with `|` AND end with `|` (outer
+///   pipes are required in this v1; CommonMark's no-outer-pipe
+///   form is out of scope).
+/// - At least 3 pipes total (so the line has at least 2 cells).
+/// - Inner cell content extracted between the pipes; each
+///   cell is trimmed.
+///
+/// Separator rows (`|---|---|`) ARE extracted as cells —
+/// each `---` becomes a separate output line. Filter
+/// downstream with another transform if you want to skip
+/// them; not filtering them keeps the extractor's row-
+/// count semantics straightforward.
+///
+/// 35th member of the extraction family.
+SortLinesResult extractMarkdownTableCellsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final out = <String>[];
+      for (final l in lines) {
+        final trimmed = l.trim();
+        if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) {
+          continue;
+        }
+        final pipeCount = '|'.allMatches(trimmed).length;
+        if (pipeCount < 3) continue;
+        final cells = trimmed.split('|');
+        // First and last are empty (leading/trailing pipe);
+        // emit only the inner cells, each trimmed.
+        for (var i = 1; i < cells.length - 1; i++) {
+          out.add(cells[i].trim());
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
