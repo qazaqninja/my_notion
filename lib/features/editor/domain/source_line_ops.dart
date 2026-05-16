@@ -1436,6 +1436,38 @@ SortLinesResult extractBareUrlsFromLinesIn(
       return out;
     });
 
+/// Extract every 4-digit year substring (1800-2099 range) from
+/// each selected line. Useful for citation / biography date
+/// harvests, doc-vintage audits, and timeline scrapes.
+///
+/// Recognition: `\b(?:1[89]\d{2}|20\d{2})\b`
+/// - 1800-1899 (`1[89]` covers 18xx and 19xx via the `[89]`
+///   alternation)
+/// - 2000-2099 (`20\d{2}`)
+/// Outside the range — 2100+, pre-1800, 2-digit years — are
+/// NOT matched. Word boundaries on each end reject embedded
+/// runs in longer numeric strings.
+///
+/// Distinct from M1062 ISO-date extractor (full `YYYY-MM-DD`
+/// shape with separators). This one is the bare year only,
+/// which is the dominant prose form for citations like
+/// "first published in 1923".
+///
+/// 38th member of the extraction family — round-number
+/// milestone partner to M1100.
+SortLinesResult extractYearsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b(?:1[89]\d{2}|20\d{2})\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

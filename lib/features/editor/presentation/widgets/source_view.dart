@@ -1368,6 +1368,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractBareUrlsFromLinesIn,
         );
+      case SlashAction.extractYearsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractYearsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

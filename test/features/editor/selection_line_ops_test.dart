@@ -4299,6 +4299,76 @@ void main() {
     });
   });
 
+  group('extractYearsFromLinesIn', () {
+    test('current era year `2024` extracts', () {
+      const text = 'shipped in 2024 finally\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024\n');
+    });
+
+    test('20th-century year `1995` extracts', () {
+      const text = 'born in 1995 here\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1995\n');
+    });
+
+    test('lower-boundary `1800` and upper-boundary `2099` extract', () {
+      const text = 'from 1800 to 2099 era\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1800\n2099\n');
+    });
+
+    test('out-of-range `1799` (pre-1800) is NOT a match', () {
+      const text = 'before 1799 too early\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('out-of-range `2100` (post-2099) is NOT a match', () {
+      const text = 'projected 2100 future\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('2-digit and 3-digit years are NOT matched', () {
+      const text = "in '95 and 1923's era\n";
+      // `95` is too short, but `1923` matches.
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1923\n');
+    });
+
+    test('5-digit `12345` is NOT a year', () {
+      const text = 'id 12345 inline\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple years on one line each extract', () {
+      const text = 'from 1995 to 2010 then 2024 stretch\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1995\n2010\n2024\n');
+    });
+
+    test('embedded year in version-shape `1.2.2024-rc` matches', () {
+      // `\b` between `.` and `2` is a boundary; the year
+      // surfaces from compound version strings. Accepted
+      // false-positive vector — document and move on.
+      const text = 'version 1.2.2024-rc.1 cut\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024\n');
+    });
+
+    test('lines without years dropped from output', () {
+      const text = 'plain prose\ncite 1985 here\nmore prose\n';
+      final r = extractYearsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1985\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractYearsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

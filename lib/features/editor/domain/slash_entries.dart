@@ -354,6 +354,9 @@ enum SlashAction {
   /// Extract every bare-domain URL (no protocol prefix) from each
   /// selected line.
   extractBareUrlsFromLines,
+  /// Extract every 4-digit year substring (1800-2099 range) from
+  /// each selected line.
+  extractYearsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1827,6 +1830,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractBareUrlsFromLines,
     keywords: ['extract', 'bare', 'url', 'domain', 'host', 'site',
         'noprotocol'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Extract years (1800-2099)',
+    hint: '1995 / 2024',
+    action: SlashAction.extractYearsFromLines,
+    keywords: ['extract', 'year', 'date', 'citation', 'bibliography',
+        'timeline'],
   ),
   SlashEntry(
     icon: 'calendar',
