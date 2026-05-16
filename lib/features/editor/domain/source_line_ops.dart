@@ -928,6 +928,47 @@ SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
       return [range.toString()];
     });
 
+/// Replace every numeric line with its absolute value
+/// (`abs(x)`). Non-numeric lines pass through. Renders integer-
+/// form when every input was integer (no `.`) AND the abs value
+/// has no fractional part; decimal-form otherwise.
+SortLinesResult absNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final trimmed = l.trim();
+            final v = double.tryParse(trimmed);
+            if (v == null) return l;
+            final a = v.abs();
+            if (!trimmed.contains('.') && a == a.truncateToDouble()) {
+              return a.toInt().toString();
+            }
+            return a.toString();
+          })(),
+      ];
+    });
+
+/// Replace every numeric line with its negation (`-x`). Non-
+/// numeric lines pass through. Same integer/decimal-rendering
+/// convention as [absNumericLinesIn].
+SortLinesResult negateNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final trimmed = l.trim();
+            final v = double.tryParse(trimmed);
+            if (v == null) return l;
+            final n = -v;
+            if (!trimmed.contains('.') && n == n.truncateToDouble()) {
+              return n.toInt().toString();
+            }
+            return n.toString();
+          })(),
+      ];
+    });
+
 /// Round every selected numeric line to [decimals] places. Uses
 /// banker's-friendly `toStringAsFixed` so a trailing 5 follows the
 /// platform's default-rounding behaviour (away-from-zero on most

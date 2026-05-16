@@ -239,6 +239,10 @@ enum SlashAction {
   varianceNumericLines,
   /// Round every numeric line to 2 decimal places.
   roundNumericLines,
+  /// Replace every numeric line with its absolute value.
+  absNumericLines,
+  /// Replace every numeric line with its negation.
+  negateNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1102,6 +1106,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '3.14159 → 3.14',
     action: SlashAction.roundNumericLines,
     keywords: ['round', 'decimal', 'precision', 'truncate'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Absolute value',
+    hint: '-5 → 5',
+    action: SlashAction.absNumericLines,
+    keywords: ['abs', 'absolute', 'value', 'positive', 'magnitude'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Negate numeric lines',
+    hint: '5 → -5',
+    action: SlashAction.negateNumericLines,
+    keywords: ['negate', 'flip', 'sign', 'invert', 'minus'],
   ),
   SlashEntry(
     icon: 'hash',

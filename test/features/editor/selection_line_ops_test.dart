@@ -2669,6 +2669,46 @@ void main() {
     });
   });
 
+  group('absNumericLinesIn / negateNumericLinesIn', () {
+    test('abs flips negative to positive', () {
+      const text = '-5\n3\n-7\n';
+      final r = absNumericLinesIn(text, 0, text.length);
+      expect(r.text, '5\n3\n7\n');
+    });
+
+    test('abs preserves positives untouched', () {
+      const text = '5\n0\n3.5\n';
+      final r = absNumericLinesIn(text, 0, text.length);
+      expect(r.text, '5\n0\n3.5\n');
+    });
+
+    test('negate flips every sign', () {
+      const text = '5\n-3\n0\n';
+      final r = negateNumericLinesIn(text, 0, text.length);
+      // Dart prints `-0` as `0` for ints; assert real-life rendering.
+      expect(r.text, '-5\n3\n0\n');
+    });
+
+    test('negate twice is identity for non-zero values', () {
+      const text = '5\n-3\n7\n';
+      final once = negateNumericLinesIn(text, 0, text.length);
+      final twice = negateNumericLinesIn(once.text, 0, once.text.length);
+      expect(twice.text, text);
+    });
+
+    test('non-numeric lines pass through both transforms', () {
+      const text = '-5\nlabel\n';
+      expect(absNumericLinesIn(text, 0, text.length).text, '5\nlabel\n');
+      expect(negateNumericLinesIn(text, 0, text.length).text, '5\nlabel\n');
+    });
+
+    test('decimal input renders decimal', () {
+      const text = '-3.5\n';
+      expect(absNumericLinesIn(text, 0, text.length).text, '3.5\n');
+      expect(negateNumericLinesIn(text, 0, text.length).text, '3.5\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

@@ -1168,6 +1168,14 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, roundNumericLinesIn,
         );
+      case SlashAction.absNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, absNumericLinesIn,
+        );
+      case SlashAction.negateNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, negateNumericLinesIn,
+        );
     }
   }
 
