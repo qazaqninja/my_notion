@@ -69,8 +69,13 @@ class SuperEditorSerializer {
   /// - Slice 12: transclusion cards.
   ///   - Standalone `![[ULID]]` (image-style transclusion) →
   ///     `ParagraphNode` with `blockType: transclusionAttribution`.
-  ///     Inline `[[ULID]]` mid-paragraph stays as raw text — that's an
-  ///     inline mark (slices 16-22).
+  /// - Slice 13: column fences.
+  ///   - `:::cols\n:::col\n…\n:::\n:::col\n…\n:::\n:::` → `ParagraphNode`
+  ///     with `blockType: columnsAttribution`. Body text is the raw
+  ///     multi-line fence content so the existing
+  ///     `markdown_renderer.dart` columns path (M66) keeps rendering;
+  ///     super_editor migration preserves the structure for cell-level
+  ///     editing later.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -141,6 +146,33 @@ class SuperEditorSerializer {
             'blockType': codeAttribution,
             if (lang.isNotEmpty) 'language': lang,
           },
+        ));
+        continue;
+      }
+      // Column fence? `:::cols` opens a multi-column layout. Inner
+      // `:::col` / `:::` boundaries are part of the body. We track
+      // nesting so the outer-most closing `:::` ends the block.
+      if (line.trimRight() == ':::cols') {
+        flushBuffer();
+        final body = StringBuffer(line);
+        var depth = 1; // opened :::cols
+        i += 1;
+        while (i < lines.length && depth > 0) {
+          final l = lines[i];
+          body.write('\n');
+          body.write(l);
+          final t = l.trimRight();
+          if (t == ':::cols' || t == ':::col') {
+            depth += 1;
+          } else if (t == ':::') {
+            depth -= 1;
+          }
+          i += 1;
+        }
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(body.toString()),
+          metadata: const {'blockType': columnsAttribution},
         ));
         continue;
       }
@@ -370,7 +402,8 @@ class SuperEditorSerializer {
             block == fileAttachmentAttribution ||
             block == bookmarkAttribution ||
             block == subPageAttribution ||
-            block == transclusionAttribution) {
+            block == transclusionAttribution ||
+            block == columnsAttribution) {
           // Body holds the raw markdown — emit verbatim.
           out.write(node.text.toPlainText());
         } else if (block == codeAttribution) {
@@ -514,6 +547,13 @@ const subPageAttribution = NamedAttribution('subPage');
 /// transclusion — the linked page's body is rendered inline (cycle-safe
 /// up to maxDepth = 3 per CLAUDE.md).
 const transclusionAttribution = NamedAttribution('transclusion');
+
+/// Custom block-type attribution for a multi-column layout fenced with
+/// `:::cols` / `:::col` / `:::` per M66. The body holds the raw
+/// multi-line markdown so the existing layout renderer keeps working;
+/// cell-level WYSIWYG editing of the columns themselves would need a
+/// nested-document super_editor model (v2).
+const columnsAttribution = NamedAttribution('columns');
 
 /// Returns true when [url] has an extension this serializer treats as an
 /// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no

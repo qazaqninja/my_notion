@@ -552,4 +552,52 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer column fences (D1 slice 13)', () {
+    test('two-column layout round-trips byte-identical', () {
+      const md = ':::cols\n'
+          ':::col\n'
+          'left content\n'
+          ':::\n'
+          ':::col\n'
+          'right content\n'
+          ':::\n'
+          ':::';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), columnsAttribution);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('column layout with multiple lines per column', () {
+      const md = ':::cols\n'
+          ':::col\n'
+          'line one\n'
+          'line two\n'
+          ':::\n'
+          ':::col\n'
+          'line A\n'
+          'line B\n'
+          ':::\n'
+          ':::';
+      final doc = serializer.markdownToDocument(md);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('paragraph + column layout + paragraph round-trip', () {
+      const md = 'before\n\n'
+          ':::cols\n'
+          ':::col\n'
+          'a\n'
+          ':::\n'
+          ':::col\n'
+          'b\n'
+          ':::\n'
+          ':::\n\n'
+          'after';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.toList(), hasLength(3));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
