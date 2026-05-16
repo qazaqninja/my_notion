@@ -46,4 +46,56 @@ void main() {
           'line one line two line three');
     });
   });
+
+  group('SuperEditorSerializer heading round-trip (D1 slice 2)', () {
+    test('# Title round-trips as header1 ParagraphNode', () {
+      const md = '# Title';
+      final doc = serializer.markdownToDocument(md);
+      final nodes = doc.toList();
+      expect(nodes, hasLength(1));
+      final node = nodes.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), header1Attribution);
+      expect(node.text.toPlainText(), 'Title');
+      expect(serializer.documentToMarkdown(doc), '# Title');
+    });
+
+    test('## Subtitle round-trips as header2', () {
+      const md = '## Subtitle';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), header2Attribution);
+      expect(serializer.documentToMarkdown(doc), '## Subtitle');
+    });
+
+    test('### Section round-trips as header3', () {
+      const md = '### Section';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), header3Attribution);
+      expect(serializer.documentToMarkdown(doc), '### Section');
+    });
+
+    test('headings can be mixed with paragraphs', () {
+      const md = '# Title\n\nFirst paragraph\n\n## Subtitle\n\nSecond paragraph';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.toList(), hasLength(4));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('#### (level 4) is not a heading — stays a paragraph with the # marks',
+        () {
+      const md = '#### Deep';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      // super_editor only ships header1-3; level 4+ stays as plain
+      // paragraph text per slice 2's scope. super_editor sets a default
+      // `paragraphAttribution` block type so we check the *negation* —
+      // it must not be a header attribution.
+      final block = node.getMetadataValue('blockType');
+      expect(block, isNot(header1Attribution));
+      expect(block, isNot(header2Attribution));
+      expect(block, isNot(header3Attribution));
+      expect(node.text.toPlainText(), '#### Deep');
+    });
+  });
 }

@@ -16,33 +16,43 @@ class SuperEditorSerializer {
   /// Parse a markdown body (no frontmatter — strip the YAML block before
   /// calling) into a `MutableDocument` super_editor can render.
   ///
-  /// Slice 1: each non-empty line becomes a `ParagraphNode`. Slices
-  /// 2-10 extend with headings, lists, code, quotes, tables, math,
-  /// mermaid, image cards, etc.
+  /// Supports (cumulative across slices):
+  /// - Slice 1: paragraphs (soft-wrap merge, blank-line splits).
+  /// - Slice 2: ATX headings `#`, `##`, `###` → `ParagraphNode` with
+  ///   `blockType: header[1-3]Attribution`.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
     final buffer = StringBuffer();
+
+    void flushBuffer() {
+      if (buffer.isEmpty) return;
+      nodes.add(ParagraphNode(
+        id: Editor.createNodeId(),
+        text: AttributedText(buffer.toString().trimRight()),
+      ));
+      buffer.clear();
+    }
+
     for (final line in lines) {
       if (line.trim().isEmpty) {
-        if (buffer.isNotEmpty) {
-          nodes.add(ParagraphNode(
-            id: Editor.createNodeId(),
-            text: AttributedText(buffer.toString().trimRight()),
-          ));
-          buffer.clear();
-        }
+        flushBuffer();
+        continue;
+      }
+      final heading = _matchHeading(line);
+      if (heading != null) {
+        flushBuffer();
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(heading.text),
+          metadata: {'blockType': heading.attribution},
+        ));
         continue;
       }
       if (buffer.isNotEmpty) buffer.write(' ');
       buffer.write(line);
     }
-    if (buffer.isNotEmpty) {
-      nodes.add(ParagraphNode(
-        id: Editor.createNodeId(),
-        text: AttributedText(buffer.toString().trimRight()),
-      ));
-    }
+    flushBuffer();
     if (nodes.isEmpty) {
       // super_editor requires at least one node for an empty document.
       nodes.add(ParagraphNode(
@@ -55,7 +65,7 @@ class SuperEditorSerializer {
 
   /// Serialise a `MutableDocument` back into markdown source. Paired
   /// with `markdownToDocument` so a load + save without edits is
-  /// idempotent at the paragraph level.
+  /// idempotent for supported node types.
   String documentToMarkdown(Document doc) {
     final out = StringBuffer();
     final nodes = doc.toList();
@@ -63,12 +73,46 @@ class SuperEditorSerializer {
     for (var i = 0; i < n; i++) {
       final node = nodes[i];
       if (node is ParagraphNode) {
+        final prefix = _headingPrefix(node);
+        if (prefix.isNotEmpty) out.write('$prefix ');
         out.write(node.text.toPlainText());
       }
-      // Other node types unhandled in slice 1 — they'll skip silently
-      // until their respective slices add explicit branches.
+      // Other node types unhandled until their respective slices add
+      // explicit branches.
       if (i < n - 1) out.write('\n\n');
     }
     return out.toString();
   }
+
+  /// If the paragraph's `blockType` metadata is a heading attribution,
+  /// returns the corresponding `#` prefix string. Empty string otherwise.
+  String _headingPrefix(ParagraphNode node) {
+    final block = node.getMetadataValue('blockType');
+    if (block == header1Attribution) return '#';
+    if (block == header2Attribution) return '##';
+    if (block == header3Attribution) return '###';
+    return '';
+  }
+
+  /// Match an ATX-style heading `# text` / `## text` / `### text`.
+  /// Returns null for non-headings. Levels 4-6 are paragraph-encoded
+  /// (super_editor's default heading attribution only ships H1-H3).
+  _HeadingMatch? _matchHeading(String line) {
+    final m = RegExp(r'^(#{1,3})\s+(.+)$').firstMatch(line);
+    if (m == null) return null;
+    final hashes = m.group(1)!.length;
+    final text = m.group(2)!.trim();
+    final attribution = switch (hashes) {
+      1 => header1Attribution,
+      2 => header2Attribution,
+      _ => header3Attribution,
+    };
+    return _HeadingMatch(text: text, attribution: attribution);
+  }
+}
+
+class _HeadingMatch {
+  const _HeadingMatch({required this.text, required this.attribution});
+  final String text;
+  final NamedAttribution attribution;
 }
