@@ -140,6 +140,41 @@ void main() {
     });
   });
 
+  group('splitLinesOnSentencesIn', () {
+    test('two-sentence paragraph splits into two lines', () {
+      const text = 'Hello world. Goodbye now.\n';
+      final r = splitLinesOnSentencesIn(text, 0, text.length);
+      expect(r.text, 'Hello world.\nGoodbye now.\n');
+    });
+
+    test('three sentences ending with mixed punctuation', () {
+      const text = 'First! Then second. Finally third?\n';
+      final r = splitLinesOnSentencesIn(text, 0, text.length);
+      expect(r.text, 'First!\nThen second.\nFinally third?\n');
+    });
+
+    test('a line with no sentence boundary passes through unchanged', () {
+      const text = 'just a single sentence.\n';
+      expect(splitLinesOnSentencesIn(text, 0, text.length).text, text);
+    });
+
+    test('comma after period stays attached (no double-cap)', () {
+      // No `[.!?] \s+ [A-Z]` pattern → no split.
+      const text = 'apples, oranges, and bananas.\n';
+      expect(splitLinesOnSentencesIn(text, 0, text.length).text, text);
+    });
+
+    test('multi-line input splits each line independently', () {
+      const text = 'A. B.\nC. D.\n';
+      final r = splitLinesOnSentencesIn(text, 0, text.length);
+      expect(r.text, 'A.\nB.\nC.\nD.\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(splitLinesOnSentencesIn('', 0, 0).text, '');
+    });
+  });
+
   group('stripLeadingNumberPrefixIn', () {
     test('strips dot-separator with zero padding', () {
       const text = '01. foo\n02. bar\n';

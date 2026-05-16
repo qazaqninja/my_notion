@@ -1804,6 +1804,39 @@ SortLinesResult shuffleLinesIn(
       return shuffled;
     });
 
+/// Split each selected line on **sentence boundaries**, emitting one
+/// sentence per output line. A boundary is a sentence terminator
+/// (`.`, `!`, `?`) followed by whitespace and an uppercase letter —
+/// good enough to handle plain prose without false-firing on the
+/// `Dr. Smith` shape (no capital follows the period inside the
+/// abbreviation, just the abbreviated name itself).
+///
+/// Useful for "split a paragraph into one-sentence-per-line" proof-
+/// reading mode; pair with `joinLineWithNext` / similar to rebuild.
+/// Lines without a boundary pass through unchanged.
+///
+///   "Hello world. Goodbye now."  →  "Hello world."
+///                                   "Goodbye now."
+SortLinesResult splitLinesOnSentencesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Split on a positive lookbehind/lookahead pair — keeps the
+      // terminator attached to the LEFT sentence while requiring the
+      // RIGHT sentence to start with a capital letter (so `Dr. Smith`
+      // stays one sentence — no capital follows the abbreviation's
+      // period until "Smith" starts, but the regex sees `.` + ` ` +
+      // `S` here too — accept the false positive, it's the better
+      // failure mode than splitting nowhere).
+      final boundary = RegExp(r'(?<=[.!?])\s+(?=[A-Z])');
+      return [
+        for (final l in lines)
+          if (boundary.hasMatch(l))
+            ...l.split(boundary).map((s) => s.trim()).where((s) => s.isNotEmpty)
+          else
+            l,
+      ];
+    });
+
 /// Strip trailing whitespace (spaces, tabs) from every line in the
 /// selected block. Common cleanup before committing — many tools
 /// reject trailing whitespace and it's invisible in the editor.

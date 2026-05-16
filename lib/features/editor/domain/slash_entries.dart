@@ -48,6 +48,9 @@ enum SlashAction {
   /// `1] ` / `1: ` / `1- `) from every selected line, preserving
   /// any leading indentation.
   stripLeadingNumberPrefix,
+  /// Split each selected line on sentence boundaries, emitting one
+  /// sentence per output line.
+  splitLinesOnSentences,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1384,6 +1387,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '01. foo → foo',
     action: SlashAction.stripLeadingNumberPrefix,
     keywords: ['strip', 'unnumber', 'denumber', 'leading', 'prefix', 'remove'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Split into sentences',
+    hint: 'one sentence per line',
+    action: SlashAction.splitLinesOnSentences,
+    keywords: ['split', 'sentence', 'sentences', 'proofread', 'review', 'break'],
   ),
   SlashEntry(
     icon: 'link',
