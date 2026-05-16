@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** A (Foundation)
-- **Task:** A5 — Add `alchemist` + golden config (TS-08)
+- **Task:** A6 — Add `mockingjay` dev dependency (TS-09)
 - **Status:** pending
 
 ## Last completed
 
-- **M1192 — A4** (add bloc_test ^10.0.0 dev dependency + smoke test)
-- Committed: 5cf2869
-- TaskList ID: 3
-- Notes: pin is ^10.0.0 (not ^9.1.7 from the plan) — bloc_test 10.x is the line paired with bloc 9.x / flutter_bloc 9.x; bloc_test 9.x is the bloc-8.x line. Smoke test at `test/foundation/bloc_test_smoke_test.dart` drives a `_CounterCubit` through three blocTest<> scenarios.
+- **M1194 — A5** (add alchemist ^0.12.1 + golden test harness)
+- Committed: 8a67992
+- TaskList ID: 4
+- Notes: Created `test/flutter_test_config.dart` with `AlchemistConfig` (platform goldens disabled, CI goldens enabled), `dart_test.yaml` declaring alchemist's `golden` tag, smoke at `test/foundation/golden_smoke_test.dart` rendering two colored squares with PNG baseline at `test/foundation/goldens/ci/golden_smoke_squares.png`.
 
 ## Backlog (Phase A — Foundation)
 
@@ -22,6 +22,7 @@
 - [x] A2 — Refresh CLAUDE.md v1.x backlog strikethroughs (M1188 / a993a1c)
 - [x] A3 — Audit FEATURES.md 🚧 entries (M1190 / 8f0a2b1)
 - [x] A4 — Add `bloc_test` dev dependency (TS-03) (M1192 / 5cf2869)
+- [x] A5 — Add `alchemist` + golden config (TS-08) (M1194 / 8a67992)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
 - [ ] A6 — Add `mockingjay` dev dependency (TS-09)
 - [ ] A7 — Port `vault_bloc` test to `bloc_test` (TS-03)
@@ -72,6 +73,7 @@
 - [ ] **LT-02** — `bloc_lint` not in pubspec / CI. **Resolves with A4** (add `bloc_test` + `bloc_lint` together since both are linked).
 - [ ] **LT-03** — `custom_lint` not in `dev_dependencies` / CI. Add `custom_lint: ^0.x` + `dart run custom_lint` step in CI.
 - [x] **TS-03** — `bloc_test` package absent → no `blocTest<>` usage anywhere. ✅ Resolved at M1192 (A4) — `bloc_test: ^10.0.0` added to `pubspec.yaml` dev_dependencies; smoke test at `test/foundation/bloc_test_smoke_test.dart` proves the harness works. Subsequent tasks A7–A11 port existing hand-written bloc/cubit tests to the new harness.
+- [x] **TS-08** (preventive) — alchemist was not in pubspec; no goldens existed so no formal violation yet, but RULES.md TS-08 mandates alchemist for any future golden. ✅ Resolved at M1194 (A5) — `alchemist: ^0.12.1` added, `test/flutter_test_config.dart` wires the config, `dart_test.yaml` declares the `golden` tag, smoke golden at `test/foundation/golden_smoke_test.dart`.
 
 ### WARN (informational)
 
