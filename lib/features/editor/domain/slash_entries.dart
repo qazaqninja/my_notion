@@ -501,6 +501,9 @@ enum SlashAction {
   /// Extract every NPM-style semver-range expression
   /// (`^1.2.3`, `~1.2.3`, `>=1.2.0`) from each selected line.
   extractNpmSemverRangesFromLines,
+  /// Extract every HTTP method + path token (`GET /api/x`,
+  /// `POST /v1/login`) from each selected line.
+  extractHttpMethodsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2358,6 +2361,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractNpmSemverRangesFromLines,
     keywords: ['extract', 'npm', 'semver', 'range', 'caret',
         'tilde', 'version', 'dep'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract HTTP method + path',
+    hint: 'GET /api/x / POST /v1/login',
+    action: SlashAction.extractHttpMethodsFromLines,
+    keywords: ['extract', 'http', 'method', 'route', 'api',
+        'rest', 'endpoint', 'get', 'post'],
   ),
   SlashEntry(
     icon: 'calendar',

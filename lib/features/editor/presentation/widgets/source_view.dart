@@ -1563,6 +1563,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractNpmSemverRangesFromLinesIn,
         );
+      case SlashAction.extractHttpMethodsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractHttpMethodsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

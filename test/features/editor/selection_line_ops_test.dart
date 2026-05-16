@@ -7587,6 +7587,78 @@ void main() {
     });
   });
 
+  group('extractHttpMethodsFromLinesIn', () {
+    test('GET method + path extracts', () {
+      const text = 'route GET /api/users today\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'GET /api/users\n');
+    });
+
+    test('POST method + path extracts', () {
+      const text = 'auth POST /v1/login here\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'POST /v1/login\n');
+    });
+
+    test('DELETE with id-path extracts', () {
+      const text = 'remove DELETE /api/users/123 now\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'DELETE /api/users/123\n');
+    });
+
+    test('PATCH method + path extracts (RFC 5789)', () {
+      const text = 'update PATCH /api/users/123 here\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'PATCH /api/users/123\n');
+    });
+
+    test('all standard methods recognized', () {
+      const text =
+          'GET /a POST /b PUT /c PATCH /d DELETE /e HEAD /f '
+          'OPTIONS /g TRACE /h CONNECT /i\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'GET /a\nPOST /b\nPUT /c\nPATCH /d\nDELETE /e\nHEAD /f\n'
+        'OPTIONS /g\nTRACE /h\nCONNECT /i\n',
+      );
+    });
+
+    test('lowercase method `get /path` is NOT matched', () {
+      const text = 'fake get /path lowercase\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('method without path is NOT a match', () {
+      const text = 'word GET alone here\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('path with query string included in capture', () {
+      const text = 'fetch GET /api/users?id=42 inline\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'GET /api/users?id=42\n');
+    });
+
+    test('multiple methods on one line each extract', () {
+      const text = 'sequence GET /a then POST /b together\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'GET /a\nPOST /b\n');
+    });
+
+    test('lines without HTTP methods dropped from output', () {
+      const text = 'plain prose\nroute GET /api/x\nmore prose\n';
+      final r = extractHttpMethodsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'GET /api/x\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractHttpMethodsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

@@ -3048,6 +3048,38 @@ SortLinesResult extractNpmSemverRangesFromLinesIn(
       return out;
     });
 
+/// Extract every HTTP method + path token from each selected
+/// line (e.g. `GET /api/users`, `POST /v1/login`). Useful for
+/// REST API doc audits, route inventory, and OpenAPI spec
+/// authoring.
+///
+/// Recognition: `\b(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|TRACE|CONNECT)\s+/[^\s]+`
+/// - Standard HTTP method (uppercase, all nine RFC 7231 +
+///   RFC 5789 PATCH).
+/// - Whitespace.
+/// - Path starting with `/` (no spaces inside the path).
+///
+/// Lowercase methods (`get /path`) are NOT matched — HTTP
+/// methods are conventionally uppercase in doc tables and
+/// curl examples. Bare methods without paths are skipped.
+///
+/// 86th member of the extraction family.
+SortLinesResult extractHttpMethodsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|TRACE|CONNECT)'
+        r'\s+/[^\s]+',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
