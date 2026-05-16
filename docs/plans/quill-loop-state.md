@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E41 — Phase E sync stack re-audit (closeout — verify all E36/E37/E38/E39/E40 fixes resolved orchestrator findings)
+- **Task:** E42 — droppable() on SyncRestoreRequested (latent BL-10 caught by E41 re-audit)
 - **Status:** pending
 
 ## Last completed
 
-- **M1343 — E40** (DI-03 root-scope justification comment)
+- **M1344 — E41** (Phase E sync stack re-audit closeout)
 - Committed: (this iteration)
-- TaskList ID: 62
-- Notes: Closes the orchestrator DI-03 INFO finding. Added a block comment above the `MultiBlocProvider` in `app.dart` enumerating all four root-scoped blocs (ThemeCubit / VaultBloc / RemindersBloc / SyncBloc) with the cross-route reason each is hoisted: theme is read by every route, vault is single-instance per app, reminders subscribes to editor frontmatter edits, sync bridges editor save → push AND settings → auth. TS-04 (test group naming) and TS-05 (fake-class placement at top of test files) deferred — both are cosmetic and would just churn the test files; will pick up when sync_bloc_test.dart structure is next touched. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 63
+- Notes: Re-dispatched flutter-arch-orchestrator over the Phase E sync stack after the E36–E40 fix cycle. Verified all 5 actionable items resolved: CA-07+BL-06 (entity moved to domain/Equatable), BL-10 (droppable on logout+push-all), TH-03 (tokens.success), BL-05 (enum renamed), DI-03 (root-scope comment). No new violations introduced. Deferred items (MD-01, TS-04, TS-05, FS-03) unchanged. ONE latent observation flagged: `SyncRestoreRequested` performs I/O (reads SharedPreferences) without an explicit transformer — pre-existing, not part of E37 scope. Queued as E42 — single-shot droppable() is the right semantic. Findings recorded under "Phase E sync stack re-audit (E41 / M1344 — closeout)" section. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
@@ -132,6 +132,22 @@
 - BL-11: side effects (toasts, dialogs) live in `BlocListener`s, not in build().
 - BL-12: all four `BlocListener`s use `listenWhen`.
 - RP-02 / RP-03: `HttpSyncRepository` injects its `http.Client`; all I/O errors wrap in typed exceptions.
+
+### Phase E sync stack re-audit (E41 / M1344 — closeout)
+
+Re-dispatched flutter-arch-orchestrator after the E36–E40 fix cycle. Status of every actionable item from the initial audit:
+
+- ✅ **CA-07 + BL-06** — `SyncBulkPushEntry` moved to `domain/entities/`; Equatable + props complete; usecase imports the entity directly.
+- ✅ **BL-10** — `droppable()` on logout + push-all; other I/O handlers carry `sequential()`; transformer choices documented inline.
+- ✅ **TH-03** — `tokens.success` used for the connected dot; no live `Colors.*` literals in the sync widget tree.
+- ✅ **BL-05** — Enum renamed to `{initial, loading, success, failure}` everywhere; zero stale references.
+- ✅ **DI-03** — `MultiBlocProvider` in app.dart carries the block comment justifying root-scope of all four blocs.
+
+**No new violations introduced by the fixes.**
+
+One latent BL-10 item the re-audit surfaced (not in the original scope): `SyncRestoreRequested` performs I/O (reads SharedPreferences) without an explicit transformer. Pre-existing; not introduced by E37. Add `droppable()` in a small follow-up — restore is intentionally single-shot at app boot, so droppable is the right semantic.
+
+Deferred items unchanged: MD-01 (DTO/state class merge), TS-04 (group naming), TS-05 (fake placement), FS-03 (no `packages/` directory).
 
 ### Notes for upcoming work
 
