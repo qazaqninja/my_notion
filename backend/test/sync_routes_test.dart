@@ -42,12 +42,27 @@ class _Sync implements SyncRepositoryBase {
       _byUser[userId] ?? const [];
 
   @override
-  Future<FileSummary> upsert({
+  Future<UpsertOutcome> upsert({
     required String userId,
     required String relpath,
     required String body,
     required String sha256,
+    String? ifMatch,
   }) async {
+    // Conflict-detection mirror of the real impl.
+    final existing = _byUser[userId]
+        ?.where((f) => f.relpath == relpath)
+        .firstOrNull;
+    if (ifMatch != null) {
+      if (ifMatch == '*' && existing != null) {
+        return UpsertOutcome.conflict(existing);
+      }
+      if (ifMatch != '*' &&
+          existing != null &&
+          existing.sha256 != ifMatch) {
+        return UpsertOutcome.conflict(existing);
+      }
+    }
     bodies.putIfAbsent(userId, () => {})[relpath] = body;
     final summary = FileSummary(
       relpath: relpath,
@@ -58,7 +73,21 @@ class _Sync implements SyncRepositoryBase {
     final without = list.where((f) => f.relpath != relpath).toList();
     _byUser[userId] = [...without, summary]
       ..sort((a, b) => a.relpath.compareTo(b.relpath));
-    return summary;
+    return UpsertOutcome.persisted(summary);
+  }
+
+  @override
+  Future<bool> delete({
+    required String userId,
+    required String relpath,
+  }) async {
+    final list = _byUser[userId];
+    if (list == null) return false;
+    final without = list.where((f) => f.relpath != relpath).toList();
+    if (without.length == list.length) return false;
+    _byUser[userId] = without;
+    bodies[userId]?.remove(relpath);
+    return true;
   }
 
   @override
@@ -254,6 +283,109 @@ void main() {
       expect(body['relpath'], 'notes/idea.md');
       expect(body['body'], 'eat the rich');
       expect((body['sha256'] as String).length, 64);
+    });
+
+    test('PUT with If-Match: <stale> returns 409 + current summary', () async {
+      final users = _Users({alice.id: alice});
+      final sync = _Sync({alice.id: const []});
+      final tok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      // Initial put — no If-Match.
+      await pipeline(
+        Request(
+          'PUT',
+          Uri.parse('http://localhost/put/contention.md'),
+          headers: {'authorization': 'Bearer $tok'},
+          body: 'v1',
+        ),
+      );
+      // Stale client sends If-Match with the wrong sha — must conflict.
+      final res = await pipeline(
+        Request(
+          'PUT',
+          Uri.parse('http://localhost/put/contention.md'),
+          headers: {
+            'authorization': 'Bearer $tok',
+            'if-match': 'deadbeef' * 8,
+          },
+          body: 'v2',
+        ),
+      );
+      expect(res.statusCode, 409);
+      final body = jsonDecode(await res.readAsString()) as Map<String, dynamic>;
+      expect(body['error'], 'conflict');
+      expect(body['current'], isA<Map<String, dynamic>>());
+      // Stored body should still be the original v1 from the first PUT.
+      expect(sync.bodies[alice.id]?['contention.md'], 'v1');
+    });
+
+    test('PUT with If-Match: * succeeds when no row exists', () async {
+      final users = _Users({alice.id: alice});
+      final sync = _Sync({alice.id: const []});
+      final tok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      final res = await pipeline(
+        Request(
+          'PUT',
+          Uri.parse('http://localhost/put/new.md'),
+          headers: {
+            'authorization': 'Bearer $tok',
+            'if-match': '*',
+          },
+          body: 'first',
+        ),
+      );
+      expect(res.statusCode, 200);
+    });
+
+    test('DELETE removes the file and returns 204', () async {
+      final users = _Users({alice.id: alice});
+      final sync = _Sync({alice.id: const []});
+      final tok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      // First put a file.
+      await pipeline(
+        Request(
+          'PUT',
+          Uri.parse('http://localhost/put/doomed.md'),
+          headers: {'authorization': 'Bearer $tok'},
+          body: 'about to die',
+        ),
+      );
+      // Then delete it.
+      final del = await pipeline(
+        Request(
+          'DELETE',
+          Uri.parse('http://localhost/del/doomed.md'),
+          headers: {'authorization': 'Bearer $tok'},
+        ),
+      );
+      expect(del.statusCode, 204);
+      expect(sync.bodies[alice.id]?.containsKey('doomed.md') ?? false, false);
+    });
+
+    test('DELETE on a missing file returns 404 not_found', () async {
+      final users = _Users({alice.id: alice});
+      final sync = _Sync({alice.id: const []});
+      final tok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      final res = await pipeline(
+        Request(
+          'DELETE',
+          Uri.parse('http://localhost/del/ghost.md'),
+          headers: {'authorization': 'Bearer $tok'},
+        ),
+      );
+      expect(res.statusCode, 404);
+      expect(jsonDecode(await res.readAsString())['error'], 'not_found');
     });
 
     test('GET /get/<relpath> is scoped to caller user_id', () async {

@@ -13,8 +13,12 @@ import '../db/sync.dart';
 /// Routes (cumulative across slices):
 /// - `GET /sync/list` — caller's vault file summary array. Slice E8.
 /// - `PUT /sync/put/[relpath]` — upsert a file (raw body). Slice E9.
+///   Optimistic concurrency via `If-Match: <sha256>` header (or `*` for
+///   "must not exist"). 409 conflict returns the server's current
+///   summary so clients can reconcile. Slice E11.
 /// - `GET /sync/get/[relpath]` — fetch body + sha256 + mtime. Slice E10.
-/// - (E11+) DELETE, conflict detection, etc.
+/// - `DELETE /sync/del/[relpath]` — remove a file. 204 on success, 404
+///   when no row exists. Slice E11.
 Router buildSyncRouter({required SyncRepositoryBase sync}) {
   final router = Router();
 
@@ -60,16 +64,41 @@ Router buildSyncRouter({required SyncRepositoryBase sync}) {
     }
     final body = await req.readAsString();
     final hash = sha256.convert(utf8.encode(body)).toString();
-    final summary = await sync.upsert(
+    final outcome = await sync.upsert(
       userId: user.id,
       relpath: relpath,
       body: body,
       sha256: hash,
+      ifMatch: req.headers['if-match'],
     );
+    if (outcome.isConflict) {
+      return Response(
+        409,
+        body: jsonEncode({
+          'error': 'conflict',
+          'current': outcome.conflict!.toJson(),
+        }),
+        headers: const {'content-type': 'application/json'},
+      );
+    }
     return Response.ok(
-      jsonEncode(summary.toJson()),
+      jsonEncode(outcome.summary!.toJson()),
       headers: const {'content-type': 'application/json'},
     );
+  });
+
+  router.delete('/del/<relpath|.*>', (Request req) async {
+    final user = currentUser(req);
+    final relpath = req.params['relpath'];
+    if (relpath == null || relpath.isEmpty) {
+      return _err(400, 'missing_relpath');
+    }
+    if (!_isSafeRelpath(relpath)) {
+      return _err(400, 'invalid_relpath');
+    }
+    final removed = await sync.delete(userId: user.id, relpath: relpath);
+    if (!removed) return _err(404, 'not_found');
+    return Response(204);
   });
 
   return router;
