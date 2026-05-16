@@ -7,14 +7,14 @@
 
 - **Phase:** A (Foundation)
 - **Task:** A10 — Write NEW `vault_bloc_test.dart` from scratch (TS-03)
-- **Status:** pending
+- **Status:** in_progress (1 of ~5 slices done — M1204)
 
-## Last completed
+## Last completed slice
 
-- **M1202 — A9** (port slash_menu_cubit_test to bloc_test)
-- Committed: 8ec74dc
-- TaskList ID: 9
-- Notes: 6 cases ported. Third and final cubit port (after theme M1198, relation_picker M1200). All three pre-existing dedicated cubit tests now run on bloc_test. Next: A10 + A11 are larger "write from scratch" tasks covering VaultBloc and EditorBloc which lack any existing dedicated tests.
+- **M1204 — A10 slice 1** (LoadFromPath missing-path → VaultError)
+- Committed: 4530a6e
+- TaskList ID: 10 (still in_progress)
+- Notes: Mock scaffolding (_MockVaultRepository, _MockIndexer, _MockDb) + real inert VaultWatcher pattern established. Next slices cover: PickVault, LoadFromPath happy path (requires fixture vault + drift in-memory db), RefreshFromDisk, error-path branches in CreatePage / MoveToTrash / Duplicate / Favorite / Move / Rename / CreateFolder.
 
 ## Backlog (Phase A — Foundation)
 
@@ -27,7 +27,7 @@
 - [x] A7 — Port `theme_cubit_test` to bloc_test (M1198 / df304c6) — re-scoped from vault_bloc
 - [x] A8 — Port `relation_picker_cubit_test` to bloc_test (M1200 / 02e2b74) — re-scoped from editor_bloc
 - [x] A9 — Port `slash_menu_cubit_test` to bloc_test (M1202 / 8ec74dc)
-- [ ] A10 — Write NEW `vault_bloc_test.dart` from scratch (was: port) — VaultBloc has no test today
+- [~] A10 — Write NEW `vault_bloc_test.dart` from scratch (slice 1: LoadFromPath missing-path at M1204; remaining slices cover PickVault / LoadFromPath happy / RefreshFromDisk / 7 error paths)
 - [ ] A11 — Write NEW `editor_bloc_test.dart` from scratch (was: port) — EditorBloc has no test today
 - [ ] A12 — Re-run flutter-arch-orchestrator end-to-end (Phase A gate)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
