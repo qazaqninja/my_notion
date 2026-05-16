@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** G2.5 — Wire MobileEditorToolbar into editor_page.dart body column (isMobileWidth gate + callback wiring)
+- **Task:** H1 — y_crdt Dart port PoC (add dep + serializer skeleton + round-trip test)
 - **Status:** pending
 
 ## Last completed
+
+- **M1370 — G2.5** (MobileEditorToolbar wired into editor_page body column)
+- Committed: (this iteration)
+- TaskList ID: 90
+- Notes: Mounted the G2 widget at the bottom of `_EditorBody`'s main `Column` (after the conditional `_FindBar`). Gated on the existing `mobile` flag (`isMobileWidth(context)`) so wide layouts skip it. A `Builder` wraps the toolbar so callbacks receive a child context — keeps overlays / toasts / showDialog calls anchored below the toolbar instead of higher in the tree. Threading: `onSetReminder → _setReminder`, `onPublish → _isPublic ? _unpublishPage : _publishPage`, `onViewFormSubmissions → _viewFormSubmissions`, `onMore → _showPageMenu`. State flags: `hasForms: _hasForms(loaded)`, `isPublished: _isPublic(loaded)`. Import order in editor_page.dart cleaned up alphabetically (mobile_editor_toolbar slotted between markdown_renderer and page_history_dialog; the prior comments_dialog → frontmatter_card → page_history_dialog → markdown_renderer order had drifted from sorted). 4/4 mobile toolbar tests still pass; flutter analyze clean. The kebab itself stays available at the page header so power users can still get the full menu without invoking the "More" path. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1369 — G2** (mobile editor toolbar — standalone widget + tests)
 - Committed: (this iteration)

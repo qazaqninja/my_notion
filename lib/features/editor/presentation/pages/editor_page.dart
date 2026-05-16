@@ -51,8 +51,9 @@ import '../bloc/editor_state.dart';
 import '../widgets/backlinks_rail.dart';
 import '../widgets/comments_dialog.dart';
 import '../widgets/frontmatter_card.dart';
-import '../widgets/page_history_dialog.dart';
 import '../widgets/markdown_renderer.dart';
+import '../widgets/mobile_editor_toolbar.dart';
+import '../widgets/page_history_dialog.dart';
 import '../widgets/outline_rail.dart';
 import '../widgets/page_title_field.dart';
 import '../widgets/properties_panel.dart';
@@ -1954,6 +1955,25 @@ class _EditorBodyState extends State<_EditorBody> {
                 onNext: () => _step(1, page.body),
                 onPrev: () => _step(-1, page.body),
                 onClose: _closeFind,
+              ),
+            // G2.5 — mobile sticky bottom-bar surfaces the most-used
+            // kebab actions on narrow widths. The kebab itself stays
+            // in the page header so the "More…" button on the bar
+            // just re-uses _showPageMenu through a Builder for the
+            // right anchor.
+            if (mobile)
+              Builder(
+                builder: (toolbarCtx) => MobileEditorToolbar(
+                  onSetReminder: () => _setReminder(toolbarCtx, loaded),
+                  onPublish: () => _isPublic(loaded)
+                      ? _unpublishPage(toolbarCtx, loaded)
+                      : _publishPage(toolbarCtx, loaded),
+                  onViewFormSubmissions: () =>
+                      _viewFormSubmissions(toolbarCtx, loaded),
+                  onMore: () => _showPageMenu(toolbarCtx, loaded),
+                  hasForms: _hasForms(loaded),
+                  isPublished: _isPublic(loaded),
+                ),
               ),
           ],
         ),
