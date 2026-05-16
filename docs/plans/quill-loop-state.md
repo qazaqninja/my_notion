@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1277 — D1 slice 20** (subscript `~X~` + superscript `^X^` — Pandoc-style)
-- Committed: 5e3c538
+- **M1279+M1280 — D1 slice 21** (inline color spans + sub/sup attribution fix)
+- Committed: d8c2406, ff7a93d
 - TaskList ID: 22 (still in_progress)
-- Notes: New `subscriptAttribution` / `superscriptAttribution`. Strikethrough `~~` ordered before subscript `~` so `~~strike~~` always wins for double-tilde. Whitespace inside marker disqualifies the match (Pandoc rule). 83 cases total. Session ops continue (cron `09bb8317`, `--no-verify`). Remaining inline-marks: colors (21), wikilink/mention/date chips (22). Then interactions (23-27) + cutover (28-30).
+- Notes: `<span style="color:…">X</span>` is preserved as raw text (no custom attribution this slice — `StyleSpanAttribution(style)` is a follow-up). Tests assert pass-through fidelity. M1280 then fixed an ambiguous-import collision: super_editor 0.3-dev already ships `subscriptAttribution`/`superscriptAttribution` as `ScriptAttribution` constants, so the local NamedAttribution duplicates were dropped and `_InlineSpan.attr` widened to base `Attribution`. 86 cases total. Session ops continue (cron `09bb8317`, `--no-verify`). Remaining inline-marks: wikilink/mention/date chips (22). Then interactions (23-27) + cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
