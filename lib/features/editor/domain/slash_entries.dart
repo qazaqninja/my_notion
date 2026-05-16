@@ -363,6 +363,9 @@ enum SlashAction {
   /// Extract every HTML tag name (`<div>`, `</body>`, `<br/>`)
   /// from each selected line.
   extractHtmlTagsFromLines,
+  /// Extract every HTML attribute name (the part before `=`)
+  /// from each selected line.
+  extractHtmlAttributeNamesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1860,6 +1863,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractHtmlTagsFromLines,
     keywords: ['extract', 'html', 'tag', 'element', 'name',
         'sanitize', 'audit'],
+  ),
+  SlashEntry(
+    icon: 'tag',
+    label: 'Extract HTML attribute names',
+    hint: 'href="x" → href',
+    action: SlashAction.extractHtmlAttributeNamesFromLines,
+    keywords: ['extract', 'html', 'attribute', 'attr', 'name',
+        'audit', 'sanitize'],
   ),
   SlashEntry(
     icon: 'calendar',

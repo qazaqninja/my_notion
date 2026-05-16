@@ -4508,6 +4508,80 @@ void main() {
     });
   });
 
+  group('extractHtmlAttributeNamesFromLinesIn', () {
+    test('double-quoted attribute extracts name', () {
+      const text = 'wrap <a href="x">link</a> here\n';
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'href\n');
+    });
+
+    test('single-quoted attribute extracts name', () {
+      const text = "wrap <a href='x'>link</a> here\n";
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'href\n');
+    });
+
+    test('multiple attributes on one tag each extract', () {
+      const text = '<img src="pic.png" alt="hero" width="100">\n';
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'src\nalt\nwidth\n');
+    });
+
+    test('data-* hyphenated attribute name preserved', () {
+      const text = '<div data-id="42" data-role="button">\n';
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'data-id\ndata-role\n');
+    });
+
+    test('tag with no attributes is NOT a match', () {
+      const text = 'plain <div> here\n';
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('unquoted attribute is NOT matched (v1 limitation)', () {
+      // `<img src=foo>` lacks the `=["']` shape; v1 only
+      // captures quoted attribute values.
+      const text = 'unquoted <img src=foo>\n';
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('whitespace around `=` tolerated', () {
+      const text = '<a href = "x">\n';
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'href\n');
+    });
+
+    test('multi-tag line with mixed attributes', () {
+      const text = '<a href="x"><img src="p"></a>\n';
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'href\nsrc\n');
+    });
+
+    test('lines without attribute syntax dropped from output', () {
+      const text = 'plain prose\n<a href="x">link</a>\nmore prose\n';
+      final r = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'href\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractHtmlAttributeNamesFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

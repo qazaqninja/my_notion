@@ -1542,6 +1542,37 @@ SortLinesResult extractHtmlTagsFromLinesIn(
       return out;
     });
 
+/// Extract every HTML attribute NAME (the part before `=`) from
+/// each selected line. Companion to M1102's tag-name extractor —
+/// paired together they give a full inventory of what HTML
+/// surface a pasted fragment uses.
+///
+/// Recognition: `\b([\w-]+)\s*=\s*["']`
+/// - Attribute name: alphanumeric + hyphen (covers data-attrs
+///   like `data-foo`).
+/// - `=` with optional surrounding whitespace.
+/// - Followed by a single or double quote (the start of the
+///   attribute value).
+///
+/// Single AND double quote forms both match. Unquoted attribute
+/// values (`<img src=foo>`) are NOT matched in this v1 — most
+/// modern HTML uses quoted attributes; if needed, add a no-quote
+/// branch in a future milestone.
+///
+/// 41st member of the extraction family.
+SortLinesResult extractHtmlAttributeNamesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b([\w-]+)\s*=\s*["' "']");
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
