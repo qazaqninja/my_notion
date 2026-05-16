@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E17 — Client-side "Publish" toggle in editor kebab
+- **Task:** E18 — Editor save → SyncBloc push (when authed)
 - **Status:** pending
 
 ## Last completed
 
-- **M1316 — E16** (public page sharing — backend)
-- Committed: 9bf75b1
-- TaskList ID: 38
-- Notes: Migration v3 adds `vault_files.ulid` + `is_public` + partial index `(ulid) WHERE is_public = true`. `FrontmatterProbe.fromBody` extracts `id:` (ULID-validated) + `public: true|yes` via regex (no YAML dep). Sync upsert populates both columns from the probe; ON CONFLICT updates them so toggling public in frontmatter flips on next save. `GET /public/<ulid>` route — NO auth — returns 200 HTML (`<pre>` wrap for now; E17+ swaps in proper rendering) or 404. 9 probe tests + 51 total backend tests pass. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1318 — E17** (Publish/Unpublish kebab toggle)
+- Committed: 8659852
+- TaskList ID: 39
+- Notes: Single dynamic kebab entry — "Publish & copy link" → adds `public: true` to frontmatter + copies `http://localhost:8080/public/<ulid>` to clipboard; "Unpublish" → removes the field. `_isPublic(loaded)` mirrors the server probe's truthy contract (true / yes). flutter analyze clean. End-to-end loop: kebab Publish → frontmatter change → next save round-trips through sync repo → backend probe flips `is_public` column → public route returns the page. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
