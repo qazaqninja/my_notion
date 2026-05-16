@@ -41,6 +41,12 @@ dependencies:
   # OS share-sheet integration (C3 of the 1m-loop plan). Capped at ^12.0.2
   # — 13.x requires SDK ^3.10.0 (we have 3.9.2).
   share_plus: ^12.0.2
+  # Inbound share-sheet (F1) — companion to share_plus. Lets Safari/
+  # Chrome/etc. push URLs + text into Quill, which appends them to
+  # Inbox/Quick capture.md. Native side (iOS Share Extension + Android
+  # intent-filter) wired in subsequent slices; this dep is the Dart
+  # entry point.
+  receive_sharing_intent: ^1.8.1
   # WYSIWYG editing (Phase D of the 1m-loop plan). 0.3-dev required
   # because 0.2.x pins http ^0.13 which conflicts with `timezone ^0.10.0`
   # (added in B4) needing http ^1.2. Used behind a feature flag at

@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F1 — Inbound share-sheet via `receive_sharing_intent` → Inbox/Quick capture.md
+- **Task:** F2 — Wire IncomingShareListener into app.dart lifecycle (start on vault loaded; stop on dispose)
 - **Status:** pending
 
 ## Last completed
+
+- **M1358 — F1** (inbound share-sheet wiring — Dart side)
+- Committed: (this iteration)
+- TaskList ID: 77
+- Notes: Dart-side wiring of `receive_sharing_intent: ^1.8.1` into the Quill vault. New feature folder `lib/features/sharing/` with three pieces: (1) domain `IncomingShare(text, kind)` (Equatable) + `ShareKind { text, url, file }` enum and an abstract `IncomingShareSource` (`initial()` for OS-queued payloads at launch, `stream` for live events, `close()` for teardown). (2) data adapter `ReceiveSharingIntentSource` wrapping the plugin's `SharedMediaFile` representation behind the Quill type — keeps the rest of the codebase decoupled from the package's evolving type names. (3) `IncomingShareListener` glue class: takes the source + vault root + (injectable) appender (defaults to existing `QuickCapture.append`). On `start()` drains the initial payload, then subscribes to the live stream; each share is trimmed, empty skipped, errors caught individually so one bad share can't kill the subscription. Exposes `isListening` + `handled` count. Hand-rolled (no Cubit) — the user-visible state is the vault-watcher-triggered RefreshFromDisk, which the existing watcher handles. Native platform config (iOS Share Extension + Android intent-filter) is queued for F2/F3 follow-ups; this slice is the Dart contract. 5 new tests (initial-payload-appended-+-skips-empty, live-batches-in-order, all-empty-skipped, throwing-appender-doesn't-kill-stream, start-idempotent). flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1357 — E54** (fix BLOCK + audit cleanup from E53 orchestrator pass)
 - Committed: (this iteration)
