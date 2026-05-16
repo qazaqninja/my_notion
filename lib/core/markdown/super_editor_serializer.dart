@@ -24,6 +24,11 @@ class SuperEditorSerializer {
   ///   - `- foo` / `* foo` → `ListItemNode.unordered`.
   ///   - `<n>. foo` → `ListItemNode.ordered` (re-numbered on serialise).
   ///   - `- [ ] foo` / `- [x] foo` → `TaskNode(isComplete: …)`.
+  /// - Slice 4: code blocks + horizontal rules.
+  ///   - ` ```lang\nbody\n``` ` → `ParagraphNode` with `blockType:
+  ///     codeAttribution` (language stored under metadata key `language`).
+  ///   - `---` / `***` / `___` (≥3 of same char, line-only) →
+  ///     `HorizontalRuleNode`.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -38,9 +43,43 @@ class SuperEditorSerializer {
       buffer.clear();
     }
 
-    for (final line in lines) {
+    var i = 0;
+    while (i < lines.length) {
+      final line = lines[i];
+      // Code fence open?
+      final fenceOpen = RegExp(r'^```([\w-]*)$').firstMatch(line);
+      if (fenceOpen != null) {
+        flushBuffer();
+        final lang = fenceOpen.group(1) ?? '';
+        final body = StringBuffer();
+        i += 1;
+        while (i < lines.length && lines[i].trimRight() != '```') {
+          if (body.isNotEmpty) body.write('\n');
+          body.write(lines[i]);
+          i += 1;
+        }
+        // Consume the closing fence (or end of input if unclosed).
+        if (i < lines.length) i += 1;
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(body.toString()),
+          metadata: {
+            'blockType': codeAttribution,
+            if (lang.isNotEmpty) 'language': lang,
+          },
+        ));
+        continue;
+      }
+      // Horizontal rule? `---`, `***`, `___` (3+ of same char, no text).
+      if (RegExp(r'^(\*{3,}|-{3,}|_{3,})\s*$').hasMatch(line)) {
+        flushBuffer();
+        nodes.add(HorizontalRuleNode(id: Editor.createNodeId()));
+        i += 1;
+        continue;
+      }
       if (line.trim().isEmpty) {
         flushBuffer();
+        i += 1;
         continue;
       }
       // Order matters: todo before unordered (todos start with `- [` which
@@ -85,6 +124,7 @@ class SuperEditorSerializer {
       }
       if (buffer.isNotEmpty) buffer.write(' ');
       buffer.write(line);
+      i += 1;
     }
     flushBuffer();
     if (nodes.isEmpty) {
@@ -129,10 +169,20 @@ class SuperEditorSerializer {
           out.write('$orderedCounter. ');
         }
         out.write(node.text.toPlainText());
+      } else if (node is HorizontalRuleNode) {
+        out.write('---');
       } else if (node is ParagraphNode) {
-        final prefix = _headingPrefix(node);
-        if (prefix.isNotEmpty) out.write('$prefix ');
-        out.write(node.text.toPlainText());
+        final block = node.getMetadataValue('blockType');
+        if (block == codeAttribution) {
+          final lang = node.getMetadataValue('language') as String? ?? '';
+          out.write('```$lang\n');
+          out.write(node.text.toPlainText());
+          out.write('\n```');
+        } else {
+          final prefix = _headingPrefix(node);
+          if (prefix.isNotEmpty) out.write('$prefix ');
+          out.write(node.text.toPlainText());
+        }
       }
       if (i < n - 1) {
         // Consecutive list items of the *same* kind share a single

@@ -172,4 +172,57 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer code + hr round-trip (D1 slice 4)', () {
+    test('fenced code block with language tag round-trips', () {
+      const md = '```dart\nvoid main() {}\n```';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), codeAttribution);
+      expect(node.getMetadataValue('language'), 'dart');
+      expect(node.text.toPlainText(), 'void main() {}');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('fenced code block without language tag', () {
+      const md = '```\nplain text\n```';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), codeAttribution);
+      expect(node.getMetadataValue('language'), isNull);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('multi-line code block preserves internal newlines', () {
+      const md = '```py\ndef hi():\n    print("hi")\n```';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'def hi():\n    print("hi")');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('--- emits HorizontalRuleNode and round-trips', () {
+      const md = '---';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.first, isA<HorizontalRuleNode>());
+      expect(serializer.documentToMarkdown(doc), '---');
+    });
+
+    test('*** and ___ also emit HorizontalRuleNode', () {
+      final docStar = serializer.markdownToDocument('***');
+      expect(docStar.first, isA<HorizontalRuleNode>());
+      final docUnder = serializer.markdownToDocument('___');
+      expect(docUnder.first, isA<HorizontalRuleNode>());
+      // Both serialise back to canonical `---`.
+      expect(serializer.documentToMarkdown(docStar), '---');
+      expect(serializer.documentToMarkdown(docUnder), '---');
+    });
+
+    test('paragraph, hr, paragraph round-trip', () {
+      const md = 'before\n\n---\n\nafter';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.toList(), hasLength(3));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
