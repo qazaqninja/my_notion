@@ -1583,6 +1583,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractS3UrisFromLinesIn,
         );
+      case SlashAction.extractCronExpressionsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractCronExpressionsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

@@ -517,6 +517,9 @@ enum SlashAction {
   /// Extract every AWS S3 URI (`s3://bucket[/key]`) from each
   /// selected line.
   extractS3UrisFromLines,
+  /// Extract every cron expression (`* * * * *`, `0 0 * * *`,
+  /// `*/15 * * * *`) from each selected line.
+  extractCronExpressionsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2415,6 +2418,15 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractS3UrisFromLines,
     keywords: ['extract', 's3', 'aws', 'bucket', 'uri',
         'storage', 'cloud', 'amazon', 'object'],
+  ),
+  SlashEntry(
+    icon: 'clock',
+    label: 'Extract cron expressions',
+    hint: '* * * * * / 0 0 * * * / */15 * * * *',
+    action: SlashAction.extractCronExpressionsFromLines,
+    keywords: ['extract', 'cron', 'schedule', 'crontab',
+        'job', 'periodic', 'unix', 'star', 'ops', 'kubernetes',
+        'cronjob'],
   ),
   SlashEntry(
     icon: 'calendar',

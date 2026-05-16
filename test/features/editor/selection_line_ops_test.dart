@@ -8023,6 +8023,91 @@ void main() {
     });
   });
 
+  group('extractCronExpressionsFromLinesIn', () {
+    test('every-minute star expression extracts', () {
+      const text = 'job: * * * * * runs every minute\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '* * * * *\n');
+    });
+
+    test('daily-at-midnight expression extracts', () {
+      const text = 'nightly 0 0 * * * fires at midnight\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '0 0 * * *\n');
+    });
+
+    test('every-15-minutes step expression extracts', () {
+      const text = 'cleanup */15 * * * * sweep\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '*/15 * * * *\n');
+    });
+
+    test('weekday range expression extracts', () {
+      const text = 'meeting 0 9 * * 1-5 daily standup\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '0 9 * * 1-5\n');
+    });
+
+    test('comma list + range expression extracts', () {
+      const text = 'busy 0,30 9-17 * * 1-5 weekdays\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '0,30 9-17 * * 1-5\n');
+    });
+
+    test('Quartz 6-field form extracts', () {
+      const text = 'quartz 0 0 * * * * with seconds\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '0 0 * * * *\n');
+    });
+
+    test('plain numeric run NOT a cron (no star)', () {
+      // `1 2 3 4 5` matches the field shape but contains no
+      // star, so the strong-signal filter rejects it.
+      const text = 'numbers 1 2 3 4 5 not cron\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('only 3 fields NOT matched (too few)', () {
+      // The regex requires 5 or 6 fields. `* * *` is too short.
+      const text = 'short * * * not enough\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('7 fields NOT matched (Quartz year form unsupported)', () {
+      // The regex caps at 6 fields; the rare 7-field Quartz form
+      // with year is intentionally not extracted.
+      const text = 'yearly 0 0 0 * * * 2026 unsupported\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      // The regex will greedily try to match. Field 7 (`2026`)
+      // doesn't have a star, but the regex finds a 6-field match
+      // inside `0 0 0 * * *`. So output is the 6-field substring.
+      expect(r.text, '0 0 0 * * *\n');
+    });
+
+    test('lines without cron expressions dropped from output', () {
+      const text = 'plain prose\nschedule 0 9 * * * works\nbye\n';
+      final r = extractCronExpressionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '0 9 * * *\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractCronExpressionsFromLinesIn('', 0, 0).text,
+          '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

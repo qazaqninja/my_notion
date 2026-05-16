@@ -3247,6 +3247,49 @@ SortLinesResult extractS3UrisFromLinesIn(
       return out;
     });
 
+/// Extract every cron expression substring from each selected
+/// line. Useful for scheduler-doc audits, ops-runbook scrapes,
+/// and migration-window inventories.
+///
+/// Recognition: 5 or 6 space-separated fields, each composed of
+/// digits, `*`, `,`, `-`, `/`. At least one field must contain
+/// `*` — a strong cron-vs-prose signal that prevents a plain
+/// numeric run like `1 2 3 4 5` from matching as a cron
+/// expression.
+///
+/// Matches:
+/// - `* * * * *`             — every minute
+/// - `0 0 * * *`             — daily at midnight
+/// - `*/15 * * * *`          — every 15 minutes
+/// - `0 9 * * 1-5`           — weekdays at 09:00
+/// - `0,30 9-17 * * 1-5`     — every half hour, 9am-5pm, weekdays
+/// - `0 0 * * * *`           — Quartz 6-field form (seconds)
+///
+/// The 5-field POSIX form and the 6-field Quartz (with seconds)
+/// form are both recognised. The 7-field Quartz form with year
+/// is NOT recognised — the regex caps at 6 fields.
+///
+/// Boundary lookarounds `(?<!\S)` / `(?!\S)` prevent embedded
+/// matches inside a longer non-cron token.
+///
+/// 91st member of the extraction family.
+SortLinesResult extractCronExpressionsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'(?<!\S)(?:[\d*,\-/]+\s){4,5}[\d*,\-/]+(?!\S)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          final s = m.group(0)!;
+          // Strong cron signal: at least one field has a star.
+          if (s.contains('*')) out.add(s);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
