@@ -44,6 +44,10 @@ enum SlashAction {
   /// Prefix every selected line with its 1-based index, zero-padded
   /// to the width of the largest index.
   prefixLinesWithIndex,
+  /// Strip a leading number-enumerator prefix (`1. ` / `1) ` /
+  /// `1] ` / `1: ` / `1- `) from every selected line, preserving
+  /// any leading indentation.
+  stripLeadingNumberPrefix,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -1346,6 +1350,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '01. foo / 02. bar',
     action: SlashAction.prefixLinesWithIndex,
     keywords: ['prefix', 'index', 'number', 'enumerate', 'count', 'numbered'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Strip leading number prefix',
+    hint: '01. foo → foo',
+    action: SlashAction.stripLeadingNumberPrefix,
+    keywords: ['strip', 'unnumber', 'denumber', 'leading', 'prefix', 'remove'],
   ),
   SlashEntry(
     icon: 'link',

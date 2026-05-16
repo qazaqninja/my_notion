@@ -2713,6 +2713,33 @@ SortLinesResult stripMarkdownEmphasisLinesIn(
       ];
     });
 
+/// Strip a leading number-enumerator prefix from every selected
+/// line. Matches the common forms `1. ` / `1) ` / `1] ` / `1: ` /
+/// `1- ` with an arbitrary digit run (zero-padded or not) and a
+/// single trailing space. Leading indentation (spaces / tabs) is
+/// preserved so an indented "1. foo" inside an outer list still
+/// loses its number but keeps its indent.
+///
+/// Inverse of [prefixLinesWithIndexIn] for the most common cases,
+/// and broader than `renumberListLines` (which only resequences
+/// existing `1. ` markers; this removes them entirely).
+///
+///   01. foo            foo
+///   02. bar      →     bar
+///   003) baz           baz
+SortLinesResult stripLeadingNumberPrefixIn(
+        String text, int start, int end,) =>
+    _transformLinesIn(text, start, end, (lines) {
+      // `^[indent]<digits><sep><space>` with sep in `. : ) ] -`.
+      // Capture group 1 holds the leading whitespace — `replaceFirst`
+      // takes a literal string and won't expand `$1`, so use
+      // `replaceFirstMapped` to inline the captured indent.
+      final re = RegExp(r'^([ \t]*)\d+[.:)\]\-] ');
+      return [
+        for (final l in lines) l.replaceFirstMapped(re, (m) => m.group(1)!),
+      ];
+    });
+
 /// Prefix every selected line with its 1-based index in the
 /// selection, zero-padded to the width of the largest index so the
 /// column stays aligned. Blank lines get the prefix too — they

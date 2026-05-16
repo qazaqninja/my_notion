@@ -140,6 +140,46 @@ void main() {
     });
   });
 
+  group('stripLeadingNumberPrefixIn', () {
+    test('strips dot-separator with zero padding', () {
+      const text = '01. foo\n02. bar\n';
+      final r = stripLeadingNumberPrefixIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\n');
+    });
+
+    test('strips other common separators (.: )] -)', () {
+      const text = '1) foo\n2: bar\n3] baz\n4- qux\n';
+      final r = stripLeadingNumberPrefixIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\nbaz\nqux\n');
+    });
+
+    test('preserves leading indentation while stripping the prefix', () {
+      const text = '  01. foo\n\t2) bar\n';
+      final r = stripLeadingNumberPrefixIn(text, 0, text.length);
+      expect(r.text, '  foo\n\tbar\n');
+    });
+
+    test('lines without a number prefix pass through unchanged', () {
+      const text = 'plain line\nno prefix here\n';
+      expect(stripLeadingNumberPrefixIn(text, 0, text.length).text, text);
+    });
+
+    test('round-trips with prefixLinesWithIndexIn', () {
+      const text = 'foo\nbar\nbaz\n';
+      final numbered = prefixLinesWithIndexIn(text, 0, text.length);
+      final stripped = stripLeadingNumberPrefixIn(
+        numbered.text,
+        0,
+        numbered.text.length,
+      );
+      expect(stripped.text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(stripLeadingNumberPrefixIn('', 0, 0).text, '');
+    });
+  });
+
   group('prefixLinesWithIndexIn', () {
     test('three lines get single-digit prefixes', () {
       const text = 'foo\nbar\nbaz\n';
