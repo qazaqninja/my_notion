@@ -23,6 +23,10 @@ dependencies:
   # frontmatter, so the backend never sees the plaintext. Same
   # package the backend uses, pure-Dart so no native channel needed.
   bcrypt: ^1.2.0
+  # WebSocket client for the H2.2 multiplayer sub — connects to
+  # ws://<baseUrl>/sync/sub/<ulid>. Same package the backend uses
+  # so the test seam is symmetric.
+  web_socket_channel: ^3.0.1
   # SHA-256 hashing for the E31/E32 vault-wide bulk push (decides which
   # files need to be sent vs already match the server). Already pulled
   # in transitively by drift / http_parser; promoting to a direct dep
