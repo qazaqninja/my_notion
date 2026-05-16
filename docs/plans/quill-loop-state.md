@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F3 — Native platform config for receive_sharing_intent (iOS Share Extension + Android intent-filter)
+- **Task:** F4 — Form schema validation (resolve `forms:` ref → walk linked .database.yaml schema → per-field type checks on POST /forms/<ulid>/submit)
 - **Status:** pending
 
 ## Last completed
+
+- **M1360 — F3** (Android intent-filters + iOS Share Extension docs)
+- Committed: (this iteration)
+- TaskList ID: 79
+- Notes: Android: three intent-filter blocks added to `MainActivity` in `AndroidManifest.xml` — `ACTION_SEND` for `text/plain`, `ACTION_SEND` for `text/*` (covers URLs, formatted clipboard, etc.), and `ACTION_SEND_MULTIPLE` for `text/*` (Chrome's "Share multiple links"). `MainActivity` was already `singleTop` + `exported` so no further attribute changes needed. iOS Share Extension requires Xcode target work (a new target with NSExtensionPointIdentifier, App Groups capability, custom URL scheme, ShareViewController.swift port) that can't be done by editing text files alone. New `docs/native-share-setup.md` walkthrough captures the canonical 7-step iOS setup (from receive_sharing_intent's example/ios) plus the `adb shell am start ACTION_SEND` smoke test for Android. macOS share-sheet is out of scope (separate AppKit work). 10/10 sharing tests still pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1359 — F2** (IncomingShareBinder wired into VaultBloc lifecycle)
 - Committed: (this iteration)
