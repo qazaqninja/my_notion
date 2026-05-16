@@ -28,6 +28,10 @@ dependencies:
   # Companion to flutter_local_notifications for scheduling at a specific
   # local time across DST/timezone boundaries.
   timezone: ^0.10.0
+  # WebView host for mermaid diagram rendering (C1 of the 1m-loop plan).
+  # iOS / Android / macOS supported natively; Linux / Windows fall back to
+  # the styled placeholder card (M200).
+  webview_flutter: ^4.13.1
   # `bloc_concurrency` adds the named event transformers (droppable,
   # sequential, restartable) that flutter_bloc itself doesn't ship.
   # We use them to guard I/O-heavy handlers (editor open / save) from
