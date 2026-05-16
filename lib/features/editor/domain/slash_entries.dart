@@ -95,6 +95,9 @@ enum SlashAction {
   /// Strip a leading bracketed char-count prefix (the inverse of
   /// `prefixLinesWithCharCount`) from every selected line.
   stripLeadingCharCountPrefix,
+  /// Strip bare http/https/ftp URLs from every selected line,
+  /// leaving the surrounding prose intact.
+  removeUrlsLines,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1548,6 +1551,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[12] foo → foo',
     action: SlashAction.stripLeadingCharCountPrefix,
     keywords: ['strip', 'remove', 'count', 'prefix', 'chars', 'undo'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Remove bare URLs',
+    hint: 'http(s)/ftp → drop',
+    action: SlashAction.removeUrlsLines,
+    keywords: ['strip', 'remove', 'url', 'http', 'https', 'ftp', 'link'],
   ),
   SlashEntry(
     icon: 'edit',

@@ -1077,6 +1077,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingCharCountPrefixIn,
         );
+      case SlashAction.removeUrlsLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, removeUrlsLinesIn,
+        );
       case SlashAction.outdentLines:
         _applyLinesTransformAfterSlash(stripStart, caret, outdentLinesIn);
       case SlashAction.stripLeadingWhitespace:

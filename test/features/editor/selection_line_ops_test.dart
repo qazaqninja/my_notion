@@ -140,6 +140,45 @@ void main() {
     });
   });
 
+  group('removeUrlsLinesIn', () {
+    test('strips a single https URL', () {
+      const text = 'see https://example.com for details\n';
+      final r = removeUrlsLinesIn(text, 0, text.length);
+      expect(r.text, 'see  for details\n');
+    });
+
+    test('strips multiple URLs in one line', () {
+      const text = 'a https://x.test and ftp://y.test b\n';
+      final r = removeUrlsLinesIn(text, 0, text.length);
+      expect(r.text, 'a  and  b\n');
+    });
+
+    test('handles http (not https) too', () {
+      const text = 'old http://example.com link\n';
+      final r = removeUrlsLinesIn(text, 0, text.length);
+      expect(r.text, 'old  link\n');
+    });
+
+    test('lines without a URL pass through unchanged', () {
+      const text = 'just plain text\n';
+      expect(removeUrlsLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('does NOT touch the URL inside a markdown link', () {
+      // The url is wrapped by `(...)` — those chars don't satisfy \S+
+      // so the regex eats up to the closing paren.
+      // The result is `[label]()` which the markdown-link strip
+      // gesture (M977) cleans up if the user runs it afterward.
+      const text = '[label](https://example.com)\n';
+      final r = removeUrlsLinesIn(text, 0, text.length);
+      expect(r.text, '[label](\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(removeUrlsLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('stripLeadingCharCountPrefixIn', () {
     test('strips an unpadded bracketed count', () {
       const text = '[3] foo\n[5] hello\n';

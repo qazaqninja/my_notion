@@ -86,6 +86,25 @@ SortLinesResult removeAccentsLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Strip bare http/https/ftp URLs from every selected line. Useful
+/// for cleaning prose where pasted-in references should keep their
+/// surrounding context but lose the click-target. Distinct from
+/// [stripMarkdownLinksLinesIn] (which handles `[label](url)` /
+/// `![alt](src)` markdown shapes); bare URLs are a different gesture
+/// because they're plain text, not wrapped in any markup.
+///
+/// Heuristic: scheme + `://` + URL-safe chars until the next
+/// whitespace or end-of-line. A trailing period or comma is left in
+/// place — usually the user wants `See foo. now` to read sensibly
+/// after the URL drops out. Punctuation immediately followed by a
+/// space gets preserved correctly because the regex stops at the
+/// space, leaving the punctuation visible.
+SortLinesResult removeUrlsLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      final url = RegExp(r'(?:https?|ftp)://\S+');
+      return [for (final l in lines) l.replaceAll(url, '')];
+    });
+
 /// Escape markdown control characters on every selected line so the
 /// content renders verbatim instead of being parsed. Wraps each of
 /// `\`, `*`, `_`, `~`, `` ` ``, `[`, `]`, `(`, `)`, `<`, `>`, `#`,
