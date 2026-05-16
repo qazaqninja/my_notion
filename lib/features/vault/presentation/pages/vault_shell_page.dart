@@ -590,6 +590,39 @@ class _VaultShellPageState extends State<VaultShellPage> {
     router.go('/editor/${pick.ulid}');
   }
 
+  Future<void> _resumeLatestInFolderPrompt(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final scope = context;
+    final folder = await showQuillPrompt(
+      context,
+      title: 'Resume latest page in folder',
+      icon: 'note',
+      label: 'Folder',
+      placeholder: 'e.g. Operations',
+      confirmLabel: 'Open',
+    );
+    if (folder == null || folder.trim().isEmpty) return;
+    final refs = _toPageRefs(await db.select(db.pages).get());
+    final pick = latestInFolder(refs, folder);
+    if (pick == null) {
+      if (scope.mounted) {
+        scope.toastError('No pages in "$folder/"');
+      }
+      return;
+    }
+    final days = DateTime.now()
+            .difference(DateTime.fromMillisecondsSinceEpoch(pick.mtimeMs))
+            .inDays;
+    if (scope.mounted) {
+      scope.toastInfo(
+        '"$folder/" · last edited $days ${days == 1 ? "day" : "days"} ago',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _resumeLatestByTagPrompt(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -983,6 +1016,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openRandomPageInFolderPrompt(context);
       case 'Resume latest page by tag…':
         await _resumeLatestByTagPrompt(context);
+      case 'Resume latest page in folder…':
+        await _resumeLatestInFolderPrompt(context);
       case 'Open largest page':
         await _openLargestPage(context);
       case 'Open most-linked page':
