@@ -567,6 +567,9 @@ enum SlashAction {
   /// Extract every UK postcode (`SW1A 1AA`, `M1 1AE`) from
   /// each selected line.
   extractUkPostcodesFromLines,
+  /// Extract every stack-trace file:line reference (`main.dart:42`,
+  /// `index.js:123:45`) from each selected line.
+  extractStackTraceRefsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2604,6 +2607,15 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractUkPostcodesFromLines,
     keywords: ['extract', 'uk', 'postcode', 'address',
         'mail', 'royal-mail', 'britain', 'gb', 'crm'],
+  ),
+  SlashEntry(
+    icon: 'bug',
+    label: 'Extract stack-trace file:line refs',
+    hint: 'main.dart:42 / index.js:123:45',
+    action: SlashAction.extractStackTraceRefsFromLines,
+    keywords: ['extract', 'stack', 'trace', 'error',
+        'crash', 'debug', 'line', 'column', 'file',
+        'postmortem'],
   ),
   SlashEntry(
     icon: 'calendar',

@@ -9301,6 +9301,92 @@ void main() {
     });
   });
 
+  group('extractStackTraceRefsFromLinesIn', () {
+    test('main.dart:42 extracts (Dart line-only)', () {
+      const text = 'crash main.dart:42 today\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'main.dart:42\n');
+    });
+
+    test('index.js:123:45 extracts (line + column)', () {
+      const text = 'trace index.js:123:45 here\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'index.js:123:45\n');
+    });
+
+    test('relative path lib/feat.ts:99 extracts', () {
+      const text = 'see lib/feat.ts:99 path\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'lib/feat.ts:99\n');
+    });
+
+    test('Python file.py:1 extracts', () {
+      const text = 'app.py:1 startup\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'app.py:1\n');
+    });
+
+    test('Java widget.java:200 extracts', () {
+      const text = 'see widget.java:200 frame\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'widget.java:200\n');
+    });
+
+    test('full Dart widget.dart:100:25 extracts', () {
+      const text = 'render widget.dart:100:25 col\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'widget.dart:100:25\n');
+    });
+
+    test('URL with port NOT matched (no code extension)', () {
+      // `.com` is not in the allowlist.
+      const text = 'svc https://example.com:8080 alive\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('time-of-day 12:34 NOT matched (no extension)', () {
+      const text = 'meet 12:34 today\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('unknown extension .pdf:42 NOT matched', () {
+      // `.pdf` is not in the code-extension allowlist.
+      const text = 'doc report.pdf:42 page\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple refs on one line each extract', () {
+      const text = 'trace main.dart:10 then helper.dart:20 hop\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'main.dart:10\nhelper.dart:20\n');
+    });
+
+    test('lines without refs dropped from output', () {
+      const text = 'plain prose\ncrash app.swift:50 here\nbye\n';
+      final r = extractStackTraceRefsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'app.swift:50\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+          extractStackTraceRefsFromLinesIn('', 0, 0).text, '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

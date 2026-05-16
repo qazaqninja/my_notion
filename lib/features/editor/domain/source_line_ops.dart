@@ -3965,6 +3965,55 @@ SortLinesResult extractUkPostcodesFromLinesIn(
       return out;
     });
 
+/// Extract every stack-trace file:line reference from each
+/// selected line. Useful for debugging-note triage, error-log
+/// scrapes, and crash-postmortem incident harvests.
+///
+/// Recognition: a code-file path with a recognised extension,
+/// followed by `:line` and optionally `:column`. The extension
+/// alternation covers the most common source-file types in
+/// stack traces.
+///
+/// Recognised extensions:
+/// - Dart/Flutter: `.dart`
+/// - JS / TS: `.js`, `.jsx`, `.ts`, `.tsx`
+/// - Python / Ruby / Go: `.py`, `.rb`, `.go`
+/// - JVM: `.java`, `.kt`, `.scala`
+/// - C-family: `.c`, `.cc`, `.cpp`, `.h`, `.hpp`
+/// - Other compiled: `.swift`, `.rs`, `.cs`, `.m`
+/// - Shell: `.sh`, `.bash`
+///
+/// Matches:
+/// - `main.dart:42`           — Dart with line only
+/// - `index.js:123:45`        — JS with line + column
+/// - `lib/feat.ts:99`         — relative path
+/// - `/abs/path/file.py:1`    — absolute path
+/// - `widget.dart:100:25`     — full Dart trace form
+///
+/// URLs with port numbers like `https://example.com:8080` are
+/// NOT matched because `.com` is not in the allowlist of code
+/// extensions. The same applies to time-of-day strings like
+/// `12:34` (no preceding extension at all).
+///
+/// 107th member of the extraction family.
+SortLinesResult extractStackTraceRefsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b[\w./\-]+\.'
+        r'(?:dart|js|jsx|ts|tsx|py|rb|go|java|kt|scala|'
+        r'c|cc|cpp|h|hpp|swift|rs|cs|m|sh|bash)'
+        r':\d+(?::\d+)?\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
