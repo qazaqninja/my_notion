@@ -5878,6 +5878,75 @@ void main() {
     });
   });
 
+  group('extractRomanNumeralsFromLinesIn', () {
+    test('simple `IV` extracts', () {
+      const text = 'chapter IV begins\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'IV\n');
+    });
+
+    test('large Roman `MCMXCIX` (1999) extracts', () {
+      const text = 'year MCMXCIX inline\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'MCMXCIX\n');
+    });
+
+    test('basic `I` through `X` extract', () {
+      const text = 'I II III IV V VI VII VIII IX X\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'I\nII\nIII\nIV\nV\nVI\nVII\nVIII\nIX\nX\n',
+      );
+    });
+
+    test('lowercase Roman `iv` is NOT matched', () {
+      // Outline / chapter Roman numerals are uppercase by
+      // convention; lowercase forms conflict with English
+      // words ending in `i` / `v` / `x`.
+      const text = 'fake iv lowercase\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('English word `MIX` matches as Roman 1009', () {
+      // `MIX` happens to be both an English word and a valid
+      // Roman numeral (M + IX = 1009). Acceptable false-
+      // positive given the visual identity.
+      const text = 'cocktail MIX added\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'MIX\n');
+    });
+
+    test('mid-prose Roman extracts with word boundary', () {
+      const text = 'see Section XIII for context\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'XIII\n');
+    });
+
+    test('multiple Romans on one line each extract', () {
+      const text = 'chapters IV through VII covered\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'IV\nVII\n');
+    });
+
+    test('plain English words (no Roman chars) are NOT matched', () {
+      const text = 'pure prose with no numerals here\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without Romans dropped from output', () {
+      const text = 'plain prose\nchapter VII begins\nmore prose\n';
+      final r = extractRomanNumeralsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'VII\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractRomanNumeralsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

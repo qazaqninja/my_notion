@@ -2215,6 +2215,42 @@ SortLinesResult extractPrIssueRefsFromLinesIn(
       return out;
     });
 
+/// Extract every Roman numeral substring (strict 1-3999 form,
+/// uppercase only) from each selected line. Useful for
+/// outline / chapter notation audits, book index harvests, and
+/// historical-date scraping.
+///
+/// Recognition: `\b(?=[MDCLXVI])M{0,4}(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})\b`
+/// - Lookahead `(?=[MDCLXVI])` blocks zero-content matches
+///   on word boundaries (would match empty at every `\b`
+///   otherwise).
+/// - Standard Roman-numeral grammar enforcing valid letter
+///   sequences (M up to 4 times, then 9/4/0-3 hundreds,
+///   tens, units).
+/// - Word boundaries on each end.
+///
+/// Lowercase form (`iv`, `mcmxcix`) is NOT matched — Roman
+/// numerals in outline / chapter notation almost always use
+/// uppercase, and supporting lowercase would conflict with
+/// common English words ending in `i` / `v` / `x`.
+///
+/// 61st member of the extraction family.
+SortLinesResult extractRomanNumeralsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?=[MDCLXVI])M{0,4}(?:CM|CD|D?C{0,3})'
+        r'(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

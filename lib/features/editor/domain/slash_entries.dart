@@ -425,6 +425,9 @@ enum SlashAction {
   /// Extract every GitHub-style PR/issue reference (`#1234`)
   /// from each selected line.
   extractPrIssueRefsFromLines,
+  /// Extract every Roman numeral substring (strict 1-3999 form,
+  /// uppercase only) from each selected line.
+  extractRomanNumeralsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2082,6 +2085,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractPrIssueRefsFromLines,
     keywords: ['extract', 'pr', 'issue', 'github', 'reference',
         'changelog'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract Roman numerals',
+    hint: 'IV / MCMXCIX',
+    action: SlashAction.extractRomanNumeralsFromLines,
+    keywords: ['extract', 'roman', 'numeral', 'outline', 'chapter',
+        'index'],
   ),
   SlashEntry(
     icon: 'calendar',
