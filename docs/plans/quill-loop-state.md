@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1270 — D1 slice 17** (italic *X* + strikethrough ~~X~~)
-- Committed: 581da83
+- **M1272+M1273 — D1 slice 18** (underline `<u>X</u>` implementation + tests)
+- Committed: 905c890, 2a442b2
 - TaskList ID: 22 (still in_progress)
-- Notes: `_parseInline` grows italic (`*X*`, after `**` check) and strike (`~~X~~`). `_serializeInline` open order: code → bold → italic → strike; close order: strike → italic → bold → code (nested marks stack cleanly). Code still suppresses inner formatting. 73 cases total. **Session ops: cron 9064a841 cancelled and replaced by 09bb8317 after the user re-launched /loop. ggshield pre-commit hook is unauthenticated locally — the user explicitly authorised `--no-verify` for this loop session (see M1270 commit body); revert to non-bypass commits once `ggshield auth login` is completed.** Remaining inline-marks: underline (18), highlight (19), sub/sup (20), colors (21), wikilink/mention/date chips (22). Then interactions (23-27) + cutover (28-30).
+- Notes: M80's raw-HTML underline tag `<u>X</u>` now maps to super_editor's `underlineAttribution`. New `under` per-character flag in `_serializeInline`; open order: …→underline, close order: underline→… so nested marks like `<u>**bold**</u>` stack cleanly. Test edit landed in a follow-up M1273 (M1272's same-iteration test Edit hit a stale-read race). 76 cases total. **Session ops continue**: cron `09bb8317`, ggshield `--no-verify` override authorised. Remaining inline-marks: highlight (19), sub/sup (20), colors (21), wikilink/mention/date chips (22).
 
 ## Backlog (Phase A — Foundation)
 
