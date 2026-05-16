@@ -886,6 +886,27 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Collapse runs of identical consecutive lines down to a single
+/// occurrence — Unix `uniq` semantics. Non-consecutive duplicates
+/// are KEPT. Case-sensitive, matches the existing dedupe family
+/// convention.
+///
+/// Differs from [dedupeLinesIn] which removes ALL duplicates
+/// regardless of position. Use this when consecutive duplicates
+/// are noise (a log file that emitted the same line three times
+/// in a row) but non-consecutive recurrences are meaningful (the
+/// same status reported across separate sessions).
+SortLinesResult collapseConsecutiveDuplicatesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      if (lines.isEmpty) return lines;
+      final out = <String>[lines.first];
+      for (var i = 1; i < lines.length; i++) {
+        if (lines[i] != lines[i - 1]) out.add(lines[i]);
+      }
+      return out;
+    });
+
 /// Remove consecutive AND non-consecutive duplicate lines in the
 /// selected block, keeping the FIRST occurrence of each. Case-
 /// sensitive — Notion / Vim convention.

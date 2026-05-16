@@ -2234,6 +2234,43 @@ void main() {
     });
   });
 
+  group('collapseConsecutiveDuplicatesIn', () {
+    test('collapses a run of identical consecutive lines to one', () {
+      const text = 'foo\nfoo\nfoo\nbar\n';
+      final r = collapseConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\n');
+    });
+
+    test('non-consecutive duplicates are kept', () {
+      const text = 'foo\nbar\nfoo\n';
+      final r = collapseConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('mixed: collapse runs, keep non-consecutive recurrences', () {
+      const text = 'foo\nfoo\nbar\nfoo\nfoo\n';
+      // First foo-run collapses; bar passes through; second foo-run
+      // collapses; final result: foo, bar, foo.
+      final r = collapseConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\nfoo\n');
+    });
+
+    test('case-sensitive (Foo ≠ foo, two lines kept)', () {
+      const text = 'Foo\nfoo\n';
+      final r = collapseConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('single-line input passes through', () {
+      const text = 'lonely\n';
+      expect(collapseConsecutiveDuplicatesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(collapseConsecutiveDuplicatesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractWikilinksFromLinesIn', () {
     test('bare ULID wikilink emits the ULID string', () {
       const text = 'see [[01HABCDEFGHIJKLMNOPQRSTUVW]]\n';

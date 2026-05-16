@@ -272,6 +272,10 @@ enum SlashAction {
   /// Extract every Quill wikilink (ULID, optionally with anchor or
   /// alias) from each selected line, without the wrapping brackets.
   extractWikilinksFromLines,
+  /// Collapse runs of identical consecutive lines down to a single
+  /// occurrence (Unix `uniq` semantics). Non-consecutive duplicates
+  /// are kept.
+  collapseConsecutiveDuplicates,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1508,6 +1512,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[[ULID]] → ULID',
     action: SlashAction.extractWikilinksFromLines,
     keywords: ['extract', 'pull', 'wikilink', 'ulid', 'reference', 'relation'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Collapse consecutive duplicates',
+    hint: 'Unix uniq semantics',
+    action: SlashAction.collapseConsecutiveDuplicates,
+    keywords: ['uniq', 'collapse', 'consecutive', 'duplicate', 'dedup'],
   ),
   SlashEntry(
     icon: 'sync',

@@ -1264,6 +1264,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractWikilinksFromLinesIn,
         );
+      case SlashAction.collapseConsecutiveDuplicates:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, collapseConsecutiveDuplicatesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,
