@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E3 — Auth scaffold (bcrypt + JWT helpers)
+- **Task:** E4 — UserRepository + User entity
 - **Status:** pending
 
 ## Last completed
 
-- **M1288 — E2** (Postgres connection + migration runner + /health)
-- Committed: 19ab3fc
-- TaskList ID: 24
-- Notes: `backend/lib/db/connection.dart` parses `DATABASE_URL` into a `postgres ^3.5.11` Endpoint (localhost fallback for plain `dart run`). `backend/lib/db/migrations.dart` is an append-only registry that tracks applied versions in `schema_migrations` and runs new SQL inside a tx with the version-insert. First migration creates `users(id, email, password_hash, created_at)` for the E6+ auth slice. `bin/server.dart` boots the connection + migrations, exposes `/health` that runs `SELECT 1` and returns `ok` / `503`. Connection failures are non-fatal so `/health` can report. Phase D D1 24-30 remain v1.x backlog. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1290 — E3** (auth helpers — bcrypt password + JWT issue/verify)
+- Committed: 9e3f058
+- TaskList ID: 25
+- Notes: `backend/lib/auth/password.dart` PasswordHasher wraps bcrypt (cost 12 prod, 4 in tests). `backend/lib/auth/tokens.dart` TokenIssuer wraps dart_jsonwebtoken with HS256 + iss/aud/sub/exp claims; reads `JWT_SECRET` from env with loud dev fallback. 9 unit tests pass (hash shape, verify accept/reject/random-salt; token sign/verify, secret mismatch reject, expired reject). `bcrypt ^1.2.0` + `dart_jsonwebtoken ^3.4.1` added. 11/11 backend tests pass. Phase D D1 24-30 remain v1.x backlog. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
