@@ -2910,6 +2910,39 @@ SortLinesResult extractHtmlEntitiesFromLinesIn(
       return out;
     });
 
+/// Extract the checkbox STATE from every markdown task-list
+/// item (`[ ]`, `[x]`, `[X]`) on each selected line. Useful
+/// for "done vs open" audits, completion-rate analysis, and
+/// pivot from body to state in todo-style outlines.
+///
+/// Distinct from M1056 done-todos and open-todos extractors
+/// which emit the BODY (text after the checkbox). This one
+/// emits only the state character — `x` or `X` for done,
+/// ` ` (space) for open — useful for tallying without reading
+/// the body content.
+///
+/// Recognition: `\[([ xX])\]`
+/// - Literal `[`.
+/// - Exactly one of `space`, `x`, or `X` (captured).
+/// - Literal `]`.
+///
+/// Plain `[foo]` (multi-char body) is NOT a match — only the
+/// single-char checkbox slot counts.
+///
+/// 82nd member of the extraction family.
+SortLinesResult extractMarkdownTaskStatesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\[([ xX])\]');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

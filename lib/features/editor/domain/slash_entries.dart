@@ -489,6 +489,9 @@ enum SlashAction {
   /// Extract every HTML entity reference (`&amp;`, `&#39;`,
   /// `&#x27;`) from each selected line.
   extractHtmlEntitiesFromLines,
+  /// Extract the checkbox state (`x` / `X` / ` `) from every
+  /// markdown task-list item on each selected line.
+  extractMarkdownTaskStatesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2314,6 +2317,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractHtmlEntitiesFromLines,
     keywords: ['extract', 'html', 'entity', 'character',
         'reference', 'amp', 'nbsp'],
+  ),
+  SlashEntry(
+    icon: 'checksquare',
+    label: 'Extract task states',
+    hint: '[x] / [ ] / [X] → state char',
+    action: SlashAction.extractMarkdownTaskStatesFromLines,
+    keywords: ['extract', 'task', 'todo', 'checkbox', 'state',
+        'done', 'open'],
   ),
   SlashEntry(
     icon: 'calendar',

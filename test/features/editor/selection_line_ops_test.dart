@@ -7334,6 +7334,71 @@ void main() {
     });
   });
 
+  group('extractMarkdownTaskStatesFromLinesIn', () {
+    test('lowercase `[x]` (done) extracts state `x`', () {
+      const text = '- [x] done item here\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'x\n');
+    });
+
+    test('uppercase `[X]` extracts state `X`', () {
+      const text = '- [X] also done\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'X\n');
+    });
+
+    test('empty `[ ]` (open) extracts space char', () {
+      const text = '- [ ] open todo\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, ' \n');
+    });
+
+    test('multi-char `[foo]` is NOT a checkbox', () {
+      // Only single-char `[ ]`, `[x]`, `[X]` are task states.
+      const text = 'see [foo] tag here\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('`[t]` (random letter) is NOT a checkbox', () {
+      const text = 'fake [t] only here\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('mixed done + open list', () {
+      const text =
+          '- [x] first\n- [ ] second\n- [X] third\n- [ ] fourth\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'x\n \nX\n \n');
+    });
+
+    test('multiple checkboxes on one line each extract', () {
+      const text = '[x] done and [ ] open inline\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'x\n \n');
+    });
+
+    test('nested in prose extracts the state', () {
+      const text = 'see status [x] for the item\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'x\n');
+    });
+
+    test('lines without checkboxes dropped from output', () {
+      const text = 'plain prose\n- [x] done item\nmore prose\n';
+      final r = extractMarkdownTaskStatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'x\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownTaskStatesFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
