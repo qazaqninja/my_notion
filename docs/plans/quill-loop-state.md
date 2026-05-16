@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** G2 — Mobile-tuned editor toolbar (sticky bottom-bar for most-used kebab actions on narrow widths)
+- **Task:** G2.5 — Wire MobileEditorToolbar into editor_page.dart body column (isMobileWidth gate + callback wiring)
 - **Status:** pending
 
 ## Last completed
+
+- **M1369 — G2** (mobile editor toolbar — standalone widget + tests)
+- Committed: (this iteration)
+- TaskList ID: 88
+- Notes: New `lib/features/editor/presentation/widgets/mobile_editor_toolbar.dart` — pure-presentational sticky-bottom-bar widget that surfaces the most-used kebab actions on mobile/narrow widths. Takes 4 named callback params (`onSetReminder`, `onPublish`, `onViewFormSubmissions`, `onMore`) plus `hasForms` + `isPublished` flags. Layout: 3-or-4 evenly-spaced IconButtons with Tooltips (clock / link / inbox / kebab-h), inside a `Material(surface)` + `SafeArea(top: false)` + top divider, 48-dp Material default hit targets. `link` icon flips to `tokens.accent` when `isPublished` is true and tooltip swaps `Publish & copy link ↔ Unpublish`. `inbox` button is conditionally rendered when `hasForms` is true (a non-form-bearing page hides it). 4 widget tests cover: hasForms=false renders 3 buttons, hasForms=true adds inbox, isPublished swaps tooltip, all 4 buttons invoke their respective callback when tapped. flutter analyze clean. Wiring into editor_page.dart's body column queued as G2.5 — the existing layout column is ~150 lines so the wire-in deserves its own slice. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1368 — G1** (home_widget Add-to-Inbox skeleton + Dart-side adapter)
 - Committed: (this iteration)
