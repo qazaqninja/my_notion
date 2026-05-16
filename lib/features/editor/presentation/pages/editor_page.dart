@@ -402,6 +402,15 @@ class _EditorBodyState extends State<_EditorBody> {
         const QuillMenuItem(icon: 'clock', label: 'Clear reminder', value: 'clear-reminder'),
         const QuillMenuItem(icon: 'hash', label: 'Set word count goal…', value: 'set-goal'),
         QuillMenuItem.separator<String>(),
+        // E17 — v2 backend public sharing toggle. Single entry swaps
+        // label based on current frontmatter (Publish ↔ Unpublish).
+        if (_isPublic(loaded))
+          const QuillMenuItem(
+              icon: 'link', label: 'Unpublish', value: 'unpublish')
+        else
+          const QuillMenuItem(
+              icon: 'link', label: 'Publish & copy link', value: 'publish'),
+        QuillMenuItem.separator<String>(),
         const QuillMenuItem(icon: 'trash', label: 'Move to trash', danger: true, value: 'trash'),
         const QuillMenuItem(icon: 'sync', label: 'Reindex vault', value: 'reindex'),
       ],
@@ -495,6 +504,10 @@ class _EditorBodyState extends State<_EditorBody> {
         }
       case 'set-goal':
         await _setWordGoal(context, loaded);
+      case 'publish':
+        await _publishPage(context, loaded);
+      case 'unpublish':
+        await _unpublishPage(context, loaded);
       case 'rename':
         await _renameFile(context, loaded);
       case 'move':
@@ -1041,6 +1054,55 @@ class _EditorBodyState extends State<_EditorBody> {
     if (!ok && context.mounted) {
       context.toastError('Could not reveal', sub: path, subMono: true);
     }
+  }
+
+  /// True iff the page's frontmatter has `public: true` (or `yes`) per
+  /// the M1316 server-side probe contract. The kebab swaps Publish ↔
+  /// Unpublish based on this.
+  bool _isPublic(EditorLoaded loaded) {
+    final v = loaded.page.frontmatter.get('public');
+    if (v == true) return true;
+    final s = '$v'.toLowerCase();
+    return s == 'true' || s == 'yes';
+  }
+
+  /// Hardcoded share-URL base — matches `HttpSyncRepository` in
+  /// `app.dart`. A future settings entry lets users override.
+  static const _publicShareBase = 'http://localhost:8080/public';
+
+  Future<void> _publishPage(BuildContext context, EditorLoaded loaded) async {
+    final ulid = loaded.page.ulid;
+    if (ulid.isEmpty) {
+      context.toastError('Cannot publish', sub: 'page has no ULID');
+      return;
+    }
+    final bloc = context.read<EditorBloc>();
+    final fm = loaded.page.frontmatter;
+    final existing = fm.find('public');
+    const entry = FrontmatterEntry(
+      key: 'public',
+      rawScalar: 'true',
+      type: FrontmatterType.checkbox,
+      value: true,
+    );
+    if (existing == null) {
+      bloc.add(const AddFrontmatterField(entry));
+    } else {
+      bloc.add(const EditFrontmatterField('public', entry));
+    }
+    final url = '$_publicShareBase/$ulid';
+    await Clipboard.setData(ClipboardData(text: url));
+    if (context.mounted) {
+      context.toastSuccess('Published', sub: url, subMono: true);
+    }
+  }
+
+  Future<void> _unpublishPage(
+      BuildContext context, EditorLoaded loaded) async {
+    final bloc = context.read<EditorBloc>();
+    if (loaded.page.frontmatter.find('public') == null) return;
+    bloc.add(const RemoveFrontmatterField('public'));
+    if (context.mounted) context.toastSuccess('Unpublished');
   }
 
   /// C3 of the 1m-loop plan: route the current page through the OS share
