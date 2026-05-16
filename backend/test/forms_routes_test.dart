@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:backend/auth/user.dart';
+import 'package:backend/forms/form_schema.dart';
 import 'package:backend/forms/routes.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
@@ -10,14 +11,17 @@ class _StubRepo implements FormsRepositoryBase {
     this.definedFor = const <String>{},
     this.pageOwners = const <String, String>{},
     this.submissionsByPage = const <String, List<FormSubmission>>{},
+    this.schemas = const <String, FormSchema>{},
   });
   final Set<String> definedFor;
   // E49 — ownership + submission listing.
   final Map<String, String> pageOwners; // pageUlid → userId
   final Map<String, List<FormSubmission>> submissionsByPage;
+  // F5 — schema lookup keyed by pageUlid.
+  final Map<String, FormSchema> schemas;
   // Captured for tests so they can assert what was inserted.
   String? lastPageUlid;
-  Map<String, String>? lastFields;
+  Map<String, Object?>? lastFields;
   String? lastSourceIp;
   int insertCount = 0;
   String nextId = 'submission-id-01';
@@ -25,6 +29,11 @@ class _StubRepo implements FormsRepositoryBase {
   @override
   Future<bool> hasFormDefinition(String ulid) async {
     return definedFor.contains(ulid);
+  }
+
+  @override
+  Future<FormSchema?> loadSchemaFor(String ulid) async {
+    return schemas[ulid];
   }
 
   @override
@@ -39,7 +48,7 @@ class _StubRepo implements FormsRepositoryBase {
   @override
   Future<String> insertSubmission({
     required String pageUlid,
-    required Map<String, String> fields,
+    required Map<String, Object?> fields,
     String? sourceIp,
   }) async {
     insertCount++;
@@ -212,6 +221,122 @@ void main() {
         body: utf8.decode([0x68, 0x69]), // 'hi'
       );
       expect(res.statusCode, 404);
+    });
+
+    // F5 — schema-aware validation in the route.
+    FormSchema fullSchema() => const FormSchema(fields: [
+          FormFieldDef(
+            name: 'email',
+            type: FormFieldType.text,
+            required: true,
+          ),
+          FormFieldDef(name: 'age', type: FormFieldType.number),
+          FormFieldDef(
+            name: 'subscribed',
+            type: FormFieldType.checkbox,
+          ),
+        ]);
+
+    test('F5: valid schema submission → 303 + normalized types', () async {
+      final repo = _StubRepo(
+        definedFor: {ulid},
+        schemas: {ulid: fullSchema()},
+      );
+      final res = await _hit(
+        '/$ulid/submit',
+        repo: repo,
+        body: 'email=pat%40x&age=42&subscribed=on',
+      );
+      expect(res.statusCode, 303);
+      // Normalized map preserves types — age is int, subscribed is bool.
+      expect(repo.lastFields, {
+        'email': 'pat@x',
+        'age': 42,
+        'subscribed': true,
+      });
+    });
+
+    test('F5: missing required field → 422 validation_failed', () async {
+      final repo = _StubRepo(
+        definedFor: {ulid},
+        schemas: {ulid: fullSchema()},
+      );
+      final res = await _hit(
+        '/$ulid/submit',
+        repo: repo,
+        body: 'age=42',
+      );
+      expect(res.statusCode, 422);
+      final body =
+          jsonDecode(await res.readAsString()) as Map<String, dynamic>;
+      expect(body['error'], 'validation_failed');
+      expect((body['errors'] as Map)['email'], 'required');
+      expect(repo.insertCount, 0);
+    });
+
+    test('F5: non-numeric in number field → 422 expected_number', () async {
+      final repo = _StubRepo(
+        definedFor: {ulid},
+        schemas: {ulid: fullSchema()},
+      );
+      final res = await _hit(
+        '/$ulid/submit',
+        repo: repo,
+        body: 'email=ok%40x&age=forty-two',
+      );
+      expect(res.statusCode, 422);
+      final errors = (jsonDecode(await res.readAsString())
+          as Map<String, dynamic>)['errors'] as Map;
+      expect(errors['age'], 'expected_number');
+      expect(repo.insertCount, 0);
+    });
+
+    test('F5: empty schema (legacy fallback) accepts any non-empty body',
+        () async {
+      final repo = _StubRepo(
+        definedFor: {ulid},
+        schemas: const {ulid: FormSchema.empty},
+      );
+      final res = await _hit(
+        '/$ulid/submit',
+        repo: repo,
+        body: 'foo=bar',
+      );
+      expect(res.statusCode, 303);
+      expect(repo.lastFields, {'foo': 'bar'});
+    });
+
+    test('F5: null schema (no entry) also falls through', () async {
+      // schemas map deliberately empty → loadSchemaFor returns null.
+      final repo = _StubRepo(definedFor: {ulid});
+      final res = await _hit(
+        '/$ulid/submit',
+        repo: repo,
+        body: 'foo=bar',
+      );
+      expect(res.statusCode, 303);
+      expect(repo.lastFields, {'foo': 'bar'});
+    });
+
+    test('F5: submission with only extras + optional schema → 400 empty_body',
+        () async {
+      const optionalOnly = FormSchema(fields: [
+        FormFieldDef(name: 'note', type: FormFieldType.text),
+      ]);
+      final repo = _StubRepo(
+        definedFor: {ulid},
+        schemas: const {ulid: optionalOnly},
+      );
+      // Validator drops `rocketship` (not in schema), `note` was
+      // optional + missing → normalized map empty → 400.
+      final res = await _hit(
+        '/$ulid/submit',
+        repo: repo,
+        body: 'rocketship=launch',
+      );
+      expect(res.statusCode, 400);
+      expect(await res.readAsString(), 'empty_body');
+      expect(repo.insertCount, 0);
     });
   });
 

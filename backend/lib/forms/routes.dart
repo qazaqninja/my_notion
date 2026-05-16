@@ -6,6 +6,8 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:ulid/ulid.dart';
 
 import '../auth/middleware.dart';
+import '../sync/frontmatter_probe.dart';
+import 'form_schema.dart';
 
 /// Repository contract for form-definition lookups + submission storage.
 /// Slice E46 ships only the abstract interface plus a default impl that
@@ -20,12 +22,26 @@ abstract class FormsRepositoryBase {
   /// currently writable.
   Future<bool> hasFormDefinition(String ulid);
 
+  /// F5 — resolve the schema linked from the form-bearing page at
+  /// [ulid]. Returns:
+  ///   - `null` when the page doesn't exist or isn't form-bearing
+  ///     (route uses this as a 404 indicator, same shape as
+  ///     `hasFormDefinition` returning false).
+  ///   - `FormSchema.empty` when the page is form-bearing but has no
+  ///     resolvable `forms:` ref (e.g. `forms: true`) OR the linked
+  ///     `.database.yaml` isn't in the user's vault_files. Legacy
+  ///     "any non-empty body" submissions land in this branch.
+  ///   - The parsed schema otherwise.
+  Future<FormSchema?> loadSchemaFor(String ulid);
+
   /// E48 — record a submission for the form at [pageUlid]. [fields] is
-  /// the parsed form payload (one entry per text input on the page).
+  /// the (possibly schema-coerced) form payload — F5 widened from
+  /// `Map<String, String>` to `Map<String, Object?>` so checkbox
+  /// booleans and number ints land in JSONB as native types.
   /// Returns the generated submission ID.
   Future<String> insertSubmission({
     required String pageUlid,
-    required Map<String, String> fields,
+    required Map<String, Object?> fields,
     String? sourceIp,
   });
 
@@ -80,7 +96,7 @@ class NoFormsRepository implements FormsRepositoryBase {
   @override
   Future<String> insertSubmission({
     required String pageUlid,
-    required Map<String, String> fields,
+    required Map<String, Object?> fields,
     String? sourceIp,
   }) async {
     throw StateError(
@@ -95,6 +111,9 @@ class NoFormsRepository implements FormsRepositoryBase {
     required String pageUlid,
   }) async =>
       null;
+
+  @override
+  Future<FormSchema?> loadSchemaFor(String ulid) async => null;
 }
 
 /// Concrete repo backed by Postgres. E47 wires the lookup against
@@ -122,7 +141,7 @@ class FormsRepository implements FormsRepositoryBase {
   @override
   Future<String> insertSubmission({
     required String pageUlid,
-    required Map<String, String> fields,
+    required Map<String, Object?> fields,
     String? sourceIp,
   }) async {
     final id = Ulid().toString();
@@ -141,6 +160,46 @@ class FormsRepository implements FormsRepositoryBase {
       },
     );
     return id;
+  }
+
+  @override
+  Future<FormSchema?> loadSchemaFor(String ulid) async {
+    // 1. Find the form-bearing page and (a) confirm it's still
+    //    is_public + has_forms, (b) get its body so we can probe
+    //    the `forms:` ref, (c) get user_id so the linked
+    //    .database.yaml lookup stays scoped to the same vault.
+    final pageRows = await _conn.execute(
+      Sql.named('''
+        SELECT body, user_id FROM vault_files
+        WHERE ulid = @ulid AND is_public = true AND has_forms = true
+        LIMIT 1
+      '''),
+      parameters: {'ulid': ulid},
+    );
+    if (pageRows.isEmpty) return null;
+    final pageBody = pageRows.first[0]! as String;
+    final userId = pageRows.first[1]! as String;
+    final probe = FrontmatterProbe.fromBody(pageBody);
+    final ref = probe.formsRef;
+    // Bare `forms: true` (no ref) → empty schema, legacy fallback.
+    if (ref == null) return FormSchema.empty;
+    // 2. Look up the linked schema file in the same user's vault.
+    //    Forward-slashes are how the Flutter side serializes relpaths.
+    final schemaRows = await _conn.execute(
+      Sql.named('''
+        SELECT body FROM vault_files
+        WHERE user_id = @uid AND relpath = @rel
+        LIMIT 1
+      '''),
+      parameters: {'uid': userId, 'rel': ref},
+    );
+    if (schemaRows.isEmpty) {
+      // Page references a schema file that isn't synced yet — fall
+      // back to empty schema rather than blocking submissions.
+      return FormSchema.empty;
+    }
+    final schemaBody = schemaRows.first[0]! as String;
+    return parseFormSchema(schemaBody);
   }
 
   @override
@@ -240,9 +299,34 @@ Router buildFormsRouter({required FormsRepositoryBase repo}) {
     if (fields.isEmpty) {
       return Response(400, body: 'empty_body');
     }
+    // F5: schema-aware validation. An empty schema (legacy "any
+    // non-empty body" fallback) lets `fields` through unchanged.
+    final schema = await repo.loadSchemaFor(ulid);
+    final Map<String, Object?> toStore;
+    if (schema != null) {
+      final result = validateSubmission(schema, fields);
+      if (!result.isValid) {
+        return Response(
+          422,
+          body: jsonEncode({
+            'error': 'validation_failed',
+            'errors': result.errors,
+          }),
+          headers: const {'content-type': 'application/json'},
+        );
+      }
+      toStore = result.normalized;
+      // Coerced map may be empty if schema fields were all optional
+      // and the submission only carried out-of-schema keys.
+      if (toStore.isEmpty) {
+        return Response(400, body: 'empty_body');
+      }
+    } else {
+      toStore = Map<String, Object?>.from(fields);
+    }
     final id = await repo.insertSubmission(
       pageUlid: ulid,
-      fields: fields,
+      fields: toStore,
       sourceIp: _sourceIp(req),
     );
     return Response(

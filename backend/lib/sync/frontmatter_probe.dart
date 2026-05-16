@@ -14,6 +14,7 @@ class FrontmatterProbe {
     this.isPublic = false,
     this.publicPasswordHash,
     this.hasForms = false,
+    this.formsRef,
   });
 
   factory FrontmatterProbe.fromBody(String body) {
@@ -25,6 +26,7 @@ class FrontmatterProbe {
     var isPublic = false;
     String? publicPasswordHash;
     var hasForms = false;
+    String? formsRef;
     for (final line in block.split('\n')) {
       final m = RegExp(r'^([a-zA-Z_][\w-]*)\s*:\s*(.*?)\s*$').firstMatch(line);
       if (m == null) continue;
@@ -43,13 +45,15 @@ class FrontmatterProbe {
         publicPasswordHash = value;
       }
       // E47: `forms:` flags the page as carrying a form definition
-      // that POST /forms/<ulid>/submit will accept. We treat any
-      // non-empty value as "has a form" — the actual schema
-      // resolution (string ref to a `.database.yaml`, or an inline
-      // block, etc.) is a future-slice concern. The empty-line case
-      // (just `forms:` with no value) is NOT a definition.
+      // that POST /forms/<ulid>/submit will accept. Any non-empty
+      // value flips hasForms; F5 also records the value when it
+      // looks like a relpath (contains `.database.yaml`) so the
+      // route layer can resolve the linked schema.
       if (key == 'forms' && value.isNotEmpty) {
         hasForms = true;
+        if (value.endsWith('.database.yaml')) {
+          formsRef = value;
+        }
       }
     }
     return FrontmatterProbe._(
@@ -57,6 +61,7 @@ class FrontmatterProbe {
       isPublic: isPublic,
       publicPasswordHash: publicPasswordHash,
       hasForms: hasForms,
+      formsRef: formsRef,
     );
   }
 
@@ -70,8 +75,14 @@ class FrontmatterProbe {
   /// E47 — true when the page's frontmatter declares a `forms:` field
   /// with a non-empty value, indicating that
   /// `POST /forms/<ulid>/submit` should accept submissions for this
-  /// page. The schema itself is resolved separately (TBD slice).
+  /// page. The schema itself is resolved separately via [formsRef].
   final bool hasForms;
+
+  /// F5 — when `forms:` was a relpath (e.g. `customers.database.yaml`)
+  /// rather than a bare `true`, this is that path. Null for the
+  /// bare-truthy case — submissions then run against an empty schema
+  /// (legacy "any non-empty body" fallback).
+  final String? formsRef;
 
   /// True when `public: true` AND the page has been gated behind a
   /// password.

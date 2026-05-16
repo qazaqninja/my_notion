@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F5 — Wire FormSchema/validateSubmission into POST /forms/<ulid>/submit (replace "any non-empty body" with the validator + 422 on errors)
+- **Task:** F6 — Backend hardening pass (close cross-cutting RP-03 / TS-02 / TS-01 / LT-01 deferred items from both audits)
 - **Status:** pending
 
 ## Last completed
+
+- **M1362 — F5** (schema validation wired into POST /forms/<ulid>/submit)
+- Committed: (this iteration)
+- TaskList ID: 81
+- Notes: Plumbed the F4 schema validator into the request path. `FrontmatterProbe` gained a `formsRef` field — captures the `forms:` frontmatter value when it ends with `.database.yaml` (the bare-`forms: true` case keeps `formsRef = null` and runs against `FormSchema.empty`). `FormsRepositoryBase.loadSchemaFor(ulid)` returns null for unknown pages, `FormSchema.empty` when the page is form-bearing but has no resolvable schema (bare-truthy or linked yaml not synced), the parsed schema otherwise. Concrete impl does a 2-step query: page body + user_id from vault_files (gated on is_public AND has_forms), then the linked schema by `(user_id, relpath)` — keeps lookups inside the same vault. `NoFormsRepository.loadSchemaFor` returns null. `FormsRepositoryBase.insertSubmission` signature widened from `Map<String, String>` to `Map<String, Object?>` so checkbox booleans + number ints land in JSONB as native types. Route handler in POST /forms/<ulid>/submit now: after the existing 32-KB body cap + empty-body check, calls `loadSchemaFor`; if non-null AND non-empty, runs `validateSubmission`; on errors returns 422 with `{error: 'validation_failed', errors: {field: code}}`. Coerced + normalized map flows into insertSubmission. Empty schema (legacy fallback) and null schema (no entry) both pass through unchanged. Edge case: a submission with only out-of-schema keys against an optional-only schema → normalized map empty → 400 empty_body. 6 new tests (valid-schema-303-+-normalized-types, missing-required-422, non-numeric-422, empty-schema-legacy-fallback, null-schema-falls-through, only-extras-against-optional-only-400). 122/122 backend tests pass; backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1361 — F4** (form schema parser + validator pure functions)
 - Committed: (this iteration)
