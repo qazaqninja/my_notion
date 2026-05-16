@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E35 — Long-press kebab "Pull from server" → diff dialog without round-tripping (alternate trigger)
+- **Task:** E36 — Fix CA-07+BL-06: move SyncBulkPushEntry to domain entity with Equatable
 - **Status:** pending
 
 ## Last completed
 
-- **M1337 — E34** (pull dialog surfaces server mtime + helper extraction)
+- **M1338 — E35** (orchestrator gate over Phase E sync stack)
 - Committed: (this iteration)
-- TaskList ID: 56
-- Notes: Extracted `syncRelativeTime` out of `sync_connected_card.dart` into its own file `lib/features/sync/presentation/widgets/sync_relative_time.dart`. Both `SyncConnectedCard` (re-exports `show syncRelativeTime` so existing import paths still resolve) and `PullReconcileDialog` import it as a peer util. `PullReconcileDialog` gains a "server edited <X ago>" line under the existing sha/relpath line so the user can see HOW OLD the server copy is, not just its sha. 1 new dialog test asserts `RegExp(r'server edited \d+m ago')` appears for a 5-minutes-ago server `mtime`. 21/21 sync card + dialog tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 57
+- Notes: Dispatched `flutter-arch-orchestrator` on the 18-commit Phase E sync stack (M1320–M1337). Findings appended to "Phase E sync stack audit" section: 1 real ERROR (CA-07 + BL-06 — `SyncBulkPushEntry` lives in `sync_event.dart` and is imported from a domain usecase + lacks Equatable; both flagged by the orchestrator as one fix), 4 WARN (BL-05 status enum naming, BL-01/BL-10 missing transformers on logout/restore/cleared/delta/pushall, TH-03 `Colors.green.shade400` dot, MD-01 DTO/entity/state merge), 3 INFO (TS-04 group naming, TS-05 fake placement, DI-03 root-scope doc). Compliant areas captured to prevent regression: CA-01 (no Flutter imports in bloc), CA-06 (no cross-bloc imports), BL-08/09 (no Navigator/context in bloc), BL-11 (side-effects in listeners only), BL-12 (all listeners use listenWhen), RP-02/03 (DI'd Client + typed exceptions). flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
@@ -102,6 +102,35 @@
 - [ ] **TH-03** — Hex literals in `lib/shared/theme/{tokens,accent}.dart`. Borderline per rule intent (rule is about widget files; tokens.dart IS the token home).
 - [x] **MD-03** — No `CONTRIBUTING.md` documenting generated-files policy for `quill_database.g.dart` (committed to repo). ✅ Resolved at M1213 (A14) — CONTRIBUTING.md "Generated files" section.
 - [ ] **DI-03** — `VaultBloc` + `ThemeCubit` provided at root `MultiBlocProvider` in `app.dart:88`. Justifiable (single-vault app, cross-cutting theme) but should be documented inline.
+
+### Phase E sync stack audit (M1320–M1337, run at E35 / M1338)
+
+#### ERROR (block-severity)
+
+- [ ] **CA-07 + BL-06** — `SyncBulkPushEntry` lives inside `lib/features/sync/presentation/bloc/sync_event.dart` (a presentation file), but `lib/features/sync/domain/usecases/collect_bulk_push_entries.dart` imports it. Domain → presentation = inverted dependency. Same class also lacks `Equatable` so `SyncPushAllRequested.props` falls back to identity equality for entries. **Fix in E36:** move `SyncBulkPushEntry` to `lib/features/sync/domain/entities/sync_bulk_push_entry.dart`, extend `Equatable`, retarget imports in usecase + event + tests.
+
+#### WARN (informational)
+
+- [ ] **BL-05** — `SyncStatus { idle, busy, connected, error }` deviates from standard `{ initial, loading, success, failure }`. Cosmetic but inconsistent with `VaultStatus` / `EditorStatus`. Rename in a dedicated slice once nothing else is in flight; touch 7+ test files.
+- [ ] **BL-01 / BL-10** — `SyncLogoutRequested`, `SyncRestoreRequested`, `SyncFetchCleared`, `SyncPendingPushDelta`, and `SyncPushAllRequested` run on the default concurrent transformer. Logout in particular hits SharedPreferences and could double-fire on rapid taps. **Add `droppable()` to logout + push-all** at minimum. Class doc comment in `sync_bloc.dart` should also enumerate each event's transformer choice.
+- [ ] **TH-03** — `Colors.green.shade400` for the "connected" dot in `sync_connected_card.dart:55`. Bypasses theming; doesn't adapt to dark mode or accent change. Move to a `QuillTokens.successColor` (or reuse an existing token).
+- [ ] **MD-01** — `SyncFileSummary` + `SyncFileBody` double-duty as DTOs (with `fromJson`/`toJson`) and as state fields on `SyncState`. Standard wants three separate types per layer boundary. Pragmatic compression for now; revisit when CRDT layer (E45+) lands and the wire format diverges from in-memory.
+
+#### INFO (style)
+
+- [ ] **TS-04** — sync_bloc test groups are named with milestone codes (`'SyncBloc per-relpath If-Match tracking (E19)'`) rather than event names (`'SyncPushFileRequested'`). Demote the milestone code to a comment in a future cleanup pass.
+- [ ] **TS-05** — `_FakeRepo` / `_LifeRepo` / `_MockSyncBloc` declared at the top of their test files. Convention is bottom-of-file so `main()` reads first. Cosmetic.
+- [ ] **DI-03** — `SyncBloc` provided root-scoped in `app.dart:122`. Deliberate (editor save-bridge + settings pane share state) but lacks the inline comment justifying it.
+
+#### Compliant (positive findings — keep these from regressing)
+
+- CA-01: bloc/event/state files have no Flutter imports.
+- CA-06: SyncBloc doesn't import other blocs; cross-bloc bridges live in `MultiBlocListener` on the editor page.
+- BL-06 (state shape): `SyncState` + every event except `SyncBulkPushEntry` extend `Equatable` with complete `props`.
+- BL-08 / BL-09: zero `BuildContext` / `Navigator` / `go_router` in sync_bloc.dart.
+- BL-11: side effects (toasts, dialogs) live in `BlocListener`s, not in build().
+- BL-12: all four `BlocListener`s use `listenWhen`.
+- RP-02 / RP-03: `HttpSyncRepository` injects its `http.Client`; all I/O errors wrap in typed exceptions.
 
 ### Notes for upcoming work
 
