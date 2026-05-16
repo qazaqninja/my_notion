@@ -18,6 +18,12 @@ dependencies:
   flutter:
     sdk: flutter
   archive: ^4.0.7
+  # `bloc_concurrency` adds the named event transformers (droppable,
+  # sequential, restartable) that flutter_bloc itself doesn't ship.
+  # We use them to guard I/O-heavy handlers (editor open / save) from
+  # concurrent fires under the default `concurrent` transformer — see
+  # BL-10 in docs/RULES.md.
+  bloc_concurrency: ^0.3.0
   drift: ^2.20.0
   drift_flutter: ^0.2.4
   equatable: ^2.0.7

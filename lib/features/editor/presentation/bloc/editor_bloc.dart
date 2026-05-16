@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
@@ -23,10 +24,19 @@ class EditorBloc extends Bloc<EditorEvent, EditorState> {
         _indexer = indexer,
         _db = db,
         super(const EditorIdle()) {
-    on<OpenEditor>(_onOpen);
+    // `droppable()`: while one open is loading from disk + drift,
+    // ignore further OpenEditor events. The user opening rapidly
+    // shouldn't queue stale loads behind the in-flight one (M1075,
+    // BL-10).
+    on<OpenEditor>(_onOpen, transformer: droppable());
     on<EditBody>(_onEditBody);
     on<ToggleEditorMode>(_onToggleMode);
-    on<SaveNow>(_onSave);
+    // `sequential()`: SaveNow events come from the debounce timer
+    // (and Cmd+S). Ordering matters — if a save is mid-write, the
+    // next SaveNow must wait, not run concurrently. Dropping a
+    // save would risk losing the final edits when no further
+    // keystrokes follow (M1075, BL-10).
+    on<SaveNow>(_onSave, transformer: sequential());
     on<EditFrontmatterField>(_onEditField);
     on<AddFrontmatterField>(_onAddField);
     on<RemoveFrontmatterField>(_onRemoveField);
