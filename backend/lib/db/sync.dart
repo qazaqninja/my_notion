@@ -17,6 +17,14 @@ abstract class SyncRepositoryBase {
     required String body,
     required String sha256,
   });
+
+  /// Fetch the full file payload (summary + body). Returns null when no
+  /// row exists for (userId, relpath). Scoped to the caller's user_id —
+  /// the route layer's `currentUser(req).id` is the only valid argument.
+  Future<FileBody?> fetch({
+    required String userId,
+    required String relpath,
+  });
 }
 
 class SyncRepository implements SyncRepositoryBase {
@@ -73,6 +81,32 @@ class SyncRepository implements SyncRepositoryBase {
       relpath: row[0] as String,
       sha256: row[1] as String,
       mtime: row[2] as DateTime,
+    );
+  }
+
+  @override
+  Future<FileBody?> fetch({
+    required String userId,
+    required String relpath,
+  }) async {
+    final rows = await _conn.execute(
+      Sql.named('''
+        SELECT relpath, sha256, mtime, body
+        FROM vault_files
+        WHERE user_id = @uid AND relpath = @rel
+        LIMIT 1
+      '''),
+      parameters: {'uid': userId, 'rel': relpath},
+    );
+    if (rows.isEmpty) return null;
+    final row = rows.first;
+    return FileBody(
+      summary: FileSummary(
+        relpath: row[0] as String,
+        sha256: row[1] as String,
+        mtime: row[2] as DateTime,
+      ),
+      body: row[3] as String,
     );
   }
 }

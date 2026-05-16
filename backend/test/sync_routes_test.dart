@@ -60,6 +60,25 @@ class _Sync implements SyncRepositoryBase {
       ..sort((a, b) => a.relpath.compareTo(b.relpath));
     return summary;
   }
+
+  @override
+  Future<FileBody?> fetch({
+    required String userId,
+    required String relpath,
+  }) async {
+    final body = bodies[userId]?[relpath];
+    final list = _byUser[userId];
+    if (list == null || body == null) return null;
+    FileSummary? summary;
+    for (final f in list) {
+      if (f.relpath == relpath) {
+        summary = f;
+        break;
+      }
+    }
+    if (summary == null) return null;
+    return FileBody(summary: summary, body: body);
+  }
 }
 
 void main() {
@@ -184,6 +203,83 @@ void main() {
       expect(res.statusCode, 200);
       // The relpath that landed in storage has the `..` segment collapsed.
       expect(sync.bodies[alice.id]?.keys, contains('bob/secret.md'));
+    });
+
+    test('GET /get/<relpath> returns 404 when the file does not exist',
+        () async {
+      final users = _Users({alice.id: alice});
+      final sync = _Sync({alice.id: const []});
+      final tok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      final res = await pipeline(
+        Request(
+          'GET',
+          Uri.parse('http://localhost/get/Nope.md'),
+          headers: {'authorization': 'Bearer $tok'},
+        ),
+      );
+      expect(res.statusCode, 404);
+      expect(jsonDecode(await res.readAsString())['error'], 'not_found');
+    });
+
+    test('PUT /put then GET /get round-trips the body', () async {
+      final users = _Users({alice.id: alice});
+      final sync = _Sync({alice.id: const []});
+      final tok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      // PUT
+      final put = await pipeline(
+        Request(
+          'PUT',
+          Uri.parse('http://localhost/put/notes/idea.md'),
+          headers: {'authorization': 'Bearer $tok'},
+          body: 'eat the rich',
+        ),
+      );
+      expect(put.statusCode, 200);
+      // GET
+      final get = await pipeline(
+        Request(
+          'GET',
+          Uri.parse('http://localhost/get/notes/idea.md'),
+          headers: {'authorization': 'Bearer $tok'},
+        ),
+      );
+      expect(get.statusCode, 200);
+      final body = jsonDecode(await get.readAsString()) as Map<String, dynamic>;
+      expect(body['relpath'], 'notes/idea.md');
+      expect(body['body'], 'eat the rich');
+      expect((body['sha256'] as String).length, 64);
+    });
+
+    test('GET /get/<relpath> is scoped to caller user_id', () async {
+      final bob = User(id: '01HXBOB2', email: 'bob@quill', createdAt: now);
+      final users = _Users({alice.id: alice, bob.id: bob});
+      final sync = _Sync({alice.id: const [], bob.id: const []});
+      // Pre-seed Bob's vault.
+      await sync.upsert(
+        userId: bob.id,
+        relpath: 'bob-secret.md',
+        body: 'classified',
+        sha256: 'b' * 64,
+      );
+      final aliceTok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      // Alice tries to read Bob's file.
+      final res = await pipeline(
+        Request(
+          'GET',
+          Uri.parse('http://localhost/get/bob-secret.md'),
+          headers: {'authorization': 'Bearer $aliceTok'},
+        ),
+      );
+      expect(res.statusCode, 404, reason: 'Alice must not see Bob`s file');
     });
 
     test("GET /list scopes to the caller's user_id only", () async {

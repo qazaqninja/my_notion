@@ -28,3 +28,21 @@ class FileSummary {
   @override
   int get hashCode => Object.hash(relpath, sha256, mtime);
 }
+
+/// Full file payload returned by `GET /sync/get/[relpath]` — the summary
+/// plus the raw markdown body. Kept separate from FileSummary so listings
+/// stay cheap.
+class FileBody {
+  const FileBody({
+    required this.summary,
+    required this.body,
+  });
+
+  final FileSummary summary;
+  final String body;
+
+  Map<String, dynamic> toJson() => {
+        ...summary.toJson(),
+        'body': body,
+      };
+}

@@ -13,7 +13,7 @@ import '../db/sync.dart';
 /// Routes (cumulative across slices):
 /// - `GET /sync/list` — caller's vault file summary array. Slice E8.
 /// - `PUT /sync/put/[relpath]` — upsert a file (raw body). Slice E9.
-/// - (E10) `GET /sync/get/[relpath]` — fetch body.
+/// - `GET /sync/get/[relpath]` — fetch body + sha256 + mtime. Slice E10.
 /// - (E11+) DELETE, conflict detection, etc.
 Router buildSyncRouter({required SyncRepositoryBase sync}) {
   final router = Router();
@@ -23,6 +23,25 @@ Router buildSyncRouter({required SyncRepositoryBase sync}) {
     final files = await sync.listFor(user.id);
     return Response.ok(
       jsonEncode([for (final f in files) f.toJson()]),
+      headers: const {'content-type': 'application/json'},
+    );
+  });
+
+  router.get('/get/<relpath|.*>', (Request req) async {
+    final user = currentUser(req);
+    final relpath = req.params['relpath'];
+    if (relpath == null || relpath.isEmpty) {
+      return _err(400, 'missing_relpath');
+    }
+    if (!_isSafeRelpath(relpath)) {
+      return _err(400, 'invalid_relpath');
+    }
+    final file = await sync.fetch(userId: user.id, relpath: relpath);
+    if (file == null) {
+      return _err(404, 'not_found');
+    }
+    return Response.ok(
+      jsonEncode(file.toJson()),
       headers: const {'content-type': 'application/json'},
     );
   });
