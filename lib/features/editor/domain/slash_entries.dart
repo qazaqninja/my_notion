@@ -370,6 +370,8 @@ enum SlashAction {
   pascalCaseLines,
   /// Convert every selected line to `CONSTANT_CASE`.
   constantCaseLines,
+  /// Convert every selected line to `kebab-case`.
+  kebabCaseLines,
   /// Wrap every non-blank selected line in `**…**`.
   boldLines,
   /// Wrap every non-blank selected line in `*…*`.
@@ -1089,6 +1091,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'A_B_C',
     action: SlashAction.constantCaseLines,
     keywords: ['constant', 'case', 'screaming', 'snake', 'env', 'macro'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'kebab-case',
+    hint: 'a-b-c',
+    action: SlashAction.kebabCaseLines,
+    keywords: ['kebab', 'case', 'dash', 'hyphen', 'slug', 'url',
+        'css', 'flag'],
   ),
   SlashEntry(
     icon: 'bold',

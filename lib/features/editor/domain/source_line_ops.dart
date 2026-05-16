@@ -2621,6 +2621,24 @@ SortLinesResult constantCaseLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Convert a single line into `kebab-case` — same split rules as
+/// [toSnakeCase] but the word separator is `-` instead of `_`.
+/// Common for URL slugs, file names, CSS class names, and most
+/// command-line flag conventions.
+///
+///   "My Cool Title!" → "my-cool-title"
+///   "hello_world"    → "hello-world"
+///   "v1.2.3 final"   → "v1-2-3-final"
+String toKebabCase(String line) => toSnakeCase(line).replaceAll('_', '-');
+
+/// Per-line wrapper for [toKebabCase].
+SortLinesResult kebabCaseLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines) if (l.trim().isEmpty) l else toKebabCase(l),
+      ];
+    });
+
 /// Convert a single line into a URL-safe slug:
 ///
 ///   "My Cool Title!" → "my-cool-title"

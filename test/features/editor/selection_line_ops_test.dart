@@ -4161,6 +4161,57 @@ void main() {
     });
   });
 
+  group('toKebabCase / kebabCaseLinesIn', () {
+    test('basic title to kebab', () {
+      expect(toKebabCase('My Cool Title!'), 'my-cool-title');
+    });
+
+    test('mirrors snake form with `-` separator', () {
+      // Implementation is `toSnakeCase(line).replaceAll('_', '-')`,
+      // so kebab and snake share recognition rules; the only
+      // difference is the separator char.
+      expect(toKebabCase('hello world'), 'hello-world');
+      expect(toKebabCase('hello_world'), 'hello-world');
+    });
+
+    test('already-kebab passes through (modulo case)', () {
+      expect(toKebabCase('Hello-World'), 'hello-world');
+    });
+
+    test('preserves digit segments', () {
+      expect(toKebabCase('v1.2.3 final'), 'v1-2-3-final');
+    });
+
+    test('runs of non-alphanumeric collapse to a single dash', () {
+      expect(toKebabCase('foo!!!---bar'), 'foo-bar');
+    });
+
+    test('leading/trailing punctuation is trimmed', () {
+      expect(toKebabCase('!!!hello'), 'hello');
+      expect(toKebabCase('hello!!!'), 'hello');
+      expect(toKebabCase('---hello---'), 'hello');
+    });
+
+    test('mixed-case input lowercases', () {
+      expect(toKebabCase('CamelCaseTitle'), 'camelcasetitle');
+    });
+
+    test('empty / all-punctuation returns empty', () {
+      expect(toKebabCase(''), '');
+      expect(toKebabCase('!!!---'), '');
+    });
+
+    test('per-line transform skips blanks', () {
+      const text = 'My Title\n\nFoo Bar\n';
+      final r = kebabCaseLinesIn(text, 0, text.length);
+      expect(r.text, 'my-title\n\nfoo-bar\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(kebabCaseLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('convertDecimalToOctalLinesIn / convertOctalToDecimalLinesIn', () {
     test('decimal → octal with 0o prefix', () {
       const text = '8\n64\n0\n';
