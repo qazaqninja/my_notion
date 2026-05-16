@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E53 — Open Phase E final closeout: orchestrator pass + Pick-next survey for what's left
+- **Task:** F1 — Inbound share-sheet via `receive_sharing_intent` → Inbox/Quick capture.md
 - **Status:** pending
 
 ## Last completed
+
+- **M1356 — E53** (Phase E final-closeout survey + Flutter forms client audit dispatched)
+- Committed: (this iteration)
+- TaskList ID: 75
+- Notes: Dispatched flutter-arch-orchestrator over the Flutter forms client (`lib/features/forms/` E50-E51 commits) in the background — findings will be recorded under the existing "Phase E forms stack audit" section once they land. Surveyed CLAUDE.md backlog: confirmed `receive_sharing_intent` and `home_widget` are NOT in pubspec or referenced in code — the two cleanest v1 polish items remaining. Recorded a 6-item pick-next candidate list (F1-F6) in loop-state under "Phase E final-closeout survey" — ordered by smallest lift first, with F1 (receive_sharing_intent inbound share-sheet) called out as recommended next because it's the natural complement to the already-shipped outbound share_plus and unlocks the "Share to Quill from Safari/Chrome → lands in Inbox/Quick capture.md" workflow. Phase E sync/public/forms surface is shipped end-to-end. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1355 — E52** (Phase E forms walkthrough docs + manual sanity checklist)
 - Committed: (this iteration)
@@ -162,6 +167,23 @@
 - BL-11: side effects (toasts, dialogs) live in `BlocListener`s, not in build().
 - BL-12: all four `BlocListener`s use `listenWhen`.
 - RP-02 / RP-03: `HttpSyncRepository` injects its `http.Client`; all I/O errors wrap in typed exceptions.
+
+### Phase E final-closeout survey (E53 / M1356)
+
+After 53 slices the Phase E surface is shipped end-to-end:
+
+- **Sync stack (E1-E40)** — auth (signup/login/restore/logout), push/pull/list/delete/get/ping with sequential transformers, /sync/list periodic ping, knownShas tracking, pull reconcile dialog, push queue depth, network/health banners, audit clean.
+- **Public sharing (E16/E21/E43-E45)** — `GET /public/<ulid>`, real markdown rendering, `public_password:` bcrypt-gated cookie, "Publish with password…" kebab.
+- **Forms (E46-E51)** — `POST /forms/<ulid>/submit` + thanks page + authed `GET /forms/owner/<ulid>/submissions` + Flutter dialog. Schema validation against `.database.yaml` deferred.
+
+**Pick-next candidates** (rough impact order, smallest-lift first):
+
+- **F1 — `receive_sharing_intent`** — currently NOT in pubspec; inbound share-sheet (Safari/Chrome → "Add to Inbox") is the natural complement to the already-shipped outbound `share_plus`. 1-day lift, iOS + Android Xcode/manifest work. **Recommended next.**
+- **F2 — Mobile-tuned slash menu / properties panel / editor toolbar** — CLAUDE.md item 10 remainder. Touch targets + tight spacing + sheet-style overlays. ~1 day.
+- **F3 — Schema-aware form validation** — currently any non-empty form-urlencoded body lands; would need `.database.yaml` walking + per-field type checks. ~1 day backend, ~half day client.
+- **F4 — `home_widget` "Add to Inbox" write-only widget** — iOS + Android. ~1 day per platform.
+- **F5 — D1 cutover slices (D1.24-D1.30)** — finish super_editor parity (slash menu, drag-drop, multi-select, M234-M268 shortcut port + cutover the flag default to true). ~3-5 days.
+- **F6 — Cross-cutting backend hardening** — close the RP-03 / TS-02 / TS-01 / LT-01 deferred items both audits flagged in one sweep. ~half day.
 
 ### Phase E forms stack audit (E50 / M1353)
 
