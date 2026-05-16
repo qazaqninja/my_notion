@@ -1,22 +1,22 @@
 # Feature roadmap — Quill (my_notion)
 
-> Reconciliation of every Notion feature against what Quill has actually shipped (M0–M20), what is partially done, what is queued, and what is explicitly out of scope. The goal is that any agent landing in this repo for the first time can open this file, pick an item, follow the file pointers it includes, and ship it as the next milestone (Mxx) without re-discovering the codebase.
+> Reconciliation of every Notion feature against what Quill has actually shipped (M0–M1186+), what is partially done, what is queued, and what is explicitly out of scope. The goal is that any agent landing in this repo for the first time can open this file, pick an item, follow the file pointers it includes, and ship it as the next milestone (Mxxxx) without re-discovering the codebase.
 
-Read `CLAUDE.md` first for invariants and conventions. Read `~/.claude/plans/build-prompt-self-hosted-transient-bear.md` for the original milestone plan. Then come back here.
+Read `CLAUDE.md` first for invariants and conventions. Read `~/.claude/plans/1m-run-until-we-frolicking-thompson.md` for the current 1m-loop plan (Phase A foundation → B media → C platform → D WYSIWYG → E V2 backend); the original milestone plan at `~/.claude/plans/build-prompt-self-hosted-transient-bear.md` is the historical pre-M30 blueprint. Then come back here.
 
 ## How to use this doc
 
 1. Scan the **Pick-next queue** at the bottom — it's the prioritized work list. The top item is what you should pick.
 2. Find the item in the categorized list to see which file(s) and patterns to touch.
 3. Follow the **Architecture invariants** below — they are non-negotiable and they tell you *where* state lives (markdown frontmatter vs. drift vs. nowhere).
-4. Ship as the next milestone commit `Mxx: <feature>`, matching the style of the existing 21 milestones.
+4. Ship as the next milestone commit `Mxxxx: <feature>`, matching the style of the existing 1,180+ milestones (commits use 4-digit milestone IDs once the count crosses M1000).
 
 ## Status legend
 
-- ✅ **Shipped** — landed in M0–M20. Commit hash in parens when notable.
-- 🚧 **Partial** — some of it works, the rest is queued.
+- ✅ **Shipped** — landed somewhere in M0–M1186+. Commit hash in parens when notable.
+- 🚧 **Partial** — some of it works, the rest is queued in the 1m-loop plan (Phase B onward).
 - 📋 **Backlog** — ready to pick up. No backend or new architecture required.
-- 🔮 **v2 — requires backend** — needs the Dart Frog/Serverpod + Postgres + Docker layer that hasn't been built yet.
+- 🔮 **v2 — requires backend** — needs the Dart Frog/Serverpod + Postgres + Docker layer (Phase E of the 1m-loop plan).
 - 🚫 **Out of scope for v1** — Quill is a desktop/mobile self-hosted markdown editor, not a publishing platform or SaaS admin console. Reason given inline.
 
 ## Architecture invariants (don't break these while shipping a feature)
