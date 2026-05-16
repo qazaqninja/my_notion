@@ -18,6 +18,7 @@ import 'package:my_notion/features/vault/domain/repositories/vault_repository.da
 import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_event.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class _MockVaultRepository extends Mock implements VaultRepository {}
 
@@ -41,6 +42,10 @@ void main() {
       // Real watcher; never call watch() so it stays inert. The bloc's
       // close() awaits dispose() which is safe on an unwatched controller.
       watcher = VaultWatcher();
+      // VaultBloc's PickVault/LoadFromPath/CloseVault read/write the saved
+      // vault path, so SharedPreferences must be mocked or `getInstance()`
+      // hangs forever in pure-Dart tests.
+      SharedPreferences.setMockInitialValues({});
     });
 
     VaultBloc buildBloc() => VaultBloc(
@@ -68,5 +73,55 @@ void main() {
         verifyZeroInteractions(repo);
       },
     );
+
+    // ────────────────────────────────────────────────────────────────────
+    // Slice 2 (M1206): CloseVault + the 7 events that no-op outside
+    // VaultLoaded state.
+    //
+    // All 7 of these handlers start with `if (state is! VaultLoaded) return;`
+    // so when fired from `VaultInitial`, they must emit nothing AND must
+    // not call any of the mocked dependencies. This lets the bloc be added
+    // to a UI before a vault is loaded without risking spurious state
+    // flicker or premature side effects.
+    // ────────────────────────────────────────────────────────────────────
+
+    blocTest<VaultBloc, VaultState>(
+      'CloseVault: stops watcher, clears indexer, transitions to VaultInitial',
+      // Seed with VaultPicking so the Initial-after-emit is an observable
+      // transition rather than a dedup-suppressed re-emission.
+      seed: () => const VaultPicking(),
+      build: () {
+        when(() => indexer.clearAll()).thenAnswer((_) async {});
+        return buildBloc();
+      },
+      act: (bloc) => bloc.add(const CloseVault()),
+      expect: () => const [VaultInitial()],
+      verify: (bloc) {
+        verify(() => indexer.clearAll()).called(1);
+      },
+    );
+
+    for (final entry in <String, VaultEvent>{
+      'ToggleFolder': const ToggleFolder('Inbox'),
+      'ReindexVault': const ReindexVault(),
+      'CreatePage': const CreatePage(title: 'X'),
+      'MoveToTrash': const MoveToTrash('01HZZZZ'),
+      'DuplicatePage': const DuplicatePage('01HZZZZ'),
+      'ToggleFavorite': const ToggleFavorite('01HZZZZ'),
+      'MovePage': const MovePage(ulid: '01HZZZZ', targetFolder: 'X'),
+      'RenamePage': const RenamePage(ulid: '01HZZZZ', newBasename: 'X'),
+      'CreateFolder': const CreateFolder(parentFolder: '', name: 'X'),
+    }.entries) {
+      blocTest<VaultBloc, VaultState>(
+        '${entry.key} is a no-op when state is VaultInitial',
+        build: buildBloc,
+        act: (bloc) => bloc.add(entry.value),
+        expect: () => const <VaultState>[],
+        verify: (bloc) {
+          verifyZeroInteractions(indexer);
+          verifyZeroInteractions(repo);
+        },
+      );
+    }
   });
 }
