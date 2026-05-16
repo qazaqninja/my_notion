@@ -1523,6 +1523,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractLinuxPathsFromLinesIn,
         );
+      case SlashAction.extractWindowsPathsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractWindowsPathsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

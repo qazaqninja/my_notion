@@ -6898,6 +6898,75 @@ void main() {
     });
   });
 
+  group('extractWindowsPathsFromLinesIn', () {
+    test('classic `C:\\Users\\foo` extracts', () {
+      const text = r'open C:\Users\foo today' '\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'C:\Users\foo' '\n');
+    });
+
+    test('deep system path extracts', () {
+      const text = r'edit C:\Windows\System32\drivers\etc\hosts inline' '\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        r'C:\Windows\System32\drivers\etc\hosts' '\n',
+      );
+    });
+
+    test('single-segment `C:\\Users` IS matched', () {
+      // Windows paths usually have at least a drive + folder,
+      // so single-segment is sensible (unlike Linux's
+      // 2+ requirement).
+      const text = r'cd C:\Users today' '\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'C:\Users' '\n');
+    });
+
+    test('lowercase drive letter still matches', () {
+      const text = r'open d:\projects\repo today' '\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'd:\projects\repo' '\n');
+    });
+
+    test('file with dot extension preserved', () {
+      const text = r'edit C:\config.json today' '\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'C:\config.json' '\n');
+    });
+
+    test('bare `C:` (no backslash) is NOT a match', () {
+      const text = 'just C: alone\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('Linux path `/etc/passwd` is NOT matched here', () {
+      // Linux paths are M1139's surface.
+      const text = 'unix /etc/passwd elsewhere\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple Windows paths on one line each extract', () {
+      const text = r'copy C:\src to D:\dest now' '\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'C:\src' '\n' r'D:\dest' '\n');
+    });
+
+    test('lines without Windows paths dropped from output', () {
+      const text = r'plain prose' '\n'
+          r'edit C:\Windows\notepad.exe' '\n'
+          r'more prose' '\n';
+      final r = extractWindowsPathsFromLinesIn(text, 0, text.length);
+      expect(r.text, r'C:\Windows\notepad.exe' '\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractWindowsPathsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

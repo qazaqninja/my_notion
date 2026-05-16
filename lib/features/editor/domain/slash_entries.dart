@@ -471,6 +471,9 @@ enum SlashAction {
   /// Extract every Linux absolute-path substring from each
   /// selected line (`/etc/passwd`-style).
   extractLinuxPathsFromLines,
+  /// Extract every Windows absolute-path substring from each
+  /// selected line (`C:\Users\foo`-style).
+  extractWindowsPathsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2248,6 +2251,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractLinuxPathsFromLines,
     keywords: ['extract', 'linux', 'path', 'file', 'unix',
         'absolute', 'sysadmin'],
+  ),
+  SlashEntry(
+    icon: 'file',
+    label: 'Extract Windows paths',
+    hint: r'C:\Users\foo / D:\Projects\repo',
+    action: SlashAction.extractWindowsPathsFromLines,
+    keywords: ['extract', 'windows', 'path', 'file', 'win',
+        'absolute', 'drive'],
   ),
   SlashEntry(
     icon: 'calendar',

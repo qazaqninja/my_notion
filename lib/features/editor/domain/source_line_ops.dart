@@ -2702,6 +2702,39 @@ SortLinesResult extractLinuxPathsFromLinesIn(
       return out;
     });
 
+/// Extract every Windows absolute-path substring from each
+/// selected line (`C:\Users\foo`, `D:\Projects\repo\file.txt`).
+/// Companion to M1139's Linux-path extractor — together they
+/// cover both major filesystem-path conventions.
+///
+/// Recognition: `[A-Za-z]:\\[\w.-]+(?:\\[\w.-]+)*`
+/// - Drive letter (single uppercase / lowercase ASCII letter).
+/// - Literal `:` then `\`.
+/// - At least one segment (alphanumeric + `_` + `-` + `.`).
+/// - Zero or more additional `\segment` parts.
+///
+/// Single-segment paths like `C:\Users` ARE matched (unlike
+/// Linux paths which require 2+ segments). Windows convention
+/// is to write the bare drive letter as `C:\` (just the drive),
+/// not just `C:`, so `C:\Users` is the minimal sensible shape.
+///
+/// UNC paths (`\\server\share`) are out of scope for v1.
+///
+/// 76th member of the extraction family — M1140 round-number
+/// milestone.
+SortLinesResult extractWindowsPathsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'[A-Za-z]:\\[\w.-]+(?:\\[\w.-]+)*');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
