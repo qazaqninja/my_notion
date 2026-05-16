@@ -1582,6 +1582,36 @@ SortLinesResult extractPhoneNumbersFromLinesIn(
       return out;
     });
 
+/// Canonicalize every markdown horizontal-rule line in the
+/// selected text to `---`. Useful for cleanup before publishing:
+/// a doc that mixes `---`, `***`, `___`, and `- - -` gets a
+/// uniform divider style in one pass.
+///
+/// Recognition (CommonMark HR): three or more of `-`, `*`, or
+/// `_` chars at line start (allowing optional leading whitespace
+/// and any whitespace between the markers, but no other content
+/// on the line). All these match:
+///   `---`     `***`     `___`
+///   `----`    `* * *`   `- - -`
+///   `  ---`   `--- `
+///
+/// Non-HR lines (text, headings, list items) pass through
+/// unchanged. The transform is "normalize HR style" rather
+/// than extract, so the line count is preserved.
+SortLinesResult canonicalizeHorizontalRulesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // `^\s*([-*_])(?:\s*\1){2,}\s*$` — at least 3 of the
+      // same marker char, separated by optional whitespace,
+      // surrounded by optional outer whitespace, nothing else
+      // on the line. The backref `\1` enforces consistency
+      // (a mixed `-*-` line is NOT an HR).
+      final re = RegExp(r'^\s*([-*_])(?:\s*\1){2,}\s*$');
+      return [
+        for (final l in lines) if (re.hasMatch(l)) '---' else l,
+      ];
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

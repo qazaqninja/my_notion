@@ -1384,6 +1384,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractPhoneNumbersFromLinesIn,
         );
+      case SlashAction.canonicalizeHorizontalRules:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, canonicalizeHorizontalRulesIn,
+        );
       case SlashAction.extractMarkdownLinkLabelsFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownLinkLabelsFromLinesIn,

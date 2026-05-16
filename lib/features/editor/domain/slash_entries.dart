@@ -366,6 +366,9 @@ enum SlashAction {
   /// Extract every E.164-ish international phone number from each
   /// selected line.
   extractPhoneNumbersFromLines,
+  /// Canonicalize every markdown horizontal-rule line in the
+  /// selected text to `---`.
+  canonicalizeHorizontalRules,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1830,6 +1833,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractPhoneNumbersFromLines,
     keywords: ['extract', 'phone', 'number', 'e164', 'tel',
         'mobile', 'contact'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Canonicalize HR lines',
+    hint: '*** / ___ / - - - → ---',
+    action: SlashAction.canonicalizeHorizontalRules,
+    keywords: ['canonicalize', 'normalize', 'hr', 'horizontal',
+        'rule', 'divider', 'separator', 'thematic', 'break'],
   ),
   SlashEntry(
     icon: 'edit',

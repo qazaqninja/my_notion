@@ -3769,6 +3769,85 @@ void main() {
     });
   });
 
+  group('canonicalizeHorizontalRulesIn', () {
+    test('three-dash HR passes through unchanged', () {
+      const text = '---\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '---\n');
+    });
+
+    test('three-asterisk `***` canonicalizes to `---`', () {
+      const text = '***\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '---\n');
+    });
+
+    test('three-underscore `___` canonicalizes to `---`', () {
+      const text = '___\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '---\n');
+    });
+
+    test('space-separated `- - -` canonicalizes', () {
+      const text = '- - -\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '---\n');
+    });
+
+    test('space-separated `* * *` canonicalizes', () {
+      const text = '* * *\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '---\n');
+    });
+
+    test('four+ dashes still canonicalize to `---`', () {
+      const text = '----\n--------\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '---\n---\n');
+    });
+
+    test('leading and trailing whitespace tolerated', () {
+      const text = '   ---   \n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '---\n');
+    });
+
+    test('two-dash line is NOT an HR (too few)', () {
+      const text = '--\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '--\n');
+    });
+
+    test('mixed marker chars are NOT an HR', () {
+      // Backref `\1` requires same marker char throughout.
+      const text = '-*-\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '-*-\n');
+    });
+
+    test('HR with adjacent text is NOT a clean HR line', () {
+      const text = '--- text\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, '--- text\n');
+    });
+
+    test('non-HR prose lines pass through unchanged', () {
+      const text = 'paragraph\n# Heading\n- bullet\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, 'paragraph\n# Heading\n- bullet\n');
+    });
+
+    test('mixed selection: HR lines normalize, prose preserved', () {
+      const text = 'intro\n***\nbody\n___\nclose\n';
+      final r = canonicalizeHorizontalRulesIn(text, 0, text.length);
+      expect(r.text, 'intro\n---\nbody\n---\nclose\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(canonicalizeHorizontalRulesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
