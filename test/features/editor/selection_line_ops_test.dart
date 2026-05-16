@@ -140,6 +140,42 @@ void main() {
     });
   });
 
+  group('joinLinesWithSpaceIn', () {
+    test('three sentences glue back into one paragraph', () {
+      const text = 'Hello world.\nGoodbye now.\nSee you later.\n';
+      final r = joinLinesWithSpaceIn(text, 0, text.length);
+      expect(r.text, 'Hello world. Goodbye now. See you later.\n');
+    });
+
+    test('round-trips with splitLinesOnSentencesIn', () {
+      const text = 'First sentence. Second sentence! Third question?\n';
+      final split = splitLinesOnSentencesIn(text, 0, text.length);
+      final joined = joinLinesWithSpaceIn(split.text, 0, split.text.length);
+      expect(joined.text, text);
+    });
+
+    test('blank lines are skipped', () {
+      const text = 'foo\n\nbar\n';
+      final r = joinLinesWithSpaceIn(text, 0, text.length);
+      expect(r.text, 'foo bar\n');
+    });
+
+    test('per-line whitespace is trimmed before joining', () {
+      const text = '  alpha  \n  beta  \n';
+      final r = joinLinesWithSpaceIn(text, 0, text.length);
+      expect(r.text, 'alpha beta\n');
+    });
+
+    test('all-blank selection is a no-op', () {
+      const text = '\n\n\n';
+      expect(joinLinesWithSpaceIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(joinLinesWithSpaceIn('', 0, 0).text, '');
+    });
+  });
+
   group('splitLinesOnSentencesIn', () {
     test('two-sentence paragraph splits into two lines', () {
       const text = 'Hello world. Goodbye now.\n';

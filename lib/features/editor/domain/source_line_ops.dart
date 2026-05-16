@@ -2392,6 +2392,20 @@ SortLinesResult joinLinesWithCommaIn(String text, int start, int end) =>
       return [cells.join(', ')];
     });
 
+/// Join every non-blank selected line into a single space-separated
+/// paragraph. Each line is trimmed before joining so trailing
+/// whitespace from a sentence split doesn't leak into the rebuilt
+/// prose. Natural inverse of [splitLinesOnSentencesIn] (M990) for
+/// rebuilding after proofreading. Returns the source unchanged when
+/// the block has no non-blank lines.
+SortLinesResult joinLinesWithSpaceIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      final cells =
+          [for (final l in lines) l.trim()].where((l) => l.isNotEmpty).toList();
+      if (cells.isEmpty) return lines;
+      return [cells.join(' ')];
+    });
+
 /// Split every selected line on `,` (with optional trailing
 /// whitespace) into separate lines. Inverse of [joinLinesWithCommaIn].
 /// Each split cell is trimmed. Lines without a comma pass through.

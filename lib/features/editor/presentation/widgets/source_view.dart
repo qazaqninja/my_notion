@@ -953,6 +953,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, splitLinesOnSentencesIn,
         );
+      case SlashAction.joinLinesWithSpace:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, joinLinesWithSpaceIn,
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

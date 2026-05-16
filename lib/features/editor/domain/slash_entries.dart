@@ -51,6 +51,9 @@ enum SlashAction {
   /// Split each selected line on sentence boundaries, emitting one
   /// sentence per output line.
   splitLinesOnSentences,
+  /// Join every non-blank selected line into a single space-separated
+  /// paragraph. Inverse of `splitLinesOnSentences`.
+  joinLinesWithSpace,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1394,6 +1397,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'one sentence per line',
     action: SlashAction.splitLinesOnSentences,
     keywords: ['split', 'sentence', 'sentences', 'proofread', 'review', 'break'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Join into one paragraph',
+    hint: 'glue lines with spaces',
+    action: SlashAction.joinLinesWithSpace,
+    keywords: ['join', 'merge', 'paragraph', 'glue', 'concat', 'flow'],
   ),
   SlashEntry(
     icon: 'link',
