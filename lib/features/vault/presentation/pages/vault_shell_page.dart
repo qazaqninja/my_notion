@@ -499,6 +499,31 @@ class _VaultShellPageState extends State<VaultShellPage> {
           ),
       ];
 
+  Future<void> _openRandomUntaggedPage(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final rows = await db.select(db.pages).get();
+    final untagged = [
+      for (final p in rows)
+        if (listValueFromFrontmatterJson(p.frontmatterJson, 'tags').isEmpty) p,
+    ];
+    if (untagged.isEmpty) {
+      if (context.mounted) {
+        context.toastInfo('Every page is tagged. Nothing to triage.');
+      }
+      return;
+    }
+    final pick = untagged[
+        DateTime.now().microsecondsSinceEpoch.abs() % untagged.length];
+    if (context.mounted) {
+      context.toastInfo(
+        'Untagged · ${untagged.length} candidate${untagged.length == 1 ? "" : "s"}',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openSmallestPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -762,6 +787,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openMostLinkedPage(context);
       case 'Open smallest page':
         await _openSmallestPage(context);
+      case 'Open random untagged page':
+        await _openRandomUntaggedPage(context);
       case "Open today's daily note":
         if (vaultPath == null) {
           context.toastError('No vault open');
