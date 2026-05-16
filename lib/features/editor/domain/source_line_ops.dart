@@ -2041,6 +2041,40 @@ SortLinesResult extractYearRangesFromLinesIn(
       return out;
     });
 
+/// Extract every DOI (Digital Object Identifier) substring from
+/// each selected line. Useful for academic citation harvest,
+/// paper-reference audit, and bibliography mining.
+///
+/// DOI format per the spec: `10.PREFIX/SUFFIX`
+/// - `10.` literal namespace marker.
+/// - PREFIX: 4-9 digit registrant code.
+/// - `/` literal.
+/// - SUFFIX: registrant-defined opaque identifier (alphanumeric
+///   plus `-._;():/`).
+///
+/// Recognition: `\b10\.\d{4,9}/[\-._;()/:A-Za-z0-9]+`
+///
+/// Catches both bare DOIs (`10.1000/xyz123`) and DOIs embedded
+/// in resolver URLs (`https://doi.org/10.1000/xyz123` —
+/// captured portion is `10.1000/xyz123`, the resolver prefix
+/// is leftover).
+///
+/// 56th member of the extraction family.
+SortLinesResult extractDoiFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b10\.\d{4,9}/[\-._;()/:A-Za-z0-9]+',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

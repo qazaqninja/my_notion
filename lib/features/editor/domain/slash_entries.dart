@@ -410,6 +410,9 @@ enum SlashAction {
   /// Extract every compound year-range substring (`YYYY-YYYY` or
   /// `YYYY–YYYY` with em-dash) from each selected line.
   extractYearRangesFromLines,
+  /// Extract every DOI (Digital Object Identifier) substring
+  /// (`10.NNNN/suffix`) from each selected line.
+  extractDoiFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2027,6 +2030,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractYearRangesFromLines,
     keywords: ['extract', 'year', 'range', 'timespan', 'period',
         'copyright', 'career'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract DOIs',
+    hint: '10.NNNN/suffix',
+    action: SlashAction.extractDoiFromLines,
+    keywords: ['extract', 'doi', 'citation', 'paper', 'academic',
+        'bibliography'],
   ),
   SlashEntry(
     icon: 'calendar',

@@ -5555,6 +5555,63 @@ void main() {
     });
   });
 
+  group('extractDoiFromLinesIn', () {
+    test('basic DOI extracts', () {
+      const text = 'cite 10.1000/xyz123 here\n';
+      final r = extractDoiFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1000/xyz123\n');
+    });
+
+    test('IEEE-style DOI extracts intact', () {
+      const text = 'paper 10.1109/CVPR.2023.12345 referenced\n';
+      final r = extractDoiFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1109/CVPR.2023.12345\n');
+    });
+
+    test('DOI with hyphens and dots in suffix', () {
+      const text = 'ref 10.1234/abc.def-ghi pulled\n';
+      final r = extractDoiFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1234/abc.def-ghi\n');
+    });
+
+    test('resolver URL exposes the embedded DOI', () {
+      const text = 'see https://doi.org/10.1000/xyz123 link\n';
+      final r = extractDoiFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1000/xyz123\n');
+    });
+
+    test('prefix too short (3 digits) is NOT a match', () {
+      // Spec requires 4-9 digit prefix.
+      const text = 'fake 10.123/short bad\n';
+      final r = extractDoiFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('decimal `10.5` is NOT a DOI', () {
+      // No `/suffix` follows.
+      const text = 'note value 10.5 only\n';
+      final r = extractDoiFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple DOIs on one line each extract', () {
+      const text =
+          'cite 10.1000/abc and 10.2000/def together\n';
+      final r = extractDoiFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1000/abc\n10.2000/def\n');
+    });
+
+    test('lines without DOIs dropped from output', () {
+      const text = 'plain prose\ncite 10.1000/abc\nmore prose\n';
+      final r = extractDoiFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.1000/abc\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractDoiFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
