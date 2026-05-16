@@ -246,6 +246,9 @@ enum SlashAction {
   stdDevNumericLines,
   /// Compute the population variance of every numeric line.
   varianceNumericLines,
+  /// Replace every numeric line with its z-score
+  /// `(x - mean) / stddev`, using the population stddev.
+  zScoreNumericLines,
   /// Round every numeric line to 2 decimal places.
   roundNumericLines,
   /// Replace every numeric line with its absolute value.
@@ -1127,6 +1130,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'σ² (population)',
     action: SlashAction.varianceNumericLines,
     keywords: ['variance', 'sigma', 'squared', 'stats'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Z-score per line',
+    hint: '(x - μ) / σ',
+    action: SlashAction.zScoreNumericLines,
+    keywords: ['zscore', 'standard', 'score', 'normalize', 'stats'],
   ),
   SlashEntry(
     icon: 'hash',

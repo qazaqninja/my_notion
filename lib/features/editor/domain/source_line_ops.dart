@@ -1209,6 +1209,44 @@ SortLinesResult stdDevNumericLinesIn(String text, int start, int end) =>
       return [math.sqrt(variance).toString()];
     });
 
+/// Replace each numeric line with its **z-score**:
+/// `(x - mean) / stddev`, using the population standard deviation
+/// (same as [stdDevNumericLinesIn]). Non-numeric lines pass through
+/// — labels and dividers survive the transform so a column with a
+/// header still reads correctly. Returns the source unchanged when
+/// no line parses, when only one numeric line is present, or when
+/// the stddev is 0 (all values identical, avoids divide-by-zero).
+/// Always rendered as decimal — z-scores rarely line up on integers
+/// and forcing integer-form would be misleading.
+///
+///   10            -1.414...
+///   20      →     0.0
+///   30             1.414...
+SortLinesResult zScoreNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final values = <double>[];
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v != null) values.add(v);
+      }
+      if (values.length < 2) return lines;
+      final mean = values.reduce((a, b) => a + b) / values.length;
+      final variance = values
+              .map((v) => (v - mean) * (v - mean))
+              .reduce((a, b) => a + b) /
+          values.length;
+      final sd = math.sqrt(variance);
+      if (sd == 0) return lines;
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            return ((v - mean) / sd).toString();
+          })(),
+      ];
+    });
+
 /// Replace each numeric line with its share of the column total,
 /// rendered as a percentage with one decimal place (`xx.x%`).
 /// Non-numeric lines pass through. Returns the source unchanged

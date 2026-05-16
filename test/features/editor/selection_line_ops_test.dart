@@ -2668,6 +2668,53 @@ void main() {
     });
   });
 
+  group('zScoreNumericLinesIn', () {
+    test('symmetric run around the mean yields signed z-scores', () {
+      // [10, 20, 30] has μ = 20, σ = sqrt(200/3) ≈ 8.1649658...
+      // → z = -1.2247..., 0.0, 1.2247...
+      const text = '10\n20\n30\n';
+      final r = zScoreNumericLinesIn(text, 0, text.length);
+      final lines = r.text.split('\n');
+      expect(double.parse(lines[0]), closeTo(-1.2247, 1e-4));
+      expect(double.parse(lines[1]), closeTo(0.0, 1e-9));
+      expect(double.parse(lines[2]), closeTo(1.2247, 1e-4));
+    });
+
+    test('label lines pass through unchanged', () {
+      const text = 'score\n10\n20\n30\n';
+      final r = zScoreNumericLinesIn(text, 0, text.length);
+      final lines = r.text.split('\n');
+      expect(lines[0], 'score');
+      expect(double.parse(lines[2]), closeTo(0.0, 1e-9));
+    });
+
+    test('all-identical values is a no-op (avoids /0)', () {
+      const text = '7\n7\n7\n';
+      expect(zScoreNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('single numeric line is a no-op', () {
+      const text = '42\n';
+      expect(zScoreNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(zScoreNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('z-scores sum to 0 over the column', () {
+      const text = '1\n2\n3\n4\n5\n';
+      final r = zScoreNumericLinesIn(text, 0, text.length);
+      final sum = r.text
+          .split('\n')
+          .where((l) => l.isNotEmpty)
+          .map(double.parse)
+          .reduce((a, b) => a + b);
+      expect(sum, closeTo(0.0, 1e-9));
+    });
+  });
+
   group('varianceNumericLinesIn', () {
     test('variance of textbook example is std-dev squared (4)', () {
       // [2,4,4,4,5,5,7,9] has σ = 2, so variance = 4.

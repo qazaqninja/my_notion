@@ -1176,6 +1176,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, varianceNumericLinesIn,
         );
+      case SlashAction.zScoreNumericLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, zScoreNumericLinesIn,
+        );
       case SlashAction.roundNumericLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, roundNumericLinesIn,
