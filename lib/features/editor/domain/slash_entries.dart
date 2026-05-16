@@ -357,6 +357,9 @@ enum SlashAction {
   /// Extract every 4-digit year substring (1800-2099 range) from
   /// each selected line.
   extractYearsFromLines,
+  /// Extract every markdown autolink URL (`<https://x.test>` →
+  /// `https://x.test`) from each selected line.
+  extractMarkdownAutolinksFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1838,6 +1841,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractYearsFromLines,
     keywords: ['extract', 'year', 'date', 'citation', 'bibliography',
         'timeline'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract autolinks',
+    hint: '<https://x> → https://x',
+    action: SlashAction.extractMarkdownAutolinksFromLines,
+    keywords: ['extract', 'autolink', 'angle', 'url', 'commonmark',
+        'wrapped', 'markdown'],
   ),
   SlashEntry(
     icon: 'calendar',

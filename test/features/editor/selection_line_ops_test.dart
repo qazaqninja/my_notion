@@ -4369,6 +4369,76 @@ void main() {
     });
   });
 
+  group('extractMarkdownAutolinksFromLinesIn', () {
+    test('https autolink extracts URL without angle brackets', () {
+      const text = 'see <https://x.test> for context\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('http autolink (no s) extracts', () {
+      const text = 'fetch <http://example.com/path> there\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, 'http://example.com/path\n');
+    });
+
+    test('ftp autolink extracts', () {
+      const text = 'upload to <ftp://files.test/data> tonight\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, 'ftp://files.test/data\n');
+    });
+
+    test('mailto autolink extracts', () {
+      const text = 'email <mailto:bob@example.com> direct\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, 'mailto:bob@example.com\n');
+    });
+
+    test('bare URL (no angle brackets) is NOT an autolink', () {
+      // The `<` `>` brackets are the distinguishing marker; a
+      // bare `https://x.test` is captured by M1054, not here.
+      const text = 'see https://x.test inline\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('angle-bracketed non-URL is NOT an autolink', () {
+      // `<not-a-url>` has no recognised protocol prefix.
+      const text = 'tag <not-a-url> here\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple autolinks on one line each extract', () {
+      const text = 'pair <https://a.test> and <https://b.test>\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://a.test\nhttps://b.test\n');
+    });
+
+    test('URL with whitespace inside is NOT an autolink', () {
+      // `[^>\s]+` rejects whitespace in the URL content.
+      const text = 'invalid <https://x.test more>\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('autolink with query string and fragment preserved', () {
+      const text = 'see <https://x.test/page?v=2#main> details\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://x.test/page?v=2#main\n');
+    });
+
+    test('lines without autolinks dropped from output', () {
+      const text = 'plain prose\n<https://x.test> only\nmore prose\n';
+      final r = extractMarkdownAutolinksFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownAutolinksFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

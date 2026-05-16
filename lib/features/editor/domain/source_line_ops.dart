@@ -1468,6 +1468,40 @@ SortLinesResult extractYearsFromLinesIn(
       return out;
     });
 
+/// Extract every markdown autolink URL (`<https://x.test>` →
+/// `https://x.test`) from each selected line. CommonMark allows
+/// URLs wrapped in `<…>` to be rendered as links without a
+/// surrounding `[text](url)` shape.
+///
+/// Recognition: `<((?:https?|ftp|mailto):[^>\s]+)>`
+/// - Literal `<` opener.
+/// - Protocol prefix: `http`, `https`, `ftp`, or `mailto`.
+/// - URL content: any non-`>`, non-whitespace chars (captured).
+/// - Literal `>` closer.
+///
+/// Distinct from:
+/// - M1054 `extractUrlsFromLinesIn` (bare `https://x.test` form)
+/// - M1099 `extractBareUrlsFromLinesIn` (`example.com` no protocol)
+/// - M1066 `extractMarkdownLinkUrlsFromLinesIn` (inline `[t](url)`)
+/// - M1094 `extractMarkdownReferenceLinkUrlsFromLinesIn` (`[label]: url`)
+///
+/// Five different URL surfaces, each useful for a different
+/// audit pass.
+///
+/// 39th member of the extraction family.
+SortLinesResult extractMarkdownAutolinksFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'<((?:https?|ftp|mailto):[^>\s]+)>');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
