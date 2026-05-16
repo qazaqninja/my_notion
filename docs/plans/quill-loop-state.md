@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** A (Foundation) — gating before Phase B
-- **Task:** A13 — Add `bloc_lint` + `custom_lint` (LT-02, LT-03)
+- **Task:** A14 — Write CONTRIBUTING.md (MD-03 + TS-07 ratchet policy)
 - **Status:** pending
 
 ## Last completed
 
-- **M1210 — A12** (Phase A orchestrator gate — full re-audit, all three TS-* targets confirmed PASS)
-- Committed: (this commit)
-- TaskList ID: 12
-- Notes: Phase A delta confirmed. New info finding: TS-04 (event-level group nesting in vault_bloc/editor_bloc tests) — defer to A15 or later. Phase B readiness checks: reminders datasource belongs in `lib/features/reminders/data/datasources/`, not `lib/core/platform/`; no transitive `get_it` pulled in by video_player/audioplayers/pdfx/flutter_local_notifications/share_plus per `flutter pub deps`; pdfx may need a method-channel wrapper for testability.
+- **M1211 — A13** (add bloc_lint + custom_lint)
+- Committed: 7fb21fb
+- TaskList ID: 13
+- Notes: Pins `bloc_lint: ^0.3.7` (pub resolved 0.4.x incompatible with drift_dev/flutter_test analyzer constraints) and `custom_lint: ^0.8.0`. analyzer.plugins:[custom_lint] wired in analysis_options.yaml. `dart run custom_lint` finds 0 issues on existing code — no follow-up cleanup needed. LT-02 and LT-03 both resolved in one iteration.
 
 ## Backlog (Phase A — Foundation)
 
@@ -30,7 +30,7 @@
 - [x] A10 — Write NEW `vault_bloc_test.dart` (M1204+M1206, 11 cases covering 9 no-op events + CloseVault + LoadFromPath missing-path; PickVault / load-happy-path deferred)
 - [x] A11 — Write NEW `editor_bloc_test.dart` (M1208, 9 cases covering no-op contract; OpenEditor / SaveNow positive paths deferred)
 - [x] A12 — Re-run flutter-arch-orchestrator (Phase A gate — TS-03/08/09 confirmed PASS; remaining ERRORs LT-02/LT-03/TS-07)
-- [ ] A13 — Add `bloc_lint` + `custom_lint` (LT-02, LT-03)
+- [x] A13 — Add `bloc_lint` + `custom_lint` (LT-02, LT-03) (M1211 / 7fb21fb)
 - [ ] A14 — Write CONTRIBUTING.md (MD-03 + TS-07 ratchet policy)
 - [ ] A15 — (deferred / optional) sub-group vault_bloc_test + editor_bloc_test by event (TS-04 info)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
@@ -80,8 +80,8 @@
 ### ERROR (block-severity)
 
 - [ ] **TS-07** — Coverage gate 62% vs RULES.md 95% default. Set in `.github/workflows/flutter-ci.yml:65` (`min_coverage: 62`). Intentional ratchet but formally non-compliant; A14 lands CONTRIBUTING.md documenting the ratchet path so the deviation is policy-acknowledged. Full 95% requires backfilling many feature areas.
-- [ ] **LT-02** — `bloc_lint` not in pubspec / CI. (Note: A4 added bloc_test only; LT-02 was decoupled and is now A13.) Resolves with A13.
-- [ ] **LT-03** — `custom_lint` not in `dev_dependencies` / CI. Resolves with A13 (same iteration as bloc_lint — both are lint-runner packages).
+- [x] **LT-02** — `bloc_lint` not in pubspec / CI. ✅ Resolved at M1211 (A13) — `bloc_lint: ^0.3.7` added + custom_lint plugin wired in `analysis_options.yaml`. `dart run custom_lint` returns 0 issues on existing code.
+- [x] **LT-03** — `custom_lint` not in `dev_dependencies` / CI. ✅ Resolved at M1211 (A13) — `custom_lint: ^0.8.0` added + `analyzer.plugins: [custom_lint]` in analysis_options.yaml.
 - [x] **TS-03** — `bloc_test` package absent → no `blocTest<>` usage anywhere. ✅ Resolved at M1192 (A4) — `bloc_test: ^10.0.0` added to `pubspec.yaml` dev_dependencies; smoke test at `test/foundation/bloc_test_smoke_test.dart` proves the harness works. Subsequent tasks A7–A11 port existing hand-written bloc/cubit tests to the new harness.
 - [x] **TS-08** (preventive) — alchemist was not in pubspec; no goldens existed so no formal violation yet, but RULES.md TS-08 mandates alchemist for any future golden. ✅ Resolved at M1194 (A5) — `alchemist: ^0.12.1` added, `test/flutter_test_config.dart` wires the config, `dart_test.yaml` declares the `golden` tag, smoke golden at `test/foundation/golden_smoke_test.dart`.
 - [x] **TS-09** (preventive) — mockingjay was not in pubspec; no widget tests asserted Navigator/router calls yet, but RULES.md TS-09 mandates mockingjay for any future router-touching widget test. ✅ Resolved at M1196 (A6) — `mockingjay: ^2.0.0` added (pin capped by SDK 3.9.2 — 2.1.0 needs SDK 3.10). Smoke at `test/foundation/mockingjay_smoke_test.dart` shows both `MockNavigator` and the local `_MockGoRouter extends Mock implements GoRouter` patterns.
