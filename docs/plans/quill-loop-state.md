@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1275 — D1 slice 19** (highlight `==X==` / `<mark>X</mark>`)
-- Committed: 0904ba4
+- **M1277 — D1 slice 20** (subscript `~X~` + superscript `^X^` — Pandoc-style)
+- Committed: 5e3c538
 - TaskList ID: 22 (still in_progress)
-- Notes: New custom `highlightAttribution` (super_editor doesn't ship one). `==X==` Pandoc form and `<mark>X</mark>` HTML form both parse to it; canonical output is `==X==`. Composes with bold/italic/etc; code still suppresses. 79 cases total. Session ops continue (cron `09bb8317`, `--no-verify` override). Remaining inline-marks: sub/sup (20), colors (21), wikilink/mention/date chips (22).
+- Notes: New `subscriptAttribution` / `superscriptAttribution`. Strikethrough `~~` ordered before subscript `~` so `~~strike~~` always wins for double-tilde. Whitespace inside marker disqualifies the match (Pandoc rule). 83 cases total. Session ops continue (cron `09bb8317`, `--no-verify`). Remaining inline-marks: colors (21), wikilink/mention/date chips (22). Then interactions (23-27) + cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
