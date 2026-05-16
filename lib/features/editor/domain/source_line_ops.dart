@@ -1432,6 +1432,42 @@ SortLinesResult extractPercentagesFromLinesIn(
       return out;
     });
 
+/// Extract every currency-amount substring from each selected line.
+/// Useful for finance / pricing doc audits — invoice line items,
+/// budget tables, contract amount harvests.
+///
+/// Supported currency symbols (the four most common):
+/// - `$` (US dollar, also CAD/AUD/etc. in context)
+/// - `€` (euro)
+/// - `£` (British pound)
+/// - `¥` (Japanese yen / Chinese yuan)
+///
+/// Recognition: `[\$€£¥]\d+(?:,\d{3})*(?:\.\d+)?`
+/// - Single currency symbol prefix.
+/// - At least one digit.
+/// - Optional groups of `,\d{3}` for US-style thousands
+///   (e.g. `$1,234,567`).
+/// - Optional decimal part (`$10.99`).
+///
+/// EU-style decimal-comma forms like `€5,99` only capture `€5`
+/// (the `,99` doesn't follow the thousands `,\d{3}` rule).
+/// Multi-char prefixes (`R$`, `HK$`, `C$`) are out of scope —
+/// only the dominant single-symbol form is supported.
+///
+/// 29th member of the extraction family.
+SortLinesResult extractCurrencyFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'[\$€£¥]\d+(?:,\d{3})*(?:\.\d+)?');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

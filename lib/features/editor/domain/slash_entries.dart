@@ -354,6 +354,9 @@ enum SlashAction {
   /// Extract every percentage substring (`42%`, `99.9%`) from each
   /// selected line.
   extractPercentagesFromLines,
+  /// Extract every currency-amount substring (`$10`, `€5.99`,
+  /// `£100`, `¥500`) from each selected line.
+  extractCurrencyFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1786,6 +1789,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractPercentagesFromLines,
     keywords: ['extract', 'percent', 'percentage', 'rate', 'kpi',
         'growth', 'analytics'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract currency amounts',
+    hint: '\$10.99 / €5 / £100',
+    action: SlashAction.extractCurrencyFromLines,
+    keywords: ['extract', 'currency', 'money', 'price', 'dollar',
+        'euro', 'pound', 'yen', 'amount', 'invoice', 'budget'],
   ),
   SlashEntry(
     icon: 'edit',

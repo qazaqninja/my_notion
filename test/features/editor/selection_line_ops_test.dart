@@ -3499,6 +3499,74 @@ void main() {
     });
   });
 
+  group('extractCurrencyFromLinesIn', () {
+    test('plain dollar amount extracts', () {
+      const text = 'price \$10 today\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$10' '\n');
+    });
+
+    test('decimal dollar amount extracts', () {
+      const text = 'cost \$10.99 each\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$10.99' '\n');
+    });
+
+    test('US-style thousands separator preserved', () {
+      const text = 'total \$1,234,567 paid\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$1,234,567' '\n');
+    });
+
+    test('thousands + decimal combined', () {
+      const text = 'invoice \$1,234.56 sent\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$1,234.56' '\n');
+    });
+
+    test('euro symbol extracts', () {
+      const text = 'price €5 in Berlin\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, '€5\n');
+    });
+
+    test('pound and yen symbols extract', () {
+      const text = 'tea £100 and bento ¥500 stocked\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, '£100\n¥500\n');
+    });
+
+    test('multiple currencies on one line each extract', () {
+      const text = 'split \$10 €5 £3 ¥200 across\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$10' '\n€5\n£3\n¥200\n');
+    });
+
+    test('EU comma-decimal `€5,99` captures only the integer part', () {
+      // `,99` doesn't follow `,\d{3}` thousands rule, so the
+      // regex stops at `€5`. Document the v1 limitation.
+      const text = 'price €5,99 in Paris\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, '€5\n');
+    });
+
+    test('bare currency symbol with no digits is NOT a match', () {
+      const text = 'symbol \$ alone trivia\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without currency dropped from output', () {
+      const text = 'plain prose\ncharge \$50 today\nmore prose\n';
+      final r = extractCurrencyFromLinesIn(text, 0, text.length);
+      expect(r.text, r'$50' '\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractCurrencyFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
