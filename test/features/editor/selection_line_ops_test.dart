@@ -2234,6 +2234,49 @@ void main() {
     });
   });
 
+  group('extractHashtagsFromLinesIn', () {
+    test('strips the leading # and emits one tag per line', () {
+      const text = 'this #urgent and #review please\n';
+      final r = extractHashtagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'urgent\nreview\n');
+    });
+
+    test('hashtag supports - and _ in the body', () {
+      const text = '#kebab-case and #snake_case\n';
+      final r = extractHashtagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'kebab-case\nsnake_case\n');
+    });
+
+    test('trailing punctuation drops out cleanly', () {
+      const text = 'see #urgent. now.\n';
+      final r = extractHashtagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'urgent\n');
+    });
+
+    test('# followed by space is NOT a hashtag (it is a heading)', () {
+      const text = '# heading\n#real-tag\n';
+      final r = extractHashtagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'real-tag\n');
+    });
+
+    test('# embedded in a word is NOT a hashtag', () {
+      // `email#cc` should not yield `cc` — the boundary check rejects it.
+      const text = 'email#cc trail\n#real\n';
+      final r = extractHashtagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'real\n');
+    });
+
+    test('lines without hashtags are dropped from output', () {
+      const text = 'plain prose\n#tagged here\n';
+      final r = extractHashtagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'tagged\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractHashtagsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractUrlsFromLinesIn', () {
     test('one URL per line: emits each on its own line', () {
       const text = 'see https://example.com\nand http://other.test\n';

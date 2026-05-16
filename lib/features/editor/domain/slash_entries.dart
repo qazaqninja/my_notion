@@ -263,6 +263,9 @@ enum SlashAction {
   /// Extract every http/https/ftp URL from each selected line and
   /// emit them one-per-line.
   extractUrlsFromLines,
+  /// Extract every `#hashtag` from each selected line and emit them
+  /// one-per-line, without the leading `#`.
+  extractHashtagsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1478,6 +1481,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'one link per line',
     action: SlashAction.extractUrlsFromLines,
     keywords: ['extract', 'pull', 'url', 'link', 'http', 'https'],
+  ),
+  SlashEntry(
+    icon: 'tag',
+    label: 'Extract hashtags',
+    hint: '#tag → tag (one per line)',
+    action: SlashAction.extractHashtagsFromLines,
+    keywords: ['extract', 'pull', 'hashtag', 'tag', 'tags'],
   ),
   SlashEntry(
     icon: 'sync',

@@ -524,6 +524,30 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Extract every `#hashtag` from each selected line and emit them
+/// one-per-line WITHOUT the leading `#`. Useful for harvesting
+/// inline-written tags out of prose for migration into the
+/// frontmatter `tags:` list, or for surveying which tags appear in
+/// a paste-in.
+///
+/// Recognition: `#` immediately followed by a letter/digit (so the
+/// `#` in `#1` and `#header` both count, but `# heading` does not).
+/// Hashtag continues through letters / digits / `-` / `_`. Trailing
+/// punctuation drops out cleanly: `#urgent.` → `urgent`.
+SortLinesResult extractHashtagsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Anchored on word boundary so `email#cc:` doesn't yield `cc`.
+      final re = RegExp(r'(?<![A-Za-z0-9])#([A-Za-z0-9][\w\-]*)');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every http/https/ftp URL from each selected line and emit
 /// them one-per-line. Useful for harvesting links from prose
 /// paste-ins ahead of bulk-bookmarking or building a links-only
