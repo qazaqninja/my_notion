@@ -8,6 +8,7 @@ import 'package:backend/db/connection.dart';
 import 'package:backend/db/migrations.dart';
 import 'package:backend/db/sync.dart';
 import 'package:backend/db/users.dart';
+import 'package:backend/public/routes.dart' as public_routes;
 import 'package:backend/sync/routes.dart' as sync_routes;
 import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
@@ -84,10 +85,15 @@ void main(List<String> args) async {
               .call,
         );
     router.mount('/sync/', syncPipeline);
+    // Public sharing surface (E16) — NO auth wrapper. `GET /public/<ulid>`
+    // returns the public-flagged page body as HTML, or 404.
+    router.mount('/public/', public_routes.buildPublicRouter(conn: conn).call);
   } else {
     router.all('/auth/<ignored|.*>',
         (Request req) => Response(503, body: 'db: not connected\n'));
     router.all('/sync/<ignored|.*>',
+        (Request req) => Response(503, body: 'db: not connected\n'));
+    router.all('/public/<ignored|.*>',
         (Request req) => Response(503, body: 'db: not connected\n'));
   }
 

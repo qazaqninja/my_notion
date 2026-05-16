@@ -1,6 +1,7 @@
 import 'package:postgres/postgres.dart';
 
 import '../sync/file_summary.dart';
+import '../sync/frontmatter_probe.dart';
 
 /// Result of `upsert` — either the new persisted summary, or a
 /// conflict-with-the-current-server-state when `ifMatch` didn't match.
@@ -123,14 +124,18 @@ class SyncRepository implements SyncRepositoryBase {
           }
         }
       }
+      final probe = FrontmatterProbe.fromBody(body);
       final rows = await tx.execute(
         Sql.named('''
-          INSERT INTO vault_files (user_id, relpath, sha256, body, mtime)
-          VALUES (@uid, @rel, @sha, @body, now())
+          INSERT INTO vault_files
+            (user_id, relpath, sha256, body, mtime, ulid, is_public)
+          VALUES (@uid, @rel, @sha, @body, now(), @ulid, @public)
           ON CONFLICT (user_id, relpath) DO UPDATE
-            SET sha256 = EXCLUDED.sha256,
-                body   = EXCLUDED.body,
-                mtime  = now()
+            SET sha256    = EXCLUDED.sha256,
+                body      = EXCLUDED.body,
+                mtime     = now(),
+                ulid      = EXCLUDED.ulid,
+                is_public = EXCLUDED.is_public
           RETURNING relpath, sha256, mtime
         '''),
         parameters: {
@@ -138,6 +143,8 @@ class SyncRepository implements SyncRepositoryBase {
           'rel': relpath,
           'sha': sha256,
           'body': body,
+          'ulid': probe.ulid,
+          'public': probe.isPublic,
         },
       );
       final row = rows.first;

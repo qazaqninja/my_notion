@@ -67,4 +67,15 @@ const _migrations = <_Migration>[
     );
     CREATE INDEX idx_vault_files_user_mtime ON vault_files(user_id, mtime DESC);
   '''),
+  _Migration(3, '''
+    -- E16 (M1316): public sharing surface.
+    -- `ulid` is the page identifier extracted from frontmatter `id:` —
+    -- used by `GET /public/<ulid>` for cross-user lookup.
+    -- `is_public` is extracted from frontmatter `public: true`; only
+    -- pages with this set respond to the public route.
+    ALTER TABLE vault_files ADD COLUMN ulid TEXT;
+    ALTER TABLE vault_files ADD COLUMN is_public BOOLEAN NOT NULL DEFAULT false;
+    CREATE INDEX idx_vault_files_ulid_public
+      ON vault_files(ulid) WHERE is_public = true;
+  '''),
 ];
