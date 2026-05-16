@@ -183,6 +183,29 @@ void main() {
     });
   });
 
+  group('trimWhitespaceLinesIn', () {
+    test('trims leading and trailing whitespace from each line', () {
+      const text = '  foo  \n\tbar\t\n  baz\n';
+      final r = trimWhitespaceLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\nbaz\n');
+    });
+
+    test('blank lines become empty (full collapse)', () {
+      const text = '   \n\tfoo\t\n';
+      final r = trimWhitespaceLinesIn(text, 0, text.length);
+      expect(r.text, '\nfoo\n');
+    });
+
+    test('lines already flush pass through unchanged', () {
+      const text = 'flush\nlines\n';
+      expect(trimWhitespaceLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(trimWhitespaceLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('dedentLinesIn', () {
     test('strips the minimum common indent', () {
       const text = '  foo\n    bar\n  baz\n';

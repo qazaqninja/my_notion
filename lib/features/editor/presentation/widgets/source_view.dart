@@ -889,6 +889,15 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart.clamp(0, trimmed.text.length),
           ),
         );
+      case SlashAction.trimWhitespaceLines:
+        final cleared = text.replaceRange(stripStart, caret, '');
+        final trimmed = trimWhitespaceLinesIn(cleared, 0, cleared.length);
+        _controller.value = TextEditingValue(
+          text: trimmed.text,
+          selection: TextSelection.collapsed(
+            offset: stripStart.clamp(0, trimmed.text.length),
+          ),
+        );
       case SlashAction.uppercaseSelectedLines:
         _applyLinesTransformAfterSlash(stripStart, caret, uppercaseLinesIn);
       case SlashAction.lowercaseSelectedLines:

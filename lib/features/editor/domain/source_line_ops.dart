@@ -1972,6 +1972,19 @@ SortLinesResult splitLinesOnSentencesIn(
       ];
     });
 
+/// Trim BOTH leading and trailing whitespace from every line in the
+/// selected block — a single op that combines `stripLeadingWhitespace`
+/// (M821 era) and `trimTrailingWhitespace`. Useful when prose lost
+/// its surrounding whitespace structure and you want to flatten it
+/// in one shot. Blank lines stay blank.
+SortLinesResult trimWhitespaceLinesIn(String text, int start, int end) =>
+    transformLinesIn(
+      text,
+      start,
+      end,
+      (lines) => [for (final l in lines) l.trim()],
+    );
+
 /// Strip trailing whitespace (spaces, tabs) from every line in the
 /// selected block. Common cleanup before committing — many tools
 /// reject trailing whitespace and it's invisible in the editor.

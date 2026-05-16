@@ -21,6 +21,9 @@ enum SlashAction {
   /// the entire body when no selection is active). Common cleanup
   /// before committing — many tools reject trailing whitespace.
   trimTrailingWhitespace,
+  /// Trim BOTH leading and trailing whitespace from every line in
+  /// the selected block.
+  trimWhitespaceLines,
   /// Uppercase the lines touched by the selection.
   uppercaseSelectedLines,
   /// Lowercase the lines touched by the selection.
@@ -763,6 +766,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'cleanup',
     action: SlashAction.trimTrailingWhitespace,
     keywords: ['trim', 'whitespace', 'cleanup', 'strip', 'tabs'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Trim leading + trailing whitespace',
+    hint: 'both sides at once',
+    action: SlashAction.trimWhitespaceLines,
+    keywords: ['trim', 'whitespace', 'both', 'cleanup', 'strip'],
   ),
   SlashEntry(
     icon: 'edit',
