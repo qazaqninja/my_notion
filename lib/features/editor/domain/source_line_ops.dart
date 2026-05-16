@@ -3415,6 +3415,47 @@ SortLinesResult extractGeoCoordinatesFromLinesIn(
       return out;
     });
 
+/// Extract every IBAN (International Bank Account Number) from
+/// each selected line. Useful for invoicing doc audits, vendor
+/// payment inventory, and accounting note triage.
+///
+/// Recognition: `\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b`
+/// - Two uppercase letters (ISO 3166-1 country code).
+/// - Two digits (the IBAN check digits, computed per ISO 13616).
+/// - 11 to 30 uppercase alphanumerics (the BBAN body — bank
+///   identifier + account number, country-specific layout).
+/// - Total length 15-34 characters, matching the IBAN-by-country
+///   length table.
+///
+/// Matches:
+/// - `GB82WEST12345698765432`              — UK, 22 chars
+/// - `DE89370400440532013000`              — Germany, 22 chars
+/// - `FR1420041010050500013M02606`         — France, 27 chars
+/// - `NO9386011117947`                     — Norway, 15 chars
+///
+/// IBAN check-digit validity (ISO 13616 mod-97) is NOT verified
+/// — that's a semantic check downstream. The regex enforces only
+/// shape; downstream callers can run mod-97 if they need to
+/// reject malformed entries.
+///
+/// Case-sensitive (uppercase only) per the canonical IBAN
+/// presentation; mixed-case strings would be normalised before
+/// printing.
+///
+/// 95th member of the extraction family.
+SortLinesResult extractIbansFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

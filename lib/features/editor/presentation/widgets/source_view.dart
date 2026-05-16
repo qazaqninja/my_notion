@@ -1599,6 +1599,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractGeoCoordinatesFromLinesIn,
         );
+      case SlashAction.extractIbansFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractIbansFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

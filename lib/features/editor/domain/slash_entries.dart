@@ -531,6 +531,9 @@ enum SlashAction {
   /// degrees, e.g. `37.7749,-122.4194`) from each selected
   /// line.
   extractGeoCoordinatesFromLines,
+  /// Extract every IBAN (International Bank Account Number,
+  /// e.g. `GB82WEST12345698765432`) from each selected line.
+  extractIbansFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2465,6 +2468,14 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'geo', 'coordinate', 'lat', 'lon',
         'latitude', 'longitude', 'gps', 'map', 'location',
         'travel'],
+  ),
+  SlashEntry(
+    icon: 'credit-card',
+    label: 'Extract IBANs',
+    hint: 'GB82WEST... / DE8937... / NO9386...',
+    action: SlashAction.extractIbansFromLines,
+    keywords: ['extract', 'iban', 'bank', 'account',
+        'sepa', 'payment', 'invoice', 'finance', 'banking'],
   ),
   SlashEntry(
     icon: 'calendar',

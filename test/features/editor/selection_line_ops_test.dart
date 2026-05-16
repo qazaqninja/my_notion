@@ -8362,6 +8362,81 @@ void main() {
     });
   });
 
+  group('extractIbansFromLinesIn', () {
+    test('UK IBAN extracts', () {
+      const text = 'wire to GB82WEST12345698765432 today\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'GB82WEST12345698765432\n');
+    });
+
+    test('Germany IBAN extracts', () {
+      const text = 'invoice DE89370400440532013000 paid\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'DE89370400440532013000\n');
+    });
+
+    test('France IBAN extracts (mixed alphanumeric body)', () {
+      const text = 'vendor FR1420041010050500013M02606 here\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'FR1420041010050500013M02606\n');
+    });
+
+    test('Norway 15-char IBAN extracts (shortest)', () {
+      const text = 'nordic NO9386011117947 ref\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'NO9386011117947\n');
+    });
+
+    test('Malta 31-char IBAN extracts (long)', () {
+      const text = 'malta MT84MALT011000012345MTLCAST001S here\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'MT84MALT011000012345MTLCAST001S\n');
+    });
+
+    test('lowercase country code rejected', () {
+      // The regex requires uppercase letters for the country
+      // code; lowercase like `gb82...` is rejected.
+      const text = 'fake gb82WEST12345698765432 ignore\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('non-digit check chars rejected', () {
+      // The regex requires `\d{2}` after the country code;
+      // letters where digits should be are rejected.
+      const text = 'fake GBAAWEST12345698765432 ignore\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('too short BBAN body rejected', () {
+      // BBAN body must be 11+ chars. `GB821234567890` has
+      // a 10-char body, too short.
+      const text = 'short GB821234567890 ignore\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple IBANs on one line each extract', () {
+      const text =
+          'from GB82WEST12345698765432 to '
+          'DE89370400440532013000 ok\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text,
+          'GB82WEST12345698765432\nDE89370400440532013000\n',);
+    });
+
+    test('lines without IBANs dropped from output', () {
+      const text = 'plain prose\npay GB82WEST12345698765432 bye\n';
+      final r = extractIbansFromLinesIn(text, 0, text.length);
+      expect(r.text, 'GB82WEST12345698765432\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractIbansFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
