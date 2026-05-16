@@ -3116,6 +3116,41 @@ SortLinesResult toggleNumberedPrefixIn(String text, int start, int end) =>
 /// treated as plain text and gains one more `> ` (becoming
 /// `> >> nested`), so repeated toggles let the user step nested
 /// quotes outward one level at a time on reapply.
+/// Remove the **common leading whitespace** from every line in the
+/// selected block — the standard "dedent" semantics. The minimum
+/// indent across all non-blank lines is computed, then stripped
+/// from each line. Tabs and spaces are treated as equivalent
+/// columns of width 1 (the same convention the M1006
+/// `outdentLinesIn` uses); the user's tab-vs-space mix is left
+/// alone, only the common prefix length is reduced.
+///
+///   '  foo\n    bar\n  baz\n'  →  'foo\n  bar\nbaz\n'
+///
+/// Blank lines are skipped when computing the minimum indent but
+/// emitted unchanged. Useful when a paste-in came over-indented
+/// from being copied out of a nested context.
+SortLinesResult dedentLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      int leading(String l) {
+        var i = 0;
+        while (i < l.length && (l.codeUnitAt(i) == 0x20 || l.codeUnitAt(i) == 0x09)) {
+          i++;
+        }
+        return i;
+      }
+      var minIndent = -1;
+      for (final l in lines) {
+        if (l.trim().isEmpty) continue;
+        final n = leading(l);
+        if (minIndent < 0 || n < minIndent) minIndent = n;
+      }
+      if (minIndent <= 0) return lines;
+      return [
+        for (final l in lines)
+          l.trim().isEmpty ? l : l.substring(minIndent),
+      ];
+    });
+
 /// Strip blank lines from the **edges** of the selected block,
 /// preserving every line in the interior. Useful for trimming the
 /// "extra newlines around a paste" without flattening blank lines

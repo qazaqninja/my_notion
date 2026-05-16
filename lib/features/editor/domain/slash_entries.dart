@@ -107,6 +107,9 @@ enum SlashAction {
   /// Strip blank lines from the edges of the selected block,
   /// preserving every line in the interior.
   trimBlankEdgeLines,
+  /// Remove the common leading whitespace from every line in the
+  /// selected block (standard "dedent" semantics).
+  dedentLines,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1598,6 +1601,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'drop leading + trailing blanks',
     action: SlashAction.trimBlankEdgeLines,
     keywords: ['trim', 'strip', 'blank', 'edge', 'leading', 'trailing'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Dedent (remove common indent)',
+    hint: 'strip shared prefix whitespace',
+    action: SlashAction.dedentLines,
+    keywords: ['dedent', 'unindent', 'flatten', 'normalize'],
   ),
   SlashEntry(
     icon: 'edit',

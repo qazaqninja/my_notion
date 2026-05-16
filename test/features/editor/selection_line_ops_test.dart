@@ -140,6 +140,41 @@ void main() {
     });
   });
 
+  group('dedentLinesIn', () {
+    test('strips the minimum common indent', () {
+      const text = '  foo\n    bar\n  baz\n';
+      final r = dedentLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\n  bar\nbaz\n');
+    });
+
+    test('blank lines are skipped when computing minimum + stay blank', () {
+      const text = '  foo\n\n  bar\n';
+      final r = dedentLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\n\nbar\n');
+    });
+
+    test('no common indent (a line is flush) is a no-op', () {
+      const text = 'foo\n  bar\n';
+      expect(dedentLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('tabs count as one column each', () {
+      // Both lines start with a tab; minimum indent is 1 (the tab).
+      const text = '\tfoo\n\tbar\n';
+      final r = dedentLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\n');
+    });
+
+    test('all-blank selection passes through (no indent to strip)', () {
+      const text = '\n\n\n';
+      expect(dedentLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(dedentLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('trimBlankEdgeLinesIn', () {
     test('strips leading and trailing blank lines, keeps interior', () {
       const text = '\n\nhello\n\nworld\n\n';
