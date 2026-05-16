@@ -360,6 +360,9 @@ enum SlashAction {
   /// Extract every markdown autolink URL (`<https://x.test>` →
   /// `https://x.test`) from each selected line.
   extractMarkdownAutolinksFromLines,
+  /// Extract every HTML tag name (`<div>`, `</body>`, `<br/>`)
+  /// from each selected line.
+  extractHtmlTagsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1849,6 +1852,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownAutolinksFromLines,
     keywords: ['extract', 'autolink', 'angle', 'url', 'commonmark',
         'wrapped', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'tag',
+    label: 'Extract HTML tag names',
+    hint: '<div> / </body> → div / body',
+    action: SlashAction.extractHtmlTagsFromLines,
+    keywords: ['extract', 'html', 'tag', 'element', 'name',
+        'sanitize', 'audit'],
   ),
   SlashEntry(
     icon: 'calendar',

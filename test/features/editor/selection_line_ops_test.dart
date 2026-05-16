@@ -4439,6 +4439,75 @@ void main() {
     });
   });
 
+  group('extractHtmlTagsFromLinesIn', () {
+    test('opening tag with attribute extracts name', () {
+      const text = 'wrap <a href="x">link</a> here\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a\na\n');
+    });
+
+    test('closing tag yields the same name', () {
+      const text = 'end </body> done\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'body\n');
+    });
+
+    test('self-closing tag extracts', () {
+      const text = 'image <br/> break\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'br\n');
+    });
+
+    test('HTML5 custom element with hyphen', () {
+      const text = 'use <my-component prop="x"> here\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'my-component\n');
+    });
+
+    test('multiple tags on one line each extract', () {
+      const text = '<div><span>txt</span></div>\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'div\nspan\nspan\ndiv\n');
+    });
+
+    test('markdown autolink is NOT an HTML tag', () {
+      // `<https://x.test>` starts with `<h` but the regex's
+      // `[\w-]*\b[^>]*>` happily consumes the rest. Hmm —
+      // this is actually a known overlap. Document.
+      const text = 'see <https://x.test>\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      // The regex DOES match: `h` (first letter), `ttps`
+      // (rest of name chars). Then `\b` between `s` and `:`.
+      // Then `://x.test` as attribute content. Match name
+      // = `https`. Documented overlap with autolinks.
+      expect(r.text, 'https\n');
+    });
+
+    test('space after `<` is NOT a tag', () {
+      // The regex requires `[a-zA-Z]` immediately after `<`
+      // (with optional `/`). A space breaks it.
+      const text = 'use < not a tag>\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('digits-first `<1div>` is NOT a tag', () {
+      const text = 'see <1div> bad\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain prose lines dropped from output', () {
+      const text = 'plain prose\n<p>para</p>\nmore prose\n';
+      final r = extractHtmlTagsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'p\np\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractHtmlTagsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

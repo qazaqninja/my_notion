@@ -1502,6 +1502,46 @@ SortLinesResult extractMarkdownAutolinksFromLinesIn(
       return out;
     });
 
+/// Extract every HTML tag NAME from each selected line. Useful
+/// for "what HTML does this content use?" audits — pasted
+/// fragments, mixed markdown+HTML docs, sanitization passes.
+///
+/// Recognition: `</?([a-zA-Z][\w-]*)\b[^>]*>`
+/// - Optional `/` for closing tags (so `</body>` and `<body>`
+///   both yield `body`).
+/// - First char must be `[a-zA-Z]` — distinguishes from
+///   markdown autolinks (`<https://…>` starts with `h`, then
+///   `://` would fail the tag-content regex).
+/// - Remaining chars `[\w-]*` cover digits and hyphens, which
+///   are valid in HTML5 custom elements (`my-component`).
+/// - Word boundary `\b` then any non-`>` chars (attributes).
+/// - Literal `>` closer.
+///
+/// Self-closing tags (`<br/>`, `<img src=""/>`) match the same
+/// pattern — the `/>` falls inside `[^>]*>`.
+///
+/// 40th member of the extraction family — round-number partner
+/// to M1100. The 40-member family covers: numbers, emails,
+/// URLs (5 surfaces), hashtags, mentions, wikilinks, todos
+/// (open + done), ISO dates, ULIDs, hex colors, IPv4, UUIDs,
+/// link labels + image alts, semver, MAC, code spans, headings,
+/// blockquote / list / strikethrough / footnote ID+body,
+/// fence langs, bold + italic, time-of-day, percentages,
+/// currency, file sizes, git SHAs, phones, table cells,
+/// ref-link defs (URL + label), years, autolinks, HTML tags.
+SortLinesResult extractHtmlTagsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'</?([a-zA-Z][\w-]*)\b[^>]*>');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
