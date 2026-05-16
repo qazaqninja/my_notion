@@ -351,6 +351,9 @@ enum SlashAction {
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
+  /// Extract every percentage substring (`42%`, `99.9%`) from each
+  /// selected line.
+  extractPercentagesFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1775,6 +1778,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractTimeOfDayFromLines,
     keywords: ['extract', 'time', 'clock', 'hour', 'minute',
         'meeting', 'schedule', 'log'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract percentages',
+    hint: '42% / 99.9%',
+    action: SlashAction.extractPercentagesFromLines,
+    keywords: ['extract', 'percent', 'percentage', 'rate', 'kpi',
+        'growth', 'analytics'],
   ),
   SlashEntry(
     icon: 'edit',

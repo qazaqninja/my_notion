@@ -3436,6 +3436,69 @@ void main() {
     });
   });
 
+  group('extractPercentagesFromLinesIn', () {
+    test('whole-number percentage extracts', () {
+      const text = 'growth 42% YoY tracked\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '42%\n');
+    });
+
+    test('decimal percentage extracts', () {
+      const text = 'churn 99.9% retained\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '99.9%\n');
+    });
+
+    test('0% and 100% edge cases extract', () {
+      const text = 'from 0% to 100% complete\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '0%\n100%\n');
+    });
+
+    test('multiple percentages on one line each extract', () {
+      const text = 'split 25%, 35%, and 40% across teams\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '25%\n35%\n40%\n');
+    });
+
+    test('after non-letter operator `n=42%` still matches', () {
+      // `\b` before digits is satisfied when preceded by a
+      // non-word char like `=`.
+      const text = 'ratio n=42% precise\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '42%\n');
+    });
+
+    test('embedded in word `abc42%` is NOT a match', () {
+      // `\b` requires a non-word→word transition before digits.
+      const text = 'token abc42% inline\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('bare `%` without digits is NOT a match', () {
+      const text = 'symbol % alone trivia\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('number without `%` is NOT a percentage', () {
+      const text = 'count 42 things\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without percentages dropped from output', () {
+      const text = 'plain prose\nrate 75% growth\nmore prose\n';
+      final r = extractPercentagesFromLinesIn(text, 0, text.length);
+      expect(r.text, '75%\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractPercentagesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

@@ -1364,6 +1364,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,
         );
+      case SlashAction.extractPercentagesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractPercentagesFromLinesIn,
+        );
       case SlashAction.extractMarkdownLinkLabelsFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownLinkLabelsFromLinesIn,

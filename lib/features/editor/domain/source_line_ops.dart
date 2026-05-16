@@ -1404,6 +1404,34 @@ SortLinesResult extractTimeOfDayFromLinesIn(
       return out;
     });
 
+/// Extract every percentage substring from each selected line.
+/// Useful for finance / analytics doc audits — "what numbers
+/// is this report citing?", growth-rate harvests, KPI scrapes.
+///
+/// Recognition: `\b\d+(?:\.\d+)?%`
+/// - Word boundary before the digits, so `n=42%` matches but
+///   `abc42%` does not.
+/// - Optional decimal part (`99.9%`, `0.5%`, `100%` all match).
+/// - Literal trailing `%`.
+///
+/// The whole token (including `%`) is captured — keeps the
+/// semantic intent visible in the output. Strip `%` downstream
+/// if you want the bare numbers.
+///
+/// 28th member of the extraction family.
+SortLinesResult extractPercentagesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b\d+(?:\.\d+)?%');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
