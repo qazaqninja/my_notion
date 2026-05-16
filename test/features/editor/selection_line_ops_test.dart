@@ -6552,6 +6552,86 @@ void main() {
     });
   });
 
+  group('extractStackOverflowQuestionIdsFromLinesIn', () {
+    test('canonical /questions/N URL extracts', () {
+      const text = 'see https://stackoverflow.com/questions/12345 ref\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '12345\n');
+    });
+
+    test('URL with trailing slug extracts ID only', () {
+      const text =
+          'cite https://stackoverflow.com/questions/12345/how-to-x today\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '12345\n');
+    });
+
+    test('short /q/N form extracts', () {
+      const text = 'short stackoverflow.com/q/999 inline\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '999\n');
+    });
+
+    test('protocol-less form still matches', () {
+      const text = 'see stackoverflow.com/questions/42 today\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '42\n');
+    });
+
+    test('non-SO URL is NOT matched', () {
+      const text =
+          'cite quora.com/questions/12345 elsewhere\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('SO tag URL (not /questions/) is NOT a Q ID', () {
+      // `/tagged/dart` is a tag listing, not a question.
+      const text =
+          'browse https://stackoverflow.com/tagged/dart anywhere\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple SO URLs on one line each extract', () {
+      const text =
+          'pair stackoverflow.com/questions/100 and '
+          'stackoverflow.com/q/200 cited\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '100\n200\n');
+    });
+
+    test('large question number extracts', () {
+      const text =
+          'big stackoverflow.com/questions/79999999 ref\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '79999999\n');
+    });
+
+    test('lines without SO URLs dropped from output', () {
+      const text =
+          'plain prose\ncite stackoverflow.com/questions/100\nmore prose\n';
+      final r = extractStackOverflowQuestionIdsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '100\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractStackOverflowQuestionIdsFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

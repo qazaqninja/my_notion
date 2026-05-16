@@ -455,6 +455,9 @@ enum SlashAction {
   /// Extract every HTTP status code substring (1XX-5XX range)
   /// from each selected line.
   extractHttpStatusCodesFromLines,
+  /// Extract every Stack Overflow question ID from a Stack
+  /// Overflow URL on each selected line.
+  extractStackOverflowQuestionIdsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2192,6 +2195,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractHttpStatusCodesFromLines,
     keywords: ['extract', 'http', 'status', 'code', 'error',
         'response', 'api'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract StackOverflow Q IDs',
+    hint: 'stackoverflow.com/questions/N → N',
+    action: SlashAction.extractStackOverflowQuestionIdsFromLines,
+    keywords: ['extract', 'stackoverflow', 'so', 'question',
+        'answer', 'citation'],
   ),
   SlashEntry(
     icon: 'calendar',

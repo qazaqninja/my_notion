@@ -2540,6 +2540,35 @@ SortLinesResult extractHttpStatusCodesFromLinesIn(
       return out;
     });
 
+/// Extract every Stack Overflow question ID from a Stack
+/// Overflow URL on each selected line. Useful for citation
+/// audit, "which SO answers does this design doc link?"
+/// surveys, and reference-list scrubbing.
+///
+/// Recognition: `stackoverflow\.com/(?:questions|q)/(\d+)`
+/// - `stackoverflow.com/` anchor.
+/// - Path segment: `questions` (canonical) OR `q` (short URL).
+/// - Numeric question ID captured as group 1.
+///
+/// The trailing `/title-slug` portion (if any) is correctly
+/// excluded — the regex stops at the digits.
+///
+/// 71st member of the extraction family.
+SortLinesResult extractStackOverflowQuestionIdsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'stackoverflow\.com/(?:questions|q)/(\d+)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
