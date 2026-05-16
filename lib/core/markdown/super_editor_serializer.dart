@@ -50,10 +50,17 @@ class SuperEditorSerializer {
   ///     `markdown_renderer.dart` GFM-pipe-table path) gets the source
   ///     unmodified and round-trip stays byte-identical.
   /// - Slice 8: image cards.
-  ///   - Standalone `![alt](url)` (the line is exactly that) →
-  ///     `ImageNode(imageUrl: url, altText: alt)`. Inline images inside
-  ///     a paragraph stay as raw markdown — they'd need an inline
-  ///     mark, deferred to the inline-marks slices.
+  ///   - Standalone `![alt](url)` (the line is exactly that), URL has
+  ///     image extension (jpg/jpeg/png/gif/webp/bmp/svg/heic) or no
+  ///     extension → `ImageNode(imageUrl: url, altText: alt)`. Inline
+  ///     images inside a paragraph stay as raw markdown.
+  /// - Slice 9: file attachment cards.
+  ///   - Standalone `![label](file.pdf)` (or `.mp4`, `.mp3`, `.zip`,
+  ///     etc.) — non-image extensions → `ParagraphNode` with `blockType:
+  ///     fileAttachmentAttribution` and `label` / `path` metadata. The
+  ///     existing markdown_renderer.dart M76/M201 cards render this via
+  ///     the same `_FileAttachment` widget; super_editor migration
+  ///     preserves the structure for cell-level editing later.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -127,17 +134,33 @@ class SuperEditorSerializer {
         ));
         continue;
       }
-      // Standalone image card? Line is exactly `![alt](url)` — bare
-      // image with no surrounding text. Inline images inside a paragraph
-      // stay as raw markdown for the inline-marks pass.
-      final imageMatch = RegExp(r'^!\[(.*?)\]\((.+?)\)\s*$').firstMatch(line);
-      if (imageMatch != null) {
+      // Standalone media card? Line is exactly `![label](url)`. Branch
+      // on extension: image vs file attachment.
+      final mediaMatch = RegExp(r'^!\[(.*?)\]\((.+?)\)\s*$').firstMatch(line);
+      if (mediaMatch != null) {
         flushBuffer();
-        nodes.add(ImageNode(
-          id: Editor.createNodeId(),
-          altText: imageMatch.group(1) ?? '',
-          imageUrl: imageMatch.group(2)!,
-        ));
+        final label = mediaMatch.group(1) ?? '';
+        final url = mediaMatch.group(2)!;
+        if (_isImageUrl(url)) {
+          nodes.add(ImageNode(
+            id: Editor.createNodeId(),
+            altText: label,
+            imageUrl: url,
+          ));
+        } else {
+          // File attachment — keep the raw markdown in body text so a
+          // load + save without edits is byte-identical, and stash the
+          // label + path in metadata for future cell-level editing.
+          nodes.add(ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('![$label]($url)'),
+            metadata: {
+              'blockType': fileAttachmentAttribution,
+              'label': label,
+              'path': url,
+            },
+          ));
+        }
         i += 1;
         continue;
       }
@@ -292,8 +315,9 @@ class SuperEditorSerializer {
         out.write('![${node.altText}](${node.imageUrl})');
       } else if (node is ParagraphNode) {
         final block = node.getMetadataValue('blockType');
-        if (block == tableAttribution) {
-          // Body is the raw multi-line table markdown — emit verbatim.
+        if (block == tableAttribution ||
+            block == fileAttachmentAttribution) {
+          // Body holds the raw markdown — emit verbatim.
           out.write(node.text.toPlainText());
         } else if (block == codeAttribution) {
           final lang = node.getMetadataValue('language') as String? ?? '';
@@ -412,6 +436,27 @@ bool _isTableSeparator(String line) {
   final cells = line.split('|').where((s) => s.trim().isNotEmpty);
   if (cells.isEmpty) return false;
   return cells.every((c) => RegExp(r'^:?-+:?\s*$').hasMatch(c.trim()));
+}
+
+/// Custom block-type attribution for non-image `![label](path.ext)`
+/// references (PDFs, video, audio, archives, etc.). super_editor's
+/// `ImageNode` would try to load the URL as a bitmap — wrong tool for
+/// a `.pdf` or `.mp4` path. The ParagraphNode's text holds the raw
+/// markdown for round-trip; metadata fields `label` and `path` are
+/// available for cell-level editing later.
+const fileAttachmentAttribution = NamedAttribution('fileAttachment');
+
+/// Returns true when [url] has an extension this serializer treats as an
+/// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no
+/// extension at all (case insensitive). Non-image extensions route to
+/// `fileAttachmentAttribution`.
+bool _isImageUrl(String url) {
+  final m = RegExp(r'\.([a-zA-Z0-9]+)\s*$').firstMatch(url);
+  if (m == null) return true; // no extension — treat as image
+  final ext = m.group(1)!.toLowerCase();
+  return const {
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic',
+  }.contains(ext);
 }
 
 // Slice 3 list matchers — module-private extension functions on

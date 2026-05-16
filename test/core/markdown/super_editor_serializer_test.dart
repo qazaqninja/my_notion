@@ -381,4 +381,82 @@ void main() {
           'See ![logo](logo.png) inline.');
     });
   });
+
+  group('SuperEditorSerializer file attachment cards (D1 slice 9)', () {
+    test('![report](docs/report.pdf) → file attachment, not image', () {
+      const md = '![report](docs/report.pdf)';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first;
+      expect(node, isA<ParagraphNode>());
+      expect(
+        (node as ParagraphNode).getMetadataValue('blockType'),
+        fileAttachmentAttribution,
+      );
+      expect(node.getMetadataValue('label'), 'report');
+      expect(node.getMetadataValue('path'), 'docs/report.pdf');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('mp4 video → file attachment', () {
+      const md = '![demo](attachments/demo.mp4)';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.first, isA<ParagraphNode>());
+      expect(
+        (doc.first as ParagraphNode).getMetadataValue('blockType'),
+        fileAttachmentAttribution,
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('mp3 audio → file attachment', () {
+      const md = '![song](attachments/song.mp3)';
+      final doc = serializer.markdownToDocument(md);
+      expect(
+        (doc.first as ParagraphNode).getMetadataValue('blockType'),
+        fileAttachmentAttribution,
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('zip and other extensions → file attachment', () {
+      for (final ext in const ['zip', 'tar', 'gz', 'docx', 'xlsx', 'ppt']) {
+        final md = '![file](thing.$ext)';
+        final doc = serializer.markdownToDocument(md);
+        expect(
+          (doc.first as ParagraphNode).getMetadataValue('blockType'),
+          fileAttachmentAttribution,
+          reason: 'expected file attachment for .$ext',
+        );
+        expect(serializer.documentToMarkdown(doc), md);
+      }
+    });
+
+    test('image extensions stay ImageNode (svg, webp, heic, jpeg)', () {
+      for (final ext in const ['svg', 'webp', 'heic', 'jpeg']) {
+        final md = '![pic](pic.$ext)';
+        final doc = serializer.markdownToDocument(md);
+        expect(
+          doc.first,
+          isA<ImageNode>(),
+          reason: 'expected ImageNode for .$ext',
+        );
+        expect(serializer.documentToMarkdown(doc), md);
+      }
+    });
+
+    test('mixed image + file attachment in same document', () {
+      const md =
+          '![logo](logo.png)\n\n![spec](spec.pdf)\n\nthird paragraph';
+      final doc = serializer.markdownToDocument(md);
+      final nodes = doc.toList();
+      expect(nodes[0], isA<ImageNode>());
+      expect(nodes[1], isA<ParagraphNode>());
+      expect(
+        (nodes[1] as ParagraphNode).getMetadataValue('blockType'),
+        fileAttachmentAttribution,
+      );
+      expect(nodes[2], isA<ParagraphNode>());
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
