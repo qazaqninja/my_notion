@@ -834,6 +834,36 @@ void main() {
     });
   });
 
+  group('bulletizeSentencesIn', () {
+    test('two-sentence paragraph splits into two bullets', () {
+      const text = 'Hello world. Goodbye now.\n';
+      final r = bulletizeSentencesIn(text, 0, text.length);
+      expect(r.text, '- Hello world.\n- Goodbye now.\n');
+    });
+
+    test('a line with no sentence boundary still gets the bullet', () {
+      const text = 'a single line\n';
+      final r = bulletizeSentencesIn(text, 0, text.length);
+      expect(r.text, '- a single line\n');
+    });
+
+    test('blank lines stay blank (no spurious bullet)', () {
+      const text = 'one. Two!\n\nthree four\n';
+      final r = bulletizeSentencesIn(text, 0, text.length);
+      expect(r.text, '- one.\n- Two!\n\n- three four\n');
+    });
+
+    test('trims whitespace inside the sentence', () {
+      const text = '  padded sentence  \n';
+      final r = bulletizeSentencesIn(text, 0, text.length);
+      expect(r.text, '- padded sentence\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(bulletizeSentencesIn('', 0, 0).text, '');
+    });
+  });
+
   group('splitLinesOnSentencesIn', () {
     test('two-sentence paragraph splits into two lines', () {
       const text = 'Hello world. Goodbye now.\n';

@@ -965,6 +965,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, splitLinesOnSentencesIn,
         );
+      case SlashAction.bulletizeSentences:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, bulletizeSentencesIn,
+        );
       case SlashAction.joinLinesWithSpace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, joinLinesWithSpaceIn,

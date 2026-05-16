@@ -51,6 +51,9 @@ enum SlashAction {
   /// Split each selected line on sentence boundaries, emitting one
   /// sentence per output line.
   splitLinesOnSentences,
+  /// Split each selected line on sentence boundaries AND prefix
+  /// every sentence with `- ` (bullet form).
+  bulletizeSentences,
   /// Join every non-blank selected line into a single space-separated
   /// paragraph. Inverse of `splitLinesOnSentences`.
   joinLinesWithSpace,
@@ -1510,6 +1513,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'one sentence per line',
     action: SlashAction.splitLinesOnSentences,
     keywords: ['split', 'sentence', 'sentences', 'proofread', 'review', 'break'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Bulletize sentences',
+    hint: 'paragraph → "- " list',
+    action: SlashAction.bulletizeSentences,
+    keywords: ['bullet', 'list', 'sentence', 'sentences', 'paragraph', 'split'],
   ),
   SlashEntry(
     icon: 'edit',

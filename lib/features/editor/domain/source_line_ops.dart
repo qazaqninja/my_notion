@@ -1914,6 +1914,31 @@ SortLinesResult shuffleLinesIn(
       return shuffled;
     });
 
+/// Split each selected line on sentence boundaries AND prefix every
+/// resulting sentence with `- `. The composite "paragraph → bullet
+/// list" transform that pairs naturally with M990's
+/// `splitLinesOnSentencesIn` but emits a bulleted list rather than
+/// plain lines. Useful for converting flowing prose into proofread-
+/// ready bullet form. Lines without a sentence boundary still get
+/// the bullet prefix.
+SortLinesResult bulletizeSentencesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      final boundary = RegExp(r'(?<=[.!?])\s+(?=[A-Z])');
+      return [
+        for (final l in lines)
+          if (boundary.hasMatch(l))
+            ...l
+                .split(boundary)
+                .map((s) => s.trim())
+                .where((s) => s.isNotEmpty)
+                .map((s) => '- $s')
+          else if (l.trim().isEmpty)
+            l
+          else
+            '- ${l.trim()}',
+      ];
+    });
+
 /// Split each selected line on **sentence boundaries**, emitting one
 /// sentence per output line. A boundary is a sentence terminator
 /// (`.`, `!`, `?`) followed by whitespace and an uppercase letter —
