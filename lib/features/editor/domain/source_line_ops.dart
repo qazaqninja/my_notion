@@ -1,10 +1,18 @@
 /// Pure transformations on a (text, caret-offset) pair for the
 /// source-mode editor. Kept dependency-free so the logic can be
 /// unit-tested without a widget tree.
+///
+/// The "make this paste plain" cleanup family
+/// (`stripMarkdownEmphasisLinesIn`, `stripMarkdownLinksLinesIn`,
+/// `stripHtmlTagsLinesIn`, `stripLeadingNumberPrefixIn`) lives in
+/// `text_cleanup_ops.dart` and is re-exported from here so existing
+/// callers don't need to know about the split (M983).
 library;
 
 import 'dart:convert';
 import 'dart:math' as math;
+
+export 'text_cleanup_ops.dart';
 
 /// Result of a line-op: the new text and the new collapsed-selection
 /// caret offset.
@@ -368,7 +376,7 @@ class SortLinesResult {
 /// Apply [transform] to the block of lines that the selection
 /// [start..end] touches. Shared core for sort / reverse / dedupe.
 /// Selection-widening rules match VS Code's "select N lines" gesture.
-SortLinesResult _transformLinesIn(
+SortLinesResult transformLinesIn(
   String text,
   int start,
   int end,
@@ -424,7 +432,7 @@ SortLinesResult _transformLinesIn(
 /// - Empty selection ([start] == [end]): sort only the line under
 ///   the caret with itself (no-op), returning the same selection.
 SortLinesResult sortLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final sorted = [...lines]
         ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
       return sorted;
@@ -435,7 +443,7 @@ SortLinesResult sortLinesIn(String text, int start, int end) =>
 /// mirror [sortLinesIn]; this is the natural companion for flipping
 /// a previously-ascending block without an extra reverse step.
 SortLinesResult sortLinesDescIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final sorted = [...lines]
         ..sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
       return sorted;
@@ -448,7 +456,7 @@ SortLinesResult sortLinesDescIn(String text, int start, int end) =>
 /// magnitude regardless of sign — e.g. "biggest deviations first"
 /// when running the M955 delta transform over a column of changes.
 SortLinesResult sortLinesByAbsValueIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final numeric = <(double, String)>[];
       final nonNumeric = <String>[];
       for (final l in lines) {
@@ -470,7 +478,7 @@ SortLinesResult sortLinesByAbsValueIn(String text, int start, int end) =>
 /// data where the leading column is the sort key (e.g. "[42] foo",
 /// "score: 87 alice", "-3°C Monday").
 SortLinesResult sortLinesByFirstNumberIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       // Capture optional sign and a decimal run with optional fractional
       // part. Exponents are out of scope — the first plain number wins.
       final re = RegExp(r'-?\d+(?:\.\d+)?');
@@ -497,7 +505,7 @@ SortLinesResult sortLinesByFirstNumberIn(String text, int start, int end) =>
 /// for prioritising a bullet list by terseness, or surfacing
 /// one-word labels at the top of a paste-in.
 SortLinesResult sortLinesByWordCountIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       int wc(String s) =>
           s.trim().isEmpty ? 0 : s.trim().split(RegExp(r'\s+')).length;
       final sorted = [...lines]
@@ -513,7 +521,7 @@ SortLinesResult sortLinesByWordCountIn(String text, int start, int end) =>
 /// (shortest first). Equal-length lines fall back to a stable
 /// case-insensitive lex compare for deterministic ordering.
 SortLinesResult sortLinesByLengthIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final sorted = [...lines]
         ..sort((a, b) {
           final cmp = a.length.compareTo(b.length);
@@ -526,7 +534,7 @@ SortLinesResult sortLinesByLengthIn(String text, int start, int end) =>
 /// Sort the lines touched by the selection by **length**, descending
 /// (longest first). The natural pair to [sortLinesByLengthIn].
 SortLinesResult sortLinesByLengthDescIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final sorted = [...lines]
         ..sort((a, b) {
           final cmp = b.length.compareTo(a.length);
@@ -589,7 +597,7 @@ int compareNatural(String a, String b) {
 /// lists, and ordered task IDs. Selection-widening rules mirror
 /// [sortLinesIn].
 SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final sorted = [...lines]..sort(compareNatural);
       return sorted;
     });
@@ -598,7 +606,7 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
 /// selected block, keeping the FIRST occurrence of each. Case-
 /// sensitive — Notion / Vim convention.
 SortLinesResult dedupeLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final seen = <String>{};
       return [for (final l in lines) if (seen.add(l)) l];
     });
@@ -606,12 +614,12 @@ SortLinesResult dedupeLinesIn(String text, int start, int end) =>
 /// Reverse the order of the lines in the selected block. Useful for
 /// flipping a sort or rendering a list bottom-up.
 SortLinesResult reverseLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) => lines.reversed.toList());
+    transformLinesIn(text, start, end, (lines) => lines.reversed.toList());
 
 /// Wrap each non-blank selected line in `**…**` so its contents
 /// render bold. Blank lines stay blank.
 SortLinesResult boldLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty) l else '**$l**',
@@ -621,7 +629,7 @@ SortLinesResult boldLinesIn(String text, int start, int end) =>
 /// Wrap each non-blank selected line in `*…*` so its contents
 /// render italic. Blank lines stay blank.
 SortLinesResult italicLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty) l else '*$l*',
@@ -631,7 +639,7 @@ SortLinesResult italicLinesIn(String text, int start, int end) =>
 /// Wrap each non-blank selected line in `` `…` `` so its contents
 /// render as inline code. Blank lines stay blank.
 SortLinesResult codeLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty) l else '`$l`',
@@ -641,7 +649,7 @@ SortLinesResult codeLinesIn(String text, int start, int end) =>
 /// Wrap each non-blank selected line in `~~…~~` (GFM strikethrough).
 /// Blank lines stay blank.
 SortLinesResult strikethroughLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty) l else '~~$l~~',
@@ -654,7 +662,7 @@ SortLinesResult strikethroughLinesIn(String text, int start, int end) =>
 /// lines pass through. Useful when copy-pasting a section into a
 /// larger document and needing to push every heading one deeper.
 SortLinesResult demoteHeadingsIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final headingPattern = RegExp(r'^(#{1,6}) ');
       return [
         for (final l in lines)
@@ -672,7 +680,7 @@ SortLinesResult demoteHeadingsIn(String text, int start, int end) =>
 /// **up** one level (H2 → H1, etc.). Lines already at H1 (`# `) stay
 /// put. Non-heading lines pass through.
 SortLinesResult promoteHeadingsIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final headingPattern = RegExp(r'^(#{1,6}) ');
       return [
         for (final l in lines)
@@ -708,7 +716,7 @@ SortLinesResult csvLinesToMarkdownTableIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       // Filter blanks but keep their positions in the output by
       // pre-storing them. For a markdown table we don't want blank
       // rows in the middle (they'd break the table), so drop them.
@@ -752,7 +760,7 @@ SortLinesResult markdownTableToCsvLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final dividerPattern = RegExp(r'^\|?(?:\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?$');
       return [
         for (final l in lines)
@@ -784,7 +792,7 @@ SortLinesResult markdownTableToCsvLinesIn(
 /// when a user pastes a vertical list of URLs and wants them
 /// clickable in the renderer.
 SortLinesResult urlsToMarkdownLinksIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       // A URL is the whole non-whitespace span of the line.
       final urlPattern = RegExp(
         r'^(\s*)(https?://\S+|www\.\S+)(\s*)$',
@@ -806,7 +814,7 @@ SortLinesResult urlsToMarkdownLinksIn(String text, int start, int end) =>
 /// (`"abc"`). Internal `"` is preserved as-is. Useful for quoting
 /// rows before CSV export or JSON-array construction.
 SortLinesResult quoteLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty) l else '"$l"',
@@ -819,7 +827,7 @@ SortLinesResult quoteLinesIn(String text, int start, int end) =>
 /// don't bother trying to detect that case). Returns the source
 /// unchanged when no line parses as a number.
 SortLinesResult averageNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       double total = 0;
       var count = 0;
       for (final l in lines) {
@@ -835,7 +843,7 @@ SortLinesResult averageNumericLinesIn(String text, int start, int end) =>
 /// Find the maximum numeric value in the selected block. Skips non-
 /// numeric lines. Returns the source unchanged when no line parses.
 SortLinesResult maxNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       double? best;
       var allInt = true;
       for (final l in lines) {
@@ -857,7 +865,7 @@ SortLinesResult maxNumericLinesIn(String text, int start, int end) =>
 /// decimal otherwise. Returns the source unchanged when no line
 /// parses.
 SortLinesResult medianNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final values = <double>[];
       var anyDecimalInput = false;
       for (final l in lines) {
@@ -888,7 +896,7 @@ SortLinesResult medianNumericLinesIn(String text, int start, int end) =>
 /// Find the minimum numeric value in the selected block. Skips non-
 /// numeric lines. Returns the source unchanged when no line parses.
 SortLinesResult minNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       double? best;
       var allInt = true;
       for (final l in lines) {
@@ -907,7 +915,7 @@ SortLinesResult minNumericLinesIn(String text, int start, int end) =>
 /// scratch work — pairs with the M938–M940 statistics quartet so a
 /// column of values gives both the aggregate and the cardinality.
 SortLinesResult countLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final n = lines.where((l) => l.trim().isNotEmpty).length;
       return [n.toString()];
     });
@@ -929,7 +937,7 @@ SortLinesResult countLinesIn(String text, int start, int end) =>
 ///   1× banana
 ///   1× cherry
 SortLinesResult frequencyLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final counts = <String, int>{};
       for (final l in lines) {
         if (l.trim().isEmpty) continue;
@@ -951,7 +959,7 @@ SortLinesResult frequencyLinesIn(String text, int start, int end) =>
 /// fractional part; decimal-form otherwise. Returns the source
 /// unchanged when no line parses (preserves block structure).
 SortLinesResult productNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       double product = 1;
       var hasNumber = false;
       var anyDecimalInput = false;
@@ -976,7 +984,7 @@ SortLinesResult productNumericLinesIn(String text, int start, int end) =>
 /// decimal-form otherwise. Returns the source unchanged when no
 /// line parses (preserves block structure).
 SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       double? lo;
       double? hi;
       var anyDecimalInput = false;
@@ -1001,7 +1009,7 @@ SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
 /// form when every input was integer (no `.`) AND the abs value
 /// has no fractional part; decimal-form otherwise.
 SortLinesResult absNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1021,7 +1029,7 @@ SortLinesResult absNumericLinesIn(String text, int start, int end) =>
 /// numeric lines pass through. Same integer/decimal-rendering
 /// convention as [absNumericLinesIn].
 SortLinesResult negateNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1047,7 +1055,7 @@ SortLinesResult scientificNotationLinesIn(
   int end, {
   int digits = 3,
 }) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1067,7 +1075,7 @@ SortLinesResult withThousandSeparatorsLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       String groupInteger(String digits) {
         if (digits.length <= 3) return digits;
         // Collect groups from the right, then reverse so the
@@ -1106,7 +1114,7 @@ SortLinesResult withThousandSeparatorsLinesIn(
 /// lines pass through. Useful for collapsing a noisy column of
 /// values down to a sparkline-style trend indicator.
 SortLinesResult signNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1123,7 +1131,7 @@ SortLinesResult signNumericLinesIn(String text, int start, int end) =>
 /// infinity. `3.7 → 3`, `-3.7 → -4`. Result is always an integer
 /// rendered without decimals. Non-numeric lines pass through.
 SortLinesResult floorNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1138,7 +1146,7 @@ SortLinesResult floorNumericLinesIn(String text, int start, int end) =>
 /// infinity. `3.2 → 4`, `-3.2 → -3`. Result is always an integer.
 /// Non-numeric lines pass through.
 SortLinesResult ceilNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1154,7 +1162,7 @@ SortLinesResult ceilNumericLinesIn(String text, int start, int end) =>
 /// [floorNumericLinesIn] on negative inputs. Non-numeric lines
 /// pass through.
 SortLinesResult truncateNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1176,7 +1184,7 @@ SortLinesResult roundNumericLinesIn(
   int end, {
   int decimals = 2,
 }) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1192,7 +1200,7 @@ SortLinesResult roundNumericLinesIn(
 /// result. Always rendered as decimal. Non-numeric lines are
 /// skipped; no-numeric is a no-op.
 SortLinesResult varianceNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final values = <double>[];
       for (final l in lines) {
         final v = double.tryParse(l.trim());
@@ -1214,7 +1222,7 @@ SortLinesResult varianceNumericLinesIn(String text, int start, int end) =>
 /// devs are rarely whole numbers and forcing integer-form would be
 /// misleading.
 SortLinesResult stdDevNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final values = <double>[];
       for (final l in lines) {
         final v = double.tryParse(l.trim());
@@ -1243,7 +1251,7 @@ SortLinesResult stdDevNumericLinesIn(String text, int start, int end) =>
 ///   20      →     0.0
 ///   30             1.414...
 SortLinesResult zScoreNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final values = <double>[];
       for (final l in lines) {
         final v = double.tryParse(l.trim());
@@ -1279,7 +1287,7 @@ SortLinesResult zScoreNumericLinesIn(String text, int start, int end) =>
 ///   3            2
 ///   7            4
 SortLinesResult rankNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final values = <double>[];
       for (final l in lines) {
         final v = double.tryParse(l.trim());
@@ -1316,7 +1324,7 @@ SortLinesResult rankNumericLinesIn(String text, int start, int end) =>
 ///   25       →    0.25
 ///   100           1.0
 SortLinesResult normalizeNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final values = <double>[];
       for (final l in lines) {
         final v = double.tryParse(l.trim());
@@ -1346,7 +1354,7 @@ SortLinesResult normalizeNumericLinesIn(String text, int start, int end) =>
 ///   10        25.0%
 ///   30   →    75.0%
 SortLinesResult percentageOfTotalLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       double total = 0;
       var anyNumeric = false;
       for (final l in lines) {
@@ -1382,7 +1390,7 @@ SortLinesResult percentageOfTotalLinesIn(String text, int start, int end) =>
 /// `+` prefix on positive values keeps the output readable as
 /// signed deltas; negative deltas render with the native `-`.
 SortLinesResult deltaNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       String fmt(double v, {required bool decimal}) {
         final body = !decimal && v == v.truncateToDouble()
             ? v.toInt().toString()
@@ -1429,7 +1437,7 @@ SortLinesResult cumulativeProductLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       var anyDecimalInput = false;
       var anyNumeric = false;
       double product = 1;
@@ -1468,7 +1476,7 @@ SortLinesResult cumulativeProductLinesIn(
 /// Returns the source unchanged when no line parses (preserves the
 /// block instead of producing an empty output).
 SortLinesResult cumulativeSumLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       var anyDecimalInput = false;
       var anyNumeric = false;
       double total = 0;
@@ -1499,7 +1507,7 @@ SortLinesResult cumulativeSumLinesIn(String text, int start, int end) =>
 /// fixed-point otherwise. Returns the source unchanged when no line
 /// parses as a number (preserves block structure).
 SortLinesResult sumNumericLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       var hasNumber = false;
       var hasFraction = false;
       double total = 0;
@@ -1527,7 +1535,7 @@ SortLinesResult sumNumericLinesIn(String text, int start, int end) =>
 /// when the input doesn't parse — keeps mixed-content selections
 /// safe.
 SortLinesResult jsonArrayToLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final joined = lines.join('\n').trim();
       if (!joined.startsWith('[') || !joined.endsWith(']')) return lines;
       try {
@@ -1546,7 +1554,7 @@ SortLinesResult jsonArrayToLinesIn(String text, int start, int end) =>
 /// Blank lines are dropped (they'd produce empty array elements).
 /// Returns the source unchanged when there are no non-blank lines.
 SortLinesResult linesToJsonArrayIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final cells =
           [for (final l in lines) l.trim()].where((l) => l.isNotEmpty);
       if (cells.isEmpty) return lines;
@@ -1559,7 +1567,7 @@ SortLinesResult linesToJsonArrayIn(String text, int start, int end) =>
 /// straight double quotes when both ends of a line are `"`.
 /// Single-sided quotes and inner quotes pass through.
 SortLinesResult unquoteLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1574,7 +1582,7 @@ SortLinesResult unquoteLinesIn(String text, int start, int end) =>
 /// Wrap each non-blank selected line in `==…==` (Pandoc highlight,
 /// rendered yellow by markdown_renderer). Blank lines stay blank.
 SortLinesResult highlightLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty) l else '==$l==',
@@ -1594,7 +1602,7 @@ SortLinesResult unwrapInlineFormattingLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       const pairs = <(String, String)>[
         ('**', '**'),
         ('~~', '~~'),
@@ -1676,7 +1684,7 @@ String toCamelCase(String line) {
 
 /// Per-line wrapper for [toSnakeCase].
 SortLinesResult snakeCaseLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines) if (l.trim().isEmpty) l else toSnakeCase(l),
       ];
@@ -1684,7 +1692,7 @@ SortLinesResult snakeCaseLinesIn(String text, int start, int end) =>
 
 /// Per-line wrapper for [toCamelCase].
 SortLinesResult camelCaseLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines) if (l.trim().isEmpty) l else toCamelCase(l),
       ];
@@ -1713,7 +1721,7 @@ String toPascalCase(String line) {
 
 /// Per-line wrapper for [toPascalCase].
 SortLinesResult pascalCaseLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines) if (l.trim().isEmpty) l else toPascalCase(l),
       ];
@@ -1729,7 +1737,7 @@ String toConstantCase(String line) => toSnakeCase(line).toUpperCase();
 
 /// Per-line wrapper for [toConstantCase].
 SortLinesResult constantCaseLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines) if (l.trim().isEmpty) l else toConstantCase(l),
       ];
@@ -1771,7 +1779,7 @@ String slugifyLine(String line) {
 /// for converting a list of titles into a list of permalink fragments
 /// in one gesture. Blank lines stay blank.
 SortLinesResult slugifyLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty) l else slugifyLine(l),
@@ -1791,7 +1799,7 @@ SortLinesResult shuffleLinesIn(
   int end, {
   math.Random? random,
 }) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final shuffled = [...lines]..shuffle(random);
       return shuffled;
     });
@@ -1800,7 +1808,7 @@ SortLinesResult shuffleLinesIn(
 /// selected block. Common cleanup before committing — many tools
 /// reject trailing whitespace and it's invisible in the editor.
 SortLinesResult trimTrailingWhitespaceIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text,
       start,
       end,
@@ -1813,7 +1821,7 @@ SortLinesResult trimTrailingWhitespaceIn(String text, int start, int end) =>
 /// "decorative" whitespace. Non-blank lines are untouched; the
 /// trailing newline after the selection is preserved.
 SortLinesResult collapseBlankLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final out = <String>[];
       var prevBlank = false;
       for (final l in lines) {
@@ -1829,7 +1837,7 @@ SortLinesResult collapseBlankLinesIn(String text, int start, int end) =>
 /// "stronger" variant of [collapseBlankLinesIn] — useful when you
 /// want a pure compact form with zero vertical breathing room.
 SortLinesResult dropBlankLinesIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text,
       start,
       end,
@@ -1841,7 +1849,7 @@ SortLinesResult dropBlankLinesIn(String text, int start, int end) =>
 /// when pasting prose alongside snippets and wanting to mark
 /// sections as commentary.
 SortLinesResult commentLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines) if (l.trim().isEmpty) l else '// $l',
       ];
@@ -1852,7 +1860,7 @@ SortLinesResult commentLinesIn(String text, int start, int end) =>
 /// invisible in the rendered view but stays in the source).
 /// Blank lines stay blank.
 SortLinesResult htmlCommentLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty) l else '<!-- $l -->',
@@ -1863,7 +1871,7 @@ SortLinesResult htmlCommentLinesIn(String text, int start, int end) =>
 /// from every line where it fully wraps the line. Non-matching
 /// lines pass through.
 SortLinesResult htmlUncommentLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final wrap = RegExp(r'^<!--\s?(.*?)\s?-->$');
       return [
         for (final l in lines)
@@ -1878,7 +1886,7 @@ SortLinesResult htmlUncommentLinesIn(String text, int start, int end) =>
 /// without space) from every line that starts with one. Blank
 /// lines and uncommented lines pass through.
 SortLinesResult uncommentLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -1896,7 +1904,7 @@ SortLinesResult uncommentLinesIn(String text, int start, int end) =>
 /// in markdown prose. Leading whitespace is preserved (so indented
 /// list markers stay aligned); only **internal** runs collapse.
 SortLinesResult collapseSpacesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final internalRun = RegExp(r'(?<=\S)[ \t]{2,}');
       return [
         for (final l in lines) l.replaceAll(internalRun, ' '),
@@ -1907,7 +1915,7 @@ SortLinesResult collapseSpacesIn(String text, int start, int end) =>
 /// selected block. The trim-trailing's mirror — common when pasting
 /// pre-indented code into the editor and wanting a clean left margin.
 SortLinesResult stripLeadingWhitespaceIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text,
       start,
       end,
@@ -1920,7 +1928,7 @@ SortLinesResult stripLeadingWhitespaceIn(String text, int start, int end) =>
 /// rejects tabs in Dart source.
 SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2}) {
   final replacement = ' ' * width;
-  return _transformLinesIn(
+  return transformLinesIn(
     text,
     start,
     end,
@@ -1938,7 +1946,7 @@ SortLinesResult tabsToSpacesIn(String text, int start, int end, {int width = 2})
 ///
 /// Useful when copying source code or HTML-templating into prose.
 SortLinesResult htmlEscapeLinesIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text,
       start,
       end,
@@ -1959,7 +1967,7 @@ SortLinesResult htmlEscapeLinesIn(String text, int start, int end) =>
 /// escapes prematurely. The decode pass also handles `&#39;` (the
 /// numeric form) and the equivalent `&apos;` for compatibility.
 SortLinesResult htmlUnescapeLinesIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text,
       start,
       end,
@@ -1983,7 +1991,7 @@ SortLinesResult htmlUnescapeLinesIn(String text, int start, int end) =>
 ///   `hello world` → `world hello`
 ///   `one two three` → `three two one`
 SortLinesResult reverseWordsInLineIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty)
@@ -1999,7 +2007,7 @@ SortLinesResult reverseWordsInLineIn(String text, int start, int end) =>
 /// Useful for the classic "reveal hidden text" gag and for testing
 /// palindromes.
 SortLinesResult reverseCharactersInLineIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text,
       start,
       end,
@@ -2029,7 +2037,7 @@ String rot13(String s) {
 
 /// Apply [rot13] per line over the selected block.
 SortLinesResult rot13LinesIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text, start, end, (lines) => [for (final l in lines) rot13(l)],
     );
 
@@ -2038,7 +2046,7 @@ SortLinesResult rot13LinesIn(String text, int start, int end) =>
 /// (spaces become `%20`, slashes `%2F`, etc.). Blank lines stay blank
 /// so block structure is preserved.
 SortLinesResult urlEncodeLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.isEmpty) l else Uri.encodeComponent(l),
@@ -2050,7 +2058,7 @@ SortLinesResult urlEncodeLinesIn(String text, int start, int end) =>
 /// sequences are caught by [ArgumentError] / [FormatException] and
 /// left untouched so a mixed-content selection is safe to invoke.
 SortLinesResult urlDecodeLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.isEmpty)
@@ -2076,7 +2084,7 @@ SortLinesResult urlDecodeLinesIn(String text, int start, int end) =>
 /// were empty stay empty so block structure is preserved. Useful
 /// when copying secrets / blob payloads into structured fields.
 SortLinesResult base64EncodeLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.isEmpty) l else base64.encode(utf8.encode(l)),
@@ -2088,7 +2096,7 @@ SortLinesResult base64EncodeLinesIn(String text, int start, int end) =>
 /// left untouched so a mixed-content selection is still safe to
 /// invoke. Empty lines stay empty.
 SortLinesResult base64DecodeLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           if (l.trim().isEmpty)
@@ -2149,7 +2157,7 @@ String smartTypography(String body) {
 
 /// Apply [smartTypography] to every line in the selected block.
 SortLinesResult smartTypographyIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text, start, end, (lines) => [for (final l in lines) smartTypography(l)],
     );
 
@@ -2168,7 +2176,7 @@ String dumbifyTypography(String body) {
 
 /// Apply [dumbifyTypography] to every line in the selected block.
 SortLinesResult dumbifyTypographyIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text, start, end, (lines) => [for (final l in lines) dumbifyTypography(l)],
     );
 
@@ -2315,7 +2323,7 @@ String formatTextStats(({int words, int chars, int lines}) s) =>
 /// Whitespace around each line is trimmed so the joined output looks
 /// clean. Returns the source unchanged when the block is empty.
 SortLinesResult joinLinesWithCommaIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final cells =
           [for (final l in lines) l.trim()].where((l) => l.isNotEmpty).toList();
       if (cells.isEmpty) return lines;
@@ -2326,7 +2334,7 @@ SortLinesResult joinLinesWithCommaIn(String text, int start, int end) =>
 /// whitespace) into separate lines. Inverse of [joinLinesWithCommaIn].
 /// Each split cell is trimmed. Lines without a comma pass through.
 SortLinesResult splitOnCommaIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final out = <String>[];
       for (final l in lines) {
         if (!l.contains(',')) {
@@ -2351,7 +2359,7 @@ SortLinesResult centerLinesIn(
   int end, {
   int? width,
 }) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final target = width ??
           lines.fold<int>(0, (max, l) => l.length > max ? l.length : max);
       return [
@@ -2381,7 +2389,7 @@ SortLinesResult padRightLinesIn(
   int end, {
   int? width,
 }) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final target = width ??
           lines.fold<int>(0, (max, l) => l.length > max ? l.length : max);
       return [
@@ -2404,7 +2412,7 @@ SortLinesResult zeroPadLinesIn(
   int end, {
   int? width,
 }) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final target = width ??
           lines.fold<int>(0, (max, l) => l.length > max ? l.length : max);
       return [
@@ -2424,7 +2432,7 @@ SortLinesResult convertDecimalToOctalLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -2444,7 +2452,7 @@ SortLinesResult convertOctalToDecimalLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final octPattern = RegExp(r'^0[oO]([0-7]+)$');
       return [
         for (final l in lines)
@@ -2468,7 +2476,7 @@ SortLinesResult convertDecimalToBinaryLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -2491,7 +2499,7 @@ SortLinesResult convertBinaryToDecimalLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final binPattern = RegExp(r'^0[bB]([01]+)$');
       return [
         for (final l in lines)
@@ -2516,7 +2524,7 @@ SortLinesResult convertDecimalToHexLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -2535,7 +2543,7 @@ SortLinesResult convertHexToDecimalLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final hexPattern = RegExp(r'^(0[xX])?([0-9a-fA-F]+)$');
       return [
         for (final l in lines)
@@ -2607,7 +2615,7 @@ SortLinesResult convertDecimalToRomanLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -2625,7 +2633,7 @@ SortLinesResult convertRomanToDecimalLinesIn(
   int start,
   int end,
 ) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       return [
         for (final l in lines)
           (() {
@@ -2646,7 +2654,7 @@ SortLinesResult convertRomanToDecimalLinesIn(
 /// trip preserves leading-tab-only files, and a file with mixed
 /// inline spaces stays unchanged on the trip back.
 SortLinesResult spacesToTabsIn(String text, int start, int end, {int width = 2}) {
-  return _transformLinesIn(
+  return transformLinesIn(
     text,
     start,
     end,
@@ -2669,94 +2677,15 @@ SortLinesResult spacesToTabsIn(String text, int start, int end, {int width = 2})
 /// Uppercase every line in the selected block. Common power-user
 /// transform; mirrors VS Code's "Transform to Uppercase".
 SortLinesResult uppercaseLinesIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text, start, end, (lines) => [for (final l in lines) l.toUpperCase()],
     );
 
 /// Lowercase every line in the selected block.
 SortLinesResult lowercaseLinesIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text, start, end, (lines) => [for (final l in lines) l.toLowerCase()],
     );
-
-/// Strip markdown emphasis / decoration markers from every selected
-/// line: `**bold**` / `__bold__`, `*italic*` / `_italic_`,
-/// `~~strike~~`, `==highlight==`, and `` `inline code` `` all become
-/// their plain inner text. Backticks remove the wrapping; the content
-/// stays. Useful when pasting formatted text from an LLM or another
-/// markdown editor into a section you want as plain prose.
-///
-///   "**Hello** _world_ ~~oops~~"  →  "Hello world oops"
-///
-/// Handles nested forms by repeating the pass until nothing more
-/// shrinks (e.g. `***both***` → `Hello`). Markdown links / images
-/// are intentionally not touched here — those have a dedicated slash
-/// entry already, and unwrapping them loses the target URL.
-SortLinesResult stripMarkdownEmphasisLinesIn(
-        String text, int start, int end,) =>
-    _transformLinesIn(text, start, end, (lines) {
-      // Patterns are checked in length-descending order so `~~` and
-      // `**` don't get half-eaten by their single-char cousins on the
-      // first pass.
-      final patterns = <RegExp>[
-        RegExp(r'\*\*([^*\n]+?)\*\*'),   // **bold**
-        RegExp('__([^_\\n]+?)__'),         // __bold__
-        RegExp('~~([^~\\n]+?)~~'),         // ~~strike~~
-        RegExp('==([^=\\n]+?)=='),         // ==highlight==
-        RegExp(r'\*([^*\n]+?)\*'),       // *italic*
-        RegExp('_([^_\\n]+?)_'),           // _italic_
-        RegExp('`([^`\\n]+?)`'),           // `code`
-      ];
-      String stripOnce(String s) {
-        var out = s;
-        for (final p in patterns) {
-          out = out.replaceAllMapped(p, (m) => m.group(1)!);
-        }
-        return out;
-      }
-      return [
-        for (final l in lines)
-          (() {
-            var prev = l;
-            // Loop until fixed-point: handles ***both*** by peeling
-            // outer `**` first, then `*`. Cap at lines.length+8 iters
-            // as a paranoia safety net against pathological input.
-            for (var i = 0; i < 16; i++) {
-              final next = stripOnce(prev);
-              if (next == prev) break;
-              prev = next;
-            }
-            return prev;
-          })(),
-      ];
-    });
-
-/// Strip a leading number-enumerator prefix from every selected
-/// line. Matches the common forms `1. ` / `1) ` / `1] ` / `1: ` /
-/// `1- ` with an arbitrary digit run (zero-padded or not) and a
-/// single trailing space. Leading indentation (spaces / tabs) is
-/// preserved so an indented "1. foo" inside an outer list still
-/// loses its number but keeps its indent.
-///
-/// Inverse of [prefixLinesWithIndexIn] for the most common cases,
-/// and broader than `renumberListLines` (which only resequences
-/// existing `1. ` markers; this removes them entirely).
-///
-///   01. foo            foo
-///   02. bar      →     bar
-///   003) baz           baz
-SortLinesResult stripLeadingNumberPrefixIn(
-        String text, int start, int end,) =>
-    _transformLinesIn(text, start, end, (lines) {
-      // `^[indent]<digits><sep><space>` with sep in `. : ) ] -`.
-      // Capture group 1 holds the leading whitespace — `replaceFirst`
-      // takes a literal string and won't expand `$1`, so use
-      // `replaceFirstMapped` to inline the captured indent.
-      final re = RegExp(r'^([ \t]*)\d+[.:)\]\-] ');
-      return [
-        for (final l in lines) l.replaceFirstMapped(re, (m) => m.group(1)!),
-      ];
-    });
 
 /// Prefix every selected line with its 1-based index in the
 /// selection, zero-padded to the width of the largest index so the
@@ -2770,63 +2699,12 @@ SortLinesResult stripLeadingNumberPrefixIn(
 ///   bar       →    02. bar
 ///   baz            03. baz
 SortLinesResult prefixLinesWithIndexIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       if (lines.isEmpty) return lines;
       final width = lines.length.toString().length;
       return [
         for (var i = 0; i < lines.length; i++)
           '${(i + 1).toString().padLeft(width, '0')}. ${lines[i]}',
-      ];
-    });
-
-/// Strip inline HTML tags from every selected line, leaving the
-/// text content between them. Closes the "make this paste plain"
-/// trilogy alongside [stripMarkdownEmphasisLinesIn] (M976) and
-/// [stripMarkdownLinksLinesIn] (M977). Useful when pasting
-/// Office/Word/Notion-export HTML or LLM output where formatting
-/// snuck through as raw `<tag>`s rather than markdown.
-///
-///   '<b>Hello</b> <span class="x">world</span>'  →  'Hello world'
-///
-/// Per-line scope: only tags whose open and close are on the same
-/// line are stripped. Multi-line block elements (`<div>` on one line,
-/// `</div>` on another) leave each line's tag chrome removed in
-/// isolation. HTML entities (`&amp;` etc.) pass through unchanged —
-/// unescaping is a separate gesture (`htmlUnescape`).
-SortLinesResult stripHtmlTagsLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
-      // `<[^>\n]+>` matches any `<` ... `>` run that stays on one
-      // line. Excluding `\n` keeps a stray unclosed `<` from
-      // swallowing the next line.
-      final tag = RegExp(r'<[^>\n]+>');
-      return [for (final l in lines) l.replaceAll(tag, '')];
-    });
-
-/// Strip markdown links and images from every selected line, keeping
-/// the visible label. `[Click here](url)` becomes `Click here`;
-/// `![alt text](path)` becomes `alt text`. Quill-internal wikilinks
-/// (`[[ULID]]` / `![[ULID]]` / `[[ULID#anchor]]` / `[[ULID|alias]]`)
-/// are deliberately **not** touched — their ULID payload is the
-/// canonical relation identifier and stripping it would permanently
-/// lose the link target.
-///
-/// Useful when copy-pasting Markdown into a section that should read
-/// as plain prose without clickable URLs. Often run before or after
-/// [stripMarkdownEmphasisLinesIn] depending on whether the user
-/// wants formatting first or links first.
-SortLinesResult stripMarkdownLinksLinesIn(
-        String text, int start, int end,) =>
-    _transformLinesIn(text, start, end, (lines) {
-      // Order matters: images first (the `!` prefix is more specific),
-      // then regular links. Negative lookbehind keeps wikilinks safe
-      // from the bracket regex.
-      final image = RegExp(r'!\[([^\]\n]*)\]\([^)\n]*\)');
-      final link = RegExp(r'(?<!\[)\[([^\]\n]+)\]\(([^)\n]*)\)');
-      return [
-        for (final l in lines)
-          l
-              .replaceAllMapped(image, (m) => m.group(1) ?? '')
-              .replaceAllMapped(link, (m) => m.group(1)!),
       ];
     });
 
@@ -2839,7 +2717,7 @@ SortLinesResult stripMarkdownLinksLinesIn(
 ///
 ///   "Hello World"  →  "hELLO wORLD"
 SortLinesResult swapCaseLinesIn(String text, int start, int end) =>
-    _transformLinesIn(
+    transformLinesIn(
       text, start, end, (lines) => [
         for (final l in lines)
           (() {
@@ -2871,7 +2749,7 @@ SortLinesResult swapCaseLinesIn(String text, int start, int end) =>
 ///
 /// Mirrors the Notion / VS Code "toggle bullet" gesture.
 SortLinesResult toggleBulletPrefixIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       bool startsWithBullet(String l) {
         final stripped = l.trimLeft();
         return stripped.startsWith('- ');
@@ -2913,7 +2791,7 @@ SortLinesResult toggleBulletPrefixIn(String text, int start, int end) =>
 /// re-added as unchecked `[ ]`, since the user's intent on "toggle on"
 /// is "make these tasks I haven't started yet".
 SortLinesResult toggleTaskPrefixIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final taskPattern = RegExp(r'^- \[[ xX]\] ');
       bool startsWithTask(String l) => taskPattern.hasMatch(l.trimLeft());
 
@@ -2948,7 +2826,7 @@ SortLinesResult toggleTaskPrefixIn(String text, int start, int end) =>
 /// items mid-list to fix the numbering without doing two
 /// toggleNumberedPrefixIn passes (which would touch every line).
 SortLinesResult renumberListLinesIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final numPattern = RegExp(r'^(\s*)\d+\. (.*)$');
       var n = 1;
       return [
@@ -2972,7 +2850,7 @@ SortLinesResult renumberListLinesIn(String text, int start, int end) =>
 /// any `\d+\. ` prefix (allowing leading indent). Blank lines and
 /// existing indentation are preserved in both directions.
 SortLinesResult toggleNumberedPrefixIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       final numPattern = RegExp(r'^\d+\. ');
       bool startsWithNumber(String l) => numPattern.hasMatch(l.trimLeft());
 
@@ -3019,7 +2897,7 @@ SortLinesResult toggleNumberedPrefixIn(String text, int start, int end) =>
 /// `> >> nested`), so repeated toggles let the user step nested
 /// quotes outward one level at a time on reapply.
 SortLinesResult toggleBlockquotePrefixIn(String text, int start, int end) =>
-    _transformLinesIn(text, start, end, (lines) {
+    transformLinesIn(text, start, end, (lines) {
       bool startsWithQuote(String l) => l.trimLeft().startsWith('> ');
 
       final nonEmpty = [for (final l in lines) if (l.trim().isNotEmpty) l];
@@ -3079,7 +2957,7 @@ SortLinesResult sentenceCaseLinesIn(String text, int start, int end) {
         );
   }
 
-  return _transformLinesIn(
+  return transformLinesIn(
     text,
     start,
     end,
@@ -3116,7 +2994,7 @@ SortLinesResult titleCaseLinesIn(String text, int start, int end) {
     return buf.toString();
   }
 
-  return _transformLinesIn(
+  return transformLinesIn(
     text, start, end, (lines) => [for (final l in lines) titleCaseLine(l)],
   );
 }
