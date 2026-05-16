@@ -4746,6 +4746,84 @@ void main() {
     });
   });
 
+  group('extractCalendarDatesFromLinesIn', () {
+    test('abbreviated month form extracts', () {
+      const text = 'shipped Jan 1, 2024 today\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Jan 1, 2024\n');
+    });
+
+    test('full month name extracts', () {
+      const text = 'first published January 1, 2024 here\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'January 1, 2024\n');
+    });
+
+    test('ordinal suffix `1st` form extracts', () {
+      const text = 'starts Apr 1st, 2024 demo\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Apr 1st, 2024\n');
+    });
+
+    test('all ordinal forms (st/nd/rd/th) extract', () {
+      const text =
+          'Jan 1st, 2024\nFeb 2nd, 2024\nMar 3rd, 2024\nApr 4th, 2024\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'Jan 1st, 2024\nFeb 2nd, 2024\nMar 3rd, 2024\nApr 4th, 2024\n',
+      );
+    });
+
+    test('comma is optional', () {
+      const text = 'dated Apr 1 2024 stamp\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Apr 1 2024\n');
+    });
+
+    test('case-insensitive month names', () {
+      const text = 'cite jan 1, 2024 and MARCH 5, 2025 today\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'jan 1, 2024\nMARCH 5, 2025\n');
+    });
+
+    test('two-digit day extracts (1-31 unvalidated)', () {
+      const text = 'released Dec 25, 2023 holiday\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Dec 25, 2023\n');
+    });
+
+    test('multiple dates on one line each extract', () {
+      const text = 'from Jan 1, 2024 to Mar 15, 2024 stretch\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Jan 1, 2024\nMar 15, 2024\n');
+    });
+
+    test('no-month substring is NOT a date', () {
+      const text = 'just 1, 2024 alone\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('ISO format `2024-01-15` is NOT matched here', () {
+      // M1062 handles ISO dates; this extractor only catches
+      // prose-style `Month Day, Year`.
+      const text = 'iso 2024-01-15 form\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without dates dropped from output', () {
+      const text = 'plain prose\nstart Jan 1, 2024 launch\nmore prose\n';
+      final r = extractCalendarDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Jan 1, 2024\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractCalendarDatesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

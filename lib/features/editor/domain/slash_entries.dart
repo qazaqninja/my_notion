@@ -372,6 +372,9 @@ enum SlashAction {
   /// Extract the label from every CommonMark inline reference-link
   /// usage site (`[text][label]` → `label`) on each selected line.
   extractMarkdownReferenceLinkUsageLabelsFromLines,
+  /// Extract every American-style calendar date (`January 1, 2024`,
+  /// `Jan 1, 2024`, `Apr 1st, 2024`) from each selected line.
+  extractCalendarDatesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1893,6 +1896,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownReferenceLinkUsageLabelsFromLines,
     keywords: ['extract', 'reference', 'ref', 'link', 'usage',
         'inline', 'label', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Extract calendar dates',
+    hint: 'Jan 1, 2024 / January 1, 2024',
+    action: SlashAction.extractCalendarDatesFromLines,
+    keywords: ['extract', 'date', 'calendar', 'month', 'day',
+        'year', 'citation', 'prose'],
   ),
   SlashEntry(
     icon: 'calendar',

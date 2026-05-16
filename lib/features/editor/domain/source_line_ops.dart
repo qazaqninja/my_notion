@@ -1641,6 +1641,50 @@ SortLinesResult extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
       return out;
     });
 
+/// Extract every American-style calendar date (`January 1, 2024`,
+/// `Jan 1, 2024`, `Apr 1st, 2024`) from each selected line.
+/// Useful for citation parsing, meeting-minute scraping, and
+/// biography date harvests where prose-style dates dominate
+/// over ISO `YYYY-MM-DD` (which M1062 already handles).
+///
+/// Recognition: `\b(?:Jan|Feb|...|Dec)(?:[a-z]+)?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}\b`
+/// - Abbreviated or full English month name (case-insensitive
+///   via `caseSensitive: false`).
+/// - Whitespace separator.
+/// - Day number (1-2 digits) with optional ordinal suffix
+///   (`1st`, `2nd`, `3rd`, `4th`, ...).
+/// - Optional comma.
+/// - Whitespace separator.
+/// - 4-digit year.
+///
+/// No semantic validation — `Jan 32, 2024` matches even though
+/// January has only 31 days. Accept for v1; downstream date-
+/// parsing is the validation layer.
+///
+/// Day-first European form (`1 January 2024`, `01/01/2024`)
+/// is out of scope for v1.
+///
+/// Distinct from M1062 ISO-date (`YYYY-MM-DD` numeric) and
+/// M1100 4-digit year-only extractors.
+///
+/// 44th member of the extraction family.
+SortLinesResult extractCalendarDatesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
+        r'(?:[a-z]+)?\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}\b',
+        caseSensitive: false,
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
