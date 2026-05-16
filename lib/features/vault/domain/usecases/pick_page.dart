@@ -106,6 +106,21 @@ PageRef? pickRandom(List<PageRef> pages, math.Random random) {
   return pages[random.nextInt(pages.length)];
 }
 
+/// Histogram of pages by **top-level folder name**. Pages directly
+/// at the vault root are bucketed under `(root)` so they're visible
+/// next to the named folders rather than hidden. Mirrors the inline
+/// computation `_showVaultStats` does today; pulled into the picker
+/// module so a future "browse folders" UI can reuse it.
+Map<String, int> countByTopFolder(List<PageRef> pages) {
+  final counts = <String, int>{};
+  for (final p in pages) {
+    final slash = p.relativePath.indexOf('/');
+    final folder = slash == -1 ? '(root)' : p.relativePath.substring(0, slash);
+    counts[folder] = (counts[folder] ?? 0) + 1;
+  }
+  return counts;
+}
+
 /// Filter to pages that live under the given folder (matched against
 /// `relativePath`'s path components, case-sensitive — vault folders
 /// preserve case on disk so the comparison should too). Trailing

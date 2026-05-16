@@ -296,6 +296,45 @@ void main() {
     });
   });
 
+  group('countByTopFolder', () {
+    test('sums pages per top-level folder', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Operations/Acme.md'),
+        _p(ulid: 'b', relativePath: 'Operations/Globex.md'),
+        _p(ulid: 'c', relativePath: 'Meetings/Q1.md'),
+        _p(ulid: 'd', relativePath: 'Inbox.md'),
+      ];
+      final f = countByTopFolder(pages);
+      expect(f['Operations'], 2);
+      expect(f['Meetings'], 1);
+      expect(f['(root)'], 1);
+    });
+
+    test('deeply nested paths still bucket under top folder', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Operations/Sub/Deep/X.md'),
+        _p(ulid: 'b', relativePath: 'Operations/Sub/Y.md'),
+      ];
+      final f = countByTopFolder(pages);
+      expect(f['Operations'], 2);
+      expect(f.length, 1);
+    });
+
+    test('every page at root bucketed under (root)', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Inbox.md'),
+        _p(ulid: 'b', relativePath: 'TODO.md'),
+      ];
+      final f = countByTopFolder(pages);
+      expect(f['(root)'], 2);
+      expect(f.length, 1);
+    });
+
+    test('empty input returns empty map', () {
+      expect(countByTopFolder([]), isEmpty);
+    });
+  });
+
   group('filterByFolder', () {
     test('keeps pages whose path starts with `folder/`', () {
       final pages = [
