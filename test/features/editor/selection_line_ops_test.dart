@@ -9136,6 +9136,90 @@ void main() {
     });
   });
 
+  group('extractShieldsBadgesFromLinesIn', () {
+    test('badge URL with path extracts', () {
+      const text = 'see https://img.shields.io/badge/dynamic-blue here\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'https://img.shields.io/badge/dynamic-blue\n');
+    });
+
+    test('github release version badge extracts', () {
+      const text = 'tag https://img.shields.io/github/v/release/owner/repo built\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text,
+          'https://img.shields.io/github/v/release/owner/repo\n',);
+    });
+
+    test('CI workflow status badge extracts', () {
+      const badge = 'https://img.shields.io/github/actions/'
+          'workflow/status/owner/repo/ci.yml';
+      const text = 'ci $badge today\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '$badge\n');
+    });
+
+    test('npm version badge extracts', () {
+      const text = 'lib https://img.shields.io/npm/v/some-package\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text,
+          'https://img.shields.io/npm/v/some-package\n',);
+    });
+
+    test('markdown link wraps badge — capture stops at )', () {
+      // Typical markdown form: [![Build](URL)](URL2)
+      const text =
+          '[![Build](https://img.shields.io/badge/test-pass)]'
+          '(https://github.com/owner)\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text,
+          'https://img.shields.io/badge/test-pass\n',);
+    });
+
+    test('other badge hosts NOT matched', () {
+      // badgen.net is a different badge host.
+      const text = 'fake https://badgen.net/badge/foo not shields\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('http (not https) NOT matched', () {
+      // shields.io enforces HTTPS; the regex requires it.
+      const text = 'old http://img.shields.io/badge/foo http\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple badges on one line each extract', () {
+      const text =
+          'pair https://img.shields.io/badge/a-1 and '
+          'https://img.shields.io/badge/b-2 both\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text,
+          'https://img.shields.io/badge/a-1\n'
+          'https://img.shields.io/badge/b-2\n',);
+    });
+
+    test('lines without badges dropped from output', () {
+      const text = 'plain prose\nsee https://img.shields.io/npm/dt/pkg today\nbye\n';
+      final r = extractShieldsBadgesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'https://img.shields.io/npm/dt/pkg\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+          extractShieldsBadgesFromLinesIn('', 0, 0).text, '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

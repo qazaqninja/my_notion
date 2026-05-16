@@ -3879,6 +3879,49 @@ SortLinesResult extractSha256FromLinesIn(
       return out;
     });
 
+/// Extract every shields.io badge URL from each selected line.
+/// Useful for README audits, repository status-badge inventory,
+/// CI-pipeline reference scrapes, and dependency-badge harvests
+/// in open-source project documentation.
+///
+/// Recognition: `https://img\.shields\.io/[^\s)\]>'"]+`
+/// - Literal `https://img.shields.io/` scheme + host prefix.
+/// - Path: any non-whitespace, non-bracket, non-quote chars.
+///   The suffix is captured greedily up to the first delimiter
+///   commonly used in markdown image-link syntax (`)`, `]`)
+///   and prose quotes.
+///
+/// Matches:
+/// - `https://img.shields.io/badge/dynamic-blue`
+/// - `https://img.shields.io/github/v/release/owner/repo`
+/// - `https://img.shields.io/github/actions/workflow/status/owner/repo/ci.yml`
+/// - `https://img.shields.io/npm/v/some-package`
+///
+/// Other badge hosts (`badges.aleen42.com`, `badgen.net`) are
+/// NOT matched — they're distinct surfaces with different URL
+/// shapes. Add a dedicated extractor if those matter.
+///
+/// Bracket-bounded captures: in a typical
+/// `[![Build](https://img.shields.io/...)](https://...)`
+/// markdown link, the badge URL is cleanly extracted because
+/// the path stops at the closing `)`.
+///
+/// 105th member of the extraction family.
+SortLinesResult extractShieldsBadgesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'https://img\.shields\.io/[^\s)\]>"' "'" r']+',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

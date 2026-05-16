@@ -561,6 +561,9 @@ enum SlashAction {
   /// Extract every SHA-256 hash (64 hex chars) from each
   /// selected line.
   extractSha256FromLines,
+  /// Extract every shields.io badge URL (`https://img.shields.io/...`)
+  /// from each selected line.
+  extractShieldsBadgesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2582,6 +2585,14 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'sha256', 'sha2', 'hash',
         'digest', 'integrity', 'checksum', 'container',
         'supply-chain'],
+  ),
+  SlashEntry(
+    icon: 'badge',
+    label: 'Extract shields.io badge URLs',
+    hint: 'https://img.shields.io/...',
+    action: SlashAction.extractShieldsBadgesFromLines,
+    keywords: ['extract', 'shields', 'badge', 'readme',
+        'status', 'ci', 'build', 'github', 'open-source'],
   ),
   SlashEntry(
     icon: 'calendar',
