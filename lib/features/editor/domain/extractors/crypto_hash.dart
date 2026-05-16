@@ -117,3 +117,41 @@ SortLinesResult extractSha256FromLinesIn(
       }
       return out;
     });
+
+/// Extract every MD5 hash (32 hex chars) from each selected
+/// line. Useful for file-integrity audits, password-hash
+/// inventories (where MD5 is unfortunately still used), and
+/// content-id harvests from older systems.
+///
+/// Recognition: `\b[0-9a-fA-F]{32}\b` — exactly 32 hex chars
+/// surrounded by word boundaries. Mixed case allowed.
+///
+/// Matches:
+/// - `d41d8cd98f00b204e9800998ecf8427e`  (MD5 of empty string)
+/// - Hyphenless UUIDs technically match this shape — `123e4567`
+///   `e89b12d3a456426614174000` (an 8-4-4-4-12 UUID with hyphens
+///   stripped). For audits where the distinction matters, use
+///   the UUID extractor first to pull canonical-form UUIDs and
+///   then this extractor for the hyphenless residue.
+///
+/// Distinct from SHA-1 / git refs (M1063 — 7-40 hex) and SHA-256
+/// (M1168 — exactly 64 hex). The fixed 32-char length pins down
+/// MD5 specifically.
+///
+/// MD5 is cryptographically broken (RFC 6151) and should not be
+/// used for security purposes. This extractor exists for
+/// inventory / audit needs only.
+///
+/// 110th member of the extraction family — round milestone.
+SortLinesResult extractMd5FromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b[0-9a-fA-F]{32}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });

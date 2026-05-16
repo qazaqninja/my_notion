@@ -9136,6 +9136,78 @@ void main() {
     });
   });
 
+  group('extractMd5FromLinesIn', () {
+    test('canonical MD5 of empty string extracts', () {
+      const md5 = 'd41d8cd98f00b204e9800998ecf8427e';
+      const text = 'digest $md5 here\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '$md5\n');
+    });
+
+    test('uppercase hex MD5 extracts', () {
+      const md5 = 'D41D8CD98F00B204E9800998ECF8427E';
+      const text = 'cap $md5 here\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '$md5\n');
+    });
+
+    test('mixed-case MD5 extracts', () {
+      const md5 = 'AbCdEf01234567890123456789aBcDeF';
+      const text = 'mix $md5 today\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '$md5\n');
+    });
+
+    test('31 hex chars rejected (too short)', () {
+      const md5 = 'd41d8cd98f00b204e9800998ecf8427';
+      const text = 'short $md5 here\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('33 hex chars rejected (too long via boundary)', () {
+      const md5 = 'd41d8cd98f00b204e9800998ecf8427ef';
+      const text = 'long $md5 here\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('40-char SHA-1 / git form NOT matched here', () {
+      // SHA-1 has its own extractor (extractGitShasFromLinesIn).
+      const sha = '0123456789abcdef0123456789abcdef01234567';
+      const text = 'commit $sha here\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('64-char SHA-256 NOT matched here', () {
+      const sha = '0123456789abcdef0123456789abcdef'
+          '0123456789abcdef0123456789abcdef';
+      const text = 'big $sha here\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple MD5s on one line each extract', () {
+      const a = '1111111111111111111111111111111a';
+      const b = '2222222222222222222222222222222b';
+      const text = 'src $a to $b ok\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '$a\n$b\n');
+    });
+
+    test('lines without MD5 dropped from output', () {
+      const md5 = 'abcdef0123456789abcdef0123456789';
+      const text = 'plain prose\nsee $md5 here\nbye\n';
+      final r = extractMd5FromLinesIn(text, 0, text.length);
+      expect(r.text, '$md5\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMd5FromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractShieldsBadgesFromLinesIn', () {
     test('badge URL with path extracts', () {
       const text = 'see https://img.shields.io/badge/dynamic-blue here\n';

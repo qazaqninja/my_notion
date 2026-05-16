@@ -561,6 +561,9 @@ enum SlashAction {
   /// Extract every SHA-256 hash (64 hex chars) from each
   /// selected line.
   extractSha256FromLines,
+  /// Extract every MD5 hash (32 hex chars) from each selected
+  /// line.
+  extractMd5FromLines,
   /// Extract every shields.io badge URL (`https://img.shields.io/...`)
   /// from each selected line.
   extractShieldsBadgesFromLines,
@@ -2597,6 +2600,14 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'sha256', 'sha2', 'hash',
         'digest', 'integrity', 'checksum', 'container',
         'supply-chain'],
+  ),
+  SlashEntry(
+    icon: 'shield',
+    label: 'Extract MD5 hashes',
+    hint: '32 hex chars — legacy file integrity',
+    action: SlashAction.extractMd5FromLines,
+    keywords: ['extract', 'md5', 'hash', 'digest',
+        'checksum', 'integrity', 'legacy'],
   ),
   SlashEntry(
     icon: 'badge',
