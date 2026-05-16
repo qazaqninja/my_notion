@@ -1107,6 +1107,10 @@ class _SourceViewState extends State<SourceView> {
         );
       case SlashAction.dedentLines:
         _applyLinesTransformAfterSlash(stripStart, caret, dedentLinesIn);
+      case SlashAction.stripHeadingMarker:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, stripHeadingMarkerLinesIn,
+        );
       case SlashAction.outdentLines:
         _applyLinesTransformAfterSlash(stripStart, caret, outdentLinesIn);
       case SlashAction.stripLeadingWhitespace:

@@ -3116,6 +3116,21 @@ SortLinesResult toggleNumberedPrefixIn(String text, int start, int end) =>
 /// treated as plain text and gains one more `> ` (becoming
 /// `> >> nested`), so repeated toggles let the user step nested
 /// quotes outward one level at a time on reapply.
+/// Strip a leading ATX heading marker (`# `, `## `, `### `,
+/// `#### `, `##### `, `###### `) from every selected line that has
+/// one. Lines without a heading marker pass through. Leading
+/// indentation is preserved — `  ## foo` becomes `  foo`. Useful
+/// for converting a heading block back to plain prose without
+/// disturbing surrounding bullet / blockquote nesting.
+SortLinesResult stripHeadingMarkerLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'^([ \t]*)#{1,6} ');
+      return [
+        for (final l in lines) l.replaceFirstMapped(re, (m) => m.group(1)!),
+      ];
+    });
+
 /// Remove the **common leading whitespace** from every line in the
 /// selected block — the standard "dedent" semantics. The minimum
 /// indent across all non-blank lines is computed, then stripped

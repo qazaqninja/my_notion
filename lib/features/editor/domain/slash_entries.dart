@@ -110,6 +110,9 @@ enum SlashAction {
   /// Remove the common leading whitespace from every line in the
   /// selected block (standard "dedent" semantics).
   dedentLines,
+  /// Strip a leading ATX heading marker (`# ` to `###### `) from
+  /// every selected line that has one.
+  stripHeadingMarker,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1608,6 +1611,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'strip shared prefix whitespace',
     action: SlashAction.dedentLines,
     keywords: ['dedent', 'unindent', 'flatten', 'normalize'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Strip heading marker',
+    hint: '## foo → foo',
+    action: SlashAction.stripHeadingMarker,
+    keywords: ['strip', 'heading', 'header', 'h1', 'h2', 'demote', 'hash'],
   ),
   SlashEntry(
     icon: 'edit',

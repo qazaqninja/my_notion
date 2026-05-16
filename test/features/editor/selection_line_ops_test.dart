@@ -140,6 +140,49 @@ void main() {
     });
   });
 
+  group('stripHeadingMarkerLinesIn', () {
+    test('strips h1-h6 markers from every level', () {
+      const text = '# h1\n## h2\n### h3\n#### h4\n##### h5\n###### h6\n';
+      final r = stripHeadingMarkerLinesIn(text, 0, text.length);
+      expect(r.text, 'h1\nh2\nh3\nh4\nh5\nh6\n');
+    });
+
+    test('preserves leading indentation', () {
+      const text = '  ## foo\n\t# bar\n';
+      final r = stripHeadingMarkerLinesIn(text, 0, text.length);
+      expect(r.text, '  foo\n\tbar\n');
+    });
+
+    test('plain lines pass through', () {
+      const text = 'just prose\nno hashes\n';
+      expect(stripHeadingMarkerLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('seven-hash lines are NOT touched (markdown rejects h7+)', () {
+      const text = '####### too many\n';
+      // Re-reading the regex: `#{1,6}` requires 1-6 hashes then ` `.
+      // Input is 7 hashes then space — the first 6 + the 7th hash +
+      // space matches a 7-hash prefix... wait, no: regex anchors at
+      // start. The regex matches the LONGEST anchored prefix of 1-6
+      // `#` followed by ` `. For 7 hashes the regex CAN match 6 #
+      // then `#` then ` ` — but the 7th char is `#`, not space, so
+      // the match for `#{1,6} ` fails. Verifies the regex stops at 6.
+      expect(
+        stripHeadingMarkerLinesIn(text, 0, text.length).text,
+        text,
+      );
+    });
+
+    test('a `#` without a trailing space is preserved (not a heading)', () {
+      const text = '#hashtag\n';
+      expect(stripHeadingMarkerLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(stripHeadingMarkerLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('dedentLinesIn', () {
     test('strips the minimum common indent', () {
       const text = '  foo\n    bar\n  baz\n';
