@@ -703,6 +703,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show duplicate page titles':
         if (!context.mounted) return;
         await _showDuplicateTitlesDialog(context);
+      case 'Show heaviest pages':
+        if (!context.mounted) return;
+        await _showHeaviestPagesDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           context.toastError('No vault open');
@@ -1186,6 +1189,28 @@ views:
           'Pages not edited in 90+ days. Oldest first — candidates for archive or refresh.',
       subtitleEmpty:
           'Every indexed page has been edited within the last 90 days.',
+    );
+  }
+
+  Future<void> _showHeaviestPagesDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    // Sort by body length descending and keep the top 20 — the
+    // long-tail rapidly stops being interesting and a 200-row dialog
+    // hurts scrolling more than it helps surfacing.
+    final byWeight = [...pages]
+      ..sort((a, b) => b.bodyText.length.compareTo(a.bodyText.length));
+    final topPages = byWeight.take(20).toList();
+    if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: topPages,
+      headingFull: 'HEAVIEST PAGES',
+      headingEmpty: 'NO PAGES',
+      subtitleFull:
+          'Top 20 pages by markdown body size. Candidates for splitting, archiving, or a database column.',
+      subtitleEmpty:
+          'The vault has no indexed pages yet.',
     );
   }
 
