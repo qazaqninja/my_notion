@@ -2402,6 +2402,97 @@ void main() {
     });
   });
 
+  group('extractMarkdownImageUrlsFromLinesIn', () {
+    test('strips the alt and keeps the URL', () {
+      const text = 'see ![Hero](hero.png) and ![Logo](https://x.test/l.svg)\n';
+      final r = extractMarkdownImageUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'hero.png\nhttps://x.test/l.svg\n');
+    });
+
+    test('bare links without `!` are NOT matched', () {
+      // The image extractor REQUIRES the leading `!`; a plain
+      // `[doc](url)` link is not an image and must be skipped.
+      const text = '[doc](https://x.test) and ![img](pic.png)\n';
+      final r = extractMarkdownImageUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'pic.png\n');
+    });
+
+    test('empty alt slot is allowed', () {
+      // `![](url)` is a CommonMark-legal image with no alt;
+      // the extractor must still capture the URL.
+      const text = '![](deco.svg) trailing\n';
+      final r = extractMarkdownImageUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'deco.svg\n');
+    });
+
+    test('multiple images on one line each extract', () {
+      const text = '![a](1.png) gap ![b](2.png) gap ![c](3.png)\n';
+      final r = extractMarkdownImageUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.png\n2.png\n3.png\n');
+    });
+
+    test('image URL with query string and fragment preserved', () {
+      const text = '![hero](https://cdn.test/h.png?v=2#main) text\n';
+      final r = extractMarkdownImageUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://cdn.test/h.png?v=2#main\n');
+    });
+
+    test('lines without images dropped from output', () {
+      const text = 'no images here\n![img](pic.jpg)\nplain text\n';
+      final r = extractMarkdownImageUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'pic.jpg\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownImageUrlsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
+  group('extractMarkdownImageAltsFromLinesIn', () {
+    test('strips the URL and keeps the alt', () {
+      const text = 'see ![Hero](hero.png) and ![Logo](logo.svg)\n';
+      final r = extractMarkdownImageAltsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Hero\nLogo\n');
+    });
+
+    test('bare links without `!` are NOT matched', () {
+      const text = '[Docs](url) and ![diagram](d.png)\n';
+      final r = extractMarkdownImageAltsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'diagram\n');
+    });
+
+    test('empty alt emits as empty line', () {
+      // The regex captures zero-or-more for alt, so an empty
+      // alt yields an empty captured group. Match the
+      // documented helper behaviour (one blank entry per match).
+      const text = '![](decoration.svg)\n';
+      final r = extractMarkdownImageAltsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('alt with internal punctuation passes through intact', () {
+      const text = '![Click, then read](pic.png) trailing\n';
+      final r = extractMarkdownImageAltsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Click, then read\n');
+    });
+
+    test('multiple images on one line each extract', () {
+      const text = '![first](1.png) and ![second](2.png) and ![third](3.png)\n';
+      final r = extractMarkdownImageAltsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'first\nsecond\nthird\n');
+    });
+
+    test('lines without images dropped from output', () {
+      const text = 'plain prose here\n![alt](pic.png)\nmore prose\n';
+      final r = extractMarkdownImageAltsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alt\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownImageAltsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractUuidsFromLinesIn', () {
     test('extracts canonical hyphenated UUIDs', () {
       const u1 = '550e8400-e29b-41d4-a716-446655440000';

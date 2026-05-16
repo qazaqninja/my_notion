@@ -319,6 +319,12 @@ enum SlashAction {
   /// Extract every markdown-link URL (`[label](url)` → `url`) from
   /// each selected line.
   extractMarkdownLinkUrlsFromLines,
+  /// Extract every markdown-image URL (`![alt](url)` → `url`)
+  /// from each selected line.
+  extractMarkdownImageUrlsFromLines,
+  /// Extract every markdown-image alt text (`![alt](url)` → `alt`)
+  /// from each selected line.
+  extractMarkdownImageAltsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1639,6 +1645,22 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[label](url) → url',
     action: SlashAction.extractMarkdownLinkUrlsFromLines,
     keywords: ['extract', 'link', 'url', 'markdown', 'href', 'target'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract markdown image URLs',
+    hint: '![alt](url) → url',
+    action: SlashAction.extractMarkdownImageUrlsFromLines,
+    keywords: ['extract', 'image', 'img', 'url', 'src', 'markdown',
+        'attachment', 'photo'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Extract markdown image alts',
+    hint: '![alt](url) → alt',
+    action: SlashAction.extractMarkdownImageAltsFromLines,
+    keywords: ['extract', 'image', 'img', 'alt', 'caption', 'accessibility',
+        'markdown'],
   ),
   SlashEntry(
     icon: 'sync',

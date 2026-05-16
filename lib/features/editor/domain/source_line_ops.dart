@@ -929,6 +929,56 @@ SortLinesResult extractMarkdownLinkLabelsFromLinesIn(
       return out;
     });
 
+/// Extract every markdown-IMAGE URL (`![alt](url)` → `url`) from
+/// each selected line. Parallel to
+/// [extractMarkdownLinkUrlsFromLinesIn] (M1066) but specifically
+/// requires the leading `!` that marks an image — bare
+/// `[label](url)` text does NOT match here.
+///
+/// Use this when you specifically want image references (an
+/// attachment manifest, a CDN audit, a broken-image sweep) rather
+/// than every link on the page.
+///
+/// Empty alt text (`![](url)`) IS supported — the regex uses
+/// `*` (zero-or-more) rather than `+` for the alt slot, since
+/// CommonMark allows an empty alt and it's a common pattern for
+/// purely decorative images.
+SortLinesResult extractMarkdownImageUrlsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'!\[[^\]\n]*\]\(([^)\n]*)\)');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
+/// Extract every markdown-IMAGE ALT text (`![alt](url)` → `alt`)
+/// from each selected line. Companion to
+/// [extractMarkdownImageUrlsFromLinesIn] — alts vs URLs are the
+/// two halves of every image reference.
+///
+/// Useful for harvesting caption / accessibility strings without
+/// the underlying URLs. Empty alts emit as empty strings (one
+/// blank line per match) since `*` matches zero characters;
+/// pipe through a drop-empty-lines pass if you only want
+/// non-blank captions.
+SortLinesResult extractMarkdownImageAltsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'!\[([^\]\n]*)\]\([^)\n]*\)');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every UUID-shaped substring from each selected line
 /// (`8-4-4-4-12` hex format, case-insensitive). Useful for pulling
 /// generated identifiers out of logs / debug paste-ins ahead of

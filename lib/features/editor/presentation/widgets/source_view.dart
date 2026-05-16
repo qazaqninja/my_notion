@@ -1324,6 +1324,14 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownLinkUrlsFromLinesIn,
         );
+      case SlashAction.extractMarkdownImageUrlsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractMarkdownImageUrlsFromLinesIn,
+        );
+      case SlashAction.extractMarkdownImageAltsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractMarkdownImageAltsFromLinesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,
