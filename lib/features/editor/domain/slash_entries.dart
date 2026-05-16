@@ -419,6 +419,9 @@ enum SlashAction {
   /// Extract every ISBN-13 substring (`978`/`979` prefix) from
   /// each selected line.
   extractIsbn13FromLines,
+  /// Extract every JIRA-style ticket reference (`PROJ-1234`)
+  /// from each selected line.
+  extractJiraTicketsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2060,6 +2063,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractIsbn13FromLines,
     keywords: ['extract', 'isbn', 'book', 'bibliography',
         'catalog'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract JIRA tickets',
+    hint: 'PROJ-1234',
+    action: SlashAction.extractJiraTicketsFromLines,
+    keywords: ['extract', 'jira', 'ticket', 'issue', 'sprint',
+        'project'],
   ),
   SlashEntry(
     icon: 'calendar',

@@ -2150,6 +2150,40 @@ SortLinesResult extractIsbn13FromLinesIn(
       return out;
     });
 
+/// Extract every JIRA-style ticket reference (`PROJ-1234`) from
+/// each selected line. Useful for sprint reviews, retro notes,
+/// release-notes audits, and "which tickets does this doc
+/// reference?" surveys.
+///
+/// Recognition: `\b[A-Z]{2,10}-\d+\b`
+/// - 2-10 uppercase letters (project key).
+/// - Literal `-`.
+/// - One or more digits (ticket number).
+/// - Word boundaries on each end.
+///
+/// Lowercase project keys (`proj-123`) are NOT matched — JIRA
+/// convention uses uppercase. Single-letter keys (`A-123`) are
+/// NOT matched — most JIRA installs require 2+ chars.
+///
+/// The project-key length cap at 10 is a heuristic to avoid
+/// catching arbitrary `LONGWORD-123` strings. Real JIRA keys
+/// are usually 2-4 chars (`PROJ`, `OPS`) but occasionally
+/// longer for enterprise installs.
+///
+/// 59th member of the extraction family.
+SortLinesResult extractJiraTicketsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b[A-Z]{2,10}-\d+\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

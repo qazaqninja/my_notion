@@ -5739,6 +5739,75 @@ void main() {
     });
   });
 
+  group('extractJiraTicketsFromLinesIn', () {
+    test('typical PROJ-1234 form extracts', () {
+      const text = 'fix PROJ-1234 today\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'PROJ-1234\n');
+    });
+
+    test('short project key with single-digit issue', () {
+      const text = 'ticket OPS-1 still open\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'OPS-1\n');
+    });
+
+    test('long issue number extracts', () {
+      const text = 'massive XYZ-999999 inline\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'XYZ-999999\n');
+    });
+
+    test('lowercase project key is NOT a JIRA ticket', () {
+      // JIRA convention requires uppercase.
+      const text = 'fake proj-123 invalid\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('single-letter prefix is NOT matched', () {
+      // The regex requires 2+ letters.
+      const text = 'short A-123 only one\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain number (no prefix) is NOT a ticket', () {
+      const text = 'count 123 things\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain project key (no number) is NOT a ticket', () {
+      const text = 'project PROJ standalone\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple tickets on one line each extract', () {
+      const text = 'merge PROJ-100 and OPS-42 deploy\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'PROJ-100\nOPS-42\n');
+    });
+
+    test('mixed-case word `MyProj-1` (lowercase mixed in) NOT matched', () {
+      // The regex requires all-uppercase letters in the key.
+      const text = 'fake MyProj-1 mixed\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without tickets dropped from output', () {
+      const text = 'plain prose\nfix PROJ-1234 today\nmore prose\n';
+      final r = extractJiraTicketsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'PROJ-1234\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractJiraTicketsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
