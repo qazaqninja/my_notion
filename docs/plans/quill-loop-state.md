@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E48 — Forms slice 3: schema validation + row insert on POST /forms/<ulid>/submit
+- **Task:** E49 — Forms slice 4: list-submissions endpoint for the page owner (GET /forms/<ulid>/submissions, behind auth)
 - **Status:** pending
 
 ## Last completed
+
+- **M1351 — E48** (forms submission: validation + row insert + thanks page)
+- Committed: (this iteration)
+- TaskList ID: 70
+- Notes: `FormsRepositoryBase` gains `insertSubmission({pageUlid, fields, sourceIp}) → String` returning a new submission ID. `NoFormsRepository` throws a `StateError` for the method since the route guards on `hasFormDefinition` first. `FormsRepository` generates a fresh ULID via `package:ulid`, JSON-encodes the field map, and inserts into the new `form_submissions(id, page_ulid, fields JSONB, source_ip, created_at)` table (migration v6 + `idx_form_submissions_page` index). Route handler refactor on `POST /forms/<ulid>/submit`: 32 KB body cap (`_kMaxFormBodyBytes`) checked twice — Content-Length advisory header first, then the actual read; both 413 `body_too_large` on overflow. Empty-body / all-blank-fields submissions return 400 `empty_body`. Malformed percent-encoding (`%ZZ`) skips the offending pair via `ArgumentError` + `FormatException` catches instead of 500ing. Success returns 303 → `/forms/<ulid>/thanks?id=<submissionId>`. New `GET /forms/<ulid>/thanks` returns a minimal styled HTML thank-you page (dark-mode aware). Source IP captured from `X-Forwarded-For` (first hop) when present, else `shelf.io.connection_info`. 7 new route tests + the 6 from E46 = 13 forms tests passing; 93/93 backend tests pass; backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1350 — E47** (probe `forms:` field + populate hasFormDefinition)
 - Committed: (this iteration)
