@@ -1754,6 +1754,36 @@ SortLinesResult extractMarkdownImageReferenceUsageLabelsFromLinesIn(
       return out;
     });
 
+/// Extract every CIDR-notation IPv4 substring (`a.b.c.d/N`) from
+/// each selected line. Useful for firewall-rule audits, network
+/// scope reviews, and routing-table scrapes.
+///
+/// Recognition: `\b(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}\b`
+/// - Three groups of 1-3 digits + `.`.
+/// - Final 1-3 digit octet.
+/// - Literal `/`.
+/// - 1-2 digit prefix length.
+/// - Word boundaries on each end.
+///
+/// No semantic validation — `999.999.999.999/99` matches even
+/// though octets cap at 255 and prefix at 32. Acceptable for v1;
+/// downstream network-layer code validates ranges. Strict IPv4
+/// validation is M1064's job.
+///
+/// 47th member of the extraction family.
+SortLinesResult extractCidrFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

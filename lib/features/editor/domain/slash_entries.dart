@@ -381,6 +381,9 @@ enum SlashAction {
   /// Extract the label from every CommonMark inline image-reference
   /// usage site (`![alt][label]` → `label`) on each selected line.
   extractMarkdownImageReferenceUsageLabelsFromLines,
+  /// Extract every CIDR-notation IPv4 substring (`a.b.c.d/N`) from
+  /// each selected line.
+  extractCidrFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1926,6 +1929,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownImageReferenceUsageLabelsFromLines,
     keywords: ['extract', 'image', 'img', 'reference', 'ref',
         'usage', 'label', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract CIDR notations',
+    hint: '10.0.0.0/8',
+    action: SlashAction.extractCidrFromLines,
+    keywords: ['extract', 'cidr', 'subnet', 'network', 'ipv4',
+        'firewall', 'route'],
   ),
   SlashEntry(
     icon: 'calendar',

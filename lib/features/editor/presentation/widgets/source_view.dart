@@ -1406,6 +1406,10 @@ class _SourceViewState extends State<SourceView> {
           stripStart, caret,
           extractMarkdownImageReferenceUsageLabelsFromLinesIn,
         );
+      case SlashAction.extractCidrFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractCidrFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

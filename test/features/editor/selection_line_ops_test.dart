@@ -4955,6 +4955,68 @@ void main() {
     });
   });
 
+  group('extractCidrFromLinesIn', () {
+    test('class-A subnet extracts', () {
+      const text = 'route 10.0.0.0/8 to gateway\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.0.0.0/8\n');
+    });
+
+    test('class-B subnet extracts', () {
+      const text = 'block 172.16.0.0/12 inbound\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '172.16.0.0/12\n');
+    });
+
+    test('class-C subnet extracts', () {
+      const text = 'subnet 192.168.1.0/24 allocated\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '192.168.1.0/24\n');
+    });
+
+    test('host-bit /32 form extracts', () {
+      const text = 'pin 10.5.5.42/32 single-host\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.5.5.42/32\n');
+    });
+
+    test('default route 0.0.0.0/0 extracts', () {
+      const text = 'fallback 0.0.0.0/0 catch-all\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '0.0.0.0/0\n');
+    });
+
+    test('plain IPv4 without `/N` is NOT a CIDR', () {
+      const text = 'host 192.168.1.42 only\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple CIDRs on one line each extract', () {
+      const text = 'allow 10.0.0.0/8 and 192.168.0.0/16 paths\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.0.0.0/8\n192.168.0.0/16\n');
+    });
+
+    test('out-of-range octets / prefixes still match (no validate)', () {
+      // Documented v1 behavior — `999.999.999.999/99` matches.
+      // Downstream network-layer code is the validation layer.
+      const text = 'fake 999.999.999.999/99 still grabs\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '999.999.999.999/99\n');
+    });
+
+    test('lines without CIDRs dropped from output', () {
+      const text = 'plain prose\nallow 10.0.0.0/8 only\nmore prose\n';
+      final r = extractCidrFromLinesIn(text, 0, text.length);
+      expect(r.text, '10.0.0.0/8\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractCidrFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
