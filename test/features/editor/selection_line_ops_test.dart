@@ -2234,6 +2234,45 @@ void main() {
     });
   });
 
+  group('extractIsoDatesFromLinesIn', () {
+    test('emits one ISO date per match', () {
+      const text = 'met on 2026-05-16\nnext on 2026-06-01\n';
+      final r = extractIsoDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, '2026-05-16\n2026-06-01\n');
+    });
+
+    test('multiple dates on one line preserved in order', () {
+      const text = 'spans 2026-01-01 to 2026-12-31 inclusive\n';
+      final r = extractIsoDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, '2026-01-01\n2026-12-31\n');
+    });
+
+    test('non-ISO date shapes are ignored', () {
+      const text = 'on 5/16/2026 and 16-May-2026 nothing\n';
+      // Neither matches the YYYY-MM-DD shape.
+      expect(extractIsoDatesFromLinesIn(text, 0, text.length).text, '\n');
+    });
+
+    test('does not validate calendar realism', () {
+      // The spec deliberately doesn't check: 2026-02-31 is non-real,
+      // but the regex accepts the SHAPE, leaving validation to the
+      // caller's parser.
+      const text = 'fake date 2026-02-31\n';
+      final r = extractIsoDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, '2026-02-31\n');
+    });
+
+    test('lines without dates dropped from output', () {
+      const text = 'no date\nmet 2026-01-01\n';
+      final r = extractIsoDatesFromLinesIn(text, 0, text.length);
+      expect(r.text, '2026-01-01\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractIsoDatesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractDoneTodoBodiesIn', () {
     test('strips the marker from every done-todo line', () {
       const text = '- [x] shipped feature\n- [x] sent invoice\n';

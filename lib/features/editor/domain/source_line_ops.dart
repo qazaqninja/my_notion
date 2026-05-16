@@ -886,6 +886,28 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract every ISO-shaped date (`YYYY-MM-DD`) from each selected
+/// line and emit them one-per-line in original order. Useful for
+/// harvesting timestamps out of meeting notes or journals into a
+/// flat date list for follow-on sort / dedupe / range analysis.
+///
+/// Recognition is conservative: 4-digit year, 2-digit month, 2-digit
+/// day, separated by `-`. Doesn't validate the date is real
+/// (`2026-02-31` will be extracted) — that's the caller's problem
+/// at parse time, not the extractor's.
+SortLinesResult extractIsoDatesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\d{4}-\d{2}-\d{2}');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract the BODY of every GFM CHECKED-todo line in the
 /// selection (`- [x] foo` → `foo`). Mirror of
 /// [extractOpenTodoBodiesIn] — same marker / indent recognition,

@@ -288,6 +288,9 @@ enum SlashAction {
   /// Extract the body of every GFM CHECKED-todo line in the
   /// selection, emitting each body without its `- [x] ` marker.
   extractDoneTodoBodies,
+  /// Extract every ISO-shaped date (`YYYY-MM-DD`) from each
+  /// selected line and emit them one-per-line.
+  extractIsoDatesFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1559,6 +1562,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '- [x] foo → foo',
     action: SlashAction.extractDoneTodoBodies,
     keywords: ['extract', 'todo', 'todos', 'done', 'completed', 'gfm'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Extract ISO dates',
+    hint: 'YYYY-MM-DD per line',
+    action: SlashAction.extractIsoDatesFromLines,
+    keywords: ['extract', 'date', 'dates', 'iso', 'timestamp'],
   ),
   SlashEntry(
     icon: 'sync',
