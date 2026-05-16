@@ -1474,6 +1474,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractEthAddressesFromLinesIn,
         );
+      case SlashAction.extractMongoObjectIdsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractMongoObjectIdsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

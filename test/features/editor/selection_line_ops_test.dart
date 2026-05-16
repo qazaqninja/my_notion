@@ -6076,6 +6076,65 @@ void main() {
     });
   });
 
+  group('extractMongoObjectIdsFromLinesIn', () {
+    test('typical lowercase ObjectId extracts', () {
+      const text = 'doc _id: 507f1f77bcf86cd799439011 here\n';
+      final r = extractMongoObjectIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '507f1f77bcf86cd799439011\n');
+    });
+
+    test('mixed-case hex ObjectId extracts intact', () {
+      const text = 'see 507F1F77BcF86cd799439011 today\n';
+      final r = extractMongoObjectIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '507F1F77BcF86cd799439011\n');
+    });
+
+    test('all-digit 24-char run is NOT a match', () {
+      // Lookahead requires AT LEAST ONE letter — disambiguates
+      // from a long number that happens to have 24 digits.
+      const text = 'count 123456789012345678901234 only\n';
+      final r = extractMongoObjectIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('too-short (23 hex) is NOT an ObjectId', () {
+      const text = 'short 507f1f77bcf86cd79943901 bad\n';
+      final r = extractMongoObjectIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('too-long (25 hex) is NOT an ObjectId', () {
+      const text = 'long 507f1f77bcf86cd7994390111 invalid\n';
+      final r = extractMongoObjectIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple ObjectIds on one line each extract', () {
+      const text =
+          'pair 507f1f77bcf86cd799439011 and '
+          '507f1f77bcf86cd799439012 logged\n';
+      final r = extractMongoObjectIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '507f1f77bcf86cd799439011\n'
+          '507f1f77bcf86cd799439012\n');
+    });
+
+    test('non-hex char in 24-run is NOT a match', () {
+      const text = 'fake 507f1f77bcf86cZ799439011 bad\n';
+      final r = extractMongoObjectIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without ObjectIds dropped from output', () {
+      const text = 'plain prose\n_id: 507f1f77bcf86cd799439011\nmore prose\n';
+      final r = extractMongoObjectIdsFromLinesIn(text, 0, text.length);
+      expect(r.text, '507f1f77bcf86cd799439011\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMongoObjectIdsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

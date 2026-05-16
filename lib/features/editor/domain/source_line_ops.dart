@@ -2313,6 +2313,39 @@ SortLinesResult extractEthAddressesFromLinesIn(
       return out;
     });
 
+/// Extract every MongoDB ObjectId substring (24 hex chars,
+/// with at least one letter) from each selected line. Useful
+/// for NoSQL doc audits, debug log triage, and ID-extraction
+/// from MongoDB connection paste-ins.
+///
+/// Recognition: `\b(?=[0-9a-fA-F]*[a-fA-F])[0-9a-fA-F]{24}\b`
+/// - Exactly 24 hex digits (the canonical ObjectId length).
+/// - Lookahead requires AT LEAST ONE letter to distinguish
+///   from 24-digit numbers that happen to share the same
+///   length.
+/// - Word boundaries on each end.
+/// - Case-insensitive matching across upper/lower hex.
+///
+/// Overlaps with M1091 git short SHA extractor (7-40 hex
+/// chars). A 24-char hex with letters matches BOTH; use
+/// whichever surface fits the docs domain.
+///
+/// 64th member of the extraction family.
+SortLinesResult extractMongoObjectIdsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?=[0-9a-fA-F]*[a-fA-F])[0-9a-fA-F]{24}\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

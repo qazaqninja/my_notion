@@ -434,6 +434,9 @@ enum SlashAction {
   /// Extract every Ethereum-style hex address substring
   /// (`0x` + 40 hex chars) from each selected line.
   extractEthAddressesFromLines,
+  /// Extract every MongoDB ObjectId substring (24 hex chars,
+  /// with at least one letter) from each selected line.
+  extractMongoObjectIdsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2115,6 +2118,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractEthAddressesFromLines,
     keywords: ['extract', 'eth', 'ethereum', 'address', 'wallet',
         'crypto', 'blockchain'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract MongoDB ObjectIds',
+    hint: '24 hex chars',
+    action: SlashAction.extractMongoObjectIdsFromLines,
+    keywords: ['extract', 'mongo', 'mongodb', 'objectid', 'id',
+        'nosql'],
   ),
   SlashEntry(
     icon: 'calendar',
