@@ -1623,6 +1623,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractIpv6FromLinesIn,
         );
+      case SlashAction.extractIsbn10FromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractIsbn10FromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

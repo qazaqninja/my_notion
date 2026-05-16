@@ -549,6 +549,9 @@ enum SlashAction {
   /// Extract every IPv6 address (`::1`, `2001:db8::1`,
   /// `fe80::1`) from each selected line.
   extractIpv6FromLines,
+  /// Extract every ISBN-10 identifier (`0-306-40615-2`,
+  /// `030640615X`) from each selected line.
+  extractIsbn10FromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2535,6 +2538,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractIpv6FromLines,
     keywords: ['extract', 'ipv6', 'ip', 'v6', 'address',
         'host', 'network', 'colon', 'hex'],
+  ),
+  SlashEntry(
+    icon: 'bookmark',
+    label: 'Extract ISBN-10 identifiers',
+    hint: '0-306-40615-2 / 030640615X',
+    action: SlashAction.extractIsbn10FromLines,
+    keywords: ['extract', 'isbn', 'isbn10', 'book',
+        'library', 'catalog', 'bibliography', 'reference'],
   ),
   SlashEntry(
     icon: 'calendar',

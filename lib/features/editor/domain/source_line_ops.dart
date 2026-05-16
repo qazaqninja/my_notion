@@ -3688,6 +3688,64 @@ SortLinesResult extractIpv6FromLinesIn(
       return out;
     });
 
+/// Extract every ISBN-10 identifier from each selected line.
+/// Complements the existing M-prefixed ISBN-13 extractor for
+/// pre-2007 books and reference systems still using the
+/// older 10-digit form.
+///
+/// Recognition: a regex that allows either:
+/// - A hyphenated form `D-D-D-X` (group-language-publisher-
+///   title-check, length-variable groups), or
+/// - A bare 10-character form ending in the `X` check digit
+///   (the `X`-check variant is distinctive enough on its own).
+///
+/// Each candidate is then verified to have exactly 10
+/// "digit-equivalents" (the 9 digits plus 1 check digit, where
+/// the check can be either 0-9 or `X`). The verification step
+/// filters out plain numeric runs like `1-2-3-4` which match
+/// the hyphenated shape but lack the 10-position requirement.
+///
+/// Bare 10-digit ISBN-10s WITHOUT a hyphenated layout and
+/// WITHOUT an `X` check digit (e.g. `0306406152`) are NOT
+/// matched — they're indistinguishable from arbitrary 10-digit
+/// numbers in prose. Use the hyphenated presentation when
+/// authoring ISBN references.
+///
+/// Matches:
+/// - `0-306-40615-2`      — classic hyphenated form
+/// - `7-803-44132-X`      — hyphenated with X check
+/// - `030640615X`         — bare with X check (distinctive)
+///
+/// ISBN-10 check-digit validity (mod-11) is NOT verified —
+/// downstream callers can run mod-11 if they want strict
+/// validation.
+///
+/// 101st member of the extraction family.
+SortLinesResult extractIsbn10FromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Lookarounds `(?<![\d-])` / `(?![\d-])` prevent the
+      // regex from carving out the trailing 10-digit suffix of
+      // an ISBN-13 like `978-0-13-468599-1` and reporting it
+      // as a standalone ISBN-10.
+      final re = RegExp(
+        r'(?<![\d-])'
+        r'(?:\d{1,5}-\d{1,7}-\d{1,6}-[\dX]|\d{9}X)'
+        r'(?![\d-])',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          final s = m.group(0)!;
+          // Count digit-equivalents (digits + X).
+          // ISBN-10 must have exactly 10.
+          final n = s.replaceAll(RegExp(r'[^\dX]'), '').length;
+          if (n == 10) out.add(s);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

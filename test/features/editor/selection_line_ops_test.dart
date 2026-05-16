@@ -8833,6 +8833,72 @@ void main() {
     });
   });
 
+  group('extractIsbn10FromLinesIn', () {
+    test('classic hyphenated ISBN-10 extracts', () {
+      const text = 'book 0-306-40615-2 today\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '0-306-40615-2\n');
+    });
+
+    test('hyphenated with X check digit extracts', () {
+      const text = 'see 7-803-44132-X reference\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '7-803-44132-X\n');
+    });
+
+    test('bare 10-char form with X check extracts', () {
+      const text = 'index 030640615X library\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '030640615X\n');
+    });
+
+    test('bare 10 digits NOT matched (too ambiguous)', () {
+      // `0306406152` is a valid ISBN-10 but visually
+      // indistinguishable from any 10-digit number.
+      const text = 'isbn 0306406152 bare\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain hyphenated 1-2-3-4 NOT matched', () {
+      // The post-match digit-count check requires exactly 10
+      // digit-equivalents; `1-2-3-4` has only 4.
+      const text = 'fake 1-2-3-4 not an ISBN\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('date 2025-12-01 NOT matched', () {
+      // Date format doesn't satisfy 10 digit-equivalents.
+      const text = 'on 2025-12-01 today\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('ISBN-13 form NOT matched here', () {
+      // 13-digit form has 13 digit positions, not 10.
+      const text = 'iso 978-0-13-468599-1 modern\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple ISBNs on one line each extract', () {
+      const text = 'cite 0-306-40615-2 and 1-56619-909-3 books\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '0-306-40615-2\n1-56619-909-3\n');
+    });
+
+    test('lines without ISBNs dropped from output', () {
+      const text = 'plain prose\nref 0-306-40615-2 here\nbye\n';
+      final r = extractIsbn10FromLinesIn(text, 0, text.length);
+      expect(r.text, '0-306-40615-2\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractIsbn10FromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
