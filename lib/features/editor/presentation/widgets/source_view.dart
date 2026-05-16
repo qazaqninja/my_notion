@@ -1511,6 +1511,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractDbConnectionStringsFromLinesIn,
         );
+      case SlashAction.extractRgbColorsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractRgbColorsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

@@ -6699,6 +6699,76 @@ void main() {
     });
   });
 
+  group('extractRgbColorsFromLinesIn', () {
+    test('basic rgb() extracts', () {
+      const text = 'background rgb(255, 0, 0) red\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rgb(255, 0, 0)\n');
+    });
+
+    test('rgba() with alpha extracts', () {
+      const text = 'overlay rgba(0, 0, 0, 0.5) shade\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rgba(0, 0, 0, 0.5)\n');
+    });
+
+    test('no-space form extracts', () {
+      const text = 'tight rgb(0,0,0) black\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rgb(0,0,0)\n');
+    });
+
+    test('mixed spacing tolerated', () {
+      const text = 'odd rgba( 12,34 , 56 , 1) inline\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rgba( 12,34 , 56 , 1)\n');
+    });
+
+    test('rgba with integer alpha extracts', () {
+      const text = 'opaque rgba(255, 255, 255, 1) full\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rgba(255, 255, 255, 1)\n');
+    });
+
+    test('plain `rgb` word (no parens) is NOT a match', () {
+      const text = 'word rgb only no parens\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('out-of-range values still match (no validation)', () {
+      // Documented v1 behaviour — `999` channel passes; CSS
+      // engine validates downstream.
+      const text = 'fake rgb(999, 999, 999) over\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rgb(999, 999, 999)\n');
+    });
+
+    test('multiple colors on one line each extract', () {
+      const text =
+          'pair rgb(255,0,0) and rgba(0,255,0,0.5) palette\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rgb(255,0,0)\nrgba(0,255,0,0.5)\n');
+    });
+
+    test('hex color `#abc` is NOT matched here', () {
+      // Hex colors are M1063's surface.
+      const text = 'use #ff0000 only\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without rgb()/rgba() dropped from output', () {
+      const text = 'plain prose\nuse rgb(0,0,255)\nmore prose\n';
+      final r = extractRgbColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rgb(0,0,255)\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractRgbColorsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

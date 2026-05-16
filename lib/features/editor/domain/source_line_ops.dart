@@ -2603,6 +2603,40 @@ SortLinesResult extractDbConnectionStringsFromLinesIn(
       return out;
     });
 
+/// Extract every CSS `rgb(...)` / `rgba(...)` color expression
+/// from each selected line. Useful for design doc audits, CSS
+/// style sweeps, and color-palette extraction from notes.
+///
+/// Recognition:
+///   `rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*[\d.]+)?\s*\)`
+/// - `rgb` or `rgba` literal.
+/// - Opening `(`.
+/// - Three comma-separated integers (the channels).
+/// - Optional fourth comma-separated number (alpha).
+/// - Closing `)`.
+/// Whitespace around commas tolerated; values not range-
+/// validated (so `rgb(999,999,999)` matches even though it's
+/// out of spec).
+///
+/// Distinct from M1063 hex-color extractor (`#abc` / `#aabbcc`).
+/// Together they cover the dominant CSS color formats.
+///
+/// 73rd member of the extraction family.
+SortLinesResult extractRgbColorsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*[\d.]+)?\s*\)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

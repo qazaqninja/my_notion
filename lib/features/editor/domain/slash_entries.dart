@@ -462,6 +462,9 @@ enum SlashAction {
   /// selected line (`mongodb://`, `postgres://`, `mysql://`,
   /// `redis://`).
   extractDbConnectionStringsFromLines,
+  /// Extract every CSS `rgb(...)` / `rgba(...)` color expression
+  /// from each selected line.
+  extractRgbColorsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2215,6 +2218,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractDbConnectionStringsFromLines,
     keywords: ['extract', 'db', 'database', 'connection',
         'mongodb', 'postgres', 'mysql', 'redis', 'dsn'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract RGB/RGBA colors',
+    hint: 'rgb(255,0,0) / rgba(0,0,0,0.5)',
+    action: SlashAction.extractRgbColorsFromLines,
+    keywords: ['extract', 'rgb', 'rgba', 'color', 'css',
+        'design'],
   ),
   SlashEntry(
     icon: 'calendar',
