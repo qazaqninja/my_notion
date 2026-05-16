@@ -86,6 +86,9 @@ enum SlashAction {
   /// Wrap each selected line at an 80-character column boundary,
   /// breaking on the last whitespace at or before column 80.
   wrapLinesAt80,
+  /// Escape markdown control characters on every selected line so
+  /// the content renders verbatim instead of being parsed.
+  escapeMarkdownLines,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1518,6 +1521,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'fold at column 80',
     action: SlashAction.wrapLinesAt80,
     keywords: ['wrap', 'fold', 'reflow', '80', 'column', 'break'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Escape markdown',
+    hint: r'**bold** → \*\*bold\*\*',
+    action: SlashAction.escapeMarkdownLines,
+    keywords: ['escape', 'verbatim', 'literal', 'backslash', 'markdown'],
   ),
   SlashEntry(
     icon: 'edit',

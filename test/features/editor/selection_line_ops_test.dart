@@ -140,6 +140,41 @@ void main() {
     });
   });
 
+  group('escapeMarkdownLinesIn', () {
+    test('backslash-escapes the canonical control characters', () {
+      const text = r'**bold** *italic* `code`' '\n';
+      final r = escapeMarkdownLinesIn(text, 0, text.length);
+      expect(r.text, r'\*\*bold\*\* \*italic\* \`code\`' '\n');
+    });
+
+    test('escapes brackets and parens used in links/images', () {
+      const text = '[label](url)\n';
+      final r = escapeMarkdownLinesIn(text, 0, text.length);
+      expect(r.text, r'\[label\]\(url\)' '\n');
+    });
+
+    test('escapes heading + blockquote + pipe characters', () {
+      const text = '# H1 | col | > bq\n';
+      final r = escapeMarkdownLinesIn(text, 0, text.length);
+      expect(r.text, r'\# H1 \| col \| \> bq' '\n');
+    });
+
+    test('escapes the backslash itself', () {
+      const text = r'use \n for newline' '\n';
+      final r = escapeMarkdownLinesIn(text, 0, text.length);
+      expect(r.text, r'use \\n for newline' '\n');
+    });
+
+    test('plain prose with no control chars is the identity', () {
+      const text = 'hello world\n';
+      expect(escapeMarkdownLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(escapeMarkdownLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('wrapLinesAt80In', () {
     test('short lines (≤80 chars) pass through unchanged', () {
       const text = 'hello world\nfoo bar baz\n';

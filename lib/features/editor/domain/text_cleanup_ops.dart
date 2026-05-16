@@ -86,6 +86,31 @@ SortLinesResult removeAccentsLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Escape markdown control characters on every selected line so the
+/// content renders verbatim instead of being parsed. Wraps each of
+/// `\`, `*`, `_`, `~`, `` ` ``, `[`, `]`, `(`, `)`, `<`, `>`, `#`,
+/// `!`, and `|` with a leading backslash. Useful when pasting in
+/// shell snippets, regex examples, or other prose where the source
+/// must be shown to the reader literally rather than rendered.
+///
+/// Doesn't try to be smart about context — every occurrence of a
+/// control character gets escaped. Run this BEFORE the strip-family
+/// (M976/977/978) to harden a line for verbatim display; or after,
+/// to escape what slipped through.
+SortLinesResult escapeMarkdownLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      const controls = r'\*_~`[]()<>#!|';
+      String esc(String l) {
+        final buf = StringBuffer();
+        for (final c in l.split('')) {
+          if (controls.contains(c)) buf.write('\\');
+          buf.write(c);
+        }
+        return buf.toString();
+      }
+      return [for (final l in lines) esc(l)];
+    });
+
 /// Strip emoji glyphs from every selected line. Covers the major
 /// Unicode emoji blocks (`U+1F000`-`U+1FAFF` for pictographs, plus
 /// `U+2600`-`U+27BF` for Misc Symbols / Dingbats), along with the
