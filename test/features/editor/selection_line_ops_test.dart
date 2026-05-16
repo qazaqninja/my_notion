@@ -2922,6 +2922,80 @@ void main() {
     });
   });
 
+  group('extractMarkdownListContentFromLinesIn', () {
+    test('dash bullet strips and keeps content', () {
+      const text = '- first item\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'first item\n');
+    });
+
+    test('asterisk bullet strips and keeps content', () {
+      const text = '* asterisk item\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'asterisk item\n');
+    });
+
+    test('plus bullet strips and keeps content', () {
+      const text = '+ plus item\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'plus item\n');
+    });
+
+    test('ordered single-digit marker strips and keeps content', () {
+      const text = '1. ordered item\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'ordered item\n');
+    });
+
+    test('ordered multi-digit marker strips and keeps content', () {
+      const text = '42. forty-second item\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'forty-second item\n');
+    });
+
+    test('indented sub-bullet matches with leading whitespace', () {
+      // Outline-style nesting — `\s*` allows the sub-item.
+      const text = '  - sub item\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'sub item\n');
+    });
+
+    test('marker without space gap is NOT a list item', () {
+      // `\s+` between marker and content is required.
+      const text = '-nogap content\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('bare marker with no content is NOT a match', () {
+      const text = '-\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('mixed markers across lines all extract', () {
+      const text = '- dash\n* star\n+ plus\n9. ordered\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'dash\nstar\nplus\nordered\n');
+    });
+
+    test('plain prose lines dropped from output', () {
+      const text = 'plain prose\n- a bullet\nmore prose\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a bullet\n');
+    });
+
+    test('inline punctuation in item content passes through', () {
+      const text = '- a, b (c) — d!\n';
+      final r = extractMarkdownListContentFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a, b (c) — d!\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownListContentFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

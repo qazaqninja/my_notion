@@ -329,6 +329,9 @@ enum SlashAction {
   /// Extract the quoted content from every markdown blockquote
   /// line (`> quoted text` → `quoted text`).
   extractMarkdownBlockquoteContentFromLines,
+  /// Extract the item content from every markdown list line
+  /// (`- foo` / `* foo` / `+ foo` / `1. foo` → `foo`).
+  extractMarkdownListContentFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1687,6 +1690,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownBlockquoteContentFromLines,
     keywords: ['extract', 'blockquote', 'quote', 'cite', 'gt',
         'markdown'],
+  ),
+  SlashEntry(
+    icon: 'list',
+    label: 'Extract list item content',
+    hint: '- foo / 1. foo → foo',
+    action: SlashAction.extractMarkdownListContentFromLines,
+    keywords: ['extract', 'list', 'bullet', 'item', 'ordered',
+        'unordered', 'markdown'],
   ),
   SlashEntry(
     icon: 'edit',

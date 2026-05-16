@@ -1167,6 +1167,37 @@ SortLinesResult extractMarkdownBlockquoteContentFromLinesIn(
       return out;
     });
 
+/// Extract the item content from every markdown list line
+/// (unordered `- foo` / `* foo` / `+ foo`, or ordered `1. foo`).
+/// Useful for "give me just the points without the markers" —
+/// flattening an outline into a plain bullet-list of strings,
+/// feeding items into a downstream search or sort, etc.
+///
+/// Recognition:
+/// - Optional leading whitespace (so indented sub-items in an
+///   outline still match — this is the dominant Notion-style
+///   list shape).
+/// - One of the unordered markers `-`, `*`, `+` OR an ordered
+///   marker `N.` for any non-negative integer `N`.
+/// - At least one whitespace separates marker from content.
+/// - At least one content char is required (bare `-` does NOT
+///   match).
+///
+/// Distinct from heading / blockquote extractors — different
+/// markdown surfaces, different transforms. 21st member of
+/// the extraction family.
+SortLinesResult extractMarkdownListContentFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'^\s*(?:[-*+]|\d+\.)\s+(.+)$');
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(1)!);
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
