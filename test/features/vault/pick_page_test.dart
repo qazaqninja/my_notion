@@ -10,6 +10,7 @@ PageRef _p({
   int mtimeMs = 0,
   List<String> tags = const [],
   String bodyText = '',
+  String relativePath = '',
 }) =>
     (
       ulid: ulid,
@@ -18,6 +19,7 @@ PageRef _p({
       mtimeMs: mtimeMs,
       tags: tags,
       bodyText: bodyText,
+      relativePath: relativePath,
     );
 
 void main() {
@@ -291,6 +293,52 @@ void main() {
         final pick = pickRandom(pages, math.Random(seed))!;
         expect(pages.contains(pick), isTrue);
       }
+    });
+  });
+
+  group('filterByFolder', () {
+    test('keeps pages whose path starts with `folder/`', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Operations/Acme.md'),
+        _p(ulid: 'b', relativePath: 'Operations/Sub/X.md'),
+        _p(ulid: 'c', relativePath: 'Inbox.md'),
+      ];
+      expect(
+        filterByFolder(pages, 'Operations').map((p) => p.ulid).toSet(),
+        {'a', 'b'},
+      );
+    });
+
+    test('does NOT match path components in the middle', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Inbox/Operations.md'),
+      ];
+      expect(filterByFolder(pages, 'Operations'), isEmpty);
+    });
+
+    test('top-level same-name page is NOT in the folder', () {
+      // 'Operations.md' is a sibling file, not inside 'Operations/'.
+      final pages = [_p(ulid: 'a', relativePath: 'Operations.md')];
+      expect(filterByFolder(pages, 'Operations'), isEmpty);
+    });
+
+    test('trailing slash on input is normalized away', () {
+      final pages = [_p(ulid: 'a', relativePath: 'Operations/Foo.md')];
+      expect(filterByFolder(pages, 'Operations/').length, 1);
+      expect(filterByFolder(pages, 'Operations///').length, 1);
+    });
+
+    test('empty folder returns empty', () {
+      final pages = [_p(ulid: 'a', relativePath: 'Foo.md')];
+      expect(filterByFolder(pages, ''), isEmpty);
+      expect(filterByFolder(pages, '   '), isEmpty);
+    });
+
+    test('case-sensitive match (vault folders preserve case)', () {
+      final pages = [
+        _p(ulid: 'a', relativePath: 'Operations/x.md'),
+      ];
+      expect(filterByFolder(pages, 'operations'), isEmpty);
     });
   });
 

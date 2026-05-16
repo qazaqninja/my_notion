@@ -28,6 +28,7 @@ typedef PageRef = ({
   int mtimeMs,
   List<String> tags,
   String bodyText,
+  String relativePath,
 });
 
 /// Minimum subset of relation columns the most-linked picker needs.
@@ -103,6 +104,28 @@ List<PageRef> topByBacklinkCount(
 PageRef? pickRandom(List<PageRef> pages, math.Random random) {
   if (pages.isEmpty) return null;
   return pages[random.nextInt(pages.length)];
+}
+
+/// Filter to pages that live under the given folder (matched against
+/// `relativePath`'s path components, case-sensitive — vault folders
+/// preserve case on disk so the comparison should too). Trailing
+/// slash on the input folder is optional. Empty folder returns
+/// empty — same convention as the rest of the filter family.
+/// Useful for "random page in Operations/" navigation.
+///
+///   filterByFolder(pages, 'Operations')
+///     keeps relativePath = 'Operations/Acme.md', 'Operations/Sub/X.md'
+///     drops  relativePath = 'Operations.md', 'Inbox/Operations.md'
+List<PageRef> filterByFolder(List<PageRef> pages, String folder) {
+  var needle = folder.trim();
+  if (needle.isEmpty) return [];
+  while (needle.endsWith('/')) {
+    needle = needle.substring(0, needle.length - 1);
+  }
+  final prefix = '$needle/';
+  return [
+    for (final p in pages) if (p.relativePath.startsWith(prefix)) p,
+  ];
 }
 
 /// Filter to pages whose title **starts with** the prefix
