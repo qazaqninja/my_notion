@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E34 — Surface `lastFetched.summary.mtime` in pull dialog header
+- **Task:** E35 — Long-press kebab "Pull from server" → diff dialog without round-tripping (alternate trigger)
 - **Status:** pending
 
 ## Last completed
 
-- **M1336 — E33** (sync lifecycle sanity check + post-await race fix)
+- **M1337 — E34** (pull dialog surfaces server mtime + helper extraction)
 - Committed: (this iteration)
-- TaskList ID: 55
-- Notes: New integration-ish test file `test/features/sync/sync_bloc_lifecycle_test.dart` (3 cases) exercises end-to-end SyncBloc lifecycle: (1) user A login → push → logout → user B login fully resets `token`, `knownShas`, `lastPush`, `lastConflict`, `pendingPushes`; (2) `close()` does NOT wipe the persisted token (only explicit logout does); (3) periodic timer cancels on logout and re-arms on re-login with the new user's listing only. The third test caught a real race: `_onList` checks `state.isAuthed` BEFORE its `await _repo.list(token:)`, but if a logout lands during the await, the response would emit Alice's relpaths into Bob's empty state. Fix: re-check `state.isAuthed` immediately AFTER the await in `_onList` and skip the merge. 3/3 lifecycle + 51/51 sync_bloc tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 56
+- Notes: Extracted `syncRelativeTime` out of `sync_connected_card.dart` into its own file `lib/features/sync/presentation/widgets/sync_relative_time.dart`. Both `SyncConnectedCard` (re-exports `show syncRelativeTime` so existing import paths still resolve) and `PullReconcileDialog` import it as a peer util. `PullReconcileDialog` gains a "server edited <X ago>" line under the existing sha/relpath line so the user can see HOW OLD the server copy is, not just its sha. 1 new dialog test asserts `RegExp(r'server edited \d+m ago')` appears for a 5-minutes-ago server `mtime`. 21/21 sync card + dialog tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

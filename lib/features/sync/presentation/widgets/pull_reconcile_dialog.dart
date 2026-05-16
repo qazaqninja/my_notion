@@ -4,6 +4,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../domain/entities/sync_file.dart';
+import 'sync_relative_time.dart';
 
 /// E24 — Modal that surfaces the server-side copy fetched by
 /// `SyncFetchFileRequested` and lets the user decide whether to overwrite
@@ -81,6 +82,17 @@ class PullReconcileDialog extends StatelessWidget {
                 style: mono(
                   color: tokens.text3,
                   fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 2),
+              // E34 — surface the server-side mtime as a relative time so
+              // the user can see HOW OLD the server copy is, not just its
+              // sha. Helps decide whether to overwrite local edits.
+              Text(
+                'server edited ${syncRelativeTime(serverBody.summary.mtime)}',
+                style: TextStyle(
+                  color: tokens.text3,
+                  fontSize: 11,
                 ),
               ),
               const SizedBox(height: 12),

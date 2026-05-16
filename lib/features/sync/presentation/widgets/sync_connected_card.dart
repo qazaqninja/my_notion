@@ -5,6 +5,8 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../bloc/sync_bloc.dart';
 import '../bloc/sync_event.dart';
 import '../bloc/sync_state.dart';
+import 'sync_relative_time.dart';
+export 'sync_relative_time.dart' show syncRelativeTime;
 
 /// Settings → Sync "connected" card. Shows the logged-in indicator, a
 /// Log out button, the last successful push, and any unresolved
@@ -304,14 +306,6 @@ class _ActivityRow extends StatelessWidget {
   }
 }
 
-/// Compact relative time formatter — `now`, `Xs ago`, `Xm ago`,
-/// `Xh ago`, `Xd ago`. Exposed for unit tests.
-String syncRelativeTime(DateTime when) {
-  final diff = DateTime.now().difference(when);
-  if (diff.isNegative) return 'just now';
-  if (diff.inSeconds < 5) return 'now';
-  if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
-  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-  if (diff.inHours < 24) return '${diff.inHours}h ago';
-  return '${diff.inDays}d ago';
-}
+// `syncRelativeTime` lives in sync_relative_time.dart — re-exported above
+// so callers that already import this file continue to compile without
+// adding a second import.

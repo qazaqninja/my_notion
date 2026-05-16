@@ -53,6 +53,30 @@ void main() {
       expect(find.textContaining('notes/a.md'), findsOneWidget);
     });
 
+    testWidgets('shows server mtime as a relative-time line (E34)',
+        (tester) async {
+      final recent = SyncFileBody(
+        summary: SyncFileSummary(
+          relpath: 'notes/a.md',
+          sha256: 'abcdef1234567890',
+          // Far enough in the past that syncRelativeTime maps to a
+          // stable 'Xs ago' / 'Xm ago' label rather than 'now'.
+          mtime: DateTime.now().subtract(const Duration(minutes: 5)),
+        ),
+        body: '# Server\n',
+      );
+      await tester.pumpWidget(pumpDialog(
+        serverBody: recent,
+        localBody: '# Local',
+        onUseServer: () {},
+        onKeepLocal: () {},
+      ));
+      expect(
+        find.textContaining(RegExp(r'server edited \d+m ago')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('"Use server version" invokes onUseServer', (tester) async {
       var called = false;
       await tester.pumpWidget(pumpDialog(
