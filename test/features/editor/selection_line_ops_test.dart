@@ -2234,6 +2234,47 @@ void main() {
     });
   });
 
+  group('extractMentionsFromLinesIn', () {
+    test('strips the leading @ and emits one mention per line', () {
+      const text = 'cc @alice and @bob please\n';
+      final r = extractMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alice\nbob\n');
+    });
+
+    test('mention body supports dot, dash, underscore', () {
+      const text = '@bob.smith @alice-z @user_42\n';
+      final r = extractMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'bob.smith\nalice-z\nuser_42\n');
+    });
+
+    test('email-style @ is NOT a mention (lookbehind rejects)', () {
+      const text = 'send to alice@x.test from @bob\n';
+      // The `@` inside `alice@x.test` is preceded by `e`, so it
+      // fails the lookbehind. Only `@bob` survives.
+      final r = extractMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'bob\n');
+    });
+
+    test('@ followed by space or digit is NOT a mention', () {
+      const text = '@ space here and @42-not-mention\n';
+      // @42 fails because mention body must start with a letter.
+      // @ followed by space fails for the same reason.
+      // `_transformLinesIn` preserves the trailing newline when the
+      // emitted lines list is empty, so the result is `'\n'`, not ''.
+      expect(extractMentionsFromLinesIn(text, 0, text.length).text, '\n');
+    });
+
+    test('lines without mentions are dropped from output', () {
+      const text = 'no mention here\n@alice\n';
+      final r = extractMentionsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alice\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMentionsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractHashtagsFromLinesIn', () {
     test('strips the leading # and emits one tag per line', () {
       const text = 'this #urgent and #review please\n';

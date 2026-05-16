@@ -266,6 +266,9 @@ enum SlashAction {
   /// Extract every `#hashtag` from each selected line and emit them
   /// one-per-line, without the leading `#`.
   extractHashtagsFromLines,
+  /// Extract every `@mention` from each selected line and emit them
+  /// one-per-line, without the leading `@`.
+  extractMentionsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1488,6 +1491,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '#tag → tag (one per line)',
     action: SlashAction.extractHashtagsFromLines,
     keywords: ['extract', 'pull', 'hashtag', 'tag', 'tags'],
+  ),
+  SlashEntry(
+    icon: 'users',
+    label: 'Extract mentions',
+    hint: '@user → user (one per line)',
+    action: SlashAction.extractMentionsFromLines,
+    keywords: ['extract', 'pull', 'mention', 'mentions', 'user', 'at'],
   ),
   SlashEntry(
     icon: 'sync',

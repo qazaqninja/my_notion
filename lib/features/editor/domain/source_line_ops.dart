@@ -524,6 +524,30 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Extract every `@mention` from each selected line and emit them
+/// one-per-line WITHOUT the leading `@`. Useful for harvesting
+/// inline-written attendee / DRI mentions out of meeting notes,
+/// retro action items, or any prose where the user wants a
+/// flat list of "who got mentioned".
+///
+/// Recognition: `@` immediately followed by a letter (so `@alice`
+/// and `@bob.smith` count, but `email@x.test` does NOT — the
+/// negative lookbehind on alphanumeric rejects the `@` inside an
+/// email address). Mention body accepts letters / digits / `.` /
+/// `-` / `_`.
+SortLinesResult extractMentionsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?<![A-Za-z0-9])@([A-Za-z][\w.\-]*)');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every `#hashtag` from each selected line and emit them
 /// one-per-line WITHOUT the leading `#`. Useful for harvesting
 /// inline-written tags out of prose for migration into the
