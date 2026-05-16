@@ -1573,6 +1573,37 @@ SortLinesResult extractHtmlAttributeNamesFromLinesIn(
       return out;
     });
 
+/// Extract every HTML attribute VALUE (the part inside the
+/// quotes) from each selected line. Companion to M1103's
+/// attribute-name extractor — paired together they let you
+/// audit both halves of every HTML attribute.
+///
+/// Recognition: `\b[\w-]+\s*=\s*(?:"([^"]*)"|'([^']*)')`
+/// - Standard attribute-name + `=` shape.
+/// - Value captured as group 1 (double-quoted) OR group 2
+///   (single-quoted), one of them non-null per match.
+///
+/// Empty values (`href=""`) ARE matched and emit as empty
+/// strings — useful for "which attributes are empty?" audits.
+/// Unquoted attribute values are still out of scope (matches
+/// M1103's v1 limitation).
+///
+/// 42nd member of the extraction family.
+SortLinesResult extractHtmlAttributeValuesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'''\b[\w-]+\s*=\s*(?:"([^"]*)"|'([^']*)')''',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add((m.group(1) ?? m.group(2))!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

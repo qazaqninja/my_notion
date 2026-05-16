@@ -366,6 +366,9 @@ enum SlashAction {
   /// Extract every HTML attribute name (the part before `=`)
   /// from each selected line.
   extractHtmlAttributeNamesFromLines,
+  /// Extract every HTML attribute value (the part inside the
+  /// quotes) from each selected line.
+  extractHtmlAttributeValuesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1870,6 +1873,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'href="x" → href',
     action: SlashAction.extractHtmlAttributeNamesFromLines,
     keywords: ['extract', 'html', 'attribute', 'attr', 'name',
+        'audit', 'sanitize'],
+  ),
+  SlashEntry(
+    icon: 'tag',
+    label: 'Extract HTML attribute values',
+    hint: 'href="x" → x',
+    action: SlashAction.extractHtmlAttributeValuesFromLines,
+    keywords: ['extract', 'html', 'attribute', 'attr', 'value',
         'audit', 'sanitize'],
   ),
   SlashEntry(

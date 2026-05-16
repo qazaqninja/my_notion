@@ -4582,6 +4582,83 @@ void main() {
     });
   });
 
+  group('extractHtmlAttributeValuesFromLinesIn', () {
+    test('double-quoted value extracts content', () {
+      const text = '<a href="https://x.test">link</a>\n';
+      final r = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('single-quoted value extracts content', () {
+      const text = "<a href='/local/path'>link</a>\n";
+      final r = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '/local/path\n');
+    });
+
+    test('multiple attributes each yield value', () {
+      const text = '<img src="pic.png" alt="hero" width="100">\n';
+      final r = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'pic.png\nhero\n100\n');
+    });
+
+    test('empty value emits as empty line', () {
+      // `href=""` is a legitimate (if odd) attribute; capture
+      // emits an empty entry so audits can flag empty values.
+      const text = '<a href="" target="_blank">\n';
+      final r = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n_blank\n');
+    });
+
+    test('paired with name extractor for full attr audit', () {
+      const text = '<a href="x" class="y">\n';
+      final names = extractHtmlAttributeNamesFromLinesIn(
+          text, 0, text.length);
+      final values = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(names.text, 'href\nclass\n');
+      expect(values.text, 'x\ny\n');
+    });
+
+    test('tag with no attributes is NOT a match', () {
+      const text = 'plain <div> here\n';
+      final r = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('value with internal spaces preserved', () {
+      const text = '<a title="hover text here">link</a>\n';
+      final r = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'hover text here\n');
+    });
+
+    test('data-* attribute values preserved', () {
+      const text = '<div data-id="42" data-role="button">\n';
+      final r = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '42\nbutton\n');
+    });
+
+    test('lines without attribute syntax dropped from output', () {
+      const text = 'plain prose\n<a href="x">link</a>\nmore prose\n';
+      final r = extractHtmlAttributeValuesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'x\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractHtmlAttributeValuesFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
