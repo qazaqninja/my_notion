@@ -697,6 +697,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show stale pages (90+ days)':
         if (!context.mounted) return;
         await _showStaleDialog(context);
+      case 'Show pages with open todos':
+        if (!context.mounted) return;
+        await _showOpenTodosDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           context.toastError('No vault open');
@@ -1180,6 +1183,30 @@ views:
           'Pages not edited in 90+ days. Oldest first — candidates for archive or refresh.',
       subtitleEmpty:
           'Every indexed page has been edited within the last 90 days.',
+    );
+  }
+
+  Future<void> _showOpenTodosDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    // Match the GFM open-todo marker anywhere in the body: optional
+    // leading indent, then `- [ ] ` / `* [ ] ` / `+ [ ] `. Multi-line
+    // mode so `^` matches every line start, not just file start.
+    final todoRe = RegExp(r'^[ \t]*[-*+] \[ \] ', multiLine: true);
+    final withTodos = [
+      for (final p in pages)
+        if (todoRe.hasMatch(p.bodyText)) p,
+    ]..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+    if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: withTodos,
+      headingFull: 'OPEN TODOS',
+      headingEmpty: 'NO OPEN TODOS',
+      subtitleFull:
+          'Pages containing at least one unchecked `- [ ] ` item. Sorted by last-edited.',
+      subtitleEmpty:
+          'No indexed page has an open `- [ ] ` todo. Inbox zero, or nothing tracked yet.',
     );
   }
 

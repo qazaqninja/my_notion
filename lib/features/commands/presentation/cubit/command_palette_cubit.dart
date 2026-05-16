@@ -204,6 +204,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Show pages without a title', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'link', label: 'Show broken wikilinks', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'clock', label: 'Show stale pages (90+ days)', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'check', label: 'Show pages with open todos', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'table', label: 'Import CSV as database', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import HTML file as page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import text file as page', hint: ''),
