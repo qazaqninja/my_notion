@@ -7,6 +7,16 @@ import '../sync/file_summary.dart';
 /// connection (same pattern as `UserRepositoryBase`).
 abstract class SyncRepositoryBase {
   Future<List<FileSummary>> listFor(String userId);
+
+  /// Upsert one file. The new server-side `mtime` is recorded on every
+  /// write so clients can sort by recent activity. Returns the
+  /// canonical `FileSummary` from the persisted row.
+  Future<FileSummary> upsert({
+    required String userId,
+    required String relpath,
+    required String body,
+    required String sha256,
+  });
 }
 
 class SyncRepository implements SyncRepositoryBase {
@@ -32,5 +42,37 @@ class SyncRepository implements SyncRepositoryBase {
           mtime: row[2] as DateTime,
         ),
     ];
+  }
+
+  @override
+  Future<FileSummary> upsert({
+    required String userId,
+    required String relpath,
+    required String body,
+    required String sha256,
+  }) async {
+    final rows = await _conn.execute(
+      Sql.named('''
+        INSERT INTO vault_files (user_id, relpath, sha256, body, mtime)
+        VALUES (@uid, @rel, @sha, @body, now())
+        ON CONFLICT (user_id, relpath) DO UPDATE
+          SET sha256 = EXCLUDED.sha256,
+              body   = EXCLUDED.body,
+              mtime  = now()
+        RETURNING relpath, sha256, mtime
+      '''),
+      parameters: {
+        'uid': userId,
+        'rel': relpath,
+        'sha': sha256,
+        'body': body,
+      },
+    );
+    final row = rows.first;
+    return FileSummary(
+      relpath: row[0] as String,
+      sha256: row[1] as String,
+      mtime: row[2] as DateTime,
+    );
   }
 }

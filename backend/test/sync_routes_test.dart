@@ -33,10 +33,33 @@ class _Users implements UserRepositoryBase {
 class _Sync implements SyncRepositoryBase {
   _Sync(this._byUser);
   final Map<String, List<FileSummary>> _byUser;
+  // (userId → (relpath → body)) — captured by upsert so tests can
+  // assert per-user scoping on writes too.
+  final Map<String, Map<String, String>> bodies = {};
 
   @override
   Future<List<FileSummary>> listFor(String userId) async =>
       _byUser[userId] ?? const [];
+
+  @override
+  Future<FileSummary> upsert({
+    required String userId,
+    required String relpath,
+    required String body,
+    required String sha256,
+  }) async {
+    bodies.putIfAbsent(userId, () => {})[relpath] = body;
+    final summary = FileSummary(
+      relpath: relpath,
+      sha256: sha256,
+      mtime: DateTime.utc(2026, 5, 17, 12),
+    );
+    final list = _byUser.putIfAbsent(userId, () => <FileSummary>[]);
+    final without = list.where((f) => f.relpath != relpath).toList();
+    _byUser[userId] = [...without, summary]
+      ..sort((a, b) => a.relpath.compareTo(b.relpath));
+    return summary;
+  }
 }
 
 void main() {
@@ -108,6 +131,59 @@ void main() {
       expect(body[0]['relpath'], 'Inbox/Note.md');
       expect(body[0]['sha256'], 'aaa');
       expect(body[1]['relpath'], 'README.md');
+    });
+
+    test('PUT /put/<relpath> upserts body and returns FileSummary', () async {
+      final users = _Users({alice.id: alice});
+      final sync = _Sync({alice.id: const []});
+      final tok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      final res = await pipeline(
+        Request(
+          'PUT',
+          Uri.parse('http://localhost/put/Inbox/Note.md'),
+          headers: {'authorization': 'Bearer $tok'},
+          body: '# hello',
+        ),
+      );
+      expect(res.statusCode, 200);
+      final body = jsonDecode(await res.readAsString()) as Map<String, dynamic>;
+      expect(body['relpath'], 'Inbox/Note.md');
+      // Server-computed sha256 of '# hello'.
+      expect(body['sha256'], isA<String>());
+      expect((body['sha256'] as String).length, 64);
+      // The fake captured the body for the right user.
+      expect(sync.bodies[alice.id]?['Inbox/Note.md'], '# hello');
+    });
+
+    test('PUT /put: path-traversal `..` is normalised away by Uri parsing '
+        'before the route handler runs', () async {
+      // Defense-in-depth note: Dart's Uri.parse collapses `..` segments
+      // automatically (RFC 3986 §5.2.4), so a URL like
+      // `/put/notes/../bob/secret.md` is decoded to `/put/bob/secret.md`
+      // before shelf_router matches the pattern. The handler sees
+      // `bob/secret.md` and accepts it — safe. The `_isSafeRelpath`
+      // check still rejects literal `..` segments that bypass URI
+      // normalisation (e.g. body-decoded multipart paths in future work).
+      final users = _Users({alice.id: alice});
+      final sync = _Sync({alice.id: const []});
+      final tok = tokens.issue(alice.id);
+      final pipeline = Pipeline()
+          .addMiddleware(requireAuth(users: users, tokens: tokens))
+          .addHandler(buildSyncRouter(sync: sync).call);
+      final res = await pipeline(
+        Request(
+          'PUT',
+          Uri.parse('http://localhost/put/notes/../bob/secret.md'),
+          headers: {'authorization': 'Bearer $tok'},
+          body: 'bad',
+        ),
+      );
+      expect(res.statusCode, 200);
+      // The relpath that landed in storage has the `..` segment collapsed.
+      expect(sync.bodies[alice.id]?.keys, contains('bob/secret.md'));
     });
 
     test("GET /list scopes to the caller's user_id only", () async {
