@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1242 — D1 slice 1** (super_editor 0.3.0-dev.44 + serializer paragraph round-trip)
-- Committed: a598753
+- **M1244 — D1 slice 2** (heading round-trip — H1/H2/H3 via blockType metadata)
+- Committed: 19238ba
 - TaskList ID: 22 (still in_progress)
-- Notes: Pinned exactly at 0.3.0-dev.44 because the stable 0.2.x line pins http ^0.13 (conflicts with timezone-via-flutter_local_notifications needing http ^1.2), and the newer 0.3-dev.51 uses Flutter APIs that don't exist in Flutter 3.35.5. `SuperEditorSerializer` ships paragraph round-trip only; subsequent slices add headings, lists, code, math, mermaid, tables, image cards, transclusion, then inline marks (bold/italic/etc.), then interactions (slash menu, drag, multi-select), then cutover. ~30+ slices ahead.
+- Notes: super_editor encodes headings as `ParagraphNode` with `metadata.blockType = header[N]Attribution`, not as separate HeaderNode classes. Regex `^(#{1,3})\s+(.+)$` matches H1-H3; H4+ falls through to paragraph (super_editor's default attribution set only ships H1-H3). 9/9 cases now pass. Slices remaining for serializer block parity: lists (ul/ol/todo), code blocks, blockquotes, horizontal rule, callouts, math, mermaid, tables, image cards, file cards, bookmark cards, sub-page cards, transclusion cards, hr, columns, breadcrumb block, toc, buttons, then inline marks.
 
 ## Backlog (Phase A — Foundation)
 
