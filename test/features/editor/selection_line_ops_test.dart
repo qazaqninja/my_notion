@@ -3627,6 +3627,74 @@ void main() {
     });
   });
 
+  group('extractGitShasFromLinesIn', () {
+    test('typical 7-char short SHA extracts', () {
+      const text = 'see commit abc1234 for context\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, 'abc1234\n');
+    });
+
+    test('8-char hex with letters extracts', () {
+      const text = 'released deadbeef yesterday\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, 'deadbeef\n');
+    });
+
+    test('full 40-char SHA-1 extracts', () {
+      const sha = '1234567890abcdef1234567890abcdef12345678';
+      final text = 'full sha $sha tracked\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, '$sha\n');
+    });
+
+    test('all-digit `1234567` (no letters) is NOT a SHA', () {
+      // The lookahead requires at least one `[a-f]` letter.
+      // A pure-numeric 7-digit run is a number, not a SHA.
+      const text = 'id 1234567 tracked\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('mixed-case `DeadBeef` is NOT a SHA', () {
+      // Lowercase-only — disambiguates from UUIDs and hex
+      // colors which often use uppercase.
+      const text = 'cookie DeadBeef inline\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('6-char hex (too short) is NOT a SHA', () {
+      const text = 'short abc123 only six\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('41-char hex (too long) is NOT a SHA', () {
+      // The trailing word boundary would fall inside a word,
+      // so neither greedy nor backtrack length 7..40 succeeds.
+      const sha41 = '1234567890abcdef1234567890abcdef123456789';
+      final text = 'over $sha41 long\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple SHAs on one line each extract', () {
+      const text = 'merged abc1234 with deadbeef cleanup\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, 'abc1234\ndeadbeef\n');
+    });
+
+    test('lines without SHAs dropped from output', () {
+      const text = 'plain prose\ncherry-pick cafebabe done\nmore prose\n';
+      final r = extractGitShasFromLinesIn(text, 0, text.length);
+      expect(r.text, 'cafebabe\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractGitShasFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

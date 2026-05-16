@@ -360,6 +360,9 @@ enum SlashAction {
   /// Extract every file-size substring (`1.5 MB`, `42KB`, `512 B`)
   /// from each selected line.
   extractFileSizesFromLines,
+  /// Extract every git-short-SHA substring (7–40 lowercase hex
+  /// chars with at least one letter) from each selected line.
+  extractGitShasFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1808,6 +1811,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractFileSizesFromLines,
     keywords: ['extract', 'size', 'bytes', 'kb', 'mb', 'gb', 'tb',
         'pb', 'kib', 'mib', 'gib', 'disk', 'storage'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract git short SHAs',
+    hint: '7-40 hex w/ ≥1 letter',
+    action: SlashAction.extractGitShasFromLines,
+    keywords: ['extract', 'git', 'sha', 'commit', 'hash', 'short',
+        'hex', 'revision'],
   ),
   SlashEntry(
     icon: 'edit',

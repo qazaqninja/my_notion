@@ -1506,6 +1506,40 @@ SortLinesResult extractFileSizesFromLinesIn(
       return out;
     });
 
+/// Extract every git-short-SHA substring from each selected line.
+/// Useful for dev-log scraping, PR-description audits, and
+/// commit-list mining ("which commits does this doc reference?").
+///
+/// Recognition: `\b(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b`
+/// - 7 to 40 lowercase hex chars (git's default short-SHA is 7;
+///   full SHA-1 is 40).
+/// - Lookahead `(?=[0-9a-f]*[a-f])` requires AT LEAST ONE
+///   letter — this distinguishes `abc1234` (a SHA) from
+///   `1234567` (a plain number that happens to have 7 digits).
+/// - Lowercase only — git uses lowercase consistently. Mixed-
+///   case `DeadBeef` does NOT match (helps disambiguate from
+///   UUIDs and hex colors which often use uppercase).
+/// - Word boundaries on each end reject embedded slices and
+///   also reject runs longer than 40 (the trailing word boundary
+///   would fall inside a word).
+///
+/// Distinct from M1069 UUIDs (dashed form) and M1063 hex colors
+/// (3 / 6 chars, `#` prefix).
+///
+/// 31st member of the extraction family.
+SortLinesResult extractGitShasFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
