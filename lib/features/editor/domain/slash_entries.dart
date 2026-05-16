@@ -294,6 +294,9 @@ enum SlashAction {
   /// Extract every bare ULID (`[0-9A-Z]{26}`) from each selected
   /// line, including ULIDs outside `[[wikilinks]]`.
   extractUlidsFromLines,
+  /// Extract every CSS hex color code (`#RGB` / `#RRGGBB` / `#RGBA`
+  /// / `#RRGGBBAA`) from each selected line.
+  extractHexColorsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1579,6 +1582,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '26-char IDs (incl. unbracketed)',
     action: SlashAction.extractUlidsFromLines,
     keywords: ['extract', 'ulid', 'id', 'identifier', 'page'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract hex colors',
+    hint: '#RGB / #RRGGBB / etc.',
+    action: SlashAction.extractHexColorsFromLines,
+    keywords: ['extract', 'color', 'hex', 'palette', 'rgb', 'css'],
   ),
   SlashEntry(
     icon: 'sync',

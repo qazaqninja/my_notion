@@ -1292,6 +1292,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractUlidsFromLinesIn,
         );
+      case SlashAction.extractHexColorsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractHexColorsFromLinesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,

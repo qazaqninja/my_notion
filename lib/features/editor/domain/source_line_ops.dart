@@ -886,6 +886,34 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract every CSS-shaped hex color code from each selected line:
+/// `#RGB`, `#RRGGBB`, `#RGBA`, `#RRGGBBAA`. Useful for pulling a
+/// palette out of design notes / CSS dumps for migration into a
+/// theme file.
+///
+/// Recognition: `#` immediately followed by 3, 4, 6, or 8 hex
+/// digits. Case-insensitive on the digits (both `#fff` and `#FFF`
+/// match). Adjacent hex chars beyond the canonical lengths are
+/// rejected — `#fff123` would match as `#fff123` (a valid 6-char
+/// code), not as `#fff` + leftover.
+SortLinesResult extractHexColorsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Order matters in the alternation: longest forms first so the
+      // regex doesn't shortcircuit on the 3-char shape inside an
+      // 8-char value.
+      final re = RegExp(
+        r'#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every bare ULID (`[0-9A-Z]{26}`) from each selected line
 /// and emit them one-per-line. Distinct from
 /// [extractWikilinksFromLinesIn] which only catches ULIDs inside

@@ -2234,6 +2234,44 @@ void main() {
     });
   });
 
+  group('extractHexColorsFromLinesIn', () {
+    test('extracts 3-char and 6-char hex codes', () {
+      const text = 'use #fff for bg and #2A4D7E for accent\n';
+      final r = extractHexColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#fff\n#2A4D7E\n');
+    });
+
+    test('extracts 4-char and 8-char (with alpha)', () {
+      const text = 'fade #abcd and #12345678 spread\n';
+      final r = extractHexColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#abcd\n#12345678\n');
+    });
+
+    test('case-insensitive on the hex digits', () {
+      const text = '#AbCdEf and #aaa1\n';
+      final r = extractHexColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#AbCdEf\n#aaa1\n');
+    });
+
+    test('non-hex chars after a short code stop the match cleanly', () {
+      // `#fffg` is not a valid hex code (g is not hex).
+      // `\b` boundary fails here so the regex rejects.
+      const text = '#fffg dropped #abc kept\n';
+      final r = extractHexColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#abc\n');
+    });
+
+    test('lines without hex codes dropped from output', () {
+      const text = 'plain prose\nuse #fff color\n';
+      final r = extractHexColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '#fff\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractHexColorsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractUlidsFromLinesIn', () {
     test('extracts a bare ULID', () {
       const ulid = '01HABCDEFGHIJKLMNOPQRSTUVW';
