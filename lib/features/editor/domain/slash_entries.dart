@@ -63,6 +63,9 @@ enum SlashAction {
   /// Insert a classic three-sentence lorem-ipsum paragraph at the
   /// caret. Useful for layout testing and template stubs.
   insertLoremIpsum,
+  /// Insert a four-section meeting-notes scaffold at the caret
+  /// (Attendees / Agenda / Decisions / Action items).
+  insertMeetingNotesScaffold,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1434,6 +1437,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'placeholder paragraph',
     action: SlashAction.insertLoremIpsum,
     keywords: ['lorem', 'ipsum', 'placeholder', 'fill', 'stub', 'dummy'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Meeting notes scaffold',
+    hint: 'attendees / agenda / decisions / actions',
+    action: SlashAction.insertMeetingNotesScaffold,
+    keywords: ['meeting', 'notes', 'agenda', 'minutes', 'template', 'scaffold'],
   ),
   SlashEntry(
     icon: 'link',

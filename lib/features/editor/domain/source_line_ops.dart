@@ -2263,6 +2263,25 @@ String formatIsoDateTime(DateTime when) {
 String formatEpochTimestamp(DateTime when) =>
     (when.millisecondsSinceEpoch ~/ 1000).toString();
 
+/// Four-section meeting-notes scaffold dropped at the caret by the
+/// `/meeting` slash entry: Attendees / Agenda / Decisions / Action
+/// items, each headed by an h2 and seeded with a single empty list
+/// marker so the user can start typing immediately. Action items use
+/// the GFM unchecked-todo form so they surface in the "Show pages
+/// with open todos" palette entry (M985).
+const String kMeetingNotesScaffold =
+    '## Attendees\n'
+    '- \n'
+    '\n'
+    '## Agenda\n'
+    '- \n'
+    '\n'
+    '## Decisions\n'
+    '- \n'
+    '\n'
+    '## Action items\n'
+    '- [ ] \n';
+
 /// The canonical lorem-ipsum paragraph used by the `/lorem` slash
 /// entry. Three sentences, ~30 words each — enough to test
 /// layout/spacing without overwhelming a small block. Held as a

@@ -975,6 +975,20 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart + kLoremIpsumParagraph.length,
           ),
         );
+      case SlashAction.insertMeetingNotesScaffold:
+        final newText = text.replaceRange(
+          stripStart, caret, kMeetingNotesScaffold,
+        );
+        // Land the caret right after the first "- " (under
+        // "## Attendees") so the user can start typing the first
+        // attendee immediately. Offset = "## Attendees\n- ".length.
+        const caretInScaffold = 15;
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + caretInScaffold,
+          ),
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

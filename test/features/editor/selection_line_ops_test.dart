@@ -140,6 +140,33 @@ void main() {
     });
   });
 
+  group('kMeetingNotesScaffold', () {
+    test('contains the four canonical h2 section headings', () {
+      expect(kMeetingNotesScaffold.contains('## Attendees\n'), isTrue);
+      expect(kMeetingNotesScaffold.contains('## Agenda\n'), isTrue);
+      expect(kMeetingNotesScaffold.contains('## Decisions\n'), isTrue);
+      expect(kMeetingNotesScaffold.contains('## Action items\n'), isTrue);
+    });
+
+    test('action items use the GFM unchecked-todo form', () {
+      // `- [ ] ` so the scaffold surfaces in M985's "Show pages with
+      // open todos" palette entry.
+      expect(kMeetingNotesScaffold.contains('- [ ] '), isTrue);
+    });
+
+    test('the caret-landing offset (15) sits right after the first "- "',
+        () {
+      // Sanity-check the magic number used in the source_view.dart
+      // dispatch arm; if the heading prose changes, this catches the
+      // drift before users notice the caret landing somewhere wrong.
+      const caretInScaffold = 15;
+      expect(
+        kMeetingNotesScaffold.substring(0, caretInScaffold),
+        '## Attendees\n- ',
+      );
+    });
+  });
+
   group('kLoremIpsumParagraph', () {
     test('is one paragraph, no internal line breaks', () {
       expect(kLoremIpsumParagraph.contains('\n'), isFalse);
