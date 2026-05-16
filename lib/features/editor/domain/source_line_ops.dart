@@ -3415,7 +3415,7 @@ SortLinesResult extractStackTraceRefsFromLinesIn(
 /// Matches:
 /// - `pi_3OZmkF2eZvKYlo2C1tAxYBJP`        — payment intent
 /// - `cus_NXkvJpFKy5mP9R`                  — customer
-/// - `sk_test_FAKE`    — test secret key
+/// - `sk_test_FAKE`    — test secret key (example only)
 /// - `whsec_abcdef0123456789`              — webhook secret
 ///
 /// The alphanumeric body uses `[A-Za-z0-9]+` (no length limit

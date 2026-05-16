@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/editor/domain/source_line_ops.dart';
+
+import '../../helpers/env.dart';
 
 void main() {
   group('sortLinesIn', () {
@@ -9058,6 +9061,8 @@ void main() {
   });
 
   group('extractStripeIdsFromLinesIn', () {
+    setUpAll(loadTestEnv);
+
     test('payment intent pi_... extracts', () {
       const text = 'see pi_3OZmkF2eZvKYlo2C1tAxYBJP charge\n';
       final r = extractStripeIdsFromLinesIn(
@@ -9080,10 +9085,12 @@ void main() {
     });
 
     test('test secret key sk_test_... extracts', () {
-      const text = 'cfg sk_test_FAKE here\n';
+      final key = dotenv.env['STRIPE_TEST_EXAMPLE_KEY']
+          ?? 'sk_test_FAKE';
+      final text = 'cfg $key here\n';
       final r = extractStripeIdsFromLinesIn(
           text, 0, text.length,);
-      expect(r.text, 'sk_test_FAKE\n');
+      expect(r.text, '$key\n');
     });
 
     test('webhook secret whsec_... extracts', () {
