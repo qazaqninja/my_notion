@@ -5,16 +5,16 @@
 
 ## Current
 
-- **Phase:** C → D transition (V1 Polish — Platform → V1 Polish — WYSIWYG)
-- **Task:** D1 — Bring `super_editor` into the tree (start parallel `/editor-beta/` route)
-- **Status:** pending
+- **Phase:** D (V1 Polish — WYSIWYG via super_editor)
+- **Task:** D1 — Bring `super_editor` into the tree + serializer skeleton
+- **Status:** in_progress (slice 1 of ~30+ done at M1242)
 
-## Last completed
+## Last completed slice
 
-- **M1240 — C3 (closes C3 + Phase C)** (outbound OS share-sheet via share_plus)
-- Committed: 069f1d8
-- TaskList ID: 21 (closed)
-- Notes: share_plus ^12.0.2 + editor-kebab "Share…" entry that calls `Share.shareXFiles` with the current page. Falls back to `Share.share(body)` on file-share-unsupported platforms. **Inbound** sharing (receive_sharing_intent) deferred — needs per-platform Xcode/manifest setup that's heavier than a 1-minute slice. FEATURES.md marker stays 🚧 until inbound lands; outbound path documented. Phase C closes here.
+- **M1242 — D1 slice 1** (super_editor 0.3.0-dev.44 + serializer paragraph round-trip)
+- Committed: a598753
+- TaskList ID: 22 (still in_progress)
+- Notes: Pinned exactly at 0.3.0-dev.44 because the stable 0.2.x line pins http ^0.13 (conflicts with timezone-via-flutter_local_notifications needing http ^1.2), and the newer 0.3-dev.51 uses Flutter APIs that don't exist in Flutter 3.35.5. `SuperEditorSerializer` ships paragraph round-trip only; subsequent slices add headings, lists, code, math, mermaid, tables, image cards, transclusion, then inline marks (bold/italic/etc.), then interactions (slash menu, drag, multi-select), then cutover. ~30+ slices ahead.
 
 ## Backlog (Phase A — Foundation)
 
