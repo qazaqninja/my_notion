@@ -397,6 +397,9 @@ enum SlashAction {
   /// display name (`[[ULID|alias]]` → `alias`) on each selected
   /// line.
   extractWikilinkAliasesFromLines,
+  /// Extract the anchor slug from every wikilink that has one
+  /// (`[[ULID#anchor]]` → `anchor`) on each selected line.
+  extractWikilinkAnchorsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1982,6 +1985,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractWikilinkAliasesFromLines,
     keywords: ['extract', 'wikilink', 'alias', 'display', 'name',
         'i18n'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract wikilink anchors',
+    hint: '[[ULID#anchor]] → anchor',
+    action: SlashAction.extractWikilinkAnchorsFromLines,
+    keywords: ['extract', 'wikilink', 'anchor', 'section', 'slug',
+        'deeplink'],
   ),
   SlashEntry(
     icon: 'calendar',

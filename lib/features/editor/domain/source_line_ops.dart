@@ -1903,6 +1903,42 @@ SortLinesResult extractWikilinkAliasesFromLinesIn(
       return out;
     });
 
+/// Extract the ANCHOR slug from every wikilink that has one
+/// (`[[ULID#anchor]]` or `[[ULID#anchor|alias]]` → `anchor`)
+/// on each selected line. Companion to M1114's alias extractor
+/// — useful for "which sections does this doc deep-link to?"
+/// audits and anchor-slug consistency reviews.
+///
+/// Recognition:
+/// `\[\[[0-9A-Z]{26}#([a-z0-9][a-z0-9\-]*)(?:\|[^\]\n]*)?\]\]`
+/// - Standard wikilink opener `[[` + 26-char ULID.
+/// - Literal `#` then the anchor slug (captured as group 1):
+///   starts with `[a-z0-9]`, followed by lowercase + digits +
+///   hyphens.
+/// - Optional `|alias` (consumed but not captured).
+/// - Literal `]]` closer.
+///
+/// Wikilinks WITHOUT an anchor (`[[ULID]]` or `[[ULID|alias]]`)
+/// are NOT matched — the `#anchor` is the required marker.
+///
+/// 52nd member of the extraction family. The wikilink trio
+/// (full body, alias, anchor) is now complete — three
+/// complementary surfaces for vault analysis.
+SortLinesResult extractWikilinkAnchorsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\[\[[0-9A-Z]{26}#([a-z0-9][a-z0-9\-]*)(?:\|[^\]\n]*)?\]\]',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

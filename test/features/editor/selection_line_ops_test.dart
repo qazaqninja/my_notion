@@ -5280,6 +5280,80 @@ void main() {
     });
   });
 
+  group('extractWikilinkAnchorsFromLinesIn', () {
+    test('anchor-only wikilink extracts anchor', () {
+      const text =
+          'see [[01HABCDEFGHIJKLMNOPQRSTUVW#intro]] section\n';
+      final r = extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'intro\n');
+    });
+
+    test('anchor + alias wikilink extracts anchor only', () {
+      const text =
+          'cite [[01HABCDEFGHIJKLMNOPQRSTUVW#section-2|S2]] today\n';
+      final r = extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'section-2\n');
+    });
+
+    test('hyphenated anchor slug preserved', () {
+      const text = 'jump [[01HABCDEFGHIJKLMNOPQRSTUVW#my-cool-section]]\n';
+      final r = extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'my-cool-section\n');
+    });
+
+    test('digit-starting anchor extracts', () {
+      const text = 'step [[01HABCDEFGHIJKLMNOPQRSTUVW#2024-q1]] plan\n';
+      final r = extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024-q1\n');
+    });
+
+    test('plain `[[ULID]]` (no anchor) is NOT matched', () {
+      const text = 'bare [[01HABCDEFGHIJKLMNOPQRSTUVW]] ref\n';
+      final r = extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('alias-only `[[ULID|alias]]` (no anchor) is NOT matched', () {
+      const text = 'named [[01HABCDEFGHIJKLMNOPQRSTUVW|alias]] only\n';
+      final r = extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple anchored wikilinks each extract', () {
+      const text = 'pair [[01HABCDEFGHIJKLMNOPQRSTUVW#a]] and '
+          '[[01HBBCDEFGHIJKLMNOPQRSTUVW#b-c]] cross\n';
+      final r = extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a\nb-c\n');
+    });
+
+    test('wikilink trio: base + alias + anchor cross-check', () {
+      // Demonstrates the trio: same input yields parallel
+      // body/alias/anchor sequences when all three apply.
+      const text =
+          'see [[01HABCDEFGHIJKLMNOPQRSTUVW#section|Display]] inline\n';
+      final base = extractWikilinksFromLinesIn(text, 0, text.length);
+      final aliases =
+          extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      final anchors =
+          extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(base.text, '01HABCDEFGHIJKLMNOPQRSTUVW#section|Display\n');
+      expect(aliases.text, 'Display\n');
+      expect(anchors.text, 'section\n');
+    });
+
+    test('lines without anchored wikilinks dropped from output', () {
+      const text = 'plain prose\n'
+          'cite [[01HABCDEFGHIJKLMNOPQRSTUVW#anc]] here\n'
+          'more prose\n';
+      final r = extractWikilinkAnchorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'anc\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractWikilinkAnchorsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
