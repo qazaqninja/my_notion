@@ -3813,6 +3813,28 @@ SortLinesResult trimBlankEdgeLinesIn(String text, int start, int end) =>
       return lines.sublist(lo, hi);
     });
 
+/// Unconditionally ADD a `> ` blockquote prefix to every selected
+/// non-blank line. Idempotent on non-quoted lines (becomes
+/// `> ` + original). Blank lines stay blank. Existing leading
+/// indentation is preserved — `  foo` becomes `  > foo`.
+///
+/// Differs from `toggleBlockquotePrefixIn` which strips when ALL
+/// lines are quoted. This op always adds, so a user iterating "add
+/// more nesting" can repeat the action without the toggle flipping
+/// to remove mode partway through.
+SortLinesResult addBlockquotePrefixIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            if (l.trim().isEmpty) return l;
+            final indent = l.substring(0, l.length - l.trimLeft().length);
+            final body = l.substring(indent.length);
+            return '$indent> $body';
+          })(),
+      ];
+    });
+
 /// Unconditionally strip a leading `> ` blockquote prefix from
 /// every selected line that has one. Lines without the prefix pass
 /// through. Differs from [toggleBlockquotePrefixIn] which only

@@ -272,6 +272,37 @@ void main() {
     });
   });
 
+  group('addBlockquotePrefixIn', () {
+    test('adds `> ` to every non-blank line', () {
+      const text = 'foo\nbar\n';
+      final r = addBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, '> foo\n> bar\n');
+    });
+
+    test('blank lines stay blank', () {
+      const text = 'foo\n\nbar\n';
+      final r = addBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, '> foo\n\n> bar\n');
+    });
+
+    test('preserves leading indentation', () {
+      const text = '  foo\n\tbar\n';
+      final r = addBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, '  > foo\n\t> bar\n');
+    });
+
+    test('idempotent-add: re-applying nests the quote', () {
+      const text = '> foo\n';
+      final r = addBlockquotePrefixIn(text, 0, text.length);
+      // Already quoted → becomes `> > foo` (nested quote).
+      expect(r.text, '> > foo\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(addBlockquotePrefixIn('', 0, 0).text, '');
+    });
+  });
+
   group('stripBlockquotePrefixIn', () {
     test('strips `> ` from every quoted line', () {
       const text = '> foo\n> bar\n';

@@ -113,6 +113,10 @@ enum SlashAction {
   /// Unconditionally strip a leading `> ` blockquote prefix from
   /// every selected line that has one (mixed selections welcome).
   stripBlockquotePrefix,
+  /// Unconditionally ADD a `> ` blockquote prefix to every
+  /// non-blank selected line (idempotent on already-quoted lines —
+  /// they become nested quotes).
+  addBlockquotePrefix,
   /// Strip blank lines from the edges of the selected block,
   /// preserving every line in the interior.
   trimBlankEdgeLines,
@@ -1859,6 +1863,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '> foo → foo',
     action: SlashAction.stripBlockquotePrefix,
     keywords: ['strip', 'unquote', 'blockquote', 'quote', 'prefix'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Add blockquote prefix',
+    hint: 'foo → > foo (idempotent-add)',
+    action: SlashAction.addBlockquotePrefix,
+    keywords: ['add', 'quote', 'blockquote', 'prefix', 'nest'],
   ),
   SlashEntry(
     icon: 'edit',
