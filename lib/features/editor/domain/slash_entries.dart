@@ -524,6 +524,9 @@ enum SlashAction {
   /// `alpine:latest`, `ghcr.io/owner/repo:v1`) from each
   /// selected line.
   extractDockerImagesFromLines,
+  /// Extract every Ethereum address (`0x` + 40 hex chars) from
+  /// each selected line.
+  extractEthereumAddressesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2440,6 +2443,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'docker', 'image', 'container',
         'tag', 'registry', 'compose', 'dockerfile', 'oci',
         'podman'],
+  ),
+  SlashEntry(
+    icon: 'wallet',
+    label: 'Extract Ethereum addresses',
+    hint: '0x... (40 hex chars)',
+    action: SlashAction.extractEthereumAddressesFromLines,
+    keywords: ['extract', 'ethereum', 'eth', 'address',
+        'wallet', 'web3', 'crypto', 'nft', 'evm', 'chain',
+        'blockchain'],
   ),
   SlashEntry(
     icon: 'calendar',

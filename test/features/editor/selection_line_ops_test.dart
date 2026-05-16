@@ -8195,6 +8195,96 @@ void main() {
     });
   });
 
+  group('extractEthereumAddressesFromLinesIn', () {
+    test('canonical lowercase address extracts', () {
+      const text = 'send to 0x742d35cc6634c0532925a3b8d404d5028e25e1f8 now\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text,
+          '0x742d35cc6634c0532925a3b8d404d5028e25e1f8\n',);
+    });
+
+    test('EIP-55 mixed-case address extracts', () {
+      // Real Ethereum addresses use mixed-case checksum encoding.
+      const text = 'cold 0x742d35Cc6634C0532925a3b8D404D5028e25e1F8 wallet\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text,
+          '0x742d35Cc6634C0532925a3b8D404D5028e25e1F8\n',);
+    });
+
+    test('uppercase hex address extracts', () {
+      const text = 'admin 0xDEADBEEFCAFEBABE1234567890ABCDEF12345678 here\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text,
+          '0xDEADBEEFCAFEBABE1234567890ABCDEF12345678\n',);
+    });
+
+    test('39 hex chars rejected (too short)', () {
+      // 39 hex chars after `0x` — one short of the required 40.
+      const text = 'short 0x123456789012345678901234567890123456789 here\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('41 hex chars rejected (too long via word boundary)', () {
+      // 41 hex chars after `0x`. The exact `{40}` quantifier
+      // plus `\b` boundary should reject. Note: a 41-char run
+      // is itself a single word token, so `\b` after 40 chars
+      // is FALSE (still in the middle of word chars), meaning
+      // the regex correctly rejects this whole token rather
+      // than truncating it.
+      const text = 'long 0x12345678901234567890123456789012345678901 here\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('missing 0x prefix rejected', () {
+      // Bare 40-hex run without `0x` is not an Ethereum address.
+      const text = 'plain 742d35cc6634c0532925a3b8d404d5028e25e1f8 hex\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('non-hex characters in address rejected', () {
+      // `g` is not a hex digit; truncates the address.
+      const text = 'bad 0x742d35gc6634c0532925a3b8d404d5028e25e1f8 ugh\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple addresses on one line each extract', () {
+      const text =
+          'from 0x1111111111111111111111111111111111111111 to '
+          '0x2222222222222222222222222222222222222222 here\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(
+          r.text,
+          '0x1111111111111111111111111111111111111111\n'
+          '0x2222222222222222222222222222222222222222\n',);
+    });
+
+    test('lines without addresses dropped from output', () {
+      // 10 groups of 4 hex chars = 40 hex chars after `0x`.
+      const addr = '0xcafe000011112222333344445555666677778888';
+      const text = 'plain prose\nsee $addr here\nbye\n';
+      final r = extractEthereumAddressesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '$addr\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractEthereumAddressesFromLinesIn('', 0, 0).text,
+          '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

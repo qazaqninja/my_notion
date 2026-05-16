@@ -3340,6 +3340,39 @@ SortLinesResult extractDockerImagesFromLinesIn(
       return out;
     });
 
+/// Extract every Ethereum address (`0x` + 40 hex chars) from
+/// each selected line. Useful for web3 doc audits, smart-contract
+/// reviews, NFT-collection inventories, and on-chain reference
+/// harvests in postmortem notes.
+///
+/// Recognition: `\b0x[0-9a-fA-F]{40}\b`
+/// - Literal `0x` prefix (the canonical Ethereum / EVM scheme).
+/// - Exactly 40 hexadecimal characters (160-bit address).
+/// - Mixed case allowed: Ethereum uses EIP-55 checksum casing
+///   so addresses commonly contain both upper- and lower-case
+///   letters. The regex preserves whatever casing appears.
+///
+/// 41 hex chars (too long) and 39 hex chars (too short) are
+/// rejected by the word boundary plus exact `{40}` quantifier.
+///
+/// Distinct from [extractBitcoinAddressesFromLinesIn] (M751 —
+/// base58 P2PKH / P2SH / bech32 shapes). Ethereum's hex format
+/// is its own surface.
+///
+/// 93rd member of the extraction family.
+SortLinesResult extractEthereumAddressesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b0x[0-9a-fA-F]{40}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
