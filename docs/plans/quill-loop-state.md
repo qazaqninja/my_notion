@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E18 — Editor save → SyncBloc push (when authed)
+- **Task:** E19 — Track last-known server sha per relpath
 - **Status:** pending
 
 ## Last completed
 
-- **M1318 — E17** (Publish/Unpublish kebab toggle)
-- Committed: 8659852
-- TaskList ID: 39
-- Notes: Single dynamic kebab entry — "Publish & copy link" → adds `public: true` to frontmatter + copies `http://localhost:8080/public/<ulid>` to clipboard; "Unpublish" → removes the field. `_isPublic(loaded)` mirrors the server probe's truthy contract (true / yes). flutter analyze clean. End-to-end loop: kebab Publish → frontmatter change → next save round-trips through sync repo → backend probe flips `is_public` column → public route returns the page. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1320 — E18** (editor save → SyncBloc push + conflict toast)
+- Committed: bb3f27e
+- TaskList ID: 40
+- Notes: `MultiBlocListener` wrapping three presentation-layer bridges. Save → push bridge fires when EditorBloc transitions out of `saving: true` and if SyncBloc.isAuthed, dispatches `SyncPushFileRequested(relpath, body)` (no ifMatch yet — E19 adds that). Conflict bridge listens for `lastError == 'conflict'` transitions and shows a non-blocking toast with relpath + first-8 of server sha. End-to-end loop closed: open page → edit → debounced save → fire-and-forget push to v2 → backend probe flips `is_public` if `public:` frontmatter changed. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
