@@ -285,6 +285,9 @@ enum SlashAction {
   /// Extract the body of every GFM unchecked-todo line in the
   /// selection, emitting each body without its `- [ ] ` marker.
   extractOpenTodoBodies,
+  /// Extract the body of every GFM CHECKED-todo line in the
+  /// selection, emitting each body without its `- [x] ` marker.
+  extractDoneTodoBodies,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1549,6 +1552,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '- [ ] foo → foo',
     action: SlashAction.extractOpenTodoBodies,
     keywords: ['extract', 'todo', 'todos', 'action', 'item', 'open', 'gfm'],
+  ),
+  SlashEntry(
+    icon: 'check',
+    label: 'Extract done-todo bodies',
+    hint: '- [x] foo → foo',
+    action: SlashAction.extractDoneTodoBodies,
+    keywords: ['extract', 'todo', 'todos', 'done', 'completed', 'gfm'],
   ),
   SlashEntry(
     icon: 'sync',

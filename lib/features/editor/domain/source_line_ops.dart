@@ -886,6 +886,26 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract the BODY of every GFM CHECKED-todo line in the
+/// selection (`- [x] foo` → `foo`). Mirror of
+/// [extractOpenTodoBodiesIn] — same marker / indent recognition,
+/// but the `x` (or `X`) inside the brackets identifies done items.
+/// Useful for harvesting "what got done" lists out of a meeting
+/// note for a retro / status update.
+SortLinesResult extractDoneTodoBodiesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // `[xX]` because some editors uppercase the mark; both are
+      // valid GFM.
+      final re = RegExp(r'^[ \t]*[-*+] \[[xX]\] (.*)$');
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(1)!);
+      }
+      return out;
+    });
+
 /// Extract the BODY of every GFM unchecked-todo line in the
 /// selection (`- [ ] foo bar` → `foo bar`). The marker (with any
 /// leading indentation) is stripped; the body passes through.

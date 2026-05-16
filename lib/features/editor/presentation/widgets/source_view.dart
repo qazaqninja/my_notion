@@ -1280,6 +1280,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractOpenTodoBodiesIn,
         );
+      case SlashAction.extractDoneTodoBodies:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractDoneTodoBodiesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,

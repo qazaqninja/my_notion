@@ -2234,6 +2234,42 @@ void main() {
     });
   });
 
+  group('extractDoneTodoBodiesIn', () {
+    test('strips the marker from every done-todo line', () {
+      const text = '- [x] shipped feature\n- [x] sent invoice\n';
+      final r = extractDoneTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'shipped feature\nsent invoice\n');
+    });
+
+    test('uppercase [X] is also recognised', () {
+      const text = '- [X] capital X done\n';
+      final r = extractDoneTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'capital X done\n');
+    });
+
+    test('open todos are NOT extracted', () {
+      const text = '- [ ] still open\n- [x] done\n';
+      final r = extractDoneTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'done\n');
+    });
+
+    test('non-todo lines are dropped from output', () {
+      const text = 'preamble\n- [x] real\nfooter\n';
+      final r = extractDoneTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'real\n');
+    });
+
+    test('all bullet variants + indentation recognised', () {
+      const text = '* [x] star\n  + [X] indented plus\n';
+      final r = extractDoneTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'star\nindented plus\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractDoneTodoBodiesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractOpenTodoBodiesIn', () {
     test('strips the marker from every open-todo line', () {
       const text = '- [ ] write report\n- [ ] file expenses\n';
