@@ -437,6 +437,10 @@ enum SlashAction {
   /// Extract every MongoDB ObjectId substring (24 hex chars,
   /// with at least one letter) from each selected line.
   extractMongoObjectIdsFromLines,
+  /// Extract every AWS ARN substring
+  /// (`arn:PARTITION:SERVICE:REGION:ACCOUNT:RESOURCE`) from
+  /// each selected line.
+  extractAwsArnsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2126,6 +2130,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMongoObjectIdsFromLines,
     keywords: ['extract', 'mongo', 'mongodb', 'objectid', 'id',
         'nosql'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract AWS ARNs',
+    hint: 'arn:aws:service:region:account:resource',
+    action: SlashAction.extractAwsArnsFromLines,
+    keywords: ['extract', 'aws', 'arn', 'amazon', 'iam',
+        'resource'],
   ),
   SlashEntry(
     icon: 'calendar',

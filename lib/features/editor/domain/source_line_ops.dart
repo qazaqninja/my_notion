@@ -2346,6 +2346,37 @@ SortLinesResult extractMongoObjectIdsFromLinesIn(
       return out;
     });
 
+/// Extract every AWS ARN substring (`arn:PARTITION:SERVICE:REGION:ACCOUNT:RESOURCE`)
+/// from each selected line. Useful for infrastructure docs,
+/// IAM policy audits, and cross-account resource inventory.
+///
+/// Recognition: `\barn:[\w\-]+:[\w\-]+:[\w\-]*:\d{0,12}:[\w/\-:.,*]+`
+/// - `arn:` literal namespace marker.
+/// - Partition (`aws`, `aws-cn`, `aws-us-gov`, etc.): alphanumeric
+///   + hyphen.
+/// - Service (`s3`, `iam`, `lambda`, etc.): alphanumeric + hyphen.
+/// - Region (`us-east-1`, optional empty for global services):
+///   alphanumeric + hyphen, can be empty.
+/// - Account-id: 0-12 digits (empty allowed for global / public
+///   resources).
+/// - Resource: alphanumeric plus `/`, `-`, `:`, `.`, `,`, `*`.
+///
+/// 65th member of the extraction family.
+SortLinesResult extractAwsArnsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\barn:[\w\-]+:[\w\-]+:[\w\-]*:\d{0,12}:[\w/\-:.,*]+',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

@@ -1478,6 +1478,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMongoObjectIdsFromLinesIn,
         );
+      case SlashAction.extractAwsArnsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractAwsArnsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

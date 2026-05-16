@@ -6135,6 +6135,83 @@ void main() {
     });
   });
 
+  group('extractAwsArnsFromLinesIn', () {
+    test('IAM role ARN extracts', () {
+      const text = 'role arn:aws:iam::123456789012:role/AdminRole here\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'arn:aws:iam::123456789012:role/AdminRole\n');
+    });
+
+    test('S3 bucket ARN extracts', () {
+      const text = 'bucket arn:aws:s3:::my-bucket-name today\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'arn:aws:s3:::my-bucket-name\n');
+    });
+
+    test('Lambda function ARN with region extracts', () {
+      const text =
+          'fn arn:aws:lambda:us-east-1:123456789012:function:myFn called\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'arn:aws:lambda:us-east-1:123456789012:function:myFn\n',
+      );
+    });
+
+    test('aws-cn (China partition) ARN extracts', () {
+      const text =
+          'cn arn:aws-cn:lambda:cn-north-1:123456789012:function:myFn ref\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'arn:aws-cn:lambda:cn-north-1:123456789012:function:myFn\n',
+      );
+    });
+
+    test('aws-us-gov partition ARN extracts', () {
+      const text =
+          'gov arn:aws-us-gov:ec2:us-gov-west-1:123456789012:instance/i-1234 ref\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'arn:aws-us-gov:ec2:us-gov-west-1:123456789012:instance/i-1234\n',
+      );
+    });
+
+    test('plain `arn` (no colons) is NOT an ARN', () {
+      const text = 'word arn alone here\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple ARNs on one line each extract', () {
+      const text =
+          'pair arn:aws:s3:::bucket1 and arn:aws:s3:::bucket2 ready\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        'arn:aws:s3:::bucket1\narn:aws:s3:::bucket2\n',
+      );
+    });
+
+    test('wildcard `*` in resource path extracts', () {
+      const text = 'policy arn:aws:s3:::my-bucket/* allow\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'arn:aws:s3:::my-bucket/*\n');
+    });
+
+    test('lines without ARNs dropped from output', () {
+      const text =
+          'plain prose\nrole arn:aws:iam::123456789012:role/X\nmore prose\n';
+      final r = extractAwsArnsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'arn:aws:iam::123456789012:role/X\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractAwsArnsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
