@@ -92,7 +92,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Video upload and embed — File attachment chip M76 with movie icon. M201 renders video files as a prominent card (terracotta band). M1218 wires `VideoInlinePlayer` (`package:video_player`) into the card's top band for local mp4/mov/webm/avi/mkv files; tap-on-video toggles play/pause inline, tap-on-metadata still opens externally via `Reveal.openUrl`.
 - ✅ Audio upload and embed — Same as video. M201 renders audio files as a prominent card (blue band). M1220 wires `AudioInlinePlayer` (`package:audioplayers`) into the band — play/pause + scrubber + duration label; tap on metadata still opens externally.
 - ✅ File attachments — M76, `![label](path.ext)` for non-image extensions renders a clickable chip with extension icon + size.
-- 🚧 PDF embed and preview — M76 renders as a chip. M201 promotes PDFs to a prominent card (sage band, PDF glyph). Tap opens in the OS default app. Inline page preview would need `pdfx` + platform setup.
+- ✅ PDF embed and preview — M76 renders as a chip. M201 promotes PDFs to a prominent card (sage band). M1222 wires `PdfInlinePreview` (`package:pdfx`) into the card's sage band — renders the first page as a static thumbnail; tap on metadata still opens the full PDF externally.
 - ✅ Image galleries (via database) — M87, `_FileChip` renders image extensions as 22-px thumbnails so a `files`-typed cell looks like a micro-gallery.
 
 ## Databases

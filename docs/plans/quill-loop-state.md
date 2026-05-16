@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** B (V1 Polish — Media)
-- **Task:** B3 — Inline PDF preview (pdfx)
+- **Task:** B4 — OS notifications for reminders (flutter_local_notifications)
 - **Status:** pending
 
 ## Last completed
 
-- **M1220 — B2** (inline audio playback shipped as a single slice)
-- Committed: e28145e
-- TaskList ID: 16
-- Notes: `audioplayers ^6.6.0` + `AudioInlinePlayer` widget + renderer wiring landed in one commit. Audio card's blue band now hosts a play/pause + scrubber + position/duration strip; metadata-row tap still opens externally. FEATURES.md "Audio upload and embed" 🚧 → ✅.
+- **M1222 — B3** (inline PDF first-page preview shipped as a single slice)
+- Committed: 1d6297c
+- TaskList ID: 17
+- Notes: `pdfx ^2.9.2` + `PdfInlinePreview` widget + renderer wiring. PDF card's sage band now hosts a first-page rendered thumbnail; tap on metadata still opens externally. Chose single first-page thumbnail over PdfView for inline use (PdfView is overkill in a 220-px card). FEATURES.md "PDF embed and preview" 🚧 → ✅.
 
 ## Backlog (Phase A — Foundation)
 
