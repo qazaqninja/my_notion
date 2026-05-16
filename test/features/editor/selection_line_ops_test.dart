@@ -3848,6 +3848,94 @@ void main() {
     });
   });
 
+  group('extractMarkdownReferenceLinkUrlsFromLinesIn', () {
+    test('plain `[foo]: url` extracts URL', () {
+      const text = '[foo]: https://x.test\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('local path URL extracts', () {
+      const text = '[bar]: /local/path\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '/local/path\n');
+    });
+
+    test('definition with title extracts only the URL', () {
+      const text = '[baz]: https://x.test "Title"\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('angle-bracket URL form captured with brackets', () {
+      // CommonMark also permits `<url>` form for definitions;
+      // the regex's `\S+` greedy match captures the full token
+      // including angle brackets. Trim downstream if needed.
+      const text = '[qux]: <https://angle.test>\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '<https://angle.test>\n');
+    });
+
+    test('indented definition (up to 3 spaces) matches', () {
+      const text = '   [foo]: url\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'url\n');
+    });
+
+    test('inline `[label][ref]` collapsed-ref is NOT a definition', () {
+      // The definition requires `[…]:` followed by whitespace
+      // and a URL on its own line. An inline reference like
+      // `see [foo][bar]` doesn't fit that line-shape.
+      const text = 'see [foo][bar] inline\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('shortcut form `[foo]` alone is NOT a definition', () {
+      const text = '[foo] short ref\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('inline link `[text](url)` is NOT a ref-link definition', () {
+      // The `(url)` form is the inline link, captured by M1066,
+      // not this extractor.
+      const text = 'see [docs](https://x.test) inline\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple definitions across lines all extract', () {
+      const text = '[a]: https://1.test\n[b]: https://2.test\n'
+          '[c]: https://3.test "with title"\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'https://1.test\nhttps://2.test\nhttps://3.test\n');
+    });
+
+    test('plain prose lines dropped from output', () {
+      const text = 'plain prose\n[ref]: https://x.test\nmore prose\n';
+      final r = extractMarkdownReferenceLinkUrlsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownReferenceLinkUrlsFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

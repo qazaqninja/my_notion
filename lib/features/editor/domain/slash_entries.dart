@@ -369,6 +369,9 @@ enum SlashAction {
   /// Canonicalize every markdown horizontal-rule line in the
   /// selected text to `---`.
   canonicalizeHorizontalRules,
+  /// Extract the URL from every markdown reference-link
+  /// definition line (`[label]: url`).
+  extractMarkdownReferenceLinkUrlsFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1841,6 +1844,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.canonicalizeHorizontalRules,
     keywords: ['canonicalize', 'normalize', 'hr', 'horizontal',
         'rule', 'divider', 'separator', 'thematic', 'break'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract reference-link URLs',
+    hint: '[label]: url → url',
+    action: SlashAction.extractMarkdownReferenceLinkUrlsFromLines,
+    keywords: ['extract', 'reference', 'ref', 'link', 'url',
+        'definition', 'def', 'shortcut', 'markdown'],
   ),
   SlashEntry(
     icon: 'edit',

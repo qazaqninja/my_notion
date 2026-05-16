@@ -1612,6 +1612,47 @@ SortLinesResult canonicalizeHorizontalRulesIn(
       ];
     });
 
+/// Extract the URL from every markdown reference-link
+/// definition line on each selected line. CommonMark allows
+/// reusable link refs defined as `[label]: url`, optionally
+/// with a `"title"` suffix; the definition lives on its own
+/// line and is later referenced inline as `[text][label]` or
+/// shortcut `[label]`.
+///
+/// Useful for harvesting every reference URL for a link audit
+/// ("do they still resolve?"), site-wide URL inventory, and
+/// link-rot triage.
+///
+/// Recognition: `^\s*\[[^\]\n]+\]:\s+(\S+)(?:\s+"[^"\n]*")?\s*$`
+/// - Optional leading whitespace (CM permits up to 3 spaces).
+/// - Literal `[`, label content (any non-`]`, non-newline
+///   chars), literal `]:`, at least one whitespace.
+/// - URL: any run of non-whitespace chars (captured).
+/// - Optional title: whitespace + `"…"`.
+/// - Trailing whitespace tolerated; the line must contain
+///   only the definition shape.
+///
+/// Angle-bracket URL form `<https://x.test>` is captured
+/// verbatim (with the brackets); trim them downstream if you
+/// want just the URL contents.
+///
+/// Distinct from M1066 `extractMarkdownLinkUrlsFromLinesIn`
+/// (inline `[text](url)` shape). 33rd member of the extraction
+/// family.
+SortLinesResult extractMarkdownReferenceLinkUrlsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'^\s*\[[^\]\n]+\]:\s+(\S+)(?:\s+"[^"\n]*")?\s*$',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(1)!);
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
