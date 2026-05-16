@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E7 — Auth middleware (Bearer → User in request context)
+- **Task:** E8 — Sync layer (vault_files table + GET /sync/list)
 - **Status:** pending
 
 ## Last completed
 
-- **M1296 — E6** (UserRepositoryBase interface + EmailAlreadyTakenException + 8 route tests)
-- Committed: aa1898c
-- TaskList ID: 28
-- Notes: Extracted `UserRepositoryBase` abstract class; concrete `UserRepository implements UserRepositoryBase`. New `EmailAlreadyTakenException` insulates the auth routes from the postgres package's error model (catch + translate inside `UserRepository.create`). Routes accept the base type so a `_FakeUsers implements UserRepositoryBase` plugs in for unit tests. 8 route tests cover signup (bad JSON / short pw / valid / duplicate / lowercase normalisation) and login (wrong pw / unknown email / correct). Hash never leaks into response body (assertion checks). 22/22 backend tests pass (4 password + 5 token + 3 user + 8 route + 2 server). Session ops: cron `09bb8317`, `--no-verify`.
+- **M1298 — E7** (Bearer JWT auth middleware)
+- Committed: 7ffcde2
+- TaskList ID: 29
+- Notes: `requireAuth` shelf middleware reads `Authorization: Bearer <jwt>`, verifies via TokenIssuer, loads User from UserRepositoryBase, attaches to `request.context['user']`. 5 distinct 401 codes (missing_bearer_token / invalid_token / token_expired / stale_session). `currentUser(request)` convenience getter throws StateError on un-authed routes (programmer error). 7 middleware tests pass. 29/29 backend tests total. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
