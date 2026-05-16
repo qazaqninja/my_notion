@@ -1,0 +1,14 @@
+# Test runner config used by `flutter test` / `dart test`.
+#
+# Declares the `golden` tag that alchemist adds to all golden tests so the
+# runner doesn't emit a "tag wasn't specified in dart_test.yaml" warning on
+# every run.
+#
+# RULES.md TS-08: alchemist is the canonical golden harness.
+
+tags:
+  golden:
+    # Default: tagged tests still run. Use `flutter test -x golden` to skip them
+    # locally (e.g. when iterating on rendering and goldens are expected to
+    # mismatch), or `flutter test -t golden` to run only goldens (CI uses this
+    # when validating a PR's visual changes).
