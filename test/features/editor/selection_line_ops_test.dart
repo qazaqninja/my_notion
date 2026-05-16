@@ -7203,6 +7203,69 @@ void main() {
     });
   });
 
+  group('extractMacAddressesCiscoFromLinesIn', () {
+    test('Cisco dotted MAC extracts', () {
+      const text = 'host 0123.4567.89ab online\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, '0123.4567.89ab\n');
+    });
+
+    test('all-letters MAC extracts', () {
+      const text = 'vendor abcd.ef01.2345 seen\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, 'abcd.ef01.2345\n');
+    });
+
+    test('mixed-case hex digits preserved', () {
+      const text = 'addr aBcD.Ef01.2345 case\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, 'aBcD.Ef01.2345\n');
+    });
+
+    test('colon-separated MAC (M1076 form) is NOT matched', () {
+      const text = 'colon 01:23:45:67:89:ab elsewhere\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('hyphen-separated MAC (M1076 form) is NOT matched', () {
+      const text = 'hyphen 01-23-45-67-89-ab elsewhere\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('wrong group count (2 groups) is NOT a match', () {
+      const text = 'fake 0123.4567 partial\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('wrong digit count (3 per group) is NOT a match', () {
+      const text = 'fake 012.345.678 short\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple Cisco MACs on one line each extract', () {
+      const text = 'pair 0123.4567.89ab and ffff.eeee.dddd seen\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, '0123.4567.89ab\nffff.eeee.dddd\n');
+    });
+
+    test('lines without Cisco MACs dropped from output', () {
+      const text = 'plain prose\nseen abcd.ef01.2345 today\nmore prose\n';
+      final r = extractMacAddressesCiscoFromLinesIn(text, 0, text.length);
+      expect(r.text, 'abcd.ef01.2345\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMacAddressesCiscoFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

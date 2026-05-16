@@ -1539,6 +1539,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractBitcoinAddressesFromLinesIn,
         );
+      case SlashAction.extractMacAddressesCiscoFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractMacAddressesCiscoFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

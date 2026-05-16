@@ -2842,6 +2842,40 @@ SortLinesResult extractBitcoinAddressesFromLinesIn(
       return out;
     });
 
+/// Extract every Cisco-style MAC address (dot-separated
+/// `XXXX.XXXX.XXXX`) from each selected line. Companion to
+/// M1076's standard MAC extractor (colon / hyphen separators).
+///
+/// Recognition: `\b[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\b`
+/// - Three groups of 4 hex digits.
+/// - Two literal `.` separators.
+/// - Word boundaries on each end.
+///
+/// This is the dotted-quad-of-quads form Cisco IOS uses (and
+/// many network appliances mirror). Distinct from the
+/// canonical `XX:XX:XX:XX:XX:XX` form (M1076) and the OUI
+/// extractor (M1130).
+///
+/// Mixed-case hex digits supported. Wrong segment count
+/// (2 or 4 groups) or wrong digit count per group are
+/// rejected.
+///
+/// 80th member of the extraction family — round milestone.
+SortLinesResult extractMacAddressesCiscoFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\.[0-9a-fA-F]{4}\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

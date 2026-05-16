@@ -483,6 +483,9 @@ enum SlashAction {
   /// Extract every Bitcoin address substring (legacy P2PKH,
   /// P2SH, or bech32 SegWit) from each selected line.
   extractBitcoinAddressesFromLines,
+  /// Extract every Cisco-style MAC address (dot-separated
+  /// `XXXX.XXXX.XXXX`) from each selected line.
+  extractMacAddressesCiscoFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2292,6 +2295,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractBitcoinAddressesFromLines,
     keywords: ['extract', 'bitcoin', 'btc', 'address', 'wallet',
         'crypto', 'p2pkh', 'p2sh', 'bech32'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract Cisco MACs',
+    hint: 'XXXX.XXXX.XXXX',
+    action: SlashAction.extractMacAddressesCiscoFromLines,
+    keywords: ['extract', 'mac', 'cisco', 'dotted', 'address',
+        'network'],
   ),
   SlashEntry(
     icon: 'calendar',
