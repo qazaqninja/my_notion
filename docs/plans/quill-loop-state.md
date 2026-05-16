@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1244 — D1 slice 2** (heading round-trip — H1/H2/H3 via blockType metadata)
-- Committed: 19238ba
+- **M1246 — D1 slice 3** (list round-trip — unordered / ordered / todos)
+- Committed: aa1a5f9
 - TaskList ID: 22 (still in_progress)
-- Notes: super_editor encodes headings as `ParagraphNode` with `metadata.blockType = header[N]Attribution`, not as separate HeaderNode classes. Regex `^(#{1,3})\s+(.+)$` matches H1-H3; H4+ falls through to paragraph (super_editor's default attribution set only ships H1-H3). 9/9 cases now pass. Slices remaining for serializer block parity: lists (ul/ol/todo), code blocks, blockquotes, horizontal rule, callouts, math, mermaid, tables, image cards, file cards, bookmark cards, sub-page cards, transclusion cards, hr, columns, breadcrumb block, toc, buttons, then inline marks.
+- Notes: ListItemNode.unordered (`-` / `*` markers, `*` normalised to `-`), ListItemNode.ordered (re-numbered 1,2,3,… on serialise), TaskNode (`- [ ]` / `- [x]` recognised before unordered). New `_separator` rule shares newlines within same-marker-family (dash family = unordered + tasks; ordered family); type boundaries get blank lines. 16/16 cases pass. Remaining serializer slices: code blocks + hr (4), blockquotes + callouts (5), math + mermaid (6), tables (7), image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), then inline marks (16-22), interactions (23-27), cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
