@@ -12,6 +12,7 @@ import 'package:backend/db/users.dart';
 import 'package:backend/forms/routes.dart' as forms_routes;
 import 'package:backend/public/routes.dart' as public_routes;
 import 'package:backend/sync/routes.dart' as sync_routes;
+import 'package:backend/sync/ws_hub.dart' as sync_ws;
 import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -83,12 +84,19 @@ void main(List<String> args) async {
           ).call,
         );
     router.mount('/auth/', authPipeline);
+    // H2: single hub instance shared across every WebSocket sub for
+    // the lifetime of the server. Cross-process broadcast (LISTEN/
+    // NOTIFY) is a future-slice concern.
+    final wsHub = sync_ws.WsHub();
     final syncPipeline = Pipeline()
         .addMiddleware(dbErrors)
         .addMiddleware(requireAuth(users: users, tokens: tokens))
         .addHandler(
           sync_routes
-              .buildSyncRouter(sync: SyncRepository(conn))
+              .buildSyncRouter(
+                sync: SyncRepository(conn),
+                wsHub: wsHub,
+              )
               .call,
         );
     router.mount('/sync/', syncPipeline);

@@ -6,6 +6,8 @@ import 'package:shelf_router/shelf_router.dart';
 
 import '../auth/middleware.dart';
 import '../db/sync.dart';
+import 'ws_hub.dart';
+import 'ws_routes.dart';
 
 /// Build the `/sync/...` sub-router. Caller mounts at `/sync` *after*
 /// wrapping with `requireAuth` so `currentUser(req)` is safe to call.
@@ -19,8 +21,21 @@ import '../db/sync.dart';
 /// - `GET /sync/get/[relpath]` — fetch body + sha256 + mtime. Slice E10.
 /// - `DELETE /sync/del/[relpath]` — remove a file. 204 on success, 404
 ///   when no row exists. Slice E11.
-Router buildSyncRouter({required SyncRepositoryBase sync}) {
+/// - `GET /sync/sub/<ulid>` — WebSocket subscription endpoint that
+///   broadcasts opaque text messages (future: y_crdt binary base64)
+///   between subscribers of the same `(userId, pageUlid)` room.
+///   Slice H2 (M1372).
+Router buildSyncRouter({
+  required SyncRepositoryBase sync,
+  WsHub? wsHub,
+}) {
   final router = Router();
+  // H2: mount the WebSocket sub-router at /sub/<ulid> when the
+  // caller passed a hub. Tests + minimal-server boots can omit the
+  // hub and the WS path stays unrouted.
+  if (wsHub != null) {
+    router.mount('/sub/', buildWsRouter(hub: wsHub).call);
+  }
 
   router.get('/list', (Request req) async {
     final user = currentUser(req);

@@ -13,7 +13,12 @@ dependencies:
   postgres: ^3.5.11
   shelf: ^1.4.2
   shelf_router: ^1.1.2
+  # H2: WebSocket support for per-page CRDT subscriptions
+  # (lib/sync/ws_routes.dart). Hosted under /sync/sub/<ulid> behind
+  # the same Bearer-JWT middleware as the rest of /sync.
+  shelf_web_socket: ^3.0.0
   ulid: ^2.0.0
+  web_socket_channel: ^3.0.1
 
 dev_dependencies:
   http: ^1.2.2

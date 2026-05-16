@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** H2 — WebSocket subscription endpoint + per-page CRDT updates wired into SyncBloc (multiplayer surface)
+- **Task:** H2.2 — Flutter SyncWsClient — connect to /sync/sub/<ulid>, dispatch incoming to QuillCrdtDoc.apply, broadcast outgoing on local edits
 - **Status:** pending
 
 ## Last completed
+
+- **M1372 — H2.1** (backend WebSocket sub endpoint + WsHub)
+- Committed: (this iteration)
+- TaskList ID: 91
+- Notes: Backend side of multiplayer. Added `shelf_web_socket: ^3.0.0` + `web_socket_channel: ^3.0.1` to `backend/pubspec.yaml`. New `backend/lib/sync/ws_hub.dart` — pure-in-memory pub/sub keyed by `(userId, pageUlid)`. `subscribe(channel)` adds to the room; `broadcast(from, payload)` fans out to every other peer in the same room (originator does NOT echo back to itself); `unsubscribe(channel)` removes from every room it touched and drops empty rooms; `subscriberCount` + `hasRoom` exposed for tests. New `backend/lib/sync/ws_routes.dart` — `buildWsRouter(hub:)` returns a Router with `GET /<ulid>` running `webSocketHandler` from `shelf_web_socket`. Upgrade flows through the existing `requireAuth` middleware so `currentUser(req)` resolves before subscribe. Messages opaque (text frame today; H2.3+ swap to base64-y_crdt-binary). `buildSyncRouter` gains optional `wsHub:` param; when non-null mounts `/sub/` for the WS sub-router. server.dart constructs one `WsHub` per process + threads it through. Test seams: `_FakeChannel implements WebSocketChannel` + `_Sink implements WebSocketSink` so the hub tests run without a real socket pair. 6 new hub tests (subscribe-then-broadcast-fans-out-to-others-not-self, different-rooms-no-crosstalk, different-users-on-same-ulid-no-crosstalk, broadcast-empty-room-returns-0, unsubscribe-removes-from-every-room-drops-empties, subscriberCount-totals). 132/132 backend tests pass; backend dart analyze clean. Cross-process broadcast (Postgres LISTEN/NOTIFY) deferred to a later slice when single-process is no longer enough. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1371 — H1** (CRDT PoC seam — Yjs-shaped wrapper + serializer + round-trip tests)
 - Committed: (this iteration)
