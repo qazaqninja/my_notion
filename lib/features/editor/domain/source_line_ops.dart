@@ -1604,6 +1604,43 @@ SortLinesResult extractHtmlAttributeValuesFromLinesIn(
       return out;
     });
 
+/// Extract the LABEL from every CommonMark inline reference-link
+/// USAGE site (`[text][label]` → `label`) on each selected line.
+/// Useful for orphan-ref audits: which labels are referenced
+/// inline but not defined as `[label]: url` (M1094/M1095)?
+///
+/// Recognition: `\[[^\]\n]+\]\[([^\]\n]+)\]`
+/// - Literal `[`, text content (any non-`]`, non-newline chars),
+///   literal `]`.
+/// - Immediately followed by `[`, label content (captured),
+///   literal `]`.
+///
+/// Distinct from M1066 inline-link extractor (`[text](url)`,
+/// parens form) and M1094/M1095 ref-link definitions
+/// (`[label]: url` line-shape).
+///
+/// Collapsed form `[label][]` and shortcut form `[label]` (no
+/// second bracket) are NOT matched in this v1 — the text and
+/// label sections both require non-empty content per the
+/// `[^\]\n]+` quantifier.
+///
+/// 43rd member of the extraction family. Together with M1066,
+/// M1094, M1095, M1099, and M1101 this completes the markdown
+/// reference / link extractor matrix for cross-checking
+/// definitions vs usages.
+SortLinesResult extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\[[^\]\n]+\]\[([^\]\n]+)\]');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

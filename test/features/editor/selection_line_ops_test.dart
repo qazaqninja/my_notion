@@ -4659,6 +4659,93 @@ void main() {
     });
   });
 
+  group('extractMarkdownReferenceLinkUsageLabelsFromLinesIn', () {
+    test('plain `[text][label]` extracts label', () {
+      const text = 'see [the docs][foo] for context\n';
+      final r = extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'foo\n');
+    });
+
+    test('label with hyphen and digits preserved', () {
+      const text = 'cite [example][ref-1] inline\n';
+      final r = extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'ref-1\n');
+    });
+
+    test('multiple usages on one line each extract', () {
+      const text = 'pair [a][r1] and [b][r2] and [c][r3]\n';
+      final r = extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'r1\nr2\nr3\n');
+    });
+
+    test('inline `[text](url)` parens form is NOT a usage', () {
+      // The `(url)` form is the M1066 inline-link surface, not
+      // this extractor.
+      const text = 'see [docs](https://x.test) inline\n';
+      final r = extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('shortcut `[label]` (no second bracket) is NOT matched', () {
+      // The shortcut form lacks the `[label]` after; v1 only
+      // captures full `[text][label]` usages.
+      const text = '[foo] short ref\n';
+      final r = extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('definition `[foo]: url` is NOT a usage', () {
+      // Definitions are M1094/M1095's surface; this extractor
+      // only captures inline usages.
+      const text = '[foo]: https://x.test\n';
+      final r = extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('paired audit: usage labels vs definition labels', () {
+      // Demonstrates the audit gesture — usages from this
+      // extractor and definitions from M1095 give two sets
+      // to cross-check (orphan defs, missing defs, etc.).
+      const text = 'see [docs][foo] and [api][bar]\n[foo]: /docs\n';
+      final usages =
+          extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+              text, 0, text.length);
+      final defs = extractMarkdownReferenceLinkLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(usages.text, 'foo\nbar\n');
+      expect(defs.text, 'foo\n');
+      // `bar` is in usages but not defs — orphan reference.
+    });
+
+    test('text with internal punctuation handled', () {
+      const text = 'wrap [Click, then read][go] up\n';
+      final r = extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'go\n');
+    });
+
+    test('lines without usages dropped from output', () {
+      const text = 'plain prose\nsee [t][r] inline\nmore prose\n';
+      final r = extractMarkdownReferenceLinkUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'r\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownReferenceLinkUsageLabelsFromLinesIn('', 0, 0)
+            .text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
