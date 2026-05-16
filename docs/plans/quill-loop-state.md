@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1250 — D1 slice 5** (blockquotes + GFM callouts)
-- Committed: 76f80de
+- **M1252 — D1 slice 6** (math blocks + mermaid coverage)
+- Committed: 2f0f2b3
 - TaskList ID: 22 (still in_progress)
-- Notes: `> body` (multi-line OK) → ParagraphNode with `blockType: blockquoteAttribution`. `> [!NOTE|TIP|IMPORTANT|WARNING|CAUTION]\n> body` adds `callout: <kind>` metadata (lowercased). Serialiser prefixes each body line with `> ` and emits the admonition tag on its own first line. 27 cases total written across the 5 slices. Remaining slices: math+mermaid (6), tables (7), image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
+- Notes: Single-line `$$body$$` and multi-line `$$\n…\n$$` → ParagraphNode with custom `mathBlockAttribution` blockType. Body holds raw LaTeX. Mermaid `\`\`\`mermaid` already covered by slice 4's code-fence path; slice 6 added a coverage test that the language tag round-trips. 31 cases total. Remaining: tables (7), image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
