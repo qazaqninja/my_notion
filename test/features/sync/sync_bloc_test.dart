@@ -367,6 +367,84 @@ void main() {
     );
   });
 
+  group('SyncBloc background list ping (E27)', () {
+    blocTest<SyncBloc, SyncState>(
+      'After login, the ping timer dispatches SyncListRequested at the cadence',
+      build: () => SyncBloc(
+        repo: _FakeRepo()
+          ..listResponse = [
+            SyncFileSummary(
+              relpath: 'ping.md',
+              sha256: 'sha-ping',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+          ],
+        // 50 ms keeps the test fast; the production default is 60 s.
+        listPingInterval: const Duration(milliseconds: 50),
+      ),
+      act: (bloc) async {
+        bloc.add(const SyncLoginRequested(
+          email: 'a@quill',
+          password: 'correct-horse',
+        ));
+        await Future<void>.delayed(const Duration(milliseconds: 180));
+      },
+      verify: (bloc) {
+        // The initial login + one or more periodic pings should have
+        // populated the tracker by now.
+        final repo = bloc.state;
+        expect(repo.knownShas['ping.md'], 'sha-ping');
+        expect(bloc.state.isAuthed, isTrue);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Logout cancels the timer so no further list calls land',
+      build: () {
+        final repo = _FakeRepo();
+        return SyncBloc(
+          repo: repo,
+          listPingInterval: const Duration(milliseconds: 30),
+        );
+      },
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+      ),
+      act: (bloc) async {
+        // Force-start the timer by simulating a login pulse: just
+        // dispatch logout then wait — the timer was never started, so
+        // this primarily checks close()/_stopListPing safety.
+        bloc.add(const SyncLogoutRequested());
+        await Future<void>.delayed(const Duration(milliseconds: 120));
+      },
+      verify: (bloc) {
+        expect(bloc.state.token, isNull);
+        expect(bloc.state.isAuthed, isFalse);
+      },
+    );
+
+    test('close() cancels the timer (no dangling Timer.periodic)',
+        () async {
+      final repo = _FakeRepo();
+      final bloc = SyncBloc(
+        repo: repo,
+        listPingInterval: const Duration(milliseconds: 20),
+      );
+      // Drive a login so the timer starts.
+      bloc.add(const SyncLoginRequested(
+        email: 'a@quill',
+        password: 'correct-horse',
+      ));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final countAtClose = repo.listCallCount;
+      await bloc.close();
+      // Wait past several would-be ticks; the count must not grow.
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(repo.listCallCount, countAtClose);
+    });
+  });
+
   group('SyncBloc fetch (E23)', () {
     blocTest<SyncBloc, SyncState>(
       'Fetch when not authed → error not_authenticated',

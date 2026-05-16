@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +12,12 @@ import 'sync_state.dart';
 /// means no token cached.
 const _kTokenPrefKey = 'sync.token';
 
+/// Default cadence for the E27 background `/sync/list` ping. Picked to
+/// be small enough that an external edit shows up before the user's
+/// next save in a typical editing session, but large enough not to
+/// flood the backend when the app is idle on a public Wi-Fi.
+const Duration kDefaultSyncListPingInterval = Duration(seconds: 60);
+
 /// Coordinates v2 backend auth + push/pull lifecycle from the Flutter
 /// app. Lives at top-level via `app.dart`'s MultiBlocProvider so any
 /// route can `context.read<SyncBloc>().add(SyncPushFileRequested(...))`.
@@ -19,8 +27,11 @@ const _kTokenPrefKey = 'sync.token';
 ///   form submissions don't race (BL-10).
 /// - Push events use `sequential()` too so concurrent saves keep order.
 class SyncBloc extends Bloc<SyncEvent, SyncState> {
-  SyncBloc({required SyncRepository repo})
-      : _repo = repo,
+  SyncBloc({
+    required SyncRepository repo,
+    Duration listPingInterval = kDefaultSyncListPingInterval,
+  })  : _repo = repo,
+        _listPingInterval = listPingInterval,
         super(const SyncState()) {
     on<SyncLoginRequested>(_onLogin, transformer: sequential());
     on<SyncSignupRequested>(_onSignup, transformer: sequential());
@@ -34,6 +45,35 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   }
 
   final SyncRepository _repo;
+  final Duration _listPingInterval;
+
+  /// Background ping that re-runs `/sync/list` while the bloc is authed
+  /// so concurrent edits from another device show up as conflicts on
+  /// the next save instead of silent overwrites. Started by
+  /// `_startListPing`, cancelled by `_stopListPing` whenever the bloc
+  /// transitions out of authed state (logout, 401 token invalidation,
+  /// or `close()`).
+  Timer? _listPingTimer;
+
+  void _startListPing() {
+    _listPingTimer?.cancel();
+    _listPingTimer = Timer.periodic(_listPingInterval, (_) {
+      // Re-dispatch through the event system so the sequential
+      // transformer on SyncListRequested keeps concurrent pings ordered.
+      if (state.isAuthed) add(const SyncListRequested());
+    });
+  }
+
+  void _stopListPing() {
+    _listPingTimer?.cancel();
+    _listPingTimer = null;
+  }
+
+  @override
+  Future<void> close() async {
+    _stopListPing();
+    return super.close();
+  }
 
   Future<void> _onLogin(
     SyncLoginRequested e,
@@ -47,6 +87,10 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       // E20: kick off a listing so the first post-login push already
       // has a real If-Match for every relpath the server knows about.
       add(const SyncListRequested());
+      // E27: keep the listing fresh in the background so concurrent
+      // edits from another device surface as conflicts before the
+      // user's next save.
+      _startListPing();
     } on SyncAuthException {
       emit(state.copyWith(
         status: SyncStatus.error,
@@ -72,6 +116,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       // Fresh accounts will receive an empty list; the call is still
       // cheap and keeps the post-login flow symmetric with login.
       add(const SyncListRequested());
+      _startListPing();
     } on SyncEmailTakenException {
       emit(state.copyWith(
         status: SyncStatus.error,
@@ -96,6 +141,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     Emitter<SyncState> emit,
   ) async {
     await _clearToken();
+    _stopListPing();
     // Returning the default SyncState() also clears knownShas — fresh
     // login starts with a clean tracker.
     emit(const SyncState());
@@ -116,6 +162,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     // serves as a token-validity ping: a 401 here will clear the
     // stale token early instead of waiting for the first save.
     add(const SyncListRequested());
+    _startListPing();
   }
 
   Future<void> _onList(
@@ -139,6 +186,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       // Token was already invalidated server-side. Reuse the same
       // recovery as a push 401: clear the cached token, error out.
       await _clearToken();
+      _stopListPing();
       emit(const SyncState(
         status: SyncStatus.error,
         lastError: 'token_invalid',
@@ -205,6 +253,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     } on SyncAuthException {
       // Token expired or revoked. Drop it; UI can re-prompt for login.
       await _clearToken();
+      _stopListPing();
       emit(const SyncState(
         status: SyncStatus.error,
         lastError: 'token_invalid',
@@ -244,6 +293,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       ));
     } on SyncAuthException {
       await _clearToken();
+      _stopListPing();
       emit(const SyncState(
         status: SyncStatus.error,
         lastError: 'token_invalid',
@@ -291,6 +341,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       ));
     } on SyncAuthException {
       await _clearToken();
+      _stopListPing();
       emit(const SyncState(
         status: SyncStatus.error,
         lastError: 'token_invalid',

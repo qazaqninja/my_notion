@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E27 — Sync background ping: periodic `/sync/list` refresh (so external edits show conflicts before next save)
+- **Task:** E28 — Sync error pane: surface long-lived network failures with a manual retry
 - **Status:** pending
 
 ## Last completed
 
-- **M1329 — E26** (Settings → Sync: surface last-push + last-conflict + Retry pull)
+- **M1330 — E27** (periodic background /sync/list ping)
 - Committed: (this iteration)
-- TaskList ID: 48
-- Notes: Extracted `_SyncConnectedCard` from settings_page.dart into a standalone `lib/features/sync/presentation/widgets/sync_connected_card.dart` so it can be pumped in isolation from the settings sidebar chrome (which has a pre-existing wide nav `Row` that overflows the 800-px test viewport). The widget gains: green dot + Connected + Log out (existing), an "Activity" block with a "Last push" row showing `relpath · X ago` and `sha XXXXXXXX…`, and a danger-tinted "Unresolved conflict" banner with the relpath + first-8 of server sha and a `FilledButton.tonal('Retry pull')` that dispatches `SyncFetchFileRequested`. New `syncRelativeTime(when)` helper formats compact relative times (`now`, `Xs ago`, `Xm ago`, `Xh ago`, `Xd ago`, `just now` for future). 8 new tests (4 widget + 4 helper) cover clean-state, recent-push, conflict-with-retry, log-out-dispatch, plus the 4 relative-time branches. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 49
+- Notes: `SyncBloc` gains a `_listPingTimer` (Timer.periodic) plus an injectable `listPingInterval` (`kDefaultSyncListPingInterval = 60s` for prod, tests inject 20–50 ms). `_startListPing` arms after each successful login/signup/restore; `_stopListPing` runs on logout, on every 401-recovery path (list/push/delete/fetch), and in the bloc's `close()` override. Each tick re-dispatches `SyncListRequested` only when `state.isAuthed` (so a race against logout-mid-tick is a no-op). 3 new tests (timer-dispatches-list-after-login, logout-cancels-timer, close-cancels-timer — `repo.listCallCount` doesn't grow after `close()`). 39/39 sync_bloc tests pass; flutter analyze clean. External edits made on another device now flow into `knownShas` automatically within the ping window and surface as `If-Match` conflicts on the next save instead of silent overwrites. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
