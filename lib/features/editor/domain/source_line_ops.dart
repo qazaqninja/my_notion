@@ -886,6 +886,29 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract every UUID-shaped substring from each selected line
+/// (`8-4-4-4-12` hex format, case-insensitive). Useful for pulling
+/// generated identifiers out of logs / debug paste-ins ahead of
+/// dedupe / sort / cross-reference lookups.
+///
+/// Recognition: 8 hex + `-` + 4 + `-` + 4 + `-` + 4 + `-` + 12, with
+/// `\b` boundaries on each end so embedded runs in longer hex
+/// strings don't match.
+SortLinesResult extractUuidsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

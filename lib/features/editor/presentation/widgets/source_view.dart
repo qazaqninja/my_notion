@@ -1300,6 +1300,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractIpv4FromLinesIn,
         );
+      case SlashAction.extractUuidsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractUuidsFromLinesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,

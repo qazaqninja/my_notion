@@ -2234,6 +2234,42 @@ void main() {
     });
   });
 
+  group('extractUuidsFromLinesIn', () {
+    test('extracts canonical hyphenated UUIDs', () {
+      const u1 = '550e8400-e29b-41d4-a716-446655440000';
+      const u2 = '6FA459EA-EE8A-3CA4-894E-DB77E160355E';
+      final text = 'pair $u1 and $u2 are siblings\n';
+      final r = extractUuidsFromLinesIn(text, 0, text.length);
+      expect(r.text, '$u1\n$u2\n');
+    });
+
+    test('mixed-case hex digits accepted', () {
+      const u = 'AbCdEf01-1234-5678-9aBc-DeF012345678';
+      final text = 'uuid $u\n';
+      final r = extractUuidsFromLinesIn(text, 0, text.length);
+      expect(r.text, '$u\n');
+    });
+
+    test('wrong segment lengths are NOT UUIDs', () {
+      // 7-4-4-4-12 → wrong shape.
+      const text = '12345678-1234-1234-1234-123456789012\n'
+          '1234567-1234-1234-1234-123456789012\n';
+      final r = extractUuidsFromLinesIn(text, 0, text.length);
+      expect(r.text, '12345678-1234-1234-1234-123456789012\n');
+    });
+
+    test('lines without a UUID dropped from output', () {
+      const u = '550e8400-e29b-41d4-a716-446655440000';
+      final text = 'plain prose\nuuid $u\n';
+      final r = extractUuidsFromLinesIn(text, 0, text.length);
+      expect(r.text, '$u\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractUuidsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

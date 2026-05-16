@@ -300,6 +300,9 @@ enum SlashAction {
   /// Extract every IPv4 dotted-quad (`a.b.c.d`, each octet 0..255)
   /// from each selected line.
   extractIpv4FromLines,
+  /// Extract every UUID-shaped substring (`8-4-4-4-12` hex form)
+  /// from each selected line.
+  extractUuidsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1599,6 +1602,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a.b.c.d per line',
     action: SlashAction.extractIpv4FromLines,
     keywords: ['extract', 'ip', 'ipv4', 'address', 'host', 'network'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract UUIDs',
+    hint: '8-4-4-4-12 hex per line',
+    action: SlashAction.extractUuidsFromLines,
+    keywords: ['extract', 'uuid', 'guid', 'id', 'identifier'],
   ),
   SlashEntry(
     icon: 'sync',
