@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** A (Foundation)
-- **Task:** A11 — Write NEW `editor_bloc_test.dart` from scratch (TS-03)
+- **Task:** A12 — Re-run `flutter-arch-orchestrator` end-to-end (Phase A gate)
 - **Status:** pending
 
 ## Last completed
 
-- **M1206 — A10 slice 2** (CloseVault + 9 no-op-outside-VaultLoaded events)
-- Committed: 49b93e9
-- TaskList ID: 10 (closed at 11 cases passing)
-- Notes: A10 covers the early-return contract for 9 events + CloseVault transition + LoadFromPath missing-path error. Remaining un-covered: PickVault (needs FilePicker.platform mock), LoadFromPath happy path (needs fixture vault + drift in-memory), RefreshFromDisk happy path. Deferred to A12 or later as they require heavier scaffolding than a bite-sized iteration.
+- **M1208 — A11 slice 1** (EditorBloc no-op contract — 9 events)
+- Committed: bd2e8fe
+- TaskList ID: 11 (closed at 9 cases passing)
+- Notes: A11 covers the early-return contract for the 9 events that no-op outside EditorLoaded. OpenEditor / SaveNow positive paths need a working drift in-memory db (mocktail `any()` can't bind drift's strongly-typed generics), which is heavier than a bite-sized slice. Deferred to a future iteration.
 
 ## Backlog (Phase A — Foundation)
 
@@ -28,7 +28,7 @@
 - [x] A8 — Port `relation_picker_cubit_test` to bloc_test (M1200 / 02e2b74) — re-scoped from editor_bloc
 - [x] A9 — Port `slash_menu_cubit_test` to bloc_test (M1202 / 8ec74dc)
 - [x] A10 — Write NEW `vault_bloc_test.dart` (M1204+M1206, 11 cases covering 9 no-op events + CloseVault + LoadFromPath missing-path; PickVault / load-happy-path deferred)
-- [ ] A11 — Write NEW `editor_bloc_test.dart` from scratch (was: port) — EditorBloc has no test today
+- [x] A11 — Write NEW `editor_bloc_test.dart` (M1208, 9 cases covering no-op contract; OpenEditor / SaveNow positive paths deferred)
 - [ ] A12 — Re-run flutter-arch-orchestrator end-to-end (Phase A gate)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
 - [ ] A6 — Add `mockingjay` dev dependency (TS-09)
