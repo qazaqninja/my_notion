@@ -387,6 +387,9 @@ enum SlashAction {
   /// Extract the content of every HTML comment (`<!-- text -->` →
   /// `text`) on each selected line.
   extractHtmlCommentsFromLines,
+  /// Extract the domain portion from every email address on each
+  /// selected line (`user@example.com` → `example.com`).
+  extractEmailDomainsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1948,6 +1951,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractHtmlCommentsFromLines,
     keywords: ['extract', 'html', 'comment', 'hidden', 'todo',
         'note', 'audit'],
+  ),
+  SlashEntry(
+    icon: 'users',
+    label: 'Extract email domains',
+    hint: 'user@example.com → example.com',
+    action: SlashAction.extractEmailDomainsFromLines,
+    keywords: ['extract', 'email', 'domain', 'provider', 'contact',
+        'mail'],
   ),
   SlashEntry(
     icon: 'calendar',

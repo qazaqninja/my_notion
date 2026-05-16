@@ -5074,6 +5074,71 @@ void main() {
     });
   });
 
+  group('extractEmailDomainsFromLinesIn', () {
+    test('plain email yields domain', () {
+      const text = 'contact user@example.com today\n';
+      final r = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'example.com\n');
+    });
+
+    test('subdomain in email captured intact', () {
+      const text = 'reply alice@mail.example.org soon\n';
+      final r = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'mail.example.org\n');
+    });
+
+    test('multiple emails on one line each yield domain', () {
+      const text = 'cc alice@a.test and bob@b.test direct\n';
+      final r = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'a.test\nb.test\n');
+    });
+
+    test('email with `+` tag preserves domain extraction', () {
+      const text = 'tag bob+orders@shop.example.com inline\n';
+      final r = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'shop.example.com\n');
+    });
+
+    test('email with `.` in local part preserves domain', () {
+      const text = 'send first.last@example.io now\n';
+      final r = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'example.io\n');
+    });
+
+    test('bare `@` without local or TLD is NOT a match', () {
+      const text = 'tag @only here\n';
+      final r = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('local-only without `@domain` is NOT a match', () {
+      const text = 'just user without ampersand\n';
+      final r = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('paired with M1053 email extractor for provider audit', () {
+      // Demonstrates the design: full emails (M1053) + domains
+      // (M1112) give parallel sequences for grouping by provider.
+      const text = 'cc alice@google.com\ncc bob@google.com\ncc carol@yahoo.com\n';
+      final emails = extractEmailsFromLinesIn(text, 0, text.length);
+      final domains = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(emails.text,
+          'alice@google.com\nbob@google.com\ncarol@yahoo.com\n');
+      expect(domains.text, 'google.com\ngoogle.com\nyahoo.com\n');
+    });
+
+    test('lines without emails dropped from output', () {
+      const text = 'plain prose\ncc user@example.com\nmore prose\n';
+      final r = extractEmailDomainsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'example.com\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractEmailDomainsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

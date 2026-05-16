@@ -1414,6 +1414,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractHtmlCommentsFromLinesIn,
         );
+      case SlashAction.extractEmailDomainsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractEmailDomainsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

@@ -1812,6 +1812,32 @@ SortLinesResult extractHtmlCommentsFromLinesIn(
       return out;
     });
 
+/// Extract the DOMAIN portion from every email address on each
+/// selected line (`user@example.com` → `example.com`). Companion
+/// to M1053's full-email extractor — useful for "which email
+/// providers does this contact list use?" audits, deliverability
+/// review, and bulk-import provider distribution.
+///
+/// Recognition mirrors M1053's email regex but the local-part
+/// section is now non-capturing while the domain section is
+/// captured as group 1.
+///
+/// 49th member of the extraction family.
+SortLinesResult extractEmailDomainsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'[A-Za-z0-9._%+\-]+@([A-Za-z0-9.\-]+\.[A-Za-z]{2,})',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
