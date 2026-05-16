@@ -2584,6 +2584,34 @@ void main() {
     });
   });
 
+  group('stdDevNumericLinesIn', () {
+    test('std dev of [2, 4, 4, 4, 5, 5, 7, 9] is 2.0', () {
+      // Classic textbook example with a known population std dev of 2.
+      const text = '2\n4\n4\n4\n5\n5\n7\n9\n';
+      expect(stdDevNumericLinesIn(text, 0, text.length).text, '2.0\n');
+    });
+
+    test('single value has zero std dev', () {
+      const text = '42\n';
+      expect(stdDevNumericLinesIn(text, 0, text.length).text, '0.0\n');
+    });
+
+    test('two identical values have zero std dev', () {
+      const text = '5\n5\n';
+      expect(stdDevNumericLinesIn(text, 0, text.length).text, '0.0\n');
+    });
+
+    test('skips non-numeric lines', () {
+      const text = '4\nlabel\n4\n';
+      expect(stdDevNumericLinesIn(text, 0, text.length).text, '0.0\n');
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(stdDevNumericLinesIn(text, 0, text.length).text, text);
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';

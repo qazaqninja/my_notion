@@ -232,6 +232,9 @@ enum SlashAction {
   /// Replace each numeric line with its percentage of the column
   /// total (`xx.x%`).
   percentageOfTotalLines,
+  /// Compute the population standard deviation of every numeric
+  /// line.
+  stdDevNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1074,6 +1077,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '10 / 30 → 25% / 75%',
     action: SlashAction.percentageOfTotalLines,
     keywords: ['percent', 'percentage', 'share', 'normalize'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Standard deviation',
+    hint: 'σ (population)',
+    action: SlashAction.stdDevNumericLines,
+    keywords: ['std', 'standard', 'deviation', 'sigma', 'stats'],
   ),
   SlashEntry(
     icon: 'hash',
