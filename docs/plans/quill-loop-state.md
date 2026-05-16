@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E49 — Forms slice 4: list-submissions endpoint for the page owner (GET /forms/<ulid>/submissions, behind auth)
+- **Task:** E50 — Phase E backend audit + Flutter-side forms client (consume the new endpoints)
 - **Status:** pending
 
 ## Last completed
+
+- **M1352 — E49** (authed list-submissions endpoint for the page owner)
+- Committed: (this iteration)
+- TaskList ID: 71
+- Notes: New `FormSubmission` value class (id / pageUlid / fields / createdAt / sourceIp) + `FormsRepositoryBase.listSubmissionsFor({userId, pageUlid})` returning `null` for not-owned-or-missing (deliberate — visitors can't enumerate ULIDs by response shape) and a list otherwise. Concrete impl runs a 2-step query: `SELECT 1 FROM vault_files WHERE ulid = $1 AND user_id = $2 LIMIT 1` for ownership, then `SELECT … FROM form_submissions WHERE page_ulid = $1 ORDER BY created_at DESC`. The new partial index from E48 covers this read. New `buildOwnerFormsRouter` mounts `GET /<ulid>/submissions` returning JSON `{"submissions": [...]}` (each entry includes id, page_ulid, fields, created_at; source_ip only when present). Server mounts the owner router at `/forms/owner/` behind the standard `requireAuth` pipeline — ordered BEFORE the unauthed `/forms/` mount so the owner prefix wins. 6 new tests (403 not-owner, 403 page-missing, 404 malformed-ulid, 200 with two submissions, 200 empty list, NoFormsRepository.listSubmissionsFor returns null). 99/99 backend tests pass; backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1351 — E48** (forms submission: validation + row insert + thanks page)
 - Committed: (this iteration)

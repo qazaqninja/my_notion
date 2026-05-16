@@ -1,12 +1,20 @@
 import 'dart:convert';
 
+import 'package:backend/auth/user.dart';
 import 'package:backend/forms/routes.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
 class _StubRepo implements FormsRepositoryBase {
-  _StubRepo({this.definedFor = const <String>{}});
+  _StubRepo({
+    this.definedFor = const <String>{},
+    this.pageOwners = const <String, String>{},
+    this.submissionsByPage = const <String, List<FormSubmission>>{},
+  });
   final Set<String> definedFor;
+  // E49 — ownership + submission listing.
+  final Map<String, String> pageOwners; // pageUlid → userId
+  final Map<String, List<FormSubmission>> submissionsByPage;
   // Captured for tests so they can assert what was inserted.
   String? lastPageUlid;
   Map<String, String>? lastFields;
@@ -17,6 +25,15 @@ class _StubRepo implements FormsRepositoryBase {
   @override
   Future<bool> hasFormDefinition(String ulid) async {
     return definedFor.contains(ulid);
+  }
+
+  @override
+  Future<List<FormSubmission>?> listSubmissionsFor({
+    required String userId,
+    required String pageUlid,
+  }) async {
+    if (pageOwners[pageUlid] != userId) return null;
+    return submissionsByPage[pageUlid] ?? const [];
   }
 
   @override
@@ -195,6 +212,126 @@ void main() {
         body: utf8.decode([0x68, 0x69]), // 'hi'
       );
       expect(res.statusCode, 404);
+    });
+  });
+
+  // E49 — owner-facing list-submissions endpoint.
+  group('Owner forms routes (E49)', () {
+    const ulid = '01HX0V0000000000000000000A';
+    const ownerId = 'user-alice';
+
+    User owner({String id = ownerId}) =>
+        User(id: id, email: '$id@quill', createdAt: DateTime.utc(2026));
+
+    Future<Response> ownerHit({
+      required FormsRepositoryBase repo,
+      required User user,
+      required String path,
+    }) async {
+      final handler = buildOwnerFormsRouter(repo: repo).call;
+      final req = Request(
+        'GET',
+        Uri.parse('http://localhost$path'),
+      ).change(context: {'user': user});
+      return handler(req);
+    }
+
+    test('Returns 403 not_owner when the caller does not own the page',
+        () async {
+      final repo = _StubRepo(pageOwners: const {ulid: 'someone-else'});
+      final res = await ownerHit(
+        repo: repo,
+        user: owner(),
+        path: '/$ulid/submissions',
+      );
+      expect(res.statusCode, 403);
+      expect(jsonDecode(await res.readAsString()),
+          {'error': 'not_owner'});
+    });
+
+    test('Returns 403 not_owner when the page is missing entirely',
+        () async {
+      // Same response shape for not-mine vs missing — avoids ULID
+      // enumeration by visitors.
+      final repo = _StubRepo();
+      final res = await ownerHit(
+        repo: repo,
+        user: owner(),
+        path: '/$ulid/submissions',
+      );
+      expect(res.statusCode, 403);
+    });
+
+    test('Returns 404 not_found for malformed ULID', () async {
+      final res = await ownerHit(
+        repo: _StubRepo(),
+        user: owner(),
+        path: '/not-a-ulid/submissions',
+      );
+      expect(res.statusCode, 404);
+    });
+
+    test('Returns 200 with submissions when the caller owns the page',
+        () async {
+      final submissions = [
+        FormSubmission(
+          id: 'sub-1',
+          pageUlid: ulid,
+          fields: const {'name': 'Pat', 'email': 'p@x'},
+          createdAt: DateTime.utc(2026, 5, 17, 12),
+          sourceIp: '203.0.113.42',
+        ),
+        FormSubmission(
+          id: 'sub-2',
+          pageUlid: ulid,
+          fields: const {'name': 'Jo'},
+          createdAt: DateTime.utc(2026, 5, 17, 13),
+        ),
+      ];
+      final repo = _StubRepo(
+        pageOwners: const {ulid: ownerId},
+        submissionsByPage: {ulid: submissions},
+      );
+      final res = await ownerHit(
+        repo: repo,
+        user: owner(),
+        path: '/$ulid/submissions',
+      );
+      expect(res.statusCode, 200);
+      final body = jsonDecode(await res.readAsString())
+          as Map<String, dynamic>;
+      final list = body['submissions'] as List;
+      expect(list.length, 2);
+      expect(list[0]['id'], 'sub-1');
+      expect(list[0]['fields'], {'name': 'Pat', 'email': 'p@x'});
+      expect(list[0]['source_ip'], '203.0.113.42');
+      expect(list[1]['id'], 'sub-2');
+      // sourceIp omitted when null.
+      expect((list[1] as Map).containsKey('source_ip'), isFalse);
+    });
+
+    test(
+        'Returns 200 with empty list when owner exists but no submissions',
+        () async {
+      final repo = _StubRepo(pageOwners: const {ulid: ownerId});
+      final res = await ownerHit(
+        repo: repo,
+        user: owner(),
+        path: '/$ulid/submissions',
+      );
+      expect(res.statusCode, 200);
+      final body = jsonDecode(await res.readAsString())
+          as Map<String, dynamic>;
+      expect(body['submissions'], isEmpty);
+    });
+
+    test('NoFormsRepository.listSubmissionsFor returns null', () async {
+      const repo = NoFormsRepository();
+      final result = await repo.listSubmissionsFor(
+        userId: 'any',
+        pageUlid: 'any',
+      );
+      expect(result, isNull);
     });
   });
 }

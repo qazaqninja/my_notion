@@ -5,6 +5,8 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:ulid/ulid.dart';
 
+import '../auth/middleware.dart';
+
 /// Repository contract for form-definition lookups + submission storage.
 /// Slice E46 ships only the abstract interface plus a default impl that
 /// always returns no-form-definition; E48 adds the submission insert.
@@ -26,6 +28,45 @@ abstract class FormsRepositoryBase {
     required Map<String, String> fields,
     String? sourceIp,
   });
+
+  /// E49 — list submissions for [pageUlid] on behalf of [userId].
+  ///
+  /// Returns `null` when the page exists but is not owned by [userId]
+  /// (route layer maps that to 403). Returns an empty list when the
+  /// page exists and the caller owns it but no submissions have come
+  /// in yet. Returns `null` when the page is missing entirely — the
+  /// caller can't distinguish "missing" from "not owned" by design
+  /// (avoids leaking which ULIDs exist).
+  Future<List<FormSubmission>?> listSubmissionsFor({
+    required String userId,
+    required String pageUlid,
+  });
+}
+
+/// Single row from `form_submissions`. Equatable not used — these
+/// aren't compared in any state machine; the route layer just maps
+/// them to JSON.
+class FormSubmission {
+  const FormSubmission({
+    required this.id,
+    required this.pageUlid,
+    required this.fields,
+    required this.createdAt,
+    this.sourceIp,
+  });
+  final String id;
+  final String pageUlid;
+  final Map<String, dynamic> fields;
+  final DateTime createdAt;
+  final String? sourceIp;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'page_ulid': pageUlid,
+        'fields': fields,
+        'created_at': createdAt.toIso8601String(),
+        if (sourceIp != null) 'source_ip': sourceIp,
+      };
 }
 
 /// Default no-form-definition repo. Used by E46 to honor the "every
@@ -47,6 +88,13 @@ class NoFormsRepository implements FormsRepositoryBase {
       'route guard on hasFormDefinition should have prevented this',
     );
   }
+
+  @override
+  Future<List<FormSubmission>?> listSubmissionsFor({
+    required String userId,
+    required String pageUlid,
+  }) async =>
+      null;
 }
 
 /// Concrete repo backed by Postgres. E47 wires the lookup against
@@ -93,6 +141,49 @@ class FormsRepository implements FormsRepositoryBase {
       },
     );
     return id;
+  }
+
+  @override
+  Future<List<FormSubmission>?> listSubmissionsFor({
+    required String userId,
+    required String pageUlid,
+  }) async {
+    // Verify ownership before reading any submission rows. The join
+    // against vault_files lets us answer "owns this page?" in one
+    // round-trip; we deliberately don't distinguish "page missing"
+    // from "not owner" in the response (the route maps both to 403)
+    // so visitors can't enumerate ULIDs.
+    final ownerCheck = await _conn.execute(
+      Sql.named('''
+        SELECT 1 FROM vault_files
+        WHERE ulid = @ulid AND user_id = @uid
+        LIMIT 1
+      '''),
+      parameters: {'ulid': pageUlid, 'uid': userId},
+    );
+    if (ownerCheck.isEmpty) return null;
+    final rows = await _conn.execute(
+      Sql.named('''
+        SELECT id, page_ulid, fields, source_ip, created_at
+        FROM form_submissions
+        WHERE page_ulid = @ulid
+        ORDER BY created_at DESC
+      '''),
+      parameters: {'ulid': pageUlid},
+    );
+    return rows
+        .map((r) => FormSubmission(
+              id: r[0]! as String,
+              pageUlid: r[1]! as String,
+              // `fields` comes back as JSONB; postgres adapter decodes
+              // to a Dart Map when the column type is jsonb.
+              fields: (r[2] is String)
+                  ? jsonDecode(r[2]! as String) as Map<String, dynamic>
+                  : (r[2]! as Map).cast<String, dynamic>(),
+              sourceIp: r[3] as String?,
+              createdAt: r[4]! as DateTime,
+            ))
+        .toList();
   }
 }
 
@@ -170,6 +261,50 @@ Router buildFormsRouter({required FormsRepositoryBase repo}) {
     return Response.ok(
       _renderThanksHtml(),
       headers: const {'content-type': 'text/html; charset=utf-8'},
+    );
+  });
+
+  return router;
+}
+
+/// E49 — owner-facing forms routes. Mounted at `/forms/owner/` behind
+/// the standard `requireAuth` middleware so handlers can read the
+/// authed `User` from `currentUser(request)`.
+///
+/// Routes:
+///   - `GET /forms/owner/<ulid>/submissions` — JSON list of submissions
+///     for [ulid]. Returns 403 `not_owner` when the caller doesn't own
+///     the page (also when the page doesn't exist — by design, no ULID
+///     enumeration). Returns `{"submissions": [...]}` on success.
+Router buildOwnerFormsRouter({required FormsRepositoryBase repo}) {
+  final router = Router();
+
+  router.get('/<ulid>/submissions', (Request req) async {
+    final ulid = req.params['ulid'];
+    if (ulid == null || !_isUlid(ulid)) {
+      return Response(
+        404,
+        body: jsonEncode({'error': 'not_found'}),
+        headers: const {'content-type': 'application/json'},
+      );
+    }
+    final user = currentUser(req);
+    final submissions = await repo.listSubmissionsFor(
+      userId: user.id,
+      pageUlid: ulid,
+    );
+    if (submissions == null) {
+      return Response(
+        403,
+        body: jsonEncode({'error': 'not_owner'}),
+        headers: const {'content-type': 'application/json'},
+      );
+    }
+    return Response.ok(
+      jsonEncode({
+        'submissions': submissions.map((s) => s.toJson()).toList(),
+      }),
+      headers: const {'content-type': 'application/json'},
     );
   });
 

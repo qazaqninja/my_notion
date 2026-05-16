@@ -93,11 +93,19 @@ void main(List<String> args) async {
     // currently returns 404 in every case; the route shape is locked
     // in so the Flutter form designer can render a working form action
     // before the row-insert behavior lands in a future slice.
+    // E49: order matters — mount the authed sub-tree FIRST so its
+    // routes win the `/forms/owner/...` prefix before the unauthed
+    // catch-all on `/forms/`.
+    final formsRepo = forms_routes.FormsRepository(conn);
+    final ownerFormsPipeline = Pipeline()
+        .addMiddleware(requireAuth(users: users, tokens: tokens))
+        .addHandler(forms_routes
+            .buildOwnerFormsRouter(repo: formsRepo)
+            .call);
+    router.mount('/forms/owner/', ownerFormsPipeline);
     router.mount(
       '/forms/',
-      forms_routes
-          .buildFormsRouter(repo: forms_routes.FormsRepository(conn))
-          .call,
+      forms_routes.buildFormsRouter(repo: formsRepo).call,
     );
   } else {
     router.all('/auth/<ignored|.*>',
