@@ -485,6 +485,25 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  Future<void> _openLargestPage(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final rows = await db.select(db.pages).get();
+    if (rows.isEmpty) {
+      if (context.mounted) context.toastInfo('No pages to pick from yet.');
+      return;
+    }
+    final pick =
+        rows.reduce((a, b) => a.bodyText.length > b.bodyText.length ? a : b);
+    if (context.mounted) {
+      context.toastInfo(
+        'Largest page · ${pick.bodyText.length} chars',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openLastEditedPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -682,6 +701,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openRandomPage(context);
       case 'Open last edited page':
         await _openLastEditedPage(context);
+      case 'Open largest page':
+        await _openLargestPage(context);
       case "Open today's daily note":
         if (vaultPath == null) {
           context.toastError('No vault open');

@@ -211,6 +211,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Show empty pages', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'link', label: 'Copy vault path', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'clock', label: 'Open last edited page', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Open largest page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'table', label: 'Import CSV as database', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import HTML file as page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import text file as page', hint: ''),
