@@ -101,6 +101,9 @@ enum SlashAction {
   /// Prefix every selected line with its word count
   /// (`[3] one two three`), padded so columns align.
   prefixLinesWithWordCount,
+  /// Unconditionally strip a leading `> ` blockquote prefix from
+  /// every selected line that has one (mixed selections welcome).
+  stripBlockquotePrefix,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1568,6 +1571,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[3] one two three',
     action: SlashAction.prefixLinesWithWordCount,
     keywords: ['count', 'words', 'word', 'prefix', 'measure'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Strip blockquote prefix',
+    hint: '> foo → foo',
+    action: SlashAction.stripBlockquotePrefix,
+    keywords: ['strip', 'unquote', 'blockquote', 'quote', 'prefix'],
   ),
   SlashEntry(
     icon: 'edit',

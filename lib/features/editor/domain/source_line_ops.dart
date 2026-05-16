@@ -3108,6 +3108,27 @@ SortLinesResult toggleNumberedPrefixIn(String text, int start, int end) =>
 /// treated as plain text and gains one more `> ` (becoming
 /// `> >> nested`), so repeated toggles let the user step nested
 /// quotes outward one level at a time on reapply.
+/// Unconditionally strip a leading `> ` blockquote prefix from
+/// every selected line that has one. Lines without the prefix pass
+/// through. Differs from [toggleBlockquotePrefixIn] which only
+/// strips when ALL non-blank lines start with `> ` — useful when
+/// you have a mixed selection (some quoted, some not) and want to
+/// unquote the ones that ARE quoted without adding `> ` to the
+/// others. Existing leading indentation is preserved (`  > foo`
+/// becomes `  foo`).
+SortLinesResult stripBlockquotePrefixIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final indent = l.substring(0, l.length - l.trimLeft().length);
+            final after = l.trimLeft();
+            if (!after.startsWith('> ')) return l;
+            return '$indent${after.substring(2)}';
+          })(),
+      ];
+    });
+
 SortLinesResult toggleBlockquotePrefixIn(String text, int start, int end) =>
     transformLinesIn(text, start, end, (lines) {
       bool startsWithQuote(String l) => l.trimLeft().startsWith('> ');

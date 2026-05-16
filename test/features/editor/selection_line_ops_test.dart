@@ -140,6 +140,37 @@ void main() {
     });
   });
 
+  group('stripBlockquotePrefixIn', () {
+    test('strips `> ` from every quoted line', () {
+      const text = '> foo\n> bar\n';
+      final r = stripBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, 'foo\nbar\n');
+    });
+
+    test('mixed selection: only quoted lines get unquoted', () {
+      const text = '> quoted\nplain\n> another\n';
+      final r = stripBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, 'quoted\nplain\nanother\n');
+    });
+
+    test('preserves leading indentation', () {
+      const text = '  > foo\n\t> bar\n';
+      final r = stripBlockquotePrefixIn(text, 0, text.length);
+      expect(r.text, '  foo\n\tbar\n');
+    });
+
+    test('a lonely `>` without a trailing space is preserved', () {
+      // The regex requires `> ` (with trailing space) so `>foo` is
+      // not a blockquote prefix and passes through unchanged.
+      const text = '>no-space\n';
+      expect(stripBlockquotePrefixIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(stripBlockquotePrefixIn('', 0, 0).text, '');
+    });
+  });
+
   group('prefixLinesWithWordCountIn', () {
     test('single-digit counts pad to width 1', () {
       const text = 'one\none two\n';

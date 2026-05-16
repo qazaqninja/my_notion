@@ -1085,6 +1085,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, prefixLinesWithWordCountIn,
         );
+      case SlashAction.stripBlockquotePrefix:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, stripBlockquotePrefixIn,
+        );
       case SlashAction.outdentLines:
         _applyLinesTransformAfterSlash(stripStart, caret, outdentLinesIn);
       case SlashAction.stripLeadingWhitespace:
