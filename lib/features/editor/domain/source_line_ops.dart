@@ -1247,6 +1247,40 @@ SortLinesResult zScoreNumericLinesIn(String text, int start, int end) =>
       ];
     });
 
+/// Replace each numeric line with its **min-max normalised** value,
+/// scaled to the [0, 1] range: `(x - min) / (max - min)`. Non-numeric
+/// lines pass through unchanged so header rows and dividers survive.
+/// Returns the source unchanged when fewer than two numeric lines
+/// are present (a single value can't define a range), or when
+/// `max == min` (every value identical — collapse would lose info
+/// and force a divide-by-zero). Always rendered as decimal —
+/// normalised scores almost never land on integers.
+///
+///   0             0.0
+///   25       →    0.25
+///   100           1.0
+SortLinesResult normalizeNumericLinesIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final values = <double>[];
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v != null) values.add(v);
+      }
+      if (values.length < 2) return lines;
+      final lo = values.reduce(math.min);
+      final hi = values.reduce(math.max);
+      if (hi == lo) return lines;
+      final span = hi - lo;
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            return ((v - lo) / span).toString();
+          })(),
+      ];
+    });
+
 /// Replace each numeric line with its share of the column total,
 /// rendered as a percentage with one decimal place (`xx.x%`).
 /// Non-numeric lines pass through. Returns the source unchanged

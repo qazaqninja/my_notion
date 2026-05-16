@@ -249,6 +249,9 @@ enum SlashAction {
   /// Replace every numeric line with its z-score
   /// `(x - mean) / stddev`, using the population stddev.
   zScoreNumericLines,
+  /// Min-max normalise every numeric line into the [0, 1] range
+  /// using `(x - min) / (max - min)`.
+  normalizeNumericLines,
   /// Round every numeric line to 2 decimal places.
   roundNumericLines,
   /// Replace every numeric line with its absolute value.
@@ -1137,6 +1140,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '(x - μ) / σ',
     action: SlashAction.zScoreNumericLines,
     keywords: ['zscore', 'standard', 'score', 'normalize', 'stats'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Normalise to [0, 1]',
+    hint: '(x - min) / (max - min)',
+    action: SlashAction.normalizeNumericLines,
+    keywords: ['normalize', 'normalise', 'minmax', 'scale', 'range', 'rescale'],
   ),
   SlashEntry(
     icon: 'hash',

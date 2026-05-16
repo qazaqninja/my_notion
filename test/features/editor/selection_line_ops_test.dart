@@ -2668,6 +2668,51 @@ void main() {
     });
   });
 
+  group('normalizeNumericLinesIn', () {
+    test('three values across a 0..100 range scale into [0, 1]', () {
+      const text = '0\n25\n100\n';
+      final r = normalizeNumericLinesIn(text, 0, text.length);
+      final lines = r.text.split('\n');
+      expect(double.parse(lines[0]), closeTo(0.0, 1e-9));
+      expect(double.parse(lines[1]), closeTo(0.25, 1e-9));
+      expect(double.parse(lines[2]), closeTo(1.0, 1e-9));
+    });
+
+    test('label lines pass through unchanged', () {
+      const text = 'score\n10\n20\n';
+      final r = normalizeNumericLinesIn(text, 0, text.length);
+      final lines = r.text.split('\n');
+      expect(lines[0], 'score');
+      expect(double.parse(lines[1]), closeTo(0.0, 1e-9));
+      expect(double.parse(lines[2]), closeTo(1.0, 1e-9));
+    });
+
+    test('all-identical values is a no-op (avoids /0)', () {
+      const text = '7\n7\n7\n';
+      expect(normalizeNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('single numeric line is a no-op', () {
+      const text = '42\n';
+      expect(normalizeNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('no numeric lines is a no-op', () {
+      const text = 'a\nb\n';
+      expect(normalizeNumericLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('negative values shift so min becomes 0', () {
+      // [-5, 0, 5] has min -5, max 5, span 10 → 0.0, 0.5, 1.0.
+      const text = '-5\n0\n5\n';
+      final r = normalizeNumericLinesIn(text, 0, text.length);
+      final lines = r.text.split('\n');
+      expect(double.parse(lines[0]), closeTo(0.0, 1e-9));
+      expect(double.parse(lines[1]), closeTo(0.5, 1e-9));
+      expect(double.parse(lines[2]), closeTo(1.0, 1e-9));
+    });
+  });
+
   group('zScoreNumericLinesIn', () {
     test('symmetric run around the mean yields signed z-scores', () {
       // [10, 20, 30] has μ = 20, σ = sqrt(200/3) ≈ 8.1649658...
