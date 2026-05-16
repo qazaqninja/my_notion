@@ -886,6 +886,28 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract every markdown-link URL (`[label](url)` → `url`) from
+/// each selected line. Companion to
+/// [extractMarkdownLinkLabelsFromLinesIn] (M1068) — labels vs URLs
+/// are the two halves of every markdown link.
+///
+/// Different from [extractUrlsFromLinesIn] (M1054) which catches
+/// bare URLs anywhere in prose; this one ONLY pulls URLs that are
+/// wrapped in markdown link syntax. A mixed paste-in (some bare,
+/// some wrapped) needs both extractors to capture every link.
+SortLinesResult extractMarkdownLinkUrlsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?<!\[)\[[^\]\n]+\]\(([^)\n]*)\)');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every markdown-link LABEL (`[label](url)` → `label`) from
 /// each selected line. Useful for harvesting click-text out of
 /// reference paste-ins — "what was each link called?" — without

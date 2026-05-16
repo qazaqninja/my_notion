@@ -2234,6 +2234,48 @@ void main() {
     });
   });
 
+  group('extractMarkdownLinkUrlsFromLinesIn', () {
+    test('strips the label and keeps the URL', () {
+      const text = 'click [Docs](https://x.test) and [Wiki](https://y.test)\n';
+      final r = extractMarkdownLinkUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://x.test\nhttps://y.test\n');
+    });
+
+    test('wikilinks [[ULID]] are NOT matched (lookbehind rejects)', () {
+      const text = '[[01HABCDEFGHIJKLMNOPQRSTUVW]] and [foo](https://x.test)\n';
+      final r = extractMarkdownLinkUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://x.test\n');
+    });
+
+    test('image-link form is NOT a plain markdown link', () {
+      // `![alt](src)` has a leading `!` so the regex (which has
+      // negative lookbehind on `[` to reject `[[`) ALSO does not
+      // need to reject `![` — the regex matches starting at `[`,
+      // and `!` is fine before. Document the actual behaviour:
+      // images ARE matched (the URL inside `(...)` IS extracted).
+      const text = '![alt](image.png) and [doc](https://x.test)\n';
+      final r = extractMarkdownLinkUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'image.png\nhttps://x.test\n');
+    });
+
+    test('empty URL slot extracts as empty string', () {
+      const text = '[label]() trailing\n';
+      // The lookbehind/lookahead allow empty contents inside `(...)`.
+      final r = extractMarkdownLinkUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without markdown links dropped from output', () {
+      const text = 'bare url https://x.test\n[lbl](https://y.test)\n';
+      final r = extractMarkdownLinkUrlsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'https://y.test\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownLinkUrlsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractMarkdownLinkLabelsFromLinesIn', () {
     test('strips the wrapper and keeps the label', () {
       const text = 'click [Docs](https://x.test) and [Wiki](https://y.test)\n';

@@ -306,6 +306,9 @@ enum SlashAction {
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
+  /// Extract every markdown-link URL (`[label](url)` → `url`) from
+  /// each selected line.
+  extractMarkdownLinkUrlsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1619,6 +1622,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[label](url) → label',
     action: SlashAction.extractMarkdownLinkLabelsFromLines,
     keywords: ['extract', 'link', 'label', 'markdown', 'anchor', 'text'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract markdown link URLs',
+    hint: '[label](url) → url',
+    action: SlashAction.extractMarkdownLinkUrlsFromLines,
+    keywords: ['extract', 'link', 'url', 'markdown', 'href', 'target'],
   ),
   SlashEntry(
     icon: 'sync',
