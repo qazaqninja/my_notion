@@ -225,4 +225,54 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer blockquote + callout (D1 slice 5)', () {
+    test('single-line blockquote', () {
+      const md = '> just a quote';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), blockquoteAttribution);
+      expect(node.text.toPlainText(), 'just a quote');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('multi-line blockquote merges with internal newlines', () {
+      const md = '> first line\n> second line';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'first line\nsecond line');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('GFM admonition with [!NOTE] stores callout kind', () {
+      const md = '> [!NOTE]\n> Pay attention.';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.getMetadataValue('blockType'), blockquoteAttribution);
+      expect(node.getMetadataValue('callout'), 'note');
+      expect(node.text.toPlainText(), 'Pay attention.');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('GFM admonition kinds tip / important / warning / caution', () {
+      for (final kind in const ['TIP', 'IMPORTANT', 'WARNING', 'CAUTION']) {
+        final md = '> [!$kind]\n> body';
+        final doc = serializer.markdownToDocument(md);
+        final node = doc.first as ParagraphNode;
+        expect(
+          node.getMetadataValue('callout'),
+          kind.toLowerCase(),
+          reason: 'callout key for $kind',
+        );
+        expect(serializer.documentToMarkdown(doc), md);
+      }
+    });
+
+    test('paragraph, blockquote, paragraph round-trip', () {
+      const md = 'before\n\n> a quote\n\nafter';
+      final doc = serializer.markdownToDocument(md);
+      expect(doc.toList(), hasLength(3));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }

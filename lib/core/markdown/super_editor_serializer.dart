@@ -29,6 +29,15 @@ class SuperEditorSerializer {
   ///     codeAttribution` (language stored under metadata key `language`).
   ///   - `---` / `***` / `___` (≥3 of same char, line-only) →
   ///     `HorizontalRuleNode`.
+  /// - Slice 5: blockquotes + GFM admonition callouts.
+  ///   - `> body` (one or more `>`-prefixed lines) → `ParagraphNode` with
+  ///     `blockType: blockquoteAttribution`. Multi-line quotes merge into
+  ///     a single paragraph at the blockquote level.
+  ///   - `> [!NOTE]\n> body` (GFM admonition) → same blockquote node but
+  ///     with metadata key `callout: note|tip|important|warning|caution`.
+  ///     The renderer in the existing `markdown_renderer.dart` already
+  ///     surfaces these as coloured blocks; serializer keeps the kind
+  ///     so a round-trip preserves the admonition tag.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -75,6 +84,32 @@ class SuperEditorSerializer {
         flushBuffer();
         nodes.add(HorizontalRuleNode(id: Editor.createNodeId()));
         i += 1;
+        continue;
+      }
+      // Blockquote / GFM callout? `> body` (possibly multi-line).
+      if (RegExp(r'^>\s?').hasMatch(line)) {
+        flushBuffer();
+        final quoteLines = <String>[];
+        String? callout;
+        while (i < lines.length && RegExp(r'^>\s?').hasMatch(lines[i])) {
+          final stripped = lines[i].replaceFirst(RegExp(r'^>\s?'), '');
+          final adm = RegExp(r'^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]$')
+              .firstMatch(stripped.trim());
+          if (adm != null && quoteLines.isEmpty) {
+            callout = adm.group(1)!.toLowerCase();
+          } else {
+            quoteLines.add(stripped);
+          }
+          i += 1;
+        }
+        nodes.add(ParagraphNode(
+          id: Editor.createNodeId(),
+          text: AttributedText(quoteLines.join('\n')),
+          metadata: {
+            'blockType': blockquoteAttribution,
+            if (callout != null) 'callout': callout,
+          },
+        ));
         continue;
       }
       if (line.trim().isEmpty) {
@@ -178,6 +213,20 @@ class SuperEditorSerializer {
           out.write('```$lang\n');
           out.write(node.text.toPlainText());
           out.write('\n```');
+        } else if (block == blockquoteAttribution) {
+          final callout =
+              node.getMetadataValue('callout') as String? ?? '';
+          final body = node.text.toPlainText();
+          if (callout.isNotEmpty) {
+            out.write('> [!${callout.toUpperCase()}]\n');
+          }
+          // Prefix every newline in the body with `> ` so multi-line
+          // quotes round-trip cleanly.
+          final bodyLines = body.split('\n');
+          for (var j = 0; j < bodyLines.length; j++) {
+            if (j > 0) out.write('\n');
+            out.write('> ${bodyLines[j]}');
+          }
         } else {
           final prefix = _headingPrefix(node);
           if (prefix.isNotEmpty) out.write('$prefix ');
