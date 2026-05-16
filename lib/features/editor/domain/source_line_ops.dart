@@ -2661,6 +2661,36 @@ SortLinesResult lowercaseLinesIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) l.toLowerCase()],
     );
 
+/// Toggle the case of every cased character on every selected line:
+/// uppercase becomes lowercase and vice versa, character-by-character.
+/// Non-cased characters (digits, punctuation, whitespace, symbols, and
+/// most non-Latin scripts) pass through. Mirrors Notepad++'s "Invert
+/// case" and JetBrains' "Toggle case" — running the op twice is the
+/// identity for ASCII inputs.
+///
+///   "Hello World"  →  "hELLO wORLD"
+SortLinesResult swapCaseLinesIn(String text, int start, int end) =>
+    _transformLinesIn(
+      text, start, end, (lines) => [
+        for (final l in lines)
+          (() {
+            final buf = StringBuffer();
+            for (final c in l.split('')) {
+              final lo = c.toLowerCase();
+              final up = c.toUpperCase();
+              if (c == lo && c != up) {
+                buf.write(up); // was lowercase
+              } else if (c == up && c != lo) {
+                buf.write(lo); // was uppercase
+              } else {
+                buf.write(c); // not cased — digit / symbol / etc.
+              }
+            }
+            return buf.toString();
+          })(),
+      ],
+    );
+
 /// Toggle a `- ` bullet prefix on every line in the selected block.
 ///
 /// The toggle is idempotent in pairs: if **every** non-empty line in the

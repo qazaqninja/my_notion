@@ -901,6 +901,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, sentenceCaseLinesIn,
         );
+      case SlashAction.swapCaseSelectedLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, swapCaseLinesIn,
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

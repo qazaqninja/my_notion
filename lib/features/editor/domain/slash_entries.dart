@@ -27,6 +27,9 @@ enum SlashAction {
   lowercaseSelectedLines,
   /// Title-case the lines touched by the selection.
   titleCaseSelectedLines,
+  /// Toggle the case of every cased character on every selected line:
+  /// uppercase becomes lowercase and vice versa.
+  swapCaseSelectedLines,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -1293,6 +1296,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'Aa…',
     action: SlashAction.sentenceCaseSelectedLines,
     keywords: ['sentence', 'case', 'lowercase', 'capitalize'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Swap case (invert)',
+    hint: 'aBC → AbC',
+    action: SlashAction.swapCaseSelectedLines,
+    keywords: ['swap', 'invert', 'case', 'toggle', 'flip'],
   ),
   SlashEntry(
     icon: 'link',

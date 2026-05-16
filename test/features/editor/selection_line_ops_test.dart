@@ -140,6 +140,36 @@ void main() {
     });
   });
 
+  group('swapCaseLinesIn', () {
+    test('inverts upper/lower case per character', () {
+      const text = 'Hello World\n';
+      expect(swapCaseLinesIn(text, 0, text.length).text, 'hELLO wORLD\n');
+    });
+
+    test('non-cased characters pass through', () {
+      // Digits, punctuation, whitespace and symbols stay put.
+      const text = 'aB1 c-D 42!\n';
+      expect(swapCaseLinesIn(text, 0, text.length).text, 'Ab1 C-d 42!\n');
+    });
+
+    test('double-application is the identity for ASCII input', () {
+      const text = 'The QUICK brown Fox.\n';
+      final once = swapCaseLinesIn(text, 0, text.length);
+      final twice = swapCaseLinesIn(once.text, 0, once.text.length);
+      expect(twice.text, text);
+    });
+
+    test('non-Latin scripts without casing pass through unchanged', () {
+      // CJK ideographs and digits have no case.
+      const text = '日本 2026\n';
+      expect(swapCaseLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(swapCaseLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('titleCaseLinesIn', () {
     test('capitalises every non-small word', () {
       const text = 'hello world\n';
