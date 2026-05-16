@@ -8,6 +8,7 @@ import 'package:backend/db/connection.dart';
 import 'package:backend/db/migrations.dart';
 import 'package:backend/db/sync.dart';
 import 'package:backend/db/users.dart';
+import 'package:backend/forms/routes.dart' as forms_routes;
 import 'package:backend/public/routes.dart' as public_routes;
 import 'package:backend/sync/routes.dart' as sync_routes;
 import 'package:postgres/postgres.dart';
@@ -88,12 +89,24 @@ void main(List<String> args) async {
     // Public sharing surface (E16) — NO auth wrapper. `GET /public/<ulid>`
     // returns the public-flagged page body as HTML, or 404.
     router.mount('/public/', public_routes.buildPublicRouter(conn: conn).call);
+    // Forms scaffold (E46) — NO auth wrapper. `POST /forms/<ulid>/submit`
+    // currently returns 404 in every case; the route shape is locked
+    // in so the Flutter form designer can render a working form action
+    // before the row-insert behavior lands in a future slice.
+    router.mount(
+      '/forms/',
+      forms_routes
+          .buildFormsRouter(repo: forms_routes.FormsRepository(conn))
+          .call,
+    );
   } else {
     router.all('/auth/<ignored|.*>',
         (Request req) => Response(503, body: 'db: not connected\n'));
     router.all('/sync/<ignored|.*>',
         (Request req) => Response(503, body: 'db: not connected\n'));
     router.all('/public/<ignored|.*>',
+        (Request req) => Response(503, body: 'db: not connected\n'));
+    router.all('/forms/<ignored|.*>',
         (Request req) => Response(503, body: 'db: not connected\n'));
   }
 

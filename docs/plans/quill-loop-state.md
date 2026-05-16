@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E46 — Begin Phase E E56+ (forms): scaffold `.database.yaml` schema column `forms` + skeleton submit endpoint
+- **Task:** E47 — Forms slice 2: probe `forms:` field from frontmatter, populate FormsRepository.hasFormDefinition
 - **Status:** pending
 
 ## Last completed
 
-- **M1348 — E45** (document the end-to-end password-protected sharing flow)
+- **M1349 — E46** (forms scaffold: route + repo abstraction)
 - Committed: (this iteration)
-- TaskList ID: 67
-- Notes: Added a "Public sharing contract (E16–E44)" section to `backend/README.md` covering every piece of the flow: the three frontmatter fields a page can carry (`id`, `public`, `public_password`), the two routes (`GET /public/<ulid>`, `POST /public/<ulid>/unlock`), the bcrypt-hash-as-cookie-value cookie semantics with rationale (stateless, self-rotating on password change, scope-limited via Path, HttpOnly + SameSite=Lax), and the 9-step end-to-end publish-with-password walkthrough (editor kebab → bcrypt → frontmatter → sync push → probe → visitor unlock → cookie → rendered HTML → password rotation invalidates old cookies). Future Claude sessions can re-derive the contract from this section without grepping. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 68
+- Notes: Phase E forms (E56+ in the original plan) kicks off with a contract-first slice. New file `backend/lib/forms/routes.dart` ships: (1) abstract `FormsRepositoryBase` with one method `hasFormDefinition(ulid)`, (2) `NoFormsRepository` default returning false, (3) `FormsRepository(Connection)` concrete impl wired in for future slices but currently also returning false (the Connection is held but unread — flagged with `// ignore: unused_field` for E47). `buildFormsRouter({required repo})` mounts `POST /<ulid>/submit` with response matrix: 404 `not_found` for malformed ULID, 404 `no_form_definition` when repo says no definition, 501 `not_implemented` when repo says yes (E47+ fills in schema-validate + row-insert). Server mounts at `/forms/` and returns 503 when DB is down. 6 new tests cover malformed ULID, no-definition path, NoFormsRepository default, has-definition stub returning 501, GET-not-routed, body-ignored-on-404. 82/82 backend tests pass; backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
