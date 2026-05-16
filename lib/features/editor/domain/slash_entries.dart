@@ -30,6 +30,10 @@ enum SlashAction {
   /// Toggle the case of every cased character on every selected line:
   /// uppercase becomes lowercase and vice versa.
   swapCaseSelectedLines,
+  /// Strip markdown emphasis / decoration markers (`**`, `*`, `_`,
+  /// `~~`, `==`, backticks) from every selected line so the inner
+  /// text remains as plain prose.
+  stripMarkdownEmphasisLines,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -1303,6 +1307,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'aBC → AbC',
     action: SlashAction.swapCaseSelectedLines,
     keywords: ['swap', 'invert', 'case', 'toggle', 'flip'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Strip markdown formatting',
+    hint: '**bold** _it_ → bold it',
+    action: SlashAction.stripMarkdownEmphasisLines,
+    keywords: ['strip', 'plain', 'unwrap', 'emphasis', 'bold', 'italic',
+        'markdown', 'remove'],
   ),
   SlashEntry(
     icon: 'link',

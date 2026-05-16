@@ -140,6 +140,44 @@ void main() {
     });
   });
 
+  group('stripMarkdownEmphasisLinesIn', () {
+    test('strips bold + italic + strike + highlight + code', () {
+      const text = '**bold** _italic_ ~~strike~~ ==hi== `code`\n';
+      final r = stripMarkdownEmphasisLinesIn(text, 0, text.length);
+      expect(r.text, 'bold italic strike hi code\n');
+    });
+
+    test('peels nested ***both*** into plain inner text', () {
+      const text = '***both***\n';
+      final r = stripMarkdownEmphasisLinesIn(text, 0, text.length);
+      expect(r.text, 'both\n');
+    });
+
+    test('plain prose with no markers is the identity', () {
+      const text = 'hello world\nno markup here\n';
+      expect(stripMarkdownEmphasisLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('unmatched single markers pass through', () {
+      // No closing `*` → no transform on this line.
+      const text = '*lonely\nstays *the same*\n';
+      final r = stripMarkdownEmphasisLinesIn(text, 0, text.length);
+      expect(r.text, '*lonely\nstays the same\n');
+    });
+
+    test('does not unwrap links or images', () {
+      // Links carry semantic info (the URL) and have a dedicated slash
+      // entry already — leave them alone.
+      const text = '[label](http://example.com) **bold**\n';
+      final r = stripMarkdownEmphasisLinesIn(text, 0, text.length);
+      expect(r.text, '[label](http://example.com) bold\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(stripMarkdownEmphasisLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('swapCaseLinesIn', () {
     test('inverts upper/lower case per character', () {
       const text = 'Hello World\n';

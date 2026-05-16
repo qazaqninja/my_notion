@@ -2661,6 +2661,58 @@ SortLinesResult lowercaseLinesIn(String text, int start, int end) =>
       text, start, end, (lines) => [for (final l in lines) l.toLowerCase()],
     );
 
+/// Strip markdown emphasis / decoration markers from every selected
+/// line: `**bold**` / `__bold__`, `*italic*` / `_italic_`,
+/// `~~strike~~`, `==highlight==`, and `` `inline code` `` all become
+/// their plain inner text. Backticks remove the wrapping; the content
+/// stays. Useful when pasting formatted text from an LLM or another
+/// markdown editor into a section you want as plain prose.
+///
+///   "**Hello** _world_ ~~oops~~"  →  "Hello world oops"
+///
+/// Handles nested forms by repeating the pass until nothing more
+/// shrinks (e.g. `***both***` → `Hello`). Markdown links / images
+/// are intentionally not touched here — those have a dedicated slash
+/// entry already, and unwrapping them loses the target URL.
+SortLinesResult stripMarkdownEmphasisLinesIn(
+        String text, int start, int end,) =>
+    _transformLinesIn(text, start, end, (lines) {
+      // Patterns are checked in length-descending order so `~~` and
+      // `**` don't get half-eaten by their single-char cousins on the
+      // first pass.
+      final patterns = <RegExp>[
+        RegExp(r'\*\*([^*\n]+?)\*\*'),   // **bold**
+        RegExp('__([^_\\n]+?)__'),         // __bold__
+        RegExp('~~([^~\\n]+?)~~'),         // ~~strike~~
+        RegExp('==([^=\\n]+?)=='),         // ==highlight==
+        RegExp(r'\*([^*\n]+?)\*'),       // *italic*
+        RegExp('_([^_\\n]+?)_'),           // _italic_
+        RegExp('`([^`\\n]+?)`'),           // `code`
+      ];
+      String stripOnce(String s) {
+        var out = s;
+        for (final p in patterns) {
+          out = out.replaceAllMapped(p, (m) => m.group(1)!);
+        }
+        return out;
+      }
+      return [
+        for (final l in lines)
+          (() {
+            var prev = l;
+            // Loop until fixed-point: handles ***both*** by peeling
+            // outer `**` first, then `*`. Cap at lines.length+8 iters
+            // as a paranoia safety net against pathological input.
+            for (var i = 0; i < 16; i++) {
+              final next = stripOnce(prev);
+              if (next == prev) break;
+              prev = next;
+            }
+            return prev;
+          })(),
+      ];
+    });
+
 /// Toggle the case of every cased character on every selected line:
 /// uppercase becomes lowercase and vice versa, character-by-character.
 /// Non-cased characters (digits, punctuation, whitespace, symbols, and
