@@ -6,20 +6,20 @@
 ## Current
 
 - **Phase:** A (Foundation)
-- **Task:** A3 — Audit FEATURES.md 🚧 entries
+- **Task:** A4 — Add `bloc_test` dev dependency (TS-03)
 - **Status:** pending
 
 ## Last completed
 
-- **M1188 — A2** (refresh CLAUDE.md v1.x backlog with ground-truth state)
-- Committed: a993a1c
-- TaskList ID: 2
+- **M1190 — A3** (audit FEATURES.md partial markers + refresh stale header)
+- Committed: 8f0a2b1
+- TaskList ID: 1
 
 ## Backlog (Phase A — Foundation)
 
 - [x] A1 — Sync CLAUDE.md milestone counter (M1187 / 57ab641)
 - [x] A2 — Refresh CLAUDE.md v1.x backlog strikethroughs (M1188 / a993a1c)
-- [ ] A3 — Audit FEATURES.md 🚧 entries
+- [x] A3 — Audit FEATURES.md 🚧 entries (M1190 / 8f0a2b1)
 - [ ] A4 — Add `bloc_test` dev dependency (TS-03)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
 - [ ] A6 — Add `mockingjay` dev dependency (TS-09)
@@ -63,9 +63,40 @@
 
 ## Orchestrator findings (running tally)
 
-> A12 seeds this section with the initial baseline. Each iteration that runs the orchestrator appends new findings or strikes resolved ones.
+> Initial baseline captured at M1187 (post-A1) by `flutter-arch-orchestrator` agent. Each iteration that runs the orchestrator appends new findings or strikes resolved ones.
 
-(empty — awaits A12)
+### ERROR (block-severity)
+
+- [ ] **TS-07** — Coverage gate 62% vs RULES.md 95% default. Set in `.github/workflows/flutter-ci.yml:65` (`min_coverage: 62`). Intentional ratchet but formally non-compliant; document in CONTRIBUTING.md (MD-03 below) once that lands.
+- [ ] **LT-02** — `bloc_lint` not in pubspec / CI. **Resolves with A4** (add `bloc_test` + `bloc_lint` together since both are linked).
+- [ ] **LT-03** — `custom_lint` not in `dev_dependencies` / CI. Add `custom_lint: ^0.x` + `dart run custom_lint` step in CI.
+- [ ] **TS-03** — `bloc_test` package absent → no `blocTest<>` usage anywhere. **Resolves with A4.** (Orchestrator initially mislabeled this as TS-02 in its report; corrected here — TS-02 is the mocktail/mockito rule which is already satisfied.)
+
+### WARN (informational)
+
+- [ ] **FS-03** — No `packages/` directory; all repositories live inside `lib/features/`. Dependency boundary is unenforced by `pub`. Architectural deferral — fixing requires monorepo (melos) restructure. Defer to Phase E if at all.
+- [ ] **FS-04 / TS-01** — Test tree mirror gaps:
+  - `lib/features/editor/domain/extractors/aws.dart`
+  - `lib/features/editor/domain/extractors/crypto_hash.dart`
+  - `lib/features/editor/domain/extractors/http_web.dart`
+  - `lib/features/editor/domain/extractors/network.dart`
+  - `lib/features/editor/domain/attachment_writer.dart` (test exists but at flat path, not mirrored under domain/)
+  - All of `lib/features/settings/`
+- [ ] **BL-10** — `VaultBloc` handlers (`PickVault`, `LoadFromPath`, `ReindexVault`, `RefreshFromDisk`) have no explicit transformer; default `concurrent` is racy for I/O. Add `droppable` (or `sequential`) from `bloc_concurrency`. (`vault_bloc.dart` lines 41-45)
+- [ ] **NV-02** — Parameterised routes (`/editor/:ulid`, `/db/:dbId`, `/settings/:section`) use string-literal `GoRoute`, not `TypedGoRoute`. (`lib/app.dart` lines 154-186) — RULES.md only **prefers** typed routes; not strictly mandatory.
+- [ ] **TH-03** — Hex literals in `lib/shared/theme/{tokens,accent}.dart`. Borderline per rule intent (rule is about widget files; tokens.dart IS the token home).
+- [ ] **MD-03** — No `CONTRIBUTING.md` documenting generated-files policy for `quill_database.g.dart` (committed to repo). Policy exists in `analysis_options.yaml` comments only.
+- [ ] **DI-03** — `VaultBloc` + `ThemeCubit` provided at root `MultiBlocProvider` in `app.dart:88`. Justifiable (single-vault app, cross-cutting theme) but should be documented inline.
+
+### Notes for upcoming work
+
+- TS-03 + LT-02 are a single `pubspec.yaml` edit → A4 resolves both gaps simultaneously.
+- TS-02 (mocktail, not mockito) is PASS. `mocktail: ^1.0.4` is present.
+- TS-04 (grouping) is largely satisfied — cubit tests use `group(...)` blocks.
+- TS-05 (private mocks) is PASS — all mocks are `_Mock*` prefixed within their own test file.
+- TS-06 (widget behavior) is largely satisfied where widget tests exist.
+- Adding `video_player`, `audioplayers`, `pdfx`, `flutter_local_notifications`, `share_plus`, `super_editor` is NOT rule-blocked. MD-02 only constrains code-gen tooling. Verify no transitive `get_it` via `flutter pub deps` after each add (DI-01).
+- Phase E's `lib/features/auth/` + `lib/features/sync/` follow established Clean Architecture pattern. FS-03 caveat: cross-feature repo imports must be enforced by review (no `pub` boundary).
 
 ## Per-iteration protocol
 
