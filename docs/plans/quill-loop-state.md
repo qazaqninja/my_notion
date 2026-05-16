@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E23 — Sync get: editor "Pull from server" → GET /sync/get/<relpath> (conflict reconciliation)
+- **Task:** E24 — Pull diff/replace dialog (UI for SyncState.lastFetched)
 - **Status:** pending
 
 ## Last completed
 
-- **M1325 — E22** (editor Move to trash → DELETE /sync/del/<relpath>)
+- **M1326 — E23** (editor "Pull from server" → GET /sync/get/<relpath>)
 - Committed: (this iteration)
-- TaskList ID: 44
-- Notes: New `SyncDeleteFileRequested(relpath)` event + `_onDelete` handler. Calls `repo.delete(token, relpath)`. 204 and 404 are both treated as success — idempotent semantics; either way drop the relpath from `knownShas` so a future push doesn't ship a stale If-Match for a tombstoned row. 401 reuses the token-clear path. Network failure surfaces `lastError` but leaves token + tracker untouched (retry-friendly). Wired into `editor_page.dart` trash kebab: after dispatching `MoveToTrash(ulid)` to VaultBloc, if `SyncBloc.isAuthed` also dispatch `SyncDeleteFileRequested(relpath: loaded.page.relativePath)`. 6 new bloc_test cases (not-authed, success-204, 404-already-gone, untracked-noop, 401-clears, network-keeps-token); 31/31 sync_bloc tests pass. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 45
+- Notes: `SyncState` gains `SyncFileBody? lastFetched` + `clearFetched: true` copyWith flag. New `SyncFetchFileRequested(relpath)` event + `_onFetch` handler. Success populates `lastFetched` AND refreshes `knownShas[relpath]` so a subsequent push automatically uses the latest server sha as If-Match. 404 maps to `lastError = 'not_found'` and clears `lastFetched` (so the UI can distinguish "no server copy" from "fetch errored"); 401 clears the token; network failure surfaces `lastError` but keeps the token. Editor kebab gets a new "Pull from server" entry (icon: download) between Publish/Unpublish and the trash separator — emits a not-logged-in warn toast if `!isAuthed`, otherwise dispatches the event and toasts "Pulling latest from server…". The next slice (E24) renders the diff/replace dialog over `state.lastFetched`. 5 new bloc_test cases (not-authed, success-populates+refresh, 404-clears, 401-token-invalid, network-keeps-token); 36/36 sync_bloc tests pass. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

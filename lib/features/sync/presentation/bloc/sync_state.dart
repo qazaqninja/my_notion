@@ -14,6 +14,7 @@ class SyncState extends Equatable {
     this.lastError,
     this.lastConflict,
     this.lastPush,
+    this.lastFetched,
     this.knownShas = const <String, String>{},
   });
 
@@ -22,6 +23,12 @@ class SyncState extends Equatable {
   final String? lastError; // human-readable; null when clean
   final SyncFileSummary? lastConflict; // populated on 409
   final SyncFileSummary? lastPush; // populated after a successful push
+  /// Populated by a successful `SyncFetchFileRequested` (E23). The UI
+  /// reads this to render a "Pull from server" diff / replace dialog.
+  /// Cleared on logout. A 404 sets it back to null and surfaces
+  /// `lastError = 'not_found'` so the UI can distinguish "no server
+  /// copy" from "fetch failed".
+  final SyncFileBody? lastFetched;
 
   /// Map of `relpath → sha256` for the last-known server-side version
   /// of each file the client has pushed or had a conflict on. Used to
@@ -42,9 +49,11 @@ class SyncState extends Equatable {
     String? lastError,
     SyncFileSummary? lastConflict,
     SyncFileSummary? lastPush,
+    SyncFileBody? lastFetched,
     Map<String, String>? knownShas,
     bool clearError = false,
     bool clearConflict = false,
+    bool clearFetched = false,
   }) {
     return SyncState(
       status: status ?? this.status,
@@ -52,11 +61,19 @@ class SyncState extends Equatable {
       lastError: clearError ? null : (lastError ?? this.lastError),
       lastConflict: clearConflict ? null : (lastConflict ?? this.lastConflict),
       lastPush: lastPush ?? this.lastPush,
+      lastFetched: clearFetched ? null : (lastFetched ?? this.lastFetched),
       knownShas: knownShas ?? this.knownShas,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [status, token, lastError, lastConflict, lastPush, knownShas];
+  List<Object?> get props => [
+        status,
+        token,
+        lastError,
+        lastConflict,
+        lastPush,
+        lastFetched,
+        knownShas,
+      ];
 }

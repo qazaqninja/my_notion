@@ -49,6 +49,17 @@ class SyncListRequested extends SyncEvent {
   const SyncListRequested();
 }
 
+/// Pull the latest server copy of [relpath]. Populates
+/// `SyncState.lastFetched` (E23) so the UI can diff against the local
+/// page body and offer "Use server version" / "Keep local". Used by the
+/// editor kebab and as a Pull action attached to conflict toasts.
+class SyncFetchFileRequested extends SyncEvent {
+  const SyncFetchFileRequested({required this.relpath});
+  final String relpath;
+  @override
+  List<Object?> get props => [relpath];
+}
+
 /// Delete a single file from the server-side mirror. Used by the
 /// editor's "Move to trash" flow so a trashed page disappears from
 /// other devices too. 404 from the server is treated as success —

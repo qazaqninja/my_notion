@@ -458,6 +458,11 @@ class _EditorBodyState extends State<_EditorBody> {
         else
           const QuillMenuItem(
               icon: 'link', label: 'Publish & copy link', value: 'publish'),
+        // E23 — pull the latest server copy for conflict reconciliation.
+        // Only meaningful when logged in; entry is always present but
+        // emits a non-blocking error toast when offline.
+        const QuillMenuItem(
+            icon: 'download', label: 'Pull from server', value: 'pull'),
         QuillMenuItem.separator<String>(),
         const QuillMenuItem(icon: 'trash', label: 'Move to trash', danger: true, value: 'trash'),
         const QuillMenuItem(icon: 'sync', label: 'Reindex vault', value: 'reindex'),
@@ -556,6 +561,15 @@ class _EditorBodyState extends State<_EditorBody> {
         await _publishPage(context, loaded);
       case 'unpublish':
         await _unpublishPage(context, loaded);
+      case 'pull':
+        final sync = context.read<SyncBloc>();
+        if (!sync.state.isAuthed) {
+          context.toastWarn('Not logged in',
+              sub: 'Open Settings → Sync to sign in.');
+          return;
+        }
+        sync.add(SyncFetchFileRequested(relpath: loaded.page.relativePath));
+        context.toastInfo('Pulling latest from server…');
       case 'rename':
         await _renameFile(context, loaded);
       case 'move':

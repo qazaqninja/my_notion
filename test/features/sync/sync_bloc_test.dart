@@ -45,8 +45,16 @@ class _FakeRepo implements SyncRepository {
     return listResponse;
   }
 
+  SyncFileBody? getResponse;
+  bool throwAuthOnGet = false;
+  bool throwNetworkOnGet = false;
+
   @override
-  Future<SyncFileBody?> get({required String token, required String relpath}) async => null;
+  Future<SyncFileBody?> get({required String token, required String relpath}) async {
+    if (throwAuthOnGet) throw const SyncAuthException();
+    if (throwNetworkOnGet) throw const SyncNetworkException('network_down');
+    return getResponse;
+  }
 
   @override
   Future<SyncPutOutcome> put({
@@ -355,6 +363,113 @@ void main() {
       act: (bloc) => bloc.add(const SyncLogoutRequested()),
       verify: (bloc) {
         expect(bloc.state.knownShas, isEmpty);
+      },
+    );
+  });
+
+  group('SyncBloc fetch (E23)', () {
+    blocTest<SyncBloc, SyncState>(
+      'Fetch when not authed → error not_authenticated',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      act: (bloc) => bloc.add(
+        const SyncFetchFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'not_authenticated');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Successful fetch populates lastFetched + refreshes knownShas',
+      build: () => SyncBloc(
+        repo: _FakeRepo()
+          ..getResponse = SyncFileBody(
+            summary: SyncFileSummary(
+              relpath: 'a.md',
+              sha256: 'sha-server',
+              mtime: DateTime.utc(2026, 5, 17),
+            ),
+            body: '# Server version\n',
+          ),
+      ),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+      ),
+      act: (bloc) => bloc.add(
+        const SyncFetchFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.lastFetched?.body, '# Server version\n');
+        expect(bloc.state.lastFetched?.summary.sha256, 'sha-server');
+        // Tracker also refreshed.
+        expect(bloc.state.knownShas['a.md'], 'sha-server');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      '404 → error not_found, lastFetched cleared',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      seed: () => SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        lastFetched: SyncFileBody(
+          summary: SyncFileSummary(
+            relpath: 'old.md',
+            sha256: 'stale',
+            mtime: DateTime.utc(2026, 5, 17),
+          ),
+          body: 'stale local copy',
+        ),
+      ),
+      act: (bloc) => bloc.add(
+        const SyncFetchFileRequested(relpath: 'gone.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'not_found');
+        expect(bloc.state.lastFetched, isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Fetch 401 clears the token + surfaces token_invalid',
+      setUp: () => SharedPreferences.setMockInitialValues({
+        'sync.token': 'jwt-stale',
+      }),
+      build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnGet = true),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-stale',
+      ),
+      act: (bloc) => bloc.add(
+        const SyncFetchFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) async {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'token_invalid');
+        expect(bloc.state.token, isNull);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('sync.token'), isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Fetch network failure surfaces lastError without clearing token',
+      build: () => SyncBloc(repo: _FakeRepo()..throwNetworkOnGet = true),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+      ),
+      act: (bloc) => bloc.add(
+        const SyncFetchFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'network_down');
+        expect(bloc.state.token, 'jwt-t');
       },
     );
   });

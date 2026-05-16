@@ -29,6 +29,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<SyncListRequested>(_onList, transformer: sequential());
     on<SyncPushFileRequested>(_onPush, transformer: sequential());
     on<SyncDeleteFileRequested>(_onDelete, transformer: sequential());
+    on<SyncFetchFileRequested>(_onFetch, transformer: sequential());
   }
 
   final SyncRepository _repo;
@@ -237,6 +238,53 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       final next = <String, String>{...state.knownShas}..remove(e.relpath);
       emit(state.copyWith(
         status: SyncStatus.connected,
+        knownShas: next,
+        clearError: true,
+      ));
+    } on SyncAuthException {
+      await _clearToken();
+      emit(const SyncState(
+        status: SyncStatus.error,
+        lastError: 'token_invalid',
+      ));
+    } on SyncNetworkException catch (err) {
+      emit(state.copyWith(
+        status: SyncStatus.error,
+        lastError: err.message,
+      ));
+    }
+  }
+
+  Future<void> _onFetch(
+    SyncFetchFileRequested e,
+    Emitter<SyncState> emit,
+  ) async {
+    final token = state.token;
+    if (token == null) {
+      emit(state.copyWith(
+        status: SyncStatus.error,
+        lastError: 'not_authenticated',
+      ));
+      return;
+    }
+    try {
+      final body = await _repo.get(token: token, relpath: e.relpath);
+      if (body == null) {
+        emit(state.copyWith(
+          status: SyncStatus.error,
+          lastError: 'not_found',
+          clearFetched: true,
+        ));
+        return;
+      }
+      // Trust the server's sha here too — it doubles as a known-shas
+      // refresh, so a subsequent push automatically uses the latest
+      // server view as If-Match.
+      final next = <String, String>{...state.knownShas};
+      next[body.summary.relpath] = body.summary.sha256;
+      emit(state.copyWith(
+        status: SyncStatus.connected,
+        lastFetched: body,
         knownShas: next,
         clearError: true,
       ));
