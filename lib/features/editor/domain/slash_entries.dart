@@ -291,6 +291,9 @@ enum SlashAction {
   /// Extract every ISO-shaped date (`YYYY-MM-DD`) from each
   /// selected line and emit them one-per-line.
   extractIsoDatesFromLines,
+  /// Extract every bare ULID (`[0-9A-Z]{26}`) from each selected
+  /// line, including ULIDs outside `[[wikilinks]]`.
+  extractUlidsFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1569,6 +1572,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'YYYY-MM-DD per line',
     action: SlashAction.extractIsoDatesFromLines,
     keywords: ['extract', 'date', 'dates', 'iso', 'timestamp'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract bare ULIDs',
+    hint: '26-char IDs (incl. unbracketed)',
+    action: SlashAction.extractUlidsFromLines,
+    keywords: ['extract', 'ulid', 'id', 'identifier', 'page'],
   ),
   SlashEntry(
     icon: 'sync',

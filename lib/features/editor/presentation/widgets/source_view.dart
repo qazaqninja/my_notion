@@ -1288,6 +1288,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractIsoDatesFromLinesIn,
         );
+      case SlashAction.extractUlidsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractUlidsFromLinesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,

@@ -886,6 +886,30 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract every bare ULID (`[0-9A-Z]{26}`) from each selected line
+/// and emit them one-per-line. Distinct from
+/// [extractWikilinksFromLinesIn] which only catches ULIDs inside
+/// `[[...]]` brackets; this one catches loose / inline ULIDs in
+/// prose too — useful when a paste-in carries page identifiers
+/// without the wikilink chrome.
+///
+/// Recognition: 26 consecutive Crockford-base32 chars (digits +
+/// uppercase letters). Negative lookbehind/lookahead on
+/// alphanumeric so embedded ULIDs in longer tokens aren't matched
+/// (`prefix01HABC...` would never collide on the 26-char run).
+SortLinesResult extractUlidsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'(?<![A-Z0-9])[0-9A-Z]{26}(?![A-Z0-9])');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every ISO-shaped date (`YYYY-MM-DD`) from each selected
 /// line and emit them one-per-line in original order. Useful for
 /// harvesting timestamps out of meeting notes or journals into a

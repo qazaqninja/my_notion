@@ -2234,6 +2234,46 @@ void main() {
     });
   });
 
+  group('extractUlidsFromLinesIn', () {
+    test('extracts a bare ULID', () {
+      const ulid = '01HABCDEFGHIJKLMNOPQRSTUVW';
+      final text = 'see $ulid for context\n';
+      final r = extractUlidsFromLinesIn(text, 0, text.length);
+      expect(r.text, '$ulid\n');
+    });
+
+    test('extracts ULIDs even when they live outside [[...]]', () {
+      const ulid1 = '01HABCDEFGHIJKLMNOPQRSTUVW';
+      const ulid2 = '01HXYZABCDEFGHIJKLMNOPQRST';
+      final text = '[[$ulid1]] body $ulid2 trailing\n';
+      final r = extractUlidsFromLinesIn(text, 0, text.length);
+      expect(r.text, '$ulid1\n$ulid2\n');
+    });
+
+    test('rejects sub-26 and over-26 character runs', () {
+      // 25 chars and 27 chars never match the {26} quantifier.
+      const text = '01HABCDEFGHIJKLMNOPQRSTU 01HABCDEFGHIJKLMNOPQRSTUVWX\n';
+      expect(extractUlidsFromLinesIn(text, 0, text.length).text, '\n');
+    });
+
+    test('lowercase / mixed-case runs are NOT ULIDs', () {
+      const text = '01habcdefghijklmnopqrstuvw\n';
+      // ULIDs are uppercase-only Crockford-base32.
+      expect(extractUlidsFromLinesIn(text, 0, text.length).text, '\n');
+    });
+
+    test('lines without a ULID dropped from output', () {
+      const ulid = '01HABCDEFGHIJKLMNOPQRSTUVW';
+      final text = 'no ulid here\nyes $ulid\n';
+      final r = extractUlidsFromLinesIn(text, 0, text.length);
+      expect(r.text, '$ulid\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractUlidsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIsoDatesFromLinesIn', () {
     test('emits one ISO date per match', () {
       const text = 'met on 2026-05-16\nnext on 2026-06-01\n';
