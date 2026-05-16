@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/paths.dart';
 import '../../../../shared/theme/quill_tokens.dart';
+import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/kbd.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -63,14 +64,14 @@ class _CommandPaletteOverlayState extends State<CommandPaletteOverlay> {
                 behavior: HitTestBehavior.opaque,
                 child: Container(
                   // Modal scrim: dark theme uses a deeper full-black
-                  // wash, light theme uses a warm muted brown matching
-                  // the design's `tokens.codeBg`-style backdrop.
+                  // wash; light theme uses the named design-tuned
+                  // warm-brown constant from tag_colors.dart.
                   color: tokens.isDark
                       ? Theme.of(context)
                           .colorScheme
                           .shadow
                           .withValues(alpha: 0.45)
-                      : const Color.fromRGBO(40, 38, 33, 0.22),
+                      : kCommandPaletteScrimLight,
                 ),
               ),
             ),

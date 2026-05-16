@@ -84,6 +84,14 @@ const Color kToggleRailOffLight = Color(0xFFD5D1C8);
 /// status accents.
 const Color kSettingsUserAvatarBg = Color(0xFF8C9F8B);
 
+/// Light-mode modal scrim for the command-palette backdrop. A
+/// muted warm brown (codeBg-adjacent) at 22% alpha rather than the
+/// neutral `colorScheme.shadow` so the wash reads as part of the
+/// design rather than a generic black scrim. Lives here rather
+/// than as a method on QuillTokens because it's a one-widget
+/// concern; dark mode uses `colorScheme.shadow.withValues(...)`.
+const Color kCommandPaletteScrimLight = Color.fromRGBO(40, 38, 33, 0.22);
+
 /// Background fill for the component-sheet preview page. Always
 /// dark regardless of the app theme so designers can read the
 /// design tokens against a consistent backdrop. Matches the dark
