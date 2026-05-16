@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/db/quill_database.dart' as db_models
     show Page;
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../domain/usecases/pick_page.dart';
 import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/platform/reveal.dart';
@@ -485,21 +486,30 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  /// Map the Drift `Page` row set to the [PageRef] subset the
+  /// domain-layer pickers operate on. One conversion site keeps the
+  /// presentation handlers tiny and the pure pickers Drift-free.
+  List<PageRef> _toPageRefs(List<db_models.Page> rows) => [
+        for (final p in rows)
+          (
+            ulid: p.ulid,
+            title: p.title,
+            bodyLen: p.bodyText.length,
+            mtimeMs: p.mtimeMs,
+          ),
+      ];
+
   Future<void> _openSmallestPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
-    final rows = await db.select(db.pages).get();
-    if (rows.isEmpty) {
+    final pick = pickSmallest(_toPageRefs(await db.select(db.pages).get()));
+    if (pick == null) {
       if (context.mounted) context.toastInfo('No pages to pick from yet.');
       return;
     }
-    // Smallest by bodyText length. Empty bodies count as 0 — typically
-    // the user IS looking for those stubs to flesh out.
-    final pick =
-        rows.reduce((a, b) => a.bodyText.length < b.bodyText.length ? a : b);
     if (context.mounted) {
       context.toastInfo(
-        'Smallest page · ${pick.bodyText.length} chars',
+        'Smallest page · ${pick.bodyLen} chars',
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
@@ -515,49 +525,37 @@ class _VaultShellPageState extends State<VaultShellPage> {
       if (context.mounted) context.toastInfo('No pages to pick from yet.');
       return;
     }
-    final inbound = <String, int>{};
-    for (final r in relations) {
-      inbound[r.toUlid] = (inbound[r.toUlid] ?? 0) + 1;
-    }
-    if (inbound.isEmpty) {
+    final result = pickMostLinked(
+      _toPageRefs(pages),
+      [for (final r in relations) (fromUlid: r.fromUlid, toUlid: r.toUlid)],
+    );
+    if (result == null) {
       if (context.mounted) {
         context.toastInfo('No wikilinks yet — every page has zero backlinks.');
       }
       return;
     }
-    // Highest inbound count wins; ties resolved by most-recent edit.
-    final pageByUlid = {for (final p in pages) p.ulid: p};
-    final pick = pages
-        .where((p) => (inbound[p.ulid] ?? 0) > 0)
-        .reduce((a, b) {
-      final ca = inbound[a.ulid] ?? 0;
-      final cb = inbound[b.ulid] ?? 0;
-      if (ca != cb) return ca > cb ? a : b;
-      return a.mtimeMs > b.mtimeMs ? a : b;
-    });
-    final count = inbound[pick.ulid] ?? 0;
     if (context.mounted) {
       context.toastInfo(
-        'Most linked · $count inbound ${count == 1 ? "link" : "links"}',
-        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+        'Most linked · ${result.inboundCount} inbound '
+        '${result.inboundCount == 1 ? "link" : "links"}',
+        sub: result.ref.title.isEmpty ? '(Untitled)' : result.ref.title,
       );
     }
-    router.go('/editor/${pageByUlid[pick.ulid]!.ulid}');
+    router.go('/editor/${result.ref.ulid}');
   }
 
   Future<void> _openLargestPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
-    final rows = await db.select(db.pages).get();
-    if (rows.isEmpty) {
+    final pick = pickLargest(_toPageRefs(await db.select(db.pages).get()));
+    if (pick == null) {
       if (context.mounted) context.toastInfo('No pages to pick from yet.');
       return;
     }
-    final pick =
-        rows.reduce((a, b) => a.bodyText.length > b.bodyText.length ? a : b);
     if (context.mounted) {
       context.toastInfo(
-        'Largest page · ${pick.bodyText.length} chars',
+        'Largest page · ${pick.bodyLen} chars',
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
@@ -567,14 +565,11 @@ class _VaultShellPageState extends State<VaultShellPage> {
   Future<void> _openLastEditedPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
-    final rows = await db.select(db.pages).get();
-    if (rows.isEmpty) {
+    final pick = pickLastEdited(_toPageRefs(await db.select(db.pages).get()));
+    if (pick == null) {
       if (context.mounted) context.toastInfo('No pages to pick from yet.');
       return;
     }
-    // Highest mtimeMs wins. Ties are uncommon (filesystem ms
-    // granularity) and order doesn't matter when they happen.
-    final pick = rows.reduce((a, b) => a.mtimeMs > b.mtimeMs ? a : b);
     if (context.mounted) {
       context.toastInfo(
         'Last edited',
