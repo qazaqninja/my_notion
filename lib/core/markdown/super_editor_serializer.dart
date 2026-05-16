@@ -85,9 +85,16 @@ class SuperEditorSerializer {
   /// - Slice 19: inline marks — highlight (`==X==` and `<mark>X</mark>`)
   ///   per M80 / M243.
   /// - Slice 20: inline marks — subscript `~X~` + superscript `^X^` per
-  ///   M244 (Pandoc extensions). Lower priority than `~~strike~~` so the
-  ///   double-tilde stripe wins for the same character. No whitespace
-  ///   allowed inside (Pandoc rule).
+  ///   M244 (Pandoc extensions).
+  /// - Slice 21: inline color / background spans
+  ///   (`<span style="color:…;background-color:…">X</span>`, M80). The
+  ///   serializer carries the raw `<span …>X</span>` markdown verbatim
+  ///   through paragraph text — the WYSIWYG view shows the HTML tags
+  ///   literally, but the existing `markdown_renderer.dart` inline-HTML
+  ///   pass renders the styled text correctly. A future styled-attribution
+  ///   pass will store the style as a `StyleSpanAttribution(style)` so
+  ///   super_editor can render the colors natively; for now byte-identical
+  ///   source preservation is the priority.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];

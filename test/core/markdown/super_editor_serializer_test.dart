@@ -873,4 +873,34 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer inline color spans (D1 slice 21)', () {
+    test('<span style="color:red">X</span> round-trips byte-identical '
+        'in paragraph text', () {
+      const md = 'this is <span style="color:red">red</span> text';
+      final doc = serializer.markdownToDocument(md);
+      // Slice 21 keeps the raw HTML span in the paragraph text — the
+      // existing renderer interprets it. Future slice promotes to a
+      // StyleSpanAttribution for native super_editor styling.
+      expect((doc.first as ParagraphNode).text.toPlainText(), md);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('combined color + background-color span round-trips', () {
+      const md =
+          'pop <span style="color:white;background-color:black">inverse</span> here';
+      final doc = serializer.markdownToDocument(md);
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('color span composes with bold prefix/suffix outside the tag', () {
+      const md = '**bold start** then <span style="color:blue">blue</span>';
+      final doc = serializer.markdownToDocument(md);
+      // The bold prefix is still a real attribution.
+      final node = doc.first as ParagraphNode;
+      expect(node.text.getAllAttributionsAt(0), contains(boldAttribution));
+      // The color span is raw text — no `colorAttribution`.
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
