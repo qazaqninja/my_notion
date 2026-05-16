@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E10 — GET /sync/get/[relpath]
+- **Task:** E11 — DELETE /sync/del/[relpath] + If-Match conflict preflight
 - **Status:** pending
 
 ## Last completed
 
-- **M1302 — E9** (PUT /sync/put/[relpath] upserts body + server sha256)
-- Committed: 92dbe10
-- TaskList ID: 31
-- Notes: `SyncRepositoryBase.upsert(userId, relpath, body, sha256)` interface + Postgres INSERT … ON CONFLICT DO UPDATE impl. Route consumes the relpath suffix via `<relpath|.*>`, computes sha256 server-side with `crypto: ^3.0.6`, returns FileSummary. `_isSafeRelpath` defense-in-depth check rejects `..` / empty segments / absolute paths; Dart Uri.parse already normalises traversal segments (RFC 3986 §5.2.4) so the check is a belt-and-suspenders second line. 35/35 backend tests pass.
+- **M1304 — E10** (GET /sync/get/[relpath] returns body + summary)
+- Committed: 1b5ff1b
+- TaskList ID: 32
+- Notes: New `FileBody(summary, body)` DTO bundles the summary + raw markdown body. `SyncRepositoryBase.fetch(userId, relpath)` returns `FileBody?`. Route runs SELECT scoped by both `user_id` AND `relpath` so cross-user reads are structurally impossible. 404 not_found when missing; 200 + FileBody JSON on hit. Cross-user-read test (Alice GETs Bob's path → 404) covers the data-leakage gap. 37/37 backend tests pass. Sync read+write loop is now end-to-end: clients can /sync/list, /sync/put, /sync/get, all gated by Bearer auth and per-user scoped.
 
 ## Backlog (Phase A — Foundation)
 
