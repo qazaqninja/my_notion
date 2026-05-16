@@ -5499,6 +5499,62 @@ void main() {
     });
   });
 
+  group('extractYearRangesFromLinesIn', () {
+    test('hyphen form extracts', () {
+      const text = 'career 1995-2024 spanned\n';
+      final r = extractYearRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '1995-2024\n');
+    });
+
+    test('em-dash form extracts', () {
+      const text = 'copyright 2000–2024 reserved\n';
+      final r = extractYearRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '2000–2024\n');
+    });
+
+    test('adjacent multiple ranges each extract', () {
+      const text = 'phases 1995-2010 and 2015-2024 logged\n';
+      final r = extractYearRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '1995-2010\n2015-2024\n');
+    });
+
+    test('single year (no range) is NOT matched', () {
+      const text = 'just 2024 alone here\n';
+      final r = extractYearRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('abbreviated form `2024-25` is NOT matched', () {
+      // Both sides require exactly 4 digits.
+      const text = 'season 2024-25 fall\n';
+      final r = extractYearRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('reversed range still extracts (no semantic check)', () {
+      const text = 'odd 2024-1995 quirk\n';
+      final r = extractYearRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '2024-1995\n');
+    });
+
+    test('embedded in longer numeric is NOT matched', () {
+      // `\b` boundaries reject embedded runs.
+      const text = 'id 12345-67890123 inline\n';
+      final r = extractYearRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without ranges dropped from output', () {
+      const text = 'plain prose\ncareer 1995-2024\nmore prose\n';
+      final r = extractYearRangesFromLinesIn(text, 0, text.length);
+      expect(r.text, '1995-2024\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractYearRangesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

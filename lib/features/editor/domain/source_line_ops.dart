@@ -2001,6 +2001,46 @@ SortLinesResult extractGithubRepoPathsFromLinesIn(
       return out;
     });
 
+/// Extract every compound year-range substring (`YYYY-YYYY` or
+/// `YYYY–YYYY` with em-dash) from each selected line. Useful
+/// for citation timespan audits, copyright-year scrapes,
+/// career-range harvests, and historical-range analysis.
+///
+/// Recognition: `\b\d{4}[-–]\d{4}\b`
+/// - First 4-digit year.
+/// - Hyphen OR em-dash (`–`, `U+2013`) separator.
+/// - Second 4-digit year.
+/// - Word boundaries on each end.
+///
+/// No semantic validation — `9999-9999` matches even though
+/// years that far in the future are usually not citations.
+/// Accept for v1.
+///
+/// Abbreviated range forms (`2024-25`, `1980s-90s`) are NOT
+/// matched — both sides require exactly 4 digits, which is
+/// the dominant academic / archival convention.
+///
+/// Distinct from M1100 4-digit year-only and M1062 ISO date
+/// extractors. Complements them as the timespan surface.
+///
+/// 55th member of the extraction family.
+SortLinesResult extractYearRangesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // The em-dash `–` (U+2013) and the basic hyphen `-` both
+      // count as separators. Other dash variants (em-dash `—`
+      // U+2014, hyphen-minus is already the basic `-`) are
+      // out of scope.
+      final re = RegExp(r'\b\d{4}[-–]\d{4}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

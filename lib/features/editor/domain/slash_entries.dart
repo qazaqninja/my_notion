@@ -407,6 +407,9 @@ enum SlashAction {
   /// Extract every `owner/repo` path from GitHub URLs on each
   /// selected line.
   extractGithubRepoPathsFromLines,
+  /// Extract every compound year-range substring (`YYYY-YYYY` or
+  /// `YYYY–YYYY` with em-dash) from each selected line.
+  extractYearRangesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2016,6 +2019,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractGithubRepoPathsFromLines,
     keywords: ['extract', 'github', 'repo', 'repository', 'owner',
         'slug'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Extract year ranges',
+    hint: '1995-2024 / 2000–2010',
+    action: SlashAction.extractYearRangesFromLines,
+    keywords: ['extract', 'year', 'range', 'timespan', 'period',
+        'copyright', 'career'],
   ),
   SlashEntry(
     icon: 'calendar',
