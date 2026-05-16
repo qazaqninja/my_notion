@@ -35,7 +35,11 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         super(const SyncState()) {
     on<SyncLoginRequested>(_onLogin, transformer: sequential());
     on<SyncSignupRequested>(_onSignup, transformer: sequential());
-    on<SyncLogoutRequested>(_onLogout);
+    // E37 (orchestrator BL-10): rapid double-tap of "Log out" would
+    // otherwise race two SharedPreferences writes against each other.
+    // droppable() guarantees only the first one runs while it's
+    // in-flight.
+    on<SyncLogoutRequested>(_onLogout, transformer: droppable());
     on<SyncRestoreRequested>(_onRestore);
     on<SyncListRequested>(_onList, transformer: sequential());
     on<SyncPushFileRequested>(_onPush, transformer: sequential());
@@ -44,7 +48,11 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<SyncFetchCleared>(_onFetchCleared);
     on<SyncPingRequested>(_onPing, transformer: sequential());
     on<SyncPendingPushDelta>(_onPendingDelta);
-    on<SyncPushAllRequested>(_onPushAll);
+    // E37 (orchestrator BL-10): the bulk-push handler dispatches a
+    // tight loop of SyncPushFileRequested. A second SyncPushAllRequested
+    // landing mid-loop would interleave dispatches; droppable() keeps
+    // the first batch atomic.
+    on<SyncPushAllRequested>(_onPushAll, transformer: droppable());
   }
 
   /// E30 — overrides Bloc.add so a `+1` to `pendingPushes` is observed

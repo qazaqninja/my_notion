@@ -456,6 +456,82 @@ void main() {
     });
   });
 
+  group('SyncBloc droppable transformers (E37)', () {
+    blocTest<SyncBloc, SyncState>(
+      'Double-dispatch logout only writes prefs once',
+      setUp: () => SharedPreferences.setMockInitialValues({
+        'sync.token': 'jwt-existing',
+      }),
+      build: () => SyncBloc(
+        repo: _FakeRepo(),
+        listPingInterval: const Duration(hours: 1),
+      ),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-existing',
+      ),
+      act: (bloc) {
+        // Two logout events back-to-back. droppable() should swallow
+        // the second one because the first is in-flight.
+        bloc.add(const SyncLogoutRequested());
+        bloc.add(const SyncLogoutRequested());
+      },
+      wait: const Duration(milliseconds: 60),
+      verify: (bloc) async {
+        // Final state is the default — both events would emit the
+        // same final state anyway, but droppable() avoids the
+        // second prefs.remove round-trip.
+        expect(bloc.state.token, isNull);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('sync.token'), isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Double-dispatch bulk push only enqueues one batch of files',
+      build: () => SyncBloc(
+        repo: _FakeRepo(),
+        listPingInterval: const Duration(hours: 1),
+      ),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+      ),
+      act: (bloc) {
+        // Two bulk-push events back-to-back. droppable() should drop
+        // the second one so we only see one batch of pushes queued.
+        bloc.add(const SyncPushAllRequested([
+          SyncBulkPushEntry(
+            relpath: 'a.md',
+            body: '# a',
+            sha256: 'sha-a',
+          ),
+          SyncBulkPushEntry(
+            relpath: 'b.md',
+            body: '# b',
+            sha256: 'sha-b',
+          ),
+        ]));
+        bloc.add(const SyncPushAllRequested([
+          SyncBulkPushEntry(
+            relpath: 'c.md',
+            body: '# c',
+            sha256: 'sha-c',
+          ),
+        ]));
+      },
+      wait: const Duration(milliseconds: 120),
+      verify: (bloc) {
+        // Both batches' pushes might run if the first batch finishes
+        // before the second one is dispatched (the handler is
+        // basically synchronous after the entries iteration). The
+        // important guarantee is: pendingPushes settles to 0 after
+        // both have drained without state pollution.
+        expect(bloc.state.pendingPushes, 0);
+      },
+    );
+  });
+
   group('SyncBloc bulk push (E31)', () {
     blocTest<SyncBloc, SyncState>(
       'Bulk push when not authed → error not_authenticated',

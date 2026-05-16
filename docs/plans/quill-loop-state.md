@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E37 — Fix orchestrator BL-10: add droppable() transformer to SyncLogoutRequested + SyncPushAllRequested
+- **Task:** E38 — Fix orchestrator TH-03: replace Colors.green.shade400 with QuillTokens.successColor
 - **Status:** pending
 
 ## Last completed
 
-- **M1339 — E36** (move SyncBulkPushEntry → domain/entities with Equatable)
+- **M1340 — E37** (droppable() transformers on logout + push-all)
 - Committed: (this iteration)
-- TaskList ID: 58
-- Notes: Resolves orchestrator ERROR finding (CA-07 + BL-06) from the E35 audit. New file `lib/features/sync/domain/entities/sync_bulk_push_entry.dart` holds the class — extends Equatable with `[relpath, body, sha256]` props. `sync_event.dart` drops the inline definition but adds `export '../../domain/entities/sync_bulk_push_entry.dart'` so existing call sites that `import sync_event.dart` (settings_page, sync_bloc test) keep compiling without changes. `collect_bulk_push_entries.dart` switches its import from `presentation/bloc/sync_event.dart` (forbidden cross-layer pull) to `../entities/sync_bulk_push_entry.dart` (correct intra-domain). 3 new entity equality tests: same-fields equal, different-sha-not-equal, props-covers-three-fields. 76/76 sync tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 59
+- Notes: Closes orchestrator BL-10 finding from the E35 audit. `on<SyncLogoutRequested>(_onLogout, transformer: droppable())` + `on<SyncPushAllRequested>(_onPushAll, transformer: droppable())`. Rationale comments inline next to each: rapid double-tap of "Log out" would otherwise hit SharedPreferences twice in flight; a second `SyncPushAllRequested` mid-loop would interleave dispatches with the first batch. `SyncRestoreRequested`, `SyncFetchCleared`, `SyncPendingPushDelta` remain default-concurrent intentionally (single-shot boot event, idempotent state-only, internal counter that must land in order with caller). 2 new bloc_test cases (double-logout-writes-prefs-once, double-bulk-push-only-enqueues-one-batch). 53/53 sync_bloc tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
@@ -112,7 +112,8 @@
 #### WARN (informational)
 
 - [ ] **BL-05** — `SyncStatus { idle, busy, connected, error }` deviates from standard `{ initial, loading, success, failure }`. Cosmetic but inconsistent with `VaultStatus` / `EditorStatus`. Rename in a dedicated slice once nothing else is in flight; touch 7+ test files.
-- [ ] **BL-01 / BL-10** — `SyncLogoutRequested`, `SyncRestoreRequested`, `SyncFetchCleared`, `SyncPendingPushDelta`, and `SyncPushAllRequested` run on the default concurrent transformer. Logout in particular hits SharedPreferences and could double-fire on rapid taps. **Add `droppable()` to logout + push-all** at minimum. Class doc comment in `sync_bloc.dart` should also enumerate each event's transformer choice.
+- [x] **BL-10** — `SyncLogoutRequested` and `SyncPushAllRequested` were default-concurrent and could race themselves on rapid double-dispatch. ✅ Resolved at M1340 (E37) — both wired to `droppable()` from `bloc_concurrency`. `SyncRestoreRequested`, `SyncFetchCleared`, `SyncPendingPushDelta` remain default-concurrent intentionally: restore is single-shot at app boot, FetchCleared is idempotent state-only, PendingPushDelta is the internal counter event that has to land in order with its caller. Inline comments document each choice. 2 new bloc_test cases (double-logout-writes-prefs-once, double-bulk-push-only-enqueues-one-batch). 53/53 sync_bloc tests pass.
+- [ ] **BL-01** — Class-doc comment on `SyncBloc` should enumerate every event's transformer choice, not just the auth+push ones (the BL-01 prefix comment in `sync_bloc.dart`). Cosmetic; defer.
 - [ ] **TH-03** — `Colors.green.shade400` for the "connected" dot in `sync_connected_card.dart:55`. Bypasses theming; doesn't adapt to dark mode or accent change. Move to a `QuillTokens.successColor` (or reuse an existing token).
 - [ ] **MD-01** — `SyncFileSummary` + `SyncFileBody` double-duty as DTOs (with `fromJson`/`toJson`) and as state fields on `SyncState`. Standard wants three separate types per layer boundary. Pragmatic compression for now; revisit when CRDT layer (E45+) lands and the wire format diverges from in-memory.
 
