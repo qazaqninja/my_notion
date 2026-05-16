@@ -6632,6 +6632,73 @@ void main() {
     });
   });
 
+  group('extractDbConnectionStringsFromLinesIn', () {
+    test('mongodb URL extracts', () {
+      const text = 'connect mongodb://localhost:27017/mydb here\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'mongodb://localhost:27017/mydb\n');
+    });
+
+    test('mongodb+srv form extracts', () {
+      const text = 'cloud mongodb+srv://cluster.mongo.net/db today\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'mongodb+srv://cluster.mongo.net/db\n');
+    });
+
+    test('postgres URL with credentials extracts', () {
+      const text = 'pg postgres://user:pass@host:5432/db cited\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'postgres://user:pass@host:5432/db\n');
+    });
+
+    test('postgresql URL form extracts', () {
+      const text = 'long postgresql://user@host/db form\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'postgresql://user@host/db\n');
+    });
+
+    test('mysql URL extracts', () {
+      const text = 'use mysql://user@host:3306/db today\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'mysql://user@host:3306/db\n');
+    });
+
+    test('redis URL extracts', () {
+      const text = 'cache redis://localhost:6379 inline\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'redis://localhost:6379\n');
+    });
+
+    test('rediss TLS variant extracts', () {
+      const text = 'secure rediss://localhost:6380 form\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'rediss://localhost:6380\n');
+    });
+
+    test('https URL (not DB) is NOT matched', () {
+      const text = 'web https://x.test inline\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple DB strings on one line each extract', () {
+      const text =
+          'compare mongodb://a:1 and postgres://b:2 stacks\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'mongodb://a:1\npostgres://b:2\n');
+    });
+
+    test('lines without DB strings dropped from output', () {
+      const text = 'plain prose\ncache redis://x:6379\nmore prose\n';
+      final r = extractDbConnectionStringsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'redis://x:6379\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractDbConnectionStringsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

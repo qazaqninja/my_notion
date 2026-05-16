@@ -2569,6 +2569,40 @@ SortLinesResult extractStackOverflowQuestionIdsFromLinesIn(
       return out;
     });
 
+/// Extract every database connection-string URL from each
+/// selected line. Useful for infra docs, secret-rotation audits,
+/// and config-leak scrubbing.
+///
+/// Supported schemes:
+/// - `mongodb://...` / `mongodb+srv://...` (MongoDB)
+/// - `postgresql://...` / `postgres://...` (PostgreSQL)
+/// - `mysql://...` (MySQL)
+/// - `redis://...` / `rediss://...` (Redis, TLS variant)
+///
+/// Recognition:
+///   `(?:mongodb(?:\+srv)?|postgres(?:ql)?|mysql|rediss?)://[^\s]+`
+///
+/// Distinct from M1054 generic URL extractor (which catches
+/// `https://` / `http://` / `ftp://`). This one targets the
+/// database-specific schemes that don't show up in regular
+/// web-URL paste-ins.
+///
+/// 72nd member of the extraction family.
+SortLinesResult extractDbConnectionStringsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'(?:mongodb(?:\+srv)?|postgres(?:ql)?|mysql|rediss?)://[^\s]+',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

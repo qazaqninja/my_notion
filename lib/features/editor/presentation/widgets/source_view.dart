@@ -1507,6 +1507,10 @@ class _SourceViewState extends State<SourceView> {
           stripStart, caret,
           extractStackOverflowQuestionIdsFromLinesIn,
         );
+      case SlashAction.extractDbConnectionStringsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractDbConnectionStringsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

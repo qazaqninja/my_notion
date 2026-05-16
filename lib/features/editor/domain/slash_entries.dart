@@ -458,6 +458,10 @@ enum SlashAction {
   /// Extract every Stack Overflow question ID from a Stack
   /// Overflow URL on each selected line.
   extractStackOverflowQuestionIdsFromLines,
+  /// Extract every database connection-string URL from each
+  /// selected line (`mongodb://`, `postgres://`, `mysql://`,
+  /// `redis://`).
+  extractDbConnectionStringsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2203,6 +2207,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractStackOverflowQuestionIdsFromLines,
     keywords: ['extract', 'stackoverflow', 'so', 'question',
         'answer', 'citation'],
+  ),
+  SlashEntry(
+    icon: 'lock',
+    label: 'Extract DB connection strings',
+    hint: 'mongodb:// / postgres:// / redis://',
+    action: SlashAction.extractDbConnectionStringsFromLines,
+    keywords: ['extract', 'db', 'database', 'connection',
+        'mongodb', 'postgres', 'mysql', 'redis', 'dsn'],
   ),
   SlashEntry(
     icon: 'calendar',
