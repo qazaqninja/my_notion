@@ -1344,6 +1344,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownStrikethroughFromLinesIn,
         );
+      case SlashAction.extractMarkdownCodeFenceLangsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractMarkdownCodeFenceLangsFromLinesIn,
+        );
       case SlashAction.extractMarkdownLinkLabelsFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownLinkLabelsFromLinesIn,

@@ -335,6 +335,9 @@ enum SlashAction {
   /// Extract the content of every GFM strikethrough span
   /// (`~~struck~~` → `struck`) from each selected line.
   extractMarkdownStrikethroughFromLines,
+  /// Extract the language hint from every markdown fenced-code
+  /// opener (`` ```dart `` → `dart`) on each selected line.
+  extractMarkdownCodeFenceLangsFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1709,6 +1712,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownStrikethroughFromLines,
     keywords: ['extract', 'strikethrough', 'strike', 'crossed',
         'gfm', 'markdown', 'tilde'],
+  ),
+  SlashEntry(
+    icon: 'code',
+    label: 'Extract code fence langs',
+    hint: '```dart → dart',
+    action: SlashAction.extractMarkdownCodeFenceLangsFromLines,
+    keywords: ['extract', 'fence', 'fenced', 'lang', 'language',
+        'code', 'block', 'markdown', 'backtick'],
   ),
   SlashEntry(
     icon: 'edit',

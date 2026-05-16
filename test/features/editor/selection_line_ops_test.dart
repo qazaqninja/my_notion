@@ -3058,6 +3058,88 @@ void main() {
     });
   });
 
+  group('extractMarkdownCodeFenceLangsFromLinesIn', () {
+    test('basic ```lang opener extracts the lang', () {
+      const text = '```dart\nvoid main() {}\n```\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'dart\n');
+    });
+
+    test('4+ backtick fence still matches', () {
+      // CM allows `>= 3` backticks; pick whichever count doesn't
+      // collide with literal backticks in the body.
+      const text = '````bash\nrm -rf /\n````\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'bash\n');
+    });
+
+    test('lang with `+` `-` `#` `.` chars all preserved', () {
+      const text = '```c++\nx\n```\n```c#\ny\n```\n```objective-c\nz\n```\n```node.js\nw\n```\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'c++\nc#\nobjective-c\nnode.js\n');
+    });
+
+    test('closing fence (no lang) does NOT match', () {
+      // The closing fence has no info string — regex requires
+      // at least one lang char after the backticks.
+      const text = '```\n```\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('inline code span (single backtick) is NOT a fence', () {
+      // `{3,}` requires three+ backticks; single is inline code.
+      const text = 'note `foo` inline\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('trailing info-string after lang does NOT contaminate capture', () {
+      // CommonMark allows arbitrary info after the lang. The
+      // captured group `[\w+\-.#]+` is greedy on lang-class only,
+      // so it stops at the first space.
+      const text = '```python3 title=demo\ndef x(): pass\n```\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'python3\n');
+    });
+
+    test('indented fence (up to 3 spaces) still matches', () {
+      // CM permits up to 3 spaces of indent before a fence.
+      const text = '   ```yaml\nkey: value\n```\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'yaml\n');
+    });
+
+    test('multiple fence openers on different lines all extract', () {
+      const text =
+          '```dart\nx\n```\n```rust\ny\n```\n```go\nz\n```\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'dart\nrust\ngo\n');
+    });
+
+    test('plain prose lines dropped from output', () {
+      const text = 'plain prose\n```ts\nx\n```\nmore prose\n';
+      final r =
+          extractMarkdownCodeFenceLangsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'ts\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownCodeFenceLangsFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

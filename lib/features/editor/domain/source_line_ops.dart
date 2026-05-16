@@ -1229,6 +1229,40 @@ SortLinesResult extractMarkdownStrikethroughFromLinesIn(
       return out;
     });
 
+/// Extract the language hint from every markdown fenced-code
+/// opener (`` ```dart `` → `dart`) on each selected line.
+/// Useful for surveying which languages a doc covers, polyglot
+/// snippet counting, and audits like "do all my Python blocks
+/// say `python` and not `py`?".
+///
+/// Recognition:
+/// - Optional leading whitespace (CommonMark allows up to 3
+///   spaces of indent before a fence).
+/// - Three or more backticks (CM requires `>=3`).
+/// - Optional whitespace between the fence and the lang.
+/// - At least one lang-identifier char captured. The class
+///   `[\w+\-.#]+` covers `dart`, `c++`, `c#`, `objective-c`,
+///   `python3`, `node.js` — the realistic alphabet for code-
+///   fence language hints.
+///
+/// The closing fence (`` ``` `` alone, no lang) does NOT
+/// match — the regex requires at least one lang char. Tilde
+/// fences (`~~~lang`) are out of scope for v1 since backtick
+/// is the dominant form.
+///
+/// 23rd member of the extraction family.
+SortLinesResult extractMarkdownCodeFenceLangsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'^\s*`{3,}\s*([\w+\-.#]+)');
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(1)!);
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
