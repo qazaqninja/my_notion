@@ -6,15 +6,16 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E15 — Persist sync token to SharedPreferences + auto-restore
+- **Phase:** E (V2 Backend Scaffold)
+- **Task:** E16 — Public page sharing (`GET /public/<ulid>` route + frontmatter `public: true`)
 - **Status:** pending
 
 ## Last completed
 
-- **M1312 — E14** (Settings → Sync pane UI)
-- Committed: e4eeb8a
-- TaskList ID: 36
-- Notes: `/settings/sync` route now renders a real pane via `BlocBuilder<SyncBloc, SyncState>`. `_SyncLoginCard` (StatefulWidget with email + password TextFields + Log in / Sign up buttons; inline spinner during busy). `_SyncConnectedCard` (green dot + last-push summary + Log out button). Inline error chip in theme errorContainer color when `state.lastError != null && != 'conflict'`. Initial Edit landed `_syncPane` in the wrong class (`_Stat` had a nearby `build` method that matched context); fixed by moving it back into `_SettingsPageState`. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1314 — E15** (token persistence + auto-restore + 401-clears-prefs)
+- Committed: d572cbf
+- TaskList ID: 37
+- Notes: `SyncRestoreRequested` event reads `sync.token` from SharedPreferences and hydrates `SyncStatus.connected` optimistically (a subsequent 401 trips the existing stale-token handler which now also clears prefs). `app.dart` dispatches the event immediately after constructing the bloc. Login/signup persist, logout + 401 clear. Plain-text storage matches the existing `vault.path` / `vault.bookmark` posture (M1238). 5 new persistence tests; 13 SyncBloc tests total. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
