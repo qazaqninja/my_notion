@@ -594,10 +594,20 @@ class _EditorBodyState extends State<_EditorBody> {
         );
         if (!confirmed || !context.mounted) return;
         final title = loaded.page.title;
+        final relpath = loaded.page.relativePath;
         context.read<VaultBloc>().add(MoveToTrash(ulid));
+        // E22: when the user is logged into the v2 backend, mirror the
+        // local trash move to the server. The server returns 204 (or
+        // 404 if it never knew about the file); both count as success
+        // and drop the relpath from knownShas so a future push doesn't
+        // ship a stale If-Match for a tombstoned row.
+        final sync = context.read<SyncBloc>();
+        if (sync.state.isAuthed) {
+          sync.add(SyncDeleteFileRequested(relpath: relpath));
+        }
         if (context.mounted) {
           context.toastSuccess('Moved to trash',
-              sub: title.isEmpty ? loaded.page.relativePath : title);
+              sub: title.isEmpty ? relpath : title);
         }
         GoRouter.of(context).go('/home');
       case 'reindex':

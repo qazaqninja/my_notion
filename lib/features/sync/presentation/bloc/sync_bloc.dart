@@ -28,6 +28,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<SyncRestoreRequested>(_onRestore);
     on<SyncListRequested>(_onList, transformer: sequential());
     on<SyncPushFileRequested>(_onPush, transformer: sequential());
+    on<SyncDeleteFileRequested>(_onDelete, transformer: sequential());
   }
 
   final SyncRepository _repo;
@@ -201,6 +202,45 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       }
     } on SyncAuthException {
       // Token expired or revoked. Drop it; UI can re-prompt for login.
+      await _clearToken();
+      emit(const SyncState(
+        status: SyncStatus.error,
+        lastError: 'token_invalid',
+      ));
+    } on SyncNetworkException catch (err) {
+      emit(state.copyWith(
+        status: SyncStatus.error,
+        lastError: err.message,
+      ));
+    }
+  }
+
+  Future<void> _onDelete(
+    SyncDeleteFileRequested e,
+    Emitter<SyncState> emit,
+  ) async {
+    final token = state.token;
+    if (token == null) {
+      emit(state.copyWith(
+        status: SyncStatus.error,
+        lastError: 'not_authenticated',
+      ));
+      return;
+    }
+    try {
+      // The repo returns `true` for 204 and `false` for 404. Both are
+      // treated as success — a 404 just means the file was already gone
+      // from the server (idempotent delete). Either way, drop the
+      // relpath from the tracker so a future push doesn't ship a stale
+      // If-Match for a file the server has forgotten.
+      await _repo.delete(token: token, relpath: e.relpath);
+      final next = <String, String>{...state.knownShas}..remove(e.relpath);
+      emit(state.copyWith(
+        status: SyncStatus.connected,
+        knownShas: next,
+        clearError: true,
+      ));
+    } on SyncAuthException {
       await _clearToken();
       emit(const SyncState(
         status: SyncStatus.error,

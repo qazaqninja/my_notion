@@ -49,6 +49,19 @@ class SyncListRequested extends SyncEvent {
   const SyncListRequested();
 }
 
+/// Delete a single file from the server-side mirror. Used by the
+/// editor's "Move to trash" flow so a trashed page disappears from
+/// other devices too. 404 from the server is treated as success —
+/// idempotent, the file is already gone. On success the bloc also
+/// drops the relpath from `knownShas` (E19/E20 tracker) so it doesn't
+/// leak into a future If-Match header.
+class SyncDeleteFileRequested extends SyncEvent {
+  const SyncDeleteFileRequested({required this.relpath});
+  final String relpath;
+  @override
+  List<Object?> get props => [relpath];
+}
+
 /// Upload a single file body to the backend. Used by the editor's save
 /// path (slice E14) and by manual "Push now" actions. If `ifMatch` is
 /// set the server may reject with conflict — that surfaces as a

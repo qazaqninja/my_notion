@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E22 — Sync delete: editor "Move to trash" → DELETE /sync/del/<relpath>
+- **Task:** E23 — Sync get: editor "Pull from server" → GET /sync/get/<relpath> (conflict reconciliation)
 - **Status:** pending
 
 ## Last completed
 
-- **M1324 — E21** (real markdown rendering in the public route)
+- **M1325 — E22** (editor Move to trash → DELETE /sync/del/<relpath>)
 - Committed: (this iteration)
-- TaskList ID: 43
-- Notes: New `backend/lib/public/markdown_html.dart` — pure-Dart, no external deps. Handles ATX headings (h1-h6), paragraphs (soft-wrap collapse), unordered + ordered lists, GFM task lists with disabled checkboxes, blockquotes, horizontal rule, fenced code blocks with language hint, inline bold/italic/strike/code, links (with `rel=nofollow`), images, wikilinks (rendered as plain text — no cross-vault leakage as clickable URLs), HTML escaping everywhere, YAML frontmatter stripped before block parse. `public/routes.dart` swaps the `<pre>$escaped</pre>` placeholder for `<article>$rendered</article>` plus a light/dark-aware inline stylesheet. 22 new renderer tests; 73/73 backend tests pass. Flutter analyze clean, backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 44
+- Notes: New `SyncDeleteFileRequested(relpath)` event + `_onDelete` handler. Calls `repo.delete(token, relpath)`. 204 and 404 are both treated as success — idempotent semantics; either way drop the relpath from `knownShas` so a future push doesn't ship a stale If-Match for a tombstoned row. 401 reuses the token-clear path. Network failure surfaces `lastError` but leaves token + tracker untouched (retry-friendly). Wired into `editor_page.dart` trash kebab: after dispatching `MoveToTrash(ulid)` to VaultBloc, if `SyncBloc.isAuthed` also dispatch `SyncDeleteFileRequested(relpath: loaded.page.relativePath)`. 6 new bloc_test cases (not-authed, success-204, 404-already-gone, untracked-noop, 401-clears, network-keeps-token); 31/31 sync_bloc tests pass. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

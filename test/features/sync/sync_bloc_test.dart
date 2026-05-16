@@ -68,8 +68,18 @@ class _FakeRepo implements SyncRepository {
         );
   }
 
+  bool deleteReturnsTrue = true;
+  bool throwAuthOnDelete = false;
+  bool throwNetworkOnDelete = false;
+  String? lastDeleteRelpath;
+
   @override
-  Future<bool> delete({required String token, required String relpath}) async => true;
+  Future<bool> delete({required String token, required String relpath}) async {
+    lastDeleteRelpath = relpath;
+    if (throwAuthOnDelete) throw const SyncAuthException();
+    if (throwNetworkOnDelete) throw const SyncNetworkException('network_down');
+    return deleteReturnsTrue;
+  }
 }
 
 void main() {
@@ -345,6 +355,115 @@ void main() {
       act: (bloc) => bloc.add(const SyncLogoutRequested()),
       verify: (bloc) {
         expect(bloc.state.knownShas, isEmpty);
+      },
+    );
+  });
+
+  group('SyncBloc delete (E22)', () {
+    blocTest<SyncBloc, SyncState>(
+      'Delete when not authed → error not_authenticated',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      act: (bloc) => bloc.add(
+        const SyncDeleteFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'not_authenticated');
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Successful 204 drops the relpath from knownShas',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-a', 'b.md': 'sha-b'},
+      ),
+      act: (bloc) => bloc.add(
+        const SyncDeleteFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.knownShas, {'b.md': 'sha-b'});
+        expect(bloc.state.lastError, isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      '404 (already-gone) is treated as success and still drops the entry',
+      build: () => SyncBloc(repo: _FakeRepo()..deleteReturnsTrue = false),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-stale'},
+      ),
+      act: (bloc) => bloc.add(
+        const SyncDeleteFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.knownShas, isEmpty);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Deleting an untracked relpath is harmless (no-op on knownShas)',
+      build: () => SyncBloc(repo: _FakeRepo()),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'other.md': 'sha-o'},
+      ),
+      act: (bloc) => bloc.add(
+        const SyncDeleteFileRequested(relpath: 'never-pushed.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.knownShas, {'other.md': 'sha-o'});
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      '401 clears the token + surfaces token_invalid',
+      setUp: () => SharedPreferences.setMockInitialValues({
+        'sync.token': 'jwt-stale',
+      }),
+      build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnDelete = true),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-stale',
+      ),
+      act: (bloc) => bloc.add(
+        const SyncDeleteFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) async {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'token_invalid');
+        expect(bloc.state.token, isNull);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('sync.token'), isNull);
+      },
+    );
+
+    blocTest<SyncBloc, SyncState>(
+      'Network failure surfaces lastError without clearing token',
+      build: () => SyncBloc(repo: _FakeRepo()..throwNetworkOnDelete = true),
+      seed: () => const SyncState(
+        status: SyncStatus.connected,
+        token: 'jwt-t',
+        knownShas: {'a.md': 'sha-a'},
+      ),
+      act: (bloc) => bloc.add(
+        const SyncDeleteFileRequested(relpath: 'a.md'),
+      ),
+      verify: (bloc) {
+        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.lastError, 'network_down');
+        // Token preserved; user can retry once network is back.
+        expect(bloc.state.token, 'jwt-t');
+        // Tracker untouched on network failure.
+        expect(bloc.state.knownShas, {'a.md': 'sha-a'});
       },
     );
   });
