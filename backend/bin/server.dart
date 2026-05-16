@@ -1,7 +1,11 @@
 import 'dart:io';
 
+import 'package:backend/auth/password.dart';
+import 'package:backend/auth/routes.dart';
+import 'package:backend/auth/tokens.dart';
 import 'package:backend/db/connection.dart';
 import 'package:backend/db/migrations.dart';
+import 'package:backend/db/users.dart';
 import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
@@ -53,6 +57,24 @@ void main(List<String> args) async {
     ..get('/', _rootHandler)
     ..get('/echo/<message>', _echoHandler)
     ..get('/health', _healthHandler);
+
+  // Auth sub-router — only mounted when the DB is up. Without a
+  // connection, /auth/* returns 503 via a fallback shim so clients see
+  // a clean error rather than a stack trace.
+  final conn = _conn;
+  if (conn != null) {
+    router.mount(
+      '/auth/',
+      buildAuthRouter(
+        users: UserRepository(conn),
+        hasher: const PasswordHasher(),
+        tokens: TokenIssuer(),
+      ).call,
+    );
+  } else {
+    router.all('/auth/<ignored|.*>',
+        (Request req) => Response(503, body: 'db: not connected\n'));
+  }
 
   final handler =
       Pipeline().addMiddleware(logRequests()).addHandler(router.call);
