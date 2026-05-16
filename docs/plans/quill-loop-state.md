@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E6 — UserRepository interface refactor + route unit tests
+- **Task:** E7 — Auth middleware (Bearer → User in request context)
 - **Status:** pending
 
 ## Last completed
 
-- **M1294 — E5** (POST /auth/signup + /auth/login routes)
-- Committed: 6d1ab7a
-- TaskList ID: 27
-- Notes: `backend/lib/auth/routes.dart` builds a shelf_router sub-router mounted at /auth. Error codes: 400 invalid_json / email_or_password_invalid; 409 email_taken (PG SQLSTATE 23505); 401 invalid_credentials (deliberately ambiguous for unknown-email + wrong-password to avoid user enumeration); 201/200 on success returning `{token, user}` where user is the public shape (no bcrypt hash). Email is trim+toLowerCase normalised. Auth sub-router only mounts when DB is up; missing-DB returns 503 via fallback shim. `dart analyze` clean. Route unit tests deferred to E6 with a UserRepositoryBase interface refactor.
+- **M1296 — E6** (UserRepositoryBase interface + EmailAlreadyTakenException + 8 route tests)
+- Committed: aa1898c
+- TaskList ID: 28
+- Notes: Extracted `UserRepositoryBase` abstract class; concrete `UserRepository implements UserRepositoryBase`. New `EmailAlreadyTakenException` insulates the auth routes from the postgres package's error model (catch + translate inside `UserRepository.create`). Routes accept the base type so a `_FakeUsers implements UserRepositoryBase` plugs in for unit tests. 8 route tests cover signup (bad JSON / short pw / valid / duplicate / lowercase normalisation) and login (wrong pw / unknown email / correct). Hash never leaks into response body (assertion checks). 22/22 backend tests pass (4 password + 5 token + 3 user + 8 route + 2 server). Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
