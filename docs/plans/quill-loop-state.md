@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** A (Foundation)
-- **Task:** A7 — Port `vault_bloc` test to `bloc_test` (TS-03)
+- **Task:** A8 — Port `relation_picker_cubit` test to `bloc_test`
 - **Status:** pending
 
 ## Last completed
 
-- **M1196 — A6** (add mockingjay ^2.0.0 dev dependency)
-- Committed: bdfcec7
-- TaskList ID: 5
-- Notes: Pin bumped from plan's ^0.6.0 to ^2.0.0 (latest compatible with SDK 3.9.2; 2.1.0 needs SDK 3.10). mockingjay 2.x exports `MockNavigator` only — go_router mocking via local `_MockGoRouter extends Mock implements GoRouter`. Smoke at `test/foundation/mockingjay_smoke_test.dart` covers both styles.
+- **M1198 — A7** (port theme_cubit_test to bloc_test — re-scoped from vault_bloc)
+- Committed: df304c6
+- TaskList ID: 7
+- Notes: vault_bloc has no dedicated test (only stubbed in widget tests via `_StubVaultBloc`). Picked theme_cubit_test as the smallest port target (8 cases) to establish the pattern. A10 / A11 re-scoped from "port vault_bloc / editor_bloc" to "write NEW bloc_test from scratch" because those blocs lack existing tests.
 
 ## Backlog (Phase A — Foundation)
 
@@ -24,6 +24,12 @@
 - [x] A4 — Add `bloc_test` dev dependency (TS-03) (M1192 / 5cf2869)
 - [x] A5 — Add `alchemist` + golden config (TS-08) (M1194 / 8a67992)
 - [x] A6 — Add `mockingjay` dev dependency (TS-09) (M1196 / bdfcec7)
+- [x] A7 — Port `theme_cubit_test` to bloc_test (M1198 / df304c6) — re-scoped from vault_bloc
+- [ ] A8 — Port `relation_picker_cubit_test` to bloc_test — re-scoped from editor_bloc
+- [ ] A9 — Port `slash_menu_cubit_test` to bloc_test
+- [ ] A10 — Write NEW `vault_bloc_test.dart` from scratch (was: port) — VaultBloc has no test today
+- [ ] A11 — Write NEW `editor_bloc_test.dart` from scratch (was: port) — EditorBloc has no test today
+- [ ] A12 — Re-run flutter-arch-orchestrator end-to-end (Phase A gate)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
 - [ ] A6 — Add `mockingjay` dev dependency (TS-09)
 - [ ] A7 — Port `vault_bloc` test to `bloc_test` (TS-03)
