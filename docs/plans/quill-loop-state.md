@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** A (Foundation)
-- **Task:** A10 — Write NEW `vault_bloc_test.dart` from scratch (TS-03)
-- **Status:** in_progress (1 of ~5 slices done — M1204)
+- **Task:** A11 — Write NEW `editor_bloc_test.dart` from scratch (TS-03)
+- **Status:** pending
 
-## Last completed slice
+## Last completed
 
-- **M1204 — A10 slice 1** (LoadFromPath missing-path → VaultError)
-- Committed: 4530a6e
-- TaskList ID: 10 (still in_progress)
-- Notes: Mock scaffolding (_MockVaultRepository, _MockIndexer, _MockDb) + real inert VaultWatcher pattern established. Next slices cover: PickVault, LoadFromPath happy path (requires fixture vault + drift in-memory db), RefreshFromDisk, error-path branches in CreatePage / MoveToTrash / Duplicate / Favorite / Move / Rename / CreateFolder.
+- **M1206 — A10 slice 2** (CloseVault + 9 no-op-outside-VaultLoaded events)
+- Committed: 49b93e9
+- TaskList ID: 10 (closed at 11 cases passing)
+- Notes: A10 covers the early-return contract for 9 events + CloseVault transition + LoadFromPath missing-path error. Remaining un-covered: PickVault (needs FilePicker.platform mock), LoadFromPath happy path (needs fixture vault + drift in-memory), RefreshFromDisk happy path. Deferred to A12 or later as they require heavier scaffolding than a bite-sized iteration.
 
 ## Backlog (Phase A — Foundation)
 
@@ -27,7 +27,7 @@
 - [x] A7 — Port `theme_cubit_test` to bloc_test (M1198 / df304c6) — re-scoped from vault_bloc
 - [x] A8 — Port `relation_picker_cubit_test` to bloc_test (M1200 / 02e2b74) — re-scoped from editor_bloc
 - [x] A9 — Port `slash_menu_cubit_test` to bloc_test (M1202 / 8ec74dc)
-- [~] A10 — Write NEW `vault_bloc_test.dart` from scratch (slice 1: LoadFromPath missing-path at M1204; remaining slices cover PickVault / LoadFromPath happy / RefreshFromDisk / 7 error paths)
+- [x] A10 — Write NEW `vault_bloc_test.dart` (M1204+M1206, 11 cases covering 9 no-op events + CloseVault + LoadFromPath missing-path; PickVault / load-happy-path deferred)
 - [ ] A11 — Write NEW `editor_bloc_test.dart` from scratch (was: port) — EditorBloc has no test today
 - [ ] A12 — Re-run flutter-arch-orchestrator end-to-end (Phase A gate)
 - [ ] A5 — Add `alchemist` + golden config (TS-08)
