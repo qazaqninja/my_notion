@@ -51,10 +51,10 @@ void main() {
         (tester) async {
       final bloc = _MockSyncBloc();
       when(() => bloc.state).thenReturn(
-        const SyncState(status: SyncStatus.connected, token: 'jwt-t'),
+        const SyncState(status: SyncStatus.success, token: 'jwt-t'),
       );
       await tester.pumpWidget(pumpCard(
-        const SyncState(status: SyncStatus.connected, token: 'jwt-t'),
+        const SyncState(status: SyncStatus.success, token: 'jwt-t'),
         bloc,
       ));
       expect(find.text('Connected'), findsOneWidget);
@@ -67,7 +67,7 @@ void main() {
     testWidgets('recent push renders with relpath + sha + relative time',
         (tester) async {
       final state = SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         lastPush: SyncFileSummary(
           relpath: 'notes/a.md',
@@ -86,7 +86,7 @@ void main() {
     testWidgets('unresolved conflict shows banner + Retry pull dispatches event',
         (tester) async {
       final state = SyncState(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         token: 'jwt-t',
         lastError: 'conflict',
         lastConflict: SyncFileSummary(
@@ -115,7 +115,7 @@ void main() {
     });
 
     testWidgets('Log out dispatches SyncLogoutRequested', (tester) async {
-      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      const state = SyncState(status: SyncStatus.success, token: 'jwt-t');
       final bloc = _MockSyncBloc();
       when(() => bloc.state).thenReturn(state);
       await tester.pumpWidget(pumpCard(state, bloc));
@@ -145,7 +145,7 @@ void main() {
 
     testWidgets('light theme dot uses tokens.success (not Colors.green)',
         (tester) async {
-      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      const state = SyncState(status: SyncStatus.success, token: 'jwt-t');
       final bloc = _MockSyncBloc();
       when(() => bloc.state).thenReturn(state);
 
@@ -166,7 +166,7 @@ void main() {
     });
 
     testWidgets('dark theme dot also uses tokens.success', (tester) async {
-      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      const state = SyncState(status: SyncStatus.success, token: 'jwt-t');
       final bloc = _MockSyncBloc();
       when(() => bloc.state).thenReturn(state);
 
@@ -188,7 +188,7 @@ void main() {
 
   group('SyncConnectedCard push-all button (E32)', () {
     testWidgets('onPushAll == null → button hidden', (tester) async {
-      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      const state = SyncState(status: SyncStatus.success, token: 'jwt-t');
       final bloc = _MockSyncBloc();
       when(() => bloc.state).thenReturn(state);
       await tester.pumpWidget(pumpCard(state, bloc));
@@ -197,7 +197,7 @@ void main() {
 
     testWidgets('onPushAll provided → button visible and tap fires it',
         (tester) async {
-      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      const state = SyncState(status: SyncStatus.success, token: 'jwt-t');
       final bloc = _MockSyncBloc();
       when(() => bloc.state).thenReturn(state);
       var called = false;
@@ -231,7 +231,7 @@ void main() {
 
   group('SyncConnectedCard push queue depth (E30)', () {
     testWidgets('pendingPushes == 0 → no "Syncing…" row', (tester) async {
-      const state = SyncState(status: SyncStatus.connected, token: 'jwt-t');
+      const state = SyncState(status: SyncStatus.success, token: 'jwt-t');
       final bloc = _MockSyncBloc();
       when(() => bloc.state).thenReturn(state);
       await tester.pumpWidget(pumpCard(state, bloc));
@@ -240,7 +240,7 @@ void main() {
 
     testWidgets('pendingPushes == 1 → "Syncing 1 file…"', (tester) async {
       const state = SyncState(
-        status: SyncStatus.busy,
+        status: SyncStatus.loading,
         token: 'jwt-t',
         pendingPushes: 1,
       );
@@ -252,7 +252,7 @@ void main() {
 
     testWidgets('pendingPushes == 4 → plural copy', (tester) async {
       const state = SyncState(
-        status: SyncStatus.busy,
+        status: SyncStatus.loading,
         token: 'jwt-t',
         pendingPushes: 4,
       );
@@ -267,7 +267,7 @@ void main() {
     testWidgets('un-classified lastError renders banner + Retry now',
         (tester) async {
       const state = SyncState(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         token: 'jwt-t',
         lastError: 'connection_timed_out',
       );
@@ -290,7 +290,7 @@ void main() {
       // conflict is rendered by the "Unresolved conflict" banner, not
       // the network one.
       final state = SyncState(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         token: 'jwt-t',
         lastError: 'conflict',
         lastConflict: SyncFileSummary(

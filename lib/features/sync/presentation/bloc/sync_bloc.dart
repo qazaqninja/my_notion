@@ -72,7 +72,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   ) {
     if (!state.isAuthed) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'not_authenticated',
       ));
       return;
@@ -141,11 +141,11 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     SyncLoginRequested e,
     Emitter<SyncState> emit,
   ) async {
-    emit(state.copyWith(status: SyncStatus.busy, clearError: true));
+    emit(state.copyWith(status: SyncStatus.loading, clearError: true));
     try {
       final token = await _repo.login(email: e.email, password: e.password);
       await _persistToken(token);
-      emit(state.copyWith(status: SyncStatus.connected, token: token));
+      emit(state.copyWith(status: SyncStatus.success, token: token));
       // E20: kick off a listing so the first post-login push already
       // has a real If-Match for every relpath the server knows about.
       add(const SyncListRequested());
@@ -155,12 +155,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       _startListPing();
     } on SyncAuthException {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'invalid_credentials',
       ));
     } on SyncNetworkException catch (err) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: err.message,
       ));
     }
@@ -170,29 +170,29 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     SyncSignupRequested e,
     Emitter<SyncState> emit,
   ) async {
-    emit(state.copyWith(status: SyncStatus.busy, clearError: true));
+    emit(state.copyWith(status: SyncStatus.loading, clearError: true));
     try {
       final token = await _repo.signup(email: e.email, password: e.password);
       await _persistToken(token);
-      emit(state.copyWith(status: SyncStatus.connected, token: token));
+      emit(state.copyWith(status: SyncStatus.success, token: token));
       // Fresh accounts will receive an empty list; the call is still
       // cheap and keeps the post-login flow symmetric with login.
       add(const SyncListRequested());
       _startListPing();
     } on SyncEmailTakenException {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'email_taken',
       ));
     } on SyncAuthException {
       // E.g. 400 invalid_email_or_password from server-side validation.
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'invalid_signup',
       ));
     } on SyncNetworkException catch (err) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: err.message,
       ));
     }
@@ -218,7 +218,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     // Optimistic: trust the persisted token. A 401 on the next call
     // (push / list / get) will trip `_onPush`'s SyncAuthException
     // branch and reset to error: token_invalid.
-    emit(state.copyWith(status: SyncStatus.connected, token: token));
+    emit(state.copyWith(status: SyncStatus.success, token: token));
     // E20: on relaunch, hydrate knownShas immediately so the first
     // push for any tracked relpath already has a real If-Match. Also
     // serves as a token-validity ping: a 401 here will clear the
@@ -255,7 +255,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       await _clearToken();
       _stopListPing();
       emit(const SyncState(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'token_invalid',
       ));
     } on SyncNetworkException {
@@ -272,7 +272,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     final token = state.token;
     if (token == null) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'not_authenticated',
       ));
       // The +1 was dispatched in add(); we still need a -1 here so the
@@ -280,7 +280,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       add(const SyncPendingPushDelta(-1));
       return;
     }
-    emit(state.copyWith(status: SyncStatus.busy, clearError: true));
+    emit(state.copyWith(status: SyncStatus.loading, clearError: true));
     try {
       // E19: if the caller didn't provide an explicit ifMatch, fall back
       // to the bloc's tracked last-known-server-sha for this relpath.
@@ -297,7 +297,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       switch (outcome) {
         case SyncPutSuccess(:final summary):
           emit(state.copyWith(
-            status: SyncStatus.connected,
+            status: SyncStatus.success,
             lastPush: summary,
             knownShas: {
               ...state.knownShas,
@@ -307,7 +307,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
           ));
         case SyncPutConflict(:final current):
           emit(state.copyWith(
-            status: SyncStatus.error,
+            status: SyncStatus.failure,
             lastError: 'conflict',
             lastConflict: current,
             // Update the tracker to the server's view so the next push
@@ -325,12 +325,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       await _clearToken();
       _stopListPing();
       emit(const SyncState(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'token_invalid',
       ));
     } on SyncNetworkException catch (err) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: err.message,
       ));
     } finally {
@@ -349,7 +349,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     final token = state.token;
     if (token == null) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'not_authenticated',
       ));
       return;
@@ -363,7 +363,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       await _repo.delete(token: token, relpath: e.relpath);
       final next = <String, String>{...state.knownShas}..remove(e.relpath);
       emit(state.copyWith(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         knownShas: next,
         clearError: true,
       ));
@@ -371,12 +371,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       await _clearToken();
       _stopListPing();
       emit(const SyncState(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'token_invalid',
       ));
     } on SyncNetworkException catch (err) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: err.message,
       ));
     }
@@ -389,7 +389,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     final token = state.token;
     if (token == null) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'not_authenticated',
       ));
       return;
@@ -398,7 +398,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       final body = await _repo.get(token: token, relpath: e.relpath);
       if (body == null) {
         emit(state.copyWith(
-          status: SyncStatus.error,
+          status: SyncStatus.failure,
           lastError: 'not_found',
           clearFetched: true,
         ));
@@ -410,7 +410,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       final next = <String, String>{...state.knownShas};
       next[body.summary.relpath] = body.summary.sha256;
       emit(state.copyWith(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         lastFetched: body,
         knownShas: next,
         clearError: true,
@@ -419,12 +419,12 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
       await _clearToken();
       _stopListPing();
       emit(const SyncState(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: 'token_invalid',
       ));
     } on SyncNetworkException catch (err) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: err.message,
       ));
     }
@@ -447,13 +447,13 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         // 503 — server up but DB down. Surface as a network-class
         // error so the E28 banner highlights it.
         emit(state.copyWith(
-          status: SyncStatus.error,
+          status: SyncStatus.failure,
           lastError: 'backend_unhealthy',
         ));
       }
     } on SyncNetworkException catch (err) {
       emit(state.copyWith(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         lastError: err.message,
       ));
     }

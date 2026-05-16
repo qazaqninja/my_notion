@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E39 — Fix orchestrator BL-05: rename SyncStatus { idle, busy, connected, error } → { initial, loading, success, failure }
+- **Task:** E40 — Fix orchestrator INFO findings (TS-04 group naming + DI-03 root-scope comment)
 - **Status:** pending
 
 ## Last completed
 
-- **M1341 — E38** (theme the connected dot via QuillTokens.success)
+- **M1342 — E39** (rename SyncStatus → {initial, loading, success, failure})
 - Committed: (this iteration)
-- TaskList ID: 60
-- Notes: Closes orchestrator TH-03 finding. The connected status dot in `SyncConnectedCard` previously used `Colors.green.shade400`, which bypassed the design-token system and wouldn't adapt to dark mode or accent changes. Swapped for `tokens.success` (an existing slot in `QuillTokens` — the same color already powers the unlock chevron). 2 new widget tests pump the card in both light and dark themes, locate the 8×8 BoxShape.circle Container, and assert `decoration.color == tokens.success` (and ≠ `Colors.green.shade400` in the light case). 18/18 sync card tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 61
+- Notes: Closes orchestrator BL-05 finding. Renamed the enum values to the standard four-state set used across `VaultStatus`, `EditorStatus`, and the codebase. New doc-comment maps old → new: `initial ← idle`, `loading ← busy`, `success ← connected`, `failure ← error`. Cascaded through 5 files: `sync_state.dart` (enum + default-arg), `sync_bloc.dart` (29 refs), `settings_page.dart` (1 ref — the disabled state of the login button while busy), `sync_bloc_test.dart` (~22 refs), `sync_connected_card_test.dart` (~12 refs). `flutter analyze` clean; 96/96 sync + card tests pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
@@ -111,7 +111,7 @@
 
 #### WARN (informational)
 
-- [ ] **BL-05** — `SyncStatus { idle, busy, connected, error }` deviates from standard `{ initial, loading, success, failure }`. Cosmetic but inconsistent with `VaultStatus` / `EditorStatus`. Rename in a dedicated slice once nothing else is in flight; touch 7+ test files.
+- [x] **BL-05** — `SyncStatus { idle, busy, connected, error }` deviated from the standard. ✅ Resolved at M1342 (E39) — renamed to `{ initial, loading, success, failure }` with a doc-comment mapping table. Cascaded through sync_state.dart (default + enum), sync_bloc.dart (29 refs), settings_page.dart (1 ref), sync_bloc_test.dart (~22 refs), sync_connected_card_test.dart (~12 refs). 96/96 sync + card tests pass.
 - [x] **BL-10** — `SyncLogoutRequested` and `SyncPushAllRequested` were default-concurrent and could race themselves on rapid double-dispatch. ✅ Resolved at M1340 (E37) — both wired to `droppable()` from `bloc_concurrency`. `SyncRestoreRequested`, `SyncFetchCleared`, `SyncPendingPushDelta` remain default-concurrent intentionally: restore is single-shot at app boot, FetchCleared is idempotent state-only, PendingPushDelta is the internal counter event that has to land in order with its caller. Inline comments document each choice. 2 new bloc_test cases (double-logout-writes-prefs-once, double-bulk-push-only-enqueues-one-batch). 53/53 sync_bloc tests pass.
 - [ ] **BL-01** — Class-doc comment on `SyncBloc` should enumerate every event's transformer choice, not just the auth+push ones (the BL-01 prefix comment in `sync_bloc.dart`). Cosmetic; defer.
 - [x] **TH-03** — `Colors.green.shade400` for the connected dot in `sync_connected_card.dart`. ✅ Resolved at M1341 (E38) — swapped for `tokens.success` (already-existing QuillTokens slot for positive/success greens). 2 new widget tests verify both light + dark themes pick up the correct token color and the dot is no longer `Colors.green.shade400`.

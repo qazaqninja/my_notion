@@ -2,14 +2,20 @@ import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/sync_file.dart';
 
-enum SyncStatus { idle, busy, connected, error }
+/// E39 (orchestrator BL-05): the standard four states used across
+/// VaultStatus / EditorStatus / etc. Maps to old names:
+///   initial ← idle      (no token, awaiting login)
+///   loading ← busy      (a request is in flight)
+///   success ← connected (a request just succeeded; bloc is authed)
+///   failure ← error     (a request failed; check `lastError`)
+enum SyncStatus { initial, loading, success, failure }
 
 /// Single-state shape for the SyncBloc. The status enum + nullable
 /// fields keep the state shape flat — easier to inspect from the UI
 /// than a sealed hierarchy.
 class SyncState extends Equatable {
   const SyncState({
-    this.status = SyncStatus.idle,
+    this.status = SyncStatus.initial,
     this.token,
     this.lastError,
     this.lastConflict,

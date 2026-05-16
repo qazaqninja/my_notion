@@ -117,7 +117,7 @@ void main() {
         const SyncLoginRequested(email: 'a@quill', password: 'correct-horse'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.status, SyncStatus.success);
         expect(bloc.state.isAuthed, isTrue);
         expect(bloc.state.token, 'jwt-a@quill');
       },
@@ -130,7 +130,7 @@ void main() {
         const SyncLoginRequested(email: 'a@quill', password: 'wrong'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'invalid_credentials');
         expect(bloc.state.isAuthed, isFalse);
       },
@@ -143,7 +143,7 @@ void main() {
         const SyncSignupRequested(email: 'a@quill', password: 'correct-horse'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'email_taken');
       },
     );
@@ -152,13 +152,13 @@ void main() {
       'Logout clears token + error',
       build: () => SyncBloc(repo: _FakeRepo()),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-stale',
         lastError: 'something',
       ),
       act: (bloc) => bloc.add(const SyncLogoutRequested()),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.idle);
+        expect(bloc.state.status, SyncStatus.initial);
         expect(bloc.state.token, isNull);
         expect(bloc.state.lastError, isNull);
       },
@@ -171,7 +171,7 @@ void main() {
         const SyncPushFileRequested(relpath: 'a.md', body: 'x'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'not_authenticated');
       },
     );
@@ -189,14 +189,14 @@ void main() {
           ),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(
         const SyncPushFileRequested(relpath: 'a.md', body: '# body'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.status, SyncStatus.success);
         expect(bloc.state.lastPush?.relpath, 'a.md');
       },
     );
@@ -214,7 +214,7 @@ void main() {
           ),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(
@@ -225,7 +225,7 @@ void main() {
         ),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'conflict');
         expect(bloc.state.lastConflict?.sha256, 'server-sha');
       },
@@ -235,14 +235,14 @@ void main() {
       'Push with stale token → error token_invalid + token cleared',
       build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnPush = true),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-stale',
       ),
       act: (bloc) => bloc.add(
         const SyncPushFileRequested(relpath: 'a.md', body: '# body'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'token_invalid');
         expect(bloc.state.token, isNull);
       },
@@ -263,7 +263,7 @@ void main() {
           ),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(
@@ -290,7 +290,7 @@ void main() {
         return SyncBloc(repo: repo);
       },
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-v1'},
       ),
@@ -317,7 +317,7 @@ void main() {
         return SyncBloc(repo: repo);
       },
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-tracked'},
       ),
@@ -346,7 +346,7 @@ void main() {
           ),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-stale'},
       ),
@@ -354,7 +354,7 @@ void main() {
         const SyncPushFileRequested(relpath: 'a.md', body: '# stale'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'conflict');
         // Tracker now reflects the latest server sha so the client can
         // pick a reconciliation strategy and push again without
@@ -367,7 +367,7 @@ void main() {
       'Logout drops all tracked shas',
       build: () => SyncBloc(repo: _FakeRepo()),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-a', 'b.md': 'sha-b'},
       ),
@@ -419,7 +419,7 @@ void main() {
         );
       },
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) async {
@@ -467,7 +467,7 @@ void main() {
         listPingInterval: const Duration(hours: 1),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-existing',
       ),
       act: (bloc) {
@@ -494,7 +494,7 @@ void main() {
         listPingInterval: const Duration(hours: 1),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) {
@@ -547,7 +547,7 @@ void main() {
         ),
       ])),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'not_authenticated');
       },
     );
@@ -566,7 +566,7 @@ void main() {
         listPingInterval: const Duration(hours: 1),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(const SyncPushAllRequested([
@@ -603,7 +603,7 @@ void main() {
         listPingInterval: const Duration(hours: 1),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {
           'a.md': 'sha-matching',
@@ -643,7 +643,7 @@ void main() {
         listPingInterval: const Duration(hours: 1),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(const SyncPushAllRequested([])),
@@ -666,7 +666,7 @@ void main() {
         listPingInterval: const Duration(hours: 1),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) {
@@ -688,7 +688,7 @@ void main() {
         listPingInterval: const Duration(hours: 1),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) {
@@ -722,7 +722,7 @@ void main() {
       ),
       wait: const Duration(milliseconds: 50),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'not_authenticated');
         // Even the early-return path must pair +1 with a -1.
         expect(bloc.state.pendingPushes, 0);
@@ -743,7 +743,7 @@ void main() {
         listPingInterval: const Duration(hours: 1),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(
@@ -762,7 +762,7 @@ void main() {
       'Ping success sets lastPingAt and clears prior network error',
       build: () => SyncBloc(repo: _FakeRepo()..pingReturns = true),
       seed: () => const SyncState(
-        status: SyncStatus.error,
+        status: SyncStatus.failure,
         token: 'jwt-t',
         lastError: 'connection_timed_out',
       ),
@@ -777,12 +777,12 @@ void main() {
       'Ping 503 surfaces backend_unhealthy (so E28 banner lights up)',
       build: () => SyncBloc(repo: _FakeRepo()..pingReturns = false),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(const SyncPingRequested()),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'backend_unhealthy');
         // No lastPingAt update on unhealthy response.
         expect(bloc.state.lastPingAt, isNull);
@@ -794,7 +794,7 @@ void main() {
       build: () => SyncBloc(repo: _FakeRepo()..throwNetworkOnPing = true),
       act: (bloc) => bloc.add(const SyncPingRequested()),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'ping_failed');
       },
     );
@@ -818,7 +818,7 @@ void main() {
         const SyncFetchFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'not_authenticated');
       },
     );
@@ -837,14 +837,14 @@ void main() {
           ),
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(
         const SyncFetchFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.status, SyncStatus.success);
         expect(bloc.state.lastFetched?.body, '# Server version\n');
         expect(bloc.state.lastFetched?.summary.sha256, 'sha-server');
         // Tracker also refreshed.
@@ -856,7 +856,7 @@ void main() {
       '404 → error not_found, lastFetched cleared',
       build: () => SyncBloc(repo: _FakeRepo()),
       seed: () => SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         lastFetched: SyncFileBody(
           summary: SyncFileSummary(
@@ -871,7 +871,7 @@ void main() {
         const SyncFetchFileRequested(relpath: 'gone.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'not_found');
         expect(bloc.state.lastFetched, isNull);
       },
@@ -884,14 +884,14 @@ void main() {
       }),
       build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnGet = true),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-stale',
       ),
       act: (bloc) => bloc.add(
         const SyncFetchFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) async {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'token_invalid');
         expect(bloc.state.token, isNull);
         final prefs = await SharedPreferences.getInstance();
@@ -903,14 +903,14 @@ void main() {
       'Fetch network failure surfaces lastError without clearing token',
       build: () => SyncBloc(repo: _FakeRepo()..throwNetworkOnGet = true),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(
         const SyncFetchFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'network_down');
         expect(bloc.state.token, 'jwt-t');
       },
@@ -925,7 +925,7 @@ void main() {
         const SyncDeleteFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'not_authenticated');
       },
     );
@@ -934,7 +934,7 @@ void main() {
       'Successful 204 drops the relpath from knownShas',
       build: () => SyncBloc(repo: _FakeRepo()),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-a', 'b.md': 'sha-b'},
       ),
@@ -942,7 +942,7 @@ void main() {
         const SyncDeleteFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.status, SyncStatus.success);
         expect(bloc.state.knownShas, {'b.md': 'sha-b'});
         expect(bloc.state.lastError, isNull);
       },
@@ -952,7 +952,7 @@ void main() {
       '404 (already-gone) is treated as success and still drops the entry',
       build: () => SyncBloc(repo: _FakeRepo()..deleteReturnsTrue = false),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-stale'},
       ),
@@ -960,7 +960,7 @@ void main() {
         const SyncDeleteFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.status, SyncStatus.success);
         expect(bloc.state.knownShas, isEmpty);
       },
     );
@@ -969,7 +969,7 @@ void main() {
       'Deleting an untracked relpath is harmless (no-op on knownShas)',
       build: () => SyncBloc(repo: _FakeRepo()),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'other.md': 'sha-o'},
       ),
@@ -977,7 +977,7 @@ void main() {
         const SyncDeleteFileRequested(relpath: 'never-pushed.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.status, SyncStatus.success);
         expect(bloc.state.knownShas, {'other.md': 'sha-o'});
       },
     );
@@ -989,14 +989,14 @@ void main() {
       }),
       build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnDelete = true),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-stale',
       ),
       act: (bloc) => bloc.add(
         const SyncDeleteFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) async {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'token_invalid');
         expect(bloc.state.token, isNull);
         final prefs = await SharedPreferences.getInstance();
@@ -1008,7 +1008,7 @@ void main() {
       'Network failure surfaces lastError without clearing token',
       build: () => SyncBloc(repo: _FakeRepo()..throwNetworkOnDelete = true),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-a'},
       ),
@@ -1016,7 +1016,7 @@ void main() {
         const SyncDeleteFileRequested(relpath: 'a.md'),
       ),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'network_down');
         // Token preserved; user can retry once network is back.
         expect(bloc.state.token, 'jwt-t');
@@ -1045,7 +1045,7 @@ void main() {
           ],
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
       ),
       act: (bloc) => bloc.add(const SyncListRequested()),
@@ -1079,7 +1079,7 @@ void main() {
           ],
       ),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-local-newer'},
       ),
@@ -1106,12 +1106,12 @@ void main() {
       'List 401 clears the token and surfaces token_invalid',
       build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnList = true),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-stale',
       ),
       act: (bloc) => bloc.add(const SyncListRequested()),
       verify: (bloc) async {
-        expect(bloc.state.status, SyncStatus.error);
+        expect(bloc.state.status, SyncStatus.failure);
         expect(bloc.state.lastError, 'token_invalid');
         expect(bloc.state.token, isNull);
         final prefs = await SharedPreferences.getInstance();
@@ -1173,7 +1173,7 @@ void main() {
       'List network failure is silent — leaves state as-is',
       build: () => SyncBloc(repo: _FakeRepo()..throwNetworkOnList = true),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-t',
         knownShas: {'a.md': 'sha-a'},
       ),
@@ -1206,7 +1206,7 @@ void main() {
       }),
       build: () => SyncBloc(repo: _FakeRepo()),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-stale',
       ),
       act: (bloc) => bloc.add(const SyncLogoutRequested()),
@@ -1224,7 +1224,7 @@ void main() {
       build: () => SyncBloc(repo: _FakeRepo()),
       act: (bloc) => bloc.add(const SyncRestoreRequested()),
       verify: (bloc) {
-        expect(bloc.state.status, SyncStatus.connected);
+        expect(bloc.state.status, SyncStatus.success);
         expect(bloc.state.token, 'jwt-restored');
       },
     );
@@ -1243,7 +1243,7 @@ void main() {
       }),
       build: () => SyncBloc(repo: _FakeRepo()..throwAuthOnPush = true),
       seed: () => const SyncState(
-        status: SyncStatus.connected,
+        status: SyncStatus.success,
         token: 'jwt-stale',
       ),
       act: (bloc) => bloc.add(

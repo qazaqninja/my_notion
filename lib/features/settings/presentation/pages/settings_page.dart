@@ -1445,7 +1445,7 @@ class _SyncLoginCardState extends State<_SyncLoginCard> {
   @override
   Widget build(BuildContext context) {
     final tokens = widget.tokens;
-    final busy = widget.state.status == SyncStatus.busy;
+    final busy = widget.state.status == SyncStatus.loading;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
