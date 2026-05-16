@@ -524,6 +524,27 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Extract every signed-decimal number from each selected line and
+/// emit them one-per-line in original order. Useful for pulling a
+/// numeric column out of tabular prose (`alice scored 87` →
+/// `87`) ahead of running a stats op on the result.
+///
+/// Lines without numbers are dropped from the output (rather than
+/// emitting an empty line) — the gesture is "give me the numbers,
+/// not the rows".
+SortLinesResult extractNumbersFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'-?\d+(?:\.\d+)?');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Sort the lines touched by the selection by the **median** of all
 /// numbers in each line, ascending. Useful for outlier-resistant
 /// ranking: a row with one anomalous value won't skew its position

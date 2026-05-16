@@ -254,6 +254,9 @@ enum SlashAction {
   /// Sort by the MEDIAN of all numbers in each line, ascending.
   /// Outlier-resistant per-row ranking.
   sortLinesByMedianNumber,
+  /// Extract every signed-decimal number from each selected line
+  /// and emit them one-per-line.
+  extractNumbersFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1448,6 +1451,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'outlier-resistant ranking',
     action: SlashAction.sortLinesByMedianNumber,
     keywords: ['sort', 'median', 'middle', 'outlier', 'robust', 'numbers'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract numbers from lines',
+    hint: 'one number per output line',
+    action: SlashAction.extractNumbersFromLines,
+    keywords: ['extract', 'pull', 'numbers', 'numeric', 'column'],
   ),
   SlashEntry(
     icon: 'sync',

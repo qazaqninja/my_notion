@@ -2234,6 +2234,36 @@ void main() {
     });
   });
 
+  group('extractNumbersFromLinesIn', () {
+    test('one number per line: emits each on its own line', () {
+      const text = 'alice 87\nbob 42\neve 100\n';
+      final r = extractNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '87\n42\n100\n');
+    });
+
+    test('multiple numbers per line: all extracted in order', () {
+      const text = 'series 1 2 3\nother 10 20\n';
+      final r = extractNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '1\n2\n3\n10\n20\n');
+    });
+
+    test('signed and decimal numbers are extracted intact', () {
+      const text = 'temp -3.5 then 12.0\n';
+      final r = extractNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '-3.5\n12.0\n');
+    });
+
+    test('lines without numbers are dropped from output', () {
+      const text = 'foo\nalice 87\nbar\nbob 42\n';
+      final r = extractNumbersFromLinesIn(text, 0, text.length);
+      expect(r.text, '87\n42\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractNumbersFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('sortLinesByMedianNumberIn', () {
     test('odd-count row uses the middle value as the key', () {
       const text = 'a 1 2 3\nb 10 20 30\nc 5 50 500\n';
