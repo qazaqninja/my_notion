@@ -1268,6 +1268,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, collapseConsecutiveDuplicatesIn,
         );
+      case SlashAction.countConsecutiveDuplicates:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, countConsecutiveDuplicatesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,

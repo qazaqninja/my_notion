@@ -276,6 +276,9 @@ enum SlashAction {
   /// occurrence (Unix `uniq` semantics). Non-consecutive duplicates
   /// are kept.
   collapseConsecutiveDuplicates,
+  /// Collapse runs of identical consecutive lines, prefixing each
+  /// kept line with its count (Unix `uniq -c` semantics).
+  countConsecutiveDuplicates,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1519,6 +1522,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'Unix uniq semantics',
     action: SlashAction.collapseConsecutiveDuplicates,
     keywords: ['uniq', 'collapse', 'consecutive', 'duplicate', 'dedup'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Count consecutive duplicates',
+    hint: 'Unix uniq -c semantics',
+    action: SlashAction.countConsecutiveDuplicates,
+    keywords: ['uniq', 'count', 'consecutive', 'duplicate', 'run'],
   ),
   SlashEntry(
     icon: 'sync',

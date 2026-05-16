@@ -886,6 +886,43 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Collapse runs of identical consecutive lines, prefixing each
+/// kept line with its count — Unix `uniq -c` semantics. The count
+/// is right-padded to the width of the largest count so columns
+/// stay aligned. Non-consecutive recurrences each get their own
+/// entry with their own run-count.
+///
+///   'foo\nfoo\nfoo\nbar\nfoo\n'  →  '3 foo\n1 bar\n1 foo\n'
+///
+/// Useful for log analysis: spot which events spammed in a row
+/// vs. which fired only once. Companion to
+/// [collapseConsecutiveDuplicatesIn] (which strips the run but
+/// loses the count).
+SortLinesResult countConsecutiveDuplicatesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      if (lines.isEmpty) return lines;
+      // First pass: collect (count, value) tuples for each run.
+      final runs = <(int, String)>[];
+      var run = 1;
+      for (var i = 1; i < lines.length; i++) {
+        if (lines[i] == lines[i - 1]) {
+          run++;
+        } else {
+          runs.add((run, lines[i - 1]));
+          run = 1;
+        }
+      }
+      runs.add((run, lines.last));
+      // Width of the largest count to align the column.
+      final width = runs
+          .map((r) => r.$1.toString().length)
+          .reduce((a, b) => a > b ? a : b);
+      return [
+        for (final r in runs) '${r.$1.toString().padLeft(width)} ${r.$2}',
+      ];
+    });
+
 /// Collapse runs of identical consecutive lines down to a single
 /// occurrence — Unix `uniq` semantics. Non-consecutive duplicates
 /// are KEPT. Case-sensitive, matches the existing dedupe family

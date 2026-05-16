@@ -2234,6 +2234,44 @@ void main() {
     });
   });
 
+  group('countConsecutiveDuplicatesIn', () {
+    test('collapses a run and prefixes with the count', () {
+      const text = 'foo\nfoo\nfoo\nbar\n';
+      final r = countConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, '3 foo\n1 bar\n');
+    });
+
+    test('non-consecutive recurrence gets its own count entry', () {
+      const text = 'foo\nfoo\nbar\nfoo\n';
+      final r = countConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, '2 foo\n1 bar\n1 foo\n');
+    });
+
+    test('counts pad left to widest count', () {
+      // Largest run is 10; width-2 padding aligns the column.
+      final ten = List.filled(10, 'spam').join('\n');
+      final text = '$ten\nfoo\n';
+      final r = countConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, '10 spam\n 1 foo\n');
+    });
+
+    test('every line unique: each gets count 1', () {
+      const text = 'a\nb\nc\n';
+      final r = countConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, '1 a\n1 b\n1 c\n');
+    });
+
+    test('single line gets count 1', () {
+      const text = 'lonely\n';
+      final r = countConsecutiveDuplicatesIn(text, 0, text.length);
+      expect(r.text, '1 lonely\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(countConsecutiveDuplicatesIn('', 0, 0).text, '');
+    });
+  });
+
   group('collapseConsecutiveDuplicatesIn', () {
     test('collapses a run of identical consecutive lines to one', () {
       const text = 'foo\nfoo\nfoo\nbar\n';
