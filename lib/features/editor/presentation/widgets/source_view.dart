@@ -995,6 +995,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByFirstNumberIn,
         );
+      case SlashAction.sortLinesByWordCount:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, sortLinesByWordCountIn,
+        );
       case SlashAction.reverseWordsInLine:
         _applyLinesTransformAfterSlash(
           stripStart, caret, reverseWordsInLineIn,

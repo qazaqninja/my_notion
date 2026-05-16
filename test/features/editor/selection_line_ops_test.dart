@@ -1251,6 +1251,38 @@ void main() {
     });
   });
 
+  group('sortLinesByWordCountIn', () {
+    test('orders bullets shortest-first by word count', () {
+      const text = 'one two three\nalpha\nbeta gamma\n';
+      final r = sortLinesByWordCountIn(text, 0, text.length);
+      expect(r.text, 'alpha\nbeta gamma\none two three\n');
+    });
+
+    test('equal-count lines fall back to case-insensitive lex', () {
+      const text = 'beta gamma\nAlpha Delta\nApple Pie\n';
+      final r = sortLinesByWordCountIn(text, 0, text.length);
+      expect(r.text, 'Alpha Delta\nApple Pie\nbeta gamma\n');
+    });
+
+    test('blank lines count as zero words and float to the top', () {
+      const text = 'one two\n\nthree four five\n';
+      final r = sortLinesByWordCountIn(text, 0, text.length);
+      expect(r.text, '\none two\nthree four five\n');
+    });
+
+    test('runs of whitespace collapse to a single word boundary', () {
+      // Three spaces between tokens still count as 2 words, not 4.
+      const text = 'a   b\nc d e f\n';
+      final r = sortLinesByWordCountIn(text, 0, text.length);
+      expect(r.text, 'a   b\nc d e f\n');
+    });
+
+    test('empty input stays empty', () {
+      final r = sortLinesByWordCountIn('', 0, 0);
+      expect(r.text, '');
+    });
+  });
+
   group('reverseWordsInLineIn', () {
     test('flips two-word lines', () {
       const text = 'hello world\n';

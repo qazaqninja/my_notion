@@ -489,6 +489,26 @@ SortLinesResult sortLinesByFirstNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Sort the lines touched by the selection by **word count**
+/// ascending (fewest words first). Words are whitespace-separated
+/// non-empty runs, matching the convention from `countLinesIn` and
+/// the text-stats footer. Equal-count lines fall back to a stable
+/// case-insensitive lex compare so output is deterministic. Useful
+/// for prioritising a bullet list by terseness, or surfacing
+/// one-word labels at the top of a paste-in.
+SortLinesResult sortLinesByWordCountIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      int wc(String s) =>
+          s.trim().isEmpty ? 0 : s.trim().split(RegExp(r'\s+')).length;
+      final sorted = [...lines]
+        ..sort((a, b) {
+          final cmp = wc(a).compareTo(wc(b));
+          if (cmp != 0) return cmp;
+          return a.toLowerCase().compareTo(b.toLowerCase());
+        });
+      return sorted;
+    });
+
 /// Sort the lines touched by the selection by **length**, ascending
 /// (shortest first). Equal-length lines fall back to a stable
 /// case-insensitive lex compare for deterministic ordering.

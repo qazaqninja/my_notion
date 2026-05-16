@@ -1,3 +1,10 @@
+// This file covers **caret-anchored** ops on `source_line_ops.dart`
+// (duplicate / move / delete line under cursor). The much larger
+// **selection-range** ops family (sort, dedupe, stats, case toggles,
+// numeric transforms, ...) is tested in
+// `selection_line_ops_test.dart`. If you're adding a new function
+// that operates on the lines a selection touches, put its tests
+// there — not here.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/editor/domain/source_line_ops.dart';
 

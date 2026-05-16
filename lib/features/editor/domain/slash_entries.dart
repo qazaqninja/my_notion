@@ -134,6 +134,9 @@ enum SlashAction {
   /// Sort by the first signed number found anywhere in each line;
   /// lines with no number drop to the bottom.
   sortLinesByFirstNumber,
+  /// Sort the lines touched by the selection by their word count,
+  /// fewest words first.
+  sortLinesByWordCount,
   /// Reverse the words on every selected line (preserving any
   /// trailing whitespace).
   reverseWordsInLine,
@@ -1255,6 +1258,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'log lines by leading score',
     action: SlashAction.sortLinesByFirstNumber,
     keywords: ['sort', 'first', 'number', 'leading', 'score', 'log'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort by word count',
+    hint: 'fewest words first',
+    action: SlashAction.sortLinesByWordCount,
+    keywords: ['sort', 'word', 'count', 'words', 'terse'],
   ),
   SlashEntry(
     icon: 'edit',
