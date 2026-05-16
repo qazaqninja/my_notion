@@ -1045,6 +1045,20 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart + caretInScaffold,
           ),
         );
+      case SlashAction.insertPostMortemScaffold:
+        final newText = text.replaceRange(
+          stripStart, caret, kPostMortemScaffold,
+        );
+        // Land caret on the blank line below "## Summary"
+        // (offset = "## Summary\n".length = 11) — the user typically
+        // writes the TL;DR sentence first, then fills in the rest.
+        const caretInScaffold = 11;
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + caretInScaffold,
+          ),
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

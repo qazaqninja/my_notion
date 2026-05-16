@@ -78,6 +78,9 @@ enum SlashAction {
   /// Insert a four-section 1:1 meeting scaffold at the caret
   /// (Their topics / My topics / Career / Action items).
   insertOneOnOneScaffold,
+  /// Insert a four-section incident post-mortem scaffold at the
+  /// caret (Summary / Timeline / Root cause / Action items).
+  insertPostMortemScaffold,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1485,6 +1488,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.insertOneOnOneScaffold,
     keywords: ['1on1', '1:1', 'oneonone', 'one-on-one', 'sync',
         'manager', 'report', 'template', 'scaffold'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Post-mortem scaffold',
+    hint: 'summary / timeline / cause / actions',
+    action: SlashAction.insertPostMortemScaffold,
+    keywords: ['postmortem', 'post-mortem', 'incident', 'outage',
+        'rca', 'root', 'cause', 'blameless', 'template', 'scaffold'],
   ),
   SlashEntry(
     icon: 'link',

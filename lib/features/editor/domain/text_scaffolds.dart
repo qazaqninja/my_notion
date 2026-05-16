@@ -67,6 +67,22 @@ const String kRetroNotesScaffold =
     '## Action items\n'
     '- [ ] \n';
 
+/// Four-section incident post-mortem scaffold dropped at the caret
+/// by the `/postmortem` slash entry: Summary / Timeline / Root cause
+/// / Action items. The standard blameless-post-mortem shape. Action
+/// items pre-seeded as GFM unchecked-todos so they roll into the
+/// M985 "open todos" palette automatically after the doc is filed.
+const String kPostMortemScaffold =
+    '## Summary\n'
+    '\n'
+    '## Timeline\n'
+    '- \n'
+    '\n'
+    '## Root cause\n'
+    '\n'
+    '## Action items\n'
+    '- [ ] \n';
+
 /// Four-section 1:1 meeting scaffold dropped at the caret by the
 /// `/1on1` slash entry: Their topics / My topics / Career / Action
 /// items. The classic manager-report sync shape — Their first so the

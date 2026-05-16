@@ -140,6 +140,36 @@ void main() {
     });
   });
 
+  group('kPostMortemScaffold', () {
+    test('contains the four canonical post-mortem section headings', () {
+      expect(kPostMortemScaffold.contains('## Summary\n'), isTrue);
+      expect(kPostMortemScaffold.contains('## Timeline\n'), isTrue);
+      expect(kPostMortemScaffold.contains('## Root cause\n'), isTrue);
+      expect(kPostMortemScaffold.contains('## Action items\n'), isTrue);
+    });
+
+    test('headings appear in canonical order S → T → C → A', () {
+      final iS = kPostMortemScaffold.indexOf('## Summary');
+      final iT = kPostMortemScaffold.indexOf('## Timeline');
+      final iC = kPostMortemScaffold.indexOf('## Root cause');
+      final iA = kPostMortemScaffold.indexOf('## Action items');
+      expect(iS < iT && iT < iC && iC < iA, isTrue);
+    });
+
+    test('action items use the GFM unchecked-todo form', () {
+      expect(kPostMortemScaffold.contains('- [ ] '), isTrue);
+    });
+
+    test('caret offset (11) sits on the blank line below "## Summary"',
+        () {
+      const caretInScaffold = 11;
+      expect(
+        kPostMortemScaffold.substring(0, caretInScaffold),
+        '## Summary\n',
+      );
+    });
+  });
+
   group('kOneOnOneScaffold', () {
     test('contains the four canonical 1:1 section headings', () {
       expect(kOneOnOneScaffold.contains('## Their topics\n'), isTrue);
