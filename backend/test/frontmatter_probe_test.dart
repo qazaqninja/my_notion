@@ -96,5 +96,34 @@ void main() {
       expect(p.publicPasswordHash, hash);
       expect(p.isPasswordProtected, isFalse);
     });
+
+    // E47 — hasForms.
+    test('forms: with a non-empty value sets hasForms = true', () {
+      final p = FrontmatterProbe.fromBody(
+        '---\nid: $ulid\npublic: true\nforms: customers.database.yaml\n---\n',
+      );
+      expect(p.hasForms, isTrue);
+    });
+
+    test('forms: true also flips hasForms (any non-empty value)', () {
+      final p = FrontmatterProbe.fromBody(
+        '---\nid: $ulid\npublic: true\nforms: true\n---\n',
+      );
+      expect(p.hasForms, isTrue);
+    });
+
+    test('forms: with an empty value does NOT set hasForms', () {
+      final p = FrontmatterProbe.fromBody(
+        '---\nid: $ulid\npublic: true\nforms:\n---\n',
+      );
+      expect(p.hasForms, isFalse);
+    });
+
+    test('hasForms defaults to false when the key is absent', () {
+      final p = FrontmatterProbe.fromBody(
+        '---\nid: $ulid\npublic: true\n---\n',
+      );
+      expect(p.hasForms, isFalse);
+    });
   });
 }

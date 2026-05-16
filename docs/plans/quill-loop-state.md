@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E47 — Forms slice 2: probe `forms:` field from frontmatter, populate FormsRepository.hasFormDefinition
+- **Task:** E48 — Forms slice 3: schema validation + row insert on POST /forms/<ulid>/submit
 - **Status:** pending
 
 ## Last completed
+
+- **M1350 — E47** (probe `forms:` field + populate hasFormDefinition)
+- Committed: (this iteration)
+- TaskList ID: 69
+- Notes: `FrontmatterProbe` gains a `hasForms` field — true iff `forms:` is present with a non-empty value (`forms: customers.database.yaml` or `forms: true` flip it; bare `forms:` doesn't). Migration v5 adds `vault_files.has_forms BOOLEAN NOT NULL DEFAULT false` plus a partial index `idx_vault_files_ulid_forms ON vault_files(ulid) WHERE is_public = true AND has_forms = true`. Sync upsert writes the new column. `FormsRepository.hasFormDefinition(ulid)` now runs `SELECT 1 FROM vault_files WHERE ulid = $1 AND is_public = true AND has_forms = true LIMIT 1` against the connection. 4 new probe tests (non-empty-value flips it, forms:true also flips, empty value does not, absent key defaults false). 86/86 backend tests pass; backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1349 — E46** (forms scaffold: route + repo abstraction)
 - Committed: (this iteration)

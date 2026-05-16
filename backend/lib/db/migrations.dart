@@ -86,4 +86,17 @@ const _migrations = <_Migration>[
     -- until the visitor presents a valid unlock cookie.
     ALTER TABLE vault_files ADD COLUMN public_password_hash TEXT;
   '''),
+  _Migration(5, '''
+    -- E47 (M1350): forms support.
+    -- `has_forms` is set true when FrontmatterProbe sees a non-empty
+    -- `forms:` field in the page's frontmatter. The forms route uses
+    -- it as a fast lookup to decide whether POST /forms/<ulid>/submit
+    -- should accept a submission.
+    ALTER TABLE vault_files
+      ADD COLUMN has_forms BOOLEAN NOT NULL DEFAULT false;
+    -- Partial index mirrors the public-page index: queries always
+    -- filter on (ulid, is_public = true, has_forms = true).
+    CREATE INDEX idx_vault_files_ulid_forms
+      ON vault_files(ulid) WHERE is_public = true AND has_forms = true;
+  '''),
 ];

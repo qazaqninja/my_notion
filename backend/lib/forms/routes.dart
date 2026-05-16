@@ -25,16 +25,26 @@ class NoFormsRepository implements FormsRepositoryBase {
   Future<bool> hasFormDefinition(String ulid) async => false;
 }
 
-/// Concrete repo backed by Postgres. Slice E46 hands the connection in
-/// but doesn't touch it — every lookup returns false. Slice E47 will
-/// query `vault_files` to find the row whose body declares `forms:` and
-/// confirm the linked database is public.
+/// Concrete repo backed by Postgres. E47 wires the lookup against
+/// `vault_files` — a page is form-bearing iff it's public AND its
+/// frontmatter declared a non-empty `forms:` value (the
+/// `FrontmatterProbe` sets `has_forms = true` on upsert).
 class FormsRepository implements FormsRepositoryBase {
   const FormsRepository(this._conn);
-  // ignore: unused_field — wired in for E47 row-insert path.
   final Connection _conn;
+
   @override
-  Future<bool> hasFormDefinition(String ulid) async => false;
+  Future<bool> hasFormDefinition(String ulid) async {
+    final rows = await _conn.execute(
+      Sql.named('''
+        SELECT 1 FROM vault_files
+        WHERE ulid = @ulid AND is_public = true AND has_forms = true
+        LIMIT 1
+      '''),
+      parameters: {'ulid': ulid},
+    );
+    return rows.isNotEmpty;
+  }
 }
 
 /// Public forms surface — Phase E E56+ scaffold (E46 / M1349).

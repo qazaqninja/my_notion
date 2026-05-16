@@ -13,6 +13,7 @@ class FrontmatterProbe {
     this.ulid,
     this.isPublic = false,
     this.publicPasswordHash,
+    this.hasForms = false,
   });
 
   factory FrontmatterProbe.fromBody(String body) {
@@ -23,6 +24,7 @@ class FrontmatterProbe {
     String? ulid;
     var isPublic = false;
     String? publicPasswordHash;
+    var hasForms = false;
     for (final line in block.split('\n')) {
       final m = RegExp(r'^([a-zA-Z_][\w-]*)\s*:\s*(.*?)\s*$').firstMatch(line);
       if (m == null) continue;
@@ -40,11 +42,21 @@ class FrontmatterProbe {
       if (key == 'public_password' && _isBcryptHash(value)) {
         publicPasswordHash = value;
       }
+      // E47: `forms:` flags the page as carrying a form definition
+      // that POST /forms/<ulid>/submit will accept. We treat any
+      // non-empty value as "has a form" — the actual schema
+      // resolution (string ref to a `.database.yaml`, or an inline
+      // block, etc.) is a future-slice concern. The empty-line case
+      // (just `forms:` with no value) is NOT a definition.
+      if (key == 'forms' && value.isNotEmpty) {
+        hasForms = true;
+      }
     }
     return FrontmatterProbe._(
       ulid: ulid,
       isPublic: isPublic,
       publicPasswordHash: publicPasswordHash,
+      hasForms: hasForms,
     );
   }
 
@@ -54,6 +66,12 @@ class FrontmatterProbe {
   /// E43 — bcrypt hash of the public-page password, when set. Null
   /// means the public page is reachable without an unlock cookie.
   final String? publicPasswordHash;
+
+  /// E47 — true when the page's frontmatter declares a `forms:` field
+  /// with a non-empty value, indicating that
+  /// `POST /forms/<ulid>/submit` should accept submissions for this
+  /// page. The schema itself is resolved separately (TBD slice).
+  final bool hasForms;
 
   /// True when `public: true` AND the page has been gated behind a
   /// password.
