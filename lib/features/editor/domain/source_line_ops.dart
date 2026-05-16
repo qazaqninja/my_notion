@@ -3456,6 +3456,50 @@ SortLinesResult extractIbansFromLinesIn(
       return out;
     });
 
+/// Extract every AWS region code from each selected line.
+/// Useful for cloud-resource doc audits, IAM scope inventories,
+/// multi-region failover plan triage, and disaster-recovery
+/// runbook scrapes.
+///
+/// Recognition: a continent / partition prefix (`us`, `eu`, `ap`,
+/// `sa`, `ca`, `af`, `me`, `cn`, `il`), a hyphen, a directional
+/// component (`east`, `west`, `north`, `south`, `central`,
+/// `northeast`, `northwest`, `southeast`, `southwest`), a hyphen,
+/// and a 1-digit availability index.
+///
+/// Matches:
+/// - `us-east-1`        — N. Virginia
+/// - `us-west-2`        — Oregon
+/// - `eu-central-1`     — Frankfurt
+/// - `ap-southeast-2`   — Sydney
+/// - `sa-east-1`        — São Paulo
+/// - `ap-northeast-3`   — Osaka
+/// - `cn-northwest-1`   — China Ningxia
+/// - `il-central-1`     — Israel Tel Aviv
+///
+/// AWS GovCloud regions (`us-gov-east-1`, `us-gov-west-1`) use a
+/// `us-gov-...` triple-prefix not covered by the directional
+/// alternation; those are intentionally not matched. Add a
+/// dedicated GovCloud extractor if that surface matters.
+///
+/// 96th member of the extraction family.
+SortLinesResult extractAwsRegionsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:us|eu|ap|sa|ca|af|me|cn|il)-'
+        r'(?:east|west|north|south|central|northeast|northwest|'
+        r'southeast|southwest)-\d\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

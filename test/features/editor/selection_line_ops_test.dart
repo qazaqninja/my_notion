@@ -8437,6 +8437,103 @@ void main() {
     });
   });
 
+  group('extractAwsRegionsFromLinesIn', () {
+    test('us-east-1 extracts (most common region)', () {
+      const text = 'primary us-east-1 deploy\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'us-east-1\n');
+    });
+
+    test('us-west-2 extracts', () {
+      const text = 'oregon us-west-2 mirror\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'us-west-2\n');
+    });
+
+    test('eu-central-1 (Frankfurt) extracts', () {
+      const text = 'gdpr eu-central-1 only\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'eu-central-1\n');
+    });
+
+    test('ap-southeast-2 (Sydney) extracts', () {
+      const text = 'apac ap-southeast-2 latency\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'ap-southeast-2\n');
+    });
+
+    test('ap-northeast-3 (Osaka) extracts', () {
+      const text = 'dr ap-northeast-3 failover\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'ap-northeast-3\n');
+    });
+
+    test('sa-east-1 (São Paulo) extracts', () {
+      const text = 'brazil sa-east-1 dedicated\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'sa-east-1\n');
+    });
+
+    test('cn-northwest-1 extracts (China region)', () {
+      const text = 'china cn-northwest-1 isolation\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'cn-northwest-1\n');
+    });
+
+    test('il-central-1 (Israel) extracts', () {
+      const text = 'tel-aviv il-central-1 launched\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'il-central-1\n');
+    });
+
+    test('unknown prefix rejected', () {
+      // `xx-east-1` is not a real AWS partition.
+      const text = 'fake xx-east-1 ignore\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('GovCloud us-gov-east-1 NOT matched (documented)', () {
+      // GovCloud regions have a triple-prefix `us-gov-...` not
+      // handled by the directional alternation; deliberately
+      // out of scope.
+      const text = 'gov us-gov-east-1 special\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      // The first part `us-gov` could regex-match as us + gov?
+      // `gov` isn't in the directional set, so the inner
+      // alternation fails. No match.
+      expect(r.text, '\n');
+    });
+
+    test('multiple regions on one line each extract', () {
+      const text = 'replicate us-east-1 to eu-west-1 ok\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'us-east-1\neu-west-1\n');
+    });
+
+    test('lines without regions dropped from output', () {
+      const text = 'plain prose\nuse ap-south-1 instead\nbye\n';
+      final r = extractAwsRegionsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'ap-south-1\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractAwsRegionsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

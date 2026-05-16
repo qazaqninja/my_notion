@@ -534,6 +534,9 @@ enum SlashAction {
   /// Extract every IBAN (International Bank Account Number,
   /// e.g. `GB82WEST12345698765432`) from each selected line.
   extractIbansFromLines,
+  /// Extract every AWS region code (`us-east-1`, `eu-west-2`,
+  /// `ap-southeast-3`) from each selected line.
+  extractAwsRegionsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2476,6 +2479,15 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractIbansFromLines,
     keywords: ['extract', 'iban', 'bank', 'account',
         'sepa', 'payment', 'invoice', 'finance', 'banking'],
+  ),
+  SlashEntry(
+    icon: 'globe',
+    label: 'Extract AWS region codes',
+    hint: 'us-east-1 / eu-west-2 / ap-southeast-2',
+    action: SlashAction.extractAwsRegionsFromLines,
+    keywords: ['extract', 'aws', 'region', 'cloud',
+        'amazon', 'datacenter', 'availability', 'zone',
+        'ops', 'infrastructure'],
   ),
   SlashEntry(
     icon: 'calendar',
