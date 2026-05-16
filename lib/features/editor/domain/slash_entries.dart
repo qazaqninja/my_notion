@@ -282,6 +282,9 @@ enum SlashAction {
   /// Split each selected line on whitespace runs, emitting one
   /// word per output line.
   splitOnSpaces,
+  /// Extract the body of every GFM unchecked-todo line in the
+  /// selection, emitting each body without its `- [ ] ` marker.
+  extractOpenTodoBodies,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1539,6 +1542,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'one word per line',
     action: SlashAction.splitOnSpaces,
     keywords: ['split', 'whitespace', 'words', 'tokens', 'break'],
+  ),
+  SlashEntry(
+    icon: 'check',
+    label: 'Extract open-todo bodies',
+    hint: '- [ ] foo → foo',
+    action: SlashAction.extractOpenTodoBodies,
+    keywords: ['extract', 'todo', 'todos', 'action', 'item', 'open', 'gfm'],
   ),
   SlashEntry(
     icon: 'sync',

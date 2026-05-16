@@ -886,6 +886,29 @@ SortLinesResult sortLinesNaturalIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Extract the BODY of every GFM unchecked-todo line in the
+/// selection (`- [ ] foo bar` → `foo bar`). The marker (with any
+/// leading indentation) is stripped; the body passes through.
+/// Lines that don't start with `- [ ] ` / `* [ ] ` / `+ [ ] ` (with
+/// optional leading indent) are dropped from the output — the
+/// gesture is "give me the open-todo bodies, not the rows around
+/// them".
+///
+/// Useful for harvesting open action items out of a meeting-note
+/// or retro page into a flat to-do list.
+SortLinesResult extractOpenTodoBodiesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // `^[indent]<bullet> [ ] ` then capture the rest of the line.
+      final re = RegExp(r'^[ \t]*[-*+] \[ \] (.*)$');
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(1)!);
+      }
+      return out;
+    });
+
 /// Split each selected line on whitespace runs, emitting one word
 /// per output line. Empty / whitespace-only lines drop out. Useful
 /// for word-level processing (sort, dedupe, count) starting from

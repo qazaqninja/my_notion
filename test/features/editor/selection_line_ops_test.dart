@@ -2234,6 +2234,42 @@ void main() {
     });
   });
 
+  group('extractOpenTodoBodiesIn', () {
+    test('strips the marker from every open-todo line', () {
+      const text = '- [ ] write report\n- [ ] file expenses\n';
+      final r = extractOpenTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'write report\nfile expenses\n');
+    });
+
+    test('recognises all GFM bullet variants', () {
+      const text = '- [ ] dash\n* [ ] star\n+ [ ] plus\n';
+      final r = extractOpenTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'dash\nstar\nplus\n');
+    });
+
+    test('indented open-todos still extract', () {
+      const text = '  - [ ] nested\n\t* [ ] tab-indented\n';
+      final r = extractOpenTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'nested\ntab-indented\n');
+    });
+
+    test('checked todos are NOT extracted', () {
+      const text = '- [x] done\n- [ ] still open\n';
+      final r = extractOpenTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'still open\n');
+    });
+
+    test('non-todo lines are dropped from output', () {
+      const text = 'preamble\n- [ ] real\nfooter\n';
+      final r = extractOpenTodoBodiesIn(text, 0, text.length);
+      expect(r.text, 'real\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractOpenTodoBodiesIn('', 0, 0).text, '');
+    });
+  });
+
   group('splitOnSpacesIn', () {
     test('emits one word per line for a single-line input', () {
       const text = 'one two three\n';
