@@ -524,6 +524,34 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Sort the lines touched by the selection by the **largest signed
+/// number** that appears anywhere in each line, ascending. Useful
+/// when each row has multiple numbers and the peak (e.g. "max load",
+/// "highest score") carries the meaning. Lines with no number drop
+/// to the bottom in original order — same convention as the rest of
+/// the numeric-sort family (M970 / M1042 / M1043).
+SortLinesResult sortLinesByMaxNumberIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'-?\d+(?:\.\d+)?');
+      final numeric = <(double, String)>[];
+      final nonNumeric = <String>[];
+      for (final l in lines) {
+        double? maxVal;
+        for (final m in re.allMatches(l)) {
+          final v = double.tryParse(m.group(0)!);
+          if (v == null) continue;
+          if (maxVal == null || v > maxVal) maxVal = v;
+        }
+        if (maxVal == null) {
+          nonNumeric.add(l);
+        } else {
+          numeric.add((maxVal, l));
+        }
+      }
+      numeric.sort((a, b) => a.$1.compareTo(b.$1));
+      return [...numeric.map((p) => p.$2), ...nonNumeric];
+    });
+
 /// Sort the lines touched by the selection by the **sum of every
 /// signed number** found anywhere in each line, ascending. Useful
 /// for ranking tabular rows where the per-row total is the metric

@@ -239,6 +239,9 @@ enum SlashAction {
   /// ascending. Lines with no number sum to 0 and sort with the
   /// other zero-sum lines.
   sortLinesBySumOfNumbers,
+  /// Sort by the LARGEST signed number found anywhere in each
+  /// line, ascending. Lines with no number drop to the bottom.
+  sortLinesByMaxNumber,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1405,6 +1408,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'per-row total ascending',
     action: SlashAction.sortLinesBySumOfNumbers,
     keywords: ['sort', 'sum', 'total', 'numbers', 'row', 'tabular'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort by max number in line',
+    hint: 'per-row peak ascending',
+    action: SlashAction.sortLinesByMaxNumber,
+    keywords: ['sort', 'max', 'maximum', 'peak', 'highest', 'numbers'],
   ),
   SlashEntry(
     icon: 'sync',

@@ -2181,6 +2181,38 @@ void main() {
     });
   });
 
+  group('sortLinesByMaxNumberIn', () {
+    test('sorts by per-row peak number ascending', () {
+      const text = 'a 10 20 30\nb 5 5 5\nc 100\n';
+      // Maxes: a=30, b=5, c=100 → b, a, c.
+      final r = sortLinesByMaxNumberIn(text, 0, text.length);
+      expect(r.text, 'b 5 5 5\na 10 20 30\nc 100\n');
+    });
+
+    test('signed numbers: a negative max still wins if it is the largest', () {
+      const text = 'a -10\nb -5 -100\nc -20\n';
+      // Maxes: a=-10, b=-5, c=-20 → c (-20), a (-10), b (-5).
+      final r = sortLinesByMaxNumberIn(text, 0, text.length);
+      expect(r.text, 'c -20\na -10\nb -5 -100\n');
+    });
+
+    test('lines with no numbers drop to the bottom', () {
+      const text = 'a 10\nplain\nb 5\n';
+      final r = sortLinesByMaxNumberIn(text, 0, text.length);
+      expect(r.text, 'b 5\na 10\nplain\n');
+    });
+
+    test('single number per line: same as sortLinesByFirstNumber', () {
+      const text = 'a 30\nb 5\nc 100\n';
+      final r = sortLinesByMaxNumberIn(text, 0, text.length);
+      expect(r.text, 'b 5\na 30\nc 100\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(sortLinesByMaxNumberIn('', 0, 0).text, '');
+    });
+  });
+
   group('sortLinesBySumOfNumbersIn', () {
     test('sums every number and sorts ascending', () {
       const text = 'alice 10 20 30\nbob 5 5 5\ncarol 100\n';
