@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E11 — DELETE /sync/del/[relpath] + If-Match conflict preflight
+- **Task:** E12 — Flutter-side sync client (lib/features/sync/)
 - **Status:** pending
 
 ## Last completed
 
-- **M1304 — E10** (GET /sync/get/[relpath] returns body + summary)
-- Committed: 1b5ff1b
-- TaskList ID: 32
-- Notes: New `FileBody(summary, body)` DTO bundles the summary + raw markdown body. `SyncRepositoryBase.fetch(userId, relpath)` returns `FileBody?`. Route runs SELECT scoped by both `user_id` AND `relpath` so cross-user reads are structurally impossible. 404 not_found when missing; 200 + FileBody JSON on hit. Cross-user-read test (Alice GETs Bob's path → 404) covers the data-leakage gap. 37/37 backend tests pass. Sync read+write loop is now end-to-end: clients can /sync/list, /sync/put, /sync/get, all gated by Bearer auth and per-user scoped.
+- **M1306 — E11** (DELETE + If-Match optimistic concurrency)
+- Committed: e465996
+- TaskList ID: 33
+- Notes: `UpsertOutcome.persisted(summary)|conflict(current)` union. `upsert` adds optional `ifMatch` (null = unconditional, `*` = must-not-exist, sha = TOCTOU-safe via `runTx` wrap). Routes: PUT honours If-Match, returns 409 `{error: conflict, current: <summary>}`. DELETE returns 204/404. 41/41 backend tests pass. Server sync API is feature-complete for v2: list / get / put / delete / conflict-aware. Phase E client work begins at E12.
 
 ## Backlog (Phase A — Foundation)
 
