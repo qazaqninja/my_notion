@@ -3366,6 +3366,76 @@ void main() {
     });
   });
 
+  group('extractTimeOfDayFromLinesIn', () {
+    test('24-hour HH:MM extracts', () {
+      const text = 'meeting at 09:30 today\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '09:30\n');
+    });
+
+    test('24-hour HH:MM:SS extracts', () {
+      const text = 'started at 14:23:45 sharp\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '14:23:45\n');
+    });
+
+    test('12-hour with space AM/PM extracts', () {
+      const text = 'demo at 2:30 PM Thursday\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '2:30 PM\n');
+    });
+
+    test('12-hour no-space form extracts', () {
+      const text = 'standup 9:30am daily\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '9:30am\n');
+    });
+
+    test('case-insensitive AM/PM meridian', () {
+      const text = 'cut 12:00 Pm release\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '12:00 Pm\n');
+    });
+
+    test('multiple times on one line each extract', () {
+      const text = 'from 09:00 to 17:30 daily\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '09:00\n17:30\n');
+    });
+
+    test('single-digit minutes are NOT a time match', () {
+      // `\d{2}` requires exactly two digit chars for the minutes.
+      const text = 'ratio 1:2 invalid\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('embedded in longer numeric run is NOT a match', () {
+      // `\b` on each end rejects embedded slices inside `12345`
+      // or other long digit runs.
+      const text = 'identifier 12345 inline\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('mixed 24h and 12h forms on one block all extract', () {
+      const text =
+          'wake at 6:00am\nstandup 09:30\nlunch 12:00 PM\nstop 17:00\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '6:00am\n09:30\n12:00 PM\n17:00\n');
+    });
+
+    test('lines without times dropped from output', () {
+      const text = 'plain prose\nstart 14:00 sharp\nmore prose\n';
+      final r = extractTimeOfDayFromLinesIn(text, 0, text.length);
+      expect(r.text, '14:00\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractTimeOfDayFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

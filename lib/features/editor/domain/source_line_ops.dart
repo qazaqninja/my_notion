@@ -1365,6 +1365,45 @@ SortLinesResult extractMarkdownFootnoteIdsFromLinesIn(
       return out;
     });
 
+/// Extract every time-of-day substring from each selected line.
+/// Useful for meeting-note triage, log-line scraping, and
+/// scheduling audits ("which timestamps does this page mention?").
+///
+/// Recognition (all three forms supported):
+/// - 24-hour HH:MM       — e.g. `09:30`, `23:59`
+/// - 24-hour HH:MM:SS    — e.g. `09:30:45`
+/// - 12-hour HH:MM AM/PM — e.g. `2:30 PM`, `9:30am`, `12:34 P.M.`
+///   is NOT supported (no period); the meridian is a single
+///   case-insensitive `am` / `pm` token, with optional space.
+///
+/// The hours and minutes use `\d{1,2}` / `\d{2}` — no semantic
+/// range validation (so a pathological `25:99` would also match,
+/// but those don't appear in real text in any meaningful way).
+/// Word boundaries `\b` keep `1:23` matchable but reject embedded
+/// runs inside longer numeric strings like `12345`.
+///
+/// Distinct from [extractIsoDatesFromLinesIn] (calendar-date
+/// shape, M1062) — different time surface.
+///
+/// 27th member of the extraction family.
+SortLinesResult extractTimeOfDayFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // `\b\d{1,2}:\d{2}(?::\d{2})?(?:\s?[ap]m)?\b` — the
+      // meridian is matched case-insensitively via the `i` flag.
+      final re = RegExp(
+        r'\b\d{1,2}:\d{2}(?::\d{2})?(?:\s?[ap]m)?\b',
+        caseSensitive: false,
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
