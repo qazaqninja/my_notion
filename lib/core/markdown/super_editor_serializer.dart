@@ -48,9 +48,12 @@ class SuperEditorSerializer {
   ///     `blockType: tableAttribution`. The raw multi-line markdown is
   ///     preserved in the body text so the renderer (existing
   ///     `markdown_renderer.dart` GFM-pipe-table path) gets the source
-  ///     unmodified and round-trip stays byte-identical. Cell-level
-  ///     editing inside super_editor would need a dedicated TableNode —
-  ///     that's a v2 concern.
+  ///     unmodified and round-trip stays byte-identical.
+  /// - Slice 8: image cards.
+  ///   - Standalone `![alt](url)` (the line is exactly that) →
+  ///     `ImageNode(imageUrl: url, altText: alt)`. Inline images inside
+  ///     a paragraph stay as raw markdown — they'd need an inline
+  ///     mark, deferred to the inline-marks slices.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -122,6 +125,20 @@ class SuperEditorSerializer {
             if (lang.isNotEmpty) 'language': lang,
           },
         ));
+        continue;
+      }
+      // Standalone image card? Line is exactly `![alt](url)` — bare
+      // image with no surrounding text. Inline images inside a paragraph
+      // stay as raw markdown for the inline-marks pass.
+      final imageMatch = RegExp(r'^!\[(.*?)\]\((.+?)\)\s*$').firstMatch(line);
+      if (imageMatch != null) {
+        flushBuffer();
+        nodes.add(ImageNode(
+          id: Editor.createNodeId(),
+          altText: imageMatch.group(1) ?? '',
+          imageUrl: imageMatch.group(2)!,
+        ));
+        i += 1;
         continue;
       }
       // GFM pipe table? Detected by two-line signature: header row
@@ -271,6 +288,8 @@ class SuperEditorSerializer {
         out.write(node.text.toPlainText());
       } else if (node is HorizontalRuleNode) {
         out.write('---');
+      } else if (node is ImageNode) {
+        out.write('![${node.altText}](${node.imageUrl})');
       } else if (node is ParagraphNode) {
         final block = node.getMetadataValue('blockType');
         if (block == tableAttribution) {

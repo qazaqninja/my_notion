@@ -342,4 +342,43 @@ void main() {
       // No table attribution → treated as plain text.
     });
   });
+
+  group('SuperEditorSerializer image cards (D1 slice 8)', () {
+    test('standalone ![alt](url) becomes an ImageNode', () {
+      const md = '![sunset](attachments/sunset.jpg)';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ImageNode;
+      expect(node.altText, 'sunset');
+      expect(node.imageUrl, 'attachments/sunset.jpg');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('image with empty alt text round-trips', () {
+      const md = '![](attachments/x.png)';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ImageNode;
+      expect(node.altText, '');
+      expect(node.imageUrl, 'attachments/x.png');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('paragraph + image + paragraph round-trip', () {
+      const md = 'before\n\n![cat](cat.png)\n\nafter';
+      final doc = serializer.markdownToDocument(md);
+      final nodes = doc.toList();
+      expect(nodes, hasLength(3));
+      expect(nodes[1], isA<ImageNode>());
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('inline image inside a paragraph stays as raw text (deferred to '
+        'inline-marks pass)', () {
+      const md = 'See ![logo](logo.png) inline.';
+      final doc = serializer.markdownToDocument(md);
+      // Whole line is a paragraph — not standalone image.
+      expect(doc.first, isA<ParagraphNode>());
+      expect((doc.first as ParagraphNode).text.toPlainText(),
+          'See ![logo](logo.png) inline.');
+    });
+  });
 }
