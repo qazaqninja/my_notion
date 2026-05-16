@@ -218,7 +218,7 @@ If your feature wants to store something new, the answer is almost always "add a
 
 - ✅ Mobile apps (iOS, Android) — Builds verified (M14); responsive shell (M13/M20). New page FAB on the mobile shell (M197). Responsive command palette + slash menu widths (M206, M207). Mobile database table auto-falls-back to list rendering (M209). Outline + footer auto-show on mobile.
 - 🔮 Web clipper (browser extension that saves URLs into Notion) — Separate package; can write to a remote vault only via backend.
-- 🚧 Share sheet integration (save to Notion from any app) — In-app Quick capture analogue M210 (⌘. opens a dialog → prepends to `Inbox/Quick capture.md` with a timestamp). True OS share-sheet integration needs a platform channel.
+- 🚧 Share sheet integration (save to Notion from any app) — In-app Quick capture analogue M210 (⌘. opens a dialog → prepends to `Inbox/Quick capture.md` with a timestamp). **Outbound** OS share-sheet shipped at M1240 (`share_plus`, editor-kebab "Share…" routes current page through OS sheet). **Inbound** share (open-in-Quill from Safari etc.) requires iOS share extension Xcode setup; remains on the backlog as a follow-up slice.
 - ✅ Offline access to recently opened pages — Local-first by design; the whole vault is on disk.
 - 📋 Widgets (iOS/Android home screen) — Platform-specific, write-only ("Add to Inbox") is the natural first widget.
 

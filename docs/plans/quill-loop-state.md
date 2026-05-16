@@ -5,16 +5,16 @@
 
 ## Current
 
-- **Phase:** C (V1 Polish — Platform)
-- **Task:** C3 — OS share-sheet integration (share_plus + receive_sharing_intent)
+- **Phase:** C → D transition (V1 Polish — Platform → V1 Polish — WYSIWYG)
+- **Task:** D1 — Bring `super_editor` into the tree (start parallel `/editor-beta/` route)
 - **Status:** pending
 
 ## Last completed
 
-- **M1238 — C2 slice 2 (closes C2)** (VaultBloc bookmark wiring)
-- Committed: 77f43df
-- TaskList ID: 20 (closed)
-- Notes: C2 shipped in 2 slices (M1236 channel + wrapper, M1238 VaultBloc integration). The longest-standing v1.x backlog item per CLAUDE.md is done — quit + relaunch macOS app auto-restores vault. Updated docs/platforms.md "Vault persistence across launches" with the full flow + manual verification steps. CLAUDE.md item #7 struck through.
+- **M1240 — C3 (closes C3 + Phase C)** (outbound OS share-sheet via share_plus)
+- Committed: 069f1d8
+- TaskList ID: 21 (closed)
+- Notes: share_plus ^12.0.2 + editor-kebab "Share…" entry that calls `Share.shareXFiles` with the current page. Falls back to `Share.share(body)` on file-share-unsupported platforms. **Inbound** sharing (receive_sharing_intent) deferred — needs per-platform Xcode/manifest setup that's heavier than a 1-minute slice. FEATURES.md marker stays 🚧 until inbound lands; outbound path documented. Phase C closes here.
 
 ## Backlog (Phase A — Foundation)
 
