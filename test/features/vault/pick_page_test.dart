@@ -335,6 +335,49 @@ void main() {
     });
   });
 
+  group('pickByTitle', () {
+    test('case-insensitive match returns the first found', () {
+      final pages = [
+        _p(ulid: 'a', title: 'Project'),
+        _p(ulid: 'b', title: 'project'),
+      ];
+      expect(pickByTitle(pages, 'PROJECT')?.ulid, 'a');
+    });
+
+    test('case-sensitive=true requires exact case', () {
+      final pages = [
+        _p(ulid: 'a', title: 'Project'),
+        _p(ulid: 'b', title: 'project'),
+      ];
+      expect(pickByTitle(pages, 'project', caseSensitive: true)?.ulid, 'b');
+      expect(
+        pickByTitle(pages, 'PROJECT', caseSensitive: true),
+        isNull,
+      );
+    });
+
+    test('trims whitespace on both sides before comparing', () {
+      final pages = [_p(ulid: 'a', title: '  Project  ')];
+      expect(pickByTitle(pages, 'Project')?.ulid, 'a');
+      expect(pickByTitle(pages, '  Project  ')?.ulid, 'a');
+    });
+
+    test('empty query returns null (no wildcard)', () {
+      final pages = [_p(ulid: 'a', title: 'anything')];
+      expect(pickByTitle(pages, ''), isNull);
+      expect(pickByTitle(pages, '   '), isNull);
+    });
+
+    test('no match returns null', () {
+      final pages = [_p(ulid: 'a', title: 'Foo')];
+      expect(pickByTitle(pages, 'Bar'), isNull);
+    });
+
+    test('empty pages returns null', () {
+      expect(pickByTitle([], 'anything'), isNull);
+    });
+  });
+
   group('pickByUlid', () {
     test('returns the matching page', () {
       final pages = [

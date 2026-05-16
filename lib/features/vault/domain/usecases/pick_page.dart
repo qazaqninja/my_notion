@@ -118,6 +118,28 @@ List<PageRef> filterTitleContains(List<PageRef> pages, String query) {
   ];
 }
 
+/// Look up a single page by exact title match, optionally
+/// case-sensitive. Returns the first match (in input order) or
+/// `null` when no page matches. The title comparison happens AFTER
+/// trimming both sides — leading/trailing whitespace differences
+/// don't fail the match. Useful for "Jump to page named X"
+/// navigation features.
+PageRef? pickByTitle(
+  List<PageRef> pages,
+  String title, {
+  bool caseSensitive = false,
+}) {
+  final needle = title.trim();
+  if (needle.isEmpty) return null;
+  final foldedNeedle = caseSensitive ? needle : needle.toLowerCase();
+  for (final p in pages) {
+    final t = p.title.trim();
+    final folded = caseSensitive ? t : t.toLowerCase();
+    if (folded == foldedNeedle) return p;
+  }
+  return null;
+}
+
 /// Look up a single page by ULID, returning `null` when no match.
 /// Linear scan — fine for vault sizes Quill targets (a few thousand
 /// pages max); callers that need O(1) lookup over a hot loop should
