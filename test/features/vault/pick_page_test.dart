@@ -120,6 +120,123 @@ void main() {
     });
   });
 
+  group('topByBodyLen', () {
+    test('returns top N sorted by bodyLen descending', () {
+      final pages = [
+        _p(ulid: 'a', bodyLen: 10),
+        _p(ulid: 'b', bodyLen: 100),
+        _p(ulid: 'c', bodyLen: 50),
+        _p(ulid: 'd', bodyLen: 5),
+      ];
+      expect(
+        topByBodyLen(pages, 2).map((p) => p.ulid).toList(),
+        ['b', 'c'],
+      );
+    });
+
+    test('ties broken by most-recent mtime', () {
+      final pages = [
+        _p(ulid: 'a', bodyLen: 100, mtimeMs: 1000),
+        _p(ulid: 'b', bodyLen: 100, mtimeMs: 3000),
+        _p(ulid: 'c', bodyLen: 100, mtimeMs: 2000),
+      ];
+      expect(
+        topByBodyLen(pages, 3).map((p) => p.ulid).toList(),
+        ['b', 'c', 'a'],
+      );
+    });
+
+    test('n=0 returns empty', () {
+      expect(topByBodyLen([_p(ulid: 'a')], 0), isEmpty);
+    });
+
+    test('negative n returns empty (defensive)', () {
+      expect(topByBodyLen([_p(ulid: 'a')], -5), isEmpty);
+    });
+
+    test('n larger than page count returns every page', () {
+      final pages = [_p(ulid: 'a'), _p(ulid: 'b')];
+      expect(topByBodyLen(pages, 99).length, 2);
+    });
+  });
+
+  group('topByMtime', () {
+    test('returns top N most-recently-edited descending', () {
+      final pages = [
+        _p(ulid: 'a', mtimeMs: 1000),
+        _p(ulid: 'b', mtimeMs: 3000),
+        _p(ulid: 'c', mtimeMs: 2000),
+      ];
+      expect(
+        topByMtime(pages, 2).map((p) => p.ulid).toList(),
+        ['b', 'c'],
+      );
+    });
+
+    test('mtimeMs ties broken by ULID lex for determinism', () {
+      final pages = [
+        _p(ulid: 'z', mtimeMs: 1000),
+        _p(ulid: 'a', mtimeMs: 1000),
+      ];
+      // 'a' < 'z' lex, so 'a' wins the tie.
+      expect(
+        topByMtime(pages, 2).map((p) => p.ulid).toList(),
+        ['a', 'z'],
+      );
+    });
+
+    test('n=0 returns empty', () {
+      expect(topByMtime([_p(ulid: 'a')], 0), isEmpty);
+    });
+  });
+
+  group('topByBacklinkCount', () {
+    test('returns top N by inbound count descending', () {
+      final pages = [_p(ulid: 'a'), _p(ulid: 'b'), _p(ulid: 'c')];
+      final rels = [
+        (fromUlid: 'a', toUlid: 'b'),
+        (fromUlid: 'c', toUlid: 'b'),
+        (fromUlid: 'a', toUlid: 'c'),
+      ];
+      // b has 2 inbound, c has 1, a has 0 → top 2 is [b, c].
+      expect(
+        topByBacklinkCount(pages, rels, 2).map((p) => p.ulid).toList(),
+        ['b', 'c'],
+      );
+    });
+
+    test('pages with zero inbound links are excluded', () {
+      final pages = [_p(ulid: 'a'), _p(ulid: 'b')];
+      final rels = [(fromUlid: 'a', toUlid: 'b')];
+      expect(topByBacklinkCount(pages, rels, 99).length, 1);
+    });
+
+    test('ties broken by most-recent mtime', () {
+      final pages = [
+        _p(ulid: 'a', mtimeMs: 1000),
+        _p(ulid: 'b', mtimeMs: 2000),
+      ];
+      final rels = [
+        (fromUlid: 'x', toUlid: 'a'),
+        (fromUlid: 'x', toUlid: 'b'),
+      ];
+      expect(
+        topByBacklinkCount(pages, rels, 2).map((p) => p.ulid).toList(),
+        ['b', 'a'],
+      );
+    });
+
+    test('empty relations returns empty', () {
+      expect(topByBacklinkCount([_p(ulid: 'a')], [], 10), isEmpty);
+    });
+
+    test('n=0 returns empty', () {
+      final pages = [_p(ulid: 'a')];
+      final rels = [(fromUlid: 'x', toUlid: 'a')];
+      expect(topByBacklinkCount(pages, rels, 0), isEmpty);
+    });
+  });
+
   group('pickByUlid', () {
     test('returns the matching page', () {
       final pages = [

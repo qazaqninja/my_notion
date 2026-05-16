@@ -38,6 +38,61 @@ typedef RelationRef = ({String fromUlid, String toUlid});
 List<PageRef> filterUntagged(List<PageRef> pages) =>
     [for (final p in pages) if (p.tags.isEmpty) p];
 
+/// Top N pages by `bodyLen`, descending. Returns at most `n` items
+/// in size-descending order; ties are broken by most-recent
+/// `mtimeMs`. Powers the M987 "Show heaviest pages" hygiene dialog.
+/// Negative or zero `n` returns empty; `n` larger than the page
+/// count returns every page.
+List<PageRef> topByBodyLen(List<PageRef> pages, int n) {
+  if (n <= 0) return [];
+  final sorted = [...pages]
+    ..sort((a, b) {
+      if (a.bodyLen != b.bodyLen) return b.bodyLen.compareTo(a.bodyLen);
+      return b.mtimeMs.compareTo(a.mtimeMs);
+    });
+  return sorted.take(n).toList();
+}
+
+/// Top N pages by `mtimeMs`, descending (most-recently-edited
+/// first). Same N-and-tie-break contract as [topByBodyLen]; ties on
+/// mtimeMs are broken by ULID lex order for determinism.
+List<PageRef> topByMtime(List<PageRef> pages, int n) {
+  if (n <= 0) return [];
+  final sorted = [...pages]
+    ..sort((a, b) {
+      if (a.mtimeMs != b.mtimeMs) return b.mtimeMs.compareTo(a.mtimeMs);
+      return a.ulid.compareTo(b.ulid);
+    });
+  return sorted.take(n).toList();
+}
+
+/// Top N pages by inbound wikilink count, descending. Returns pages
+/// with at least one inbound link; ties are broken by most-recent
+/// `mtimeMs`. Powers the M988 "Show hub pages" dialog. Pages absent
+/// from `relations` simply don't appear.
+List<PageRef> topByBacklinkCount(
+  List<PageRef> pages,
+  List<RelationRef> relations,
+  int n,
+) {
+  if (n <= 0) return [];
+  final inbound = <String, int>{};
+  for (final r in relations) {
+    inbound[r.toUlid] = (inbound[r.toUlid] ?? 0) + 1;
+  }
+  final eligible = [
+    for (final p in pages)
+      if ((inbound[p.ulid] ?? 0) > 0) p,
+  ];
+  eligible.sort((a, b) {
+    final ca = inbound[a.ulid] ?? 0;
+    final cb = inbound[b.ulid] ?? 0;
+    if (ca != cb) return cb.compareTo(ca);
+    return b.mtimeMs.compareTo(a.mtimeMs);
+  });
+  return eligible.take(n).toList();
+}
+
 /// Look up a single page by ULID, returning `null` when no match.
 /// Linear scan — fine for vault sizes Quill targets (a few thousand
 /// pages max); callers that need O(1) lookup over a hot loop should
