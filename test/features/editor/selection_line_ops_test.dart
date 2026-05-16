@@ -6490,6 +6490,68 @@ void main() {
     });
   });
 
+  group('extractHttpStatusCodesFromLinesIn', () {
+    test('404 not-found extracts', () {
+      const text = 'page returned 404 today\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '404\n');
+    });
+
+    test('200 OK extracts', () {
+      const text = 'success 200 logged\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '200\n');
+    });
+
+    test('500 server error extracts', () {
+      const text = 'server 500 alert\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '500\n');
+    });
+
+    test('range boundary 100 and 599 both extract', () {
+      const text = 'edge 100 and 599 boundary\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '100\n599\n');
+    });
+
+    test('2-digit number is NOT a status code', () {
+      const text = 'short 99 only\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('4-digit year 2024 is NOT a status code', () {
+      // `\b` boundaries reject embedded 3-digit slices of
+      // longer numeric runs.
+      const text = 'year 2024 only\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('600+ codes are NOT in HTTP range', () {
+      const text = 'fake 600 700 800 invalid\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple status codes on one line each extract', () {
+      const text = 'logged 200, 404, and 500 across\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '200\n404\n500\n');
+    });
+
+    test('lines without codes dropped from output', () {
+      const text = 'plain prose\nerror 503 reported\nmore prose\n';
+      final r = extractHttpStatusCodesFromLinesIn(text, 0, text.length);
+      expect(r.text, '503\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractHttpStatusCodesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

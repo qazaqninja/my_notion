@@ -452,6 +452,9 @@ enum SlashAction {
   /// Extract every NPM scoped package name (`@scope/name`)
   /// from each selected line.
   extractNpmScopedPackagesFromLines,
+  /// Extract every HTTP status code substring (1XX-5XX range)
+  /// from each selected line.
+  extractHttpStatusCodesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2181,6 +2184,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractNpmScopedPackagesFromLines,
     keywords: ['extract', 'npm', 'package', 'scope', 'dep',
         'dependency'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract HTTP status codes',
+    hint: '404 / 500 / 200',
+    action: SlashAction.extractHttpStatusCodesFromLines,
+    keywords: ['extract', 'http', 'status', 'code', 'error',
+        'response', 'api'],
   ),
   SlashEntry(
     icon: 'calendar',

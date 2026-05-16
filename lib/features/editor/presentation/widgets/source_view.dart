@@ -1498,6 +1498,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractNpmScopedPackagesFromLinesIn,
         );
+      case SlashAction.extractHttpStatusCodesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractHttpStatusCodesFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

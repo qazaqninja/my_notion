@@ -2508,6 +2508,38 @@ SortLinesResult extractNpmScopedPackagesFromLinesIn(
       return out;
     });
 
+/// Extract every HTTP status code substring (1XX-5XX range)
+/// from each selected line. Useful for log triage, API doc
+/// audits, and "which errors does this incident report
+/// mention?" surveys.
+///
+/// Recognition: `\b[1-5]\d{2}\b`
+/// - First digit 1-5 (covers 1XX informational through 5XX
+///   server-error families).
+/// - Two more digits.
+/// - Word boundaries on each end.
+///
+/// No semantic validation — `199` matches even though there's
+/// no canonical HTTP 199 code. Acceptable for v1 since the
+/// 3-digit shape in the 100-599 range is rare outside HTTP
+/// status contexts. 4-digit numbers (`2024`) and 2-digit
+/// numbers (`99`) are correctly skipped.
+///
+/// 70th member of the extraction family — round-number
+/// milestone.
+SortLinesResult extractHttpStatusCodesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b[1-5]\d{2}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
