@@ -83,6 +83,9 @@ enum SlashAction {
   insertPostMortemScaffold,
   /// Add a two-space indent to every selected line.
   indentLines,
+  /// Wrap each selected line at an 80-character column boundary,
+  /// breaking on the last whitespace at or before column 80.
+  wrapLinesAt80,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1508,6 +1511,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'add 2 spaces',
     action: SlashAction.indentLines,
     keywords: ['indent', 'tab', 'nest', 'shift', 'right'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Wrap lines at 80 chars',
+    hint: 'fold at column 80',
+    action: SlashAction.wrapLinesAt80,
+    keywords: ['wrap', 'fold', 'reflow', '80', 'column', 'break'],
   ),
   SlashEntry(
     icon: 'edit',

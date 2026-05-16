@@ -1945,6 +1945,53 @@ SortLinesResult collapseSpacesIn(String text, int start, int end) =>
       ];
     });
 
+/// Wrap each selected line at an 80-character column boundary,
+/// breaking on the last whitespace at or before column 80 so words
+/// don't get cut. Lines shorter than 80 chars pass through. Words
+/// longer than 80 chars on their own — URLs, hashed names — stay
+/// intact because the alternative (mid-word break) hurts more than
+/// the long line does.
+///
+/// Useful when pasting in prose written without explicit wrapping
+/// (e.g. word-processor exports or LLM output). Per-line scope: a
+/// blank-line-separated paragraph isn't re-flowed across the blank
+/// line; each non-blank line is wrapped on its own.
+SortLinesResult wrapLinesAt80In(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      const width = 80;
+      List<String> wrap(String l) {
+        if (l.length <= width) return [l];
+        final out = <String>[];
+        var s = l;
+        while (s.length > width) {
+          // Find the last whitespace at or before column `width`.
+          var brk = -1;
+          for (var i = width; i >= 0; i--) {
+            final c = s.codeUnitAt(i);
+            if (c == 0x20 || c == 0x09) {
+              brk = i;
+              break;
+            }
+          }
+          if (brk <= 0) {
+            // No word boundary at/before column 80 — find the next
+            // space anywhere (don't slice mid-word). If there's no
+            // space at all, give up and emit the line as-is.
+            brk = s.indexOf(RegExp(r'[ \t]'));
+            if (brk < 0) {
+              out.add(s);
+              return out;
+            }
+          }
+          out.add(s.substring(0, brk));
+          s = s.substring(brk + 1);
+        }
+        out.add(s);
+        return out;
+      }
+      return [for (final l in lines) ...wrap(l)];
+    });
+
 /// Add a two-space indent to the start of every selected line.
 /// Mirrors VS Code's Tab-with-multi-line-selection gesture. Empty
 /// lines are left blank — indenting them would add only trailing

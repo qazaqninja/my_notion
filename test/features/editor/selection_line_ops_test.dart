@@ -140,6 +140,55 @@ void main() {
     });
   });
 
+  group('wrapLinesAt80In', () {
+    test('short lines (≤80 chars) pass through unchanged', () {
+      const text = 'hello world\nfoo bar baz\n';
+      expect(wrapLinesAt80In(text, 0, text.length).text, text);
+    });
+
+    test('a 100-char line breaks at the last space ≤ column 80', () {
+      // 5 ten-char words (each "abcdefghij") separated by spaces =
+      // 5 * 10 + 4 = 54 chars. Add another 50-char chunk to push past 80.
+      final line =
+          '${'abcdefghij ' * 5}xxxxxxxxxx yyyyyyyyyy zzzzzzzzzz wwwwwwwwww';
+      final text = '$line\n';
+      final r = wrapLinesAt80In(text, 0, text.length);
+      final wrapped = r.text.split('\n');
+      // First wrap segment should be at most 80 chars and end with no
+      // trailing space.
+      expect(wrapped[0].length <= 80, isTrue);
+      expect(wrapped[0].endsWith(' '), isFalse);
+      // Original content reconstructs by joining the wrap segments
+      // with a single space.
+      expect(
+        wrapped.where((s) => s.isNotEmpty).join(' '),
+        line,
+      );
+    });
+
+    test('an 81-char single word stays on one line (no mid-word break)', () {
+      // A 100-char word with no whitespace can't be split safely.
+      final word = 'x' * 100;
+      final text = '$word\n';
+      expect(wrapLinesAt80In(text, 0, text.length).text, text);
+    });
+
+    test('multiple long lines wrap independently', () {
+      final long1 = '${'a' * 50} ${'b' * 50}';
+      final long2 = '${'c' * 50} ${'d' * 50}';
+      final text = '$long1\n$long2\n';
+      final r = wrapLinesAt80In(text, 0, text.length);
+      // Each original line becomes two wrap segments → four segments
+      // (plus the trailing newline's empty string).
+      final segments = r.text.split('\n').where((s) => s.isNotEmpty).toList();
+      expect(segments.length, 4);
+    });
+
+    test('empty input stays empty', () {
+      expect(wrapLinesAt80In('', 0, 0).text, '');
+    });
+  });
+
   group('indentLinesIn / outdentLinesIn', () {
     test('indent adds 2-space prefix to every non-empty line', () {
       const text = 'foo\nbar\n';
