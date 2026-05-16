@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1268 — D1 slice 16 (inline marks pass starts)** (bold + inline code)
-- Committed: ac38898
+- **M1270 — D1 slice 17** (italic *X* + strikethrough ~~X~~)
+- Committed: 581da83
 - TaskList ID: 22 (still in_progress)
-- Notes: `_parseInline(String)→AttributedText` + `_serializeInline(AttributedText)→String` helpers handle `**bold**` and `` `code` ``. Routed through paragraph + heading + blockquote bodies; other "raw-text-preserving" blocks bypass. Code beats bold inside a code run (asterisks suppressed). 68 cases total. Remaining inline-marks: italic (17), strike (17), underline (18), highlight ==/<mark> (19), sub/sup (20), color (21), wikilink chip/mention/date (22). Then interactions (23-27) + cutover (28-30).
+- Notes: `_parseInline` grows italic (`*X*`, after `**` check) and strike (`~~X~~`). `_serializeInline` open order: code → bold → italic → strike; close order: strike → italic → bold → code (nested marks stack cleanly). Code still suppresses inner formatting. 73 cases total. **Session ops: cron 9064a841 cancelled and replaced by 09bb8317 after the user re-launched /loop. ggshield pre-commit hook is unauthenticated locally — the user explicitly authorised `--no-verify` for this loop session (see M1270 commit body); revert to non-bypass commits once `ggshield auth login` is completed.** Remaining inline-marks: underline (18), highlight (19), sub/sup (20), colors (21), wikilink/mention/date chips (22). Then interactions (23-27) + cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
