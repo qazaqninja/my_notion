@@ -98,6 +98,9 @@ enum SlashAction {
   /// Strip bare http/https/ftp URLs from every selected line,
   /// leaving the surrounding prose intact.
   removeUrlsLines,
+  /// Prefix every selected line with its word count
+  /// (`[3] one two three`), padded so columns align.
+  prefixLinesWithWordCount,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1558,6 +1561,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'http(s)/ftp → drop',
     action: SlashAction.removeUrlsLines,
     keywords: ['strip', 'remove', 'url', 'http', 'https', 'ftp', 'link'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Prefix lines with word count',
+    hint: '[3] one two three',
+    action: SlashAction.prefixLinesWithWordCount,
+    keywords: ['count', 'words', 'word', 'prefix', 'measure'],
   ),
   SlashEntry(
     icon: 'edit',

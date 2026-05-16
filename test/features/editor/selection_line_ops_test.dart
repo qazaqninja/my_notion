@@ -140,6 +140,42 @@ void main() {
     });
   });
 
+  group('prefixLinesWithWordCountIn', () {
+    test('single-digit counts pad to width 1', () {
+      const text = 'one\none two\n';
+      final r = prefixLinesWithWordCountIn(text, 0, text.length);
+      expect(r.text, '[1] one\n[2] one two\n');
+    });
+
+    test('mixed widths pad to the longest count', () {
+      // Counts: 1, 2, 10 → width 2 padding.
+      final tenWords = 'a b c d e f g h i j';
+      final text = 'foo\nfoo bar\n$tenWords\n';
+      final r = prefixLinesWithWordCountIn(text, 0, text.length);
+      expect(
+        r.text,
+        '[ 1] foo\n[ 2] foo bar\n[10] $tenWords\n',
+      );
+    });
+
+    test('blank lines get [0] so positions stay visible', () {
+      const text = 'foo\n\nbar baz\n';
+      final r = prefixLinesWithWordCountIn(text, 0, text.length);
+      expect(r.text, '[1] foo\n[0] \n[2] bar baz\n');
+    });
+
+    test('whitespace runs still count as one boundary', () {
+      // Three spaces between tokens = 2 words, not 4.
+      const text = 'a   b\n';
+      final r = prefixLinesWithWordCountIn(text, 0, text.length);
+      expect(r.text, '[2] a   b\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(prefixLinesWithWordCountIn('', 0, 0).text, '');
+    });
+  });
+
   group('removeUrlsLinesIn', () {
     test('strips a single https URL', () {
       const text = 'see https://example.com for details\n';

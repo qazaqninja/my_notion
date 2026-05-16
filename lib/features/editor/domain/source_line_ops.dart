@@ -2015,6 +2015,29 @@ SortLinesResult prefixLinesWithCharCountIn(
       ];
     });
 
+/// Prefix every selected line with its **word count**, padded to the
+/// width of the longest count so the column stays aligned:
+/// `[ 3] one two three`. Whitespace-separated runs, matching the
+/// convention from `sortLinesByWordCount` and the text-stats footer.
+/// Blank lines get `[0]` so position information is preserved.
+///
+/// Companion to [prefixLinesWithCharCountIn] (M1009) for prose where
+/// word count matters more than character count.
+SortLinesResult prefixLinesWithWordCountIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      if (lines.isEmpty) return lines;
+      int wc(String s) =>
+          s.trim().isEmpty ? 0 : s.trim().split(RegExp(r'\s+')).length;
+      final width = lines
+          .map((l) => wc(l).toString().length)
+          .reduce((a, b) => a > b ? a : b);
+      return [
+        for (final l in lines)
+          '[${wc(l).toString().padLeft(width)}] $l',
+      ];
+    });
+
 /// Strip a leading bracketed char-count prefix from every selected
 /// line: `[12] hello world` → `hello world`. Matches the exact shape
 /// emitted by [prefixLinesWithCharCountIn] (optional padding spaces
