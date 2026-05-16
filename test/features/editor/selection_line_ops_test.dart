@@ -2181,6 +2181,46 @@ void main() {
     });
   });
 
+  group('sortLinesByLastNumberIn', () {
+    test('sorts value-then-label rows by the trailing score', () {
+      const text = 'alice scored 87\nbob scored 42\neve scored 100\n';
+      final r = sortLinesByLastNumberIn(text, 0, text.length);
+      expect(
+        r.text,
+        'bob scored 42\nalice scored 87\neve scored 100\n',
+      );
+    });
+
+    test('picks the LAST number when multiple appear on a line', () {
+      // 'item 3 of 10' sorts on 10, not 3.
+      const text = 'item 3 of 10\nitem 7 of 5\nitem 1 of 8\n';
+      final r = sortLinesByLastNumberIn(text, 0, text.length);
+      expect(
+        r.text,
+        'item 7 of 5\nitem 1 of 8\nitem 3 of 10\n',
+      );
+    });
+
+    test('signed trailing numbers sort numerically', () {
+      const text = 'temp tomorrow -3\ntemp today -15\ntemp friday 12\n';
+      final r = sortLinesByLastNumberIn(text, 0, text.length);
+      expect(
+        r.text,
+        'temp today -15\ntemp tomorrow -3\ntemp friday 12\n',
+      );
+    });
+
+    test('lines without numbers drop to the bottom in original order', () {
+      const text = 'banana\nv9 release\napple\nv1 release\n';
+      final r = sortLinesByLastNumberIn(text, 0, text.length);
+      expect(r.text, 'v1 release\nv9 release\nbanana\napple\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(sortLinesByLastNumberIn('', 0, 0).text, '');
+    });
+  });
+
   group('sortLinesByFirstNumberIn', () {
     test('sorts log-like lines by the leading bracket score', () {
       const text = '[42] beta\n[7] alpha\n[100] gamma\n';

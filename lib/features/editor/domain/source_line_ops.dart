@@ -498,6 +498,32 @@ SortLinesResult sortLinesByFirstNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Sort the lines touched by the selection by the **last signed
+/// number** that appears anywhere in each line, ascending. Symmetric
+/// with [sortLinesByFirstNumberIn] (M970) but anchors at the right
+/// edge — useful for log lines that end with a count / duration /
+/// timestamp, or for value-then-label rows where the number is the
+/// last token (`alice scored 87`). Lines with no number sort to the
+/// bottom in original order.
+SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'-?\d+(?:\.\d+)?');
+      final numeric = <(double, String)>[];
+      final nonNumeric = <String>[];
+      for (final l in lines) {
+        final all = re.allMatches(l).toList();
+        final last = all.isEmpty ? null : all.last;
+        final v = last == null ? null : double.tryParse(last.group(0)!);
+        if (v == null) {
+          nonNumeric.add(l);
+        } else {
+          numeric.add((v, l));
+        }
+      }
+      numeric.sort((a, b) => a.$1.compareTo(b.$1));
+      return [...numeric.map((p) => p.$2), ...nonNumeric];
+    });
+
 /// Sort the lines touched by the selection by **word count**
 /// ascending (fewest words first). Words are whitespace-separated
 /// non-empty runs, matching the convention from `countLinesIn` and

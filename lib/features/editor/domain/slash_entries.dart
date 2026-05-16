@@ -232,6 +232,9 @@ enum SlashAction {
   /// Sort by the first signed number found anywhere in each line;
   /// lines with no number drop to the bottom.
   sortLinesByFirstNumber,
+  /// Sort by the LAST signed number found anywhere in each line;
+  /// lines with no number drop to the bottom.
+  sortLinesByLastNumber,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1384,6 +1387,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'log lines by leading score',
     action: SlashAction.sortLinesByFirstNumber,
     keywords: ['sort', 'first', 'number', 'leading', 'score', 'log'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort by last number in line',
+    hint: 'value-then-label rows',
+    action: SlashAction.sortLinesByLastNumber,
+    keywords: ['sort', 'last', 'number', 'trailing', 'score', 'log'],
   ),
   SlashEntry(
     icon: 'sync',
