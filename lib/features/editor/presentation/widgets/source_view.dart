@@ -989,6 +989,20 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart + caretInScaffold,
           ),
         );
+      case SlashAction.insertStandupScaffold:
+        final newText = text.replaceRange(
+          stripStart, caret, kStandupNotesScaffold,
+        );
+        // Land the caret on the blank line below "## Yesterday"
+        // (offset = "## Yesterday\n".length = 13) so the user types
+        // the first bullet immediately.
+        const caretInScaffold = 13;
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + caretInScaffold,
+          ),
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

@@ -140,6 +140,30 @@ void main() {
     });
   });
 
+  group('kStandupNotesScaffold', () {
+    test('contains the three canonical h2 standup sections', () {
+      expect(kStandupNotesScaffold.contains('## Yesterday\n'), isTrue);
+      expect(kStandupNotesScaffold.contains('## Today\n'), isTrue);
+      expect(kStandupNotesScaffold.contains('## Blockers\n'), isTrue);
+    });
+
+    test('caret offset (13) sits on the blank line below "## Yesterday"',
+        () {
+      const caretInScaffold = 13;
+      expect(
+        kStandupNotesScaffold.substring(0, caretInScaffold),
+        '## Yesterday\n',
+      );
+    });
+
+    test('headings appear in canonical order Y → T → B', () {
+      final iY = kStandupNotesScaffold.indexOf('## Yesterday');
+      final iT = kStandupNotesScaffold.indexOf('## Today');
+      final iB = kStandupNotesScaffold.indexOf('## Blockers');
+      expect(iY < iT && iT < iB, isTrue);
+    });
+  });
+
   group('kMeetingNotesScaffold', () {
     test('contains the four canonical h2 section headings', () {
       expect(kMeetingNotesScaffold.contains('## Attendees\n'), isTrue);

@@ -2263,6 +2263,19 @@ String formatIsoDateTime(DateTime when) {
 String formatEpochTimestamp(DateTime when) =>
     (when.millisecondsSinceEpoch ~/ 1000).toString();
 
+/// Three-section daily-standup scaffold dropped at the caret by the
+/// `/standup` slash entry: Yesterday / Today / Blockers. The
+/// canonical agile-standup template, minus seeded list markers so the
+/// user can choose bullets or prose per section. Caret lands one line
+/// below the first heading.
+const String kStandupNotesScaffold =
+    '## Yesterday\n'
+    '\n'
+    '## Today\n'
+    '\n'
+    '## Blockers\n'
+    '\n';
+
 /// Four-section meeting-notes scaffold dropped at the caret by the
 /// `/meeting` slash entry: Attendees / Agenda / Decisions / Action
 /// items, each headed by an h2 and seeded with a single empty list
