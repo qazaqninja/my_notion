@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E21 — Real markdown rendering in the public route (replace placeholder HTML wrap)
+- **Task:** E22 — Sync delete: editor "Move to trash" → DELETE /sync/del/<relpath>
 - **Status:** pending
 
 ## Last completed
 
-- **M1323 — E20** (hydrate knownShas from GET /sync/list on app start)
+- **M1324 — E21** (real markdown rendering in the public route)
 - Committed: (this iteration)
-- TaskList ID: 42
-- Notes: New `SyncListRequested` event + `_onList` handler. Merges `(relpath, sha256)` pairs from the server's listing into `SyncState.knownShas`. Self-dispatched at the end of `_onLogin`, `_onSignup`, and `_onRestore` — UI doesn't need to know. 401 on list reuses the same token-clear path as a 401 on push; network errors are silent (best-effort). 7 new bloc_test cases (populate, merge, no-token-noop, 401-clears, login-chain, restore-chain, network-silent) — 25/25 sync_bloc tests pass. flutter analyze clean. After a relaunch the first save for any tracked relpath now carries a real If-Match instead of racing blind. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 43
+- Notes: New `backend/lib/public/markdown_html.dart` — pure-Dart, no external deps. Handles ATX headings (h1-h6), paragraphs (soft-wrap collapse), unordered + ordered lists, GFM task lists with disabled checkboxes, blockquotes, horizontal rule, fenced code blocks with language hint, inline bold/italic/strike/code, links (with `rel=nofollow`), images, wikilinks (rendered as plain text — no cross-vault leakage as clickable URLs), HTML escaping everywhere, YAML frontmatter stripped before block parse. `public/routes.dart` swaps the `<pre>$escaped</pre>` placeholder for `<article>$rendered</article>` plus a light/dark-aware inline stylesheet. 22 new renderer tests; 73/73 backend tests pass. Flutter analyze clean, backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
