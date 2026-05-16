@@ -2263,6 +2263,21 @@ String formatIsoDateTime(DateTime when) {
 String formatEpochTimestamp(DateTime when) =>
     (when.millisecondsSinceEpoch ~/ 1000).toString();
 
+/// Three-section retrospective scaffold dropped at the caret by the
+/// `/retro` slash entry: What went well / What didn't / Action items.
+/// The classic agile-retrospective template, with action items
+/// pre-seeded as GFM unchecked-todos so the M985 "open todos"
+/// palette surfaces them when the retro page is committed.
+const String kRetroNotesScaffold =
+    '## What went well\n'
+    '- \n'
+    '\n'
+    "## What didn't\n"
+    '- \n'
+    '\n'
+    '## Action items\n'
+    '- [ ] \n';
+
 /// Three-section daily-standup scaffold dropped at the caret by the
 /// `/standup` slash entry: Yesterday / Today / Blockers. The
 /// canonical agile-standup template, minus seeded list markers so the

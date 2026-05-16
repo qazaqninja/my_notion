@@ -1003,6 +1003,20 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart + caretInScaffold,
           ),
         );
+      case SlashAction.insertRetroScaffold:
+        final newText = text.replaceRange(
+          stripStart, caret, kRetroNotesScaffold,
+        );
+        // Land the caret right after "- " under "## What went well"
+        // (offset = "## What went well\n- ".length = 20) so the user
+        // starts typing the first positive immediately.
+        const caretInScaffold = 20;
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + caretInScaffold,
+          ),
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

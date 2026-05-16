@@ -69,6 +69,9 @@ enum SlashAction {
   /// Insert a three-section daily-standup scaffold at the caret
   /// (Yesterday / Today / Blockers).
   insertStandupScaffold,
+  /// Insert a three-section retrospective scaffold at the caret
+  /// (What went well / What didn't / Action items).
+  insertRetroScaffold,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1454,6 +1457,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'yesterday / today / blockers',
     action: SlashAction.insertStandupScaffold,
     keywords: ['standup', 'agile', 'daily', 'scrum', 'template', 'scaffold'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: 'Retrospective scaffold',
+    hint: "went well / didn't / actions",
+    action: SlashAction.insertRetroScaffold,
+    keywords: ['retro', 'retrospective', 'sprint', 'review', 'template', 'scaffold'],
   ),
   SlashEntry(
     icon: 'link',

@@ -140,6 +140,27 @@ void main() {
     });
   });
 
+  group('kRetroNotesScaffold', () {
+    test('contains the three canonical retro section headings', () {
+      expect(kRetroNotesScaffold.contains('## What went well\n'), isTrue);
+      expect(kRetroNotesScaffold.contains("## What didn't\n"), isTrue);
+      expect(kRetroNotesScaffold.contains('## Action items\n'), isTrue);
+    });
+
+    test('action items use the GFM unchecked-todo form', () {
+      // So retro notes show up in M985's "open todos" palette entry.
+      expect(kRetroNotesScaffold.contains('- [ ] '), isTrue);
+    });
+
+    test('caret offset (20) sits right after the first "- "', () {
+      const caretInScaffold = 20;
+      expect(
+        kRetroNotesScaffold.substring(0, caretInScaffold),
+        '## What went well\n- ',
+      );
+    });
+  });
+
   group('kStandupNotesScaffold', () {
     test('contains the three canonical h2 standup sections', () {
       expect(kStandupNotesScaffold.contains('## Yesterday\n'), isTrue);
