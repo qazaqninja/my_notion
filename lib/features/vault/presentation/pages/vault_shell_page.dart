@@ -485,6 +485,26 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  Future<void> _openLastEditedPage(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final rows = await db.select(db.pages).get();
+    if (rows.isEmpty) {
+      if (context.mounted) context.toastInfo('No pages to pick from yet.');
+      return;
+    }
+    // Highest mtimeMs wins. Ties are uncommon (filesystem ms
+    // granularity) and order doesn't matter when they happen.
+    final pick = rows.reduce((a, b) => a.mtimeMs > b.mtimeMs ? a : b);
+    if (context.mounted) {
+      context.toastInfo(
+        'Last edited',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openRandomPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -660,6 +680,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _promptAndBookmarkUrl(context, vaultPath);
       case 'Open random page':
         await _openRandomPage(context);
+      case 'Open last edited page':
+        await _openLastEditedPage(context);
       case "Open today's daily note":
         if (vaultPath == null) {
           context.toastError('No vault open');
