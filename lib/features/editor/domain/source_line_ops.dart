@@ -441,6 +441,28 @@ SortLinesResult sortLinesDescIn(String text, int start, int end) =>
       return sorted;
     });
 
+/// Sort the lines touched by the selection by their **absolute
+/// value** when parseable as a number, ascending. Non-numeric lines
+/// are pushed to the bottom (in their original order) so the
+/// numeric block reads cleanly at the top. Useful when sorting by
+/// magnitude regardless of sign — e.g. "biggest deviations first"
+/// when running the M955 delta transform over a column of changes.
+SortLinesResult sortLinesByAbsValueIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      final numeric = <(double, String)>[];
+      final nonNumeric = <String>[];
+      for (final l in lines) {
+        final v = double.tryParse(l.trim());
+        if (v == null) {
+          nonNumeric.add(l);
+        } else {
+          numeric.add((v.abs(), l));
+        }
+      }
+      numeric.sort((a, b) => a.$1.compareTo(b.$1));
+      return [...numeric.map((p) => p.$2), ...nonNumeric];
+    });
+
 /// Sort the lines touched by the selection by **length**, ascending
 /// (shortest first). Equal-length lines fall back to a stable
 /// case-insensitive lex compare for deterministic ordering.

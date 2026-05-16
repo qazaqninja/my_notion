@@ -1195,6 +1195,31 @@ void main() {
     });
   });
 
+  group('sortLinesByAbsValueIn', () {
+    test('ascending by magnitude across signs', () {
+      const text = '-5\n2\n-1\n3\n';
+      final r = sortLinesByAbsValueIn(text, 0, text.length);
+      expect(r.text, '-1\n2\n3\n-5\n');
+    });
+
+    test('non-numeric lines pushed to the bottom in original order', () {
+      const text = 'banana\n-3\napple\n1\n';
+      final r = sortLinesByAbsValueIn(text, 0, text.length);
+      expect(r.text, '1\n-3\nbanana\napple\n');
+    });
+
+    test('all-numeric matches abs(x) ordering', () {
+      const text = '1.5\n-2\n0\n-0.5\n';
+      final r = sortLinesByAbsValueIn(text, 0, text.length);
+      expect(r.text, '0\n-0.5\n1.5\n-2\n');
+    });
+
+    test('empty input stays empty', () {
+      final r = sortLinesByAbsValueIn('', 0, 0);
+      expect(r.text, '');
+    });
+  });
+
   group('reverseWordsInLineIn', () {
     test('flips two-word lines', () {
       const text = 'hello world\n';

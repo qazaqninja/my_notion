@@ -128,6 +128,9 @@ enum SlashAction {
   /// Sort the lines touched by the selection by length, longest
   /// first.
   sortLinesByLengthDesc,
+  /// Sort numeric lines by absolute value ascending; non-numeric
+  /// lines drop to the bottom.
+  sortLinesByAbsValue,
   /// Reverse the words on every selected line (preserving any
   /// trailing whitespace).
   reverseWordsInLine,
@@ -1205,6 +1208,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'longest first',
     action: SlashAction.sortLinesByLengthDesc,
     keywords: ['sort', 'length', 'long', 'desc', 'descending', 'size'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort by absolute value',
+    hint: '|x| ascending',
+    action: SlashAction.sortLinesByAbsValue,
+    keywords: ['sort', 'absolute', 'magnitude', 'ascending'],
   ),
   SlashEntry(
     icon: 'edit',
