@@ -12,6 +12,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/fs/unique_path.dart';
 import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
+import '../../../../core/platform/security_scoped_bookmarks.dart';
 import '../../../../core/vault_dirs.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../data/indexer.dart';
@@ -32,11 +33,13 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     required QuillDatabase db,
     VaultWatcher? watcher,
     UlidGenerator? ulids,
+    SecurityScopedBookmarks? bookmarks,
   })  : _repo = repo,
         _indexer = indexer,
         _db = db,
         _watcher = watcher ?? VaultWatcher(),
         _ulids = ulids ?? const UlidGenerator(),
+        _bookmarks = bookmarks ?? SecurityScopedBookmarks(),
         super(const VaultInitial()) {
     on<PickVault>(_onPick);
     on<LoadFromPath>(_onLoad);
@@ -59,6 +62,7 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   final QuillDatabase _db;
   final UlidGenerator _ulids;
   final VaultWatcher _watcher;
+  final SecurityScopedBookmarks _bookmarks;
   StreamSubscription<void>? _watchSub;
 
   @override
@@ -70,6 +74,12 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
 
   static const _prefVaultPath = 'vault.path';
   static const _prefVaultRecent = 'vault.recent';
+  // C2 (M1238): on macOS the App Sandbox forgets per-pick access at quit
+  // time. We persist a Base64-encoded security-scoped bookmark alongside
+  // the raw path so the next launch can resolve the bookmark and keep
+  // access. On non-macOS platforms `SecurityScopedBookmarks.isSupported`
+  // is false and this key stays unused.
+  static const _prefVaultBookmark = 'vault.bookmark';
 
   Future<void> _onPick(PickVault e, Emitter<VaultState> emit) async {
     emit(const VaultPicking());
@@ -82,6 +92,16 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
     }
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefVaultPath, selected);
+    // C2: persist a security-scoped bookmark on macOS so the next launch
+    // can resolve sandbox access without re-prompting the picker. Null
+    // (non-macOS or save failure) means we fall back to the raw path on
+    // restore.
+    final bookmark = await _bookmarks.save(selected);
+    if (bookmark != null) {
+      await prefs.setString(_prefVaultBookmark, bookmark);
+    } else {
+      await prefs.remove(_prefVaultBookmark);
+    }
     // Recent list: dedupe by string, prepend the new pick, cap at 5.
     final recent = prefs.getStringList(_prefVaultRecent) ?? const <String>[];
     final next = [
@@ -528,12 +548,27 @@ class VaultBloc extends Bloc<VaultEvent, VaultState> {
   /// Tries to restore the last-opened vault. Returns false if none stored.
   /// On failure, the saved path is cleared and the picker is shown again
   /// (rather than displaying a stale error from an inaccessible path).
+  ///
+  /// C2: on macOS we prefer the security-scoped bookmark over the raw
+  /// path. The bookmark resolves to a path the sandbox accepts; the raw
+  /// `vault.path` is kept around for non-macOS hosts and as a fallback
+  /// for cases where the bookmark resolution fails (e.g. the user moved
+  /// the folder in Finder — the bookmark may still resolve to the new
+  /// location, but if it doesn't we fall back to the raw path so the
+  /// PathAccessException → clear-prefs flow in _onLoad has something to
+  /// work with).
   Future<bool> tryRestore() async {
     final prefs = await SharedPreferences.getInstance();
-    final last = prefs.getString(_prefVaultPath);
+    final bookmark = prefs.getString(_prefVaultBookmark);
+    String? resolved;
+    if (bookmark != null && bookmark.isNotEmpty) {
+      resolved = await _bookmarks.resolve(bookmark);
+    }
+    final last = resolved ?? prefs.getString(_prefVaultPath);
     if (last == null || last.isEmpty) return false;
     if (!Directory(last).existsSync()) {
       await prefs.remove(_prefVaultPath);
+      await prefs.remove(_prefVaultBookmark);
       return false;
     }
     _isAutoRestoring = true;
