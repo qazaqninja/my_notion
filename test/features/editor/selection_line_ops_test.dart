@@ -2621,6 +2621,89 @@ void main() {
     });
   });
 
+  group('extractMacAddressesFromLinesIn', () {
+    test('colon-separated MAC extracts in canonical form', () {
+      const text = 'host 01:23:45:67:89:AB online\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '01:23:45:67:89:AB\n');
+    });
+
+    test('hyphen-separated MAC extracts as-is', () {
+      const text = 'wmi reports 01-23-45-67-89-AB now\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '01-23-45-67-89-AB\n');
+    });
+
+    test('mixed-case hex digits accepted', () {
+      const text = 'addr aB:Cd:Ef:01:23:45 seen\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'aB:Cd:Ef:01:23:45\n');
+    });
+
+    test('mixed separators are NOT a MAC', () {
+      // Backref `\1` requires the same separator throughout the
+      // run — `01:23-45:67:89:AB` switches between `:` and `-`.
+      const text = 'fake 01:23-45:67:89:AB invalid\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('5-octet shape is NOT a MAC', () {
+      // Five octets = missing one separator-segment — too short.
+      const text = 'short 01:23:45:67:89 only five\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('7-octet shape captures only the first 6 (canonical)', () {
+      // Greedy match anchors at the first valid 6-octet run.
+      // The trailing `:XX` ends up as leftover on the source
+      // line; the regex's `\b` ensures we stop before consuming
+      // the 7th octet. Documented behaviour: prose-style MACs
+      // shouldn't surface false positives.
+      const text = 'over 01:23:45:67:89:AB:CD wrong\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      // `\b` anchors mean the 6-octet run starting at `01` reaches
+      // `AB`, and `AB` is followed by `:`, which is non-word — so
+      // `\b` matches between `AB` and `:`, and we stop there.
+      expect(r.text, '01:23:45:67:89:AB\n');
+    });
+
+    test('three-digit "octet" is NOT a MAC', () {
+      const text = 'bad 001:23:45:67:89:AB malformed\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      // The leading `001` is 3 hex; the regex requires exactly 2
+      // per octet. Could the regex slide forward and match
+      // `01:23:45:67:89:AB`? `\b` before the second `0` requires
+      // non-word→word, but `0` is preceded by `0` (word). No `\b`,
+      // no match.
+      expect(r.text, '\n');
+    });
+
+    test('multiple MACs on one line each extract', () {
+      const text = 'pair 01:23:45:67:89:AB and aa-bb-cc-dd-ee-ff\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '01:23:45:67:89:AB\naa-bb-cc-dd-ee-ff\n');
+    });
+
+    test('non-hex chars in an octet reject the MAC', () {
+      // `ZZ` is not hex; the regex requires `[0-9a-fA-F]`.
+      const text = 'nope 01:23:ZZ:67:89:AB reject\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without MACs dropped from output', () {
+      const text = 'plain prose\n01:23:45:67:89:AB live\nmore prose\n';
+      final r = extractMacAddressesFromLinesIn(text, 0, text.length);
+      expect(r.text, '01:23:45:67:89:AB\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMacAddressesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

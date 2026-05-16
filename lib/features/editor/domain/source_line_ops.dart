@@ -1043,6 +1043,38 @@ SortLinesResult extractSemverFromLinesIn(
       return out;
     });
 
+/// Extract every MAC-address-shaped substring from each selected
+/// line. Recognises the two common forms:
+///   - Colon-separated:  `01:23:45:67:89:AB`
+///   - Hyphen-separated: `01-23-45-67-89-AB`
+/// Both forms accept upper / lower / mixed-case hex digits. The
+/// separator is captured and back-referenced, so mixed forms like
+/// `01:23-45:67:89:AB` do NOT match — only same-separator runs
+/// pass.
+///
+/// Useful for triaging network log paste-ins, DHCP leases, ARP
+/// tables, and switch port dumps. Distinct from
+/// [extractIpv4FromLinesIn] (M1064 — dotted-quad IP) and
+/// [extractUuidsFromLinesIn] (M1069 — UUID 8-4-4-4-12 form).
+SortLinesResult extractMacAddressesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Backref `\1` forces the same separator throughout the
+      // run so `01:23-45:67:89:AB` doesn't pass.
+      final re = RegExp(
+        r'\b[0-9a-fA-F]{2}([:-])'
+        r'(?:[0-9a-fA-F]{2}\1){4}'
+        r'[0-9a-fA-F]{2}\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

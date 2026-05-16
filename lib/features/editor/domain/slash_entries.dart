@@ -317,6 +317,9 @@ enum SlashAction {
   /// with optional `-PRERELEASE` and `+BUILD`) from each selected
   /// line.
   extractSemverFromLines,
+  /// Extract every MAC-address-shaped substring (`XX:XX:XX:XX:XX:XX`
+  /// or `XX-XX-XX-XX-XX-XX`) from each selected line.
+  extractMacAddressesFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1643,6 +1646,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractSemverFromLines,
     keywords: ['extract', 'semver', 'version', 'release', 'tag',
         'major', 'minor', 'patch'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract MAC addresses',
+    hint: 'XX:XX:XX:XX:XX:XX',
+    action: SlashAction.extractMacAddressesFromLines,
+    keywords: ['extract', 'mac', 'address', 'ethernet', 'network',
+        'hardware', 'nic'],
   ),
   SlashEntry(
     icon: 'edit',
