@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E8 — Sync layer (vault_files table + GET /sync/list)
+- **Task:** E9 — PUT /sync/put/[relpath] (first write path)
 - **Status:** pending
 
 ## Last completed
 
-- **M1298 — E7** (Bearer JWT auth middleware)
-- Committed: 7ffcde2
-- TaskList ID: 29
-- Notes: `requireAuth` shelf middleware reads `Authorization: Bearer <jwt>`, verifies via TokenIssuer, loads User from UserRepositoryBase, attaches to `request.context['user']`. 5 distinct 401 codes (missing_bearer_token / invalid_token / token_expired / stale_session). `currentUser(request)` convenience getter throws StateError on un-authed routes (programmer error). 7 middleware tests pass. 29/29 backend tests total. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1300 — E8** (vault_files table + GET /sync/list)
+- Committed: 4b77d89
+- TaskList ID: 30
+- Notes: Migration v2 lands `vault_files(user_id, relpath, sha256, body, mtime)` with composite PK + CASCADE on user delete + index on (user_id, mtime DESC). `FileSummary` DTO (relpath/sha256/mtime — body excluded for cheap listings). `SyncRepositoryBase.listFor(userId)` interface; `SyncRepository(conn)` impl runs the indexed query. `GET /sync/list` route mounted at `/sync/` BEHIND `requireAuth` so `currentUser` is safe. Per-user scoping test (Bob's row doesn't leak into Alice's listing) guards against future query bugs. 33/33 backend tests pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
