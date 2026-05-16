@@ -2377,6 +2377,39 @@ SortLinesResult extractAwsArnsFromLinesIn(
       return out;
     });
 
+/// Extract the OUI (the first 3 octets, vendor / manufacturer
+/// prefix) from every MAC address on each selected line.
+/// Companion to M1076's full-MAC extractor — useful for
+/// "which network vendors does this scan show?" audits where
+/// the host-specific bytes don't matter.
+///
+/// Recognition:
+///   `\b([0-9a-fA-F]{2}([:-])[0-9a-fA-F]{2}\2[0-9a-fA-F]{2})`
+///   `\2[0-9a-fA-F]{2}\2[0-9a-fA-F]{2}\2[0-9a-fA-F]{2}\b`
+/// - Full 6-octet MAC shape with same-separator enforcement via
+///   backref `\2`.
+/// - Capture group 1 = first 3 octets (the OUI portion).
+///
+/// Either colon or hyphen separator is supported. Mixed-form
+/// runs are rejected (same as M1076 full-MAC).
+///
+/// 66th member of the extraction family.
+SortLinesResult extractMacOuisFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b([0-9a-fA-F]{2}([:-])[0-9a-fA-F]{2}\2[0-9a-fA-F]{2})'
+        r'\2[0-9a-fA-F]{2}\2[0-9a-fA-F]{2}\2[0-9a-fA-F]{2}\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

@@ -441,6 +441,9 @@ enum SlashAction {
   /// (`arn:PARTITION:SERVICE:REGION:ACCOUNT:RESOURCE`) from
   /// each selected line.
   extractAwsArnsFromLines,
+  /// Extract the OUI (first 3 octets, vendor/manufacturer prefix)
+  /// from every MAC address on each selected line.
+  extractMacOuisFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2138,6 +2141,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractAwsArnsFromLines,
     keywords: ['extract', 'aws', 'arn', 'amazon', 'iam',
         'resource'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract MAC OUIs',
+    hint: 'XX:XX:XX:67:89:AB → XX:XX:XX',
+    action: SlashAction.extractMacOuisFromLines,
+    keywords: ['extract', 'mac', 'oui', 'vendor', 'manufacturer',
+        'prefix', 'network'],
   ),
   SlashEntry(
     icon: 'calendar',

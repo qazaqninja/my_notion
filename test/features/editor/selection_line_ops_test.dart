@@ -6212,6 +6212,67 @@ void main() {
     });
   });
 
+  group('extractMacOuisFromLinesIn', () {
+    test('colon-separated MAC yields colon-separated OUI', () {
+      const text = 'host 01:23:45:67:89:AB online\n';
+      final r = extractMacOuisFromLinesIn(text, 0, text.length);
+      expect(r.text, '01:23:45\n');
+    });
+
+    test('hyphen-separated MAC yields hyphen-separated OUI', () {
+      const text = 'wmi 01-23-45-67-89-AB inline\n';
+      final r = extractMacOuisFromLinesIn(text, 0, text.length);
+      expect(r.text, '01-23-45\n');
+    });
+
+    test('mixed-case hex digits preserved', () {
+      const text = 'addr aB:Cd:Ef:01:23:45 seen\n';
+      final r = extractMacOuisFromLinesIn(text, 0, text.length);
+      expect(r.text, 'aB:Cd:Ef\n');
+    });
+
+    test('mixed-separator MAC is NOT a match', () {
+      // Backref `\2` enforces same separator throughout.
+      const text = 'fake 01:23-45:67:89:AB invalid\n';
+      final r = extractMacOuisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('partial MAC (3 octets only) is NOT a match', () {
+      // Need full 6-octet MAC; only-OUI portion doesn't count.
+      const text = 'partial 01:23:45 short\n';
+      final r = extractMacOuisFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple MACs on one line: each yields its OUI', () {
+      const text = 'pair 01:23:45:67:89:AB and aa-bb-cc-dd-ee-ff\n';
+      final r = extractMacOuisFromLinesIn(text, 0, text.length);
+      expect(r.text, '01:23:45\naa-bb-cc\n');
+    });
+
+    test('paired with full-MAC extractor for vendor audit', () {
+      // Demonstrates the design pairing — full MACs (M1076) +
+      // OUIs (M1130) for "which hosts use which vendors?"
+      const text =
+          'host 01:23:45:67:89:AB and aa:bb:cc:11:22:33 listed\n';
+      final fulls = extractMacAddressesFromLinesIn(text, 0, text.length);
+      final ouis = extractMacOuisFromLinesIn(text, 0, text.length);
+      expect(fulls.text, '01:23:45:67:89:AB\naa:bb:cc:11:22:33\n');
+      expect(ouis.text, '01:23:45\naa:bb:cc\n');
+    });
+
+    test('lines without MACs dropped from output', () {
+      const text = 'plain prose\nseen 01:23:45:67:89:AB\nmore prose\n';
+      final r = extractMacOuisFromLinesIn(text, 0, text.length);
+      expect(r.text, '01:23:45\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMacOuisFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
