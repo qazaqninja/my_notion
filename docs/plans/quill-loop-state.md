@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1254 — D1 slice 7** (GFM pipe tables — raw round-trip)
-- Committed: 70102c7
+- **M1256 — D1 slice 8** (image cards — standalone ![alt](url) → ImageNode)
+- Committed: 6ea4057
 - TaskList ID: 22 (still in_progress)
-- Notes: Pipe tables detected by two-line signature (`|...|` header + `|---|---|` separator). Raw multi-line table source preserved in ParagraphNode.text under custom `tableAttribution` for byte-identical round-trip. Alignment colons survive. A lone `|`-prefixed line without separator falls through to paragraph. 35 cases total. Remaining: image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
+- Notes: Standalone `![alt](url)` (line is exactly that) → super_editor's built-in `ImageNode`. Inline images mid-paragraph stay as raw text (inline-marks slice). Empty alt allowed. 39 cases total. Remaining: file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
