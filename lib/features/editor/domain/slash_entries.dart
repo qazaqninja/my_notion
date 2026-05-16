@@ -357,6 +357,9 @@ enum SlashAction {
   /// Extract every currency-amount substring (`$10`, `€5.99`,
   /// `£100`, `¥500`) from each selected line.
   extractCurrencyFromLines,
+  /// Extract every file-size substring (`1.5 MB`, `42KB`, `512 B`)
+  /// from each selected line.
+  extractFileSizesFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1797,6 +1800,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractCurrencyFromLines,
     keywords: ['extract', 'currency', 'money', 'price', 'dollar',
         'euro', 'pound', 'yen', 'amount', 'invoice', 'budget'],
+  ),
+  SlashEntry(
+    icon: 'file',
+    label: 'Extract file sizes',
+    hint: '1.5 MB / 42KB / 2GiB',
+    action: SlashAction.extractFileSizesFromLines,
+    keywords: ['extract', 'size', 'bytes', 'kb', 'mb', 'gb', 'tb',
+        'pb', 'kib', 'mib', 'gib', 'disk', 'storage'],
   ),
   SlashEntry(
     icon: 'edit',

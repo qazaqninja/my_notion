@@ -1372,6 +1372,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractCurrencyFromLinesIn,
         );
+      case SlashAction.extractFileSizesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractFileSizesFromLinesIn,
+        );
       case SlashAction.extractMarkdownLinkLabelsFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMarkdownLinkLabelsFromLinesIn,

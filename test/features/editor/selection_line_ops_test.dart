@@ -3567,6 +3567,66 @@ void main() {
     });
   });
 
+  group('extractFileSizesFromLinesIn', () {
+    test('decimal `1.5 MB` form extracts', () {
+      const text = 'file size 1.5 MB compressed\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.5 MB\n');
+    });
+
+    test('no-space `42KB` form extracts', () {
+      const text = 'log was 42KB before\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '42KB\n');
+    });
+
+    test('all SI-prefix units extract', () {
+      const text = '1 KB\n2 MB\n3 GB\n4 TB\n5 PB\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '1 KB\n2 MB\n3 GB\n4 TB\n5 PB\n');
+    });
+
+    test('all binary-prefix units extract', () {
+      const text = '1 KiB\n2 MiB\n3 GiB\n4 TiB\n5 PiB\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '1 KiB\n2 MiB\n3 GiB\n4 TiB\n5 PiB\n');
+    });
+
+    test('bare `B` for bytes extracts', () {
+      const text = 'header is 512 B small\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '512 B\n');
+    });
+
+    test('case-insensitive units', () {
+      const text = 'sizes 1kb 2Mb 3gb 4tib mixed\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '1kb\n2Mb\n3gb\n4tib\n');
+    });
+
+    test('multiple sizes on one line each extract', () {
+      const text = 'before 100 MB then 1.5 GB after\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '100 MB\n1.5 GB\n');
+    });
+
+    test('number without size unit is NOT a match', () {
+      const text = 'count 42 things\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without sizes dropped from output', () {
+      const text = 'plain prose\nsize 100 MB total\nmore prose\n';
+      final r = extractFileSizesFromLinesIn(text, 0, text.length);
+      expect(r.text, '100 MB\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractFileSizesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

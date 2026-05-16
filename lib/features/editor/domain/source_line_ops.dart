@@ -1468,6 +1468,44 @@ SortLinesResult extractCurrencyFromLinesIn(
       return out;
     });
 
+/// Extract every file-size substring from each selected line.
+/// Useful for log triage, disk-usage audits, asset inventory
+/// scrapes — anywhere a doc cites byte counts.
+///
+/// Recognition: `\b\d+(?:\.\d+)?\s?[KMGTP]?i?B\b` (case-
+/// insensitive)
+/// - Number with optional decimal (`512`, `1.5`, `42.5`).
+/// - Optional single whitespace between number and unit.
+/// - Decimal-prefix family `KB MB GB TB PB`, the corresponding
+///   binary-prefix `KiB MiB GiB TiB PiB`, or bare `B` for
+///   bytes. All combinations match case-insensitively, so
+///   `42kb`, `1.5Mb`, `2GiB`, and `512 B` all work.
+/// - Word boundaries on each end keep `1.5MB` matchable but
+///   reject embedded slices inside longer tokens.
+///
+/// The whole token (number + optional space + unit) is
+/// captured. Caveat: a bare `B` after a number (e.g. `42B`)
+/// matches as "42 bytes" — false-positive risk in contexts
+/// where `B` means something else (hex literal suffix, etc.).
+/// Acceptable for v1.
+///
+/// 30th member of the extraction family — the round number.
+SortLinesResult extractFileSizesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b\d+(?:\.\d+)?\s?[KMGTP]?i?B\b',
+        caseSensitive: false,
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.
