@@ -1,5 +1,9 @@
-import 'dart:async';
+// Ported to bloc_test (RULES.md TS-03) at A8 / M1200 of the 1m-loop plan.
+// Initial-state and "no-op when closed" cases stay as vanilla tests since
+// blocTest can't elegantly express "no emission expected, but inspect
+// state" or "no mock interaction expected".
 
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:my_notion/core/ui/anchor_rect.dart';
@@ -9,11 +13,14 @@ import 'package:my_notion/features/relations/presentation/cubit/relation_picker_
 class _MockSearchPages extends Mock implements SearchPages {}
 
 PageSearchResult _result(String title) => PageSearchResult(
-      ulid: '01HX0V000000000000000000${title.codeUnitAt(0).toRadixString(16).padLeft(2, '0').toUpperCase()}',
+      ulid: '01HX0V000000000000000000'
+          '${title.codeUnitAt(0).toRadixString(16).padLeft(2, '0').toUpperCase()}',
       title: title,
       relativePath: '$title.md',
       snippet: '',
     );
+
+const _zeroAnchor = AnchorRect(left: 0, top: 0, right: 0, bottom: 0);
 
 void main() {
   late _MockSearchPages search;
@@ -27,87 +34,102 @@ void main() {
   group('RelationPickerCubit', () {
     test('starts closed with empty results', () {
       final cubit = RelationPickerCubit(search);
+      addTearDown(cubit.close);
       expect(cubit.state.open, isFalse);
       expect(cubit.state.results, isEmpty);
       expect(cubit.state.selectedIndex, 0);
-      unawaited(cubit.close());
     });
 
-    test('openAt sets anchor + sourceOffset, then resolves search results', () async {
-      final cubit = RelationPickerCubit(search);
-      const anchor = AnchorRect(left: 50, top: 80, right: 370, bottom: 80);
-      await cubit.openAt(anchor: anchor, sourceOffset: 17);
-      expect(cubit.state.open, isTrue);
-      expect(cubit.state.anchorRect, equals(anchor));
-      expect(cubit.state.anchorStartOffset, 17);
-      expect(cubit.state.results.length, 2);
-      expect(cubit.state.selectedIndex, 0);
-      unawaited(cubit.close());
-    });
+    blocTest<RelationPickerCubit, RelationPickerState>(
+      'openAt sets anchor + sourceOffset, then resolves search results',
+      build: () => RelationPickerCubit(search),
+      act: (cubit) => cubit.openAt(
+        anchor: const AnchorRect(left: 50, top: 80, right: 370, bottom: 80),
+        sourceOffset: 17,
+      ),
+      verify: (cubit) {
+        expect(cubit.state.open, isTrue);
+        expect(
+          cubit.state.anchorRect,
+          equals(const AnchorRect(left: 50, top: 80, right: 370, bottom: 80)),
+        );
+        expect(cubit.state.anchorStartOffset, 17);
+        expect(cubit.state.results.length, 2);
+        expect(cubit.state.selectedIndex, 0);
+      },
+    );
 
-    test('setQuery resets selectedIndex and re-runs the search', () async {
-      final cubit = RelationPickerCubit(search);
-      await cubit.openAt(
-        anchor: const AnchorRect(left: 0, top: 0, right: 0, bottom: 0),
-        sourceOffset: 0,
-      );
-      cubit.move(1); // selectedIndex = 1
-      expect(cubit.state.selectedIndex, 1);
+    blocTest<RelationPickerCubit, RelationPickerState>(
+      'setQuery resets selectedIndex and re-runs the search',
+      build: () => RelationPickerCubit(search),
+      act: (cubit) async {
+        await cubit.openAt(anchor: _zeroAnchor, sourceOffset: 0);
+        cubit.move(1); // selectedIndex = 1
+        when(() => search.call('alp', limit: any(named: 'limit')))
+            .thenAnswer((_) async => [_result('Alpha')]);
+        await cubit.setQuery('alp');
+      },
+      verify: (cubit) {
+        expect(cubit.state.query, 'alp');
+        expect(cubit.state.results, hasLength(1));
+        expect(
+          cubit.state.selectedIndex,
+          0,
+          reason: 'setQuery resets selection back to top',
+        );
+      },
+    );
 
-      when(() => search.call('alp', limit: any(named: 'limit')))
-          .thenAnswer((_) async => [_result('Alpha')]);
-      await cubit.setQuery('alp');
+    blocTest<RelationPickerCubit, RelationPickerState>(
+      'setQuery on a closed picker emits nothing and skips the search',
+      build: () => RelationPickerCubit(search),
+      act: (cubit) => cubit.setQuery('whatever'),
+      expect: () => <RelationPickerState>[],
+      verify: (cubit) {
+        verifyNever(() => search.call(any(), limit: any(named: 'limit')));
+      },
+    );
 
-      expect(cubit.state.query, 'alp');
-      expect(cubit.state.results, hasLength(1));
-      expect(cubit.state.selectedIndex, 0,
-          reason: 'setQuery resets selection back to top');
-      unawaited(cubit.close());
-    });
+    blocTest<RelationPickerCubit, RelationPickerState>(
+      'move clamps the selectedIndex into the results range',
+      build: () => RelationPickerCubit(search),
+      act: (cubit) async {
+        await cubit.openAt(anchor: _zeroAnchor, sourceOffset: 0);
+        cubit.move(-100);
+        expect(cubit.state.selectedIndex, 0);
+        cubit.move(100);
+      },
+      verify: (cubit) {
+        expect(cubit.state.selectedIndex, 1);
+      },
+    );
 
-    test('setQuery on a closed picker is a no-op', () async {
-      final cubit = RelationPickerCubit(search);
-      final before = cubit.state;
-      await cubit.setQuery('whatever');
-      expect(cubit.state, equals(before));
-      verifyNever(() => search.call(any(), limit: any(named: 'limit')));
-      unawaited(cubit.close());
-    });
+    blocTest<RelationPickerCubit, RelationPickerState>(
+      'dismiss returns to the closed sentinel state',
+      build: () => RelationPickerCubit(search),
+      act: (cubit) async {
+        await cubit.openAt(
+          anchor: const AnchorRect(left: 5, top: 5, right: 5, bottom: 5),
+          sourceOffset: 99,
+        );
+        cubit.dismiss();
+      },
+      verify: (cubit) {
+        expect(cubit.state, equals(RelationPickerState.closed));
+      },
+    );
 
-    test('move clamps the selectedIndex into the results range', () async {
-      final cubit = RelationPickerCubit(search);
-      await cubit.openAt(
-        anchor: const AnchorRect(left: 0, top: 0, right: 0, bottom: 0),
-        sourceOffset: 0,
-      );
-      cubit.move(-100);
-      expect(cubit.state.selectedIndex, 0);
-      cubit.move(100);
-      expect(cubit.state.selectedIndex, 1);
-      unawaited(cubit.close());
-    });
-
-    test('dismiss returns to the closed sentinel state', () async {
-      final cubit = RelationPickerCubit(search);
-      await cubit.openAt(
-        anchor: const AnchorRect(left: 5, top: 5, right: 5, bottom: 5),
-        sourceOffset: 99,
-      );
-      cubit.dismiss();
-      expect(cubit.state, equals(RelationPickerState.closed));
-      unawaited(cubit.close());
-    });
-
-    test('selectedResult reflects the highlighted row', () async {
-      final cubit = RelationPickerCubit(search);
-      await cubit.openAt(
-        anchor: const AnchorRect(left: 0, top: 0, right: 0, bottom: 0),
-        sourceOffset: 0,
-      );
-      expect(cubit.state.selectedResult?.title, 'Alpha');
-      cubit.move(1);
-      expect(cubit.state.selectedResult?.title, 'Beta');
-      unawaited(cubit.close());
-    });
+    blocTest<RelationPickerCubit, RelationPickerState>(
+      'selectedResult reflects the highlighted row',
+      build: () => RelationPickerCubit(search),
+      act: (cubit) async {
+        await cubit.openAt(anchor: _zeroAnchor, sourceOffset: 0);
+        expect(cubit.state.selectedResult?.title, 'Alpha');
+        cubit.move(1);
+      },
+      verify: (cubit) {
+        expect(cubit.state.selectedResult?.title, 'Beta');
+      },
+    );
   });
 }
