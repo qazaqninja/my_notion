@@ -2015,6 +2015,21 @@ SortLinesResult prefixLinesWithCharCountIn(
       ];
     });
 
+/// Strip a leading bracketed char-count prefix from every selected
+/// line: `[12] hello world` → `hello world`. Matches the exact shape
+/// emitted by [prefixLinesWithCharCountIn] (optional padding spaces
+/// inside the brackets, then a single space). Lines without that
+/// prefix pass through unchanged. Inverse round-trips cleanly with
+/// the prefix op.
+SortLinesResult stripLeadingCharCountPrefixIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // ` *` allows the left-padding the prefix op adds when counts
+      // have mixed widths (e.g. `[ 5]` next to `[12]`).
+      final re = RegExp(r'^\[ *\d+\] ');
+      return [for (final l in lines) l.replaceFirst(re, '')];
+    });
+
 /// Add a two-space indent to the start of every selected line.
 /// Mirrors VS Code's Tab-with-multi-line-selection gesture. Empty
 /// lines are left blank — indenting them would add only trailing

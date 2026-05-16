@@ -140,6 +140,37 @@ void main() {
     });
   });
 
+  group('stripLeadingCharCountPrefixIn', () {
+    test('strips an unpadded bracketed count', () {
+      const text = '[3] foo\n[5] hello\n';
+      final r = stripLeadingCharCountPrefixIn(text, 0, text.length);
+      expect(r.text, 'foo\nhello\n');
+    });
+
+    test('strips a padded bracketed count (mixed widths)', () {
+      const text = '[ 1] a\n[ 5] hello\n[12] hello! world\n';
+      final r = stripLeadingCharCountPrefixIn(text, 0, text.length);
+      expect(r.text, 'a\nhello\nhello! world\n');
+    });
+
+    test('lines without the bracketed prefix pass through unchanged', () {
+      const text = '01. foo\nbar\n';
+      expect(stripLeadingCharCountPrefixIn(text, 0, text.length).text, text);
+    });
+
+    test('round-trips with prefixLinesWithCharCountIn', () {
+      const text = 'foo\nhello world\n';
+      final pref = prefixLinesWithCharCountIn(text, 0, text.length);
+      final back =
+          stripLeadingCharCountPrefixIn(pref.text, 0, pref.text.length);
+      expect(back.text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(stripLeadingCharCountPrefixIn('', 0, 0).text, '');
+    });
+  });
+
   group('prefixLinesWithCharCountIn', () {
     test('three short lines get single-digit counts (width 1)', () {
       const text = 'foo\nbar\nbaz\n';

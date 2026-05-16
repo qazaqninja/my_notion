@@ -92,6 +92,9 @@ enum SlashAction {
   /// Prefix every selected line with its character count
   /// (`[12] hello world`), padded so columns align.
   prefixLinesWithCharCount,
+  /// Strip a leading bracketed char-count prefix (the inverse of
+  /// `prefixLinesWithCharCount`) from every selected line.
+  stripLeadingCharCountPrefix,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1538,6 +1541,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '[12] hello world',
     action: SlashAction.prefixLinesWithCharCount,
     keywords: ['count', 'chars', 'length', 'prefix', 'measure'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Strip char-count prefix',
+    hint: '[12] foo → foo',
+    action: SlashAction.stripLeadingCharCountPrefix,
+    keywords: ['strip', 'remove', 'count', 'prefix', 'chars', 'undo'],
   ),
   SlashEntry(
     icon: 'edit',
