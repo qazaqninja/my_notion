@@ -465,6 +465,9 @@ enum SlashAction {
   /// Extract every CSS `rgb(...)` / `rgba(...)` color expression
   /// from each selected line.
   extractRgbColorsFromLines,
+  /// Extract every CSS `hsl(...)` / `hsla(...)` color expression
+  /// from each selected line.
+  extractHslColorsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2226,6 +2229,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractRgbColorsFromLines,
     keywords: ['extract', 'rgb', 'rgba', 'color', 'css',
         'design'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract HSL/HSLA colors',
+    hint: 'hsl(120,50%,50%) / hsla(...)',
+    action: SlashAction.extractHslColorsFromLines,
+    keywords: ['extract', 'hsl', 'hsla', 'color', 'css',
+        'design', 'hue'],
   ),
   SlashEntry(
     icon: 'calendar',

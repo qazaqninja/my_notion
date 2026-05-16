@@ -2637,6 +2637,40 @@ SortLinesResult extractRgbColorsFromLinesIn(
       return out;
     });
 
+/// Extract every CSS `hsl(...)` / `hsla(...)` color expression
+/// from each selected line. Completes the CSS-color trio
+/// alongside M1063 hex and M1137 RGB extractors.
+///
+/// Recognition:
+///   `hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%(?:\s*,\s*[\d.]+)?\s*\)`
+/// - `hsl` or `hsla` literal.
+/// - Opening `(`.
+/// - Hue: integer (0-360 conventionally, but unvalidated).
+/// - Comma + saturation: integer + `%`.
+/// - Comma + lightness: integer + `%`.
+/// - Optional comma + alpha: number (decimal or integer).
+/// - Closing `)`.
+///
+/// Modern CSS `hsl(120deg 50% 50%)` space-separated form is
+/// out of scope for v1 — the legacy comma-separated form is
+/// still dominant in design docs.
+///
+/// 74th member of the extraction family.
+SortLinesResult extractHslColorsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%(?:\s*,\s*[\d.]+)?\s*\)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

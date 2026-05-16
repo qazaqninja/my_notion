@@ -6769,6 +6769,70 @@ void main() {
     });
   });
 
+  group('extractHslColorsFromLinesIn', () {
+    test('basic hsl() extracts', () {
+      const text = 'color hsl(120, 50%, 50%) green\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'hsl(120, 50%, 50%)\n');
+    });
+
+    test('hsla() with alpha extracts', () {
+      const text = 'overlay hsla(0, 100%, 50%, 0.5) shade\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'hsla(0, 100%, 50%, 0.5)\n');
+    });
+
+    test('no-space form extracts', () {
+      const text = 'tight hsl(0,0%,0%) black\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'hsl(0,0%,0%)\n');
+    });
+
+    test('full-range hsla extracts', () {
+      const text = 'opaque hsla(360, 100%, 100%, 1) white\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'hsla(360, 100%, 100%, 1)\n');
+    });
+
+    test('hsl without `%` on sat/light is NOT a match', () {
+      // Saturation and lightness MUST end with `%` per CSS spec
+      // (unlike RGB which uses raw numbers). Regex enforces this.
+      const text = 'fake hsl(120, 50, 50) no-percents\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain `hsl` word (no parens) is NOT a match', () {
+      const text = 'word hsl only no parens\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple HSL colors on one line each extract', () {
+      const text =
+          'pair hsl(0,100%,50%) and hsla(120,50%,50%,0.3) palette\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'hsl(0,100%,50%)\nhsla(120,50%,50%,0.3)\n');
+    });
+
+    test('RGB color is NOT matched here', () {
+      // RGB is M1137's surface.
+      const text = 'use rgb(255,0,0) only\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without HSL/HSLA dropped from output', () {
+      const text = 'plain prose\nuse hsl(0,100%,50%)\nmore prose\n';
+      final r = extractHslColorsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'hsl(0,100%,50%)\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractHslColorsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
