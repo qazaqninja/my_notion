@@ -47,6 +47,13 @@ dependencies:
   # intent-filter) wired in subsequent slices; this dep is the Dart
   # entry point.
   receive_sharing_intent: ^1.8.1
+  # Home-screen "Add to Inbox" widget (G1) — iOS WidgetKit + Android
+  # AppWidget bridge. The widget posts a single text payload over the
+  # `home_widget` plugin's shared-data channel; Quill drains it via
+  # the same IncomingShareSource interface as the share-sheet flow,
+  # so widget-originated captures funnel through the existing
+  # QuickCapture.append splice.
+  home_widget: ^0.7.0
   # WYSIWYG editing (Phase D of the 1m-loop plan). 0.3-dev required
   # because 0.2.x pins http ^0.13 which conflicts with `timezone ^0.10.0`
   # (added in B4) needing http ^1.2. Used behind a feature flag at

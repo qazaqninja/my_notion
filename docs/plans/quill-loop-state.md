@@ -7,10 +7,19 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** G4 — Live docker-compose smoke pass per docs/phase-e-sanity-checklist.md (validates F-stretch backend changes end-to-end)
+- **Task:** G2 — Mobile-tuned editor toolbar (sticky bottom-bar for most-used kebab actions on narrow widths)
 - **Status:** pending
 
 ## Last completed
+
+- **M1368 — G1** (home_widget Add-to-Inbox skeleton + Dart-side adapter)
+- Committed: (this iteration)
+- TaskList ID: 87
+- Notes: G4 docker-compose smoke deferred — daemon not running in cron sandbox; pivoted to G1. New direct dep `home_widget: ^0.7.0`. New `lib/features/sharing/data/home_widget_source.dart` implementing the same `IncomingShareSource` interface as F1's ReceiveSharingIntentSource so widget-originated captures drain through the existing `IncomingShareBinder → QuickCapture.append` pipeline without any branching. Abstract `HomeWidgetClient` wraps the plugin's static API (getString / clear / clicked stream) for unit-testability; `DefaultHomeWidgetClient` is the production impl. Drain-and-clear pattern: read the `pending_capture` key, emit one IncomingShare per non-blank read, clear immediately so the next click can't re-emit. Blank reads do NOT clear. 5 new tests (initial-when-set-returns+clears, initial-empty-when-missing-or-blank, click-emits-fresh-capture, click-with-no-pending-is-noop, close-is-idempotent). Native iOS WidgetKit + Android AppWidget target setup documented in docs/native-share-setup.md (Xcode + AndroidManifest steps, mirroring the F3 iOS Share Extension doc structure). 10/10 sharing tests + 5/5 new home_widget tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1367 — F9** (audit followup: BL-11 listener.start guard)
+- Committed: (this iteration)
+- TaskList ID: 85b
 
 - **M1366 — F9** (Phase F closeout survey + Phase G/H pick-next; orchestrator audit dispatched)
 - Committed: (this iteration)

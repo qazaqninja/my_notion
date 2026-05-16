@@ -116,6 +116,52 @@ iOS → Share Extension" wizard. Follow the canonical setup from the
 3. Confirm: app opens; the URL lands as a new line in
    `Inbox/Quick capture.md`.
 
+## Home-screen widgets — partial (G1, M1368)
+
+Dart side wired via `home_widget: ^0.7.0` and a new
+`lib/features/sharing/data/home_widget_source.dart`. It implements
+the same `IncomingShareSource` interface as the share-sheet plugin,
+so widget-originated captures drain through the existing
+`IncomingShareBinder` → `QuickCapture.append` flow.
+
+The OS-side widget targets still need manual setup; canonical
+example lives at the `home_widget` package's `example/` directory.
+
+### iOS WidgetKit (TODO)
+
+1. In Xcode: File → New → Target → iOS → Widget Extension. Match
+   the bundle ID convention you used for the Share Extension
+   (`com.example.myNotion.QuickCaptureWidget`).
+2. Tick the same App Group both targets.
+3. Write a small `TimelineProvider` that surfaces an "Add to Inbox"
+   button. The button's tap intent writes the user's input to the
+   shared `pending_capture` key via the `home_widget`
+   App-Group-backed UserDefaults shim, then opens the host app via
+   the `ShareMedia-…` URL scheme already declared for the Share
+   Extension.
+4. Dart-side: nothing else to do — `HomeWidgetSource` polls
+   `pending_capture` on every `HomeWidget.widgetClicked` event.
+
+### Android AppWidget (TODO)
+
+1. Add a new resource `res/xml/quill_inbox_widget_info.xml` plus a
+   layout `res/layout/quill_inbox_widget.xml`.
+2. Register a `<receiver android:name="HomeWidgetReceiver">` in
+   `AndroidManifest.xml` per the `home_widget` example app.
+3. The widget's intent fires Dart's `HomeWidget.widgetClicked`
+   stream the same way iOS does.
+
+### Smoke test
+
+Once a target is added, run:
+
+```
+flutter run
+# add the widget from the home-screen long-press menu
+# tap "Add to Inbox", type something
+# confirm a new line lands in Inbox/Quick capture.md
+```
+
 ## macOS — N/A (F5+)
 
 `receive_sharing_intent` is iOS/Android only. macOS share-sheet
