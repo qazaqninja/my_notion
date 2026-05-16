@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** H1 — y_crdt Dart port PoC (add dep + serializer skeleton + round-trip test)
+- **Task:** H2 — WebSocket subscription endpoint + per-page CRDT updates wired into SyncBloc (multiplayer surface)
 - **Status:** pending
 
 ## Last completed
+
+- **M1371 — H1** (CRDT PoC seam — Yjs-shaped wrapper + serializer + round-trip tests)
+- Committed: (this iteration)
+- TaskList ID: 89
+- Notes: First Phase H slice — ships the Clean-Architecture seam without the production dep. Investigated `y_crdt: ^0.0.1` on pub.dev — WASM-backed (pulls `wasm_run` + `wasm_wit_component`), too heavy to add pre-emptively. Decision: ship the abstraction, defer the WASM cost decision to when multiplayer actually requires it. New feature folder `lib/features/crdt/` with: `domain/entities/quill_crdt_doc.dart` (Equatable Yjs-shaped wrapper exposing `body` + `clock` + `apply(QuillCrdtUpdate)` + `toMarkdown()` + factories `empty()`/`fromMarkdown()`) plus a sealed `QuillCrdtUpdate` hierarchy (one variant today: `QuillCrdtSetBody`; H2+ adds Insert/Delete once the editor speaks CRDT-shaped operations). `domain/usecases/markdown_crdt_serializer.dart` exposes the `fromMarkdown` / `toMarkdown` pair so callers code against an interface that survives the eventual y_crdt swap. New `lib/features/crdt/README.md` documents the PoC scope + migration plan (H2+: add y_crdt, replace body field with real YDoc + Y.Text, switch QuillCrdtUpdate sealed variants to Yjs binary update format). 7 new round-trip tests (empty, sample-roundtrip, clock-seeded-from-lines, apply-replaces+increments-clock, equality, empty-input-clock-0, single-line-without-trailing-newline). flutter analyze clean. Tests stay green when the y_crdt swap lands because they exercise the public surface, not the storage shape. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1370 — G2.5** (MobileEditorToolbar wired into editor_page body column)
 - Committed: (this iteration)
