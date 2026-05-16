@@ -9387,6 +9387,84 @@ void main() {
     });
   });
 
+  group('extractStripeIdsFromLinesIn', () {
+    test('payment intent pi_... extracts', () {
+      const text = 'see pi_3OZmkF2eZvKYlo2C1tAxYBJP charge\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'pi_3OZmkF2eZvKYlo2C1tAxYBJP\n');
+    });
+
+    test('customer cus_... extracts', () {
+      const text = 'lookup cus_NXkvJpFKy5mP9R today\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'cus_NXkvJpFKy5mP9R\n');
+    });
+
+    test('charge ch_... extracts', () {
+      const text = 'refund ch_3OZmkF2eZvKYlo2C0yZxbTc4 done\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'ch_3OZmkF2eZvKYlo2C0yZxbTc4\n');
+    });
+
+    test('test secret key sk_test_... extracts', () {
+      const text = 'cfg sk_test_FAKE here\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'sk_test_FAKE\n');
+    });
+
+    test('webhook secret whsec_... extracts', () {
+      const text = 'whk whsec_abcdef0123456789 set\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'whsec_abcdef0123456789\n');
+    });
+
+    test('subscription sub_... + invoice inv_... extract', () {
+      const text = 'sub_1NXkvFKy5mP9R then inv_1ABC0123def\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'sub_1NXkvFKy5mP9R\ninv_1ABC0123def\n');
+    });
+
+    test('unknown prefix foo_... NOT matched', () {
+      // `foo_` is not a registered Stripe object prefix.
+      const text = 'fake foo_1234567890ABC ignore\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('bare prefix without body NOT matched', () {
+      // Need at least one alphanumeric body char.
+      const text = 'empty pi_ alone here\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple IDs on one line each extract', () {
+      const text = 'flow pi_abc123 to cus_def456 ok\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'pi_abc123\ncus_def456\n');
+    });
+
+    test('lines without IDs dropped from output', () {
+      const text = 'plain prose\nch_test123XYZ here\nbye\n';
+      final r = extractStripeIdsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'ch_test123XYZ\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractStripeIdsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

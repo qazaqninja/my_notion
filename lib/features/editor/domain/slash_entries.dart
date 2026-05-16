@@ -570,6 +570,9 @@ enum SlashAction {
   /// Extract every stack-trace file:line reference (`main.dart:42`,
   /// `index.js:123:45`) from each selected line.
   extractStackTraceRefsFromLines,
+  /// Extract every Stripe API object identifier (`pi_...`,
+  /// `cus_...`, `sk_test_...`) from each selected line.
+  extractStripeIdsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2616,6 +2619,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'stack', 'trace', 'error',
         'crash', 'debug', 'line', 'column', 'file',
         'postmortem'],
+  ),
+  SlashEntry(
+    icon: 'dollar-sign',
+    label: 'Extract Stripe API object IDs',
+    hint: 'pi_... / cus_... / sk_test_...',
+    action: SlashAction.extractStripeIdsFromLines,
+    keywords: ['extract', 'stripe', 'payment', 'webhook',
+        'api', 'finance', 'billing', 'subscription',
+        'invoice', 'customer'],
   ),
   SlashEntry(
     icon: 'calendar',

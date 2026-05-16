@@ -4014,6 +4014,53 @@ SortLinesResult extractStackTraceRefsFromLinesIn(
       return out;
     });
 
+/// Extract every Stripe API object identifier from each
+/// selected line. Useful for payment-doc audits, webhook
+/// payload inventories, postmortem incident triage when
+/// Stripe is involved, and finance-team note scrapes.
+///
+/// Recognition: a recognised Stripe object-prefix followed by
+/// an alphanumeric body. Prefixes covered (per stripe.com/docs/
+/// api/object-types):
+/// - Auth: `sk_test_`, `sk_live_`, `pk_test_`, `pk_live_`,
+///   `rk_test_`, `rk_live_`, `whsec_`
+/// - Core: `pi_` (payment intent), `cus_` (customer),
+///   `ch_` (charge), `re_` (refund), `sub_` (subscription),
+///   `inv_` (invoice), `prod_` (product), `price_`,
+///   `seti_` (setup intent), `src_` (source), `cs_` (checkout
+///   session), `fil_` (file), `evt_` (event)
+///
+/// Matches:
+/// - `pi_3OZmkF2eZvKYlo2C1tAxYBJP`        — payment intent
+/// - `cus_NXkvJpFKy5mP9R`                  — customer
+/// - `sk_test_FAKE`    — test secret key
+/// - `whsec_abcdef0123456789`              — webhook secret
+///
+/// The alphanumeric body uses `[A-Za-z0-9]+` (no length limit
+/// because Stripe doesn't publish one) — practical IDs are
+/// 14-32 chars.
+///
+/// 108th member of the extraction family.
+SortLinesResult extractStripeIdsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:'
+        r'sk_test_|sk_live_|pk_test_|pk_live_|rk_test_|rk_live_|'
+        r'whsec_|'
+        r'pi_|cus_|ch_|re_|sub_|inv_|prod_|price_|seti_|src_|'
+        r'cs_|fil_|evt_'
+        r')[A-Za-z0-9]+\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
