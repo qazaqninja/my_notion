@@ -3630,6 +3630,64 @@ SortLinesResult extractEnvVarsFromLinesIn(
       return out;
     });
 
+/// Extract every IPv6 address from each selected line. Useful
+/// for network doc audits, firewall rule inventories,
+/// distributed-system trace harvests, and dual-stack rollout
+/// runbook scrapes.
+///
+/// Recognition: a three-arm alternation covering:
+/// - Full eight-group form: `2001:0db8:85a3:0000:0000:8a2e:`
+///   `0370:7334`
+/// - Compressed form with `::`: `2001:db8::1`, `fe80::1`,
+///   `::ffff:a:b`
+/// - Leading-`::` and standalone `::`: `::1` (loopback), `::`
+///   (unspecified)
+///
+/// Each group is 1-4 hexadecimal characters; case is
+/// preserved as written (lowercase is canonical per RFC 5952
+/// but uppercase appears in older docs).
+///
+/// Boundary lookarounds `(?<![\w:.])` and `(?![\w:.])` prevent
+/// the regex from slicing inside longer non-IPv6 tokens that
+/// share the colon character.
+///
+/// Time-of-day strings like `12:34:56` are NOT matched because
+/// they have only 2 colons; the full-form arm requires 7
+/// colons and the compressed arm requires `::` somewhere in
+/// the match. IPv4 dotted-quad `127.0.0.1` is also not matched
+/// because the format has dots, not just colons.
+///
+/// IPv6-mapped IPv4 addresses (`::ffff:192.0.2.1`) are NOT
+/// matched — the trailing dotted-quad section breaks the
+/// purely-colonised group structure. A separate extractor
+/// could target this hybrid form if needed.
+///
+/// Zone identifiers (`fe80::1%eth0`) capture only the address
+/// portion; the `%zone` suffix is dropped at the boundary
+/// lookahead.
+///
+/// 100th member of the extraction family — milestone.
+SortLinesResult extractIpv6FromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'(?<![\w:.])'
+        r'(?:'
+        r'(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}'
+        r'|(?:[0-9a-fA-F]{1,4}:){1,7}:[0-9a-fA-F]{0,4}'
+        r'|::(?:[0-9a-fA-F]{1,4}(?::[0-9a-fA-F]{1,4}){0,6})?'
+        r')'
+        r'(?![\w:.])',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

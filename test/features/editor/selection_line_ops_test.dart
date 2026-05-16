@@ -8762,6 +8762,77 @@ void main() {
     });
   });
 
+  group('extractIpv6FromLinesIn', () {
+    test('full 8-group form extracts', () {
+      const text =
+          'route 2001:0db8:85a3:0000:0000:8a2e:0370:7334 ok\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text,
+          '2001:0db8:85a3:0000:0000:8a2e:0370:7334\n',);
+    });
+
+    test('compressed :: form extracts', () {
+      const text = 'host 2001:db8::1 default route\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, '2001:db8::1\n');
+    });
+
+    test('link-local fe80::1 extracts', () {
+      const text = 'iface fe80::1 link local\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, 'fe80::1\n');
+    });
+
+    test('loopback ::1 extracts', () {
+      const text = 'ping ::1 loopback\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, '::1\n');
+    });
+
+    test('all-zeros :: extracts', () {
+      const text = 'unspec :: any addr\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, '::\n');
+    });
+
+    test('time-of-day 12:34:56 NOT matched', () {
+      // Only 2 colons; the full-form arm needs 7 colons and
+      // the compressed arm needs `::`.
+      const text = 'meet 12:34:56 today\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('IPv4 dotted-quad 127.0.0.1 NOT matched', () {
+      // IPv4 has dots, not just colons — wrong shape.
+      const text = 'ip 127.0.0.1 here\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('compressed middle 2001:db8:abc::123 extracts', () {
+      const text = 'lan 2001:db8:abc::123 prefix\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, '2001:db8:abc::123\n');
+    });
+
+    test('uppercase hex 2001:DB8::1 extracts', () {
+      const text = 'old 2001:DB8::1 uppercase form\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, '2001:DB8::1\n');
+    });
+
+    test('lines without IPv6 dropped from output', () {
+      const text = 'plain prose\nhop fe80::abc here\nbye\n';
+      final r = extractIpv6FromLinesIn(text, 0, text.length);
+      expect(r.text, 'fe80::abc\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractIpv6FromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

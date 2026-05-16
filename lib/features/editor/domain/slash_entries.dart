@@ -546,6 +546,9 @@ enum SlashAction {
   /// Extract every shell environment variable reference
   /// (`$PATH`, `${HOME}`) from each selected line.
   extractEnvVarsFromLines,
+  /// Extract every IPv6 address (`::1`, `2001:db8::1`,
+  /// `fe80::1`) from each selected line.
+  extractIpv6FromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2524,6 +2527,14 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'env', 'environment', 'variable',
         'shell', 'bash', 'dotenv', 'docker', 'config',
         'export', 'expand'],
+  ),
+  SlashEntry(
+    icon: 'wifi',
+    label: 'Extract IPv6 addresses',
+    hint: '::1 / 2001:db8::1 / fe80::1',
+    action: SlashAction.extractIpv6FromLines,
+    keywords: ['extract', 'ipv6', 'ip', 'v6', 'address',
+        'host', 'network', 'colon', 'hex'],
   ),
   SlashEntry(
     icon: 'calendar',
