@@ -9,7 +9,11 @@
 /// block is faster, has no dependency footprint, and matches Quill's
 /// own `frontmatter_parser.dart` which preserves raw scalars verbatim.
 class FrontmatterProbe {
-  const FrontmatterProbe._({this.ulid, this.isPublic = false});
+  const FrontmatterProbe._({
+    this.ulid,
+    this.isPublic = false,
+    this.publicPasswordHash,
+  });
 
   factory FrontmatterProbe.fromBody(String body) {
     // Frontmatter block: starts with `---\n` and ends with `\n---` or
@@ -18,6 +22,7 @@ class FrontmatterProbe {
     if (block == null) return const FrontmatterProbe._();
     String? ulid;
     var isPublic = false;
+    String? publicPasswordHash;
     for (final line in block.split('\n')) {
       final m = RegExp(r'^([a-zA-Z_][\w-]*)\s*:\s*(.*?)\s*$').firstMatch(line);
       if (m == null) continue;
@@ -27,12 +32,33 @@ class FrontmatterProbe {
       if (key == 'public' && (value == 'true' || value == 'yes')) {
         isPublic = true;
       }
+      // E43: `public_password:` carries a bcrypt hash. The Flutter
+      // client computes the hash before uploading; backend never
+      // sees the plaintext. We only care about the value being a
+      // syntactically-valid bcrypt hash so a typo'd password
+      // doesn't silently bypass the check.
+      if (key == 'public_password' && _isBcryptHash(value)) {
+        publicPasswordHash = value;
+      }
     }
-    return FrontmatterProbe._(ulid: ulid, isPublic: isPublic);
+    return FrontmatterProbe._(
+      ulid: ulid,
+      isPublic: isPublic,
+      publicPasswordHash: publicPasswordHash,
+    );
   }
 
   final String? ulid;
   final bool isPublic;
+
+  /// E43 — bcrypt hash of the public-page password, when set. Null
+  /// means the public page is reachable without an unlock cookie.
+  final String? publicPasswordHash;
+
+  /// True when `public: true` AND the page has been gated behind a
+  /// password.
+  bool get isPasswordProtected =>
+      isPublic && publicPasswordHash != null;
 
   /// Extract the inner YAML block from a markdown body, or null if no
   /// frontmatter is present. Matches `^---\n…\n---\n?` at file start.
@@ -46,5 +72,12 @@ class FrontmatterProbe {
   /// regex the Flutter client uses for inline wikilink chips.
   static bool _isUlid(String s) {
     return RegExp(r'^[0-9A-HJKMNP-TV-Z]{26}$').hasMatch(s);
+  }
+
+  /// True iff [s] looks like a bcrypt hash (`$2a$<cost>$<salt+hash>`).
+  /// Defensive — a malformed value lets us refuse to gate the page
+  /// rather than locking it with garbage.
+  static bool _isBcryptHash(String s) {
+    return RegExp(r'^\$2[abxy]\$\d{2}\$[./A-Za-z0-9]{53}$').hasMatch(s);
   }
 }

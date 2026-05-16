@@ -128,14 +128,16 @@ class SyncRepository implements SyncRepositoryBase {
       final rows = await tx.execute(
         Sql.named('''
           INSERT INTO vault_files
-            (user_id, relpath, sha256, body, mtime, ulid, is_public)
-          VALUES (@uid, @rel, @sha, @body, now(), @ulid, @public)
+            (user_id, relpath, sha256, body, mtime, ulid, is_public,
+             public_password_hash)
+          VALUES (@uid, @rel, @sha, @body, now(), @ulid, @public, @pwhash)
           ON CONFLICT (user_id, relpath) DO UPDATE
-            SET sha256    = EXCLUDED.sha256,
-                body      = EXCLUDED.body,
-                mtime     = now(),
-                ulid      = EXCLUDED.ulid,
-                is_public = EXCLUDED.is_public
+            SET sha256               = EXCLUDED.sha256,
+                body                 = EXCLUDED.body,
+                mtime                = now(),
+                ulid                 = EXCLUDED.ulid,
+                is_public            = EXCLUDED.is_public,
+                public_password_hash = EXCLUDED.public_password_hash
           RETURNING relpath, sha256, mtime
         '''),
         parameters: {
@@ -145,6 +147,7 @@ class SyncRepository implements SyncRepositoryBase {
           'body': body,
           'ulid': probe.ulid,
           'public': probe.isPublic,
+          'pwhash': probe.publicPasswordHash,
         },
       );
       final row = rows.first;

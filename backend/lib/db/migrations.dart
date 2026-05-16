@@ -78,4 +78,12 @@ const _migrations = <_Migration>[
     CREATE INDEX idx_vault_files_ulid_public
       ON vault_files(ulid) WHERE is_public = true;
   '''),
+  _Migration(4, '''
+    -- E43 (M1346): per-page password protection.
+    -- `public_password_hash` holds a bcrypt hash extracted from the
+    -- frontmatter `public_password:` field by FrontmatterProbe. When
+    -- non-null the public route refuses to serve the rendered HTML
+    -- until the visitor presents a valid unlock cookie.
+    ALTER TABLE vault_files ADD COLUMN public_password_hash TEXT;
+  '''),
 ];

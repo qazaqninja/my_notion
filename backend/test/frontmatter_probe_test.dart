@@ -61,5 +61,40 @@ void main() {
       );
       expect(p.ulid, ulid);
     });
+
+    // E43 — public_password handling.
+    test('public_password: a valid bcrypt hash is captured', () {
+      // Bcrypt fixture — `$2a$10$…` with 53 trailing chars. Real
+      // hash, doesn't matter what plaintext it represents because
+      // the probe only checks shape, not value.
+      const hash =
+          r'$2a$10$abcdefghijklmnopqrstuuv1234567890ABCDEFGHIJKLMNOPQRST';
+      final p = FrontmatterProbe.fromBody(
+        '---\nid: $ulid\npublic: true\npublic_password: $hash\n---\nbody',
+      );
+      expect(p.isPublic, isTrue);
+      expect(p.publicPasswordHash, hash);
+      expect(p.isPasswordProtected, isTrue);
+    });
+
+    test('public_password: a malformed value is ignored (defensive)', () {
+      final p = FrontmatterProbe.fromBody(
+        '---\nid: $ulid\npublic: true\npublic_password: not-a-bcrypt-hash\n---\n',
+      );
+      expect(p.publicPasswordHash, isNull);
+      expect(p.isPasswordProtected, isFalse);
+    });
+
+    test('public_password without public: true is not "protected"', () {
+      const hash =
+          r'$2a$10$abcdefghijklmnopqrstuuv1234567890ABCDEFGHIJKLMNOPQRST';
+      final p = FrontmatterProbe.fromBody(
+        '---\nid: $ulid\npublic_password: $hash\n---\n',
+      );
+      // Hash is still parsed for completeness, but the convenience
+      // helper requires both flags to be set.
+      expect(p.publicPasswordHash, hash);
+      expect(p.isPasswordProtected, isFalse);
+    });
   });
 }

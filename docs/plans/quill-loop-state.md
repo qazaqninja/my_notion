@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E43 — Public route password protection (`public_password:` frontmatter + bcrypt-checked cookie)
+- **Task:** E44 — Flutter side of E43: editor kebab "Publish with password…" → bcrypt hash → frontmatter
 - **Status:** pending
 
 ## Last completed
 
-- **M1345 — E42** (droppable() on SyncRestoreRequested)
+- **M1346 — E43** (public route password protection: probe + DB column + gate + unlock POST)
 - Committed: (this iteration)
-- TaskList ID: 64
-- Notes: Closes the lone latent BL-10 surfaced by the E41 re-audit. `on<SyncRestoreRequested>(_onRestore, transformer: droppable())` with an inline comment: restore is intentionally single-shot at app boot; a re-dispatch (e.g., the user opens Settings → Sync before initial restore completes) should be a no-op rather than a redundant SharedPreferences read. 1 new bloc_test case (double-dispatch-reaches-single-restored-state). 54/54 sync_bloc tests pass; flutter analyze clean. The Phase E sync stack is now fully architecturally clean against RULES.md (only the 4 documented deferred items remain). Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 65
+- Notes: Backend side of the per-page password-protection flow. `FrontmatterProbe` gains a `publicPasswordHash` field + `isPasswordProtected` convenience getter; new `_isBcryptHash(s)` validates `$2[abxy]$NN$` + 53 trailing base64 chars defensively. New migration v4 adds `vault_files.public_password_hash TEXT NULL`; sync upsert writes it. `public/routes.dart` gets a second handler `POST /public/<ulid>/unlock` that bcrypt-checks the form-encoded `password` field and sets a `Set-Cookie: quill_unlock_<ulid>=<hash>; HttpOnly; SameSite=Lax; Max-Age=2592000` on success (cookie value is the hash itself — rotating the password mismatches old cookies and re-prompts). `GET /public/<ulid>` now returns the rendered HTML when the cookie matches, the unlock form when password is set but the cookie is absent/wrong. Cookie comparison handles missing/multiple cookies, no JS. 4 new probe tests (valid-bcrypt-captured, malformed-ignored, public-false-not-protected, plus the existing ones still pass). 76/76 backend tests pass; backend dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
