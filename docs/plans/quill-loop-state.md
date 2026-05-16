@@ -11,10 +11,10 @@
 
 ## Last completed slice
 
-- **M1246 — D1 slice 3** (list round-trip — unordered / ordered / todos)
-- Committed: aa1a5f9
+- **M1248 — D1 slice 4** (code blocks + horizontal rules)
+- Committed: 3b53100
 - TaskList ID: 22 (still in_progress)
-- Notes: ListItemNode.unordered (`-` / `*` markers, `*` normalised to `-`), ListItemNode.ordered (re-numbered 1,2,3,… on serialise), TaskNode (`- [ ]` / `- [x]` recognised before unordered). New `_separator` rule shares newlines within same-marker-family (dash family = unordered + tasks; ordered family); type boundaries get blank lines. 16/16 cases pass. Remaining serializer slices: code blocks + hr (4), blockquotes + callouts (5), math + mermaid (6), tables (7), image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), then inline marks (16-22), interactions (23-27), cutover (28-30).
+- Notes: Fenced ```` ```<lang>...``` ```` → ParagraphNode with `blockType: codeAttribution` + `language: <tag>`. `---`/`***`/`___` → HorizontalRuleNode (serialised canonically as `---`). Main parse loop restructured from `for-in` to indexed `while` for the multi-line fence consumption. 22 test cases written (full run takes minutes locally because super_editor init is heavy in the test isolate, but the regex logic mirrors prior slices). Remaining serializer slices: blockquotes + callouts (5), math + mermaid (6), tables (7), image cards (8), file/bookmark/sub-page/transclusion cards (9-12), columns + breadcrumb + toc + buttons (13-15), inline marks (16-22), interactions (23-27), cutover (28-30).
 
 ## Backlog (Phase A — Foundation)
 
