@@ -283,18 +283,7 @@ const int _kMaxFormBodyBytes = 32 * 1024;
 Router buildFormsRouter({required FormsRepositoryBase repo}) {
   final router = Router();
 
-  router.post('/<ulid>/submit', (Request req) async {
-    try {
-      return await _handleSubmit(req, repo);
-    } on DbException catch (e) {
-      // F6: db transport failure mid-request → 503 with JSON shape.
-      return Response(
-        503,
-        body: jsonEncode({'error': 'db_unavailable', 'op': e.message}),
-        headers: const {'content-type': 'application/json'},
-      );
-    }
-  });
+  router.post('/<ulid>/submit', (Request req) => _handleSubmit(req, repo));
 
   router.get('/<ulid>/thanks', (Request req) async {
     final ulid = req.params['ulid'];
@@ -394,33 +383,23 @@ Router buildOwnerFormsRouter({required FormsRepositoryBase repo}) {
       );
     }
     final user = currentUser(req);
-    try {
-      final submissions = await repo.listSubmissionsFor(
-        userId: user.id,
-        pageUlid: ulid,
-      );
-      if (submissions == null) {
-        return Response(
-          403,
-          body: jsonEncode({'error': 'not_owner'}),
-          headers: const {'content-type': 'application/json'},
-        );
-      }
-      return Response.ok(
-        jsonEncode({
-          'submissions': submissions.map((s) => s.toJson()).toList(),
-        }),
-        headers: const {'content-type': 'application/json'},
-      );
-    } on DbException catch (e) {
-      // F6: db transport failure → 503 with JSON shape, no stack
-      // trace leak.
+    final submissions = await repo.listSubmissionsFor(
+      userId: user.id,
+      pageUlid: ulid,
+    );
+    if (submissions == null) {
       return Response(
-        503,
-        body: jsonEncode({'error': 'db_unavailable', 'op': e.message}),
+        403,
+        body: jsonEncode({'error': 'not_owner'}),
         headers: const {'content-type': 'application/json'},
       );
     }
+    return Response.ok(
+      jsonEncode({
+        'submissions': submissions.map((s) => s.toJson()).toList(),
+      }),
+      headers: const {'content-type': 'application/json'},
+    );
   });
 
   return router;

@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:shelf/shelf.dart';
+
 /// Typed exception hierarchy for backend repository boundaries.
 /// Route handlers catch [DbUnavailableException] and map it to 503; raw
 /// `package:postgres` errors should never escape a repo method (closes
@@ -37,4 +41,25 @@ Future<T> runDb<T>(
   } catch (e) {
     throw DbUnavailableException('$op failed: $e', cause: e);
   }
+}
+
+/// Shelf middleware that catches [DbUnavailableException] thrown from
+/// any downstream handler and returns 503 with a JSON body of shape
+/// `{"error":"db_unavailable","op":<message>}`. Other [DbException]
+/// subtypes propagate so route handlers can keep their domain-specific
+/// catches (e.g. `EmailAlreadyTakenException` in auth/routes.dart).
+Middleware dbExceptionToResponse() {
+  return (Handler inner) {
+    return (Request request) async {
+      try {
+        return await inner(request);
+      } on DbUnavailableException catch (e) {
+        return Response(
+          503,
+          body: jsonEncode({'error': 'db_unavailable', 'op': e.message}),
+          headers: const {'content-type': 'application/json'},
+        );
+      }
+    };
+  };
 }

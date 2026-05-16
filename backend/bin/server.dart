@@ -5,6 +5,7 @@ import 'package:backend/auth/password.dart';
 import 'package:backend/auth/routes.dart';
 import 'package:backend/auth/tokens.dart';
 import 'package:backend/db/connection.dart';
+import 'package:backend/db/exceptions.dart';
 import 'package:backend/db/migrations.dart';
 import 'package:backend/db/sync.dart';
 import 'package:backend/db/users.dart';
@@ -70,15 +71,20 @@ void main(List<String> args) async {
   if (conn != null) {
     final users = UserRepository(conn);
     final tokens = TokenIssuer();
-    router.mount(
-      '/auth/',
-      buildAuthRouter(
-        users: users,
-        hasher: const PasswordHasher(),
-        tokens: tokens,
-      ).call,
-    );
+    // F7: every db-backed router gets the dbExceptionToResponse
+    // middleware so transient Postgres failures land as a 503 JSON
+    // body instead of leaking a stack trace.
+    final dbErrors = dbExceptionToResponse();
+    final authPipeline = Pipeline().addMiddleware(dbErrors).addHandler(
+          buildAuthRouter(
+            users: users,
+            hasher: const PasswordHasher(),
+            tokens: tokens,
+          ).call,
+        );
+    router.mount('/auth/', authPipeline);
     final syncPipeline = Pipeline()
+        .addMiddleware(dbErrors)
         .addMiddleware(requireAuth(users: users, tokens: tokens))
         .addHandler(
           sync_routes
@@ -88,25 +94,25 @@ void main(List<String> args) async {
     router.mount('/sync/', syncPipeline);
     // Public sharing surface (E16) — NO auth wrapper. `GET /public/<ulid>`
     // returns the public-flagged page body as HTML, or 404.
-    router.mount('/public/', public_routes.buildPublicRouter(conn: conn).call);
-    // Forms scaffold (E46) — NO auth wrapper. `POST /forms/<ulid>/submit`
-    // currently returns 404 in every case; the route shape is locked
-    // in so the Flutter form designer can render a working form action
-    // before the row-insert behavior lands in a future slice.
+    final publicPipeline = Pipeline().addMiddleware(dbErrors).addHandler(
+          public_routes.buildPublicRouter(conn: conn).call,
+        );
+    router.mount('/public/', publicPipeline);
     // E49: order matters — mount the authed sub-tree FIRST so its
     // routes win the `/forms/owner/...` prefix before the unauthed
     // catch-all on `/forms/`.
     final formsRepo = forms_routes.FormsRepository(conn);
     final ownerFormsPipeline = Pipeline()
+        .addMiddleware(dbErrors)
         .addMiddleware(requireAuth(users: users, tokens: tokens))
         .addHandler(forms_routes
             .buildOwnerFormsRouter(repo: formsRepo)
             .call);
     router.mount('/forms/owner/', ownerFormsPipeline);
-    router.mount(
-      '/forms/',
-      forms_routes.buildFormsRouter(repo: formsRepo).call,
-    );
+    final formsPipeline = Pipeline().addMiddleware(dbErrors).addHandler(
+          forms_routes.buildFormsRouter(repo: formsRepo).call,
+        );
+    router.mount('/forms/', formsPipeline);
   } else {
     router.all('/auth/<ignored|.*>',
         (Request req) => Response(503, body: 'db: not connected\n'));

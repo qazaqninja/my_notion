@@ -2,6 +2,7 @@ import 'package:postgres/postgres.dart';
 
 import '../sync/file_summary.dart';
 import '../sync/frontmatter_probe.dart';
+import 'exceptions.dart';
 
 /// Result of `upsert` — either the new persisted summary, or a
 /// conflict-with-the-current-server-state when `ifMatch` didn't match.
@@ -64,25 +65,26 @@ class SyncRepository implements SyncRepositoryBase {
   final Connection _conn;
 
   @override
-  Future<List<FileSummary>> listFor(String userId) async {
-    final rows = await _conn.execute(
-      Sql.named('''
-        SELECT relpath, sha256, mtime
-        FROM vault_files
-        WHERE user_id = @uid
-        ORDER BY relpath ASC
-      '''),
-      parameters: {'uid': userId},
-    );
-    return [
-      for (final row in rows)
-        FileSummary(
-          relpath: row[0] as String,
-          sha256: row[1] as String,
-          mtime: row[2] as DateTime,
-        ),
-    ];
-  }
+  Future<List<FileSummary>> listFor(String userId) async =>
+      runDb(op: 'sync.listFor', () async {
+        final rows = await _conn.execute(
+          Sql.named('''
+            SELECT relpath, sha256, mtime
+            FROM vault_files
+            WHERE user_id = @uid
+            ORDER BY relpath ASC
+          '''),
+          parameters: {'uid': userId},
+        );
+        return [
+          for (final row in rows)
+            FileSummary(
+              relpath: row[0] as String,
+              sha256: row[1] as String,
+              mtime: row[2] as DateTime,
+            ),
+        ];
+      });
 
   @override
   Future<UpsertOutcome> upsert({
@@ -91,7 +93,8 @@ class SyncRepository implements SyncRepositoryBase {
     required String body,
     required String sha256,
     String? ifMatch,
-  }) async {
+  }) async =>
+      runDb(op: 'sync.upsert', () async {
     return _conn.runTx<UpsertOutcome>((tx) async {
       FileSummary? current;
       if (ifMatch != null) {
@@ -162,13 +165,14 @@ class SyncRepository implements SyncRepositoryBase {
         ),
       );
     });
-  }
+      });
 
   @override
   Future<bool> delete({
     required String userId,
     required String relpath,
-  }) async {
+  }) async =>
+      runDb(op: 'sync.delete', () async {
     final result = await _conn.execute(
       Sql.named('''
         DELETE FROM vault_files
@@ -177,13 +181,14 @@ class SyncRepository implements SyncRepositoryBase {
       parameters: {'uid': userId, 'rel': relpath},
     );
     return result.affectedRows > 0;
-  }
+      });
 
   @override
   Future<FileBody?> fetch({
     required String userId,
     required String relpath,
-  }) async {
+  }) async =>
+      runDb(op: 'sync.fetch', () async {
     final rows = await _conn.execute(
       Sql.named('''
         SELECT relpath, sha256, mtime, body
@@ -203,5 +208,5 @@ class SyncRepository implements SyncRepositoryBase {
       ),
       body: row[3] as String,
     );
-  }
+      });
 }

@@ -367,16 +367,26 @@ void main() {
       expect(repo.insertCount, 0);
     });
 
-    test('F6: repo-thrown DbException maps to 503 db_unavailable', () async {
-      // Use a deliberately failing fake — its `insertSubmission` throws
-      // a DbException. The route's catch should swallow it and emit a
-      // 503 JSON body instead of leaking the stack trace.
+    test('F6/F7: repo-thrown DbException maps to 503 db_unavailable',
+        () async {
+      // F7 moved the catch into a shelf Middleware
+      // (dbExceptionToResponse) shared across every db-backed router.
+      // Reproduce the production wiring by wrapping the test pipeline
+      // with the same middleware — the test only asserts the response
+      // contract, not which layer caught the exception.
       final repo = _ThrowingRepo();
-      final res = await _hit(
-        '/$ulid/submit',
-        repo: repo,
+      final handler = Pipeline()
+          .addMiddleware(dbExceptionToResponse())
+          .addHandler(buildFormsRouter(repo: repo).call);
+      final req = Request(
+        'POST',
+        Uri.parse('http://localhost/$ulid/submit'),
         body: 'name=Pat',
+        headers: const {
+          'content-type': 'application/x-www-form-urlencoded',
+        },
       );
+      final res = await handler(req);
       expect(res.statusCode, 503);
       final body = jsonDecode(await res.readAsString())
           as Map<String, dynamic>;

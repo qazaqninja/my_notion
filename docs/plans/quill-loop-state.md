@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F7 — Extend the F6 DbException wrap to SyncRepository + UserRepository handlers
+- **Task:** F8 — Pick-next: smoke-test backend on a live docker compose stack (manual sanity per docs/phase-e-sanity-checklist.md) OR Phase F UI tightening (e.g. surface Flutter sync-error toasts when backend returns 503)
 - **Status:** pending
 
 ## Last completed
+
+- **M1364 — F7** (DbException wrap extended to Sync + User + middleware-driven 503 mapping)
+- Committed: (this iteration)
+- TaskList ID: 83
+- Notes: All four `SyncRepository` methods (`listFor`, `upsert`, `delete`, `fetch`) and all four `UserRepository` methods (`create`, `findById`, `findByEmail`, `passwordHashOf`) now wrap their `_conn.execute` calls in `runDb` from F6. `EmailAlreadyTakenException` was promoted to extend `DbException` so `runDb` passes it through untouched (the auth route's existing `on EmailAlreadyTakenException` catch keeps working unchanged because it's a subtype). New `dbExceptionToResponse()` shelf middleware in `lib/db/exceptions.dart` catches `DbUnavailableException` from any downstream handler and returns `{"error":"db_unavailable","op":<msg>}` with status 503. `server.dart` now mounts every db-backed router (`/auth/`, `/sync/`, `/public/`, `/forms/owner/`, `/forms/`) behind a shared `dbErrors` middleware instance. Per-route try/catch in forms/routes.dart removed — the middleware handles it DRY-style. F6 test in forms_routes_test.dart rewritten to wrap the test pipeline with `dbExceptionToResponse()` so it asserts the production-shape contract. 126/126 backend tests pass; backend dart analyze clean. The original Phase-E audit RP-03 deferred item is now closed across the entire backend. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1363 — F6** (typed DbException wrap on FormsRepository + 503 route mapping)
 - Committed: (this iteration)
