@@ -1722,6 +1722,38 @@ SortLinesResult extractIsoWeeksFromLinesIn(
       return out;
     });
 
+/// Extract the LABEL from every CommonMark inline image-reference
+/// USAGE site (`![alt][label]` → `label`) on each selected line.
+/// Companion to M1105's text-link usage label extractor — paired
+/// together they give a full inventory of reference-link usages
+/// (both link and image surfaces).
+///
+/// Recognition: `!\[[^\]\n]*\]\[([^\]\n]+)\]`
+/// - Literal `!` (the marker that distinguishes image refs
+///   from text-link refs).
+/// - `[alt]` opener (alt allowed to be EMPTY per CommonMark, so
+///   `[^\]\n]*` zero-or-more).
+/// - `]` closer.
+/// - Immediately followed by `[label]` (label requires non-empty
+///   content per `[^\]\n]+`).
+///
+/// Inline image form `![alt](url)` (M1073) and collapsed form
+/// `![alt][]` are NOT matched in this v1.
+///
+/// 46th member of the extraction family.
+SortLinesResult extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'!\[[^\]\n]*\]\[([^\]\n]+)\]');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

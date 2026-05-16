@@ -1401,6 +1401,11 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractIsoWeeksFromLinesIn,
         );
+      case SlashAction.extractMarkdownImageReferenceUsageLabelsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret,
+          extractMarkdownImageReferenceUsageLabelsFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

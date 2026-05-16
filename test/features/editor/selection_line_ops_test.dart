@@ -4884,6 +4884,77 @@ void main() {
     });
   });
 
+  group('extractMarkdownImageReferenceUsageLabelsFromLinesIn', () {
+    test('plain `![alt][label]` extracts label', () {
+      const text = 'see ![hero image][img-1] context\n';
+      final r = extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'img-1\n');
+    });
+
+    test('empty alt `![][label]` extracts label', () {
+      // Per CommonMark, image alt MAY be empty. The label
+      // section still requires non-empty content.
+      const text = 'decoration ![][placeholder] only\n';
+      final r = extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'placeholder\n');
+    });
+
+    test('text-link usage `[text][label]` (no `!`) is NOT matched', () {
+      // The `!` prefix is the image-vs-link disambiguator.
+      const text = 'wrap [docs][foo] here\n';
+      final r = extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('inline image `![alt](url)` is NOT matched', () {
+      // Parens form is M1073; this extractor only catches
+      // the reference-bracket form.
+      const text = 'use ![alt](pic.png) inline\n';
+      final r = extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple image refs on one line each extract', () {
+      const text = 'gallery ![a][i1] then ![b][i2] then ![c][i3]\n';
+      final r = extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'i1\ni2\ni3\n');
+    });
+
+    test('hyphenated label preserved', () {
+      const text = 'see ![hero][img-hero-1] crop\n';
+      final r = extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'img-hero-1\n');
+    });
+
+    test('text-link ref + image ref on same line: only image ref', () {
+      const text = 'mix [t][l] and ![alt][i] together\n';
+      final r = extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'i\n');
+    });
+
+    test('lines without image refs dropped from output', () {
+      const text = 'plain prose\nshow ![alt][img] here\nmore prose\n';
+      final r = extractMarkdownImageReferenceUsageLabelsFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, 'img\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractMarkdownImageReferenceUsageLabelsFromLinesIn('', 0, 0)
+            .text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

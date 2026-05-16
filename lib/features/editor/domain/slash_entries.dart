@@ -378,6 +378,9 @@ enum SlashAction {
   /// Extract every ISO 8601 week-number substring (`YYYY-Www`,
   /// e.g. `2024-W12`) from each selected line.
   extractIsoWeeksFromLines,
+  /// Extract the label from every CommonMark inline image-reference
+  /// usage site (`![alt][label]` → `label`) on each selected line.
+  extractMarkdownImageReferenceUsageLabelsFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1915,6 +1918,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractIsoWeeksFromLines,
     keywords: ['extract', 'iso', 'week', 'sprint', 'schedule',
         '8601'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract image-ref usage labels',
+    hint: '![alt][label] → label',
+    action: SlashAction.extractMarkdownImageReferenceUsageLabelsFromLines,
+    keywords: ['extract', 'image', 'img', 'reference', 'ref',
+        'usage', 'label', 'markdown'],
   ),
   SlashEntry(
     icon: 'calendar',
