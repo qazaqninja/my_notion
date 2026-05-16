@@ -2713,6 +2713,27 @@ SortLinesResult stripMarkdownEmphasisLinesIn(
       ];
     });
 
+/// Prefix every selected line with its 1-based index in the
+/// selection, zero-padded to the width of the largest index so the
+/// column stays aligned. Blank lines get the prefix too — they
+/// count as positions and keep the numbering monotonic. Useful for
+/// quickly annotating a paste-in with positional markers without
+/// committing to ordered-list syntax (which `renumberListLines`
+/// already handles for actual `1. ` lists).
+///
+///   foo            01. foo
+///   bar       →    02. bar
+///   baz            03. baz
+SortLinesResult prefixLinesWithIndexIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      if (lines.isEmpty) return lines;
+      final width = lines.length.toString().length;
+      return [
+        for (var i = 0; i < lines.length; i++)
+          '${(i + 1).toString().padLeft(width, '0')}. ${lines[i]}',
+      ];
+    });
+
 /// Strip inline HTML tags from every selected line, leaving the
 /// text content between them. Closes the "make this paste plain"
 /// trilogy alongside [stripMarkdownEmphasisLinesIn] (M976) and

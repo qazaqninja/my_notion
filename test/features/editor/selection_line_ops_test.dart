@@ -140,6 +140,45 @@ void main() {
     });
   });
 
+  group('prefixLinesWithIndexIn', () {
+    test('three lines get single-digit prefixes', () {
+      const text = 'foo\nbar\nbaz\n';
+      final r = prefixLinesWithIndexIn(text, 0, text.length);
+      // Width-1 padding for indices 1..3.
+      expect(r.text, '1. foo\n2. bar\n3. baz\n');
+    });
+
+    test('ten or more lines zero-pad to keep columns aligned', () {
+      final lines = List<String>.generate(10, (i) => 'line${i + 1}').join('\n');
+      final text = '$lines\n';
+      final r = prefixLinesWithIndexIn(text, 0, text.length);
+      // Width-2 padding so index "01" lines up under "10".
+      expect(r.text.startsWith('01. line1\n'), isTrue);
+      expect(r.text.contains('10. line10\n'), isTrue);
+    });
+
+    test('100+ lines zero-pad to width 3', () {
+      // Confirm the width scales with the largest index, not a fixed value.
+      final lines =
+          List<String>.generate(100, (i) => 'L${i + 1}').join('\n');
+      final text = '$lines\n';
+      final r = prefixLinesWithIndexIn(text, 0, text.length);
+      expect(r.text.startsWith('001. L1\n'), isTrue);
+      expect(r.text.contains('100. L100\n'), isTrue);
+    });
+
+    test('blank lines still get the prefix to keep numbering monotonic', () {
+      const text = 'foo\n\nbar\n';
+      final r = prefixLinesWithIndexIn(text, 0, text.length);
+      // The middle blank line gets a "2. " prefix so foo→1, blank→2, bar→3.
+      expect(r.text, '1. foo\n2. \n3. bar\n');
+    });
+
+    test('empty selection is a no-op', () {
+      expect(prefixLinesWithIndexIn('', 0, 0).text, '');
+    });
+  });
+
   group('stripHtmlTagsLinesIn', () {
     test('strips opening + closing tag wrappers, keeps inner text', () {
       const text = '<b>Hello</b> <span>world</span>\n';

@@ -41,6 +41,9 @@ enum SlashAction {
   /// Strip inline HTML tags from every selected line, leaving the
   /// text content between them.
   stripHtmlTagsLines,
+  /// Prefix every selected line with its 1-based index, zero-padded
+  /// to the width of the largest index.
+  prefixLinesWithIndex,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -1336,6 +1339,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '<b>Hi</b> → Hi',
     action: SlashAction.stripHtmlTagsLines,
     keywords: ['strip', 'html', 'tag', 'unwrap', 'plain', 'remove'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Prefix lines with index',
+    hint: '01. foo / 02. bar',
+    action: SlashAction.prefixLinesWithIndex,
+    keywords: ['prefix', 'index', 'number', 'enumerate', 'count', 'numbered'],
   ),
   SlashEntry(
     icon: 'link',
