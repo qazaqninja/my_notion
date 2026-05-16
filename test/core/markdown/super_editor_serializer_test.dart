@@ -827,4 +827,50 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer inline marks — sub/sup (D1 slice 20)', () {
+    test('~H2O~ → subscriptAttribution', () {
+      const md = 'water is ~H2O~ technically';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'water is H2O technically');
+      expect(node.text.getAllAttributionsAt(9), contains(subscriptAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('^X^ → superscriptAttribution', () {
+      const md = 'e=mc^2^';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'e=mc2');
+      expect(node.text.getAllAttributionsAt(4),
+          contains(superscriptAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('~~strike~~ wins over single-tilde subscript on the same run', () {
+      const md = '~~strike~~ but ~sub~';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'strike but sub');
+      // 'strike' has strike, not subscript.
+      expect(node.text.getAllAttributionsAt(0),
+          contains(strikethroughAttribution));
+      expect(node.text.getAllAttributionsAt(0),
+          isNot(contains(subscriptAttribution)));
+      // 'sub' has subscript.
+      expect(node.text.getAllAttributionsAt(11),
+          contains(subscriptAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('whitespace inside ~ ~ disqualifies subscript match', () {
+      const md = 'try ~not sub~ here';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      // Tildes stay literal because of internal whitespace.
+      expect(node.text.toPlainText(), 'try ~not sub~ here');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }

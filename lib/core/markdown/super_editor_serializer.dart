@@ -83,11 +83,11 @@ class SuperEditorSerializer {
   ///   span the same way.
   /// - Slice 18: inline marks — underline (`<u>X</u>`) per M80.
   /// - Slice 19: inline marks — highlight (`==X==` and `<mark>X</mark>`)
-  ///   per M80 / M243. Both forms parse to `highlightAttribution`;
-  ///   serialise emits the Pandoc-style `==X==` canonical form. The HTML
-  ///   exporter (existing) maps both back to `<mark>` for the rendered
-  ///   output, so a byte-identical round-trip of `==X==` source survives
-  ///   the markdown→super_editor→markdown loop.
+  ///   per M80 / M243.
+  /// - Slice 20: inline marks — subscript `~X~` + superscript `^X^` per
+  ///   M244 (Pandoc extensions). Lower priority than `~~strike~~` so the
+  ///   double-tilde stripe wins for the same character. No whitespace
+  ///   allowed inside (Pandoc rule).
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -658,6 +658,42 @@ AttributedText _parseInline(String src) {
         continue;
       }
     }
+    // Subscript `~X~` — single tilde, Pandoc-style. Must come after the
+    // strikethrough `~~` check above. No internal whitespace.
+    if (src[i] == '~') {
+      final close = src.indexOf('~', i + 1);
+      if (close > i &&
+          close > i + 1 &&
+          !RegExp(r'\s').hasMatch(src.substring(i + 1, close))) {
+        final inner = src.substring(i + 1, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(subscriptAttribution, start, end));
+        }
+        i = close + 1;
+        continue;
+      }
+    }
+    // Superscript `^X^` — single caret, Pandoc-style. No internal
+    // whitespace.
+    if (src[i] == '^') {
+      final close = src.indexOf('^', i + 1);
+      if (close > i &&
+          close > i + 1 &&
+          !RegExp(r'\s').hasMatch(src.substring(i + 1, close))) {
+        final inner = src.substring(i + 1, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(superscriptAttribution, start, end));
+        }
+        i = close + 1;
+        continue;
+      }
+    }
     // Italic `*X*` — single asterisk, only after the bold check has
     // failed. Match shortest-distance close so `*a* *b*` parses as two
     // separate italic runs.
@@ -713,6 +749,8 @@ String _serializeInline(AttributedText text) {
   final code = List<bool>.filled(plain.length, false);
   final under = List<bool>.filled(plain.length, false);
   final hi = List<bool>.filled(plain.length, false);
+  final sub = List<bool>.filled(plain.length, false);
+  final sup = List<bool>.filled(plain.length, false);
   for (var i = 0; i < plain.length; i++) {
     final attrs = text.getAllAttributionsAt(i);
     if (attrs.contains(boldAttribution)) bold[i] = true;
@@ -721,6 +759,8 @@ String _serializeInline(AttributedText text) {
     if (attrs.contains(codeAttribution)) code[i] = true;
     if (attrs.contains(underlineAttribution)) under[i] = true;
     if (attrs.contains(highlightAttribution)) hi[i] = true;
+    if (attrs.contains(subscriptAttribution)) sub[i] = true;
+    if (attrs.contains(superscriptAttribution)) sup[i] = true;
   }
   final out = StringBuffer();
   for (var i = 0; i < plain.length; i++) {
@@ -733,10 +773,14 @@ String _serializeInline(AttributedText text) {
       if (strike[i] && (i == 0 || !strike[i - 1])) out.write('~~');
       if (under[i] && (i == 0 || !under[i - 1])) out.write('<u>');
       if (hi[i] && (i == 0 || !hi[i - 1])) out.write('==');
+      if (sub[i] && (i == 0 || !sub[i - 1])) out.write('~');
+      if (sup[i] && (i == 0 || !sup[i - 1])) out.write('^');
     }
     out.write(plain[i]);
     final isLast = i == plain.length - 1;
     if (!code[i]) {
+      if (sup[i] && (isLast || !sup[i + 1])) out.write('^');
+      if (sub[i] && (isLast || !sub[i + 1])) out.write('~');
       if (hi[i] && (isLast || !hi[i + 1])) out.write('==');
       if (under[i] && (isLast || !under[i + 1])) out.write('</u>');
       if (strike[i] && (isLast || !strike[i + 1])) out.write('~~');
@@ -826,6 +870,14 @@ const buttonAttribution = NamedAttribution('button');
 /// default; we define one and the future styling pass maps it to a
 /// soft-yellow background to match the existing rendered look.
 const highlightAttribution = NamedAttribution('highlight');
+
+/// Custom inline attribution for Pandoc `~X~` subscript runs (M244).
+/// super_editor's default attribution set doesn't ship sub/sup; the
+/// styling pass will apply `FontFeature.subscripts()` + reduced size.
+const subscriptAttribution = NamedAttribution('subscript');
+
+/// Custom inline attribution for Pandoc `^X^` superscript runs (M244).
+const superscriptAttribution = NamedAttribution('superscript');
 
 /// Returns true when [url] has an extension this serializer treats as an
 /// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no
