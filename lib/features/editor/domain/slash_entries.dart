@@ -251,6 +251,9 @@ enum SlashAction {
   /// Sort by the SMALLEST signed number found anywhere in each
   /// line, ascending. Lines with no number drop to the bottom.
   sortLinesByMinNumber,
+  /// Sort by the MEDIAN of all numbers in each line, ascending.
+  /// Outlier-resistant per-row ranking.
+  sortLinesByMedianNumber,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1438,6 +1441,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'per-row trough ascending',
     action: SlashAction.sortLinesByMinNumber,
     keywords: ['sort', 'min', 'minimum', 'trough', 'lowest', 'numbers'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort by median number in line',
+    hint: 'outlier-resistant ranking',
+    action: SlashAction.sortLinesByMedianNumber,
+    keywords: ['sort', 'median', 'middle', 'outlier', 'robust', 'numbers'],
   ),
   SlashEntry(
     icon: 'sync',

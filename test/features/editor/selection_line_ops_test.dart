@@ -2234,6 +2234,43 @@ void main() {
     });
   });
 
+  group('sortLinesByMedianNumberIn', () {
+    test('odd-count row uses the middle value as the key', () {
+      const text = 'a 1 2 3\nb 10 20 30\nc 5 50 500\n';
+      // Medians: a=2, b=20, c=50 → a, b, c (already ascending).
+      final r = sortLinesByMedianNumberIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('outlier-resistant: one anomalous number does NOT skew rank', () {
+      const text = 'a 1 1 1 100\nb 5 5 5 5\n';
+      // a median = 1 (rounds down at index n//2 = 2 → value 1 of
+      // sorted [1,1,1,100]).
+      // Wait — n=4 even, so median = (1+1)/2 = 1.
+      // b median = 5.
+      // So a (1) sorts before b (5).
+      final r = sortLinesByMedianNumberIn(text, 0, text.length);
+      expect(r.text, 'a 1 1 1 100\nb 5 5 5 5\n');
+    });
+
+    test('even-count: median is the average of the two middle values', () {
+      const text = 'a 2 4\nb 1 9\n';
+      // a median = (2+4)/2 = 3, b median = (1+9)/2 = 5 → a, b.
+      final r = sortLinesByMedianNumberIn(text, 0, text.length);
+      expect(r.text, text);
+    });
+
+    test('lines without numbers drop to the bottom', () {
+      const text = 'a 5\nplain\nb 1\n';
+      final r = sortLinesByMedianNumberIn(text, 0, text.length);
+      expect(r.text, 'b 1\na 5\nplain\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(sortLinesByMedianNumberIn('', 0, 0).text, '');
+    });
+  });
+
   group('sortLinesByMinNumberIn', () {
     test('sorts by per-row trough ascending', () {
       const text = 'a 10 20 30\nb 5 5 5\nc 100\n';

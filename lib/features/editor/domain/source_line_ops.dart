@@ -524,6 +524,37 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Sort the lines touched by the selection by the **median** of all
+/// numbers in each line, ascending. Useful for outlier-resistant
+/// ranking: a row with one anomalous value won't skew its position
+/// the way `sortLinesByMaxNumber` or `sortLinesBySumOfNumbers` would.
+/// Lines with no number drop to the bottom in original order — same
+/// convention as the rest of the per-row numeric-sort family.
+SortLinesResult sortLinesByMedianNumberIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'-?\d+(?:\.\d+)?');
+      final numeric = <(double, String)>[];
+      final nonNumeric = <String>[];
+      for (final l in lines) {
+        final values = <double>[
+          for (final m in re.allMatches(l))
+            if (double.tryParse(m.group(0)!) case final v?) v,
+        ]..sort();
+        if (values.isEmpty) {
+          nonNumeric.add(l);
+          continue;
+        }
+        final mid = values.length ~/ 2;
+        final med = values.length.isOdd
+            ? values[mid]
+            : (values[mid - 1] + values[mid]) / 2;
+        numeric.add((med, l));
+      }
+      numeric.sort((a, b) => a.$1.compareTo(b.$1));
+      return [...numeric.map((p) => p.$2), ...nonNumeric];
+    });
+
 /// Sort the lines touched by the selection by the **smallest signed
 /// number** that appears anywhere in each line, ascending. Mirror of
 /// [sortLinesByMaxNumberIn] — picks the per-row trough rather than

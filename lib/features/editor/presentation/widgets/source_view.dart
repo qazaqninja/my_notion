@@ -1236,6 +1236,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByMinNumberIn,
         );
+      case SlashAction.sortLinesByMedianNumber:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, sortLinesByMedianNumberIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,
