@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** A (Foundation)
-- **Task:** A8 — Port `relation_picker_cubit` test to `bloc_test`
+- **Task:** A9 — Port `slash_menu_cubit` test to `bloc_test`
 - **Status:** pending
 
 ## Last completed
 
-- **M1198 — A7** (port theme_cubit_test to bloc_test — re-scoped from vault_bloc)
-- Committed: df304c6
-- TaskList ID: 7
-- Notes: vault_bloc has no dedicated test (only stubbed in widget tests via `_StubVaultBloc`). Picked theme_cubit_test as the smallest port target (8 cases) to establish the pattern. A10 / A11 re-scoped from "port vault_bloc / editor_bloc" to "write NEW bloc_test from scratch" because those blocs lack existing tests.
+- **M1200 — A8** (port relation_picker_cubit_test to bloc_test)
+- Committed: 02e2b74
+- TaskList ID: 8
+- Notes: 7 cases ported. Established `expect: () => <State>[], verify: verifyNever(...)` pattern for "no-op when closed" cases — the canonical bloc_test idiom for asserting both no emissions AND no mock interactions.
 
 ## Backlog (Phase A — Foundation)
 
@@ -25,7 +25,7 @@
 - [x] A5 — Add `alchemist` + golden config (TS-08) (M1194 / 8a67992)
 - [x] A6 — Add `mockingjay` dev dependency (TS-09) (M1196 / bdfcec7)
 - [x] A7 — Port `theme_cubit_test` to bloc_test (M1198 / df304c6) — re-scoped from vault_bloc
-- [ ] A8 — Port `relation_picker_cubit_test` to bloc_test — re-scoped from editor_bloc
+- [x] A8 — Port `relation_picker_cubit_test` to bloc_test (M1200 / 02e2b74) — re-scoped from editor_bloc
 - [ ] A9 — Port `slash_menu_cubit_test` to bloc_test
 - [ ] A10 — Write NEW `vault_bloc_test.dart` from scratch (was: port) — VaultBloc has no test today
 - [ ] A11 — Write NEW `editor_bloc_test.dart` from scratch (was: port) — EditorBloc has no test today
