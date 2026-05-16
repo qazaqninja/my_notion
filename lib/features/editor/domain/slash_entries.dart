@@ -323,6 +323,9 @@ enum SlashAction {
   /// Extract every backtick-delimited inline code span
   /// (`` `foo` `` → `foo`) from each selected line.
   extractMarkdownCodeSpansFromLines,
+  /// Extract the title text from every ATX-style markdown heading
+  /// (`# H1`, `## H2`, … `###### H6`) on each selected line.
+  extractMarkdownHeadingsFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1665,6 +1668,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownCodeSpansFromLines,
     keywords: ['extract', 'code', 'inline', 'backtick', 'span',
         'markdown', 'identifier'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract markdown headings',
+    hint: '## Title → Title',
+    action: SlashAction.extractMarkdownHeadingsFromLines,
+    keywords: ['extract', 'heading', 'header', 'title', 'h1', 'h2',
+        'h3', 'h4', 'h5', 'h6', 'toc', 'markdown', 'atx'],
   ),
   SlashEntry(
     icon: 'edit',

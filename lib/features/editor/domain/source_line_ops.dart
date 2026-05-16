@@ -1106,6 +1106,39 @@ SortLinesResult extractMarkdownCodeSpansFromLinesIn(
       return out;
     });
 
+/// Extract the title text from every ATX-style markdown heading
+/// (`# H1`, `## H2`, … `###### H6`) on each selected line.
+/// Useful for TOC generation, slug audits, and "give me just
+/// the titles" prose extraction.
+///
+/// Strict-ish recognition:
+/// - 1 to 6 leading `#` chars (CommonMark caps the level at 6).
+/// - At least one whitespace char separates the hashes from
+///   the title (so `#NoSpace` is NOT a heading).
+/// - Hashes must be at line start (no leading indentation).
+/// - ATX-closed form (`## Title ##`) IS supported — trailing
+///   `#`s and surrounding whitespace are stripped.
+/// - Setext underline form (`Title\n=====`) is NOT recognised:
+///   this extractor only sees one line at a time, so cross-
+///   line shapes are out of scope.
+///
+/// Title content captured as-is (no inline-markdown unwrapping)
+/// — pipe through [extractMarkdownCodeSpansFromLinesIn] or
+/// strip-emphasis transforms downstream if needed.
+SortLinesResult extractMarkdownHeadingsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // `(.+?)` non-greedy so the trailing `\s*#*\s*$` claim
+      // gets a chance to eat the closed-form trailing hashes.
+      final re = RegExp(r'^(#{1,6})\s+(.+?)\s*#*\s*$');
+      final out = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        if (m != null) out.add(m.group(2)!);
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

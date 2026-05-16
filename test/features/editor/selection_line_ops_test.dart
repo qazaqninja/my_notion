@@ -2768,6 +2768,75 @@ void main() {
     });
   });
 
+  group('extractMarkdownHeadingsFromLinesIn', () {
+    test('H1 through H6 all match and strip hashes', () {
+      const text =
+          '# H1\n## H2\n### H3\n#### H4\n##### H5\n###### H6\n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'H1\nH2\nH3\nH4\nH5\nH6\n');
+    });
+
+    test('seven hashes is NOT a heading', () {
+      // CommonMark caps ATX heading level at 6 — a 7-hash line
+      // is not a heading and must be skipped.
+      const text = '####### Seven\n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('ATX-closed form strips trailing hashes', () {
+      const text = '## Closed ##\n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Closed\n');
+    });
+
+    test('ATX-closed form with extra whitespace and hashes', () {
+      const text = '## Closed   ####  \n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Closed\n');
+    });
+
+    test('leading whitespace blocks heading recognition', () {
+      // `^#` requires the hash at line-start; an indented form
+      // is a continuation, not a heading.
+      const text = ' # Indented\n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('hash with no space after is NOT a heading', () {
+      // `#NoSpace` is read as a tag/identifier per most
+      // CommonMark parsers — heading recognition requires `\s+`.
+      const text = '#NoSpace fragment\n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('hash with no title content is NOT a heading', () {
+      // `.+?` requires at least one content char after the
+      // separator whitespace.
+      const text = '# \n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('title content with inline punctuation passes through', () {
+      const text = '## Foo, bar (baz) — qux!\n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Foo, bar (baz) — qux!\n');
+    });
+
+    test('plain prose lines are dropped from output', () {
+      const text = 'plain prose\n# Real Heading\nmore prose\n';
+      final r = extractMarkdownHeadingsFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Real Heading\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownHeadingsFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
