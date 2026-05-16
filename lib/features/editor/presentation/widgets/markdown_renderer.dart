@@ -16,6 +16,7 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/audio_inline_player.dart';
+import '../../../../shared/widgets/pdf_inline_preview.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/relation_chip.dart';
@@ -2022,13 +2023,13 @@ class _FileAttachment extends StatelessWidget {
     // inline preview than a passing reference. Non-media files keep
     // the compact chip from M76.
     if (accent != null) {
-      // B1 (M1218) / B2 (M1220): inline video / audio playback. For local
-      // media files, resolve the path against the vault root and embed an
-      // inline player where the 64-px coloured band used to live. The
-      // player's own gesture overlay catches play/pause taps; taps elsewhere
-      // on the card still bubble up to _open() for external launch.
+      // B1 (M1218) / B2 (M1220) / B3 (M1222): inline video / audio / PDF
+      // preview. For local media files, resolve the path against the vault
+      // root and embed an inline widget where the 64-px coloured band used
+      // to live. The player's own gesture overlay catches taps; taps
+      // elsewhere on the card still bubble up to _open() for external launch.
       String? inlineMediaPath;
-      if ((_isVideo || _isAudio) && !_isUrl) {
+      if ((_isVideo || _isAudio || _isPdf) && !_isUrl) {
         final vault = context.read<VaultBloc>().state;
         if (vault is VaultLoaded) {
           inlineMediaPath = src.startsWith('/')
@@ -2063,6 +2064,12 @@ class _FileAttachment extends StatelessWidget {
                           top: Radius.circular(6)),
                     ),
                     child: AudioInlinePlayer(filePath: inlineMediaPath),
+                  )
+                else if (inlineMediaPath != null && _isPdf)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(6)),
+                    child: PdfInlinePreview(filePath: inlineMediaPath),
                   )
                 else
                 Container(
