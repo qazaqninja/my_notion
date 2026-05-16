@@ -524,6 +524,34 @@ SortLinesResult sortLinesByLastNumberIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Extract every Quill wikilink (`[[ULID]]` / `[[ULID#anchor]]` /
+/// `[[ULID|alias]]` / `![[ULID]]`) from each selected line and
+/// emit them one-per-line WITHOUT the wrapping brackets. Useful
+/// for surveying which pages a prose paste-in references ahead of
+/// migrating them into a frontmatter relation field.
+///
+/// Recognition: 26-char ULID (`[0-9A-Z]{26}`), the canonical
+/// Quill page identifier, optionally followed by `#anchor-slug` or
+/// `|alias` before the closing `]]`. The leading `!` for
+/// transcludes is consumed as part of the match so the output
+/// still surfaces the page reference.
+SortLinesResult extractWikilinksFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // The body capture group keeps the ULID + optional anchor /
+      // alias as a single string — same shape the renderer accepts.
+      final re = RegExp(
+        r'!?\[\[([0-9A-Z]{26}(?:#[a-z0-9][a-z0-9\-]*)?(?:\|[^\]\n]*)?)\]\]',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every `@mention` from each selected line and emit them
 /// one-per-line WITHOUT the leading `@`. Useful for harvesting
 /// inline-written attendee / DRI mentions out of meeting notes,

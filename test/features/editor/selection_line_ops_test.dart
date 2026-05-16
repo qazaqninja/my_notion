@@ -2234,6 +2234,48 @@ void main() {
     });
   });
 
+  group('extractWikilinksFromLinesIn', () {
+    test('bare ULID wikilink emits the ULID string', () {
+      const text = 'see [[01HABCDEFGHIJKLMNOPQRSTUVW]]\n';
+      final r = extractWikilinksFromLinesIn(text, 0, text.length);
+      expect(r.text, '01HABCDEFGHIJKLMNOPQRSTUVW\n');
+    });
+
+    test('ULID with anchor + alias variants', () {
+      const ulid = '01HABCDEFGHIJKLMNOPQRSTUVW';
+      final text = 'a [[$ulid#section-one]] b [[$ulid|Project Alpha]] c\n';
+      final r = extractWikilinksFromLinesIn(text, 0, text.length);
+      expect(
+        r.text,
+        '$ulid#section-one\n$ulid|Project Alpha\n',
+      );
+    });
+
+    test('transclude form `![[...]]` is recognised', () {
+      const ulid = '01HABCDEFGHIJKLMNOPQRSTUVW';
+      final text = 'transcluded ![[$ulid]] body\n';
+      final r = extractWikilinksFromLinesIn(text, 0, text.length);
+      expect(r.text, '$ulid\n');
+    });
+
+    test('non-ULID brackets are NOT wikilinks', () {
+      // `[[markdown-link-target]]` and `[[foo]]` (not 26 chars) reject.
+      const text = '[[foo]] and [[01H_too_short]]\n';
+      expect(extractWikilinksFromLinesIn(text, 0, text.length).text, '\n');
+    });
+
+    test('lines without wikilinks are dropped from output', () {
+      const ulid = '01HABCDEFGHIJKLMNOPQRSTUVW';
+      final text = 'no link here\n[[$ulid]] yes\n';
+      final r = extractWikilinksFromLinesIn(text, 0, text.length);
+      expect(r.text, '$ulid\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractWikilinksFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractMentionsFromLinesIn', () {
     test('strips the leading @ and emits one mention per line', () {
       const text = 'cc @alice and @bob please\n';

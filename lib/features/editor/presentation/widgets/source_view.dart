@@ -1260,6 +1260,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMentionsFromLinesIn,
         );
+      case SlashAction.extractWikilinksFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractWikilinksFromLinesIn,
+        );
       case SlashAction.sortLinesByWordCount:
         _applyLinesTransformAfterSlash(
           stripStart, caret, sortLinesByWordCountIn,

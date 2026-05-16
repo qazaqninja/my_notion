@@ -269,6 +269,9 @@ enum SlashAction {
   /// Extract every `@mention` from each selected line and emit them
   /// one-per-line, without the leading `@`.
   extractMentionsFromLines,
+  /// Extract every Quill wikilink (ULID, optionally with anchor or
+  /// alias) from each selected line, without the wrapping brackets.
+  extractWikilinksFromLines,
   /// Sort the lines touched by the selection by their word count,
   /// fewest words first.
   sortLinesByWordCount,
@@ -1498,6 +1501,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '@user → user (one per line)',
     action: SlashAction.extractMentionsFromLines,
     keywords: ['extract', 'pull', 'mention', 'mentions', 'user', 'at'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract wikilinks',
+    hint: '[[ULID]] → ULID',
+    action: SlashAction.extractWikilinksFromLines,
+    keywords: ['extract', 'pull', 'wikilink', 'ulid', 'reference', 'relation'],
   ),
   SlashEntry(
     icon: 'sync',
