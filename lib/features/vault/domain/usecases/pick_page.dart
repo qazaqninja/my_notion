@@ -203,6 +203,13 @@ PageRef? pickByUlid(List<PageRef> pages, String ulid) {
   return null;
 }
 
+/// Return the most-recently-edited page carrying the given tag, or
+/// `null` when no page is tagged. Composition of [filterByTag] and
+/// [pickLastEdited] — handy enough to surface as its own primitive
+/// for the "Resume my work on tag X" navigation gesture.
+PageRef? latestByTag(List<PageRef> pages, String tag) =>
+    pickLastEdited(filterByTag(pages, tag));
+
 /// Count occurrences of each tag across the page set, returning a
 /// frequency map keyed by the trimmed-non-empty raw tag string
 /// (case preserved — callers that want case-folded counts can

@@ -590,6 +590,39 @@ class _VaultShellPageState extends State<VaultShellPage> {
     router.go('/editor/${pick.ulid}');
   }
 
+  Future<void> _resumeLatestByTagPrompt(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final scope = context;
+    final tag = await showQuillPrompt(
+      context,
+      title: 'Resume latest page by tag',
+      icon: 'tag',
+      label: 'Tag',
+      placeholder: 'e.g. work',
+      confirmLabel: 'Open',
+    );
+    if (tag == null || tag.trim().isEmpty) return;
+    final refs = _toPageRefs(await db.select(db.pages).get());
+    final pick = latestByTag(refs, tag);
+    if (pick == null) {
+      if (scope.mounted) {
+        scope.toastError('No pages tagged "$tag"');
+      }
+      return;
+    }
+    final days = DateTime.now()
+            .difference(DateTime.fromMillisecondsSinceEpoch(pick.mtimeMs))
+            .inDays;
+    if (scope.mounted) {
+      scope.toastInfo(
+        'Tagged "$tag" · last edited $days ${days == 1 ? "day" : "days"} ago',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openRandomPageInFolderPrompt(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -948,6 +981,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openRandomPageByTitlePrefixPrompt(context);
       case 'Open random page in folder…':
         await _openRandomPageInFolderPrompt(context);
+      case 'Resume latest page by tag…':
+        await _resumeLatestByTagPrompt(context);
       case 'Open largest page':
         await _openLargestPage(context);
       case 'Open most-linked page':

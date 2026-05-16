@@ -536,6 +536,32 @@ void main() {
     });
   });
 
+  group('latestByTag', () {
+    test('returns the most-recently-edited page among the tagged set', () {
+      final pages = [
+        _p(ulid: 'a', tags: ['work'], mtimeMs: 1000),
+        _p(ulid: 'b', tags: ['work'], mtimeMs: 3000),
+        _p(ulid: 'c', tags: ['personal'], mtimeMs: 5000),
+        _p(ulid: 'd', tags: ['work'], mtimeMs: 2000),
+      ];
+      expect(latestByTag(pages, 'work')?.ulid, 'b');
+    });
+
+    test('returns null when no page carries the tag', () {
+      final pages = [_p(ulid: 'a', tags: ['x'])];
+      expect(latestByTag(pages, 'y'), isNull);
+    });
+
+    test('returns null on empty input', () {
+      expect(latestByTag([], 'work'), isNull);
+    });
+
+    test('empty tag returns null (matches filterByTag convention)', () {
+      final pages = [_p(ulid: 'a', tags: ['x'])];
+      expect(latestByTag(pages, ''), isNull);
+    });
+  });
+
   group('countTagFrequency', () {
     test('sums occurrences across pages', () {
       final pages = [
