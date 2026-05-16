@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E50 — Phase E backend audit + Flutter-side forms client (consume the new endpoints)
+- **Task:** E51 — Wire forms client into editor kebab: "View form submissions →" dialog
 - **Status:** pending
 
 ## Last completed
+
+- **M1353 — E50** (Phase E forms audit + Flutter `HttpFormsRepository` client)
+- Committed: (this iteration)
+- TaskList ID: 72
+- Notes: Two parallel tracks. (1) Dispatched flutter-arch-orchestrator on the forms backend code (E46–E49) — result: 0 ERROR, 4 WARN, 3 INFO. None of the warns are forms-specific; all four mirror pre-existing sync-stack gaps (RP-03 raw Postgres exceptions to route layer, TS-02 no mocktail in backend deps, TS-01 no concrete-repo postgres tests, LT-01 `lints/recommended` not `very_good_analysis`). Mount ordering verified safe (authed `/forms/owner/` wins before unauthed `/forms/`). (2) Built the Flutter forms client: new feature folder `lib/features/forms/` with `domain/entities/form_submission.dart` (Equatable, mirrors backend FormSubmission JSON shape), `domain/repositories/forms_repository.dart` (abstract `FormsRepository.listSubmissions(token, ulid)` + typed `FormsAuthException` / `FormsNotOwnerException` / `FormsNetworkException`), and `data/repositories/http_forms_repository.dart` (HttpFormsRepository using MockClient-friendly http.Client injection — mirrors HttpSyncRepository wiring). 7 new MockClient tests cover 200-decodes-list, 401-throws-Auth, 403-throws-NotOwner, other-non-200-generic, transport-failure-Network, empty-list, missing-submissions-key. flutter analyze clean. Audit findings recorded under "Phase E forms stack audit" section. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1352 — E49** (authed list-submissions endpoint for the page owner)
 - Committed: (this iteration)
@@ -147,6 +152,23 @@
 - BL-11: side effects (toasts, dialogs) live in `BlocListener`s, not in build().
 - BL-12: all four `BlocListener`s use `listenWhen`.
 - RP-02 / RP-03: `HttpSyncRepository` injects its `http.Client`; all I/O errors wrap in typed exceptions.
+
+### Phase E forms stack audit (E50 / M1353)
+
+Dispatched flutter-arch-orchestrator on the forms backend (M1349–M1352). Result: **0 ERROR**, 4 WARN, 3 INFO. None of the warns are forms-specific regressions; all four mirror gaps that already exist in the sync stack:
+
+- **RP-03** — `FormsRepository` methods let raw `PgException` / `SocketException` propagate to route handlers. Same as `SyncRepository`. Fix is a typed `FormsException` wrap + 503 mapping. Deferred — global pattern across both repos; do as one cross-cutting slice.
+- **TS-02** — backend pubspec.yaml has no mocktail; tests use hand-rolled stubs. Same as the sync test pattern. Add when concrete repo tests need it.
+- **TS-01** — no concrete `FormsRepository` tests (would need a postgres fixture or fake `Connection`). Same as the sync repo. Pattern-level deferral.
+- **LT-01** — backend uses `lints/recommended` (not `very_good_analysis`). Pre-existing; not a regression.
+
+Positive findings flagged (keep these intact):
+- Abstraction pattern (`Base` + `No*` default + `Connection`-injected concrete) matches the sync stack 1:1.
+- Mount ordering in `server.dart` is correct: `/forms/owner/` (authed) mounted BEFORE `/forms/` (unauthed) so the prefix wins and no auth bypass is possible.
+- Migrations 5 + 6 are append-only with no edits to earlier migrations; the partial index matches the query predicate exactly.
+- sync upsert correctly threads `probe.hasForms` through `ON CONFLICT DO UPDATE` so the column stays current on every re-sync.
+
+INFO: `FormSubmission.fields` is typed `Map<String, dynamic>` because the value column is JSONB, but right now every value is in fact a `String` (form-urlencoded). Considered narrowing — left as-is so the schema-validation slice (TBD) can write structured types without a breaking change.
 
 ### Phase E sync stack re-audit (E41 / M1344 — closeout)
 
