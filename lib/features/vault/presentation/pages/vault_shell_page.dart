@@ -706,6 +706,9 @@ class _VaultShellPageState extends State<VaultShellPage> {
       case 'Show heaviest pages':
         if (!context.mounted) return;
         await _showHeaviestPagesDialog(context);
+      case 'Show hub pages (most backlinks)':
+        if (!context.mounted) return;
+        await _showHubPagesDialog(context);
       case 'Show trash':
         if (vaultPath == null) {
           context.toastError('No vault open');
@@ -1189,6 +1192,41 @@ views:
           'Pages not edited in 90+ days. Oldest first — candidates for archive or refresh.',
       subtitleEmpty:
           'Every indexed page has been edited within the last 90 days.',
+    );
+  }
+
+  Future<void> _showHubPagesDialog(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final pages = await db.select(db.pages).get();
+    final relations = await db.select(db.relations).get();
+    // Count incoming wikilinks per page. Multiple references from the
+    // same source still count as one — the relations table already
+    // dedupes (fromUlid, toUlid) pairs, so a `for` loop is enough.
+    final inbound = <String, int>{};
+    for (final r in relations) {
+      inbound[r.toUlid] = (inbound[r.toUlid] ?? 0) + 1;
+    }
+    // Keep only pages with ≥1 backlink, sort by count desc then
+    // most-recently-edited as a stable tie-break.
+    final hubs = [
+      for (final p in pages)
+        if ((inbound[p.ulid] ?? 0) > 0) p,
+    ]..sort((a, b) {
+        final cmp = (inbound[b.ulid] ?? 0).compareTo(inbound[a.ulid] ?? 0);
+        if (cmp != 0) return cmp;
+        return b.mtimeMs.compareTo(a.mtimeMs);
+      });
+    final topHubs = hubs.take(20).toList();
+    if (!context.mounted) return;
+    await _showHygieneDialog(
+      context: context,
+      pages: topHubs,
+      headingFull: 'HUB PAGES',
+      headingEmpty: 'NO HUB PAGES',
+      subtitleFull:
+          'Top 20 pages by inbound `[[wikilink]]` count. The structural anchors of the vault — review, refactor, or split deliberately.',
+      subtitleEmpty:
+          'No page has incoming wikilinks yet. Start cross-linking and they will surface here.',
     );
   }
 

@@ -207,6 +207,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'check', label: 'Show pages with open todos', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Show duplicate page titles', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Show heaviest pages', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'link', label: 'Show hub pages (most backlinks)', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'table', label: 'Import CSV as database', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import HTML file as page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Import text file as page', hint: ''),
