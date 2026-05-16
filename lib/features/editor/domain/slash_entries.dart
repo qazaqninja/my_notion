@@ -131,6 +131,9 @@ enum SlashAction {
   /// Sort numeric lines by absolute value ascending; non-numeric
   /// lines drop to the bottom.
   sortLinesByAbsValue,
+  /// Sort by the first signed number found anywhere in each line;
+  /// lines with no number drop to the bottom.
+  sortLinesByFirstNumber,
   /// Reverse the words on every selected line (preserving any
   /// trailing whitespace).
   reverseWordsInLine,
@@ -1215,6 +1218,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '|x| ascending',
     action: SlashAction.sortLinesByAbsValue,
     keywords: ['sort', 'absolute', 'magnitude', 'ascending'],
+  ),
+  SlashEntry(
+    icon: 'sync',
+    label: 'Sort by first number in line',
+    hint: 'log lines by leading score',
+    action: SlashAction.sortLinesByFirstNumber,
+    keywords: ['sort', 'first', 'number', 'leading', 'score', 'log'],
   ),
   SlashEntry(
     icon: 'edit',

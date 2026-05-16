@@ -463,6 +463,32 @@ SortLinesResult sortLinesByAbsValueIn(String text, int start, int end) =>
       return [...numeric.map((p) => p.$2), ...nonNumeric];
     });
 
+/// Sort the lines touched by the selection by the **first signed
+/// number** that appears anywhere in each line, ascending. Lines with
+/// no number sort to the bottom in their original order. Useful for
+/// log lines that start with a level/score/timestamp, or paste-in
+/// data where the leading column is the sort key (e.g. "[42] foo",
+/// "score: 87 alice", "-3°C Monday").
+SortLinesResult sortLinesByFirstNumberIn(String text, int start, int end) =>
+    _transformLinesIn(text, start, end, (lines) {
+      // Capture optional sign and a decimal run with optional fractional
+      // part. Exponents are out of scope — the first plain number wins.
+      final re = RegExp(r'-?\d+(?:\.\d+)?');
+      final numeric = <(double, String)>[];
+      final nonNumeric = <String>[];
+      for (final l in lines) {
+        final m = re.firstMatch(l);
+        final v = m == null ? null : double.tryParse(m.group(0)!);
+        if (v == null) {
+          nonNumeric.add(l);
+        } else {
+          numeric.add((v, l));
+        }
+      }
+      numeric.sort((a, b) => a.$1.compareTo(b.$1));
+      return [...numeric.map((p) => p.$2), ...nonNumeric];
+    });
+
 /// Sort the lines touched by the selection by **length**, ascending
 /// (shortest first). Equal-length lines fall back to a stable
 /// case-insensitive lex compare for deterministic ordering.

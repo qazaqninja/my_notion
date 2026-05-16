@@ -1220,6 +1220,37 @@ void main() {
     });
   });
 
+  group('sortLinesByFirstNumberIn', () {
+    test('sorts log-like lines by the leading bracket score', () {
+      const text = '[42] beta\n[7] alpha\n[100] gamma\n';
+      final r = sortLinesByFirstNumberIn(text, 0, text.length);
+      expect(r.text, '[7] alpha\n[42] beta\n[100] gamma\n');
+    });
+
+    test('first number wins even when buried mid-line', () {
+      const text = 'alpha 50\nbeta 10\ngamma 30\n';
+      final r = sortLinesByFirstNumberIn(text, 0, text.length);
+      expect(r.text, 'beta 10\ngamma 30\nalpha 50\n');
+    });
+
+    test('signed leading numbers sort numerically', () {
+      const text = '-3°C Monday\n12°C Tuesday\n-15°C Wednesday\n';
+      final r = sortLinesByFirstNumberIn(text, 0, text.length);
+      expect(r.text, '-15°C Wednesday\n-3°C Monday\n12°C Tuesday\n');
+    });
+
+    test('lines without numbers fall to the bottom in original order', () {
+      const text = 'banana\nv1 release\napple\nv9 release\n';
+      final r = sortLinesByFirstNumberIn(text, 0, text.length);
+      expect(r.text, 'v1 release\nv9 release\nbanana\napple\n');
+    });
+
+    test('empty input stays empty', () {
+      final r = sortLinesByFirstNumberIn('', 0, 0);
+      expect(r.text, '');
+    });
+  });
+
   group('reverseWordsInLineIn', () {
     test('flips two-word lines', () {
       const text = 'hello world\n';

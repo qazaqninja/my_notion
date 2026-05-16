@@ -97,4 +97,29 @@ void main() {
       expect(e.caretAfterInsert(10), 14);
     });
   });
+
+  group('kSlashEntries registration', () {
+    test('every SlashAction has at least one entry in kSlashEntries', () {
+      final actions = kSlashEntries.map((e) => e.action).toSet();
+      // Every enum value should be reachable from the picker. If a new
+      // SlashAction is added to the enum without registering an entry,
+      // this guard fires before users discover it as a silent gap.
+      for (final a in SlashAction.values) {
+        expect(actions.contains(a), isTrue,
+            reason: 'No kSlashEntries entry registered for SlashAction.$a');
+      }
+    });
+
+    test('M969/M970 numeric sort entries are reachable by keyword', () {
+      // Defends the M969 ("|x|") and M970 ("first number") slash entries
+      // against accidental removal during keyword-table refactors.
+      final byAbs = filterSlashEntries('magnitude');
+      expect(byAbs.map((e) => e.action),
+          contains(SlashAction.sortLinesByAbsValue));
+
+      final byFirst = filterSlashEntries('leading');
+      expect(byFirst.map((e) => e.action),
+          contains(SlashAction.sortLinesByFirstNumber));
+    });
+  });
 }
