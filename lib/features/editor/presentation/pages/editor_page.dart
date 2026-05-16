@@ -15,6 +15,8 @@ import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../reminders/presentation/bloc/reminders_bloc.dart';
 import '../../../reminders/presentation/bloc/reminders_event.dart';
+import '../../../forms/domain/repositories/forms_repository.dart';
+import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
 import '../../../sync/domain/usecases/build_public_password_entries.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
@@ -518,6 +520,15 @@ class _EditorBodyState extends State<_EditorBody> {
         // emits a non-blocking error toast when offline.
         const QuillMenuItem(
             icon: 'download', label: 'Pull from server', value: 'pull'),
+        // E51 — view form submissions for this page, when it carries a
+        // `forms:` frontmatter field. Only shown when the page is
+        // actually form-bearing — otherwise the menu would always
+        // resolve to a 403 / not_owner.
+        if (_hasForms(loaded))
+          const QuillMenuItem(
+              icon: 'inbox',
+              label: 'View form submissions →',
+              value: 'view-form-submissions'),
         QuillMenuItem.separator<String>(),
         const QuillMenuItem(icon: 'trash', label: 'Move to trash', danger: true, value: 'trash'),
         const QuillMenuItem(icon: 'sync', label: 'Reindex vault', value: 'reindex'),
@@ -627,6 +638,8 @@ class _EditorBodyState extends State<_EditorBody> {
         }
         sync.add(SyncFetchFileRequested(relpath: loaded.page.relativePath));
         context.toastInfo('Pulling latest from server…');
+      case 'view-form-submissions':
+        await _viewFormSubmissions(context, loaded);
       case 'rename':
         await _renameFile(context, loaded);
       case 'move':
@@ -1193,6 +1206,41 @@ class _EditorBodyState extends State<_EditorBody> {
     if (v == true) return true;
     final s = '$v'.toLowerCase();
     return s == 'true' || s == 'yes';
+  }
+
+  /// E51 — true when the page declares a `forms:` field with a
+  /// non-empty value. Mirrors the backend's `FrontmatterProbe.hasForms`
+  /// rule so the kebab entry matches what the server would accept.
+  bool _hasForms(EditorLoaded loaded) {
+    final v = loaded.page.frontmatter.get('forms');
+    if (v == null) return false;
+    final s = '$v'.trim();
+    return s.isNotEmpty;
+  }
+
+  Future<void> _viewFormSubmissions(
+      BuildContext context, EditorLoaded loaded) async {
+    final ulid = loaded.page.ulid;
+    if (ulid.isEmpty) {
+      context.toastError('Cannot list submissions',
+          sub: 'page has no ULID');
+      return;
+    }
+    final sync = context.read<SyncBloc>();
+    final token = sync.state.token;
+    if (token == null || !sync.state.isAuthed) {
+      context.toastWarn('Not logged in',
+          sub: 'Sign in to view submissions.');
+      return;
+    }
+    final repo = context.read<FormsRepository>();
+    await showDialog<void>(
+      context: context,
+      builder: (_) => FormSubmissionsDialog(
+        ulid: ulid,
+        load: () => repo.listSubmissions(token: token, ulid: ulid),
+      ),
+    );
   }
 
   /// Hardcoded share-URL base — matches `HttpSyncRepository` in

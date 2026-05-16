@@ -17,6 +17,8 @@ import 'features/database/presentation/pages/database_table_page.dart';
 import 'features/database/presentation/pages/databases_page.dart';
 import 'features/reminders/data/datasources/notification_scheduler.dart';
 import 'features/reminders/presentation/bloc/reminders_bloc.dart';
+import 'features/forms/data/repositories/http_forms_repository.dart';
+import 'features/forms/domain/repositories/forms_repository.dart';
 import 'features/sync/data/repositories/http_sync_repository.dart';
 import 'features/sync/domain/repositories/sync_repository.dart';
 import 'features/sync/presentation/bloc/sync_bloc.dart';
@@ -58,6 +60,10 @@ class _QuillAppState extends State<QuillApp> {
   late final RemindersBloc _remindersBloc;
   late final SyncRepository _syncRepo;
   late final SyncBloc _syncBloc;
+  // E51: forms repo lives alongside the sync one — same backend, same
+  // base URL — but stays bloc-less for now. The editor consumes it via
+  // RepositoryProvider directly inside a FutureBuilder dialog.
+  late final FormsRepository _formsRepo;
   late final GoRouter _router;
 
   @override
@@ -80,6 +86,7 @@ class _QuillAppState extends State<QuillApp> {
     // to localhost — a settings page (slice E14+) will let users set
     // their own self-hosted endpoint.
     _syncRepo = HttpSyncRepository(baseUrl: 'http://localhost:8080');
+    _formsRepo = HttpFormsRepository(baseUrl: 'http://localhost:8080');
     _syncBloc = SyncBloc(repo: _syncRepo)
       // E15: restore the persisted JWT (if any) so a quit + relaunch
       // doesn't force users to re-authenticate.
@@ -113,6 +120,7 @@ class _QuillAppState extends State<QuillApp> {
         RepositoryProvider<Indexer>.value(value: _indexer),
         RepositoryProvider<NotificationScheduler>.value(value: _scheduler),
         RepositoryProvider<SyncRepository>.value(value: _syncRepo),
+        RepositoryProvider<FormsRepository>.value(value: _formsRepo),
       ],
       child: MultiBlocProvider(
         // DI-03 (docs/RULES.md): blocs are normally scoped to the

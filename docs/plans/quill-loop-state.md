@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E51 — Wire forms client into editor kebab: "View form submissions →" dialog
+- **Task:** E52 — Phase E end-to-end walkthrough doc + manual sanity-check checklist
 - **Status:** pending
 
 ## Last completed
+
+- **M1354 — E51** (Flutter forms client wired into editor kebab + dialog)
+- Committed: (this iteration)
+- TaskList ID: 73
+- Notes: New presentation widget `lib/features/forms/presentation/widgets/form_submissions_dialog.dart` — pure-presentational `FormSubmissionsDialog({ulid, load})` with a header row (icon + title + dismiss), a monospace ULID subtitle, and a body driven by `FutureBuilder<List<FormSubmission>>`. Spinner while loading. Empty list → centered "No submissions yet." placeholder. Submissions render as a `ListView.separated` of tiles; each tile shows the ISO-8601 timestamp, optional "from <ip>" right-aligned, and a `SelectableText` with 2-space indented JSON of the fields map. Error branch maps typed exceptions to readable copy (`FormsNotOwnerException` → "This page is not yours…", `FormsAuthException` → "Session expired", `FormsNetworkException` → "Network: <msg>") with a Retry button that re-invokes the `load` callback. app.dart adds `RepositoryProvider<FormsRepository>` next to the sync repo + `HttpFormsRepository(baseUrl: 'http://localhost:8080')` instance. editor_page.dart kebab gets a new "View form submissions →" entry (icon: inbox) gated by `_hasForms(loaded)` (frontmatter `forms:` non-empty); selecting it dispatches `_viewFormSubmissions` which reads the SyncBloc token, reads `FormsRepository` from context, and opens the dialog. 5 new widget tests (renders-ulid-+-tiles, empty-placeholder, not-owner-copy-+-retry, session-expired-copy, retry-re-invokes-load). 12/12 forms tests pass (5 widget + 7 HTTP); flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1353 — E50** (Phase E forms audit + Flutter `HttpFormsRepository` client)
 - Committed: (this iteration)
