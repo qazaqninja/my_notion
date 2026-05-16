@@ -2222,6 +2222,24 @@ String formatIsoDateTime(DateTime when) {
 String formatEpochTimestamp(DateTime when) =>
     (when.millisecondsSinceEpoch ~/ 1000).toString();
 
+/// Format a [DateTime] as the `YYYY-Qn` quarter tag used in the sample
+/// vault's QBR notes (e.g. `2026-Q2`). Quarter boundaries follow the
+/// standard calendar definition: Q1 = Jan–Mar, Q2 = Apr–Jun,
+/// Q3 = Jul–Sep, Q4 = Oct–Dec.
+String formatYearQuarter(DateTime when) {
+  final yyyy = when.year.toString().padLeft(4, '0');
+  final q = ((when.month - 1) ~/ 3) + 1;
+  return '$yyyy-Q$q';
+}
+
+/// Format a [DateTime] as the `YYYY-MM` year-month tag used by the
+/// monthly-review slash entry (e.g. `2026-05`).
+String formatYearMonth(DateTime when) {
+  final yyyy = when.year.toString().padLeft(4, '0');
+  final mm = when.month.toString().padLeft(2, '0');
+  return '$yyyy-$mm';
+}
+
 /// Generate a UUID v4 (random) as the canonical 36-char hyphenated
 /// string. Uses [math.Random] under the hood — **not** cryptographically
 /// secure (sufficient for placeholder IDs, test data, and stable

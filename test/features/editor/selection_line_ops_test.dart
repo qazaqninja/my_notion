@@ -2354,6 +2354,28 @@ void main() {
       final when = DateTime.fromMillisecondsSinceEpoch(1_747_345_200_999);
       expect(formatEpochTimestamp(when), '1747345200');
     });
+
+    test('formatYearQuarter buckets calendar months into Q1-Q4', () {
+      // Q1: Jan-Mar, Q2: Apr-Jun, Q3: Jul-Sep, Q4: Oct-Dec.
+      expect(formatYearQuarter(DateTime(2026, 1, 1)), '2026-Q1');
+      expect(formatYearQuarter(DateTime(2026, 3, 31)), '2026-Q1');
+      expect(formatYearQuarter(DateTime(2026, 4, 1)), '2026-Q2');
+      expect(formatYearQuarter(DateTime(2026, 5, 16)), '2026-Q2');
+      expect(formatYearQuarter(DateTime(2026, 7, 1)), '2026-Q3');
+      expect(formatYearQuarter(DateTime(2026, 10, 1)), '2026-Q4');
+      expect(formatYearQuarter(DateTime(2026, 12, 31)), '2026-Q4');
+    });
+
+    test('formatYearQuarter zero-pads the year for sub-1000 dates', () {
+      // Sanity-check the padding helper is firing.
+      expect(formatYearQuarter(DateTime(99, 4, 1)), '0099-Q2');
+    });
+
+    test('formatYearMonth emits YYYY-MM with zero-padding', () {
+      expect(formatYearMonth(DateTime(2026, 5, 16)), '2026-05');
+      expect(formatYearMonth(DateTime(2026, 1, 1)), '2026-01');
+      expect(formatYearMonth(DateTime(2026, 12, 31)), '2026-12');
+    });
   });
 
   group('renumberListLinesIn', () {

@@ -48,6 +48,10 @@ enum SlashAction {
   /// `1] ` / `1: ` / `1- `) from every selected line, preserving
   /// any leading indentation.
   stripLeadingNumberPrefix,
+  /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
+  insertYearQuarter,
+  /// Insert the current year-month tag (`YYYY-MM`) at the caret.
+  insertYearMonth,
   /// Insert a freshly-generated ULID at the caret. Useful for users
   /// who want a stable placeholder identifier before they decide what
   /// the linked page will be.
@@ -558,6 +562,20 @@ const List<SlashEntry> kSlashEntries = [
     hint: '@now',
     action: SlashAction.insertTimestamp,
     keywords: ['now', 'time', 'timestamp', 'date'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Current quarter',
+    hint: '2026-Q2',
+    action: SlashAction.insertYearQuarter,
+    keywords: ['quarter', 'qbr', 'q1', 'q2', 'q3', 'q4', 'fiscal'],
+  ),
+  SlashEntry(
+    icon: 'calendar',
+    label: 'Current month',
+    hint: '2026-05',
+    action: SlashAction.insertYearMonth,
+    keywords: ['month', 'monthly', 'review', 'period'],
   ),
   SlashEntry(
     icon: 'users',
