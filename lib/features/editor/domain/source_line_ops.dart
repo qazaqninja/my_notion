@@ -2808,6 +2808,40 @@ SortLinesResult extractJwtFromLinesIn(
       return out;
     });
 
+/// Extract every Bitcoin address substring from each selected
+/// line. Covers the three dominant address formats:
+/// - Legacy P2PKH: `1` + 25-34 base58 chars
+/// - P2SH: `3` + 25-34 base58 chars
+/// - Bech32 (SegWit): `bc1` + 39-59 lowercase chars
+///
+/// Useful for crypto-transaction docs, wallet inventory, and
+/// "is there a public address leaked here?" sweeps.
+///
+/// Recognition:
+///   `\b(?:[13][1-9A-HJ-NP-Za-km-z]{25,34}|bc1[a-z0-9]{39,59})\b`
+/// - Word boundaries on each end.
+/// - Legacy / P2SH: base58 character class (no `0`, `O`, `I`,
+///   `l` — Bitcoin's confusable-char exclusion).
+/// - Bech32: lowercase alphanumeric (the full spec is more
+///   restrictive but `[a-z0-9]` covers the practical space
+///   without false-positive risk in non-bech32 text).
+///
+/// 79th member of the extraction family.
+SortLinesResult extractBitcoinAddressesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:[13][1-9A-HJ-NP-Za-km-z]{25,34}|bc1[a-z0-9]{39,59})\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

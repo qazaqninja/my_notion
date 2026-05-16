@@ -480,6 +480,9 @@ enum SlashAction {
   /// Extract every JWT (JSON Web Token) substring from each
   /// selected line.
   extractJwtFromLines,
+  /// Extract every Bitcoin address substring (legacy P2PKH,
+  /// P2SH, or bech32 SegWit) from each selected line.
+  extractBitcoinAddressesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2281,6 +2284,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractJwtFromLines,
     keywords: ['extract', 'jwt', 'token', 'auth', 'session',
         'bearer'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract Bitcoin addresses',
+    hint: '1.../3.../bc1...',
+    action: SlashAction.extractBitcoinAddressesFromLines,
+    keywords: ['extract', 'bitcoin', 'btc', 'address', 'wallet',
+        'crypto', 'p2pkh', 'p2sh', 'bech32'],
   ),
   SlashEntry(
     icon: 'calendar',

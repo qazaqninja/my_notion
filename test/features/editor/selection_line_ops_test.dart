@@ -7118,6 +7118,91 @@ void main() {
     });
   });
 
+  group('extractBitcoinAddressesFromLinesIn', () {
+    test('legacy P2PKH (Satoshi-style) extracts', () {
+      // The Genesis block's coinbase address.
+      const text =
+          'see 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa today\n';
+      final r = extractBitcoinAddressesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n');
+    });
+
+    test('P2SH (3-prefix) extracts', () {
+      const text =
+          'multisig 3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy here\n';
+      final r = extractBitcoinAddressesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy\n');
+    });
+
+    test('Bech32 SegWit extracts', () {
+      const text =
+          'segwit bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4 inline\n';
+      final r = extractBitcoinAddressesFromLinesIn(
+          text, 0, text.length);
+      expect(
+        r.text,
+        'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4\n',
+      );
+    });
+
+    test('too-short legacy form is NOT a match', () {
+      // P2PKH requires 26+ chars total (1 prefix + 25-34).
+      const text = 'short 1abc only\n';
+      final r = extractBitcoinAddressesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('confusable chars (0, O, I, l) in legacy are NOT matched', () {
+      // Base58 excludes these to avoid visual ambiguity. The
+      // regex class `[1-9A-HJ-NP-Za-km-z]` enforces.
+      const text = 'fake 10AAAAAAAAAAAAAAAAAAAAAAAA0 invalid\n';
+      final r = extractBitcoinAddressesFromLinesIn(
+          text, 0, text.length);
+      // The `0` should disqualify; regex won't match the 0-bearing
+      // candidate. Documented behaviour.
+      expect(r.text, '\n');
+    });
+
+    test('multiple addresses on one line each extract', () {
+      const text =
+          'pair 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa and '
+          '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy together\n';
+      final r = extractBitcoinAddressesFromLinesIn(
+          text, 0, text.length);
+      expect(
+        r.text,
+        '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n'
+        '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy\n',
+      );
+    });
+
+    test('lowercase `bc1...` too short is NOT a match', () {
+      // SegWit requires 39+ chars after `bc1`.
+      const text = 'fake bc1short here\n';
+      final r = extractBitcoinAddressesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without addresses dropped from output', () {
+      const text =
+          'plain prose\nsee 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\nmore prose\n';
+      final r = extractBitcoinAddressesFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractBitcoinAddressesFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
