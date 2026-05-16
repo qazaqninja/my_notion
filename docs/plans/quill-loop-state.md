@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E4 — UserRepository + User entity
+- **Task:** E5 — POST /auth/signup + POST /auth/login routes
 - **Status:** pending
 
 ## Last completed
 
-- **M1290 — E3** (auth helpers — bcrypt password + JWT issue/verify)
-- Committed: 9e3f058
-- TaskList ID: 25
-- Notes: `backend/lib/auth/password.dart` PasswordHasher wraps bcrypt (cost 12 prod, 4 in tests). `backend/lib/auth/tokens.dart` TokenIssuer wraps dart_jsonwebtoken with HS256 + iss/aud/sub/exp claims; reads `JWT_SECRET` from env with loud dev fallback. 9 unit tests pass (hash shape, verify accept/reject/random-salt; token sign/verify, secret mismatch reject, expired reject). `bcrypt ^1.2.0` + `dart_jsonwebtoken ^3.4.1` added. 11/11 backend tests pass. Phase D D1 24-30 remain v1.x backlog. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1292 — E4** (User entity + UserRepository data layer)
+- Committed: 28fccdf
+- TaskList ID: 26
+- Notes: Immutable `User(id, email, createdAt)` with value-equality, bcrypt hash kept OFF the entity (toString-leak test). `UserRepository(_conn)` ships create/findById/findByEmail/passwordHashOf, all using `Sql.named` parameterised queries. ULID generation via `ulid ^2.0.0` (same pin as the Flutter app for cross-side ID compatibility). 3 entity tests added; integration tests for the repo deferred to E5. 11/11 backend tests pass.
 
 ## Backlog (Phase A — Foundation)
 
