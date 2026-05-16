@@ -81,10 +81,13 @@ class SuperEditorSerializer {
   ///   Bold (`**`) is checked before italic (`*`) so the greedier match
   ///   wins. Strikethrough's `~~` opens and closes a strikethroughAttribution
   ///   span the same way.
-  /// - Slice 18: inline marks — underline (`<u>X</u>`) per M80. Quill
-  ///   stores underline as a raw HTML tag in the markdown body so the
-  ///   round-trip is byte-identical; the existing `markdown_renderer.dart`
-  ///   inline-HTML pass reads it back unchanged.
+  /// - Slice 18: inline marks — underline (`<u>X</u>`) per M80.
+  /// - Slice 19: inline marks — highlight (`==X==` and `<mark>X</mark>`)
+  ///   per M80 / M243. Both forms parse to `highlightAttribution`;
+  ///   serialise emits the Pandoc-style `==X==` canonical form. The HTML
+  ///   exporter (existing) maps both back to `<mark>` for the rendered
+  ///   output, so a byte-identical round-trip of `==X==` source survives
+  ///   the markdown→super_editor→markdown loop.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -596,6 +599,35 @@ AttributedText _parseInline(String src) {
         continue;
       }
     }
+    // Highlight `==X==` (Pandoc/Obsidian) or `<mark>X</mark>` (HTML).
+    if (i + 1 < src.length && src[i] == '=' && src[i + 1] == '=') {
+      final close = src.indexOf('==', i + 2);
+      if (close > i + 1) {
+        final inner = src.substring(i + 2, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(highlightAttribution, start, end));
+        }
+        i = close + 2;
+        continue;
+      }
+    }
+    if (i + 5 < src.length && src.substring(i, i + 6) == '<mark>') {
+      final close = src.indexOf('</mark>', i + 6);
+      if (close > i + 5) {
+        final inner = src.substring(i + 6, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(highlightAttribution, start, end));
+        }
+        i = close + 7;
+        continue;
+      }
+    }
     // Underline `<u>X</u>` (M80 — raw HTML tag, Quill's canonical form).
     if (i + 2 < src.length && src.substring(i, i + 3) == '<u>') {
       final close = src.indexOf('</u>', i + 3);
@@ -680,6 +712,7 @@ String _serializeInline(AttributedText text) {
   final strike = List<bool>.filled(plain.length, false);
   final code = List<bool>.filled(plain.length, false);
   final under = List<bool>.filled(plain.length, false);
+  final hi = List<bool>.filled(plain.length, false);
   for (var i = 0; i < plain.length; i++) {
     final attrs = text.getAllAttributionsAt(i);
     if (attrs.contains(boldAttribution)) bold[i] = true;
@@ -687,6 +720,7 @@ String _serializeInline(AttributedText text) {
     if (attrs.contains(strikethroughAttribution)) strike[i] = true;
     if (attrs.contains(codeAttribution)) code[i] = true;
     if (attrs.contains(underlineAttribution)) under[i] = true;
+    if (attrs.contains(highlightAttribution)) hi[i] = true;
   }
   final out = StringBuffer();
   for (var i = 0; i < plain.length; i++) {
@@ -698,10 +732,12 @@ String _serializeInline(AttributedText text) {
       if (italic[i] && (i == 0 || !italic[i - 1])) out.write('*');
       if (strike[i] && (i == 0 || !strike[i - 1])) out.write('~~');
       if (under[i] && (i == 0 || !under[i - 1])) out.write('<u>');
+      if (hi[i] && (i == 0 || !hi[i - 1])) out.write('==');
     }
     out.write(plain[i]);
     final isLast = i == plain.length - 1;
     if (!code[i]) {
+      if (hi[i] && (isLast || !hi[i + 1])) out.write('==');
       if (under[i] && (isLast || !under[i + 1])) out.write('</u>');
       if (strike[i] && (isLast || !strike[i + 1])) out.write('~~');
       if (italic[i] && (isLast || !italic[i + 1])) out.write('*');
@@ -784,6 +820,12 @@ const tocAttribution = NamedAttribution('toc');
 /// holds the raw multi-line button definition (url / copy / reveal /
 /// page action keys); the existing button renderer parses on read.
 const buttonAttribution = NamedAttribution('button');
+
+/// Custom inline attribution for highlight runs (M80 `<mark>` /
+/// M243 `==X==`). super_editor doesn't ship a highlight attribution by
+/// default; we define one and the future styling pass maps it to a
+/// soft-yellow background to match the existing rendered look.
+const highlightAttribution = NamedAttribution('highlight');
 
 /// Returns true when [url] has an extension this serializer treats as an
 /// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no

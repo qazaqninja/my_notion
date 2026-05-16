@@ -796,4 +796,35 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer inline marks — highlight (D1 slice 19)', () {
+    test('==X== round-trips with highlightAttribution', () {
+      const md = 'pay ==attention== here';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'pay attention here');
+      expect(node.text.getAllAttributionsAt(4), contains(highlightAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('<mark>X</mark> parses to highlight, serialises as canonical ==X==', () {
+      const md = 'this is <mark>marked</mark> text';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'this is marked text');
+      expect(node.text.getAllAttributionsAt(8), contains(highlightAttribution));
+      // Canonical output uses the Pandoc form.
+      expect(serializer.documentToMarkdown(doc),
+          'this is ==marked== text');
+    });
+
+    test('==X== composes with bold (**==X==**)', () {
+      const md = '**==loud and important==**';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.getAllAttributionsAt(0), contains(boldAttribution));
+      expect(node.text.getAllAttributionsAt(0), contains(highlightAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
