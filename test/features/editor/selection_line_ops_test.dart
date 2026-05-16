@@ -3140,6 +3140,81 @@ void main() {
     });
   });
 
+  group('extractMarkdownBoldFromLinesIn', () {
+    test('asterisk-form `**foo**` extracts content', () {
+      const text = 'plan is **shipped** and **complete**\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, 'shipped\ncomplete\n');
+    });
+
+    test('underscore-form `__foo__` extracts content', () {
+      const text = 'see __bold__ tag\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, 'bold\n');
+    });
+
+    test('single-delimiter italic forms are NOT matched', () {
+      // `*foo*` and `_foo_` are italic in CommonMark; the bold
+      // extractor requires the doubled delimiter.
+      const text = '*italic only* and _italic too_\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('mixed asterisk + underscore bold spans on one line', () {
+      const text = '**first** and __second__\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, 'first\nsecond\n');
+    });
+
+    test('zero-content `****` does NOT match', () {
+      // `[^*\n]+` requires at least one non-asterisk char.
+      const text = 'gap **** trivia\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('bold-italic `***foo***` captures only the inner content', () {
+      // `[^*\n]+` is greedy on NON-asterisk chars, so it
+      // captures the bare content `bold italic` without the
+      // inner `*` that wraps italic. The outer `**` closes
+      // bold at positions 14-15; position 16's third `*` is
+      // leftover. A future italic extractor would unwrap
+      // further when chained.
+      const text = '***bold italic***\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, 'bold italic\n');
+    });
+
+    test('span never crosses a line boundary', () {
+      const text = 'one **foo**\nbar **baz** end\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, 'foo\nbaz\n');
+    });
+
+    test('content with internal punctuation passes through', () {
+      const text = 'note **Q1, Q2 (final)** trail\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Q1, Q2 (final)\n');
+    });
+
+    test('unterminated `**` is NOT a match', () {
+      const text = 'lone **unclosed text here\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without bold dropped from output', () {
+      const text = 'plain prose\nwith **bold**\nmore prose\n';
+      final r = extractMarkdownBoldFromLinesIn(text, 0, text.length);
+      expect(r.text, 'bold\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractMarkdownBoldFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

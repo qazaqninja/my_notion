@@ -1263,6 +1263,40 @@ SortLinesResult extractMarkdownCodeFenceLangsFromLinesIn(
       return out;
     });
 
+/// Extract the content of every markdown bold span
+/// (`**foo**` or `__foo__` → `foo`) from each selected line.
+/// Useful for surveying which terms are emphasized in a doc —
+/// glossary harvest, term-frequency audit, etc.
+///
+/// Recognition (both forms supported):
+/// - `**…**`: two asterisks on each side.
+/// - `__…__`: two underscores on each side.
+/// At least one non-delimiter, non-newline char between the
+/// pair (so `****` and `____` zero-content runs do NOT match).
+/// Spans never cross a newline.
+///
+/// Single-delimiter italic (`*foo*` / `_foo_`) is deliberately
+/// NOT matched here — a future milestone will add the italic
+/// variant. `***bold-italic***` is captured as a bold span
+/// whose content includes the wrapped italic markers; chain
+/// the italic extractor when it ships if you want both.
+///
+/// 24th member of the extraction family.
+SortLinesResult extractMarkdownBoldFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      // Two alternations — asterisk form OR underscore form.
+      // Each captures its own group; the non-null one wins.
+      final re = RegExp(r'\*\*([^*\n]+)\*\*|__([^_\n]+)__');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add((m.group(1) ?? m.group(2))!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every IPv4 dotted-quad address from each selected line
 /// (`a.b.c.d` where each octet is 0..255). Useful for triaging log
 /// paste-ins or surveying which hosts appear in a debug dump.

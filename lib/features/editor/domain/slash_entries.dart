@@ -338,6 +338,9 @@ enum SlashAction {
   /// Extract the language hint from every markdown fenced-code
   /// opener (`` ```dart `` → `dart`) on each selected line.
   extractMarkdownCodeFenceLangsFromLines,
+  /// Extract the content of every markdown bold span
+  /// (`**foo**` or `__foo__` → `foo`) from each selected line.
+  extractMarkdownBoldFromLines,
   /// Extract every markdown-link label (`[label](url)` → `label`)
   /// from each selected line.
   extractMarkdownLinkLabelsFromLines,
@@ -1730,6 +1733,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMarkdownCodeFenceLangsFromLines,
     keywords: ['extract', 'fence', 'fenced', 'lang', 'language',
         'code', 'block', 'markdown', 'backtick'],
+  ),
+  SlashEntry(
+    icon: 'bold',
+    label: 'Extract bold content',
+    hint: '**foo** / __foo__ → foo',
+    action: SlashAction.extractMarkdownBoldFromLines,
+    keywords: ['extract', 'bold', 'strong', 'emphasis', 'markdown',
+        'asterisk', 'underscore'],
   ),
   SlashEntry(
     icon: 'edit',
