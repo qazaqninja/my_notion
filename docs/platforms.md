@@ -58,3 +58,36 @@ Fonts are vendored in `assets/fonts/` (InterVariable.ttf + JetBrains
 Mono Regular/Medium/Bold). No `google_fonts` runtime fetch is needed,
 which keeps the app working without network and inside sandboxes that
 block outbound HTTPS.
+
+### Notifications (B4)
+
+Reminders set via the editor kebab's `reminder:` frontmatter field
+schedule OS-level notifications via `flutter_local_notifications` (added
+at M1224). Per-platform setup:
+
+**iOS / macOS**: `DarwinInitializationSettings()` (in
+`lib/features/reminders/data/datasources/notification_scheduler.dart`)
+requests alert + sound + badge permissions automatically the first time
+the scheduler `init()`s. No Info.plist key required — the user receives
+the system permission prompt on first launch when a reminder is
+scheduled. On macOS, the entitlement
+`com.apple.security.cs.allow-jit` (already present) is sufficient; no
+additional sandbox capability is needed.
+
+**Android**: `<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>`
+is declared in `android/app/src/main/AndroidManifest.xml` and is
+required on Android 13 (API 33+) for any notification dispatch. The
+runtime permission prompt is triggered by the plugin when
+`scheduler.init()` runs.
+
+The scheduler uses `AndroidScheduleMode.inexactAllowWhileIdle`, which
+does *not* require `SCHEDULE_EXACT_ALARM` (an Android 14+ special
+permission). Reminders may fire up to several minutes late under
+aggressive doze — acceptable for human-scale "midnight reminder"
+semantics; users wanting precise minute-level scheduling can install a
+companion app.
+
+**Linux / Windows**: The plugin is no-op on these platforms in v20.x.
+The `RemindersBloc` still records the in-memory state so the UI badge
+counts correctly, but no actual OS notification fires. Cross-platform
+reminders would need a backend daemon (Phase E V2).

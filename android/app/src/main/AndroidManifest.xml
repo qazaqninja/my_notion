@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- B4 of the 1m-loop plan (M1230): reminders dispatch OS notifications
+         via flutter_local_notifications. POST_NOTIFICATIONS is the runtime
+         permission added in Android 13 (API 33) — older versions ignore it.
+         No SCHEDULE_EXACT_ALARM needed since the scheduler uses
+         inexactAllowWhileIdle. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="my_notion"
         android:name="${applicationName}"
