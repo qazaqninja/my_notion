@@ -928,6 +928,28 @@ SortLinesResult rangeNumericLinesIn(String text, int start, int end) =>
       return [range.toString()];
     });
 
+/// Round every selected numeric line to [decimals] places. Uses
+/// banker's-friendly `toStringAsFixed` so a trailing 5 follows the
+/// platform's default-rounding behaviour (away-from-zero on most
+/// platforms; close enough for scratch-work). Non-numeric lines
+/// pass through untouched. Default precision is 2 places.
+SortLinesResult roundNumericLinesIn(
+  String text,
+  int start,
+  int end, {
+  int decimals = 2,
+}) =>
+    _transformLinesIn(text, start, end, (lines) {
+      return [
+        for (final l in lines)
+          (() {
+            final v = double.tryParse(l.trim());
+            if (v == null) return l;
+            return v.toStringAsFixed(decimals);
+          })(),
+      ];
+    });
+
 /// Compute the **population** variance of every selected numeric
 /// line: `mean((x - mean(x))^2)`. The square of [stdDevNumericLinesIn]'s
 /// result. Always rendered as decimal. Non-numeric lines are

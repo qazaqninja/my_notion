@@ -237,6 +237,8 @@ enum SlashAction {
   stdDevNumericLines,
   /// Compute the population variance of every numeric line.
   varianceNumericLines,
+  /// Round every numeric line to 2 decimal places.
+  roundNumericLines,
 }
 
 /// Entries shown by the slash command menu. Each entry carries:
@@ -1093,6 +1095,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'σ² (population)',
     action: SlashAction.varianceNumericLines,
     keywords: ['variance', 'sigma', 'squared', 'stats'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Round to 2 decimals',
+    hint: '3.14159 → 3.14',
+    action: SlashAction.roundNumericLines,
+    keywords: ['round', 'decimal', 'precision', 'truncate'],
   ),
   SlashEntry(
     icon: 'hash',

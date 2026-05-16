@@ -2635,6 +2635,40 @@ void main() {
     });
   });
 
+  group('roundNumericLinesIn', () {
+    test('default 2-decimal rounding', () {
+      const text = '3.14159\n2.71828\n';
+      final r = roundNumericLinesIn(text, 0, text.length);
+      expect(r.text, '3.14\n2.72\n');
+    });
+
+    test('configurable precision', () {
+      const text = '3.14159\n';
+      expect(
+        roundNumericLinesIn(text, 0, text.length, decimals: 4).text,
+        '3.1416\n',
+      );
+    });
+
+    test('precision 0 truncates the fractional part', () {
+      const text = '3.7\n4.2\n';
+      final r = roundNumericLinesIn(text, 0, text.length, decimals: 0);
+      // Default toStringAsFixed(0) rounds-half-away-from-zero.
+      expect(r.text, '4\n4\n');
+    });
+
+    test('integer input renders with the decimal places', () {
+      const text = '5\n';
+      // 5 → "5.00" with default precision.
+      expect(roundNumericLinesIn(text, 0, text.length).text, '5.00\n');
+    });
+
+    test('non-numeric lines pass through', () {
+      const text = '3.14\nlabel\n';
+      expect(roundNumericLinesIn(text, 0, text.length).text, '3.14\nlabel\n');
+    });
+  });
+
   group('reverseLinesIn', () {
     test('flips three explicit lines', () {
       const text = 'one\ntwo\nthree\n';
