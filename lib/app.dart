@@ -19,6 +19,8 @@ import 'features/reminders/data/datasources/notification_scheduler.dart';
 import 'features/reminders/presentation/bloc/reminders_bloc.dart';
 import 'features/forms/data/repositories/http_forms_repository.dart';
 import 'features/forms/domain/repositories/forms_repository.dart';
+import 'features/sharing/data/receive_sharing_intent_source.dart';
+import 'features/sharing/presentation/incoming_share_binder.dart';
 import 'features/sync/data/repositories/http_sync_repository.dart';
 import 'features/sync/domain/repositories/sync_repository.dart';
 import 'features/sync/presentation/bloc/sync_bloc.dart';
@@ -64,6 +66,10 @@ class _QuillAppState extends State<QuillApp> {
   // base URL — but stays bloc-less for now. The editor consumes it via
   // RepositoryProvider directly inside a FutureBuilder dialog.
   late final FormsRepository _formsRepo;
+  // F2: binds the OS share-sheet stream to QuickCapture for whichever
+  // vault is currently loaded. Created in initState, attached after
+  // the bloc + restore are kicked off, detached on dispose.
+  late final IncomingShareBinder _shareBinder;
   late final GoRouter _router;
 
   @override
@@ -96,12 +102,24 @@ class _QuillAppState extends State<QuillApp> {
       // doesn't force users to re-authenticate.
       ..add(const SyncRestoreRequested());
     _router = _buildRouter(_vaultBloc);
+    // F2: start the inbound share-sheet binder. It attaches to the
+    // VaultBloc stream and starts/stops an IncomingShareListener as
+    // vaults load and unload. Fire-and-forget — attach() awaits one
+    // initial-state read and starts the subscription.
+    _shareBinder = IncomingShareBinder(
+      vaultBloc: _vaultBloc,
+      sourceFactory: ReceiveSharingIntentSource.new,
+    );
+    unawaited(_shareBinder.attach());
     // Restore last-opened vault.
     _vaultBloc.tryRestore();
   }
 
   @override
   void dispose() {
+    // F2: detach the share binder first — it holds a Stream sub on
+    // VaultBloc which closes immediately below.
+    unawaited(_shareBinder.detach());
     _syncBloc.close();
     _remindersBloc.close();
     _vaultBloc.close();

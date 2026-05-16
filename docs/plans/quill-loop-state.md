@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** F2 — Wire IncomingShareListener into app.dart lifecycle (start on vault loaded; stop on dispose)
+- **Task:** F3 — Native platform config for receive_sharing_intent (iOS Share Extension + Android intent-filter)
 - **Status:** pending
 
 ## Last completed
+
+- **M1359 — F2** (IncomingShareBinder wired into VaultBloc lifecycle)
+- Committed: (this iteration)
+- TaskList ID: 78
+- Notes: New `IncomingShareBinder(vaultBloc, sourceFactory, [listenerFactory])` class in `lib/features/sharing/presentation/incoming_share_binder.dart` — subscribes to `vaultBloc.stream`, reacts to `VaultLoaded` by constructing a fresh `IncomingShareSource` + `IncomingShareListener` against the new `rootPath` and calling `start()`. Leaving VaultLoaded (VaultPicking / VaultError / VaultInitial) tears down via `listener.stop()` + `source.close()`. Different rootPath swaps both objects so shares always land in the currently-open vault. Same-rootPath re-emit is a no-op (no churn). app.dart's State holds the binder in `_shareBinder`, calls `attach()` after the bloc + restore are kicked off, and `detach()` before the bloc closes in `dispose()`. 5 new bloc-test cases (already-loaded-at-attach, transition-spawns-listener, leaving-loaded-tears-down, different-root-swaps, same-root-noop). 10/10 sharing tests pass; flutter analyze clean. Native platform config (iOS Share Extension / Android intent-filter) queued as F3. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1358 — F1** (inbound share-sheet wiring — Dart side)
 - Committed: (this iteration)
