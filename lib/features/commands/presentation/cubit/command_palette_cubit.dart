@@ -212,6 +212,7 @@ class CommandPaletteCubit extends Cubit<CommandPaletteState> {
     CommandEntry(group: CommandGroup.actions, icon: 'link', label: 'Copy vault path', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'clock', label: 'Open last edited page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'clock', label: 'Open oldest page', hint: ''),
+    CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Open page by title…', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Open largest page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'link', label: 'Open most-linked page', hint: ''),
     CommandEntry(group: CommandGroup.actions, icon: 'note', label: 'Open smallest page', hint: ''),

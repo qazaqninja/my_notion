@@ -589,6 +589,36 @@ class _VaultShellPageState extends State<VaultShellPage> {
     router.go('/editor/${pick.ulid}');
   }
 
+  Future<void> _openPageByTitlePrompt(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final scope = context;
+    final title = await showQuillPrompt(
+      context,
+      title: 'Open page by title',
+      icon: 'note',
+      label: 'Title',
+      placeholder: 'Exact title (case-insensitive)',
+      confirmLabel: 'Open',
+    );
+    if (title == null || title.trim().isEmpty) return;
+    final refs = _toPageRefs(await db.select(db.pages).get());
+    final pick = pickByTitle(refs, title);
+    if (pick == null) {
+      if (scope.mounted) {
+        scope.toastError('No page named "$title"');
+      }
+      return;
+    }
+    if (scope.mounted) {
+      scope.toastInfo(
+        'Opened',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pick.ulid}');
+  }
+
   Future<void> _openOldestPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -807,6 +837,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openLastEditedPage(context);
       case 'Open oldest page':
         await _openOldestPage(context);
+      case 'Open page by title…':
+        await _openPageByTitlePrompt(context);
       case 'Open largest page':
         await _openLargestPage(context);
       case 'Open most-linked page':
