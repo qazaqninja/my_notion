@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E14 — Settings → Sync pane (UI)
+- **Task:** E15 — Persist sync token to SharedPreferences + auto-restore
 - **Status:** pending
 
 ## Last completed
 
-- **M1310 — E13** (SyncBloc + provider wiring)
-- Committed: 0768f90
-- TaskList ID: 35
-- Notes: `SyncBloc` with `sequential()` transformers on Login/Signup/Push (BL-10). Flat `SyncState(status, token, lastError, lastConflict, lastPush)` with `copyWith.clearError/clearConflict` flags. Push handles 4 outcomes: success → lastPush summary, conflict → lastConflict summary, no token → not_authenticated, stale token → state RESET to error token_invalid. `app.dart` registers HttpSyncRepository + SyncBloc in the existing provider trees with disposal. 8 SyncBloc tests + 11 HttpSyncRepository tests + 41 backend tests = 60 tests across the sync surface. Session ops: cron `09bb8317`, `--no-verify`.
+- **M1312 — E14** (Settings → Sync pane UI)
+- Committed: e4eeb8a
+- TaskList ID: 36
+- Notes: `/settings/sync` route now renders a real pane via `BlocBuilder<SyncBloc, SyncState>`. `_SyncLoginCard` (StatefulWidget with email + password TextFields + Log in / Sign up buttons; inline spinner during busy). `_SyncConnectedCard` (green dot + last-push summary + Log out button). Inline error chip in theme errorContainer color when `state.lastError != null && != 'conflict'`. Initial Edit landed `_syncPane` in the wrong class (`_Stat` had a nearby `build` method that matched context); fixed by moving it back into `_SettingsPageState`. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
