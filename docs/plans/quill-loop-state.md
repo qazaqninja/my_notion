@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E33 — Sync wire-up sanity: provider override + token rotation
+- **Task:** E34 — Surface `lastFetched.summary.mtime` in pull dialog header
 - **Status:** pending
 
 ## Last completed
 
-- **M1335 — E32** (bulk push button + vault-walk usecase)
+- **M1336 — E33** (sync lifecycle sanity check + post-await race fix)
 - Committed: (this iteration)
-- TaskList ID: 54
-- Notes: `SyncConnectedCard` gains optional `VoidCallback? onPushAll`; when non-null, renders an "Push all unsynced" `OutlinedButton` next to "Log out". New domain usecase `lib/features/sync/domain/usecases/collect_bulk_push_entries.dart` walks a `VaultTree` recursively, reads every `.md` file at `<vaultRoot>/<relpath>`, computes sha256 (new direct dep `crypto: ^3.0.6`, was already transitively pulled in), and returns a list of `SyncBulkPushEntry`. Reading errors are swallowed (file missing / locked → skipped, no abort). `_onPushAllUnsynced` in settings_page.dart wires it: VaultBloc.state check, SyncBloc.isAuthed check, collect entries, dispatch `SyncPushAllRequested`, info toast with count. 2 new widget tests (button-hidden-when-onPushAll-null, button-visible+tap-fires) + 3 new usecase tests (emits-one-per-file-with-sha, skips-unreadable-files, empty-tree-empty-list). 19/19 sync card + usecase tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 55
+- Notes: New integration-ish test file `test/features/sync/sync_bloc_lifecycle_test.dart` (3 cases) exercises end-to-end SyncBloc lifecycle: (1) user A login → push → logout → user B login fully resets `token`, `knownShas`, `lastPush`, `lastConflict`, `pendingPushes`; (2) `close()` does NOT wipe the persisted token (only explicit logout does); (3) periodic timer cancels on logout and re-arms on re-login with the new user's listing only. The third test caught a real race: `_onList` checks `state.isAuthed` BEFORE its `await _repo.list(token:)`, but if a logout lands during the await, the response would emit Alice's relpaths into Bob's empty state. Fix: re-check `state.isAuthed` immediately AFTER the await in `_onList` and skip the merge. 3/3 lifecycle + 51/51 sync_bloc tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 

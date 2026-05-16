@@ -227,6 +227,11 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     if (token == null || token.isEmpty) return;
     try {
       final summaries = await _repo.list(token: token);
+      // E33: race-guard. A logout could have landed between the
+      // outer token check and the listing response — if so, do NOT
+      // emit, otherwise the freshly-empty state would be polluted
+      // by the previous user's relpaths.
+      if (!state.isAuthed) return;
       if (summaries.isEmpty) return;
       // Merge — don't replace. A push that already happened during the
       // listing round-trip should not be clobbered by a snapshot taken
