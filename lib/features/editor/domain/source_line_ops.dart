@@ -3119,6 +3119,56 @@ SortLinesResult extractMimeTypesFromLinesIn(
       return out;
     });
 
+/// Extract every Kubernetes resource reference (`kind/name`) from
+/// each selected line. Useful for kubectl command audits, ops
+/// runbook scrapes, and incident-postmortem inventories.
+///
+/// Recognition: one of the common Kubernetes kinds followed by `/`
+/// and a DNS-1123 subdomain-shaped name (lowercase alphanumeric
+/// plus `-` and `.`). The kinds recognised are the standard
+/// short and long forms:
+/// - Workloads: `pod`, `deployment`, `replicaset`, `statefulset`,
+///   `daemonset`, `job`, `cronjob`
+/// - Networking: `service`, `ingress`, `endpoints`,
+///   `networkpolicy`
+/// - Config + storage: `configmap`, `secret`,
+///   `persistentvolume`, `persistentvolumeclaim`
+/// - Cluster: `namespace`, `node`
+/// - RBAC: `serviceaccount`, `role`, `rolebinding`,
+///   `clusterrole`, `clusterrolebinding`
+/// - Autoscaling: `horizontalpodautoscaler`
+///
+/// Matches `pod/web`, `deployment/api-gateway`, `service/db-fe`,
+/// `configmap/feature-flags`, etc. The name allows DNS-1123
+/// subdomain characters (lowercase, digits, `-`, `.`) but must
+/// start and end with an alphanumeric (enforced via boundary
+/// classes on the regex).
+///
+/// Singular kinds only — `pods` / `deployments` (plurals) are
+/// not matched. kubectl's `kind/name` resource shorthand is
+/// canonically singular.
+///
+/// 88th member of the extraction family.
+SortLinesResult extractKubernetesResourcesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:pod|deployment|replicaset|statefulset|daemonset|'
+        r'job|cronjob|service|ingress|endpoints|networkpolicy|'
+        r'configmap|secret|persistentvolume|persistentvolumeclaim|'
+        r'namespace|node|serviceaccount|role|rolebinding|'
+        r'clusterrole|clusterrolebinding|horizontalpodautoscaler)'
+        r'/[a-z0-9](?:[a-z0-9.\-]*[a-z0-9])?\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

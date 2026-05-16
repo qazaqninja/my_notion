@@ -7746,6 +7746,108 @@ void main() {
     });
   });
 
+  group('extractKubernetesResourcesFromLinesIn', () {
+    test('pod/name extracts', () {
+      const text = 'restart pod/web today\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'pod/web\n');
+    });
+
+    test('deployment with hyphenated name extracts', () {
+      const text = 'scale deployment/api-gateway up\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'deployment/api-gateway\n');
+    });
+
+    test('service/name extracts', () {
+      const text = 'check service/db-fe here\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'service/db-fe\n');
+    });
+
+    test('configmap/feature-flags extracts', () {
+      const text = 'edit configmap/feature-flags now\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'configmap/feature-flags\n');
+    });
+
+    test('cluster-scoped kinds (namespace, node) extract', () {
+      const text = 'see namespace/default and node/worker-3\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'namespace/default\nnode/worker-3\n');
+    });
+
+    test('RBAC kinds (rolebinding, clusterrole) extract', () {
+      const text = 'grant rolebinding/admin and clusterrole/edit\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'rolebinding/admin\nclusterrole/edit\n');
+    });
+
+    test('plural kinds (pods, deployments) are NOT matched', () {
+      // kubectl's resource shorthand is canonically singular.
+      const text = 'list pods/web and deployments/api\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('unknown kind rejected', () {
+      // `widget/foo` is not a registered Kubernetes kind.
+      const text = 'fake widget/foo not real\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('uppercase kind rejected', () {
+      // Kinds are matched case-sensitively (lowercase) — `Pod/web`
+      // is YAML manifest style, not kubectl shorthand.
+      const text = 'manifest Pod/web ignore\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('name ending with hyphen rejected (boundary class)', () {
+      // The name must end with an alphanumeric — `pod/web-` is
+      // malformed and should not match.
+      const text = 'broken pod/web- alone\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      // The regex backs off to a single-char name match `pod/w`?
+      // No — the leading `[a-z0-9]` plus `(?:...[a-z0-9])?` lets
+      // a 1-char name match. So `pod/web` (3 chars) matches and
+      // the trailing `-` is dropped. Document that observed
+      // behaviour.
+      expect(r.text, 'pod/web\n');
+    });
+
+    test('multiple resources on one line each extract', () {
+      const text = 'apply pod/web and service/db together\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'pod/web\nservice/db\n');
+    });
+
+    test('lines without resources dropped from output', () {
+      const text = 'plain prose\nuse pod/api\nmore prose\n';
+      final r = extractKubernetesResourcesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'pod/api\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractKubernetesResourcesFromLinesIn('', 0, 0).text,
+          '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

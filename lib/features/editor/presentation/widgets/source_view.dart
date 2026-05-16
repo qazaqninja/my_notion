@@ -1571,6 +1571,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractMimeTypesFromLinesIn,
         );
+      case SlashAction.extractKubernetesResourcesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractKubernetesResourcesFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

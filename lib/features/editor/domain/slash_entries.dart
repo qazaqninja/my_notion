@@ -507,6 +507,10 @@ enum SlashAction {
   /// Extract every MIME type token (`application/json`,
   /// `text/html`, `image/png`) from each selected line.
   extractMimeTypesFromLines,
+  /// Extract every Kubernetes resource reference
+  /// (`pod/web`, `deployment/api`, `service/db`) from each
+  /// selected line.
+  extractKubernetesResourcesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2380,6 +2384,15 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractMimeTypesFromLines,
     keywords: ['extract', 'mime', 'type', 'content',
         'header', 'accept', 'json', 'html', 'iana', 'subtype'],
+  ),
+  SlashEntry(
+    icon: 'box',
+    label: 'Extract Kubernetes resources',
+    hint: 'pod/web / deployment/api / service/db',
+    action: SlashAction.extractKubernetesResourcesFromLines,
+    keywords: ['extract', 'kubernetes', 'k8s', 'kubectl',
+        'pod', 'deployment', 'service', 'resource', 'ops',
+        'cluster'],
   ),
   SlashEntry(
     icon: 'calendar',
