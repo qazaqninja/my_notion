@@ -7,14 +7,14 @@
 
 - **Phase:** B (V1 Polish — Media)
 - **Task:** B4 — OS notifications for reminders (flutter_local_notifications)
-- **Status:** pending
+- **Status:** in_progress (slice 1 of ~4 done at M1224)
 
-## Last completed
+## Last completed slice
 
-- **M1222 — B3** (inline PDF first-page preview shipped as a single slice)
-- Committed: 1d6297c
-- TaskList ID: 17
-- Notes: `pdfx ^2.9.2` + `PdfInlinePreview` widget + renderer wiring. PDF card's sage band now hosts a first-page rendered thumbnail; tap on metadata still opens externally. Chose single first-page thumbnail over PdfView for inline use (PdfView is overkill in a 220-px card). FEATURES.md "PDF embed and preview" 🚧 → ✅.
+- **M1224 — B4 slice 1** (NotificationScheduler datasource abstraction + package add)
+- Committed: e5645bf
+- TaskList ID: 18 (still in_progress)
+- Notes: `flutter_local_notifications ^20.1.0` (capped — 21.x needs SDK 3.10) + `timezone ^0.10.0`. New `lib/features/reminders/` feature folder following the orchestrator's FS-01 guidance (NOT placed in `lib/core/platform/`). Abstract `NotificationScheduler` with 4 methods (init/schedule/cancel/cancelAll) + concrete `LocalNotificationScheduler` for RP-02 constructor injection. Smoke test verifies the abstraction is mockable via mocktail. Slice 2 = RemindersBloc; slice 3 = EditorBloc EditFrontmatterField wiring for `reminder:` key; slice 4 = main.dart init + platform config (Info.plist permissions, etc.).
 
 ## Backlog (Phase A — Foundation)
 
