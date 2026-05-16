@@ -72,6 +72,9 @@ enum SlashAction {
   /// Insert a three-section retrospective scaffold at the caret
   /// (What went well / What didn't / Action items).
   insertRetroScaffold,
+  /// Insert a three-section ADR (Architecture Decision Record)
+  /// scaffold at the caret (Context / Decision / Consequences).
+  insertAdrScaffold,
   /// Insert the current calendar quarter tag (`YYYY-Qn`) at the caret.
   insertYearQuarter,
   /// Insert the current year-month tag (`YYYY-MM`) at the caret.
@@ -1464,6 +1467,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: "went well / didn't / actions",
     action: SlashAction.insertRetroScaffold,
     keywords: ['retro', 'retrospective', 'sprint', 'review', 'template', 'scaffold'],
+  ),
+  SlashEntry(
+    icon: 'note',
+    label: 'ADR scaffold',
+    hint: 'context / decision / consequences',
+    action: SlashAction.insertAdrScaffold,
+    keywords: ['adr', 'decision', 'architecture', 'record', 'template', 'scaffold'],
   ),
   SlashEntry(
     icon: 'link',

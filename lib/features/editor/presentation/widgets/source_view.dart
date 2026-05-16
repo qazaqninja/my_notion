@@ -1017,6 +1017,20 @@ class _SourceViewState extends State<SourceView> {
             offset: stripStart + caretInScaffold,
           ),
         );
+      case SlashAction.insertAdrScaffold:
+        final newText = text.replaceRange(
+          stripStart, caret, kAdrNotesScaffold,
+        );
+        // Land the caret on the blank line below "## Context"
+        // (offset = "## Context\n".length = 11) so typing begins
+        // in the first section without further navigation.
+        const caretInScaffold = 11;
+        _controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(
+            offset: stripStart + caretInScaffold,
+          ),
+        );
       case SlashAction.stripLeadingWhitespace:
         _applyLinesTransformAfterSlash(
           stripStart, caret, stripLeadingWhitespaceIn,

@@ -2263,6 +2263,19 @@ String formatIsoDateTime(DateTime when) {
 String formatEpochTimestamp(DateTime when) =>
     (when.millisecondsSinceEpoch ~/ 1000).toString();
 
+/// Three-section ADR (Architecture Decision Record) scaffold dropped
+/// at the caret by the `/adr` slash entry: Context / Decision /
+/// Consequences. The Michael Nygard form, minus the Status section
+/// (Quill users typically track status via a frontmatter field or a
+/// database select column, not inline prose).
+const String kAdrNotesScaffold =
+    '## Context\n'
+    '\n'
+    '## Decision\n'
+    '\n'
+    '## Consequences\n'
+    '\n';
+
 /// Three-section retrospective scaffold dropped at the caret by the
 /// `/retro` slash entry: What went well / What didn't / Action items.
 /// The classic agile-retrospective template, with action items

@@ -140,6 +140,30 @@ void main() {
     });
   });
 
+  group('kAdrNotesScaffold', () {
+    test('contains the three canonical ADR section headings', () {
+      expect(kAdrNotesScaffold.contains('## Context\n'), isTrue);
+      expect(kAdrNotesScaffold.contains('## Decision\n'), isTrue);
+      expect(kAdrNotesScaffold.contains('## Consequences\n'), isTrue);
+    });
+
+    test('headings appear in canonical Nygard order C → D → C', () {
+      final iC = kAdrNotesScaffold.indexOf('## Context');
+      final iD = kAdrNotesScaffold.indexOf('## Decision');
+      final iCons = kAdrNotesScaffold.indexOf('## Consequences');
+      expect(iC < iD && iD < iCons, isTrue);
+    });
+
+    test('caret offset (11) sits on the blank line below "## Context"',
+        () {
+      const caretInScaffold = 11;
+      expect(
+        kAdrNotesScaffold.substring(0, caretInScaffold),
+        '## Context\n',
+      );
+    });
+  });
+
   group('kRetroNotesScaffold', () {
     test('contains the three canonical retro section headings', () {
       expect(kRetroNotesScaffold.contains('## What went well\n'), isTrue);
