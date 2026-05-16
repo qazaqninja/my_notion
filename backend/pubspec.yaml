@@ -12,6 +12,7 @@ dependencies:
   postgres: ^3.5.11
   shelf: ^1.4.2
   shelf_router: ^1.1.2
+  ulid: ^2.0.0
 
 dev_dependencies:
   http: ^1.2.2
