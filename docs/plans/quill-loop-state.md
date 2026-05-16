@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E36 — Fix CA-07+BL-06: move SyncBulkPushEntry to domain entity with Equatable
+- **Task:** E37 — Fix orchestrator BL-10: add droppable() transformer to SyncLogoutRequested + SyncPushAllRequested
 - **Status:** pending
 
 ## Last completed
 
-- **M1338 — E35** (orchestrator gate over Phase E sync stack)
+- **M1339 — E36** (move SyncBulkPushEntry → domain/entities with Equatable)
 - Committed: (this iteration)
-- TaskList ID: 57
-- Notes: Dispatched `flutter-arch-orchestrator` on the 18-commit Phase E sync stack (M1320–M1337). Findings appended to "Phase E sync stack audit" section: 1 real ERROR (CA-07 + BL-06 — `SyncBulkPushEntry` lives in `sync_event.dart` and is imported from a domain usecase + lacks Equatable; both flagged by the orchestrator as one fix), 4 WARN (BL-05 status enum naming, BL-01/BL-10 missing transformers on logout/restore/cleared/delta/pushall, TH-03 `Colors.green.shade400` dot, MD-01 DTO/entity/state merge), 3 INFO (TS-04 group naming, TS-05 fake placement, DI-03 root-scope doc). Compliant areas captured to prevent regression: CA-01 (no Flutter imports in bloc), CA-06 (no cross-bloc imports), BL-08/09 (no Navigator/context in bloc), BL-11 (side-effects in listeners only), BL-12 (all listeners use listenWhen), RP-02/03 (DI'd Client + typed exceptions). flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 58
+- Notes: Resolves orchestrator ERROR finding (CA-07 + BL-06) from the E35 audit. New file `lib/features/sync/domain/entities/sync_bulk_push_entry.dart` holds the class — extends Equatable with `[relpath, body, sha256]` props. `sync_event.dart` drops the inline definition but adds `export '../../domain/entities/sync_bulk_push_entry.dart'` so existing call sites that `import sync_event.dart` (settings_page, sync_bloc test) keep compiling without changes. `collect_bulk_push_entries.dart` switches its import from `presentation/bloc/sync_event.dart` (forbidden cross-layer pull) to `../entities/sync_bulk_push_entry.dart` (correct intra-domain). 3 new entity equality tests: same-fields equal, different-sha-not-equal, props-covers-three-fields. 76/76 sync tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
@@ -107,7 +107,7 @@
 
 #### ERROR (block-severity)
 
-- [ ] **CA-07 + BL-06** — `SyncBulkPushEntry` lives inside `lib/features/sync/presentation/bloc/sync_event.dart` (a presentation file), but `lib/features/sync/domain/usecases/collect_bulk_push_entries.dart` imports it. Domain → presentation = inverted dependency. Same class also lacks `Equatable` so `SyncPushAllRequested.props` falls back to identity equality for entries. **Fix in E36:** move `SyncBulkPushEntry` to `lib/features/sync/domain/entities/sync_bulk_push_entry.dart`, extend `Equatable`, retarget imports in usecase + event + tests.
+- [x] **CA-07 + BL-06** — `SyncBulkPushEntry` lived inside `sync_event.dart` (presentation) but was imported from a domain usecase. ✅ Resolved at M1339 (E36) — class moved to `lib/features/sync/domain/entities/sync_bulk_push_entry.dart`, extends `Equatable` with `[relpath, body, sha256]` props. `sync_event.dart` re-exports the type so existing call sites that `import sync_event.dart` keep compiling. 3 new entity equality tests; 76/76 sync tests pass.
 
 #### WARN (informational)
 

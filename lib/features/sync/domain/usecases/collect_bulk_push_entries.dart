@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 
 import '../../../vault/domain/entities/vault_tree.dart';
-import '../../presentation/bloc/sync_event.dart';
+import '../entities/sync_bulk_push_entry.dart';
 
 /// E32 — pure function that walks a [VaultTree] under [vaultRoot] and
 /// returns one [SyncBulkPushEntry] per markdown file. Reads each file

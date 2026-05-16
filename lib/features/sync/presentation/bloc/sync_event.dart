@@ -1,5 +1,13 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/sync_bulk_push_entry.dart';
+
+// Re-export so existing call sites can still `import sync_event.dart`
+// and reach `SyncBulkPushEntry` without a second import. The class
+// itself moved to the domain layer at E36 to fix orchestrator finding
+// CA-07 (domain usecase was importing presentation/bloc).
+export '../../domain/entities/sync_bulk_push_entry.dart';
+
 sealed class SyncEvent extends Equatable {
   const SyncEvent();
   @override
@@ -47,20 +55,6 @@ class SyncRestoreRequested extends SyncEvent {
 /// (E19+E20) rather than silent overwrites.
 class SyncListRequested extends SyncEvent {
   const SyncListRequested();
-}
-
-/// One entry in a `SyncPushAllRequested` batch: the local body the
-/// caller wants the server to mirror, plus its current sha256 so the
-/// bloc can skip relpaths whose `knownShas` value already matches.
-class SyncBulkPushEntry {
-  const SyncBulkPushEntry({
-    required this.relpath,
-    required this.body,
-    required this.sha256,
-  });
-  final String relpath;
-  final String body;
-  final String sha256;
 }
 
 /// E31 — vault-wide bulk push. Used by "Push all unsynced files" so
