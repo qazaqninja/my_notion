@@ -21,6 +21,7 @@ import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
+import '../../../sync/presentation/widgets/sync_connected_card.dart';
 import '../../../sync/presentation/bloc/sync_state.dart';
 import '../../../vault/data/exporter.dart';
 import '../../../vault/data/html_exporter.dart';
@@ -850,7 +851,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 18),
             if (state.isAuthed)
-              _SyncConnectedCard(state: state, tokens: tokens)
+              SyncConnectedCard(state: state, tokens: tokens)
             else
               _SyncLoginCard(state: state, tokens: tokens),
             if (state.lastError != null && state.lastError != 'conflict') ...[
@@ -1363,62 +1364,9 @@ class _Stat extends StatelessWidget {
   }
 }
 
-class _SyncConnectedCard extends StatelessWidget {
-  const _SyncConnectedCard({required this.state, required this.tokens});
-  final SyncState state;
-  final QuillTokens tokens;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: tokens.surface2,
-        border: Border.all(color: tokens.divider2, width: 0.5),
-        borderRadius: const BorderRadius.all(Radius.circular(6)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: Colors.green.shade400,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Connected',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: tokens.text,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Last push: ${state.lastPush?.relpath ?? '—'}',
-                  style: TextStyle(fontSize: 12, color: tokens.text3),
-                ),
-              ],
-            ),
-          ),
-          OutlinedButton(
-            onPressed: () => context
-                .read<SyncBloc>()
-                .add(const SyncLogoutRequested()),
-            child: const Text('Log out'),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// E26 — SyncConnectedCard lives in
+// `features/sync/presentation/widgets/sync_connected_card.dart` so it
+// can be pumped in isolation from this page's sidebar chrome.
 
 class _SyncLoginCard extends StatefulWidget {
   const _SyncLoginCard({required this.state, required this.tokens});

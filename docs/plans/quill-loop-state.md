@@ -7,15 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E26 — Settings → Sync pane: surface last-push + last-conflict + retry button
+- **Task:** E27 — Sync background ping: periodic `/sync/list` refresh (so external edits show conflicts before next save)
 - **Status:** pending
 
 ## Last completed
 
-- **M1328 — E25** (Pull action on the conflict toast)
+- **M1329 — E26** (Settings → Sync: surface last-push + last-conflict + Retry pull)
 - Committed: (this iteration)
-- TaskList ID: 47
-- Notes: Extended `toastSuccess/Error/Info/Warn` convenience helpers on `BuildContext` to forward `action` + `onAction` to the underlying toast controller (the `_ToastAction` row already existed at line 149 of quill_toast.dart). Conflict-toast `BlocListener` in editor_page.dart now uses `toastWarn` (was toastInfo) and adds a "Pull" action that dispatches `SyncFetchFileRequested(relpath: conflict.relpath)`. The fetch success path automatically opens the E24 reconcile dialog via the existing `lastFetched` bridge — one-tap 409 recovery. 1 new widget test asserts the action button renders and fires `onAction` when tapped. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+- TaskList ID: 48
+- Notes: Extracted `_SyncConnectedCard` from settings_page.dart into a standalone `lib/features/sync/presentation/widgets/sync_connected_card.dart` so it can be pumped in isolation from the settings sidebar chrome (which has a pre-existing wide nav `Row` that overflows the 800-px test viewport). The widget gains: green dot + Connected + Log out (existing), an "Activity" block with a "Last push" row showing `relpath · X ago` and `sha XXXXXXXX…`, and a danger-tinted "Unresolved conflict" banner with the relpath + first-8 of server sha and a `FilledButton.tonal('Retry pull')` that dispatches `SyncFetchFileRequested`. New `syncRelativeTime(when)` helper formats compact relative times (`now`, `Xs ago`, `Xm ago`, `Xh ago`, `Xd ago`, `just now` for future). 8 new tests (4 widget + 4 helper) cover clean-state, recent-push, conflict-with-retry, log-out-dispatch, plus the 4 relative-time branches. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
