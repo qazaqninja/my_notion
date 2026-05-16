@@ -89,6 +89,9 @@ enum SlashAction {
   /// Escape markdown control characters on every selected line so
   /// the content renders verbatim instead of being parsed.
   escapeMarkdownLines,
+  /// Prefix every selected line with its character count
+  /// (`[12] hello world`), padded so columns align.
+  prefixLinesWithCharCount,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1528,6 +1531,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: r'**bold** → \*\*bold\*\*',
     action: SlashAction.escapeMarkdownLines,
     keywords: ['escape', 'verbatim', 'literal', 'backslash', 'markdown'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Prefix lines with char count',
+    hint: '[12] hello world',
+    action: SlashAction.prefixLinesWithCharCount,
+    keywords: ['count', 'chars', 'length', 'prefix', 'measure'],
   ),
   SlashEntry(
     icon: 'edit',

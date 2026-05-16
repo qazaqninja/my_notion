@@ -1992,6 +1992,29 @@ SortLinesResult wrapLinesAt80In(String text, int start, int end) =>
       return [for (final l in lines) ...wrap(l)];
     });
 
+/// Prefix every selected line with its character count, padded to
+/// the width of the longest count so columns stay aligned:
+/// `[ 4] foo` / `[12] hello world`. Useful for spotting long-line
+/// outliers when proofing prose, or for sanity-checking that a list
+/// of identifiers / IDs has a consistent width.
+///
+/// Inverse of [stripLeadingNumberPrefixIn] (which strips `1. ` /
+/// `1) ` / etc.) — the bracketed form isn't matched by the strip
+/// regex, so accidental round-trips don't happen. Blank lines get
+/// `[ 0]` so position information is preserved.
+SortLinesResult prefixLinesWithCharCountIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      if (lines.isEmpty) return lines;
+      final width = lines
+          .map((l) => l.length.toString().length)
+          .reduce((a, b) => a > b ? a : b);
+      return [
+        for (final l in lines)
+          '[${l.length.toString().padLeft(width)}] $l',
+      ];
+    });
+
 /// Add a two-space indent to the start of every selected line.
 /// Mirrors VS Code's Tab-with-multi-line-selection gesture. Empty
 /// lines are left blank — indenting them would add only trailing

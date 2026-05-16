@@ -140,6 +140,40 @@ void main() {
     });
   });
 
+  group('prefixLinesWithCharCountIn', () {
+    test('three short lines get single-digit counts (width 1)', () {
+      const text = 'foo\nbar\nbaz\n';
+      final r = prefixLinesWithCharCountIn(text, 0, text.length);
+      expect(r.text, '[3] foo\n[3] bar\n[3] baz\n');
+    });
+
+    test('mixed lengths pad to the widest count', () {
+      // Lengths 1, 5, 12 → width 2 padding so single-digit counts
+      // align in a column of size 2.
+      const text = 'a\nhello\nhello! world\n';
+      final r = prefixLinesWithCharCountIn(text, 0, text.length);
+      expect(r.text, '[ 1] a\n[ 5] hello\n[12] hello! world\n');
+    });
+
+    test('blank lines get [ 0] so positions stay visible', () {
+      const text = 'foo\n\nbar\n';
+      final r = prefixLinesWithCharCountIn(text, 0, text.length);
+      expect(r.text, '[3] foo\n[0] \n[3] bar\n');
+    });
+
+    test('does not interfere with stripLeadingNumberPrefixIn', () {
+      // The bracket form `[3] foo` isn't matched by the strip regex
+      // (which looks for `\d+[.:)\]-] `), so accidental round-trip
+      // strips don't happen.
+      const text = '[3] foo\n';
+      expect(stripLeadingNumberPrefixIn(text, 0, text.length).text, text);
+    });
+
+    test('empty input stays empty', () {
+      expect(prefixLinesWithCharCountIn('', 0, 0).text, '');
+    });
+  });
+
   group('escapeMarkdownLinesIn', () {
     test('backslash-escapes the canonical control characters', () {
       const text = r'**bold** *italic* `code`' '\n';
