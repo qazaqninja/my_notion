@@ -3373,6 +3373,48 @@ SortLinesResult extractEthereumAddressesFromLinesIn(
       return out;
     });
 
+/// Extract every geo coordinate pair (`lat,lon` in decimal
+/// degrees) from each selected line. Useful for travel-note
+/// triage, field-trip planning, postmortem incident location
+/// inventories, and field-report data scrapes.
+///
+/// Recognition: `(?<!\d)-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+(?!\d)`
+/// - Optional leading `-` for southern / western hemispheres.
+/// - 1-3 digit integer degrees component (allows real lat in
+///   -90..90 and lon in -180..180 to round-trip).
+/// - Decimal point + decimal fraction (both lat and lon).
+/// - Comma separator; optional whitespace after the comma is
+///   accepted, e.g. `37.7749, -122.4194` matches.
+/// - Lookarounds `(?<!\d)` and `(?!\d)` prevent the regex from
+///   slicing inside longer numeric runs (so `12345.6,7.8` won't
+///   yield `45.6,7.8` as a sub-match).
+///
+/// Whole-number coordinates without a decimal fraction (`37,
+/// -122`) are NOT matched — the decimal-degrees convention
+/// expects fractional precision and the requirement filters
+/// out integer-pair false positives.
+///
+/// IP addresses (`127.0.0.1`) are not matched because the
+/// dotted-quad shape can't fit into the `lat.frac,lon.frac`
+/// template (only one comma is allowed, but an IP has three
+/// dots and no comma).
+///
+/// 94th member of the extraction family.
+SortLinesResult extractGeoCoordinatesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'(?<!\d)-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+(?!\d)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

@@ -527,6 +527,10 @@ enum SlashAction {
   /// Extract every Ethereum address (`0x` + 40 hex chars) from
   /// each selected line.
   extractEthereumAddressesFromLines,
+  /// Extract every geo coordinate pair (`lat,lon` decimal
+  /// degrees, e.g. `37.7749,-122.4194`) from each selected
+  /// line.
+  extractGeoCoordinatesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2452,6 +2456,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'ethereum', 'eth', 'address',
         'wallet', 'web3', 'crypto', 'nft', 'evm', 'chain',
         'blockchain'],
+  ),
+  SlashEntry(
+    icon: 'map-pin',
+    label: 'Extract geo coordinates',
+    hint: 'lat,lon — 37.7749,-122.4194',
+    action: SlashAction.extractGeoCoordinatesFromLines,
+    keywords: ['extract', 'geo', 'coordinate', 'lat', 'lon',
+        'latitude', 'longitude', 'gps', 'map', 'location',
+        'travel'],
   ),
   SlashEntry(
     icon: 'calendar',

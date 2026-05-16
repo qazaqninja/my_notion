@@ -8285,6 +8285,83 @@ void main() {
     });
   });
 
+  group('extractGeoCoordinatesFromLinesIn', () {
+    test('positive lat + negative lon extracts (SF)', () {
+      const text = 'meet at 37.7749,-122.4194 today\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '37.7749,-122.4194\n');
+    });
+
+    test('coords with whitespace after comma extract', () {
+      const text = 'hub 51.5074, -0.1278 London center\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '51.5074, -0.1278\n');
+    });
+
+    test('both negative coords extract (southern + western)', () {
+      const text = 'point -33.8688,-70.6483 santiago\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '-33.8688,-70.6483\n');
+    });
+
+    test('both positive coords extract', () {
+      const text = 'eastern 35.6762,139.6503 tokyo\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '35.6762,139.6503\n');
+    });
+
+    test('integer pair NOT matched (no decimals)', () {
+      // The regex requires a decimal fraction in both lat and
+      // lon. Integer pairs are rejected as too ambiguous.
+      const text = 'rough 37,-122 here\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('IPv4 127.0.0.1 NOT matched', () {
+      // IPv4 has three dots and no comma; cannot match the
+      // `lat.frac,lon.frac` template.
+      const text = 'ip 127.0.0.1 here\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('embedded inside longer numeric run NOT matched', () {
+      // `12345.6,7.89` — the lookbehind `(?<!\d)` blocks matches
+      // that would start inside a longer numeric run; the leading
+      // `123` has too many digits before the decimal.
+      const text = 'long 12345.6,7.89 alone\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple coord pairs on one line each extract', () {
+      const text = 'route 40.7128,-74.0060 to 51.5074,-0.1278 OK\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '40.7128,-74.0060\n51.5074,-0.1278\n');
+    });
+
+    test('lines without coords dropped from output', () {
+      const text = 'plain prose\nset 48.8566,2.3522 paris\nbye\n';
+      final r = extractGeoCoordinatesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '48.8566,2.3522\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractGeoCoordinatesFromLinesIn('', 0, 0).text,
+          '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
