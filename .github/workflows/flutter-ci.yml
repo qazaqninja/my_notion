@@ -46,18 +46,19 @@ jobs:
       - name: Run tests with coverage
         run: flutter test --coverage --reporter expanded
 
-      - name: Enforce coverage threshold (57%)
+      - name: Enforce coverage threshold (58%)
         # Baseline at M821 was 53.9%. Ratchet history:
-        #   50 → 55 (M900) → 56 (M934) → 57 (M956).
-        # By M965 actual is 58.02% (just crossed 58 from below).
-        # Holding 57 for now — 0.02pp margin above 58 would flap
-        # CI on a single regression. Will bump to 58 once actual
-        # holds at ≥58.5% across two consecutive measurements.
-        # Next stop 60% once presentation-layer widget tests land.
+        #   50 → 55 (M900) → 56 (M934) → 57 (M956) → 58 (M981).
+        # M981 bump triggered: M979 measured 58.71% and M980 / M981
+        # measured 58.76% — two consecutive observations ≥58.5%
+        # clears the safety margin (0.7pp) for the 58 step. Next
+        # ratchet (59) requires the same two-consecutive-≥59.5%
+        # rule. Next stop 60% once presentation-layer widget tests
+        # land.
         uses: VeryGoodOpenSource/very_good_coverage@v3
         with:
           path: coverage/lcov.info
-          min_coverage: 57
+          min_coverage: 58
 
       - name: Upload coverage artifact
         if: always()
