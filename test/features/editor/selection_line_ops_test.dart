@@ -140,6 +140,37 @@ void main() {
     });
   });
 
+  group('trimBlankEdgeLinesIn', () {
+    test('strips leading and trailing blank lines, keeps interior', () {
+      const text = '\n\nhello\n\nworld\n\n';
+      final r = trimBlankEdgeLinesIn(text, 0, text.length);
+      expect(r.text, 'hello\n\nworld\n');
+    });
+
+    test('blocks with no blank edges pass through unchanged', () {
+      const text = 'foo\nbar\n';
+      expect(trimBlankEdgeLinesIn(text, 0, text.length).text, text);
+    });
+
+    test('all-blank selection collapses to the trailing-newline only', () {
+      // `_transformLinesIn` preserves the selection's trailing
+      // newline; an empty lines list still re-emits one `\n`.
+      const text = '\n\n\n';
+      final r = trimBlankEdgeLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('whitespace-only edges count as blank too', () {
+      const text = '   \nhello\n\t\n';
+      final r = trimBlankEdgeLinesIn(text, 0, text.length);
+      expect(r.text, 'hello\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(trimBlankEdgeLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('stripBlockquotePrefixIn', () {
     test('strips `> ` from every quoted line', () {
       const text = '> foo\n> bar\n';

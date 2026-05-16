@@ -3108,6 +3108,27 @@ SortLinesResult toggleNumberedPrefixIn(String text, int start, int end) =>
 /// treated as plain text and gains one more `> ` (becoming
 /// `> >> nested`), so repeated toggles let the user step nested
 /// quotes outward one level at a time on reapply.
+/// Strip blank lines from the **edges** of the selected block,
+/// preserving every line in the interior. Useful for trimming the
+/// "extra newlines around a paste" without flattening blank lines
+/// that mark paragraph breaks inside the content. Differs from
+/// `dropBlankLines` (which removes every blank line) and
+/// `collapseBlankLines` (which compresses runs to one).
+///
+///   '\n\nhello\n\nworld\n\n'  →  'hello\n\nworld\n'
+SortLinesResult trimBlankEdgeLinesIn(String text, int start, int end) =>
+    transformLinesIn(text, start, end, (lines) {
+      var lo = 0;
+      var hi = lines.length;
+      while (lo < hi && lines[lo].trim().isEmpty) {
+        lo++;
+      }
+      while (hi > lo && lines[hi - 1].trim().isEmpty) {
+        hi--;
+      }
+      return lines.sublist(lo, hi);
+    });
+
 /// Unconditionally strip a leading `> ` blockquote prefix from
 /// every selected line that has one. Lines without the prefix pass
 /// through. Differs from [toggleBlockquotePrefixIn] which only

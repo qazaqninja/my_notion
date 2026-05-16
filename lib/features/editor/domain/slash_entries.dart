@@ -104,6 +104,9 @@ enum SlashAction {
   /// Unconditionally strip a leading `> ` blockquote prefix from
   /// every selected line that has one (mixed selections welcome).
   stripBlockquotePrefix,
+  /// Strip blank lines from the edges of the selected block,
+  /// preserving every line in the interior.
+  trimBlankEdgeLines,
   /// Strip up to two leading spaces (one indent level) from every
   /// selected line.
   outdentLines,
@@ -1578,6 +1581,13 @@ const List<SlashEntry> kSlashEntries = [
     hint: '> foo → foo',
     action: SlashAction.stripBlockquotePrefix,
     keywords: ['strip', 'unquote', 'blockquote', 'quote', 'prefix'],
+  ),
+  SlashEntry(
+    icon: 'edit',
+    label: 'Trim blank edge lines',
+    hint: 'drop leading + trailing blanks',
+    action: SlashAction.trimBlankEdgeLines,
+    keywords: ['trim', 'strip', 'blank', 'edge', 'leading', 'trailing'],
   ),
   SlashEntry(
     icon: 'edit',
