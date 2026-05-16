@@ -7,6 +7,7 @@ PageRef _p({
   int bodyLen = 0,
   int mtimeMs = 0,
   List<String> tags = const [],
+  String bodyText = '',
 }) =>
     (
       ulid: ulid,
@@ -14,6 +15,7 @@ PageRef _p({
       bodyLen: bodyLen,
       mtimeMs: mtimeMs,
       tags: tags,
+      bodyText: bodyText,
     );
 
 void main() {
@@ -147,6 +149,101 @@ void main() {
 
     test('empty pages returns empty', () {
       expect(filterOrphan([], [(fromUlid: 'a', toUlid: 'b')]), isEmpty);
+    });
+  });
+
+  group('filterEmpty', () {
+    test('keeps pages whose body trims to empty', () {
+      final pages = [
+        _p(ulid: 'a', bodyText: 'real content'),
+        _p(ulid: 'b'),
+        _p(ulid: 'c', bodyText: '   \n  \n'),
+      ];
+      expect(
+        filterEmpty(pages).map((p) => p.ulid).toSet(),
+        {'b', 'c'},
+      );
+    });
+
+    test('a body that is only newlines counts as empty', () {
+      expect(filterEmpty([_p(ulid: 'a', bodyText: '\n\n\n')]).length, 1);
+    });
+
+    test('empty input returns empty', () {
+      expect(filterEmpty([]), isEmpty);
+    });
+  });
+
+  group('filterPagesWithOpenTodos', () {
+    test('keeps pages with at least one - [ ] marker', () {
+      final pages = [
+        _p(ulid: 'a', bodyText: 'no todos here'),
+        _p(ulid: 'b', bodyText: 'preamble\n- [ ] todo\n'),
+        _p(ulid: 'c', bodyText: '* [ ] also todo\n'),
+        _p(ulid: 'd', bodyText: '+ [ ] plus form\n'),
+      ];
+      expect(
+        filterPagesWithOpenTodos(pages).map((p) => p.ulid).toSet(),
+        {'b', 'c', 'd'},
+      );
+    });
+
+    test('checked todos do NOT count as open', () {
+      final pages = [
+        _p(ulid: 'a', bodyText: '- [x] done\n'),
+      ];
+      expect(filterPagesWithOpenTodos(pages), isEmpty);
+    });
+
+    test('indented unchecked todos still count', () {
+      final pages = [_p(ulid: 'a', bodyText: '   - [ ] indented\n')];
+      expect(filterPagesWithOpenTodos(pages).length, 1);
+    });
+
+    test('empty input returns empty', () {
+      expect(filterPagesWithOpenTodos([]), isEmpty);
+    });
+  });
+
+  group('filterDuplicateTitles', () {
+    test('case-insensitive grouping surfaces both sides of a duplicate', () {
+      final pages = [
+        _p(ulid: 'a', title: 'Project'),
+        _p(ulid: 'b', title: 'project'),
+        _p(ulid: 'c', title: 'Other'),
+      ];
+      expect(
+        filterDuplicateTitles(pages).map((p) => p.ulid).toSet(),
+        {'a', 'b'},
+      );
+    });
+
+    test('within a bucket, freshest mtime comes first', () {
+      final pages = [
+        _p(ulid: 'a', title: 'Note', mtimeMs: 1000),
+        _p(ulid: 'b', title: 'note', mtimeMs: 3000),
+        _p(ulid: 'c', title: 'NOTE', mtimeMs: 2000),
+      ];
+      expect(
+        filterDuplicateTitles(pages).map((p) => p.ulid).toList(),
+        ['b', 'c', 'a'],
+      );
+    });
+
+    test('empty-title pages are skipped (no double-report)', () {
+      final pages = [
+        _p(ulid: 'a'),
+        _p(ulid: 'b'),
+      ];
+      expect(filterDuplicateTitles(pages), isEmpty);
+    });
+
+    test('single occurrence of each title returns empty', () {
+      final pages = [
+        _p(ulid: 'a', title: 'foo'),
+        _p(ulid: 'b', title: 'bar'),
+      ];
+      expect(filterDuplicateTitles(pages), isEmpty);
     });
   });
 

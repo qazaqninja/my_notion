@@ -497,6 +497,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
             bodyLen: p.bodyText.length,
             mtimeMs: p.mtimeMs,
             tags: listValueFromFrontmatterJson(p.frontmatterJson, 'tags'),
+            bodyText: p.bodyText,
           ),
       ];
 

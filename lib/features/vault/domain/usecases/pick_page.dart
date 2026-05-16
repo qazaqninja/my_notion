@@ -14,13 +14,18 @@
 // entity-mapping surface — that's a follow-up if/when more
 // presentation logic moves down here.
 
-/// Minimum subset of page columns the navigation pickers need.
+/// Minimum subset of page columns the navigation pickers need. The
+/// `bodyText` field is the full markdown body — needed by the
+/// open-todo and empty-page filters; pickers that only care about
+/// `bodyLen` ignore it. Dart strings are by-reference internally so
+/// the extra slot has negligible memory cost even on big vaults.
 typedef PageRef = ({
   String ulid,
   String title,
   int bodyLen,
   int mtimeMs,
   List<String> tags,
+  String bodyText,
 });
 
 /// Minimum subset of relation columns the most-linked picker needs.
@@ -55,6 +60,48 @@ List<PageRef> filterOrphan(
 /// cutoff and get back the candidates for archive / refresh review.
 List<PageRef> filterStale(List<PageRef> pages, int cutoffMs) =>
     [for (final p in pages) if (p.mtimeMs < cutoffMs) p];
+
+/// Filter to pages whose `bodyText.trim()` is empty — placeholder
+/// pages that were created but never filled in. Distinct from
+/// `filterOrphan` (no incoming/outgoing wikilinks) and from "no
+/// title" (the title column is blank): an empty page has a title
+/// and frontmatter but no body content.
+List<PageRef> filterEmpty(List<PageRef> pages) =>
+    [for (final p in pages) if (p.bodyText.trim().isEmpty) p];
+
+/// Filter to pages that contain at least one GFM unchecked-todo
+/// (`- [ ] ` / `* [ ] ` / `+ [ ] ` with optional leading indent)
+/// anywhere in `bodyText`. Powers the M985 "Show pages with open
+/// todos" hygiene entry and any future "what's on my plate"
+/// surfaces.
+List<PageRef> filterPagesWithOpenTodos(List<PageRef> pages) {
+  final todoRe = RegExp(r'^[ \t]*[-*+] \[ \] ', multiLine: true);
+  return [for (final p in pages) if (todoRe.hasMatch(p.bodyText)) p];
+}
+
+/// Group pages by case-folded title, return the flat list of pages
+/// in buckets of 2+ entries. Within each bucket pages appear in
+/// most-recently-edited-first order; the buckets themselves are
+/// ordered alphabetically by title. Empty-title pages are skipped
+/// (the "no title" hygiene entry already surfaces those, so
+/// double-reporting would be noise).
+List<PageRef> filterDuplicateTitles(List<PageRef> pages) {
+  final byKey = <String, List<PageRef>>{};
+  for (final p in pages) {
+    final t = p.title.trim();
+    if (t.isEmpty) continue;
+    byKey.putIfAbsent(t.toLowerCase(), () => []).add(p);
+  }
+  final out = <PageRef>[];
+  final keys = byKey.keys.where((k) => byKey[k]!.length >= 2).toList()
+    ..sort();
+  for (final k in keys) {
+    final bucket = byKey[k]!
+      ..sort((a, b) => b.mtimeMs.compareTo(a.mtimeMs));
+    out.addAll(bucket);
+  }
+  return out;
+}
 
 /// Pick the page with the highest `bodyLen`. Returns `null` for an
 /// empty input. Ties broken by most-recent `mtimeMs`.
