@@ -3,43 +3,65 @@ import 'package:ulid/ulid.dart';
 
 import '../auth/user.dart';
 
-/// Data-layer repository for the `users` table. Wraps the raw Postgres
-/// connection so callers (auth route handlers, session middleware) don't
-/// hand-craft SQL.
-///
-/// All methods are async since `postgres` is fully async; lookups by id /
-/// email use parameterised queries so the helpers can't be SQL-injected
-/// even if a route handler passes untrusted user input directly.
-class UserRepository {
+/// Thrown by `UserRepository.create` when the unique constraint on
+/// `users.email` is violated. The auth routes catch this and surface a
+/// `409 email_taken` response.
+class EmailAlreadyTakenException implements Exception {
+  const EmailAlreadyTakenException(this.email);
+  final String email;
+  @override
+  String toString() => 'EmailAlreadyTakenException: $email';
+}
+
+/// Abstract base for the User data layer. Routes / services accept this
+/// interface so tests can plug in a FakeUserRepository without
+/// constructing a real postgres connection.
+abstract class UserRepositoryBase {
+  Future<User> create({required String email, required String passwordHash});
+  Future<User?> findById(String id);
+  Future<User?> findByEmail(String email);
+  Future<String?> passwordHashOf(String email);
+}
+
+/// Postgres-backed implementation. Wraps the raw connection so callers
+/// (auth route handlers, session middleware) don't hand-craft SQL.
+class UserRepository implements UserRepositoryBase {
   const UserRepository(this._conn);
 
   final Connection _conn;
 
-  /// Insert a new user. Returns the persisted User on success.
-  /// Throws `PgException` (or subclass) on constraint violations — the
-  /// caller surface (POST /auth/signup) maps the uniqueness violation on
-  /// `email` to a 409 response.
+  @override
   Future<User> create({
     required String email,
     required String passwordHash,
   }) async {
     final id = Ulid().toString();
-    final result = await _conn.execute(
-      Sql.named('''
-        INSERT INTO users (id, email, password_hash)
-        VALUES (@id, @email, @hash)
-        RETURNING id, email, created_at
-      '''),
-      parameters: {
-        'id': id,
-        'email': email,
-        'hash': passwordHash,
-      },
-    );
-    return _toUser(result.first);
+    try {
+      final result = await _conn.execute(
+        Sql.named('''
+          INSERT INTO users (id, email, password_hash)
+          VALUES (@id, @email, @hash)
+          RETURNING id, email, created_at
+        '''),
+        parameters: {
+          'id': id,
+          'email': email,
+          'hash': passwordHash,
+        },
+      );
+      return _toUser(result.first);
+    } on PgException catch (e) {
+      // Postgres SQLSTATE 23505 = unique_violation. Translate to the
+      // typed exception so callers don't depend on the postgres package.
+      final msg = e.toString();
+      if (msg.contains('23505') || msg.contains('users_email_key')) {
+        throw EmailAlreadyTakenException(email);
+      }
+      rethrow;
+    }
   }
 
-  /// Find a user by ULID. Returns null when not found.
+  @override
   Future<User?> findById(String id) async {
     final result = await _conn.execute(
       Sql.named(
@@ -51,9 +73,7 @@ class UserRepository {
     return _toUser(result.first);
   }
 
-  /// Find a user by email (case-sensitive — callers should lowercase first
-  /// if a case-insensitive lookup is wanted; the auth route does).
-  /// Returns null when not found.
+  @override
   Future<User?> findByEmail(String email) async {
     final result = await _conn.execute(
       Sql.named(
@@ -65,9 +85,7 @@ class UserRepository {
     return _toUser(result.first);
   }
 
-  /// Fetch the bcrypt `password_hash` column for [email] — used at login.
-  /// Returns null when the user doesn't exist. The hash leaves the DB
-  /// only in this one place; never in `findBy*` results.
+  @override
   Future<String?> passwordHashOf(String email) async {
     final result = await _conn.execute(
       Sql.named(

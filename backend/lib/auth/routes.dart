@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:postgres/postgres.dart' show PgException;
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
@@ -14,7 +13,7 @@ import 'tokens.dart';
 /// - POST /auth/signup  → 201 {token, user}  | 400 bad request | 409 email taken
 /// - POST /auth/login   → 200 {token, user}  | 400 bad request | 401 invalid
 Router buildAuthRouter({
-  required UserRepository users,
+  required UserRepositoryBase users,
   required PasswordHasher hasher,
   required TokenIssuer tokens,
 }) {
@@ -37,13 +36,8 @@ Router buildAuthRouter({
         'token': tokens.issue(user.id),
         'user': _publicUser(user.id, user.email, user.createdAt),
       });
-    } on PgException catch (e) {
-      // Postgres SQLSTATE 23505 = unique_violation (email column).
-      final msg = e.toString();
-      if (msg.contains('23505') || msg.contains('users_email_key')) {
-        return _err(409, 'email_taken');
-      }
-      rethrow;
+    } on EmailAlreadyTakenException {
+      return _err(409, 'email_taken');
     }
   });
 
