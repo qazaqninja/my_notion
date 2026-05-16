@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** C (V1 Polish — Platform)
-- **Task:** C2 — macOS security-scoped bookmark persistence
-- **Status:** in_progress (slice 1 of ~2 done at M1236)
+- **Task:** C3 — OS share-sheet integration (share_plus + receive_sharing_intent)
+- **Status:** pending
 
-## Last completed slice
+## Last completed
 
-- **M1236 — C2 slice 1** (Swift MethodChannel + Dart wrapper + 4-case test)
-- Committed: 6b64326
-- TaskList ID: 20 (still in_progress)
-- Notes: AppDelegate.swift registers `quill/bookmarks` with save(path) and resolve(bookmark) methods using `URL.bookmarkData(.withSecurityScope,…)` / `URL(resolvingBookmarkData:.withSecurityScope,…)`. Dart wrapper at `lib/core/platform/security_scoped_bookmarks.dart` is mockable via MethodChannel injection (RP-02). PlatformException → null mapping so callers degrade gracefully. Slice 2 wires this into VaultBloc's tryRestore + PickVault flows (persist Base64 bookmark in SharedPreferences under `vault.bookmark`, prefer over raw `vault.path` on macOS).
+- **M1238 — C2 slice 2 (closes C2)** (VaultBloc bookmark wiring)
+- Committed: 77f43df
+- TaskList ID: 20 (closed)
+- Notes: C2 shipped in 2 slices (M1236 channel + wrapper, M1238 VaultBloc integration). The longest-standing v1.x backlog item per CLAUDE.md is done — quit + relaunch macOS app auto-restores vault. Updated docs/platforms.md "Vault persistence across launches" with the full flow + manual verification steps. CLAUDE.md item #7 struck through.
 
 ## Backlog (Phase A — Foundation)
 

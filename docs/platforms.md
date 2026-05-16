@@ -26,21 +26,32 @@ The app runs in App Sandbox. Required entitlements (both Debug and Release):
 Debug also needs `com.apple.security.cs.allow-jit` (the Dart VM) and
 `com.apple.security.network.server` (the VM Service).
 
-### Vault persistence across launches
+### Vault persistence across launches (C2)
 
-The current implementation stores only the vault *path* in
-`shared_preferences`. The macOS sandbox doesn't keep the user-granted
-file-access bookmark across launches without `applicationsBookmark` API
-work — so auto-restore intentionally bails to the picker if access is
-denied (silently clears the stale pref).
+Shipped at M1236-M1238 of the 1m-loop plan. Cross-launch sandbox access is
+preserved via a security-scoped bookmark MethodChannel:
 
-For full session continuity (open vault → quit → relaunch → vault still
-open), the next iteration should:
-1. After a successful pick, request a security-scoped bookmark URL via
-   `NSURL.bookmarkData(options:.withSecurityScope)`.
-2. Store the bookmark bytes (base64) in `shared_preferences`.
-3. On launch, resolve via `NSURL(byResolvingBookmarkData:...)` and call
-   `startAccessingSecurityScopedResource()` before reindexing.
+1. **Pick**: after `FilePicker.platform.getDirectoryPath(...)` returns a
+   path, `VaultBloc._onPick` calls `SecurityScopedBookmarks.save(path)`.
+   Swift side (`macos/Runner/AppDelegate.swift`) runs
+   `URL.bookmarkData(.withSecurityScope, …)` and returns the Base64
+   bytes; Dart stores them under SharedPreferences key `vault.bookmark`.
+2. **Restore**: `VaultBloc.tryRestore` reads `vault.bookmark` first. If
+   present, calls `SecurityScopedBookmarks.resolve(...)` which on the
+   Swift side runs `URL(resolvingBookmarkData:.withSecurityScope, …)`,
+   fires `startAccessingSecurityScopedResource()`, and returns the
+   resolved path. The path goes into a `LoadFromPath` event and the
+   indexer runs against a folder the sandbox accepts.
+3. **Fallback**: if no bookmark is stored (non-macOS host or save
+   failed) or `resolve()` returns null (stale bookmark), the raw
+   `vault.path` is used. Existing PathAccessException → clear-prefs
+   behaviour in `_onLoad` still applies.
+
+Manual verification (per macOS build):
+- Pick a vault outside `~/Documents` (e.g. `~/Desktop/Quill-test/`).
+- Quit the app (Cmd+Q, not just window close).
+- Relaunch: the vault opens directly without the picker. If the bookmark
+  fails (deleted folder, etc.), the picker re-appears with no error.
 
 ### File-reveal
 
