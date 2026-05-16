@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** B (V1 Polish — Media)
-- **Task:** B2 — Inline audio playback (audioplayers)
+- **Task:** B3 — Inline PDF preview (pdfx)
 - **Status:** pending
 
 ## Last completed
 
-- **M1218 — B1 slice 2** (wire VideoInlinePlayer into _FileAttachment video band — B1 closed)
-- Committed: 59e8a38
-- TaskList ID: 15 (closed)
-- Notes: B1 shipped across 4 commits (M1215 video_player + skeleton, M1216 lint, M1218 renderer integration, M1219 state advance). For local mp4/mov/webm/avi/mkv files, the terracotta-banded M201 card's top region now embeds `VideoInlinePlayer` with play/pause overlay; metadata-row tap still opens externally. FEATURES.md 🚧 → ✅ flipped at this iteration.
+- **M1220 — B2** (inline audio playback shipped as a single slice)
+- Committed: e28145e
+- TaskList ID: 16
+- Notes: `audioplayers ^6.6.0` + `AudioInlinePlayer` widget + renderer wiring landed in one commit. Audio card's blue band now hosts a play/pause + scrubber + position/duration strip; metadata-row tap still opens externally. FEATURES.md "Audio upload and embed" 🚧 → ✅.
 
 ## Backlog (Phase A — Foundation)
 
