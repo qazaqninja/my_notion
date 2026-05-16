@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E5 — POST /auth/signup + POST /auth/login routes
+- **Task:** E6 — UserRepository interface refactor + route unit tests
 - **Status:** pending
 
 ## Last completed
 
-- **M1292 — E4** (User entity + UserRepository data layer)
-- Committed: 28fccdf
-- TaskList ID: 26
-- Notes: Immutable `User(id, email, createdAt)` with value-equality, bcrypt hash kept OFF the entity (toString-leak test). `UserRepository(_conn)` ships create/findById/findByEmail/passwordHashOf, all using `Sql.named` parameterised queries. ULID generation via `ulid ^2.0.0` (same pin as the Flutter app for cross-side ID compatibility). 3 entity tests added; integration tests for the repo deferred to E5. 11/11 backend tests pass.
+- **M1294 — E5** (POST /auth/signup + /auth/login routes)
+- Committed: 6d1ab7a
+- TaskList ID: 27
+- Notes: `backend/lib/auth/routes.dart` builds a shelf_router sub-router mounted at /auth. Error codes: 400 invalid_json / email_or_password_invalid; 409 email_taken (PG SQLSTATE 23505); 401 invalid_credentials (deliberately ambiguous for unknown-email + wrong-password to avoid user enumeration); 201/200 on success returning `{token, user}` where user is the public shape (no bcrypt hash). Email is trim+toLowerCase normalised. Auth sub-router only mounts when DB is up; missing-DB returns 503 via fallback shim. `dart analyze` clean. Route unit tests deferred to E6 with a UserRepositoryBase interface refactor.
 
 ## Backlog (Phase A — Foundation)
 
