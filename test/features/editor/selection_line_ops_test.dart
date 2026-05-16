@@ -9617,6 +9617,85 @@ void main() {
     });
   });
 
+  group('extractTcpUdpPortsFromLinesIn', () {
+    test('tcp/443 (HTTPS) extracts', () {
+      const text = 'allow tcp/443 inbound\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'tcp/443\n');
+    });
+
+    test('udp/53 (DNS) extracts', () {
+      const text = 'dns udp/53 query\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'udp/53\n');
+    });
+
+    test('tcp/22 (SSH) extracts', () {
+      const text = 'ssh tcp/22 bastion only\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'tcp/22\n');
+    });
+
+    test('udp/123 (NTP) extracts', () {
+      const text = 'clock udp/123 sync\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'udp/123\n');
+    });
+
+    test('sctp/2904 (M3UA) extracts', () {
+      const text = 'telco sctp/2904 signaling\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'sctp/2904\n');
+    });
+
+    test('uppercase TCP/443 NOT matched', () {
+      // Lowercase proto required per IANA convention.
+      const text = 'fake TCP/443 ignore\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('bare :443 (no proto prefix) NOT matched', () {
+      const text = 'host :443 alone\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('unknown protocol icmp/8 NOT matched', () {
+      // ICMP doesn't have ports — only tcp/udp/sctp matched.
+      const text = 'fake icmp/8 echo\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('multiple ports on one line each extract', () {
+      const text = 'allow tcp/443 and udp/53 in\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'tcp/443\nudp/53\n');
+    });
+
+    test('lines without ports dropped from output', () {
+      const text = 'plain prose\nopen tcp/8080 here\nbye\n';
+      final r = extractTcpUdpPortsFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'tcp/8080\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+          extractTcpUdpPortsFromLinesIn('', 0, 0).text, '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

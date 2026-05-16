@@ -1312,6 +1312,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractIpv4FromLinesIn,
         );
+      case SlashAction.extractTcpUdpPortsFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractTcpUdpPortsFromLinesIn,
+        );
       case SlashAction.extractUuidsFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractUuidsFromLinesIn,

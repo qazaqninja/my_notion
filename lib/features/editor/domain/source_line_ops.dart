@@ -3885,6 +3885,46 @@ SortLinesResult extractIpv4FromLinesIn(
       return out;
     });
 
+/// Extract every transport-protocol + port reference (e.g.
+/// `tcp/443`, `udp/53`, `sctp/2904`) from each selected line.
+/// Useful for firewall-rule audits, port-inventory scrapes,
+/// IANA service-port doc reviews, and security-group spec
+/// authoring.
+///
+/// Recognition: `\b(?:tcp|udp|sctp)/\d{1,5}\b`
+/// - Protocol prefix: one of `tcp`, `udp`, `sctp` (lowercase
+///   per IANA convention).
+/// - Literal `/` separator.
+/// - 1-5 digit port number. Real ports are 1-65535; the regex
+///   doesn't bound-check the numeric value (so `tcp/99999`
+///   would also match) but documented limit allows downstream
+///   range checks if precision matters.
+///
+/// Matches:
+/// - `tcp/443`     — HTTPS
+/// - `tcp/22`      — SSH
+/// - `udp/53`      — DNS
+/// - `udp/123`     — NTP
+/// - `sctp/2904`   — M3UA / Signalling
+///
+/// Uppercase prefixes (`TCP/443`) and bare port numbers
+/// (`:443`) are NOT matched. Use the proto-prefix form when
+/// authoring firewall rules so this extractor can find them.
+///
+/// 111th member of the extraction family.
+SortLinesResult extractTcpUdpPortsFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b(?:tcp|udp|sctp)/\d{1,5}\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every CSS-shaped hex color code from each selected line:
 /// `#RGB`, `#RRGGBB`, `#RGBA`, `#RRGGBBAA`. Useful for pulling a
 /// palette out of design notes / CSS dumps for migration into a

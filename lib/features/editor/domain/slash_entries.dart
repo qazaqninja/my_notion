@@ -310,6 +310,10 @@ enum SlashAction {
   /// Extract every IPv4 dotted-quad (`a.b.c.d`, each octet 0..255)
   /// from each selected line.
   extractIpv4FromLines,
+  /// Extract every transport-protocol + port reference
+  /// (`tcp/443`, `udp/53`, `sctp/2904`) from each selected
+  /// line.
+  extractTcpUdpPortsFromLines,
   /// Extract every UUID-shaped substring (`8-4-4-4-12` hex form)
   /// from each selected line.
   extractUuidsFromLines,
@@ -1941,6 +1945,14 @@ const List<SlashEntry> kSlashEntries = [
     hint: 'a.b.c.d per line',
     action: SlashAction.extractIpv4FromLines,
     keywords: ['extract', 'ip', 'ipv4', 'address', 'host', 'network'],
+  ),
+  SlashEntry(
+    icon: 'arrow-down-right',
+    label: 'Extract TCP/UDP port references',
+    hint: 'tcp/443 / udp/53 / sctp/2904',
+    action: SlashAction.extractTcpUdpPortsFromLines,
+    keywords: ['extract', 'port', 'tcp', 'udp', 'sctp',
+        'firewall', 'iana', 'service', 'security-group'],
   ),
   SlashEntry(
     icon: 'link',
