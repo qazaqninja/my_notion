@@ -801,7 +801,7 @@ String _serializeInline(AttributedText text) {
 
 class _InlineSpan {
   const _InlineSpan(this.attr, this.start, this.end);
-  final NamedAttribution attr;
+  final Attribution attr;
   final int start;
   final int end;
 }
@@ -878,13 +878,10 @@ const buttonAttribution = NamedAttribution('button');
 /// soft-yellow background to match the existing rendered look.
 const highlightAttribution = NamedAttribution('highlight');
 
-/// Custom inline attribution for Pandoc `~X~` subscript runs (M244).
-/// super_editor's default attribution set doesn't ship sub/sup; the
-/// styling pass will apply `FontFeature.subscripts()` + reduced size.
-const subscriptAttribution = NamedAttribution('subscript');
-
-/// Custom inline attribution for Pandoc `^X^` superscript runs (M244).
-const superscriptAttribution = NamedAttribution('superscript');
+// Sub / sup use super_editor's built-in `subscriptAttribution` and
+// `superscriptAttribution` (ScriptAttribution variants). No locally
+// declared duplicates — earlier slice's local consts were dropped at
+// M1280 when the test surface caught the ambiguous-import collision.
 
 /// Returns true when [url] has an extension this serializer treats as an
 /// image — jpg / jpeg / png / gif / webp / bmp / svg / heic — OR has no
