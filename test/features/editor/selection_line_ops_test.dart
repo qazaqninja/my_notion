@@ -6967,6 +6967,79 @@ void main() {
     });
   });
 
+  group('extractPemBlockTypesFromLinesIn', () {
+    test('CERTIFICATE block extracts type', () {
+      const text = '-----BEGIN CERTIFICATE-----\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'CERTIFICATE\n');
+    });
+
+    test('PRIVATE KEY (with space) extracts intact', () {
+      const text = '-----BEGIN PRIVATE KEY-----\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'PRIVATE KEY\n');
+    });
+
+    test('RSA PRIVATE KEY (3-word type) extracts', () {
+      const text = '-----BEGIN RSA PRIVATE KEY-----\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'RSA PRIVATE KEY\n');
+    });
+
+    test('PUBLIC KEY extracts', () {
+      const text = '-----BEGIN PUBLIC KEY-----\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'PUBLIC KEY\n');
+    });
+
+    test('ENCRYPTED PRIVATE KEY extracts', () {
+      const text = '-----BEGIN ENCRYPTED PRIVATE KEY-----\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'ENCRYPTED PRIVATE KEY\n');
+    });
+
+    test('lowercase block type is NOT matched', () {
+      const text = '-----BEGIN certificate-----\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('plain `BEGIN` (no dashes) is NOT a PEM header', () {
+      const text = 'word BEGIN CERTIFICATE only\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('END block (not BEGIN) is NOT matched', () {
+      const text = '-----END CERTIFICATE-----\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple PEM blocks across lines all extract', () {
+      const text =
+          '-----BEGIN CERTIFICATE-----\n'
+          'data\n'
+          '-----END CERTIFICATE-----\n'
+          '-----BEGIN PUBLIC KEY-----\n'
+          'data\n'
+          '-----END PUBLIC KEY-----\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'CERTIFICATE\nPUBLIC KEY\n');
+    });
+
+    test('lines without PEM headers dropped from output', () {
+      const text =
+          'plain prose\n-----BEGIN CERTIFICATE-----\nmore prose\n';
+      final r = extractPemBlockTypesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'CERTIFICATE\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractPemBlockTypesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

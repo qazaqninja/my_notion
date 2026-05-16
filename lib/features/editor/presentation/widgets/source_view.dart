@@ -1527,6 +1527,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractWindowsPathsFromLinesIn,
         );
+      case SlashAction.extractPemBlockTypesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractPemBlockTypesFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

@@ -2735,6 +2735,45 @@ SortLinesResult extractWindowsPathsFromLinesIn(
       return out;
     });
 
+/// Extract every PEM block type from PEM header lines on each
+/// selected line. PEM blocks open with `-----BEGIN <TYPE>-----`
+/// — useful for cert/key audit, PKI inventory, and "what kind
+/// of cryptographic material does this paste-in contain?" surveys.
+///
+/// Recognition: `-----BEGIN ([A-Z][A-Z0-9 ]*[A-Z])-----`
+/// - Five literal dashes + `BEGIN ` opener.
+/// - Block type: uppercase letters, digits, and spaces; must
+///   start and end with a letter (so `PUBLIC KEY` and
+///   `RSA PRIVATE KEY` work but `PUBLIC ` with trailing space
+///   doesn't).
+/// - Five literal dashes closer.
+///
+/// Common PEM block types captured:
+/// - `CERTIFICATE`, `CERTIFICATE REQUEST`
+/// - `PRIVATE KEY`, `PUBLIC KEY`, `RSA PRIVATE KEY`,
+///   `EC PRIVATE KEY`, `DSA PRIVATE KEY`
+/// - `ENCRYPTED PRIVATE KEY`
+/// - `X509 CRL`, `PKCS7`
+///
+/// Captures only the block-TYPE portion (not the BEGIN line
+/// itself).
+///
+/// 77th member of the extraction family.
+SortLinesResult extractPemBlockTypesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'-----BEGIN ([A-Z][A-Z0-9 ]*[A-Z])-----',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

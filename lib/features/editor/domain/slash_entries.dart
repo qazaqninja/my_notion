@@ -474,6 +474,9 @@ enum SlashAction {
   /// Extract every Windows absolute-path substring from each
   /// selected line (`C:\Users\foo`-style).
   extractWindowsPathsFromLines,
+  /// Extract every PEM block type (`-----BEGIN <TYPE>-----`)
+  /// from each selected line.
+  extractPemBlockTypesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2259,6 +2262,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractWindowsPathsFromLines,
     keywords: ['extract', 'windows', 'path', 'file', 'win',
         'absolute', 'drive'],
+  ),
+  SlashEntry(
+    icon: 'lock',
+    label: 'Extract PEM block types',
+    hint: '-----BEGIN ... ----- → type',
+    action: SlashAction.extractPemBlockTypesFromLines,
+    keywords: ['extract', 'pem', 'cert', 'certificate', 'key',
+        'pki', 'crypto'],
   ),
   SlashEntry(
     icon: 'calendar',
