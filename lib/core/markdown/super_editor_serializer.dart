@@ -77,9 +77,10 @@ class SuperEditorSerializer {
   /// - Slice 15: button fences.
   ///   - `:::button\n…\n:::` (M70) → `buttonAttribution`.
   /// - Slice 16: inline marks — bold (`**X**`) and inline code (`` `X` ``).
-  ///   Markers are stripped from the plain text; matching character
-  ///   ranges in `AttributedText` get `boldAttribution` / `codeAttribution`
-  ///   so super_editor renders them with the correct style.
+  /// - Slice 17: inline marks — italic (`*X*`) and strikethrough (`~~X~~`).
+  ///   Bold (`**`) is checked before italic (`*`) so the greedier match
+  ///   wins. Strikethrough's `~~` opens and closes a strikethroughAttribution
+  ///   span the same way.
   MutableDocument markdownToDocument(String markdown) {
     final lines = markdown.split('\n');
     final nodes = <DocumentNode>[];
@@ -560,18 +561,23 @@ class _HeadingMatch {
 /// `AttributedText` with the visible text (markers stripped) plus
 /// attribution spans on the corresponding character ranges.
 ///
-/// Slice 16 handles:
-/// - `**X**` → boldAttribution
-/// - `` `X` `` → codeAttribution (inline code; distinct from code-block
-///   blockType which uses the same NamedAttribution but on metadata)
+/// Recognised (cumulative across slices):
+/// - `**X**` → boldAttribution (slice 16)
+/// - `` `X` `` → codeAttribution (slice 16; inline code, distinct from
+///   code-block blockType which uses the same NamedAttribution on metadata)
+/// - `*X*` → italicsAttribution (slice 17)
+/// - `~~X~~` → strikethroughAttribution (slice 17)
 ///
-/// Inline code is greedily matched first so backticked content doesn't
-/// participate in further mark scanning (`` `**not bold**` `` stays code).
+/// Order matters: bold (`**`) is checked before italic (`*`) so the
+/// greedier match wins; strike (`~~`) is its own non-overlapping marker.
+/// Inline code is matched whenever a backtick opens — backticked content
+/// is literal and skips further mark scanning.
 AttributedText _parseInline(String src) {
   final out = StringBuffer();
   final spans = <_InlineSpan>[];
   var i = 0;
   while (i < src.length) {
+    // Bold `**X**` — greedier than italic, checked first.
     if (i + 1 < src.length && src[i] == '*' && src[i + 1] == '*') {
       final close = src.indexOf('**', i + 2);
       if (close > i + 1) {
@@ -583,6 +589,38 @@ AttributedText _parseInline(String src) {
           spans.add(_InlineSpan(boldAttribution, start, end));
         }
         i = close + 2;
+        continue;
+      }
+    }
+    // Strikethrough `~~X~~`.
+    if (i + 1 < src.length && src[i] == '~' && src[i + 1] == '~') {
+      final close = src.indexOf('~~', i + 2);
+      if (close > i + 1) {
+        final inner = src.substring(i + 2, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(strikethroughAttribution, start, end));
+        }
+        i = close + 2;
+        continue;
+      }
+    }
+    // Italic `*X*` — single asterisk, only after the bold check has
+    // failed. Match shortest-distance close so `*a* *b*` parses as two
+    // separate italic runs.
+    if (src[i] == '*') {
+      final close = src.indexOf('*', i + 1);
+      if (close > i) {
+        final inner = src.substring(i + 1, close);
+        final start = out.length;
+        out.write(inner);
+        final end = out.length - 1;
+        if (end >= start) {
+          spans.add(_InlineSpan(italicsAttribution, start, end));
+        }
+        i = close + 1;
         continue;
       }
     }
@@ -619,21 +657,33 @@ String _serializeInline(AttributedText text) {
   if (plain.isEmpty) return '';
   // Build a per-character flag set for each tracked attribution.
   final bold = List<bool>.filled(plain.length, false);
+  final italic = List<bool>.filled(plain.length, false);
+  final strike = List<bool>.filled(plain.length, false);
   final code = List<bool>.filled(plain.length, false);
   for (var i = 0; i < plain.length; i++) {
     final attrs = text.getAllAttributionsAt(i);
     if (attrs.contains(boldAttribution)) bold[i] = true;
+    if (attrs.contains(italicsAttribution)) italic[i] = true;
+    if (attrs.contains(strikethroughAttribution)) strike[i] = true;
     if (attrs.contains(codeAttribution)) code[i] = true;
   }
   final out = StringBuffer();
   for (var i = 0; i < plain.length; i++) {
-    // Code beats bold: inline code is literal text; suppress bold markers
-    // inside a code run so the source comes out clean.
+    // Inline code beats all formatting marks — emit only backticks and
+    // suppress the others.
     if (code[i] && (i == 0 || !code[i - 1])) out.write('`');
-    if (!code[i] && bold[i] && (i == 0 || !bold[i - 1])) out.write('**');
+    if (!code[i]) {
+      if (bold[i] && (i == 0 || !bold[i - 1])) out.write('**');
+      if (italic[i] && (i == 0 || !italic[i - 1])) out.write('*');
+      if (strike[i] && (i == 0 || !strike[i - 1])) out.write('~~');
+    }
     out.write(plain[i]);
     final isLast = i == plain.length - 1;
-    if (!code[i] && bold[i] && (isLast || !bold[i + 1])) out.write('**');
+    if (!code[i]) {
+      if (strike[i] && (isLast || !strike[i + 1])) out.write('~~');
+      if (italic[i] && (isLast || !italic[i + 1])) out.write('*');
+      if (bold[i] && (isLast || !bold[i + 1])) out.write('**');
+    }
     if (code[i] && (isLast || !code[i + 1])) out.write('`');
   }
   return out.toString();

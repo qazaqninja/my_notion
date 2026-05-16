@@ -713,4 +713,56 @@ void main() {
       expect(serializer.documentToMarkdown(doc), md);
     });
   });
+
+  group('SuperEditorSerializer inline marks — italic + strike (D1 slice 17)',
+      () {
+    test('*italic* round-trips with italicsAttribution', () {
+      const md = 'do *not* go';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'do not go');
+      expect(node.text.getAllAttributionsAt(3), contains(italicsAttribution));
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('~~strike~~ round-trips with strikethroughAttribution', () {
+      const md = '~~deleted~~ kept';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      expect(node.text.toPlainText(), 'deleted kept');
+      expect(
+        node.text.getAllAttributionsAt(0),
+        contains(strikethroughAttribution),
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('bold + italic + strike in one paragraph', () {
+      const md = '**bold** *italic* ~~strike~~';
+      final doc = serializer.markdownToDocument(md);
+      expect((doc.first as ParagraphNode).text.toPlainText(),
+          'bold italic strike');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('bold takes priority over italic for `**X**`', () {
+      const md = '**all bold** and *just italic*';
+      final doc = serializer.markdownToDocument(md);
+      final node = doc.first as ParagraphNode;
+      // First 8 chars 'all bold' must have bold attribution.
+      expect(node.text.getAllAttributionsAt(0), contains(boldAttribution));
+      expect(
+        node.text.getAllAttributionsAt(0),
+        isNot(contains(italicsAttribution)),
+      );
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+
+    test('multiple italic runs', () {
+      const md = '*a* and *b* and *c*';
+      final doc = serializer.markdownToDocument(md);
+      expect((doc.first as ParagraphNode).text.toPlainText(), 'a and b and c');
+      expect(serializer.documentToMarkdown(doc), md);
+    });
+  });
 }
