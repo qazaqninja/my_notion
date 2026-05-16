@@ -52,8 +52,10 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   alchemist: ^0.12.1
+  bloc_lint: ^0.3.7
   bloc_test: ^10.0.0
   build_runner: ^2.4.15
+  custom_lint: ^0.8.0
   drift_dev: ^2.26.0
   flutter_dotenv: ^5.1.0
   mockingjay: ^2.0.0

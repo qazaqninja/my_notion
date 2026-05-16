@@ -12,7 +12,13 @@ include: package:very_good_analysis/analysis_options.yaml
 # Skip out-of-tree review-bundle scaffolding and generated drift code.
 # `flutter_clean_arch_bundle/` is vendored reference material for the
 # arch agents; not part of the running app.
+#
+# `custom_lint` plugin enables Bloc-specific lint rules from the `bloc_lint`
+# package per RULES.md LT-02 / LT-03. Run via `dart run custom_lint` (the
+# IDE picks it up automatically when this analyzer config is present).
 analyzer:
+  plugins:
+    - custom_lint
   exclude:
     - flutter_clean_arch_bundle/**
     - "**/*.g.dart"
