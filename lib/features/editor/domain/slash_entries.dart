@@ -428,6 +428,9 @@ enum SlashAction {
   /// Extract every Roman numeral substring (strict 1-3999 form,
   /// uppercase only) from each selected line.
   extractRomanNumeralsFromLines,
+  /// Extract every latitude/longitude coordinate pair from each
+  /// selected line.
+  extractLatLngFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2093,6 +2096,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractRomanNumeralsFromLines,
     keywords: ['extract', 'roman', 'numeral', 'outline', 'chapter',
         'index'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract lat/lng pairs',
+    hint: '40.7128,-74.0060',
+    action: SlashAction.extractLatLngFromLines,
+    keywords: ['extract', 'lat', 'lng', 'lon', 'longitude',
+        'latitude', 'gps', 'coordinate', 'map'],
   ),
   SlashEntry(
     icon: 'calendar',

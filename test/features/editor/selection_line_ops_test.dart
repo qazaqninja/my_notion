@@ -5947,6 +5947,70 @@ void main() {
     });
   });
 
+  group('extractLatLngFromLinesIn', () {
+    test('comma-separated coords extract', () {
+      const text = 'NYC at 40.7128,-74.0060 listed\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '40.7128,-74.0060\n');
+    });
+
+    test('whitespace around comma tolerated', () {
+      const text = 'spot 40.7128, -74.0060 saved\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '40.7128, -74.0060\n');
+    });
+
+    test('boundary coords (90 / 180) extract', () {
+      const text = 'pole 90.0, 180.0 max\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '90.0, 180.0\n');
+    });
+
+    test('negative both axes extract', () {
+      const text = 'south -33.8688, -151.2093 Sydney\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '-33.8688, -151.2093\n');
+    });
+
+    test('single decimal (no comma) is NOT a coordinate pair', () {
+      const text = 'just 1.5 alone\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('integer pair `40, 74` (no decimals) is NOT a match', () {
+      // Both sides require a decimal point.
+      const text = 'rough 40, 74 only\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple pairs on one line each extract', () {
+      const text = 'route from 40.7128,-74.0060 to 51.5074,-0.1278 today\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '40.7128,-74.0060\n51.5074,-0.1278\n');
+    });
+
+    test('decimal pair `1.5,2.5` matches (no range validation)', () {
+      // Documented v1 behavior — accept the false positive
+      // since two-decimals-with-comma is rare in non-coord
+      // prose.
+      const text = 'pair 1.5,2.5 unlikely\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '1.5,2.5\n');
+    });
+
+    test('lines without coord pairs dropped from output', () {
+      const text = 'plain prose\nspot 40.7128,-74.0060\nmore prose\n';
+      final r = extractLatLngFromLinesIn(text, 0, text.length);
+      expect(r.text, '40.7128,-74.0060\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractLatLngFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

@@ -2251,6 +2251,40 @@ SortLinesResult extractRomanNumeralsFromLinesIn(
       return out;
     });
 
+/// Extract every latitude/longitude coordinate pair from each
+/// selected line. Useful for travel-log mining, map-reference
+/// harvest, and GIS data scraping from prose notes.
+///
+/// Recognition: `-?\d{1,3}\.\d+\s*,\s*-?\d{1,3}\.\d+`
+/// - Optional leading minus sign (southern / western
+///   hemispheres).
+/// - 1-3 digit integer part.
+/// - Literal `.`.
+/// - One or more decimal digits.
+/// - Comma separator with optional surrounding whitespace.
+/// - Same shape repeated for longitude.
+///
+/// No semantic range validation — `1.5,2.5` matches even
+/// though those are unlikely real coordinates. Acceptable
+/// for v1 since the comma+two-decimals shape is rare in
+/// prose outside the coordinate use case.
+///
+/// 62nd member of the extraction family.
+SortLinesResult extractLatLngFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'-?\d{1,3}\.\d+\s*,\s*-?\d{1,3}\.\d+',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

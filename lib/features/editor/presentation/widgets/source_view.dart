@@ -1466,6 +1466,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractRomanNumeralsFromLinesIn,
         );
+      case SlashAction.extractLatLngFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractLatLngFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,
