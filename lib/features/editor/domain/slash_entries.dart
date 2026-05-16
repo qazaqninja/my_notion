@@ -555,6 +555,9 @@ enum SlashAction {
   /// Extract every ISSN (International Standard Serial
   /// Number, `0028-0836`) from each selected line.
   extractIssnFromLines,
+  /// Extract every SPDX license identifier (`MIT`,
+  /// `Apache-2.0`, `GPL-3.0-only`) from each selected line.
+  extractSpdxLicensesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2558,6 +2561,15 @@ const List<SlashEntry> kSlashEntries = [
     keywords: ['extract', 'issn', 'periodical', 'journal',
         'magazine', 'serial', 'library', 'catalog',
         'bibliography'],
+  ),
+  SlashEntry(
+    icon: 'scale',
+    label: 'Extract SPDX license identifiers',
+    hint: 'MIT / Apache-2.0 / GPL-3.0-only',
+    action: SlashAction.extractSpdxLicensesFromLines,
+    keywords: ['extract', 'spdx', 'license', 'legal',
+        'opensource', 'oss', 'mit', 'apache', 'gpl', 'bsd',
+        'creative-commons', 'compliance'],
   ),
   SlashEntry(
     icon: 'calendar',

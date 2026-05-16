@@ -8967,6 +8967,91 @@ void main() {
     });
   });
 
+  group('extractSpdxLicensesFromLinesIn', () {
+    test('MIT extracts', () {
+      const text = 'this code is MIT licensed today\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'MIT\n');
+    });
+
+    test('Apache-2.0 extracts', () {
+      const text = 'use Apache-2.0 for libs\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'Apache-2.0\n');
+    });
+
+    test('GPL-3.0-only extracts', () {
+      const text = 'strict GPL-3.0-only copyleft\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'GPL-3.0-only\n');
+    });
+
+    test('GPL-3.0-or-later extracts', () {
+      const text = 'flexible GPL-3.0-or-later picked\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'GPL-3.0-or-later\n');
+    });
+
+    test('BSD-3-Clause extracts', () {
+      const text = 'lib BSD-3-Clause permissive\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'BSD-3-Clause\n');
+    });
+
+    test('CC0-1.0 extracts', () {
+      const text = 'public CC0-1.0 dedication\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'CC0-1.0\n');
+    });
+
+    test('CC-BY-SA-4.0 extracts', () {
+      const text = 'wiki CC-BY-SA-4.0 share-alike\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'CC-BY-SA-4.0\n');
+    });
+
+    test('deprecated GPL-3.0 (no modifier) rejected', () {
+      // SPDX v3.0+ requires the -only / -or-later modifier.
+      const text = 'old GPL-3.0 deprecated form\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, '\n');
+    });
+
+    test('Unlicense and 0BSD extract', () {
+      const text = 'choose Unlicense or 0BSD freely\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'Unlicense\n0BSD\n');
+    });
+
+    test('multiple licenses on one line each extract', () {
+      const text = 'dual MIT and Apache-2.0 license\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'MIT\nApache-2.0\n');
+    });
+
+    test('lines without licenses dropped from output', () {
+      const text = 'plain prose\nuses MPL-2.0 here\nbye\n';
+      final r = extractSpdxLicensesFromLinesIn(
+          text, 0, text.length,);
+      expect(r.text, 'MPL-2.0\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+          extractSpdxLicensesFromLinesIn('', 0, 0).text, '',);
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

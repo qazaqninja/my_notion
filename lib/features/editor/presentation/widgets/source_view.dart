@@ -1631,6 +1631,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractIssnFromLinesIn,
         );
+      case SlashAction.extractSpdxLicensesFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractSpdxLicensesFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

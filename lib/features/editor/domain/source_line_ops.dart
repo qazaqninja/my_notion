@@ -3786,6 +3786,61 @@ SortLinesResult extractIssnFromLinesIn(
       return out;
     });
 
+/// Extract every SPDX license identifier from each selected
+/// line. Useful for legal compliance audits, dependency-license
+/// inventories, repository LICENSE-file scrapes, and
+/// open-source license-policy reviews.
+///
+/// Recognition: an enumerated alternation of the most common
+/// SPDX identifiers (full list at spdx.org/licenses). Each
+/// alternative is word-boundary anchored so partial-name
+/// matches like `MIT-foo` are rejected.
+///
+/// Includes:
+/// - Permissive: `MIT`, `Apache-2.0`, `BSD-2-Clause`,
+///   `BSD-3-Clause`, `BSD-4-Clause`, `0BSD`, `ISC`,
+///   `Unlicense`, `Zlib`, `WTFPL`
+/// - Copyleft: `GPL-2.0-only`, `GPL-2.0-or-later`,
+///   `GPL-3.0-only`, `GPL-3.0-or-later`, `LGPL-2.1-only`,
+///   `LGPL-2.1-or-later`, `LGPL-3.0-only`, `LGPL-3.0-or-later`,
+///   `AGPL-3.0-only`, `AGPL-3.0-or-later`, `MPL-2.0`
+/// - Creative Commons: `CC0-1.0`, `CC-BY-4.0`, `CC-BY-SA-4.0`,
+///   `CC-BY-NC-4.0`, `CC-BY-ND-4.0`
+///
+/// Deprecated GPL/LGPL forms like `GPL-3.0` (without the
+/// `-only` / `-or-later` modifier) are NOT matched — those
+/// were retired by SPDX in v3.0. Use the modern modifier
+/// forms when authoring SPDX expressions.
+///
+/// 103rd member of the extraction family.
+SortLinesResult extractSpdxLicensesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\b(?:'
+        r'MIT|'
+        r'Apache-2\.0|'
+        r'BSD-2-Clause|BSD-3-Clause|BSD-4-Clause|0BSD|'
+        r'ISC|Unlicense|Zlib|WTFPL|'
+        r'GPL-2\.0-(?:only|or-later)|'
+        r'GPL-3\.0-(?:only|or-later)|'
+        r'LGPL-2\.1-(?:only|or-later)|'
+        r'LGPL-3\.0-(?:only|or-later)|'
+        r'AGPL-3\.0-(?:only|or-later)|'
+        r'MPL-2\.0|'
+        r'CC0-1\.0|'
+        r'CC-BY-4\.0|CC-BY-SA-4\.0|CC-BY-NC-4\.0|CC-BY-ND-4\.0'
+        r')\b',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
