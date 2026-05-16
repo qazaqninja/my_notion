@@ -5677,6 +5677,68 @@ void main() {
     });
   });
 
+  group('extractIsbn13FromLinesIn', () {
+    test('bare ISBN-13 extracts', () {
+      const text = 'book ISBN 9783161484100 today\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '9783161484100\n');
+    });
+
+    test('hyphenated ISBN-13 extracts intact', () {
+      const text = 'see 978-3-16-148410-0 cover\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '978-3-16-148410-0\n');
+    });
+
+    test('space-separated ISBN-13 extracts intact', () {
+      const text = 'book 978 3 16 148410 0 form\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '978 3 16 148410 0\n');
+    });
+
+    test('GS1 prefix 979 (music) extracts', () {
+      const text = 'music ISBN 9790123456789 logged\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '9790123456789\n');
+    });
+
+    test('invalid prefix `980` is NOT an ISBN-13', () {
+      // Only 978/979 are valid GS1 ISBN-13 namespaces.
+      const text = 'fake 9803161484100 invalid\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('too short (12 digits) is NOT a match', () {
+      const text = 'short 978316148410 only\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('ISBN-10 form (10 digits, no `978`) is NOT matched', () {
+      // Out of scope for v1 — modern books use ISBN-13.
+      const text = 'legacy 0306406152 inline\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple ISBN-13s on one line each extract', () {
+      const text = 'pair 9783161484100 and 9781234567897 listed\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '9783161484100\n9781234567897\n');
+    });
+
+    test('lines without ISBNs dropped from output', () {
+      const text = 'plain prose\ncite 9783161484100\nmore prose\n';
+      final r = extractIsbn13FromLinesIn(text, 0, text.length);
+      expect(r.text, '9783161484100\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractIsbn13FromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

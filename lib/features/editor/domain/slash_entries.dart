@@ -416,6 +416,9 @@ enum SlashAction {
   /// Extract every file extension substring (`pic.png` → `png`)
   /// from each selected line.
   extractFileExtensionsFromLines,
+  /// Extract every ISBN-13 substring (`978`/`979` prefix) from
+  /// each selected line.
+  extractIsbn13FromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2049,6 +2052,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractFileExtensionsFromLines,
     keywords: ['extract', 'file', 'extension', 'ext', 'type',
         'filename', 'asset'],
+  ),
+  SlashEntry(
+    icon: 'hash',
+    label: 'Extract ISBN-13s',
+    hint: '978-3-16-148410-0',
+    action: SlashAction.extractIsbn13FromLines,
+    keywords: ['extract', 'isbn', 'book', 'bibliography',
+        'catalog'],
   ),
   SlashEntry(
     icon: 'calendar',

@@ -2112,6 +2112,44 @@ SortLinesResult extractFileExtensionsFromLinesIn(
       return out;
     });
 
+/// Extract every ISBN-13 substring from each selected line.
+/// Useful for book-inventory mining, bibliography parsing, and
+/// catalog audits.
+///
+/// Recognition: `\b97[89][-\s]?(?:\d[-\s]?){9}\d\b`
+/// - GS1 prefix `978` or `979` (strict ISBN-13 namespace).
+/// - 10 more digits (registration group + publisher + title +
+///   check), each optionally preceded by a hyphen or single
+///   whitespace separator.
+/// - Word boundaries on each end reject embedded slices.
+///
+/// Captures common formats:
+/// - Bare: `9783161484100`
+/// - Hyphenated: `978-3-16-148410-0` (standard book-cover form)
+/// - Space-separated: `978 3 16 148410 0`
+///
+/// No semantic check-digit validation — `978-3-16-148410-9`
+/// matches even if the trailing 9 isn't the correct
+/// computed check digit. Downstream layer validates if needed.
+///
+/// ISBN-10 (no `978`/`979` prefix, 10 digits with possible `X`
+/// check) is out of scope for v1 — most modern books use
+/// ISBN-13 since 2007.
+///
+/// 58th member of the extraction family.
+SortLinesResult extractIsbn13FromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(r'\b97[89][-\s]?(?:\d[-\s]?){9}\d\b');
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(0)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").
