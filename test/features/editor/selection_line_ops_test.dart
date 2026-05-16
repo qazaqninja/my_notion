@@ -5216,6 +5216,70 @@ void main() {
     });
   });
 
+  group('extractWikilinkAliasesFromLinesIn', () {
+    test('plain wikilink with alias extracts alias', () {
+      const text =
+          'see [[01HABCDEFGHIJKLMNOPQRSTUVW|My Display Title]] info\n';
+      final r = extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'My Display Title\n');
+    });
+
+    test('wikilink with anchor + alias extracts alias only', () {
+      const text =
+          'cite [[01HABCDEFGHIJKLMNOPQRSTUVW#intro|Intro section]]\n';
+      final r = extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'Intro section\n');
+    });
+
+    test('wikilink WITHOUT alias is NOT matched', () {
+      // The `|alias` is the required marker; bare ULID
+      // wikilinks are NOT aliased.
+      const text = 'plain [[01HABCDEFGHIJKLMNOPQRSTUVW]] ref\n';
+      final r = extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('multiple aliased wikilinks each extract', () {
+      const text = 'pair [[01HABCDEFGHIJKLMNOPQRSTUVW|First]] and '
+          '[[01HBBCDEFGHIJKLMNOPQRSTUVW|Second]] today\n';
+      final r = extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'First\nSecond\n');
+    });
+
+    test('alias with internal punctuation preserved', () {
+      const text =
+          'wrap [[01HABCDEFGHIJKLMNOPQRSTUVW|A, B (final)!]] up\n';
+      final r = extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'A, B (final)!\n');
+    });
+
+    test('mixed aliased + bare wikilinks: only aliased contribute', () {
+      const text =
+          'mix [[01HABCDEFGHIJKLMNOPQRSTUVW]] and '
+          '[[01HBBCDEFGHIJKLMNOPQRSTUVW|alias]] note\n';
+      final r = extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'alias\n');
+    });
+
+    test('markdown link `[t](u)` is NOT a wikilink', () {
+      const text = 'use [text](url) inline\n';
+      final r = extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('lines without aliased wikilinks dropped from output', () {
+      const text = 'plain prose\n'
+          'cite [[01HABCDEFGHIJKLMNOPQRSTUVW|named]] only\n'
+          'more prose\n';
+      final r = extractWikilinkAliasesFromLinesIn(text, 0, text.length);
+      expect(r.text, 'named\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(extractWikilinkAliasesFromLinesIn('', 0, 0).text, '');
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';

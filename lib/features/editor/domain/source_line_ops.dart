@@ -1871,6 +1871,38 @@ SortLinesResult extractEmailLocalPartsFromLinesIn(
       return out;
     });
 
+/// Extract the ALIAS portion from every wikilink with a custom
+/// display name (`[[ULID|alias]]` → `alias`) on each selected
+/// line. Companion to the full wikilink extractor — useful for
+/// "what custom display names does this doc use?" audits and
+/// internationalization / localization sweeps.
+///
+/// Recognition:
+/// `\[\[[0-9A-Z]{26}(?:#[a-z0-9][a-z0-9\-]*)?\|([^\]\n]+)\]\]`
+/// - Standard wikilink opener `[[` + 26-char ULID.
+/// - Optional `#anchor-slug` (lowercase + digits + hyphen).
+/// - Literal `|` then the alias content (captured as group 1).
+/// - Literal `]]` closer.
+///
+/// Wikilinks WITHOUT an alias (`[[ULID]]` plain) are NOT
+/// matched — the `|` is the required marker.
+///
+/// 51st member of the extraction family.
+SortLinesResult extractWikilinkAliasesFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'\[\[[0-9A-Z]{26}(?:#[a-z0-9][a-z0-9\-]*)?\|([^\]\n]+)\]\]',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

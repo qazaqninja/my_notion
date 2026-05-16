@@ -393,6 +393,10 @@ enum SlashAction {
   /// Extract the local-part portion from every email address on
   /// each selected line (`user@example.com` → `user`).
   extractEmailLocalPartsFromLines,
+  /// Extract the alias portion from every wikilink with a custom
+  /// display name (`[[ULID|alias]]` → `alias`) on each selected
+  /// line.
+  extractWikilinkAliasesFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -1970,6 +1974,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractEmailLocalPartsFromLines,
     keywords: ['extract', 'email', 'local', 'username', 'contact',
         'mail'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract wikilink aliases',
+    hint: '[[ULID|alias]] → alias',
+    action: SlashAction.extractWikilinkAliasesFromLines,
+    keywords: ['extract', 'wikilink', 'alias', 'display', 'name',
+        'i18n'],
   ),
   SlashEntry(
     icon: 'calendar',
