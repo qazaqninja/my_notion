@@ -446,6 +446,9 @@ enum SlashAction {
   extractMacOuisFromLines,
   /// Extract every Twitter/X status ID from each selected line.
   extractTwitterStatusIdsFromLines,
+  /// Extract every GitHub issue/PR number (from full-URL
+  /// references) on each selected line.
+  extractGithubIssuePrNumbersFromLines,
   /// Extract every time-of-day substring (`HH:MM[:SS][ AM/PM]`)
   /// from each selected line.
   extractTimeOfDayFromLines,
@@ -2159,6 +2162,14 @@ const List<SlashEntry> kSlashEntries = [
     action: SlashAction.extractTwitterStatusIdsFromLines,
     keywords: ['extract', 'twitter', 'x', 'tweet', 'status',
         'id'],
+  ),
+  SlashEntry(
+    icon: 'link',
+    label: 'Extract GitHub issue/PR #s',
+    hint: 'github.com/o/r/issues/N → N',
+    action: SlashAction.extractGithubIssuePrNumbersFromLines,
+    keywords: ['extract', 'github', 'issue', 'pr', 'number',
+        'pull', 'request'],
   ),
   SlashEntry(
     icon: 'calendar',

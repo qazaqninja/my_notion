@@ -1490,6 +1490,10 @@ class _SourceViewState extends State<SourceView> {
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTwitterStatusIdsFromLinesIn,
         );
+      case SlashAction.extractGithubIssuePrNumbersFromLines:
+        _applyLinesTransformAfterSlash(
+          stripStart, caret, extractGithubIssuePrNumbersFromLinesIn,
+        );
       case SlashAction.extractTimeOfDayFromLines:
         _applyLinesTransformAfterSlash(
           stripStart, caret, extractTimeOfDayFromLinesIn,

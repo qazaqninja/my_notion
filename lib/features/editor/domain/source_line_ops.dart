@@ -2445,6 +2445,37 @@ SortLinesResult extractTwitterStatusIdsFromLinesIn(
       return out;
     });
 
+/// Extract every GitHub issue or PR number from a GitHub URL
+/// on each selected line. Useful for cross-repo PR/issue
+/// audits, release-note compilation, and bug-tracker mining.
+///
+/// Recognition:
+///   `github\.com/[\w.-]+/[\w.-]+/(?:issues|pull)/(\d+)`
+/// - `github.com/` anchor.
+/// - `owner/repo` path segment.
+/// - Literal `/issues/` or `/pull/` marker.
+/// - Numeric ID captured as group 1.
+///
+/// Distinct from M1123 `extractPrIssueRefsFromLinesIn` which
+/// captures `#1234` inline-reference syntax. This extractor
+/// targets full-URL references (cross-repo PR mentions).
+///
+/// 68th member of the extraction family.
+SortLinesResult extractGithubIssuePrNumbersFromLinesIn(
+        String text, int start, int end,) =>
+    transformLinesIn(text, start, end, (lines) {
+      final re = RegExp(
+        r'github\.com/[\w.-]+/[\w.-]+/(?:issues|pull)/(\d+)',
+      );
+      final out = <String>[];
+      for (final l in lines) {
+        for (final m in re.allMatches(l)) {
+          out.add(m.group(1)!);
+        }
+      }
+      return out;
+    });
+
 /// Extract every time-of-day substring from each selected line.
 /// Useful for meeting-note triage, log-line scraping, and
 /// scheduling audits ("which timestamps does this page mention?").

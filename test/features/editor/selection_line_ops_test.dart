@@ -6348,6 +6348,85 @@ void main() {
     });
   });
 
+  group('extractGithubIssuePrNumbersFromLinesIn', () {
+    test('issue URL extracts number', () {
+      const text = 'fix https://github.com/flutter/flutter/issues/100 today\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '100\n');
+    });
+
+    test('pull URL extracts number', () {
+      const text =
+          'see https://github.com/flutter/flutter/pull/200 merged\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '200\n');
+    });
+
+    test('protocol-less form still matches', () {
+      const text = 'cite github.com/foo/bar/issues/1 today\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '1\n');
+    });
+
+    test('blob URL (not issue/pull) is NOT a match', () {
+      const text =
+          'docs github.com/foo/bar/blob/main/README.md anywhere\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('hyphenated owner / repo names preserved', () {
+      const text =
+          'see github.com/dart-lang/sdk/issues/42 today\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '42\n');
+    });
+
+    test('multiple issue/PR URLs on one line each extract', () {
+      const text =
+          'merge github.com/a/b/issues/1 and github.com/c/d/pull/2 ready\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '1\n2\n');
+    });
+
+    test('non-GitHub URL is NOT matched', () {
+      const text =
+          'cite gitlab.com/foo/bar/issues/1 elsewhere\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '\n');
+    });
+
+    test('large issue number extracts', () {
+      const text =
+          'big github.com/foo/bar/issues/999999 reported\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '999999\n');
+    });
+
+    test('lines without GH issue/PR URLs dropped from output', () {
+      const text =
+          'plain prose\nfix github.com/o/r/issues/1\nmore prose\n';
+      final r = extractGithubIssuePrNumbersFromLinesIn(
+          text, 0, text.length);
+      expect(r.text, '1\n');
+    });
+
+    test('empty input stays empty', () {
+      expect(
+        extractGithubIssuePrNumbersFromLinesIn('', 0, 0).text,
+        '',
+      );
+    });
+  });
+
   group('extractIpv4FromLinesIn', () {
     test('extracts standard IPv4 addresses', () {
       const text = 'from 10.0.0.1 to 192.168.1.42 hop\n';
