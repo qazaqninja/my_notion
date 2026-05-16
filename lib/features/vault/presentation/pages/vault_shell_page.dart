@@ -485,6 +485,45 @@ class _VaultShellPageState extends State<VaultShellPage> {
     );
   }
 
+  Future<void> _openMostLinkedPage(BuildContext context) async {
+    final db = context.read<QuillDatabase>();
+    final router = GoRouter.of(context);
+    final pages = await db.select(db.pages).get();
+    final relations = await db.select(db.relations).get();
+    if (pages.isEmpty) {
+      if (context.mounted) context.toastInfo('No pages to pick from yet.');
+      return;
+    }
+    final inbound = <String, int>{};
+    for (final r in relations) {
+      inbound[r.toUlid] = (inbound[r.toUlid] ?? 0) + 1;
+    }
+    if (inbound.isEmpty) {
+      if (context.mounted) {
+        context.toastInfo('No wikilinks yet — every page has zero backlinks.');
+      }
+      return;
+    }
+    // Highest inbound count wins; ties resolved by most-recent edit.
+    final pageByUlid = {for (final p in pages) p.ulid: p};
+    final pick = pages
+        .where((p) => (inbound[p.ulid] ?? 0) > 0)
+        .reduce((a, b) {
+      final ca = inbound[a.ulid] ?? 0;
+      final cb = inbound[b.ulid] ?? 0;
+      if (ca != cb) return ca > cb ? a : b;
+      return a.mtimeMs > b.mtimeMs ? a : b;
+    });
+    final count = inbound[pick.ulid] ?? 0;
+    if (context.mounted) {
+      context.toastInfo(
+        'Most linked · $count inbound ${count == 1 ? "link" : "links"}',
+        sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
+      );
+    }
+    router.go('/editor/${pageByUlid[pick.ulid]!.ulid}');
+  }
+
   Future<void> _openLargestPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
@@ -703,6 +742,8 @@ class _VaultShellPageState extends State<VaultShellPage> {
         await _openLastEditedPage(context);
       case 'Open largest page':
         await _openLargestPage(context);
+      case 'Open most-linked page':
+        await _openMostLinkedPage(context);
       case "Open today's daily note":
         if (vaultPath == null) {
           context.toastError('No vault open');
