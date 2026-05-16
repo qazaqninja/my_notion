@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import '../../../../core/paths.dart';
 
@@ -506,14 +507,16 @@ class _VaultShellPageState extends State<VaultShellPage> {
     final router = GoRouter.of(context);
     final untagged =
         filterUntagged(_toPageRefs(await db.select(db.pages).get()));
-    if (untagged.isEmpty) {
+    final pick = pickRandom(
+      untagged,
+      math.Random(DateTime.now().microsecondsSinceEpoch.abs()),
+    );
+    if (pick == null) {
       if (context.mounted) {
         context.toastInfo('Every page is tagged. Nothing to triage.');
       }
       return;
     }
-    final pick = untagged[
-        DateTime.now().microsecondsSinceEpoch.abs() % untagged.length];
     if (context.mounted) {
       context.toastInfo(
         'Untagged · ${untagged.length} candidate${untagged.length == 1 ? "" : "s"}',
@@ -606,16 +609,18 @@ class _VaultShellPageState extends State<VaultShellPage> {
   Future<void> _openRandomPage(BuildContext context) async {
     final db = context.read<QuillDatabase>();
     final router = GoRouter.of(context);
-    final rows = await db.select(db.pages).get();
-    if (rows.isEmpty) {
+    final refs = _toPageRefs(await db.select(db.pages).get());
+    final pick = pickRandom(
+      refs,
+      math.Random(DateTime.now().microsecondsSinceEpoch.abs()),
+    );
+    if (pick == null) {
       if (context.mounted) context.toastInfo('No pages to pick from yet.');
       return;
     }
-    final pick =
-        rows[(DateTime.now().microsecondsSinceEpoch % rows.length).abs()];
     if (context.mounted) {
       context.toastInfo(
-        'Random pick from ${rows.length} ${rows.length == 1 ? "page" : "pages"}',
+        'Random pick from ${refs.length} ${refs.length == 1 ? "page" : "pages"}',
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }

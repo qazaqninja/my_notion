@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/vault/domain/usecases/pick_page.dart';
 
@@ -234,6 +236,41 @@ void main() {
       final pages = [_p(ulid: 'a')];
       final rels = [(fromUlid: 'x', toUlid: 'a')];
       expect(topByBacklinkCount(pages, rels, 0), isEmpty);
+    });
+  });
+
+  group('pickRandom', () {
+    test('returns null on empty input', () {
+      expect(pickRandom([], math.Random(42)), isNull);
+    });
+
+    test('returns the only element of a single-page list', () {
+      final pages = [_p(ulid: 'a')];
+      expect(pickRandom(pages, math.Random(42))?.ulid, 'a');
+    });
+
+    test('same seed yields the same pick (deterministic)', () {
+      final pages = [_p(ulid: 'a'), _p(ulid: 'b'), _p(ulid: 'c'), _p(ulid: 'd')];
+      final p1 = pickRandom(pages, math.Random(123));
+      final p2 = pickRandom(pages, math.Random(123));
+      expect(p1?.ulid, p2?.ulid);
+    });
+
+    test('different seeds can produce different picks', () {
+      final pages = List.generate(10, (i) => _p(ulid: 'p$i'));
+      // With 10 candidates and these two seeds the picks ARE different,
+      // which exercises the path that doesn't always return [0].
+      final p1 = pickRandom(pages, math.Random(1))?.ulid;
+      final p2 = pickRandom(pages, math.Random(999_999))?.ulid;
+      expect(p1, isNot(equals(p2)));
+    });
+
+    test('pick is always inside the input list', () {
+      final pages = List.generate(5, (i) => _p(ulid: 'p$i'));
+      for (var seed = 0; seed < 20; seed++) {
+        final pick = pickRandom(pages, math.Random(seed))!;
+        expect(pages.contains(pick), isTrue);
+      }
     });
   });
 

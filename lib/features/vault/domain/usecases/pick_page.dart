@@ -14,6 +14,8 @@
 // entity-mapping surface — that's a follow-up if/when more
 // presentation logic moves down here.
 
+import 'dart:math' as math;
+
 /// Minimum subset of page columns the navigation pickers need. The
 /// `bodyText` field is the full markdown body — needed by the
 /// open-todo and empty-page filters; pickers that only care about
@@ -91,6 +93,16 @@ List<PageRef> topByBacklinkCount(
     return b.mtimeMs.compareTo(a.mtimeMs);
   });
   return eligible.take(n).toList();
+}
+
+/// Pick one element at random from the list, using the supplied
+/// [Random] source so the choice is deterministic in tests. Returns
+/// `null` for an empty input. Callers in presentation typically
+/// pass `math.Random(DateTime.now().microsecondsSinceEpoch.abs())`
+/// for a fresh per-invocation seed.
+PageRef? pickRandom(List<PageRef> pages, math.Random random) {
+  if (pages.isEmpty) return null;
+  return pages[random.nextInt(pages.length)];
 }
 
 /// Filter to pages whose title contains the query (case-insensitive
