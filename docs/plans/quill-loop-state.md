@@ -6,15 +6,15 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Task:** E12 — Flutter-side sync client (lib/features/sync/)
+- **Task:** E13 — SyncBloc + provider wiring in app.dart
 - **Status:** pending
 
 ## Last completed
 
-- **M1306 — E11** (DELETE + If-Match optimistic concurrency)
-- Committed: e465996
-- TaskList ID: 33
-- Notes: `UpsertOutcome.persisted(summary)|conflict(current)` union. `upsert` adds optional `ifMatch` (null = unconditional, `*` = must-not-exist, sha = TOCTOU-safe via `runTx` wrap). Routes: PUT honours If-Match, returns 409 `{error: conflict, current: <summary>}`. DELETE returns 204/404. 41/41 backend tests pass. Server sync API is feature-complete for v2: list / get / put / delete / conflict-aware. Phase E client work begins at E12.
+- **M1308 — E12** (Flutter sync client — first cut)
+- Committed: 8fabda0
+- TaskList ID: 34
+- Notes: New `lib/features/sync/` Clean Architecture tree. `SyncFileSummary` + `SyncFileBody` entities (Equatable, JSON-coded). Abstract `SyncRepository` with `login/signup/list/get/put/delete`. `SyncPutOutcome` sealed union (`SyncPutSuccess(summary)` | `SyncPutConflict(current)`). Typed exceptions `SyncAuthException`/`SyncEmailTakenException`/`SyncNetworkException`. `HttpSyncRepository(baseUrl, http.Client?)` impl uses `http ^1.2.2`. 11 tests via `MockClient` from `package:http/testing`. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 ## Backlog (Phase A — Foundation)
 
