@@ -2,5 +2,11 @@
 # to `very_good_analysis` at M1485 so the backend aligns with the
 # Flutter app's lint surface — closes the standing LT-01 deferral
 # that had been re-confirmed on every backend audit since M1479.
+#
+# `bloc_lint` and `custom_lint` are intentionally NOT configured
+# here. The backend is a pure-Dart Shelf server with zero
+# Bloc/Cubit classes (LT-02 and LT-03 only apply to Flutter apps
+# with bloc state machines). Re-enable if the backend ever
+# adopts bloc.
 
 include: package:very_good_analysis/analysis_options.yaml
