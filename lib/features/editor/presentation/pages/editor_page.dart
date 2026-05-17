@@ -25,6 +25,7 @@ import '../../../sync/presentation/bloc/sync_state.dart';
 import '../../../sync/presentation/default_editor_sync_binder_factory.dart';
 import '../../../sync/presentation/editor_sync_ws_mount.dart';
 import '../../../sync/presentation/widgets/pull_reconcile_dialog.dart';
+import '../controllers/find_in_page_controller.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
@@ -297,13 +298,18 @@ class _EditorBodyState extends State<_EditorBody> {
   final ScrollController _scroll = ScrollController();
   bool _anchorJumped = false;
 
-  // Find-in-page state (M85). Visible only when _findOpen; matches are
-  // (lineIdx) entries into the body, recomputed on every query change.
-  bool _findOpen = false;
-  final TextEditingController _findCtl = TextEditingController();
-  final FocusNode _findFocus = FocusNode();
-  List<int> _findMatches = const [];
-  int _findCursor = 0;
+  // Find-in-page state (M85). Extracted to FindInPageController
+  // (H3a) — five-field cluster (_findOpen / _findCtl / _findFocus
+  // / _findMatches / _findCursor) plus five-method API now lives
+  // in the controller; this State owns one instance and bridges
+  // its notifications into setState so the BlocConsumer rebuilds
+  // when the find bar opens/closes or the cursor advances.
+  late final FindInPageController _find =
+      FindInPageController(scroll: _scroll)..addListener(_onFindChange);
+
+  void _onFindChange() {
+    if (mounted) setState(() {});
+  }
 
   // H2.5: throttles "Multiplayer disconnected" toasts so a flaky
   // network can't spam the user — at most one toast per 8-second
@@ -314,77 +320,10 @@ class _EditorBodyState extends State<_EditorBody> {
   @override
   void dispose() {
     _scroll.dispose();
-    _findCtl.dispose();
-    _findFocus.dispose();
+    _find
+      ..removeListener(_onFindChange)
+      ..dispose();
     super.dispose();
-  }
-
-  void _openFind() {
-    setState(() => _findOpen = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _findFocus.requestFocus();
-      _findCtl.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: _findCtl.text.length,
-      );
-    });
-  }
-
-  void _closeFind() {
-    setState(() {
-      _findOpen = false;
-      _findMatches = const [];
-      _findCursor = 0;
-    });
-  }
-
-  void _recomputeFind(String body) {
-    final q = _findCtl.text.trim();
-    if (q.isEmpty) {
-      setState(() {
-        _findMatches = const [];
-        _findCursor = 0;
-      });
-      return;
-    }
-    final lower = body.toLowerCase();
-    final needle = q.toLowerCase();
-    final lines = body.split('\n');
-    final hits = <int>[];
-    int searchFrom = 0;
-    while (true) {
-      final idx = lower.indexOf(needle, searchFrom);
-      if (idx < 0) break;
-      // Convert byte offset to line index.
-      final before = body.substring(0, idx);
-      final lineIdx = '\n'.allMatches(before).length;
-      if (hits.isEmpty || hits.last != lineIdx) hits.add(lineIdx);
-      searchFrom = idx + needle.length;
-    }
-    setState(() {
-      _findMatches = hits;
-      _findCursor = hits.isEmpty ? 0 : 0;
-    });
-    if (hits.isNotEmpty) _scrollToMatch(lines.length);
-  }
-
-  void _step(int delta, String body) {
-    if (_findMatches.isEmpty) return;
-    final next = (_findCursor + delta) % _findMatches.length;
-    setState(() => _findCursor = next < 0 ? next + _findMatches.length : next);
-    _scrollToMatch(body.split('\n').length);
-  }
-
-  void _scrollToMatch(int totalLines) {
-    if (_findMatches.isEmpty || !_scroll.hasClients) return;
-    final lineIdx = _findMatches[_findCursor];
-    final frac = totalLines == 0 ? 0.0 : lineIdx / totalLines;
-    final pos = _scroll.position;
-    final target = (pos.maxScrollExtent * frac)
-        .clamp(pos.minScrollExtent, pos.maxScrollExtent);
-    pos.animateTo(target,
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOut);
   }
 
   /// After the body lays out, scroll to the heading line whose slug
@@ -1594,29 +1533,29 @@ class _EditorBodyState extends State<_EditorBody> {
         return CallbackShortcuts(
           bindings: {
             const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
-                _openFind,
+                _find.open,
             const SingleActivator(LogicalKeyboardKey.keyF, control: true):
-                _openFind,
+                _find.open,
             const SingleActivator(LogicalKeyboardKey.keyS, meta: true): () =>
                 _flushSave(context, loaded),
             const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
                 _flushSave(context, loaded),
             const SingleActivator(LogicalKeyboardKey.keyG, meta: true): () {
-              if (_findOpen) _step(1, page.body);
+              if (_find.isOpen) _find.step(1, page.body);
             },
             const SingleActivator(LogicalKeyboardKey.keyG, control: true): () {
-              if (_findOpen) _step(1, page.body);
+              if (_find.isOpen) _find.step(1, page.body);
             },
             const SingleActivator(LogicalKeyboardKey.keyG,
                 meta: true, shift: true): () {
-              if (_findOpen) _step(-1, page.body);
+              if (_find.isOpen) _find.step(-1, page.body);
             },
             const SingleActivator(LogicalKeyboardKey.keyG,
                 control: true, shift: true): () {
-              if (_findOpen) _step(-1, page.body);
+              if (_find.isOpen) _find.step(-1, page.body);
             },
             const SingleActivator(LogicalKeyboardKey.escape): () {
-              if (_findOpen) _closeFind();
+              if (_find.isOpen) _find.close();
             },
             const SingleActivator(LogicalKeyboardKey.keyL,
                 meta: true, shift: true): () => _toggleLock(context, loaded),
@@ -2028,17 +1967,17 @@ class _EditorBodyState extends State<_EditorBody> {
                 ],
               ),
             ),
-            if (_findOpen)
+            if (_find.isOpen)
               _FindBar(
-                controller: _findCtl,
-                focus: _findFocus,
-                matches: _findMatches.length,
+                controller: _find.queryController,
+                focus: _find.focusNode,
+                matches: _find.matches.length,
                 cursor:
-                    _findMatches.isEmpty ? 0 : _findCursor + 1,
-                onChanged: (_) => _recomputeFind(page.body),
-                onNext: () => _step(1, page.body),
-                onPrev: () => _step(-1, page.body),
-                onClose: _closeFind,
+                    _find.matches.isEmpty ? 0 : _find.cursor + 1,
+                onChanged: (_) => _find.recompute(page.body),
+                onNext: () => _find.step(1, page.body),
+                onPrev: () => _find.step(-1, page.body),
+                onClose: _find.close,
               ),
             // G2.5 — mobile sticky bottom-bar surfaces the most-used
             // kebab actions on narrow widths. The kebab itself stays
