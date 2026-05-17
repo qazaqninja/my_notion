@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder Cmd+Shift+Up/Down, 18 tests). Pivot to D24c (block duplicate Cmd+D).**
-- **Task:** D24c slice 1 — block duplicate resolver (pure-Dart). M1573 ruled out D24b (Tab/Shift+Tab already wired by super_editor's defaultKeyboardActions at super_editor.dart:1506-1508 — adding Cmd+[/Cmd+] would duplicate built-in behavior). Pivoted to D24c (Cmd+D block duplicate, free + Notion-native, source-mode equivalent at `lib/features/editor/domain/source_line_ops.dart:350` `duplicateLineAt`). Super_editor ships `InsertNodeAtIndexRequest` (multi_node_editing.dart:355) — clone the active node, insert at `currentIndex + 1`. Slice 1: pure-Dart resolver `({DocumentNode duplicatedNode, int newIndex})? resolveBlockDuplicate({document, selection})` mirroring resolveBlockReorder's shape. Slice 2: keyboard handler (parser + dispatcher) following the D24a M1570 template.
+- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder, 18 tests). D24c slice 1 (resolver) shipped. Slice 2 (keyboard wiring) pending.**
+- **Task:** D24c slice 2 — wire `resolveBlockDuplicate` into a super_editor `SuperEditorKeyboardAction` bound to Cmd+D. Handler: (1) parse Cmd+D via the M1570 parser-split convention (no Shift required for plain duplicate), (2) call `resolveBlockDuplicate(...)`, (3) clone the source node with a fresh ULID via `Editor.createNodeId()` — for TextNode-derived nodes use `copyTextNodeWith(id: Editor.createNodeId())`; for HorizontalRule/Image/other non-text nodes use a small dispatcher (handful of `if (node is X) return X(id: ...)` branches), (4) dispatch `InsertNodeAtIndexRequest(nodeIndex: result.newIndex, newNode: clonedNode)`, (5) return haltExecution. Place handler at `lib/features/editor/presentation/controllers/block_duplicate_keyboard_action.dart`. Wire into `editor_beta_page.dart`'s `keyboardActions` list AFTER block_reorder. Test the parser path (Cmd+D detection, KeyDown/KeyRepeat filter, non-Cmd+D no-match) — clone-with-id logic gets an exemption comment per the M1571 precedent if widget-tier-test friction is high.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1574 — D24c slice 1 — block duplicate resolver (pure-Dart)** (8 tests in 3 sub-groups; ~34-line helper)
+- Committed: (this iteration)
+- TaskList ID: 186 closeout
+- Notes: Pure-Dart helper `resolveBlockDuplicate({document, selection})` at `lib/features/editor/domain/block_duplicate.dart`. Returns `({String sourceNodeId, int newIndex})?`. Three exit paths: null selection / non-collapsed / unknown nodeId. Same shape as `resolveBlockReorder` (M1568). Index-only by design — the clone-with-fresh-ULID logic lives in slice 2's handler because it depends on framework-specific APIs (`Editor.createNodeId()`, `copyTextNodeWith` on TextNode subclasses, manual reconstruction for non-text nodes). 8 tests in 3 sub-groups: happy path (3: middle / first / last with append-at-end), no-op (3: null / non-collapsed / unknown-nodeId), edge cases (2: single-node-document / newIndex-equals-nodeCount). flutter analyze clean on both files. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 cosmetic — sub-group names follow descriptive-intent convention consistent with sibling `block_reorder_test.dart`; non-blocking). Cumulative D24-family: D24a 18 + D24c slice 1 8 = 26 tests. Slice 2 will wire the keyboard handler with Cmd+D + clone-with-fresh-ULID dispatch via `InsertNodeAtIndexRequest`. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1573 — D-phase pick-next survey closeout — D24b ruled out, pivot to D24c (Cmd+D block duplicate)** (no code; doc-only pivot decision)
 - Committed: (this iteration)
