@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete (D24-family + D25 + D26 + D27a + D27b all closed); D28-D30 cutover blocked on EditorBetaPage feature parity (kebab menu / find-in-page / presence / share-sheet not yet ported). Pivoting back to E-phase feature surface.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete (D24-family + D25 + D26 + D27a + D27b all closed); D28-D30 cutover blocked on EditorBetaPage feature parity. Pivoted back to E-phase. E60 slice 1 shipped — first HTML5 input-type slice for forms-polish.
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. Cutover deferred.
-- **Task:** E60 slice 1 — forms polish: add `FormFieldType.email` to the backend form schema. Current types: text/number/checkbox/select/date/multi. M1609 survey ruled out D28-D30 cutover (EditorBetaPage's kebab/find/presence aren't ported — `grep -c "kebab\|FindInPageController\|presence" editor_beta_page.dart` = 0 — a hard swap would regress significant functionality). Pivoted to E60 forms polish — small-bite user-visible value with no v2-backend dependency. Slice 1: extend `enum FormFieldType` with `email` (HTML5 `<input type="email">`); update `FormSchema.fromYaml` to recognize `type: email`; emit `<input type="email">` in the public form renderer; add an `_isValidEmail` validator. Slices 2-N: url, tel, longtext (textarea), pattern (regex). Each follows the same shape — short, mechanical, end-user-visible, full backend coverage in mocktail.
+- **Task:** E60 slice 2 — `FormFieldType.url` (HTML5 `<input type="url">`). Same shape as slice 1 (M1610): enum variant, `_parseType` recognises `'url'`, validator regex (`^https?://...`), renderer emits `<input type="url">`, CSS selector extended, tests for parse + validator + render. Slice 3: `longtext` → `<textarea>`. Slice 4: `pattern` → `<input pattern="...">` for arbitrary regex matching. After E60 closes, survey next (other v1.x backlog or back to D-phase parity for cutover prep).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1610 — E60 slice 1 — FormFieldType.email (parser + validator + HTML5 renderer)** (10 new backend tests; 203 backend tests pass)
+- Committed: (this iteration)
+- TaskList ID: 204 closeout
+- Notes: First HTML5 input-type slice extending forms beyond text/number/checkbox/select/date/multi. `enum FormFieldType` gets `email` variant; `_parseType` accepts `'email'` / `'e-mail'`; `validateSubmission` validates against permissive RFC-5322-lite regex `^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$` emitting `expected_email` on mismatch. Renderer adds `<input type="email">` case + CSS selector includes `input[type=email]`. 7 new schema tests (parse + alias + 5 validator) + 3 renderer tests (default + required attribute + CSS selector). All 203 backend tests pass; `dart analyze` clean. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 cosmetic — parse + validate tests folded into one group per sibling-date convention, non-blocking). E60 slice 2 will be `url` type. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1609 — D-phase pick-next survey #6 closeout — pivot to E60 forms polish** (no code; doc-only pivot decision)
 - Committed: (this iteration)
