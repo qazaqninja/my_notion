@@ -7,10 +7,20 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** H2.4c — drop EditorSyncWsMount into editor_page.dart's _EditorBodyState tree; project SyncBloc.state (isAuthed/token) + frontmatter `public:` flag into the widget's props; wire editor save path → EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(body); wire onRemoteDoc → setState / triggerRender for the body re-render; wire onConnectionError → snackbar/banner
+- **Task:** H2.4d — consumer hooks: wire editor save path → EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(body); subscribe to onRemoteDoc → setState/triggerRender (peer updates appear without page reload); subscribe to onConnectionError → context.toastError / "reconnect needed" banner; plus the CA-04 factory extraction (`defaultEditorSyncBinderFactory` to sync/presentation/) flagged by the M1385 orchestrator audit
 - **Status:** pending
 
 ## Last completed
+
+- **M1386 — H2.4c cleanup** (orchestrator gate: BL-12 narrow rebuild scope via BlocBuilder buildWhen; CA-04 deferred)
+- Committed: (this iteration)
+- TaskList ID: 100b
+- Notes: Audit returned 0 BLOCK / 2 WARN / 3 INFO. Fix-forward on BL-12: replaced `final syncState = context.watch<SyncBloc>().state;` (which subscribed the entire 400+-line editor body subtree to every SyncState emission, including heartbeats, reconnect attempts, lastError churn) with `BlocBuilder<SyncBloc, SyncState>(buildWhen: (prev, next) => prev.isAuthed != next.isAuthed || prev.token != next.token, builder: ...)` wrapping ONLY the EditorSyncWsMount. buildWhen returns true only on the two fields the multiplayer gate actually cares about. CA-04 (warn) intentionally deferred — the editor's sync/data/* imports inherit the M1380 waiver precedent (SyncWsClient + SyncWsBinder have no domain-layer wrapper because they ARE the lowest-level multiplayer primitive); orchestrator-suggested fix is to extract a `defaultEditorSyncBinderFactory({wsUrl})` top-level function to `sync/presentation/`, eliminating the data-layer import from editor_page.dart. ~20-line change, no test impact, queued as part of H2.4d. Three INFO items (TS-01 editor_page test exemption, hardcoded wsUrl until E14 settings, BL-01 N/A) accepted as-is. flutter analyze clean; 124+ sync tests + editor_bloc tests pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1385 — H2.4c** (wire EditorSyncWsMount into _EditorBodyState's tree)
+- Committed: (this iteration)
+- TaskList ID: 100
+- Notes: Final landing slice of H2.4. Single-file change in editor_page.dart (~33 lines): added 4 imports (crdt/domain/entities/quill_crdt_doc.dart, sync/data/sync_ws_binder.dart, sync/data/sync_ws_client.dart, sync/presentation/editor_sync_ws_mount.dart). Inside _EditorBodyState.build() (around line 1583) added `final syncState = context.watch<SyncBloc>().state;` to project (isAuthed, token) for the mount — superseded in M1386 by a narrow BlocBuilder<SyncBloc, SyncState>(buildWhen) for the BL-12 fix. Wrapped the existing `Focus(autofocus: true, child: Column(...))` with EditorSyncWsMount(ulid: page.ulid, isPublished: _isPublic(loaded), isAuthed, token, initialBody: page.body, binderFactory: closure returning SyncWsBinder(client: SyncWsClient(wsUrl: 'ws://localhost:8080'), ulid, token, initialDoc: QuillCrdtDoc.fromMarkdown(initialBody)), child: Focus(...)). Gate = authed && published && token != null → opens WS to ws://localhost:8080/sync/sub/<ulid>. Closes when sign out OR unpublish. No new tests this slice — gate logic exhaustively covered by M1379 controller tests + M1382/M1383 widget tests + M1373/M1376 client/binder tests, and editor_page.dart has no widget tests today (2.5k-line page needs full EditorBloc + VaultBloc + SyncBloc + RemindersBloc + go_router fixture stack). Verified via flutter analyze clean + 124+ sync tests + editor_bloc tests green. The G2 → G2.5 wire-in pattern (M1370) established this exemption shape. Consumer hooks (save → pushLocalUpdate, docStream → re-render, errorStream → banner) queued as H2.4d. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1383 — H2.4b cleanup** (orchestrator gate: TS-06 callback assertion tightening + defensive catchError on reconcile chain + dispose)
 - Committed: (this iteration)
