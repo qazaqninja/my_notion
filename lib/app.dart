@@ -199,10 +199,16 @@ class _QuillAppState extends State<QuillApp> {
           BlocProvider.value(value: _vaultBloc),
           BlocProvider.value(value: _remindersBloc),
           BlocProvider.value(value: _syncBloc),
-          // D28 cutover slice 1b (M1665): root-scoped because the
-          // /editor/:ulid GoRoute builder (slice 1c) will read it to
-          // pick EditorPage vs EditorBetaPage. Settings → Advanced
-          // also reads + writes the same instance.
+          // D28 cutover slice 1c (M1667): root-scoped because two
+          // sibling consumers read the same cubit and must agree on
+          // the live value:
+          //   1. `/editor/:ulid` GoRoute builder (`app.dart` below)
+          //      via `BlocSelector` — picks `EditorPage` vs
+          //      `EditorBetaPage` on each navigation.
+          //   2. Settings → Advanced "Use beta WYSIWYG editor"
+          //      toggle row (`settings_page.dart` `_advancedPane`).
+          // Route-scoping would force the user to restart the app
+          // (or re-route the editor) to see toggle changes.
           BlocProvider.value(value: _editorPreferencesCubit),
         ],
         child: BlocBuilder<ThemeCubit, ThemeState>(
