@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
 import 'package:my_notion/features/sync/data/sync_ws_binder.dart';
+import 'package:my_notion/features/sync/domain/entities/awareness_message.dart';
+import 'package:my_notion/features/sync/presentation/cubit/presence_cubit.dart';
 import 'package:my_notion/features/sync/presentation/editor_ws_attach_controller.dart';
 
 /// H2.4b — widget wrapper that owns one [EditorWsAttachController]
@@ -76,8 +79,14 @@ class EditorSyncWsMount extends StatefulWidget {
 
 class _EditorSyncWsMountState extends State<EditorSyncWsMount> {
   late final EditorWsAttachController _controller;
+  // H4d-iii-b — one PresenceCubit per editor mount. Owned here so
+  // its TTL Timers are torn down with the editor, and exposed via
+  // `BlocProvider<PresenceCubit>.value` so RemoteCursorOverlay
+  // (M1454) can find it via BlocBuilder.
+  late final PresenceCubit _presenceCubit;
   StreamSubscription<QuillCrdtDoc>? _docSub;
   StreamSubscription<Object>? _errSub;
+  StreamSubscription<AwarenessMessage>? _awarenessSub;
   // Serialize reconciles so a rapid prop-change cascade (e.g. mount
   // → ulid swap during the first attach() await) doesn't interleave
   // concurrent calls into the controller, which would race
@@ -88,11 +97,17 @@ class _EditorSyncWsMountState extends State<EditorSyncWsMount> {
   void initState() {
     super.initState();
     _controller = EditorWsAttachController(binderFactory: widget.binderFactory);
+    _presenceCubit = PresenceCubit();
     _docSub = _controller.docStream.listen((doc) {
       if (mounted) widget.onRemoteDoc?.call(doc);
     });
     _errSub = _controller.errorStream.listen((err) {
       if (mounted) widget.onConnectionError?.call(err);
+    });
+    _awarenessSub = _controller.awarenessStream.listen((msg) {
+      // Forward to the cubit unconditionally; the cubit's own
+      // isClosed guard handles the dispose race.
+      _presenceCubit.remoteCursorReceived(msg);
     });
     _reconcile();
   }
@@ -141,6 +156,8 @@ class _EditorSyncWsMountState extends State<EditorSyncWsMount> {
     // doesn't bubble out as an unhandled future.
     unawaited(_docSub?.cancel());
     unawaited(_errSub?.cancel());
+    unawaited(_awarenessSub?.cancel());
+    unawaited(_presenceCubit.close());
     unawaited(_controller.dispose().catchError((Object _) {}));
     super.dispose();
   }
@@ -149,7 +166,10 @@ class _EditorSyncWsMountState extends State<EditorSyncWsMount> {
   Widget build(BuildContext context) {
     return EditorSyncWsScope(
       controller: _controller,
-      child: widget.child,
+      child: BlocProvider<PresenceCubit>.value(
+        value: _presenceCubit,
+        child: widget.child,
+      ),
     );
   }
 }

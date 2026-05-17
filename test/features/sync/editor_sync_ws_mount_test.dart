@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
 import 'package:my_notion/features/sync/data/sync_ws_binder.dart';
 import 'package:my_notion/features/sync/data/sync_ws_client.dart';
+import 'package:my_notion/features/sync/presentation/cubit/presence_cubit.dart';
 import 'package:my_notion/features/sync/presentation/editor_sync_ws_mount.dart';
 import 'package:my_notion/features/sync/presentation/editor_ws_attach_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -255,6 +257,93 @@ void main() {
           ),
         );
         expect(EditorSyncWsScope.maybeOf(ctx), isNull);
+      });
+    });
+
+    group('PresenceCubit mount (H4d-iii-b)', () {
+      const awarenessJson =
+          '{"kind":"awareness","userId":"alice","pageUlid":"U",'
+          '"cursorIndex":7,"color":"#FF5722"}';
+
+      testWidgets('descendants find the cubit via BlocProvider scope',
+          (tester) async {
+        final rec = _Recorder();
+        late BuildContext childCtx;
+        await tester.pumpWidget(
+          EditorSyncWsMount(
+            ulid: 'U',
+            isPublished: true,
+            isAuthed: true,
+            token: 't',
+            initialBody: '',
+            binderFactory: rec.make,
+            child: Builder(
+              builder: (ctx) {
+                childCtx = ctx;
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final cubit = BlocProvider.of<PresenceCubit>(childCtx);
+        expect(cubit, isA<PresenceCubit>());
+        expect(cubit.state.cursors, isEmpty);
+      });
+
+      testWidgets('relayed awareness reaches the cubit state',
+          (tester) async {
+        final rec = _Recorder();
+        late BuildContext childCtx;
+        await tester.pumpWidget(
+          EditorSyncWsMount(
+            ulid: 'U',
+            isPublished: true,
+            isAuthed: true,
+            token: 't',
+            initialBody: '',
+            binderFactory: rec.make,
+            child: Builder(
+              builder: (ctx) {
+                childCtx = ctx;
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        rec.channels.single.simulateMessage(awarenessJson);
+        await tester.pump();
+        final cubit = BlocProvider.of<PresenceCubit>(childCtx);
+        expect(cubit.state.cursors, hasLength(1));
+        expect(cubit.state.cursors['alice']?.cursorIndex, 7);
+      });
+
+      testWidgets('unmount closes the cubit', (tester) async {
+        final rec = _Recorder();
+        late BuildContext childCtx;
+        await tester.pumpWidget(
+          EditorSyncWsMount(
+            ulid: 'U',
+            isPublished: true,
+            isAuthed: true,
+            token: 't',
+            initialBody: '',
+            binderFactory: rec.make,
+            child: Builder(
+              builder: (ctx) {
+                childCtx = ctx;
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final cubit = BlocProvider.of<PresenceCubit>(childCtx);
+        expect(cubit.isClosed, isFalse);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpAndSettle();
+        expect(cubit.isClosed, isTrue);
       });
     });
   });
