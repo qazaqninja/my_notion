@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** NV-03 migration slice 2c — final 5 bare '/home' call sites. `lib/features/vault/presentation/widgets/mobile_chrome.dart`: line 25 (`context.go('/home')` in some nav callback), line 36 (`void goHome() => context.go('/home');` helper), line 48 (`active: route == '/home'` in NavBar active-tab compare — purely a comparison; constant works the same). `lib/features/vault/presentation/pages/vault_shell_page.dart`: lines 177 + 179 (two `context.go('/home')` calls). Same mechanical swap pattern. After 2c: NV-03 is fully resolved across the whole codebase — revisit pick-next survey for cutover prep vs Phase E continuation.
+- **Task:** Pick-next survey #10 — after NV-03 full closure. Remaining D-fp carry-forward debt: (i) BL-11 widget-tier setState + editor.execute / SnackBar / route nav from callbacks (5 instances across D-fp1/2/3/3b/4b — needs a FindBarCubit/EditorActionCubit shift), (ii) TS-01 editor_beta_page_test.dart widget smoke (AppBar + Find bar + keyboard intent dispatch — needs full provider stack harness), (iii) BL-12 _FindBarHost child StatefulWidget extraction (tightly coupled to _doc/_editor — moderate refactor). Options outside the D-fp arc: (iv) D28-D30 cutover (could now go ahead if we accept the carry-forwards), (v) Phase E continuation (G4 live docker smoke needs user; forms field-type expansion past E60 has diminishing return; web clipper is a big standalone package), (vi) D-fp5 next parity port (outline panel, ⌘E source toggle, ⌘⇧L lock toggle, properties panel — though probably not all cutover-critical), (vii) parameterized-routes NV-02 helpers (Routes.editor(ulid), Routes.editorBeta(ulid), Routes.db(dbId), Routes.dbView(dbId, viewId), Routes.settings(section)). Decision criteria: deliver user-visible value where possible, otherwise unblock the D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1647 — NV-03 slice 2c — final '/home' + '/settings' sites — NV-03 FULLY RESOLVED** (2 files modified; +9 / -7; no new tests; 7/7 routes pass)
+- Committed: (this iteration)
+- TaskList ID: 222 closeout
+- Notes: Final NV-03 sweep. `lib/features/vault/presentation/widgets/mobile_chrome.dart` got new Routes import + 3 swaps: line 25 (`_openMostRecent` fallback `context.go('/home')`), line 36 (`goHome` helper), line 48 (`active: route == '/home'` active-tab compare — constant works identically). `lib/features/vault/presentation/pages/vault_shell_page.dart` got new Routes import + 4 swaps: lines 177 + 179 (`⌘+H` / `Ctrl+H` `context.go('/home')`) + lines 173 + 175 (`⌘+,` / `Ctrl+,` `context.go('/settings')` — opportunistic wins surfaced during the read). Used `replace_all` for the repeated `context.go('/home')` and `context.go('/settings')` patterns. Verified `grep -rn "'/home'"` in `lib/` shows only the canonical declaration in `routes.dart:24`. **NV-03 carry-forward fully resolved across the codebase** — all 9 sites identified at M1640 + 4 opportunistic `'/settings'` wins. flutter analyze clean. 7/7 routes tests pass. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1645 — NV-03 slice 2b — swap legacy editor_page.dart bare '/home' sites** (1 file modified, +3 / -2; no new tests; 7/7 routes tests pass)
 - Committed: (this iteration)
