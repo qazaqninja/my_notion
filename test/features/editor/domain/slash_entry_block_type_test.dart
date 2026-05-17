@@ -20,11 +20,7 @@ void main() {
       expect(blockTypeForLinePrefix('> '), blockquoteAttribution);
     });
 
-    test('unknown prefix returns null', () {
-      // List items + todos need a node-type change (ParagraphNode →
-      // ListItemNode / TaskNode); they cannot be expressed via a
-      // simple blockType metadata swap. Returning null lets the
-      // caller fall back to a deferred no-op until slice 2g-d.
+    test('list / todo prefixes return null (handled by sibling mappers)', () {
       expect(blockTypeForLinePrefix('- '), isNull);
       expect(blockTypeForLinePrefix('1. '), isNull);
       expect(blockTypeForLinePrefix('- [ ] '), isNull);
@@ -34,6 +30,49 @@ void main() {
       expect(blockTypeForLinePrefix(''), isNull);
       expect(blockTypeForLinePrefix(' '), isNull);
       expect(blockTypeForLinePrefix('# foo'), isNull);
+    });
+  });
+
+  group('listItemTypeForLinePrefix', () {
+    test('"- " → ListItemType.unordered', () {
+      expect(listItemTypeForLinePrefix('- '), ListItemType.unordered);
+    });
+
+    test('"1. " → ListItemType.ordered', () {
+      expect(listItemTypeForLinePrefix('1. '), ListItemType.ordered);
+    });
+
+    test('todo / heading / blockquote prefixes return null', () {
+      expect(listItemTypeForLinePrefix('- [ ] '), isNull);
+      expect(listItemTypeForLinePrefix('# '), isNull);
+      expect(listItemTypeForLinePrefix('> '), isNull);
+    });
+
+    test('empty / arbitrary strings return null', () {
+      expect(listItemTypeForLinePrefix(''), isNull);
+      expect(listItemTypeForLinePrefix('- a'), isNull);
+    });
+  });
+
+  group('isTaskLinePrefix', () {
+    test('"- [ ] " → true', () {
+      expect(isTaskLinePrefix('- [ ] '), isTrue);
+    });
+
+    test('list / heading prefixes → false', () {
+      expect(isTaskLinePrefix('- '), isFalse);
+      expect(isTaskLinePrefix('1. '), isFalse);
+      expect(isTaskLinePrefix('# '), isFalse);
+    });
+
+    test('checked-todo variant "- [x] " is NOT matched — slash menu only '
+        'emits the empty-checkbox variant; pre-checked is a v1.x ask', () {
+      expect(isTaskLinePrefix('- [x] '), isFalse);
+    });
+
+    test('empty / arbitrary strings → false', () {
+      expect(isTaskLinePrefix(''), isFalse);
+      expect(isTaskLinePrefix('- [ ]'), isFalse); // missing trailing space
     });
   });
 }

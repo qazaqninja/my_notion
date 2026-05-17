@@ -258,29 +258,33 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       nodePosition: TextNodePosition(offset: triggerLocal),
     );
 
-    // Build the request list: always strip `/query`. Then either insert
-    // the entry's snippet (default) OR change the node's block type
-    // (when linePrefix maps to a known super_editor block attribution).
-    // Both branches dispatch through `_editor.execute(...)`.
-    final blockType = entry.linePrefix == null
-        ? null
-        : blockTypeForLinePrefix(entry.linePrefix!);
+    // Build the request list. First request always strips `/query`.
+    // Second request varies by entry.linePrefix:
+    //   linePrefix == null              → InsertTextRequest (snippet)
+    //   "# " | "## " | "### " | "> "    → ChangeParagraphBlockTypeRequest
+    //   "- " | "1. "                    → ConvertParagraphToListItemRequest
+    //   "- [ ] "                        → ConvertParagraphToTaskRequest
+    // Unmappable linePrefix → delete-only (no-op insert).
+    final prefix = entry.linePrefix;
+    final blockType = prefix == null ? null : blockTypeForLinePrefix(prefix);
+    final listType = prefix == null ? null : listItemTypeForLinePrefix(prefix);
+    final isTask = prefix != null && isTaskLinePrefix(prefix);
     _editor.execute([
       DeleteContentRequest(
         documentRange: DocumentRange(start: triggerPos, end: extent),
       ),
       if (blockType != null)
         ChangeParagraphBlockTypeRequest(nodeId: nodeId, blockType: blockType)
-      else if (entry.linePrefix == null)
+      else if (listType != null)
+        ConvertParagraphToListItemRequest(nodeId: nodeId, type: listType)
+      else if (isTask)
+        ConvertParagraphToTaskRequest(nodeId: nodeId)
+      else if (prefix == null)
         InsertTextRequest(
           documentPosition: triggerPos,
           textToInsert: entry.snippet,
           attributions: const {},
         ),
-      // linePrefix entries with no mapped block type (list `- `, ordered
-      // `1. `, todo `- [ ] `) fall through to delete-only. Slice 2g-d
-      // wires the node-type replacement (ParagraphNode → ListItemNode /
-      // TaskNode) for those.
     ]);
   }
 }

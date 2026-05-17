@@ -1,21 +1,25 @@
 import 'package:super_editor/super_editor.dart';
 
-/// Map a slash-entry [SlashEntry.linePrefix] string to the matching
-/// super_editor `blockType` metadata attribution.
+/// Three pure-function mappers that translate a slash-entry
+/// [SlashEntry.linePrefix] into the corresponding super_editor convert-
+/// in-place request kind. Each returns null / false when the prefix
+/// doesn't apply, so the caller (`EditorBetaPage._onSlashEntryPicked`)
+/// can try them in sequence:
 ///
-/// Used by EditorBetaPage (slice 2g-c, M1541) to translate a convert-
-/// in-place slash pick into a `ChangeParagraphBlockTypeRequest` against
-/// the node containing the trigger. Source-mode (`SourceView`) achieves
-/// the same effect by prepending the literal prefix to the line text;
-/// in WYSIWYG the block kind is metadata, not text, so the prefix maps
-/// to a NamedAttribution instead of a string splice.
+/// 1. [blockTypeForLinePrefix] — `# `, `## `, `### `, `> ` →
+///    `ChangeParagraphBlockTypeRequest`.
+/// 2. [listItemTypeForLinePrefix] — `- `, `1. ` →
+///    `ConvertParagraphToListItemRequest`.
+/// 3. [isTaskLinePrefix] — `- [ ] ` →
+///    `ConvertParagraphToTaskRequest`.
 ///
-/// Returns null for prefixes that don't correspond to a simple
-/// blockType swap — e.g. lists (`'- '`, `'1. '`) and todos (`'- [ ] '`)
-/// require a ParagraphNode → ListItemNode/TaskNode node-type change
-/// that's a node-replace operation, not a metadata edit. The caller
-/// should treat null as "deferred" and either no-op or fall through to
-/// a follow-up slice (2g-d).
+/// Source-mode (`SourceView`) achieves the same effects by prepending
+/// the literal prefix to the line text; in WYSIWYG the block kind is
+/// either metadata or a different node class, so the prefix maps to a
+/// request shape rather than a string splice.
+
+/// Map `# `, `## `, `### `, `> ` to header1/2/3 + blockquote
+/// attributions. Null for any other prefix.
 NamedAttribution? blockTypeForLinePrefix(String linePrefix) {
   switch (linePrefix) {
     case '# ':
@@ -29,3 +33,20 @@ NamedAttribution? blockTypeForLinePrefix(String linePrefix) {
   }
   return null;
 }
+
+/// Map `- ` to unordered, `1. ` to ordered. Null for any other prefix —
+/// including task `- [ ] `, which is checked separately via
+/// [isTaskLinePrefix].
+ListItemType? listItemTypeForLinePrefix(String linePrefix) {
+  switch (linePrefix) {
+    case '- ':
+      return ListItemType.unordered;
+    case '1. ':
+      return ListItemType.ordered;
+  }
+  return null;
+}
+
+/// True iff [linePrefix] is the todo prefix `- [ ] `. Caller dispatches
+/// `ConvertParagraphToTaskRequest(isComplete: false)` when true.
+bool isTaskLinePrefix(String linePrefix) => linePrefix == '- [ ] ';
