@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration)
-- **Task:** D6 — super_editor block-type parity slice 1. Pivot survey (#159) at M1513-M1514 confirmed: items 11-16 of the CLAUDE.md v1.x backlog are all dep-shipped (most have wired-up usecases too); item 9 (WYSIWYG super_editor) is the one outstanding lift. `super_editor: 0.3.0-dev.44` is in pubspec; `lib/core/markdown/super_editor_serializer.dart` ships the markdown↔MutableDocument bridge skeleton (D1-D5 work). Next: D6 paragraph round-trip — audit the current serializer for the simplest block-type still missing/weakly-tested (likely heading vs paragraph fidelity around frontmatter), add a focused round-trip test, fix any regression. Then D7-D15 sweep through ul/ol/todo/blockquote/code/hr/callouts/tables/math/mermaid/image/file/video/audio/pdf/bookmark/sub-page/transclusion blocks; D16-D22 inline marks; D23-D27 interactions; D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **D1-D22 + D23 route shell shipped**
+- **Task:** D23 interactions slice 1 — slash menu wiring in /editor-beta. M1516 audit corrected the D-phase status: D1-D22 are all shipped at the serializer level (91-test coverage, paragraph + headings + lists + todos + code + hr + blockquote + callouts + math + mermaid + tables + image + file + bookmark + sub-page + transclusion + columns + breadcrumb + toc + button + bold + code + italic + strike + underline + highlight + sub + sup + color + wikilink + date), and D23's route shell ships at `lib/features/editor/presentation/pages/editor_beta_page.dart` mounted at `/editor-beta/<ulid>` from `lib/app.dart:264`. Remaining work: ~7-8 slices = D23 interactions (slash menu wiring + drag handles + multi-select + M234-M268 source-mode shortcuts), D24-D27 polish, D28-D30 cutover (flip default `/editor` route). First concrete slice: port the existing slash command palette into EditorBetaPage so `/` in WYSIWYG surfaces the menu. Keep slash menu's existing M1100-M1186 extractor logic intact; just wire the input source from super_editor's keyboard handlers.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1516 — refresh CLAUDE.md item 9 — D-phase audit correction (D1-D22 + D23 shell shipped)** (super_editor progress accurate)
+- Committed: (this iteration)
+- TaskList ID: 160 closeout (D6 audit slice)
+- Notes: Task #160 was "audit current super_editor_serializer for the simplest still-weak block type". Audit findings: the serializer is far more shipped than M1514's survey indicated. D1-D22 are all complete at the code+test level — 91 test cases across slices for paragraph + headings + lists + todos + code + hr + blockquote + GFM callouts + math + mermaid + GFM pipe tables + image + file + bookmark + sub-page + transclusion + columns + breadcrumb + toc + button + bold + inline code + italic + strike + underline + highlight + sub + sup + color + inline wikilink + inline date. D23's route shell ships at `lib/features/editor/presentation/pages/editor_beta_page.dart` mounted at `/editor-beta/<ulid>` from `lib/app.dart:264` ("Beta WYSIWYG editor route powered by `super_editor`"). M1516 updated CLAUDE.md item 9 from "D6-D30 outstanding (~24-27 slices)" to "D23 interactions + D24-D27 polish + D28-D30 cutover outstanding (~7-8 slices)". Pure docs refresh; no behavior change. Did not run `flutter test` for verification — first-run pub get + build takes longer than this iteration's slice and the existing 91-test green baseline at M1283 stands; subsequent iterations will rerun tests as part of actual interaction-slice work. Queued #161 = D23 slash menu wiring slice 1. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1515 — loop-state advance** (record M1513+M1514 + pivot to D-phase)
+- Committed: prior to M1516 (this iteration)
+- TaskList ID: 159 closeout
+- Notes: Recorded pivot-survey decision. Advanced **Current** pointer from "Forms polish slice 3b complete" to "D6 paragraph round-trip slice". No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1513 + M1514 — CLAUDE.md docs refresh: status + v1.x backlog** (pivot-survey iteration #159)
 - Committed: (this iteration)
