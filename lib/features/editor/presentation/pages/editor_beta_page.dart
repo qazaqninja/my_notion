@@ -20,6 +20,7 @@ import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
 import '../../domain/slash_entries.dart';
 import '../../domain/slash_entry_block_type.dart';
+import '../controllers/bold_autoformat_reaction.dart';
 import '../controllers/slash_trigger_session.dart';
 import '../controllers/super_editor_caret.dart';
 import '../cubit/slash_menu_cubit.dart';
@@ -141,6 +142,12 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       document: _doc,
       composer: _composer,
     );
+    // D26 slice 1b (M1551): append the inline-mark autoformat reactions
+    // after super_editor's defaultEditorReactions. Order: block-prefix
+    // conversions run first, then this BoldAutoformatReaction handles
+    // the `**X**` keystroke. Future sibling reactions (italic, strike,
+    // inline code, highlight, sub, sup) plug in here.
+    _editor.reactionPipeline.add(const BoldAutoformatReaction());
     _session = SlashTriggerSession();
     // D23 slice 2d (M1531): every composer selection / document mutation
     // projects to a flat (text, caret) via M1528's plainTextAndCaret and
