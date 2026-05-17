@@ -115,22 +115,33 @@ class _EditorSyncWsMountState extends State<EditorSyncWsMount> {
     final ulid = widget.ulid;
     final token = widget.token;
     final initialBody = widget.initialBody;
-    _reconcileChain = _reconcileChain.then(
-      (_) => _controller.reconcile(
-        authed: authed,
-        published: published,
-        ulid: ulid,
-        token: token,
-        initialBody: initialBody,
-      ),
-    );
+    _reconcileChain = _reconcileChain
+        .then(
+          (_) => _controller.reconcile(
+            authed: authed,
+            published: published,
+            ulid: ulid,
+            token: token,
+            initialBody: initialBody,
+          ),
+        )
+        // Defensive: if `reconcile()` ever throws, the chain must
+        // not be poisoned — a swallowed error here means the next
+        // prop change still triggers a fresh reconcile. The
+        // controller routes runtime errors through its
+        // errorStream, so this catch is a guard against
+        // programmer-error throws only.
+        .catchError((Object _) {});
   }
 
   @override
   void dispose() {
+    // Fire-and-forget the async chain since State.dispose is sync.
+    // Wrap in catchError so an unexpected dispose-time throw
+    // doesn't bubble out as an unhandled future.
     unawaited(_docSub?.cancel());
     unawaited(_errSub?.cancel());
-    unawaited(_controller.dispose());
+    unawaited(_controller.dispose().catchError((Object _) {}));
     super.dispose();
   }
 
