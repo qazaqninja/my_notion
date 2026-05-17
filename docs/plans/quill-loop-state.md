@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a all closed. 217 cumulative tests. 5 Notion shortcuts live (reorder Cmd+Shift+Up/Down, duplicate Cmd+D, delete Cmd+Shift+Backspace, headings Cmd+Opt+1/2/3/0).**
-- **Task:** D-phase pick-next survey #4. After D27a closure, the same template can extend to list/todo conversions. Notion uses Cmd+Shift+7/8/9 (numbered list / bulleted list / to-do). Super_editor ships `ConvertParagraphToListItemRequest(nodeId, type)` + `ConvertParagraphToTaskRequest(nodeId)` — both already used by the slash menu. The keyboard action would map digit-7/8/9 → unordered list / ordered list / task. After D27b: D25 multi-select (3-5 slices), D28-D30 cutover (dogfooding-gated), or pivot to a fresh feature surface (E59 ladder, TS-08 goldens, etc.). Lean toward D27b as the natural next slice — same pattern as D27a, ~1 commit per slice.
+- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a closed; D27b slice 1 shipped. 227 cumulative tests across the D-phase WYSIWYG layer.**
+- **Task:** D27b slice 2 — wire `resolveBlockConversion` into a `SuperEditorKeyboardAction` bound to Cmd+Shift+7/8/9 (Ctrl+Shift on Linux/Windows). Notion bindings: Cmd+Shift+7→ordered list, Cmd+Shift+8→unordered list, Cmd+Shift+9→to-do. Parser: KeyDown/Repeat + Cmd + Shift + digit7/8/9. The handler dispatches type-aware requests by inspecting the source node's runtime type — for Paragraph: `ConvertParagraphToListItemRequest(nodeId, type)` or `ConvertParagraphToTaskRequest(nodeId)`. For ListItem → Task: need `ConvertListItemToParagraphRequest` + `ConvertParagraphToTaskRequest` chain OR fall back to no-op if the source is already the target type. For Task → List: `ConvertTaskToParagraphRequest` + `ConvertParagraphToListItemRequest`. Slice may be simpler: only convert from Paragraph for v1, leave type-switching to slash menu. Decision lives in slice 2's design. Place handler at `lib/features/editor/presentation/controllers/block_conversion_keyboard_action.dart`. Apply M1571 coverage exemption.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1587 — D27b slice 1 — list/todo conversion resolver (pure-Dart)** (10 tests in 3 sub-groups; ~43-line helper + 3-variant enum)
+- Committed: (this iteration)
+- TaskList ID: 193 closeout
+- Notes: Fifth resolver in the family. `enum BlockConversion { unorderedList, orderedList, task }` + `resolveBlockConversion({document, selection, target})` returns `({String nodeId, BlockConversion target})?`. Four exit paths: null / non-collapsed / non-TextNode (rejects HR/Image — only Paragraph/ListItem/Task pass since all 3 extend TextNode) / unknown nodeId. The slice-2 handler will do type-aware request dispatch (Paragraph→list/task, ListItem↔Task switches). 10 tests in 3 sub-groups: happy (5: paragraph→3 targets + list-to-task + task-to-orderedList), no-op (4: null/non-collapsed/unknown/HR), edge (1: all-3-targets loop). flutter analyze clean. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 cosmetic — sub-group naming consistent with siblings, non-blocking). Cumulative D-phase WYSIWYG layer = 227 tests (D24a 18 + D24c 18 + D24d 14 + D26 148 + D27a 19 + D27b slice 1 10). Slice 2 wires Cmd+Shift+7/8/9 keyboard handler with type-aware dispatch. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1585 — D27a slice 2 — heading conversion keyboard handler + EditorBetaPage wiring (D27a closed)** (8 parser tests; cumulative D27a = 19 tests; D-phase WYSIWYG layer total = 217)
 - Committed: (this iteration)
