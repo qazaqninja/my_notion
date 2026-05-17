@@ -1,8 +1,9 @@
 /// Field types Quill's `.database.yaml` declares. Mirrors the
-/// client-side `ColumnType` set — enough to validate the four
-/// shapes a public form is likely to surface: free text, structured
-/// numbers, booleans (single checkbox), and one-of (select).
-enum FormFieldType { text, number, checkbox, select }
+/// client-side `ColumnType` subset useful for public form
+/// submission: free text, structured numbers, booleans (single
+/// checkbox), one-of (select), and dates (`<input type="date">`
+/// posts ISO 8601 `YYYY-MM-DD`).
+enum FormFieldType { text, number, checkbox, select, date }
 
 /// One column definition pulled from a `.database.yaml` `columns:`
 /// block. `options` is only populated for `FormFieldType.select`.
@@ -123,6 +124,9 @@ FormFieldType _parseType(String raw) {
     case 'select':
     case 'enum':
       return FormFieldType.select;
+    case 'date':
+    case 'datetime':
+      return FormFieldType.date;
     case 'text':
     case 'string':
     case '':
@@ -206,6 +210,18 @@ FormValidationResult validateSubmission(
           errors[field.name] = 'not_in_options';
         } else {
           normalized[field.name] = input;
+        }
+      case FormFieldType.date:
+        // Browser `<input type="date">` posts ISO 8601 YYYY-MM-DD.
+        // DateTime.tryParse handles that plus the longer datetime
+        // forms a future `<input type="datetime-local">` would emit
+        // (YYYY-MM-DDThh:mm). Normalised to a stable ISO string so
+        // downstream consumers don't have to re-parse.
+        final dt = DateTime.tryParse(input);
+        if (dt == null) {
+          errors[field.name] = 'expected_date';
+        } else {
+          normalized[field.name] = dt.toIso8601String();
         }
     }
   }

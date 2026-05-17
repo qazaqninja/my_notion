@@ -216,4 +216,83 @@ title: Customers
       expect(r.normalized, {'a': 'hi'});
     });
   });
+
+  group('FormFieldType.date (M1479)', () {
+    test('"date" parses to FormFieldType.date', () {
+      const src = '''
+columns:
+  - name: due_by
+    type: date
+''';
+      final s = parseFormSchema(src);
+      expect(s.fields.single.type, FormFieldType.date);
+    });
+
+    test('"datetime" alias parses to FormFieldType.date', () {
+      const src = '''
+columns:
+  - name: scheduled_at
+    type: datetime
+''';
+      final s = parseFormSchema(src);
+      expect(s.fields.single.type, FormFieldType.date);
+    });
+
+    test('valid ISO YYYY-MM-DD round-trips into normalized', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'due_by', type: FormFieldType.date),
+        ]),
+        const {'due_by': '2026-05-17'},
+      );
+      expect(r.isValid, isTrue);
+      // DateTime.parse normalises to a full ISO 8601 timestamp.
+      expect(r.normalized['due_by'], startsWith('2026-05-17'));
+    });
+
+    test('valid datetime-local round-trips into normalized', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'when', type: FormFieldType.date),
+        ]),
+        const {'when': '2026-05-17T14:30'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['when'], startsWith('2026-05-17T14:30'));
+    });
+
+    test('garbage input surfaces expected_date error', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'due_by', type: FormFieldType.date),
+        ]),
+        const {'due_by': 'tomorrow'},
+      );
+      expect(r.isValid, isFalse);
+      expect(r.errors, {'due_by': 'expected_date'});
+    });
+
+    test('missing required date errors with required (not expected_date)',
+        () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+              name: 'due_by', type: FormFieldType.date, required: true),
+        ]),
+        const {},
+      );
+      expect(r.errors, {'due_by': 'required'});
+    });
+
+    test('missing optional date is skipped entirely', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'due_by', type: FormFieldType.date),
+        ]),
+        const {},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized, isEmpty);
+    });
+  });
 }

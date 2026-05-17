@@ -13,6 +13,7 @@ import 'package:backend/forms/form_schema.dart';
 ///   - number    → <input type="number" name="…">
 ///   - checkbox  → <input type="checkbox" name="…">
 ///   - select    → <select name="…">… options …</select>
+///   - date      → <input type="date" name="…">  (ISO YYYY-MM-DD)
 ///
 /// `required: true` fields get the HTML `required` attribute so
 /// the browser validates before submit (the server still re-
@@ -49,7 +50,7 @@ String renderFormHtml({
       'h1{font-size:20px;margin:0 0 16px}'
       'form{display:flex;flex-direction:column;gap:14px}'
       'label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#555}'
-      'input[type=text],input[type=number],select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:6px}'
+      'input[type=text],input[type=number],input[type=date],select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:6px}'
       'button{font:inherit;padding:10px 16px;border-radius:6px;border:0;background:#222;color:#fff;cursor:pointer;align-self:flex-start}'
       '</style>'
       '</head>'
@@ -94,5 +95,8 @@ String _renderField(
           '<select name="$attrName"$req>'
           '$options'
           '</select></label>';
+    case FormFieldType.date:
+      return '<label>$label'
+          '<input type="date" name="$attrName"$req></label>';
   }
 }

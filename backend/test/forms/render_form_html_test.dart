@@ -199,5 +199,35 @@ void main() {
         expect(html, isNot(contains('<select')));
       });
     });
+
+    group('date fields (M1479)', () {
+      test('FormFieldType.date emits <input type="date">', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(name: 'due_by', type: FormFieldType.date),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html,
+            contains('<input type="date" name="due_by"></label>'));
+      });
+
+      test('required date carries the required attribute', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+              name: 'due_by',
+              type: FormFieldType.date,
+              required: true),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html,
+            contains(
+                '<input type="date" name="due_by" required></label>'));
+      });
+    });
   });
 }
