@@ -7,8 +7,8 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 4 sub-pass 3/4 — public_member_api_docs for db/* cluster: db/users.dart (7) + db/sync.dart (6) + db/exceptions.dart (4) = 17 findings. After this sub-pass: sub-pass 4 covers the auth + sync tail (auth/user.dart 4 + auth/tokens.dart 3 + auth/password.dart 2 + sync/frontmatter_probe.dart 3 + sync/ws_hub.dart 1 + sync/awareness_message.dart 1 + public/markdown_html.dart 1 = 15). After cluster 4 full clear: ~25 misc info findings then revisit-by-priority survey.
-- **Status:** in_progress (sub-passes 1+2 of ~4 complete)
+- **Task:** Forms polish slice 3b cluster 4 sub-pass 4/4 — public_member_api_docs for the auth + sync + public tail (15 findings across 7 files). Distribution: auth/user.dart (4) + auth/tokens.dart (3) + auth/password.dart (2) + sync/frontmatter_probe.dart (3) + sync/ws_hub.dart (1) + sync/awareness_message.dart (1) + public/markdown_html.dart (1). After this sub-pass, cluster 4 is fully clear (68 docs added across M1502+M1504+M1506+M150x). Then ~25 misc info findings remain (mix of small clusters) before revisit-by-priority survey for next milestone.
+- **Status:** in_progress (sub-passes 1+2+3 of 4 complete)
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
   - BL-12 design smell on RemoteCursorOverlay: hard `BlocBuilder<PresenceCubit, PresenceState>` requires the cubit ancestor, blocking isolated SourceView tests. Switch to a maybeOf-tolerant pattern when the SourceView test sweep lands — paired refactor.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1506 — backend lint cleanup 4 sub-pass 3 (public_member_api_docs for db/* 17 → 0)** (pure-doc commit, third slice of cluster 4)
+- Committed: (this iteration)
+- TaskList ID: 157 (slice 3b cluster 4 sub-pass 3 of 4)
+- Notes: Third sub-pass of cluster 4. Three files, 44 inserts. `lib/db/exceptions.dart` 4 findings: DbException const ctor + message + cause + DbUnavailableException const ctor. `lib/db/users.dart` 7 findings: EmailAlreadyTakenException const ctor + email field; UserRepositoryBase 4 abstract methods (create/findById/findByEmail/passwordHashOf); UserRepository const ctor. `lib/db/sync.dart` 6 findings: UpsertOutcome's two named ctors (persisted/conflict) + isConflict getter; SyncRepositoryBase.listFor abstract method; SyncRepository class header doc + const ctor. All doc comments are concise — no behavior change, no signature change. dart analyze: 57 → 40 (-17, exact match). public_member_api_docs cluster: 32 → 15. dart test: 192/192 still green. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — clean across all 5 specialists; commit explicitly confirmed compliant with CA-02/03/07, RP-02, RP-03, CA-05, DP-02, BL-07. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1505 — loop-state advance** (record M1504 + advance to cluster 4 sub-pass 3)
+- Committed: prior to M1506 (this iteration)
+- TaskList ID: 157 sub-pass 2 closeout
+- Notes: Recorded M1504 (forms/routes + sync/file_summary docs). Advanced **Current** pointer to sub-pass 3 (db/* cluster). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1504 — backend lint cleanup 4 sub-pass 2 (public_member_api_docs for forms/routes + sync/file_summary 18 → 0)** (pure-doc commit, second slice of cluster 4)
 - Committed: (this iteration)
