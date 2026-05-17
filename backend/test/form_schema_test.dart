@@ -660,4 +660,85 @@ columns:
       expect(r.errors['notes'], 'required');
     });
   });
+
+  // E60 slice 4 (M1616) — pattern field type.
+  group('parseFormSchema pattern types', () {
+    test('"pattern" parses to FormFieldType.pattern + reads pattern key',
+        () {
+      const src = r'''
+columns:
+  - name: code
+    type: pattern
+    pattern: ^[A-Z]{3}$
+''';
+      final s = parseFormSchema(src);
+      expect(s.fields.single.type, FormFieldType.pattern);
+      expect(s.fields.single.pattern, r'^[A-Z]{3}$');
+    });
+
+    test('"regex" alias parses to FormFieldType.pattern', () {
+      const src = r'''
+columns:
+  - name: code
+    type: regex
+    pattern: \d+
+''';
+      expect(parseFormSchema(src).fields.single.type, FormFieldType.pattern);
+    });
+
+    test('matching value passes', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+            name: 'code',
+            type: FormFieldType.pattern,
+            pattern: r'^[A-Z]{3}$',
+          ),
+        ]),
+        const {'code': 'USD'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['code'], 'USD');
+    });
+
+    test('non-matching value rejected with expected_pattern', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+            name: 'code',
+            type: FormFieldType.pattern,
+            pattern: r'^[A-Z]{3}$',
+          ),
+        ]),
+        const {'code': 'usd'},
+      );
+      expect(r.errors['code'], 'expected_pattern');
+    });
+
+    test('invalid regex string fail-soft (input accepted)', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+            name: 'code',
+            type: FormFieldType.pattern,
+            pattern: '[unclosed',
+          ),
+        ]),
+        const {'code': 'anything'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['code'], 'anything');
+    });
+
+    test('null pattern with type=pattern fail-soft (input accepted)', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'code', type: FormFieldType.pattern),
+        ]),
+        const {'code': 'anything'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['code'], 'anything');
+    });
+  });
 }

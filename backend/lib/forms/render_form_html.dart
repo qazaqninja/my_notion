@@ -28,6 +28,7 @@ import 'package:backend/forms/form_schema.dart';
 ///   - email     → <input type="email" name="…">  (E60 slice 1)
 ///   - url       → <input type="url" name="…">  (E60 slice 2)
 ///   - longtext  → <textarea name="…" rows="4"></textarea>  (E60 slice 3)
+///   - pattern   → <input type="text" pattern="…" name="…">  (E60 slice 4)
 ///
 /// `required: true` fields get the HTML `required` attribute so
 /// the browser validates before submit (the server still re-
@@ -136,6 +137,16 @@ String _renderField(
       // can grow the box for longer answers.
       return '<label>$label'
           '<textarea name="$attrName" rows="4"$req></textarea></label>';
+    case FormFieldType.pattern:
+      // E60 slice 4: regex-constrained text input. The pattern attribute
+      // is attribute-escaped to neuter `"` breakouts even though the
+      // yaml is operator-controlled. Server still re-validates via
+      // RegExp; client-side is just UX.
+      final patAttr = f.pattern == null
+          ? ''
+          : ' pattern="${attrEsc.convert(f.pattern!)}"';
+      return '<label>$label'
+          '<input type="text" name="$attrName"$patAttr$req></label>';
     case FormFieldType.multi:
       // Group of checkboxes — one per option, all sharing the
       // field name. Each checked box posts as `name=value`,

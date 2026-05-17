@@ -37,6 +37,14 @@ enum FormFieldType {
   /// rejection — same passthrough as [FormFieldType.text]; the
   /// rendered widget shape is the only difference.
   longtext,
+
+  /// Free text constrained by a per-field regex (E60 slice 4). The
+  /// `pattern:` yaml key supplies the regex; renderer emits
+  /// `<input type="text" pattern="...">`; validator matches input
+  /// server-side, emits `expected_pattern` on mismatch. Invalid
+  /// regex strings fail-soft (input passes through) so a typo in
+  /// the schema doesn't reject every submission.
+  pattern,
 }
 
 /// One column definition pulled from a `.database.yaml` `columns:`
@@ -50,6 +58,7 @@ class FormFieldDef {
     required this.type,
     this.required = false,
     this.options = const <String>[],
+    this.pattern,
   });
 
   /// Column name as posted by the form — must match the
@@ -65,6 +74,11 @@ class FormFieldDef {
   /// Universe of allowed values for `select` + `multi`; empty for
   /// other types.
   final List<String> options;
+
+  /// Per-field regex for [FormFieldType.pattern] (E60 slice 4). Null
+  /// for every other type. Invalid regex strings fail-soft at
+  /// validate time.
+  final String? pattern;
 }
 
 /// Whole-form schema. A `FormSchema.empty` matches the "no schema
@@ -126,6 +140,7 @@ FormSchema parseFormSchema(String yamlBody) {
     var type = FormFieldType.text;
     var required = false;
     var options = const <String>[];
+    String? pattern;
     i++;
     while (i < lines.length) {
       final nl = lines[i];
@@ -150,6 +165,8 @@ FormSchema parseFormSchema(String yamlBody) {
           required = value == 'true' || value == 'yes';
         case 'options':
           options = _parseOptions(value);
+        case 'pattern':
+          pattern = value;
       }
       i++;
     }
@@ -158,6 +175,7 @@ FormSchema parseFormSchema(String yamlBody) {
       type: type,
       required: required,
       options: options,
+      pattern: pattern,
     ));
   }
   return FormSchema(fields: fields);
@@ -195,6 +213,9 @@ FormFieldType _parseType(String raw) {
     case 'textarea':
     case 'paragraph':
       return FormFieldType.longtext;
+    case 'pattern':
+    case 'regex':
+      return FormFieldType.pattern;
     case 'text':
     case 'string':
     case '':
@@ -303,6 +324,25 @@ FormValidationResult validateSubmission(
           errors[field.name] = 'expected_date';
         } else {
           normalized[field.name] = dt.toIso8601String();
+        }
+      case FormFieldType.pattern:
+        // E60 slice 4: per-field regex from yaml `pattern:` key. Fail-soft
+        // on invalid regex (accept input) so a schema typo doesn't reject
+        // every submission; reject mismatches with `expected_pattern`.
+        final pat = field.pattern;
+        if (pat == null || pat.isEmpty) {
+          normalized[field.name] = input;
+          break;
+        }
+        try {
+          if (RegExp(pat).hasMatch(input)) {
+            normalized[field.name] = input;
+          } else {
+            errors[field.name] = 'expected_pattern';
+          }
+        } on FormatException {
+          // Invalid regex — fail-soft.
+          normalized[field.name] = input;
         }
       case FormFieldType.url:
         // E60 slice 2: HTML5 url input accepts a wide range of schemes

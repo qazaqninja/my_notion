@@ -412,5 +412,56 @@ void main() {
         expect(html, contains('textarea{resize:vertical'));
       });
     });
+
+    // E60 slice 4 (M1616) — pattern field renders as text input with
+    // pattern attribute.
+    group('pattern field', () {
+      test('renders <input type="text" pattern="...">', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+            name: 'code',
+            type: FormFieldType.pattern,
+            pattern: r'^[A-Z]{3}$',
+          ),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(
+          html,
+          contains(r'<input type="text" name="code" pattern="^[A-Z]{3}$"'),
+        );
+      });
+
+      test('pattern attribute is HTML-escaped', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+            name: 'code',
+            type: FormFieldType.pattern,
+            pattern: '"><script>',
+          ),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, isNot(contains('"><script>')));
+        // attribute-mode escape converts `"` to `&quot;` and `<` to `&lt;`.
+        expect(html, contains('&quot;'));
+      });
+
+      test('null pattern emits plain text input (no pattern attr)', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(name: 'code', type: FormFieldType.pattern),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('<input type="text" name="code"'));
+        expect(html, isNot(contains('pattern="')));
+      });
+    });
   });
 }
