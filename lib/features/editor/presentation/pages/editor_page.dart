@@ -17,13 +17,11 @@ import '../../../reminders/presentation/bloc/reminders_bloc.dart';
 import '../../../reminders/presentation/bloc/reminders_event.dart';
 import '../../../forms/domain/repositories/forms_repository.dart';
 import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
-import '../../../crdt/domain/entities/quill_crdt_doc.dart';
-import '../../../sync/data/sync_ws_binder.dart';
-import '../../../sync/data/sync_ws_client.dart';
 import '../../../sync/domain/usecases/build_public_password_entries.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
 import '../../../sync/presentation/bloc/sync_state.dart';
+import '../../../sync/presentation/default_editor_sync_binder_factory.dart';
 import '../../../sync/presentation/editor_sync_ws_mount.dart';
 import '../../../sync/presentation/widgets/pull_reconcile_dialog.dart';
 import '../../../../shared/theme/quill_tokens.dart';
@@ -1697,17 +1695,12 @@ class _EditorBodyState extends State<_EditorBody> {
               // backendBaseUrl ('http://localhost:8080'). When
               // E14+ exposes a settings-page override, both
               // strings will read from the same source.
-              binderFactory: ({
-                required String ulid,
-                required String token,
-                required String initialBody,
-              }) =>
-                  SyncWsBinder(
-                client: SyncWsClient(wsUrl: 'ws://localhost:8080'),
-                ulid: ulid,
-                token: token,
-                initialDoc: QuillCrdtDoc.fromMarkdown(initialBody),
-              ),
+              // H2.4d-i: factory closure extracted to
+              // sync/presentation so this presentation file no
+              // longer imports from sync/data/ directly (resolves
+              // the CA-04 cleanup deferred from M1385).
+              binderFactory:
+                  defaultEditorSyncBinderFactory(wsUrl: 'ws://localhost:8080'),
               child: Focus(
             autofocus: true,
             child: Column(
