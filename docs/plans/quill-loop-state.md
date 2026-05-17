@@ -7,10 +7,25 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E59-b H4c — RemoteCursorOverlay widget for the editor. Takes a `PresenceState` and paints one chiclet per active peer cursor at the correct character offset in the source-mode textarea. Uses the existing `RenderEditable` to translate `cursorIndex → caret rect`, then positions an `AnimatedPositioned` colored bar + small label tag near it. Path: `lib/features/editor/presentation/widgets/remote_cursor_overlay.dart` + golden test via alchemist for the 2-peer case. State-free widget consuming PresenceCubit via `BlocBuilder<PresenceCubit, PresenceState>`. H4d (EditorSyncWsScope dispatcher wiring + outbound cursor broadcast) closes the loop after.
+- **Task:** E59-b H4d — close the presence loop by wiring SyncWsBinder/SyncWsClient to dispatch `kind:'awareness'` messages into PresenceCubit AND broadcast outbound cursor changes when the local TextField selection moves. Two halves: (1) **inbound** — extend the existing per-page WS message handler to attempt `AwarenessMessage.tryDecode(raw)` first; on success route to `presenceCubit.remoteCursorReceived(msg)`, else fall through to the CRDT update handler. (2) **outbound** — debounce TextField selection changes (~100ms) and emit AwarenessMessage.encode() back through the WS sink. Also wire the RemoteCursorOverlay from M1454 into the editor body, providing the cursorRectAt resolver from the live RenderEditable. Path: `lib/features/sync/data/sync_ws_dispatcher.dart` (new) + edits in EditorWsAttachController + EditorSyncWsMount + _EditorBodyState. Recommend bite-sizing as: H4d-i (inbound dispatcher + tests), H4d-ii (outbound debounced broadcast), H4d-iii (overlay wire-in + RenderEditable rect resolver).
 - **Status:** pending
 
 ## Last completed
+
+- **M1455 — TH-03+BL-12+TS-03 fix-forward on M1454 overlay** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 140 (rolls into H4c fix-forward)
+- Notes: Orchestrator audit of M1454 returned 0 BLOCK / 3 WARN / 3 INFO. All 3 WARNs fixed: (1) TH-03 — lifted `Color(0xFF888888)` from inline `_parseColor` body to file-scope `_peerCursorColorFallback` const with rationale ("defensive sentinel, not theme color"); (2) BL-12 — added `buildWhen: (prev, next) => prev.cursors != next.cursors` to the BlocBuilder so future PresenceState additions don't accidentally repaint; (3) TS-03 — added a focused blocTest in presence_cubit_test.dart's TTL expiry sub-group asserting the entry persists past would-be-expiry when `ttl == Duration.zero`. 3 INFO items deferred per orchestrator: TS-08 alchemist golden batched with project-wide deferred queue (H4d closeout candidate), TS-04 naming compliant, open-question answers already correct. flutter analyze clean; 17 tests pass (7 overlay + 10 cubit). Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1454 — E59-b H4c: RemoteCursorOverlay widget** (third slice of presence-over-WS)
+- Committed: (this iteration)
+- TaskList ID: 140
+- Notes: Third slice of E59-b. Three files: (1) `lib/features/editor/presentation/widgets/remote_cursor_overlay.dart` (~110 lines, +~14 in M1455) — RemoteCursorOverlay StatelessWidget consuming PresenceCubit via BlocBuilder; takes a CursorRectResolver typedef (`Rect? Function(int charIndex)`) injected by the editor; paints one Positioned 2-px AnimatedContainer per peer at the resolved rect + Align.topRight label tag with first-4-chars of userId in peer color; null-resolver drops that peer; root IgnorePointer so taps fall through to TextField; `_parseColor` falls back to `_peerCursorColorFallback` const (M1455 TH-03 lift) on malformed hex. (2) `lib/features/sync/presentation/cubit/presence_cubit.dart` — `remoteCursorReceived` now skips Timer scheduling when `ttl == Duration.zero` (test-only escape hatch with rationale comment; production default 5s unchanged). (3) `test/features/editor/widgets/remote_cursor_overlay_test.dart` (~170 lines) — 7 widget tests across 3 sub-groups: rendering (4: empty / single peer rect / two peers / null resolver drops), label content (2: long userId truncated to 4 chars / short userId verbatim), input pass-through (1: IgnorePointer with ignoring=true via `.where((w) => w.ignoring)` filter to skip Material's defaults). setUp creates PresenceCubit(ttl: Duration.zero) + tearDown closes. Orchestrator audit: 0 BLOCK / 3 WARN (all fixed in M1455: TH-03 hex literal, BL-12 buildWhen, TS-03 zero-TTL blocTest) / 3 INFO (TS-08 golden deferred, TS-04 OK, design questions answered). 17 tests pass total; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1453 — loop-state advance** (record M1451/M1452 + advance to H4c)
+- Committed: (this iteration)
+- TaskList ID: 139 closeout
+- Notes: Recorded M1451 (PresenceCubit + DTO mirror) + M1452 (CA-05/BL-12 doc fix). Advanced to H4c. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1452 — CA-05+BL-12 doc fix-forward on M1451 presence layer** (orchestrator gate cleanup)
 - Committed: (this iteration)
