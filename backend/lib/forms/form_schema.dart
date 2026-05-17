@@ -8,7 +8,9 @@
 enum FormFieldType { text, number, checkbox, select, date, multi }
 
 /// One column definition pulled from a `.database.yaml` `columns:`
-/// block. `options` is only populated for `FormFieldType.select`.
+/// block. `options` is populated for `FormFieldType.select` and
+/// `FormFieldType.multi` (M1482) — the universe of one-of /
+/// many-of values respectively.
 class FormFieldDef {
   const FormFieldDef({
     required this.name,

@@ -341,7 +341,7 @@ Future<Response> _handleSubmit(
   if (raw.length > _kMaxFormBodyBytes) {
     return Response(413, body: 'body_too_large');
   }
-  final fields = _parseForm(raw);
+  final fields = parseUrlEncodedForm(raw);
   // Strip blank values — a flat `?foo=&bar=` shouldn't count as
   // a real submission.
   fields.removeWhere((_, v) => v.isEmpty);
@@ -436,7 +436,11 @@ Router buildOwnerFormsRouter({required FormsRepositoryBase repo}) {
 /// degrades gracefully — no observable change for existing
 /// callers. validateSubmission for `multi` splits on `,` and
 /// validates each value against `field.options`.
-Map<String, String> _parseForm(String body) {
+///
+/// Public (was `_parseForm`) so its repeated-key contract can be
+/// unit-tested directly without standing up a route handler —
+/// M1483 closes the orchestrator's M1482 TS-01 gap.
+Map<String, String> parseUrlEncodedForm(String body) {
   final out = <String, String>{};
   for (final pair in body.split('&')) {
     if (pair.isEmpty) continue;
