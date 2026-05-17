@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -15,6 +16,7 @@ import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../../core/ui/anchor_rect.dart';
 import '../../../../core/ui/anchor_rect_x.dart';
 import '../../domain/attachment_writer.dart';
+import '../../domain/block_selection_gesture.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
@@ -152,6 +154,13 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // the local rect maps 1-to-1 without a localToGlobal hop.
   final GlobalKey _docLayoutKey = GlobalKey();
 
+  /// D25 slice 4b (M1602): tracks the last clicked block id so that
+  /// Cmd+Shift+Click can extend the block selection from that anchor
+  /// to the newly-clicked block. Updated on every block-hit click;
+  /// stays untouched on `passthrough` and `clear` intents (clicking
+  /// off the document doesn't change the anchor).
+  String? _lastClickedBlockNodeId;
+
   @override
   void initState() {
     super.initState();
@@ -229,6 +238,53 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     );
   }
 
+  /// D25 slice 4b (M1602): passive pointer-down observer that mutates
+  /// `BlockSelectionCubit` based on the click's hit-test + modifier
+  /// state. Wired via a `Listener` (not a `GestureDetector`) so we
+  /// don't compete with super_editor's own gesture pipeline — both
+  /// receive the event and act on the parts they own (we own the
+  /// multi-selection state, super_editor owns the text caret).
+  ///
+  /// On `replace` intent we currently dispatch `clearSelection` rather
+  /// than `selectBlock`: a plain click should let super_editor's
+  /// caret take over, so the multi-selection clears. A future
+  /// block-handle hit-test (the `⋮⋮` gutter glyph on hover) can wire
+  /// `selectBlock` directly.
+  void _onPointerDown(PointerDownEvent event) {
+    final DocumentLayout? layout =
+        _docLayoutKey.currentState as DocumentLayout?;
+    final position = layout?.getDocumentPositionAtOffset(event.localPosition);
+    final nodeId = position?.nodeId;
+    final keyboard = HardwareKeyboard.instance;
+    final intent = interpretBlockClick(
+      nodeId: nodeId,
+      isPrimaryShortcutPressed: keyboard.isMetaPressed || keyboard.isControlPressed,
+      isShiftPressed: keyboard.isShiftPressed,
+    );
+    final cubit = context.read<BlockSelectionCubit>();
+    switch (intent) {
+      case BlockSelectionGestureIntent.clear:
+      case BlockSelectionGestureIntent.replace:
+        cubit.clearSelection();
+      case BlockSelectionGestureIntent.toggle:
+        if (nodeId != null) {
+          cubit.toggleBlock(nodeId);
+          _lastClickedBlockNodeId = nodeId;
+        }
+      case BlockSelectionGestureIntent.extend:
+        if (nodeId != null) {
+          cubit.extendSelection(
+            anchor: _lastClickedBlockNodeId ?? nodeId,
+            extent: nodeId,
+            document: _doc,
+          );
+          _lastClickedBlockNodeId = nodeId;
+        }
+      case BlockSelectionGestureIntent.passthrough:
+        break;
+    }
+  }
+
   AnchorRect _caretAnchor() {
     const zero = AnchorRect(left: 0, top: 0, right: 0, bottom: 0);
     final DocumentLayout? layout =
@@ -265,20 +321,23 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       // selection-splice command that mutates the document.
       body: Stack(
         children: [
-          SuperEditor(
-            editor: _editor,
-            documentLayoutKey: _docLayoutKey,
-            // D24a slice 2 (M1570): prepend the block-reorder shortcut so
-            // Cmd+Shift+ArrowUp/Down moves the active block before
-            // super_editor's default arrow-key selection-move fires.
-            keyboardActions: [
-              blockReorderKeyboardAction,
-              blockDuplicateKeyboardAction,
-              blockDeleteKeyboardAction,
-              headingConversionKeyboardAction,
-              blockConversionKeyboardAction,
-              ...defaultKeyboardActions,
-            ],
+          Listener(
+            onPointerDown: _onPointerDown,
+            child: SuperEditor(
+              editor: _editor,
+              documentLayoutKey: _docLayoutKey,
+              // D24a slice 2 (M1570): prepend the block-reorder shortcut so
+              // Cmd+Shift+ArrowUp/Down moves the active block before
+              // super_editor's default arrow-key selection-move fires.
+              keyboardActions: [
+                blockReorderKeyboardAction,
+                blockDuplicateKeyboardAction,
+                blockDeleteKeyboardAction,
+                headingConversionKeyboardAction,
+                blockConversionKeyboardAction,
+                ...defaultKeyboardActions,
+              ],
+            ),
           ),
           // D25 slice 4a (M1600): paint the Notion-style multi-block
           // selection highlight behind the document content. Gesture
