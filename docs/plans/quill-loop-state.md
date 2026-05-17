@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder, 18 tests). D24c closed (block duplicate, 18 tests). D24d closed (block delete, 14 tests). D24-family fully closed = 50 tests across 3 Notion-native shortcuts.**
-- **Task:** D-phase pick-next survey #3. D24-family complete. Candidates: (a) **D25 multi-select port** — no super_editor built-in; would need a Notion-style click+shift-click selection-set with keyboard ops affecting the whole set. Bigger lift (3-5 slices). (b) **D28-D30 cutover** — flip `/editor-beta` to default `/editor` route. Needs dogfooding budget; risky without final polish pass. (c) **E59 pick-next #3 ladder** — y_crdt WASM swap / web clipper / forms polish / FS-04 decomposition cleanup. Each opens fresh feature surface. (d) **G4 live docker smoke** — gated by user-time. (e) **TS-08 alchemist editor goldens** — pure test investment, catches WYSIWYG regressions. (f) **Other v1.x backlog** — re-read FEATURES.md for items not yet checked. Lean toward (e) or (c) for continued incremental progress; (a) is the highest-value-but-biggest-lift; (b) is dogfooding-gated. Commit pivot as M1581.
+- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 fully closed. 198 cumulative tests. 4 Notion shortcuts (reorder Cmd+Shift+Up/Down, duplicate Cmd+D, delete Cmd+Shift+Backspace) + 7 inline marks all live in WYSIWYG.**
+- **Task:** D27a slice 1 — heading keyboard shortcut resolver (pure-Dart). Notion uses Cmd+Opt+1/2/3 for h1/h2/h3 and Cmd+Opt+0 for paragraph on macOS. M1582 pick-next survey ruled out: mermaid native rendering already shipped (MermaidView at lib/shared/widgets/mermaid_view.dart:25), super_editor's defaultReactions already handle `# `/`-`/`1. `/`> `/`---`/`![]()`/`--` auto-format on type, so slice surface there is empty. D25 multi-select is 3-5 slices (deferred). D28-D30 cutover risk-gated. Pivoted to D27a heading shortcuts as the natural next D24-family-shaped slice — super_editor ships `ChangeParagraphBlockTypeRequest({nodeId, blockType: Attribution?})` at paragraph.dart:626 + `header1/2/3Attribution` exports. Resolver returns `({String nodeId, Attribution? blockType})?` given (document, selection, target). Slice 2 wires Cmd+Opt+1/2/3 and Cmd+Opt+0 keyboard handlers (one handler with a switch on logicalKey).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1582 — D-phase pick-next survey #3 closeout — pivot to D27a (heading keyboard shortcuts Cmd+Opt+1/2/3/0)** (no code; doc-only pivot decision)
+- Committed: (this iteration)
+- TaskList ID: 190 closeout
+- Notes: Surveyed FEATURES.md 🚧 markers + verified previously-listed gaps: mermaid native rendering ALREADY shipped (`MermaidView` at `lib/shared/widgets/mermaid_view.dart:25`); super_editor's `defaultReactions` already auto-format block prefixes on type (`# `/`-`/`1. `/`> `/`---`/`![]()`/`--`). D25 multi-select is 3-5 slices (deferred — biggest single user-visible lift, but doesn't fit small-bite cadence). D28-D30 cutover is dogfooding-gated. Picked D27a heading keyboard shortcuts as the natural next D24-family-shaped slice: super_editor ships `ChangeParagraphBlockTypeRequest({nodeId, blockType: Attribution?})` at paragraph.dart:626 + `header1/2/3Attribution` exports. Notion uses Cmd+Opt+1/2/3 for h1/h2/h3 + Cmd+Opt+0 for paragraph (macOS); Ctrl+Shift on other platforms. Slice 1: pure-Dart resolver returning `({String nodeId, Attribution? blockType})?` given (document, selection, target). Slice 2: one keyboard handler with a switch on logicalKey mapping digit-1/2/3/0 → target attribution. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1580 — D24d slice 2 — block delete keyboard handler + EditorBetaPage wiring (D24d closed; D24-family fully closed)** (6 parser tests; cumulative D24d = 14 tests; D24-family cumulative = 50 tests)
 - Committed: (this iteration)
