@@ -115,6 +115,12 @@ class _BetaEditorShell extends StatefulWidget {
 
 class _BetaEditorShellState extends State<_BetaEditorShell> {
   static const _serializer = SuperEditorSerializer();
+  // M1546 (RP-02 fix-forward on M1545): AttachmentWriter is injectable via a
+  // late-bound override so widget tests can swap a fake without standing up
+  // the real file_picker platform channel. Default is `const
+  // AttachmentWriter()` — production behaviour unchanged.
+  @visibleForTesting
+  AttachmentWriter attachmentWriter = const AttachmentWriter();
   late final MutableDocument _doc;
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
@@ -330,7 +336,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
 
     final String relpath;
     try {
-      relpath = await const AttachmentWriter().copy(
+      relpath = await attachmentWriter.copy(
         source: File(picked.path!),
         vaultRoot: Directory(vault.rootPath),
       );
