@@ -5,22 +5,52 @@
 /// ISO 8601 `YYYY-MM-DD`), and many-of (`multi`-select rendered
 /// as a checkbox group whose repeated keys the parser joins with
 /// `,` per the M1482 _parseForm update).
-enum FormFieldType { text, number, checkbox, select, date, multi }
+enum FormFieldType {
+  /// Free-form text → `<input type="text">`.
+  text,
+
+  /// Numeric input → `<input type="number">` validated via [num.tryParse].
+  number,
+
+  /// Single boolean → `<input type="checkbox">`.
+  checkbox,
+
+  /// One-of choice from a fixed option set → `<select>`.
+  select,
+
+  /// Calendar date (ISO 8601 `YYYY-MM-DD`) → `<input type="date">`.
+  date,
+
+  /// Many-of choice from a fixed option set → checkbox group; repeated
+  /// keys joined with `,` in the parser per M1482.
+  multi,
+}
 
 /// One column definition pulled from a `.database.yaml` `columns:`
 /// block. `options` is populated for `FormFieldType.select` and
 /// `FormFieldType.multi` (M1482) — the universe of one-of /
 /// many-of values respectively.
 class FormFieldDef {
+  /// Construct a column definition for the form schema.
   const FormFieldDef({
     required this.name,
     required this.type,
     this.required = false,
     this.options = const <String>[],
   });
+
+  /// Column name as posted by the form — must match the
+  /// `application/x-www-form-urlencoded` key.
   final String name;
+
+  /// Widget shape + parser the column resolves to.
   final FormFieldType type;
+
+  /// When true the validator rejects an empty / absent value.
   final bool required;
+
+  /// Universe of allowed values for `select` + `multi`; empty for
+  /// other types.
   final List<String> options;
 }
 
@@ -29,8 +59,14 @@ class FormFieldDef {
 /// during the rollout of F4 / F5 so existing form pages keep working
 /// until their `.database.yaml` is populated.
 class FormSchema {
+  /// Construct a schema from a list of column definitions.
   const FormSchema({required this.fields});
+
+  /// Column definitions in declaration order.
   final List<FormFieldDef> fields;
+
+  /// Sentinel for "no schema resolved" — validator passes any
+  /// non-empty body through unchanged.
   static const FormSchema empty = FormSchema(fields: <FormFieldDef>[]);
 }
 
@@ -162,9 +198,18 @@ String _unquote(String s) =>
 /// Result of running a form payload against a schema. `errors` is
 /// keyed by field name; an empty map means "valid".
 class FormValidationResult {
+  /// Construct a validation result. Empty [errors] means success;
+  /// [normalized] carries the type-coerced field values to persist.
   const FormValidationResult({required this.errors, required this.normalized});
+
+  /// Field-name → typed error code. Empty when the submission validated.
   final Map<String, String> errors;
+
+  /// Coerced field values to store as JSONB. Booleans, numbers, and
+  /// `List<String>` for multi-select land as native Dart types.
   final Map<String, Object?> normalized;
+
+  /// True iff the submission passed validation.
   bool get isValid => errors.isEmpty;
 }
 
