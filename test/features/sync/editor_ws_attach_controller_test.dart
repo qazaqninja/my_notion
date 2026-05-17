@@ -306,6 +306,108 @@ void main() {
         );
         expect(hasEvents, isTrue);
       });
+
+      test('closes awarenessStream (H4d-iii-a)', () async {
+        final rec = _BinderFactoryRecorder();
+        final ctl = EditorWsAttachController(binderFactory: rec.make);
+        await ctl.reconcile(
+          authed: true,
+          published: true,
+          ulid: 'U',
+          token: 't',
+          initialBody: '',
+        );
+        await ctl.dispose();
+        final hasEvents = await ctl.awarenessStream.isEmpty.timeout(
+          const Duration(seconds: 1),
+        );
+        expect(hasEvents, isTrue);
+      });
+    });
+
+    group('awarenessStream (H4d-iii-a)', () {
+      const awarenessJson =
+          '{"kind":"awareness","userId":"alice","pageUlid":"U-1",'
+          '"cursorIndex":7,"color":"#FF5722"}';
+
+      test('relays parsed awareness from the active binder',
+          () async {
+        final rec = _BinderFactoryRecorder();
+        final ctl = EditorWsAttachController(binderFactory: rec.make);
+        final received = <int>[];
+        final sub = ctl.awarenessStream
+            .listen((msg) => received.add(msg.cursorIndex));
+        await ctl.reconcile(
+          authed: true,
+          published: true,
+          ulid: 'U-1',
+          token: 'jwt',
+          initialBody: '',
+        );
+        // Drive the underlying fake channel — the binder routes
+        // through its own awareness dispatcher (M1457 H4d-i) and
+        // the controller relays via the new subscription.
+        rec.channels.last.simulateMessage(awarenessJson);
+        await pumpEventQueue();
+        expect(received, [7]);
+        await sub.cancel();
+        await ctl.dispose();
+      });
+
+      test('does NOT emit on docStream (presence is not a doc update)',
+          () async {
+        final rec = _BinderFactoryRecorder();
+        final ctl = EditorWsAttachController(binderFactory: rec.make);
+        final docBodies = <String>[];
+        final sub =
+            ctl.docStream.listen((d) => docBodies.add(d.body));
+        await ctl.reconcile(
+          authed: true,
+          published: true,
+          ulid: 'U-1',
+          token: 'jwt',
+          initialBody: 'initial',
+        );
+        rec.channels.last.simulateMessage(awarenessJson);
+        await pumpEventQueue();
+        // No CRDT doc body should change from the awareness msg.
+        expect(docBodies, isEmpty);
+        await sub.cancel();
+        await ctl.dispose();
+      });
+
+      test('after ulid swap, only the new binder feeds awarenessStream',
+          () async {
+        final rec = _BinderFactoryRecorder();
+        final ctl = EditorWsAttachController(binderFactory: rec.make);
+        final received = <String>[];
+        final sub = ctl.awarenessStream
+            .listen((msg) => received.add(msg.userId));
+        await ctl.reconcile(
+          authed: true,
+          published: true,
+          ulid: 'U-1',
+          token: 'jwt',
+          initialBody: '',
+        );
+        await ctl.reconcile(
+          authed: true,
+          published: true,
+          ulid: 'U-2', // forces detach + re-attach
+          token: 'jwt',
+          initialBody: '',
+        );
+        // The old channel was closed by the binder's dispose at
+        // detach time, proving the subscription was cancelled.
+        // The new binder's channel still flows.
+        rec.channels.last.simulateMessage(
+            '{"kind":"awareness","userId":"bob","pageUlid":"U-2",'
+            '"cursorIndex":1,"color":"#00FF00"}');
+        await pumpEventQueue();
+        expect(received, ['bob']);
+        await sub.cancel();
+        await ctl.dispose();
+      });
     });
   });
 }

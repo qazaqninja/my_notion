@@ -9,6 +9,7 @@ import 'dart:async';
 // (CA-07 boundary already documented on the binder itself).
 import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
 import 'package:my_notion/features/sync/data/sync_ws_binder.dart';
+import 'package:my_notion/features/sync/domain/entities/awareness_message.dart';
 
 /// Factory closure that constructs a [SyncWsBinder] for the given
 /// (ulid, token, initialBody) tuple. Injected so the controller's
@@ -52,8 +53,11 @@ class EditorWsAttachController {
   String? _activeUlid;
   StreamSubscription<QuillCrdtDoc>? _docSub;
   StreamSubscription<Object>? _errorSub;
+  StreamSubscription<AwarenessMessage>? _awarenessSub;
   final _docController = StreamController<QuillCrdtDoc>.broadcast();
   final _errorController = StreamController<Object>.broadcast();
+  final _awarenessController =
+      StreamController<AwarenessMessage>.broadcast();
   bool _disposed = false;
 
   /// True iff a binder is currently attached.
@@ -70,6 +74,13 @@ class EditorWsAttachController {
   /// Broadcast of transport errors from the active binder. Editors
   /// typically listen here to surface a "reconnect needed" banner.
   Stream<Object> get errorStream => _errorController.stream;
+
+  /// H4d-iii-a — broadcast of presence "awareness" messages from
+  /// the active binder. Editors mount a [PresenceCubit] beneath
+  /// the [EditorSyncWsScope] and forward each message to
+  /// `cubit.remoteCursorReceived`. Closed on dispose.
+  Stream<AwarenessMessage> get awarenessStream =>
+      _awarenessController.stream;
 
   /// Reconcile the controller's current state to the given gate
   /// inputs. Cheap to call repeatedly — when the (gate, ulid) tuple
@@ -104,6 +115,11 @@ class EditorWsAttachController {
     _errorSub = binder.errorStream.listen((err) {
       if (!_errorController.isClosed) _errorController.add(err);
     });
+    _awarenessSub = binder.awarenessStream.listen((msg) {
+      if (!_awarenessController.isClosed) {
+        _awarenessController.add(msg);
+      }
+    });
     await binder.attach();
   }
 
@@ -122,6 +138,8 @@ class EditorWsAttachController {
     _docSub = null;
     await _errorSub?.cancel();
     _errorSub = null;
+    await _awarenessSub?.cancel();
+    _awarenessSub = null;
     if (binder != null) {
       await binder.dispose();
     }
@@ -135,5 +153,6 @@ class EditorWsAttachController {
     await _detach();
     await _docController.close();
     await _errorController.close();
+    await _awarenessController.close();
   }
 }
