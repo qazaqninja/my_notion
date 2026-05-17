@@ -25,7 +25,7 @@ class MobileTabBar extends StatelessWidget {
     if (row == null) {
       context.go(Routes.home);
     } else {
-      context.go('/editor/${row.ulid}');
+      context.go(Routes.editor(row.ulid));
     }
   }
 

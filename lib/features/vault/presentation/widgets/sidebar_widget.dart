@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -401,7 +402,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
     if (trimmedTitle.isEmpty) return;
     bloc.add(CreatePage(
       title: trimmedTitle,
-      onCreated: (ulid) => router.go('/editor/$ulid'),
+      onCreated: (ulid) => router.go(Routes.editor(ulid)),
     ));
   }
 
@@ -657,7 +658,7 @@ class _FavoritesList extends StatelessWidget {
                       emojiFromFrontmatterJson(byUlid[ulid]!.frontmatterJson),
                   label: byUlid[ulid]!.title,
                   active: ulid == activeUlid,
-                  onTap: () => context.go('/editor/$ulid'),
+                  onTap: () => context.go(Routes.editor(ulid)),
                   trailingOnHover: GestureDetector(
                     onTap: () => context
                         .read<VaultBloc>()
@@ -741,7 +742,7 @@ class _RecentList extends StatelessWidget {
                 emojiIcon: emojiFromFrontmatterJson(r.frontmatterJson),
                 label: r.title,
                 active: r.ulid == activeUlid,
-                onTap: () => context.go('/editor/${r.ulid}'),
+                onTap: () => context.go(Routes.editor(r.ulid)),
               ),
           ],
         );

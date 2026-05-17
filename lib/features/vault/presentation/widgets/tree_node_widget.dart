@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/platform/reveal.dart';
+import '../../../../core/routing/routes.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
@@ -102,7 +103,7 @@ class TreeNodeWidget extends StatelessWidget {
         emojiIcon: emoji,
         label: n.name,
         active: n.ulid == activeUlid && n.ulid.isNotEmpty,
-        onTap: () => n.ulid.isNotEmpty ? context.go('/editor/${n.ulid}') : null,
+        onTap: () => n.ulid.isNotEmpty ? context.go(Routes.editor(n.ulid)) : null,
         onSecondaryTap: (pos) => _showFileMenu(context, n, pos),
         alwaysTrailing: pinned
             ? Padding(
@@ -282,7 +283,7 @@ class TreeNodeWidget extends StatelessWidget {
                     sub: 'New ULID: $newUlid',
                     subMono: true);
               }
-              router.go('/editor/$newUlid');
+              router.go(Routes.editor(newUlid));
             },
           ));
     } else if (selected == 'rename') {
@@ -383,7 +384,7 @@ class TreeNodeWidget extends StatelessWidget {
           scope.toastSuccess('Created "$trimmed" in $folderPath/',
               sub: 'ULID: $ulid', subMono: true);
         }
-        router.go('/editor/$ulid');
+        router.go(Routes.editor(ulid));
       },
     ));
   }

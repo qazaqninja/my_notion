@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/paths.dart';
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -141,7 +142,7 @@ class HomePage extends StatelessWidget {
     try {
       final r = await DailyNote.openTodaysNote(Directory(state.rootPath));
       if (!r.alreadyExisted) vault.add(const ReindexVault());
-      router.go('/editor/${r.ulid}');
+      router.go(Routes.editor(r.ulid));
     } catch (e) {
       if (context.mounted) context.toastError('Daily note failed', sub: '$e');
     }
@@ -169,7 +170,7 @@ class HomePage extends StatelessWidget {
           scope.toastSuccess('Created "$trimmed"',
               sub: 'ULID: $ulid', subMono: true);
         }
-        router.go('/editor/$ulid');
+        router.go(Routes.editor(ulid));
       },
     ));
   }
@@ -403,7 +404,7 @@ class _PinboardState extends State<_Pinboard> {
                   for (final e in list)
                     _HoverableTile(
                       width: 220,
-                      onTap: () => context.go('/editor/${e.ulid}'),
+                      onTap: () => context.go(Routes.editor(e.ulid)),
                       builder: ({required hover}) => Container(
                           width: 220,
                           padding:
@@ -621,7 +622,7 @@ class _UpcomingRemindersState extends State<_UpcomingReminders> {
             ? tokens.accent
             : tokens.text2;
     return _HoverableTile(
-      onTap: () => context.go('/editor/${e.ulid}'),
+      onTap: () => context.go(Routes.editor(e.ulid)),
       builder: ({required hover}) => Container(
         padding: const EdgeInsets.symmetric(vertical: 7),
         decoration: BoxDecoration(
@@ -748,7 +749,7 @@ class _RecentlyEditedState extends State<_RecentlyEdited> {
             const SizedBox(height: 8),
             for (final e in list)
               _HoverableTile(
-                onTap: () => context.go('/editor/${e.ulid}'),
+                onTap: () => context.go(Routes.editor(e.ulid)),
                 builder: ({required hover}) => Container(
                   padding: const EdgeInsets.symmetric(vertical: 7),
                   decoration: BoxDecoration(

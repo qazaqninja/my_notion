@@ -343,7 +343,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
     final favorites = state.workspace.favorites;
     final i = oneBasedIndex - 1;
     if (i < 0 || i >= favorites.length) return;
-    context.go('/editor/${favorites[i]}');
+    context.go(Routes.editor(favorites[i]));
   }
 
   Future<void> _showShortcuts(BuildContext context) async {
@@ -525,7 +525,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openSmallestPage(BuildContext context) async {
@@ -542,7 +542,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openMostLinkedPage(BuildContext context) async {
@@ -571,7 +571,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: result.ref.title.isEmpty ? '(Untitled)' : result.ref.title,
       );
     }
-    router.go('/editor/${result.ref.ulid}');
+    router.go(Routes.editor(result.ref.ulid));
   }
 
   Future<void> _openLargestPage(BuildContext context) async {
@@ -588,7 +588,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _resumeLatestByTitlePrefixPrompt(BuildContext context) async {
@@ -621,7 +621,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openOldestInFolderPrompt(BuildContext context) async {
@@ -654,7 +654,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _resumeLatestInFolderPrompt(BuildContext context) async {
@@ -687,7 +687,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _resumeLatestByTagPrompt(BuildContext context) async {
@@ -720,7 +720,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openRandomPageInFolderPrompt(BuildContext context) async {
@@ -754,7 +754,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openRandomPageByTitlePrefixPrompt(BuildContext context) async {
@@ -788,7 +788,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openRandomPageByTagPrompt(BuildContext context) async {
@@ -822,7 +822,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openPageByTitlePrompt(BuildContext context) async {
@@ -852,7 +852,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openOldestPage(BuildContext context) async {
@@ -872,7 +872,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openLastEditedPage(BuildContext context) async {
@@ -889,7 +889,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _openRandomPage(BuildContext context) async {
@@ -910,7 +910,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         sub: pick.title.isEmpty ? '(Untitled)' : pick.title,
       );
     }
-    router.go('/editor/${pick.ulid}');
+    router.go(Routes.editor(pick.ulid));
   }
 
   Future<void> _promptAndBookmarkUrl(
@@ -937,7 +937,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
         context.toastSuccess('Bookmarked "${result.title}"',
             sub: 'ULID: ${result.ulid}', subMono: true);
       }
-      router.go('/editor/${result.ulid}');
+      router.go(Routes.editor(result.ulid));
     } catch (e) {
       if (context.mounted) context.toastError('Bookmark failed', sub: '$e');
     }
@@ -1002,7 +1002,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
           scope.toastSuccess('Created "$trimmed"',
               sub: 'ULID: $ulid', subMono: true);
         }
-        router.go('/editor/$ulid');
+        router.go(Routes.editor(ulid));
       },
     ));
   }
@@ -1109,7 +1109,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
             vaultBloc.add(const ReindexVault());
           }
           if (!context.mounted) return;
-          GoRouter.of(context).go('/editor/${result.ulid}');
+          GoRouter.of(context).go(Routes.editor(result.ulid));
         } catch (e) {
           if (context.mounted) context.toastError('Daily note failed', sub: '$e');
         }
@@ -1522,7 +1522,7 @@ class _VaultShellPageState extends State<VaultShellPage> {
                   sub: 'New ULID: $newUlid',
                   subMono: true);
             }
-            router.go('/editor/$newUlid');
+            router.go(Routes.editor(newUlid));
           },
         ));
       case 'Vault stats':
@@ -2178,7 +2178,7 @@ views:
     return CommandPaletteOverlay(
       onPickPage: (p) {
         cubit.dismiss();
-        context.go('/editor/${p.ulid}');
+        context.go(Routes.editor(p.ulid));
       },
       onPickDatabase: (d) {
         cubit.dismiss();
@@ -2256,7 +2256,7 @@ class _StatsPageRowState extends State<_StatsPageRow> {
       child: GestureDetector(
         onTap: () {
           Navigator.of(context).pop();
-          context.go('/editor/${widget.ulid}');
+          context.go(Routes.editor(widget.ulid));
         },
         child: Container(
           color: _hover ? tokens.accentTint : null,
