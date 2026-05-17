@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. TS-01 recurring carry-forward closed via M1618.
-- **Phase:** D (super_editor WYSIWYG migration) — 292 tests. Cutover deferred.
-- **Task:** D-fp1 (editor feature-parity slice 1) — port Move-to-Trash kebab action to EditorBetaPage AppBar. Simplest first parity step — single AppBar `IconButton(Icons.delete_outline)` (or kebab menu with one item for now) that calls `context.read<VaultBloc>().add(MoveToTrash(widget.ulid))` then `Navigator.of(context).pop()` to leave the route. Matches the legacy editor's M195 wire-up at editor_page.dart:654. M1620 survey #8 re-read FEATURES.md 🚧/📋 markers: outstanding items are workspace-member-management (🔮 v2 backend), inbound share-sheet (iOS Xcode setup), home-screen widgets (platform-specific, G1 partial). The realistic actionable arc is editor parity. Find-in-Page would need a `DocumentSearch` helper for super_editor's `MutableDocument`; kebab Move-to-Trash is the simplest first port — single bloc dispatch + route pop. Then Pull-from-server + Share-via-OS-sheet + Find-in-Page slices. After parity: D28-D30 cutover.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 (Move-to-Trash) shipped.**
+- **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
+- **Task:** D-fp2 — port Pull-from-server kebab action to EditorBetaPage AppBar. Add an `IconButton(Icons.cloud_download_outlined)` next to Move-to-Trash, dispatch `context.read<SyncBloc>().add(SyncPullFileRequested(relpath: widget.relativePath))`. Conditionally show only when `sync.state.isAuthed` (use a `BlocBuilder<SyncBloc, SyncState>` wrapper for the button). Reference: legacy editor's M1241 wire-up at editor_page.dart (search for `SyncPullFileRequested`). After D-fp2: D-fp3 Share-via-OS-sheet, then D-fp4 Find-in-Page (multi-sub-slice — needs `DocumentSearch` helper for super_editor's MutableDocument since FindInPageController consumes a String body).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1621 — D-fp1 — port Move-to-Trash kebab action to EditorBetaPage** (1 file modified, +63 lines; 2455 editor tests pass; no new tests)
+- Committed: (this iteration)
+- TaskList ID: 210 closeout
+- Notes: First editor feature-parity slice. AppBar `IconButton(Icons.delete_outline)` calls `_onMoveToTrash` which shows AlertDialog confirmation, dispatches `VaultBloc(MoveToTrash(widget.ulid))`, mirrors to `SyncBloc(SyncDeleteFileRequested(relpath: widget.relativePath))` when authed, navigates `GoRouter.go('/home')`. 1:1 port of legacy editor_page.dart:640-668 M195 wire-up. _BetaEditorBody now passes `ulid` + `relativePath` from EditorLoaded state.page through to `_BetaEditorShell`. New imports: `go_router`, `sync/.../sync_{bloc,event}`, `vault/.../vault_event`. Handler wrapped in `// coverage:ignore-start/end` per M1618 lcov sweep pattern. flutter analyze clean. 2455 editor tests still pass. Orchestrator audit: 0 BLOCK / 1 WARN (BL-11 — imperative side-effect + navigation in callback rather than via BlocListener; mirrors legacy precedent and acceptable for parity port; flagged for future refactor before D28-D30 cutover) / 1 INFO (NV-03 — bare string `'/home'` should be extracted to `Routes.home` constant before cutover). Both non-blocking. Carrying forward to D-fp2-N as parity-arc tech debt that gets cleaned up alongside cutover prep. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1620 — Pick-next #8 closeout — pivot to editor parity arc, starting with Move-to-Trash** (no code; doc-only pivot decision)
 - Committed: (this iteration)
