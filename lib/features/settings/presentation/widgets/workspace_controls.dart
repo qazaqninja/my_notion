@@ -103,6 +103,15 @@ class _WorkspaceNameFieldState extends State<WorkspaceNameField> {
   late final TextEditingController _ctl;
   final _focus = FocusNode();
 
+  /// E59-a / M1446 re-entry guard. Pressing Enter triggers two
+  /// _commit() calls back-to-back: onSubmitted runs first and starts
+  /// the async save, then TextInputAction.done dismisses focus
+  /// which fires the focus-loss listener — a second _commit before
+  /// the first one's `await next.save(...)` returns. The guard
+  /// drops the second call on the floor so the file write +
+  /// RefreshFromDisk dispatch happen exactly once per submit.
+  bool _committing = false;
+
   @override
   void initState() {
     super.initState();
@@ -120,24 +129,30 @@ class _WorkspaceNameFieldState extends State<WorkspaceNameField> {
   }
 
   Future<void> _commit() async {
+    if (_committing) return;
     final trimmed = _ctl.text.trim();
     final current = widget.state.workspace.name ?? '';
     if (trimmed == current) return;
-    final next = widget.state.workspace.copyWith(
-      name: trimmed.isEmpty ? '' : trimmed,
-    );
+    _committing = true;
     try {
-      await next.save(Directory(widget.state.rootPath));
-    } catch (e) {
+      final next = widget.state.workspace.copyWith(
+        name: trimmed.isEmpty ? '' : trimmed,
+      );
+      try {
+        await next.save(Directory(widget.state.rootPath));
+      } catch (e) {
+        if (!mounted) return;
+        context.toastError('Could not save workspace name', sub: '$e');
+        return;
+      }
       if (!mounted) return;
-      context.toastError('Could not save workspace name', sub: '$e');
-      return;
+      context.read<VaultBloc>().add(const RefreshFromDisk());
+      context.toastSuccess(trimmed.isEmpty
+          ? 'Workspace name cleared'
+          : 'Workspace name: $trimmed');
+    } finally {
+      _committing = false;
     }
-    if (!mounted) return;
-    context.read<VaultBloc>().add(const RefreshFromDisk());
-    context.toastSuccess(trimmed.isEmpty
-        ? 'Workspace name cleared'
-        : 'Workspace name: $trimmed');
   }
 
   @override

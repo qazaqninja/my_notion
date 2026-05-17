@@ -135,15 +135,14 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       });
       await tester.pump();
-      // Pressing Enter on the TextField fires _commit twice in the
-      // current source — once via onSubmitted, once via the focus
-      // listener since done dismisses focus. Either fires the
-      // intended dispatch; the test asserts behavior, not count.
-      // TS-03 nuance: bloc_test's `blocTest` targets bare Blocs in
-      // unit tests; widget tests that pump a tree with a MockBloc
-      // use raw `verify(() => bloc.add(...))`, which is the same
-      // pattern as sync_connected_card_test in this project.
-      verify(() => bloc.add(const RefreshFromDisk()));
+      // Pressing Enter on the TextField used to fire _commit twice
+      // (onSubmitted + focus-loss listener since done dismisses
+      // focus). E59-a / M1446 added a `_committing` re-entry guard
+      // so the save + dispatch happen exactly once per submit.
+      // TS-03 nuance: widget tests pump a tree with a MockBloc and
+      // use raw `verify(() => bloc.add(...))` (same pattern as
+      // sync_connected_card_test in this project).
+      verify(() => bloc.add(const RefreshFromDisk())).called(1);
       final cfg = File('${tempVault.path}/.quill.yaml');
       expect(cfg.existsSync(), isTrue);
       expect(cfg.readAsStringSync(), contains('name: New Vault'));
