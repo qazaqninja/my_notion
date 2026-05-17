@@ -9,16 +9,15 @@ import '../../../../core/platform/reveal.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
-import '../../../../shared/widgets/quill_icon.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/segment.dart';
-import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/person_chip.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../../shared/theme/accent.dart';
 import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../widgets/forms_pane.dart';
+import '../widgets/settings_atoms.dart';
 import '../widgets/settings_nav.dart';
 import '../widgets/sync_pane.dart';
 import '../widgets/workspace_controls.dart';
@@ -125,18 +124,18 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 28),
         _sectionLabel(tokens, 'Vault location'),
-        _SettingRow(
+        SettingRow(
           label: 'Vault path',
           hint: 'Folder of .md files. Each page is one file.',
           child: Row(
             children: [
-              _Field(value: vaultPath, mono: true, width: 300),
+              SettingField(value: vaultPath, monospace: true, width: 300),
               const SizedBox(width: 8),
-              _Btn(label: 'Change…', onTap: () {
+              SettingButton(label: 'Change…', onTap: () {
                 context.read<VaultBloc>().add(const PickVault());
               }),
               const SizedBox(width: 8),
-              _Btn(
+              SettingButton(
                 label: 'Reveal',
                 icon: 'reveal',
                 onTap: () {
@@ -148,18 +147,18 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
         if (state is VaultLoaded)
-          _SettingRow(
+          SettingRow(
             label: 'Workspace name',
             hint: 'Override the folder name in the sidebar header.',
             child: WorkspaceNameField(state: state),
           ),
         if (state is VaultLoaded)
-          _SettingRow(
+          SettingRow(
             label: 'Workspace icon',
             hint: 'Renders in the sidebar header. Tap to pick.',
             child: WorkspaceIconButton(state: state),
           ),
-        _SettingRow(
+        SettingRow(
           label: 'Vault stats',
           hint: 'Read directly from disk.',
           child: _VaultStatsRow(pageCount: pageCount, vaultPath: vaultPath),
@@ -168,20 +167,20 @@ class _SettingsPageState extends State<SettingsPage> {
         _sectionLabel(tokens, 'Sync'),
         Row(
           children: const [
-            Expanded(child: _SyncCard(name: 'Git', icon: 'git', status: 'visual only', active: true)),
+            Expanded(child: SyncPlaceholderCard(name: 'Git', icon: 'git', status: 'visual only', active: true)),
             SizedBox(width: 12),
-            Expanded(child: _SyncCard(name: 'S3', icon: 'cloud', status: 'not configured')),
+            Expanded(child: SyncPlaceholderCard(name: 'S3', icon: 'cloud', status: 'not configured')),
             SizedBox(width: 12),
-            Expanded(child: _SyncCard(name: 'WebDAV', icon: 'cloud', status: 'not configured')),
+            Expanded(child: SyncPlaceholderCard(name: 'WebDAV', icon: 'cloud', status: 'not configured')),
           ],
         ),
         const SizedBox(height: 20),
-        _SettingRow(
+        SettingRow(
           label: 'Auto-commit',
           hint: 'Commit pending changes every 5 minutes if there are any.',
-          child: const _Toggle(on: true),
+          child: const SettingToggle(on: true),
         ),
-        _SettingRow(
+        SettingRow(
           label: 'Conflict policy',
           hint: 'When a sibling edits the same file.',
           child: Segment<String>(
@@ -196,7 +195,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 28),
         _sectionLabel(tokens, 'Users'),
-        _SettingRow(
+        SettingRow(
           label: 'Members',
           hint: 'Authenticated via your Git provider.',
           child: Column(
@@ -211,20 +210,20 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 28),
         _sectionLabel(tokens, 'Data'),
-        _SettingRow(
+        SettingRow(
           label: 'Export vault',
           hint: 'Folder of .md files, frontmatter intact. Open it anywhere.',
-          child: _Btn(
+          child: SettingButton(
             label: 'Export to folder',
             icon: 'export',
             primary: true,
             onTap: () => _exportVault(context),
           ),
         ),
-        _SettingRow(
+        SettingRow(
           label: 'Reindex',
           hint: 'Wipe and rebuild the SQLite cache from disk.',
-          child: _Btn(
+          child: SettingButton(
             label: 'Reindex now',
             icon: 'sync',
             onTap: () {
@@ -233,11 +232,11 @@ class _SettingsPageState extends State<SettingsPage> {
             },
           ),
         ),
-        _SettingRow(
+        SettingRow(
           label: 'Delete workspace',
           hint: 'The vault folder on disk is untouched.',
           danger: true,
-          child: _Btn(
+          child: SettingButton(
             label: 'Remove from app',
             icon: 'trash',
             onTap: () => _confirmClose(context),
@@ -321,7 +320,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 28),
         _sectionLabel(tokens, 'Cache'),
-        _SettingRow(
+        SettingRow(
           label: 'Pages indexed',
           hint: 'Total rows in the SQLite cache.',
           child: Text(
@@ -329,10 +328,10 @@ class _SettingsPageState extends State<SettingsPage> {
             style: mono(fontSize: 14, color: tokens.text),
           ),
         ),
-        _SettingRow(
+        SettingRow(
           label: 'Reindex',
           hint: 'Wipe and rebuild the SQLite cache from disk.',
-          child: _Btn(
+          child: SettingButton(
             label: 'Reindex now',
             icon: 'sync',
             primary: true,
@@ -344,10 +343,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
           ),
         ),
-        _SettingRow(
+        SettingRow(
           label: 'Refresh from disk',
           hint: 'Re-read changed files without dropping the cache.',
-          child: _Btn(
+          child: SettingButton(
             label: 'Refresh',
             icon: 'sync',
             onTap: !loaded
@@ -418,7 +417,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     onToggleHide: () => _toggleSidebarHidden(state, order[i]),
                   ),
                 const SizedBox(height: 12),
-                _Btn(
+                SettingButton(
                   label: 'Reset to default',
                   icon: 'sync',
                   onTap: () => _resetSidebar(state),
@@ -645,29 +644,29 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 28),
         _sectionLabel(tokens, 'Whole vault'),
-        _SettingRow(
+        SettingRow(
           label: 'Markdown copy',
           hint: 'Folder of .md files with frontmatter intact.',
-          child: _Btn(
+          child: SettingButton(
             label: 'Export…',
             icon: 'export',
             primary: true,
             onTap: !loaded ? null : () => _exportVault(context),
           ),
         ),
-        _SettingRow(
+        SettingRow(
           label: 'HTML site',
           hint: 'One .html per page + index. Open the folder in a browser.',
-          child: _Btn(
+          child: SettingButton(
             label: 'Export…',
             icon: 'export',
             onTap: !loaded ? null : () => _exportHtml(context),
           ),
         ),
-        _SettingRow(
+        SettingRow(
           label: 'PDF',
           hint: 'Single PDF document. Useful for sharing or archiving.',
-          child: _Btn(
+          child: SettingButton(
             label: 'Export…',
             icon: 'export',
             onTap: !loaded ? null : () => _exportPdf(context),
@@ -755,14 +754,14 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 28),
         _sectionLabel(tokens, 'Theme'),
-        _SettingRow(
+        SettingRow(
           label: 'Mode',
           hint: 'System follows your OS setting.',
           child: Wrap(
             spacing: 8,
             children: [
               for (final m in AppThemeMode.values)
-                _Btn(
+                SettingButton(
                   label: switch (m) {
                     AppThemeMode.light => 'Light',
                     AppThemeMode.dark => 'Dark',
@@ -774,10 +773,10 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
-        _SettingRow(
+        SettingRow(
           label: 'Compact mode',
           hint: 'Tighter text scale across the editor.',
-          child: _Btn(
+          child: SettingButton(
             label: themeState.compact ? 'On' : 'Off',
             primary: themeState.compact,
             onTap: () => context.read<ThemeCubit>().toggleCompact(),
@@ -785,19 +784,19 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         const SizedBox(height: 20),
         _sectionLabel(tokens, 'Accent'),
-        _SettingRow(
+        SettingRow(
           label: 'Color',
           hint: 'Picks the link/active hue.',
           child: Wrap(
             spacing: 8,
             children: [
-              _Btn(
+              SettingButton(
                 label: 'Sage',
                 primary: themeState.accent == AccentKey.sage,
                 onTap: () =>
                     context.read<ThemeCubit>().setAccent(AccentKey.sage),
               ),
-              _Btn(
+              SettingButton(
                 label: 'Terracotta',
                 primary: themeState.accent == AccentKey.terracotta,
                 onTap: () =>
@@ -846,338 +845,17 @@ class _SettingsPageState extends State<SettingsPage> {
 // M1426 (FS-04 slice 3). The 220-px left rail is now a public
 // SettingsNav widget that the page constructs from build.
 
-class _SettingRow extends StatelessWidget {
-  const _SettingRow({
-    required this.label,
-    required this.hint,
-    required this.child,
-    this.danger = false,
-  });
-
-  final String label;
-  final String hint;
-  final Widget child;
-  final bool danger;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 200,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    color: danger ? tokens.danger : tokens.text,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  hint,
-                  style: TextStyle(fontSize: 12, color: tokens.text3, height: 1.45),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 24),
-          Expanded(child: child),
-        ],
-      ),
-    );
-  }
-}
-
-class _Field extends StatelessWidget {
-  const _Field({required this.value, this.mono = false, this.width = double.infinity});
-  final String value;
-  final bool mono;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    return Container(
-      width: width == double.infinity ? null : width,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: tokens.inputBg,
-        border: Border.all(color: tokens.divider2, width: 0.5),
-        borderRadius: const BorderRadius.all(Radius.circular(5)),
-      ),
-      child: Text(
-        value,
-        style: mono
-            ? Tokens.mono(fontSize: 13, color: tokens.text)
-            : TextStyle(fontSize: 13, color: tokens.text),
-        overflow: TextOverflow.ellipsis,
-        maxLines: 1,
-      ),
-    );
-  }
-}
-
-class Tokens {
-  static TextStyle mono({double? fontSize, Color? color}) =>
-      TextStyle(fontFamily: 'JetBrainsMono', fontSize: fontSize, color: color);
-}
-
-class _Btn extends StatefulWidget {
-  const _Btn({required this.label, this.icon, this.onTap, this.primary = false});
-  final String label;
-  final String? icon;
-  final VoidCallback? onTap;
-  final bool primary;
-
-  @override
-  State<_Btn> createState() => _BtnState();
-}
-
-class _BtnState extends State<_Btn> {
-  bool _hover = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    final primary = widget.primary;
-    final enabled = widget.onTap != null;
-    return MouseRegion(
-      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      onEnter: enabled ? (_) => setState(() => _hover = true) : null,
-      onExit: enabled ? (_) => setState(() => _hover = false) : null,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Opacity(
-          opacity: enabled ? 1.0 : 0.5,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: primary
-                  ? (_hover ? tokens.accent.withValues(alpha: 0.85) : tokens.accent)
-                  : (_hover ? tokens.hover : Colors.transparent),
-              border: Border.all(
-                  color: primary
-                      ? Colors.transparent
-                      : (_hover ? tokens.accent : tokens.divider2),
-                  width: 0.5),
-              borderRadius: const BorderRadius.all(Radius.circular(5)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.icon != null) ...[
-                  QuillIcon(widget.icon!,
-                      size: 13,
-                      strokeWidth: 1.7,
-                      color: primary
-                          ? Theme.of(context).colorScheme.onPrimary
-                          : tokens.text2),
-                  const SizedBox(width: 6),
-                ],
-                Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: primary
-                        ? Theme.of(context).colorScheme.onPrimary
-                        : tokens.text,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.value, this.tooltip});
-  final String label;
-  final String value;
-
-  /// Optional hover hint with extra detail (e.g. raw byte count for a
-  /// human-formatted size).
-  final String? tooltip;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    Widget body = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label, style: mono(fontSize: 11, color: tokens.text3)),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: mono(fontSize: 18, color: tokens.text, fontWeight: FontWeight.w500),
-        ),
-      ],
-    );
-    if (tooltip != null) {
-      body = Tooltip(
-        message: tooltip,
-        waitDuration: const Duration(milliseconds: 500),
-        child: body,
-      );
-    }
-    return body;
-  }
-}
-
-// E26 — SyncConnectedCard lives in
-// `features/sync/presentation/widgets/sync_connected_card.dart` so it
-// can be pumped in isolation from this page's sidebar chrome.
+// Atom widgets extracted to widgets/settings_atoms.dart in
+// M1430 (FS-04 slice 5, final). SettingRow, SettingField,
+// SettingButton, SettingStat, SettingToggle, and
+// SyncPlaceholderCard now live in that single file. The
+// SettingField rename also dropped the duplicate Tokens.mono
+// static helper in favour of the project's existing mono(...)
+// helper from shared/theme/tokens.dart.
 //
-// _SyncLoginCard was inline here until M1423 (FS-04 slice 2) —
-// moved to widgets/sync_pane.dart along with the rest of the sync
-// cluster.
-
-class _Toggle extends StatelessWidget {
-  const _Toggle({required this.on});
-  final bool on;
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    return Container(
-      width: 34,
-      height: 20,
-      decoration: BoxDecoration(
-        color: on
-            ? tokens.accent
-            : (tokens.isDark ? kToggleRailOffDark : kToggleRailOffLight),
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-      ),
-      child: Stack(
-        children: [
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 150),
-            top: 2,
-            left: on ? 16 : 2,
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                // Toggle knob is canonically white-against-rail in
-                // both modes — `colorScheme.onPrimary` mirrors that
-                // semantic (rail is `tokens.accent`).
-                color: Theme.of(context).colorScheme.onPrimary,
-                borderRadius: const BorderRadius.all(Radius.circular(8)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .shadow
-                        .withValues(alpha: 0.15),
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SyncCard extends StatelessWidget {
-  const _SyncCard({
-    required this.name,
-    required this.icon,
-    required this.status,
-    this.active = false,
-  });
-
-  final String name;
-  final String icon;
-  final String status;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-      decoration: BoxDecoration(
-        color: active ? tokens.accentTint : tokens.surface,
-        border: Border.all(color: active ? tokens.accent : tokens.divider2, width: 0.5),
-        borderRadius: const BorderRadius.all(Radius.circular(6)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              // Subtle inverse-of-bg wash so the chiclet shows up
-              // against the page surface — `tokens.text` is dark on
-              // light, light on dark, which matches the original
-              // black/white toggle exactly.
-              color: tokens.text.withValues(alpha: 0.04),
-              borderRadius: const BorderRadius.all(Radius.circular(5)),
-            ),
-            child: QuillIcon(icon, size: 15, strokeWidth: 1.7,
-                color: active ? tokens.accent : tokens.text2),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w500,
-                    color: active ? tokens.accent : tokens.text,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Text(
-                    status,
-                    style: mono(fontSize: 11.5, color: tokens.text3),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (active)
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const StatusDot(),
-                const SizedBox(width: 6),
-                Text(status,
-                    style: TextStyle(fontSize: 11.5, color: tokens.accent)),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-}
+// E26 SyncConnectedCard remains at
+// `features/sync/presentation/widgets/sync_connected_card.dart`.
+// _SyncLoginCard moved to widgets/sync_pane.dart in M1423.
 
 class _MemberRow extends StatelessWidget {
   const _MemberRow({required this.name, required this.role});
@@ -1528,7 +1206,7 @@ class _VaultStatsRowState extends State<_VaultStatsRow> {
         final data = snap.data;
         return Row(
           children: [
-            _Stat(
+            SettingStat(
               label: 'pages',
               value: '${widget.pageCount}',
               tooltip: widget.pageCount == 1
@@ -1536,7 +1214,7 @@ class _VaultStatsRowState extends State<_VaultStatsRow> {
                   : '${widget.pageCount} pages indexed',
             ),
             const SizedBox(width: 28),
-            _Stat(
+            SettingStat(
               label: 'databases',
               value: data == null ? '…' : '${data.databases}',
               tooltip: data == null
@@ -1546,7 +1224,7 @@ class _VaultStatsRowState extends State<_VaultStatsRow> {
                       : '${data.databases} databases (.database.yaml)',
             ),
             const SizedBox(width: 28),
-            _Stat(
+            SettingStat(
               label: 'size',
               value: data == null || data.sizeBytes == null
                   ? '…'
