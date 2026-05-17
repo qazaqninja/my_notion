@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #15 — after CLAUDE.md item 10 mobile polish closes. Remaining options on the menu: (a) BL-11 D-fp callback cleanup (5 imperative setState + nav callbacks across D-fp1/2/3/3b/4b — needs FindBarCubit/EditorActionCubit); (b) BL-12 _FindBarHost (M1634 deferred — tight _doc/_editor coupling); (c) Phase E continuation (G4 docker user-gated, forms past E60 diminishing return); (d) D-fp5 next parity port (outline / source toggle / lock toggle / properties panel — not cutover-critical); (e) NV-02 GoRouteData typed routes (M1649 deferred); (f) later D30b/c (still needs dogfood time); (g) update CLAUDE.md item 10 to strike through completely; (h) revisit FEATURES.md to see what's emerged as next. Decision: deliver user-facing value or knock out tiny wins.
+- **Task:** Pick-next survey #16 — after CLAUDE.md item 10 strike + item 9 prose refresh. Both v1.x backlog items at parity with reality. Remaining options menu (with item 10 closed): (a) BL-11 D-fp callback cleanup; (b) BL-12 _FindBarHost; (c) Phase E continuation; (d) D-fp5 next parity port; (e) NV-02 GoRouteData typed routes; (f) D30b/c after dogfood time; (g) Re-survey FEATURES.md for emergent priorities (open the file, scan for 🚧/📋 still unresolved). Default lean: option (g) FEATURES.md re-survey since it's been many slices since the last priority review and the backlog state should be re-grounded in what the codebase actually still wants.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1684 — pick-next #15 closeout: strike CLAUDE.md item 10 + refresh item 9 D-cutover status** (1 file modified; +2 / -2; doc-only)
+- Committed: (this iteration)
+- TaskList ID: 238 closeout
+- Notes: Pick-next survey #15 picked option (g) doc strike-through. CLAUDE.md item 10 (mobile UI polish) is now `~~struck through~~` with prose citing both helper triplets shipped at M1680 (touch-tuned slash menu) + M1682 (touch-tuned properties panel) + a deferred-future note about bottom-sheet conversion. **Bonus:** item 9 (WYSIWYG editor) prose refreshed to reflect D28 ✅ (M1662/M1665/M1667), D29 ✅ (M1670), D30a ✅ (M1673) with only D30b/c remaining (deferred until dogfood time accumulates). "~1-3 slices remaining" → "~1-2 slices remaining". **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine (doc-only diff, no Dart files touched).** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1682 — mobile polish slice 2 — touch-tune properties panel rows (CLAUDE.md item 10 closeout)** (2 files modified; +83 / -3; 6 new tests; analyze clean)
 - Committed: (this iteration)
