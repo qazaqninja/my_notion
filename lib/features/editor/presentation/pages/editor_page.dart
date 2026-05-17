@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/yaml_scalar.dart';
+import '../../../../core/routing/routes.dart';
 import '../../../../core/network/backend_endpoint.dart';
 import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
@@ -665,7 +666,7 @@ class _EditorBodyState extends State<_EditorBody> {
           context.toastSuccess('Moved to trash',
               sub: title.isEmpty ? relpath : title);
         }
-        GoRouter.of(context).go('/home');
+        GoRouter.of(context).go(Routes.home);
       case 'reindex':
         if (!context.mounted) return;
         context.read<VaultBloc>().add(const ReindexVault());
@@ -1528,7 +1529,7 @@ class _EditorBodyState extends State<_EditorBody> {
                   Row(
                     children: [
                       TextButton(
-                        onPressed: () => context.go('/home'),
+                        onPressed: () => context.go(Routes.home),
                         child: const Text('Back to home'),
                       ),
                       const SizedBox(width: 4),
