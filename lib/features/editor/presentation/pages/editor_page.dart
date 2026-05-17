@@ -13,6 +13,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
+import '../../../../core/util/throttle.dart';
 import '../../../reminders/presentation/bloc/reminders_bloc.dart';
 import '../../../reminders/presentation/bloc/reminders_event.dart';
 import '../../../forms/domain/repositories/forms_repository.dart';
@@ -303,6 +304,12 @@ class _EditorBodyState extends State<_EditorBody> {
   final FocusNode _findFocus = FocusNode();
   List<int> _findMatches = const [];
   int _findCursor = 0;
+
+  // H2.5: throttles "Multiplayer disconnected" toasts so a flaky
+  // network can't spam the user — at most one toast per 8-second
+  // window per editor mount.
+  final Throttle<void> _connErrorToastThrottle =
+      Throttle<void>(const Duration(seconds: 8));
 
   @override
   void dispose() {
@@ -1716,11 +1723,16 @@ class _EditorBodyState extends State<_EditorBody> {
               // EditorSyncWsMount will auto-reattach on the next
               // SyncBloc/published-flag reconcile so users don't
               // need to manually retry.
+              //
+              // H2.5: throttled at 8s/window so a flaky network
+              // can't spam toasts during a reconnect burst.
               onConnectionError: (_) {
-                context.toastError(
-                  'Multiplayer disconnected',
-                  sub: 'Reconnecting…',
-                );
+                _connErrorToastThrottle.run(() {
+                  context.toastError(
+                    'Multiplayer disconnected',
+                    sub: 'Reconnecting…',
+                  );
+                });
               },
               child: Focus(
             autofocus: true,
