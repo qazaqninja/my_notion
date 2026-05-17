@@ -10,10 +10,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Persistence: backed by [SharedPreferences] under the
 /// [EditorPreferencesCubit.useBetaPrefKey] key.
 ///
-/// D28 cutover slice 1 (M1662) of the WYSIWYG migration: this is the
-/// gateway the `/editor/:ulid` GoRoute will fork on. D29 will default
-/// the key to `true`; D30 deletes the legacy `EditorPage` + this
-/// cubit.
+/// **D29 cutover (M1670):** the unset-key default flipped from
+/// `false` → `true`. Users who never touched the toggle now see the
+/// beta WYSIWYG editor on next launch. Anyone who explicitly turned
+/// the toggle off pre-D29 keeps `useBetaEditor: false` because the
+/// stored value still wins over the default. The single-click
+/// Settings → Advanced toggle remains the escape hatch. D30 deletes
+/// the legacy `EditorPage` + this cubit once dogfooding proves the
+/// flip safe.
 class EditorPreferencesState extends Equatable {
   /// Construct an immutable preferences snapshot.
   const EditorPreferencesState({required this.useBetaEditor});
@@ -39,27 +43,39 @@ class EditorPreferencesState extends Equatable {
 class EditorPreferencesCubit extends Cubit<EditorPreferencesState> {
   /// Default unhydrated constructor used at the app composition root.
   /// Pair with `..hydrate()` so the persisted value loads
-  /// asynchronously after the bloc is provided to the widget tree —
-  /// the cubit starts at the safe `useBetaEditor: false` default and
-  /// emits the persisted value (if any) once
-  /// [SharedPreferences.getInstance] resolves.
+  /// asynchronously after the bloc is provided to the widget tree.
+  /// The cubit starts at [defaultUseBetaEditor] and emits the
+  /// persisted value (if any) once [SharedPreferences.getInstance]
+  /// resolves.
   EditorPreferencesCubit()
       : _prefs = null,
-        super(const EditorPreferencesState(useBetaEditor: false));
+        super(
+          const EditorPreferencesState(useBetaEditor: defaultUseBetaEditor),
+        );
 
   /// Construct a cubit from a pre-fetched [SharedPreferences] handle.
   /// Preferred by tests since it sidesteps the async wait — the
-  /// initial state reads the persisted value synchronously.
+  /// initial state reads the persisted value synchronously, falling
+  /// back to [defaultUseBetaEditor] when the key is absent.
   EditorPreferencesCubit.fromPrefs(SharedPreferences prefs)
       : _prefs = prefs,
         super(
           EditorPreferencesState(
-            useBetaEditor: prefs.getBool(useBetaPrefKey) ?? false,
+            useBetaEditor:
+                prefs.getBool(useBetaPrefKey) ?? defaultUseBetaEditor,
           ),
         );
 
   /// SharedPreferences key used for [EditorPreferencesState.useBetaEditor].
   static const useBetaPrefKey = 'editor.useBeta';
+
+  /// D29 cutover (M1670): default value when the key is absent. The
+  /// new beta WYSIWYG editor is now the default; users who
+  /// explicitly turned the toggle off pre-D29 keep their stored
+  /// `false` value (persisted-wins-over-default semantics). The
+  /// Settings → Advanced toggle remains the single-click escape
+  /// hatch.
+  static const defaultUseBetaEditor = true;
 
   SharedPreferences? _prefs;
 
@@ -74,7 +90,7 @@ class EditorPreferencesCubit extends Cubit<EditorPreferencesState> {
     if (_prefs != null) return;
     final prefs = await SharedPreferences.getInstance();
     _prefs = prefs;
-    final stored = prefs.getBool(useBetaPrefKey) ?? false;
+    final stored = prefs.getBool(useBetaPrefKey) ?? defaultUseBetaEditor;
     if (stored != state.useBetaEditor) {
       emit(state.copyWith(useBetaEditor: stored));
     }
