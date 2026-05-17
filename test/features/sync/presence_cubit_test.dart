@@ -90,6 +90,19 @@ void main() {
       );
 
       blocTest<PresenceCubit, PresenceState>(
+        'ttl == Duration.zero skips Timer creation entirely '
+        '(entry persists, no expiry emit)',
+        build: () => PresenceCubit(ttl: Duration.zero),
+        act: (c) => c.remoteCursorReceived(msg),
+        // Wait past what would have been a normal-TTL expiry —
+        // entry must still be present because no Timer was set.
+        wait: const Duration(milliseconds: 50),
+        expect: () => [
+          const PresenceState(cursors: {'alice': msg}),
+        ],
+      );
+
+      blocTest<PresenceCubit, PresenceState>(
         'entry is dropped after the ttl elapses',
         build: () =>
             PresenceCubit(ttl: const Duration(milliseconds: 50)),

@@ -4,6 +4,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../sync/domain/entities/awareness_message.dart';
 import '../../../sync/presentation/cubit/presence_cubit.dart';
 
+/// Named fallback for the peer-cursor chiclet when
+/// [AwarenessMessage.color] doesn't parse as `#RRGGBB`. Lives at
+/// file-scope rather than QuillTokens because (a) it's a defensive
+/// sentinel rather than a theme color, and (b) the H4d wire path
+/// rejects malformed messages earlier so this should never paint
+/// in the happy path. M1455 TH-03 fix-forward (per orchestrator
+/// guidance, lifted out of the inline `_parseColor` body).
+const _peerCursorColorFallback = Color(0xFF888888);
+
 /// Function that maps a character offset in the source-mode body
 /// to a screen-space rect for the caret at that index. Provided
 /// by the editor — H4d wires it through from the TextField's
@@ -38,6 +47,11 @@ class RemoteCursorOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PresenceCubit, PresenceState>(
+      // Today PresenceState only carries the cursors map, but
+      // explicit buildWhen narrows the rebuild scope so future
+      // additions (e.g. local-cursor color, viewer count) don't
+      // accidentally repaint the chiclets. M1455 BL-12 fix-forward.
+      buildWhen: (prev, next) => prev.cursors != next.cursors,
       builder: (context, state) {
         final chiclets = <Widget>[];
         for (final entry in state.cursors.entries) {
@@ -108,14 +122,15 @@ class _RemoteCursorChiclet extends StatelessWidget {
     );
   }
 
-  /// Best-effort `#RRGGBB` parse. Falls back to grey on malformed
-  /// input so a misbehaving peer can't crash the overlay.
+  /// Best-effort `#RRGGBB` parse. Falls back to
+  /// [_peerCursorColorFallback] on malformed input so a misbehaving
+  /// peer can't crash the overlay.
   static Color _parseColor(String hex) {
     var s = hex.trim();
     if (s.startsWith('#')) s = s.substring(1);
-    if (s.length != 6) return const Color(0xFF888888);
+    if (s.length != 6) return _peerCursorColorFallback;
     final v = int.tryParse(s, radix: 16);
-    if (v == null) return const Color(0xFF888888);
+    if (v == null) return _peerCursorColorFallback;
     return Color(0xFF000000 | v);
   }
 
