@@ -11,6 +11,7 @@ import 'package:super_editor/super_editor.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/super_editor_serializer.dart';
+import '../../../../core/routing/routes.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
@@ -440,7 +441,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       sync.add(SyncDeleteFileRequested(relpath: widget.relativePath));
     }
     if (!mounted) return;
-    GoRouter.of(context).go('/home');
+    GoRouter.of(context).go(Routes.home);
   }
   // coverage:ignore-end
 
