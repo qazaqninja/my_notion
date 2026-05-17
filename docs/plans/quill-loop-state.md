@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **overlay paints; splice still stubbed**
-- **Task:** D23 interactions slice 2g-b — selection-splice command. M1537 closed slice 2g-a: SuperEditor body wrapped in a `Stack` with `SlashMenuOverlay` reading the same SlashMenuCubit; clicking outside dismisses. The `_onSlashEntryPicked` callback currently just `dismiss + session.reset` — slice 2g-b makes it actually mutate the document. Plan: read the cubit's `triggerOffset` (where the `/` lives) + the chosen `SlashEntry.snippet`, then dispatch a super_editor `Editor.execute(...)` sequence that (i) deletes the `/query` range from the source node's text and (ii) inserts the entry's snippet at that offset. The source_view path uses `text_scaffolds.dart`'s splice helpers — port the offset math into a pure-Dart helper if testable. After 2g-b closes: D24-D27 polish + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **D23 core loop works end-to-end**
+- **Task:** D23 interactions slice 2g-c — linePrefix + pickImage/pickFile actions. M1539 closed slice 2g-b: typing `/` in WYSIWYG followed by picking a snippet entry now strips `/query` and inserts the entry's snippet via super_editor's `DeleteContentRequest` + `InsertTextRequest`. The end-to-end D23 loop works for `SlashAction.insertSnippet` without `linePrefix` (paragraphs, math, code fences, bookmarks, inline marks — the majority of slash entries). Slice 2g-c handles the remaining variants: (a) `linePrefix != null` — convert-in-place block type change (e.g. `/h1` replaces the current line's prefix with `# `); (b) `SlashAction.pickImage` / `pickFile` — async picker + ImageNode/file-attachment insert. Port source_view lines 835-880's logic to super_editor's Document mutation API. Then D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts) + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1539 — D23 interactions slice 2g-b — selection-splice command in EditorBetaPage** (D23 core loop end-to-end)
+- Committed: (this iteration)
+- TaskList ID: 169 closeout (slice 2g — overlay + splice across 2g-a + 2g-b; remaining variants land in 2g-c)
+- Notes: Upgrade `_onSlashEntryPicked` from M1537's dismiss-only stub to a real super_editor splice. Reads `cubit.state.triggerOffset` (global text-projection offset of the `/`), dismisses + resets the session BEFORE mutating (defensive against listener re-entry — same lesson source_view at lines 822-833 documents), bails on `action != insertSnippet` / `linePrefix != null` / null-or-non-collapsed selection / non-text-node position. Projects the global trigger offset to local-node coordinates via `localCaret - (snapshot.caret - triggerGlobal)` — relies on same-node invariant slash_trigger enforces by dismiss-on-newline. Dispatches `_editor.execute([DeleteContentRequest(DocumentRange(start: triggerPos, end: extent)), InsertTextRequest(documentPosition: triggerPos, textToInsert: entry.snippet, attributions: {})])`. New import: `'../../domain/slash_entries.dart'`. flutter analyze clean. **End-to-end D23 loop now works in WYSIWYG**: typing `/` opens the menu at the caret, filtering as the user types, picking an `insertSnippet` entry actually replaces the trigger with the chosen snippet. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-01 pumped-widget test for _onSlashEntryPicked — pre-existing H4d carry-forward, not widened; covered surface is the 35-test triangle of slash_trigger + slash_trigger_session + super_editor_caret helpers). Slice 2g-c (linePrefix + picker actions) is queued separately. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1538 — loop-state advance** (record M1537 + queue D23 slice 2g-b)
+- Committed: prior to M1539 (this iteration)
+- TaskList ID: 169 advance (after slice 2g-a)
+- Notes: Recorded SlashMenuOverlay above SuperEditor. Advanced **Current** pointer to slice 2g-b. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1537 — D23 interactions slice 2g-a — SlashMenuOverlay above SuperEditor** (overlay paints; splice stubbed)
 - Committed: (this iteration)
