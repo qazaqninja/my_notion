@@ -48,7 +48,7 @@ Router buildPublicRouter({required Connection conn}) {
     if (rows.isEmpty) {
       return Response(404, body: 'not_found');
     }
-    final body = rows.first[0] as String;
+    final body = rows.first[0]! as String;
     final hash = rows.first[1] as String?;
     // E43: if the page is password-protected, demand the unlock
     // cookie. The cookie is set on a successful POST to

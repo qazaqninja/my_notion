@@ -104,12 +104,12 @@ class UserRepository implements UserRepositoryBase {
           parameters: {'email': email},
         );
         if (result.isEmpty) return null;
-        return result.first[0] as String;
+        return result.first[0]! as String;
       });
 
   User _toUser(ResultRow row) => User(
-        id: row[0] as String,
-        email: row[1] as String,
-        createdAt: row[2] as DateTime,
+        id: row[0]! as String,
+        email: row[1]! as String,
+        createdAt: row[2]! as DateTime,
       );
 }

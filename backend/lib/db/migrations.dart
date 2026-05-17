@@ -19,7 +19,7 @@ Future<void> runMigrations(Connection conn) async {
   ''');
 
   final applied = (await conn.execute('SELECT version FROM schema_migrations'))
-      .map((row) => row[0] as int)
+      .map((row) => row[0]! as int)
       .toSet();
 
   for (final m in _migrations) {

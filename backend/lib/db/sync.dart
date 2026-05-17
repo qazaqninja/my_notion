@@ -78,9 +78,9 @@ class SyncRepository implements SyncRepositoryBase {
         return [
           for (final row in rows)
             FileSummary(
-              relpath: row[0] as String,
-              sha256: row[1] as String,
-              mtime: row[2] as DateTime,
+              relpath: row[0]! as String,
+              sha256: row[1]! as String,
+              mtime: row[2]! as DateTime,
             ),
         ];
       });
@@ -108,9 +108,9 @@ class SyncRepository implements SyncRepositoryBase {
         if (preflight.isNotEmpty) {
           final row = preflight.first;
           current = FileSummary(
-            relpath: row[0] as String,
-            sha256: row[1] as String,
-            mtime: row[2] as DateTime,
+            relpath: row[0]! as String,
+            sha256: row[1]! as String,
+            mtime: row[2]! as DateTime,
           );
         }
         if (ifMatch == '*') {
@@ -158,9 +158,9 @@ class SyncRepository implements SyncRepositoryBase {
       final row = rows.first;
       return UpsertOutcome.persisted(
         FileSummary(
-          relpath: row[0] as String,
-          sha256: row[1] as String,
-          mtime: row[2] as DateTime,
+          relpath: row[0]! as String,
+          sha256: row[1]! as String,
+          mtime: row[2]! as DateTime,
         ),
       );
     });
@@ -201,11 +201,11 @@ class SyncRepository implements SyncRepositoryBase {
     final row = rows.first;
     return FileBody(
       summary: FileSummary(
-        relpath: row[0] as String,
-        sha256: row[1] as String,
-        mtime: row[2] as DateTime,
+        relpath: row[0]! as String,
+        sha256: row[1]! as String,
+        mtime: row[2]! as DateTime,
       ),
-      body: row[3] as String,
+      body: row[3]! as String,
     );
       });
 }
