@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D1-D22 + D23 route shell shipped**
-- **Task:** D23 interactions slice 1 — slash menu wiring in /editor-beta. M1516 audit corrected the D-phase status: D1-D22 are all shipped at the serializer level (91-test coverage, paragraph + headings + lists + todos + code + hr + blockquote + callouts + math + mermaid + tables + image + file + bookmark + sub-page + transclusion + columns + breadcrumb + toc + button + bold + code + italic + strike + underline + highlight + sub + sup + color + wikilink + date), and D23's route shell ships at `lib/features/editor/presentation/pages/editor_beta_page.dart` mounted at `/editor-beta/<ulid>` from `lib/app.dart:264`. Remaining work: ~7-8 slices = D23 interactions (slash menu wiring + drag handles + multi-select + M234-M268 source-mode shortcuts), D24-D27 polish, D28-D30 cutover (flip default `/editor` route). First concrete slice: port the existing slash command palette into EditorBetaPage so `/` in WYSIWYG surfaces the menu. Keep slash menu's existing M1100-M1186 extractor logic intact; just wire the input source from super_editor's keyboard handlers.
+- **Phase:** D (super_editor WYSIWYG migration) — **slash trigger helper extracted**
+- **Task:** D23 interactions slice 1b — refactor source_view.dart to call the new slash_trigger.dart helper. M1518+M1519 shipped the pure-Dart helper (`lib/features/editor/domain/slash_trigger.dart` with `slashShouldOpen` / `slashQueryBetween` / `slashShouldDismiss` + 19 tests). Source view's inline trigger logic at `lib/features/editor/presentation/widgets/source_view.dart:215-244` still re-implements the same heuristics — refactor it to call the helpers so both call sites stay in sync. After slice 1b: D23 slice 2 wires the helper into EditorBetaPage's super_editor keyboard listener so `/` in WYSIWYG opens the menu identically. Then D24-D27 polish + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1518 + M1519 — D23 interactions slice 1a + TS-04 fix-forward (slash_trigger helper extracted)** (first concrete D-phase TDD slice)
+- Committed: (this iteration)
+- TaskList ID: 161 (slice 1a; slice 1b is the source_view refactor follow-up)
+- Notes: First bite of D23 (slash menu wiring in /editor-beta). M1518 created `lib/features/editor/domain/slash_trigger.dart` (3 pure-Dart helpers: `slashShouldOpen({text, caret})`, `slashQueryBetween({text, triggerStart, caret})`, `slashShouldDismiss({text, triggerStart, caret})`) + `test/features/editor/domain/slash_trigger_test.dart` (16 tests). The helpers extract the trigger heuristics currently inline in `lib/features/editor/presentation/widgets/source_view.dart:215-244` so both the existing SourceView and the upcoming WYSIWYG keyboard listener inside EditorBetaPage can share one source of truth. Pure domain layer — zero Flutter/Bloc/router imports. flutter analyze clean on both files; 16/16 tests green in ~3s. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 — missing guard-branch tests for slashQueryBetween's negative triggerStart / caret-before-trigger / caret-past-end). M1519 fixed-forward with 3 explicit boundary tests covering each guard branch; 19/19 green. Source view inline logic NOT yet refactored — slice 1b ports it over. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1517 — loop-state advance** (record M1516 + advance to D23)
+- Committed: prior to M1518 (this iteration)
+- TaskList ID: 160 closeout
+- Notes: Recorded M1516 (D-phase audit correction). Advanced **Current** pointer from "D6 paragraph round-trip" to "D23 interactions slice 1 — slash menu wiring in /editor-beta". No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1516 — refresh CLAUDE.md item 9 — D-phase audit correction (D1-D22 + D23 shell shipped)** (super_editor progress accurate)
 - Committed: (this iteration)
