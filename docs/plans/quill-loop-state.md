@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E59-b H4d-iii-d-ii — wire SourceView's TextField selection listener to broadcast outbound presence via the M1470 EditorWsAttachController.sendAwareness seam. Steps: (1) expose userId from the JWT in SyncBloc/SyncState (decode the JWT's `sub` claim on auth) — currently only the raw token is exposed; (2) extend SourceView's existing `_controller` listener to detect selection-only changes (selection.baseOffset moved but text unchanged); (3) debounce ~100ms via a Timer so dragging a selection doesn't flood the WS; (4) construct AwarenessMessage(userId: <derived from SyncBloc>, pageUlid: widget.ulid?, cursorIndex: _controller.selection.baseOffset, color: peerColorFromUserId(userId)) and push via EditorSyncWsScope.maybeOf(context)?.sendAwareness(msg). Gate on the scope being non-null + sync.state.isAuthed. Path: edit `lib/features/sync/presentation/bloc/sync_bloc.dart` (or sync_state.dart) to add userId, edit `lib/features/editor/presentation/widgets/source_view.dart` for the selection listener + debounce. Closes the bidirectional presence loop end-to-end.
+- **Task:** E59-b H4d-iii-d-iii — wire SourceView's TextField selection listener to broadcast outbound presence using the M1473 SyncState.userId getter + M1470 controller seam. Steps: (1) extend SourceView's existing `_controller` listener to detect selection-only changes (text length unchanged, baseOffset moved); (2) Timer-debounce ~100ms so dragging doesn't flood; (3) read SyncBloc state to get userId via the new getter; (4) construct AwarenessMessage(userId, pageUlid: widget.ulid ?? '', cursorIndex: selection.baseOffset, color: peerColorFromUserId(userId)) and push via EditorSyncWsScope.maybeOf(context)?.sendAwareness(msg); (5) gate on scope non-null + userId non-null + isAuthed. SourceView may not currently expose ulid — needs a quick add if missing. Closes the bidirectional presence loop end-to-end.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,21 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1474 — BL-06+TS-04 fix-forward on M1473 decodeJwtSub** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 147 (rolls into H4d-iii-d-ii fix-forward)
+- Notes: Orchestrator audit of M1473 returned 0 BLOCK / 1 WARN / 3 INFO. 3 actionable fixes: (1) BL-06 — added inline comment on `SyncState.userId` getter explaining derived-from-token exclusion from props (closes future-reviewer ambiguity). (2) TS-04 — split the "non-three-segment string" test that batched two assertions into two named tests (segment count 2, segment count 4) for unambiguous failure output. (3) INFO Q1 — added "Do NOT use this to gate access-control decisions on the client" note to decodeJwtSub doc-comment so the trust boundary is explicit at every call site. INFO TS-03 (blocTest N/A on derived getter), placement, caching — all confirmed non-violations. 15/15 tests pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1473 — E59-b H4d-iii-d-ii (foundation): userId getter on SyncState via JWT sub** (foundation for SourceView outbound wire)
+- Committed: (this iteration)
+- TaskList ID: 147
+- Notes: New `lib/features/sync/domain/usecases/decode_jwt_sub.dart` (~37 lines after M1474 doc): pure `String? decodeJwtSub(String? token)` extracts JWT sub claim via base64Url.normalize + utf8.decode + jsonDecode; null-safe defensive returns for every failure mode (null/empty, non-three-segment, bad base64url, non-JSON, non-object, missing/non-string/empty sub). No signature verification — trust boundary documented in doc-comment ("backend issued the token; do not gate access-control on this"). `lib/features/sync/presentation/bloc/sync_state.dart` (modified, +6 lines after M1474): new `String? get userId => decodeJwtSub(token)` derived getter alongside isAuthed; commented re: deliberate props exclusion. `test/features/sync/decode_jwt_sub_test.dart` (~150 lines after M1474 split): 15 tests across 4 sub-groups — happy path (2: well-formed JWT, long-payload base64 normalize), null+empty (2), malformed inputs (8 after split: segment-2, segment-4, bad base64url, non-JSON, non-object JSON, missing sub, non-string sub, empty sub), SyncState.userId integration (3: derives from token, null when unauthed, null when malformed). Hand-rolled `_makeToken(Map)` helper uses base64Url.encode + strip `=` so tests exercise the same normalize path as real JWTs. SourceView selection wiring deferred to H4d-iii-d-iii — that slice is now smaller because the userId seam exists. Orchestrator audit: 0 BLOCK / 1 WARN (BL-06 derived-getter clarity — fixed M1474) / 3 INFO (1 TS-04 test split fixed M1474, 1 INFO trust-boundary doc fixed M1474, 1 TS-03 N/A confirmation). flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1472 — loop-state advance** (record M1470/M1471 + advance to H4d-iii-d-ii)
+- Committed: (this iteration)
+- TaskList ID: 146 closeout
+- Notes: Recorded M1470 (sendAwareness passthrough on controller) + M1471 (TS-04 baseline tighten). Advanced **Current** pointer to H4d-iii-d-ii (now split further into d-ii foundation + d-iii SourceView wire post-M1473). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1471 — TS-04 baseline tightening on M1470 sendAwareness test** (orchestrator gate cleanup)
 - Committed: (this iteration)
