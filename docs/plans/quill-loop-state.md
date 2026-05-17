@@ -7,10 +7,20 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** TS-01 sweep slice 2 — widget tests for `lib/features/settings/presentation/widgets/settings_nav.dart`. State-free SettingsNav widget (220-px left rail) with 3 props (groups list, activeLabel, onSelect callback). Coverage targets: all 11 nav rows render (the 4-group static list); the matching row's text matches `activeLabel` selected style (different color/weight via QuillTokens); each row's tap fires `onSelect(label)` with the row's label. Use `testApp()` from `test/helpers/test_theme.dart` (state-free → no Bloc mocks needed). Path: `test/features/settings/widgets/settings_nav_test.dart`. Follows the M1432 settings_atoms_test.dart pattern (sub-grouped per TS-04 by widget name, then per behavior).
+- **Task:** TS-01 sweep slice 3 — widget tests for `lib/features/settings/presentation/widgets/workspace_controls.dart` (WorkspaceIconButton + WorkspaceNameField). Unlike slices 1-2, these consume VaultBloc + dispatch RefreshFromDisk + write `.quill.yaml` on commit. Tests need mocktail mocks of VaultBloc to verify event dispatch on emoji-pick and name-commit. WorkspaceNameField commits on Enter or focus-loss; WorkspaceIconButton opens emoji picker (will need a stub or a "smoke that the GestureDetector wires up" test only). Path: `test/features/settings/widgets/workspace_controls_test.dart`. Use the BlocProvider<VaultBloc>.value pattern from sync_connected_card_test.dart. Recommend smoke-test the emoji-pick flow without actually opening the picker dialog (assert tap fires GestureDetector.onTap — that's enough; pickEmoji is the outer collaborator). Same testApp() base + nested groups per TS-04.
 - **Status:** pending
 
 ## Last completed
+
+- **M1435 — TS-01 sweep slice 2** (widget tests for settings_nav.dart — 8 tests across 4 sub-groups + Flexible+ellipsis defensive layout fix)
+- Committed: (this iteration)
+- TaskList ID: 133
+- Notes: Second slice of the TS-01 sweep. New `test/features/settings/widgets/settings_nav_test.dart` (~140 lines): 8 widget tests across 4 sub-groups — group headers (4 uppercased headers WORKSPACE/SYNC/ACCESS/DATA), row rendering (all 11 row labels from the 4-group static list), active state (matching row's Text fontWeight w500, inactive rows w400, exactly-one-active invariant verified via `.where((t) => t.style?.fontWeight == FontWeight.w500).length == 1`), onSelect callback (single-tap fires correct id, multi-tap sequence collects correct ids in order, re-tapping active row still fires). Includes the M1432 TS-06 `isNotNull` guard pattern before any `!` dereference. SettingsNav is state-free → testApp() with no Bloc mocks. Source change in same commit: wrap row label Text in `Flexible(child: Text(..., overflow: TextOverflow.ellipsis, ...))`. Real-font Inter at 13.5px fits at 220-px rail, but the test-default font is ~25% wider and overflowed by 47px on "Export & Backup". Defensive layout improvement that also future-proofs longer labels (i18n). Orchestrator audit: 0 BLOCK / 1 WARN (TS-06 style-counting on the one-active-row invariant — orchestrator explicitly classified as acceptable: "bold/not-bold distinction is the only user-observable signal for active state") / 3 INFO (TS-08 alchemist golden deferred to batched future infra; TS-04 grouping confirmed compliant; TH-03 Colors.transparent is a semantic constant, not a brand literal). flutter analyze clean; 48/48 settings tests pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1434 — loop-state advance** (record M1432/M1433 + advance to slice 2)
+- Committed: (this iteration)
+- TaskList ID: 132 closeout
+- Notes: Loop-state journal entry. Recorded M1432 (TS-01 slice 1, 18 tests for settings_atoms.dart) + M1433 (TS-06 fix-forward), advanced the **Current** pointer to TS-01 sweep slice 2 (settings_nav.dart). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1433 — TS-06 fix-forward on M1432 settings_atoms tests** (orchestrator gate cleanup)
 - Committed: (this iteration)
