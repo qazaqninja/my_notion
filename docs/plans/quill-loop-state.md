@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D25 + D26 + D27a + D27b ALL CLOSED. D25 complete end-to-end: multi-block selection state + cubit + UI overlay + gestures + ops integration. 292 D-phase tests.**
-- **Task:** D-phase pick-next survey #6. D25 is functionally complete: Notion-style multi-block-select is fully live in `/editor-beta` — Cmd+Click toggles, Cmd+Shift+Click extends range, plain click clears, overlay paints highlights, and Cmd+Shift+Backspace / Cmd+Opt+1-3 / Cmd+Shift+7-9 all operate on the selection set when non-empty. Remaining D-phase candidates: (a) D28-D30 cutover (flip `/editor-beta` to default `/editor` — needs dogfooding pass); (b) D25 polish slice — reorder + duplicate on multi-selection (non-contiguous semantics still deferred); (c) TS-08 alchemist editor goldens (visual regression safety); (d) project-wide TS-01 lcov directives (orchestrator's recurring carry-forward). Outside D-phase: (e) E59 pick-next #3 ladder (y_crdt WASM swap / web clipper / forms polish), (f) G4 docker smoke, (g) other v1.x backlog. Lean toward (a) cutover prep — D25 was the biggest remaining Phase D feature; with it shipped, the path to flipping `/editor-beta` to default is shorter. Or (c) goldens as a low-risk defensive investment.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete (D24-family + D25 + D26 + D27a + D27b all closed); D28-D30 cutover blocked on EditorBetaPage feature parity (kebab menu / find-in-page / presence / share-sheet not yet ported). Pivoting back to E-phase feature surface.
+- **Phase:** D (super_editor WYSIWYG migration) — 292 tests. Cutover deferred.
+- **Task:** E60 slice 1 — forms polish: add `FormFieldType.email` to the backend form schema. Current types: text/number/checkbox/select/date/multi. M1609 survey ruled out D28-D30 cutover (EditorBetaPage's kebab/find/presence aren't ported — `grep -c "kebab\|FindInPageController\|presence" editor_beta_page.dart` = 0 — a hard swap would regress significant functionality). Pivoted to E60 forms polish — small-bite user-visible value with no v2-backend dependency. Slice 1: extend `enum FormFieldType` with `email` (HTML5 `<input type="email">`); update `FormSchema.fromYaml` to recognize `type: email`; emit `<input type="email">` in the public form renderer; add an `_isValidEmail` validator. Slices 2-N: url, tel, longtext (textarea), pattern (regex). Each follows the same shape — short, mechanical, end-user-visible, full backend coverage in mocktail.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1609 — D-phase pick-next survey #6 closeout — pivot to E60 forms polish** (no code; doc-only pivot decision)
+- Committed: (this iteration)
+- TaskList ID: 203 closeout
+- Notes: Investigated D28-D30 cutover candidacy. Result: EditorBetaPage lacks feature parity with EditorPage. `grep -c "kebab\|FindInPageController\|presence\|RemoteCursor"` on editor_beta_page.dart returns 0 — the legacy editor has Move-to-Trash (M195) / Pull-from-server (M1241) / Share-via-OS-sheet (M1240) / Find-in-Page (M1322) / Presence-cursors (E59-b H4d) all wired, none of which are ported to the WYSIWYG path. A hard cutover would regress significant functionality. Realistic cutover sequence needs 5-10 parity slices before D28-D30. Pivoted to E60 forms polish as the freshest user-visible work surface outside D-phase. Current `enum FormFieldType` in `backend/lib/forms/form_schema.dart` has text/number/checkbox/select/date/multi. E60 adds email/url/longtext (textarea)/pattern (regex) — each a small mechanical slice with full backend mocktail coverage. Slice 1 adds `FormFieldType.email` + `<input type="email">` rendering + isValidEmail validator. Ruled out: (a) cutover (blocked on parity), (b) D25 polish (low value), (c) TS-08 goldens (defensive but not user-visible), (d) lcov sweep (project-wide nit), (e) y_crdt WASM swap (perf, requires build infra), (f) web clipper (separate package), (g) G4 docker (user-time-gated). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1606 + M1607 — D25 slice 5b — wire multi-block helpers into D24-family + DI-04 fix-forward (D25 CLOSED)** (no new tests; 2455 editor tests still pass)
 - Committed: (this iteration)
