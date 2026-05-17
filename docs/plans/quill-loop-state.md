@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **composer listener live, anchor still zero**
-- **Task:** D23 interactions slice 2e — caret-rect anchor positioning in WYSIWYG slash menu. M1531 wired the composer listener: typing `/` in `/editor-beta` now drives SlashMenuCubit identically to source_view, but `onOpen` passes `const AnchorRect(0,0,0,0)` so the overlay (slice 2f) wouldn't know where to draw. Slice 2e replaces that with a real screen-space rect derived from super_editor's `DocumentLayout` (via `Editor.context` or DocumentLayoutResolver) mapping `(nodeId, TextNodePosition.offset)` → `Rect` → `AnchorRect.fromLTWH`. Extract the mapping into a pure helper if testable. Then slice 2f wires the overlay rendering (porting `SlashMenuOverlay` consumption from source_view) + the selection-splice command that inserts the chosen entry's snippet via super_editor's Document mutation API. After 2f: D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts) + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **Rect→AnchorRect mapping shared**
+- **Task:** D23 interactions slice 2f — DocumentLayout caret-rect lookup in EditorBetaPage. M1533 narrowed slice 2e to "extract the Rect→AnchorRect mapping into core/ui/anchor_rect_x.dart so source_view + EditorBetaPage share one converter" (26 lines + 5 tests; source_view refactored to delegate). Slice 2f now finishes the positioning work: capture a `GlobalKey<DocumentLayoutState>` on the SuperEditor mount, in `_onComposerChanged.onOpen` call `key.currentState!.getRectForPosition(extentPosition)` → `localToGlobal` → `anchorRectFromRect`. Null-guard for the pre-layout boot case (fallback Rect.zero). After 2f: typing `/` in WYSIWYG opens SlashMenuCubit with a real anchor. Slice 2g wires the overlay rendering (porting SlashMenuOverlay consumption) + the selection-splice command (super_editor Document mutation API). Then D24-D27 polish + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1533 — D23 interactions slice 2e (narrowed) — Rect→AnchorRect converter shared by source_view + EditorBetaPage** (26 lines + 5 tests in core/ui/)
+- Committed: (this iteration)
+- TaskList ID: 167 closeout
+- Notes: Bite-sized refinement: the original slice 2e ("real DocumentLayout caret-rect lookup") was too broad. Narrowed it to extract just the shared mapping — source_view's static `_toAnchorRect(Rect)` was inlined construction; the upcoming EditorBetaPage positioning slice (2f) needs identical math. Created `lib/core/ui/anchor_rect_x.dart`: `anchorRectFromRect(Rect) → AnchorRect` free function + `extension RectAnchor on Rect { AnchorRect toAnchor() }` sugar. Pure mapping (no clamping/DPI — caller-side concerns). Test mirrors at `test/core/ui/anchor_rect_x_test.dart` (5 tests: verbatim mapping; zero rect; width/height round-trip; negative-offset preservation; extension equivalence). source_view's `_toAnchorRect` now delegates to `anchorRectFromRect` with a comment naming EditorBetaPage slice 2f as the future call site. flutter analyze clean on all 3 touched files. 5/5 tests green in <1s. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — CA-* (core/ui shared tier), TS-01/FS-04 (mirroring), LT-01 (clean) all pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1532 — loop-state advance** (record M1531 + queue D23 slice 2e)
+- Committed: prior to M1533 (this iteration)
+- TaskList ID: 166 advance
+- Notes: Recorded composer listener wiring. Advanced **Current** pointer to slice 2e. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1531 — D23 interactions slice 2d — composer listener wiring in EditorBetaPage** (slash_trigger now lights up in WYSIWYG; anchor still zero)
 - Committed: (this iteration)
