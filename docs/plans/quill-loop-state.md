@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** NV-03 slice 3a — migrate database feature `/editor/${ulid}` interpolations to `Routes.editor(ulid)`. 5 sites all in `lib/features/database/presentation/`: `database_table_page.dart:272` + `:497`, `widgets/list_view.dart:193`, `widgets/board_view.dart:232`, `widgets/calendar_view.dart:312`, `widgets/timeline_view.dart:357`, `widgets/gallery_view.dart:333`, and `pages/databases_page.dart:158` for `/db/${schema.id}` → `Routes.db(schema.id)`. Concentrated diff in the database feature. Add Routes import where needed. After 3a: slice 3b covers editor feature sites (editor_page.dart x2, backlinks_rail.dart x1, markdown_renderer.dart x5).
+- **Task:** NV-03 slice 3b — migrate editor feature route interpolations to `Routes.editor(ulid)`. 8 sites in `lib/features/editor/presentation/`: `pages/editor_page.dart:635` (`router.go('/editor/$newUlid')` in create-from-template flow) + `:2221` (`router.go('/editor/${result.ulid}')` in some palette/search jump); `widgets/backlinks_rail.dart:88` (`context.go('/editor/${bl.fromUlid}')`); `widgets/markdown_renderer.dart` x5 — lines 1500 + 1715 use `Navigator.of(context).pushReplacementNamed('/editor/$ulid')` (named-route style, may need to stay as-is or switch to `context.go`), line 2711 `context.go('/editor/$value')`, lines 4502-4503 conditional `'/editor/$ulid'` / `'/editor/$ulid?anchor=$anchor'` (the anchor variant — perfect candidate for `Routes.editor(ulid, anchor: anchor)`). Add Routes import to each file. After 3b: NV-03 fully complete across all parameterized interpolations.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1651 — NV-03 slice 3a — migrate database feature route interpolations** (7 files modified; +15 / -8; no new tests; flutter analyze clean on lib/features/database/)
+- Committed: (this iteration)
+- TaskList ID: 224 closeout
+- Notes: Continues NV-03 cleanup arc with first batch of parameterized-route call-site migration (M1649 helpers). 7 files in `lib/features/database/` swapped: `pages/databases_page.dart:158` (`Routes.db(schema.id)`); `pages/database_table_page.dart` (lines 272 + 497 — `Routes.editor(newUlid)` and `Routes.editor(row.ulid)`); 5 view widgets (`list_view`/`board_view`/`calendar_view`/`timeline_view`/`gallery_view`) all using `Routes.editor(row.ulid)` (calendar uses `r.ulid`). Each file got a new `Routes` import; verified zero bare `'/editor/'` or `'/db/'` literals remain in `lib/features/database/`. Pure mechanical refactor — no runtime behavior change. flutter analyze on `lib/features/database/` clean. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1649 — pick-next #10 closeout: Routes parameterized helpers (editor / editorBeta / db / settingsSection)** (2 files modified; 10 new routes tests; 17/17 routes pass)
 - Committed: (this iteration)
