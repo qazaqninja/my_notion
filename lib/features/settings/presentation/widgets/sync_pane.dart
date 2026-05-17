@@ -93,6 +93,14 @@ class SyncPane extends StatelessWidget {
   /// and dispatch `SyncPushAllRequested`. The bloc handler skips
   /// entries whose local sha already matches `knownShas[relpath]`,
   /// so re-clicking the button after a successful seed is a no-op.
+  ///
+  /// CA-04 note (M1423 audit): the orchestrator suggested passing
+  /// `VaultState? vault` as a prop instead of importing VaultBloc
+  /// here. We deliberately keep the inline `context.read<VaultBloc>`
+  /// inside this async callback: the user may tap "Push all" several
+  /// seconds after build, by which point a prop snapshot could be
+  /// stale (vault picker swap, reindex completion). Reading inside
+  /// the callback always gets the live state.
   Future<void> _onPushAllUnsynced(BuildContext context) async {
     final vault = context.read<VaultBloc>().state;
     if (vault is! VaultLoaded) {
