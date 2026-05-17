@@ -9,6 +9,7 @@ import '../../../vault/data/pdf_exporter.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/responsive_layout.dart';
 import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../../shared/widgets/relation_chip.dart';
 import '../../../../shared/widgets/segment.dart';
@@ -22,6 +23,29 @@ import '../bloc/editor_event.dart';
 import 'comments_dialog.dart';
 
 enum PropertiesView { fields, yaml }
+
+// ---------------------------------------------------------------------------
+// M1682 — touch-tuned properties panel rows. Pure-Dart helpers picked
+// between dense (desktop) and tall-touch (mobile) sizing. Same pattern
+// as M1680's slash_menu_overlay helpers. Production reads them from
+// `_EditableFrontmatterRow.build` via `isMobileWidth`.
+// ---------------------------------------------------------------------------
+
+/// Row container padding. Mobile bumps to 14 vertical so the resulting
+/// row height clears the 44pt Material touch-target floor (14 + ~16
+/// content + 14 = ~44). Desktop stays at the current dense 4.
+EdgeInsets propertiesRowPaddingFor({required bool isMobile}) => isMobile
+    ? const EdgeInsets.symmetric(vertical: 14)
+    : const EdgeInsets.symmetric(vertical: 4);
+
+/// Leading type-icon size. Mobile bumps to 16; desktop stays at 12.
+double propertiesRowIconSizeFor({required bool isMobile}) =>
+    isMobile ? 16 : 12;
+
+/// Key-column font size (the frontmatter field name in `mono`). Mobile
+/// bumps to 15 (touch-comfortable body); desktop stays at the dense 12.
+double propertiesRowKeyFontSizeFor({required bool isMobile}) =>
+    isMobile ? 15 : 12;
 
 /// Right-side slide-in panel. Matches `overlays.jsx:127-216` —
 /// header → Fields/YAML segment → body → relations → file actions.
@@ -566,11 +590,14 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
   Widget build(BuildContext context) {
     final tokens = QuillTokens.of(context);
     final type = widget.entry.type;
+    // M1682: per-row touch tuning — bump padding + icon + key font on
+    // narrow widths so each row clears the 44pt touch-target floor.
+    final isMobile = isMobileWidth(context);
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: propertiesRowPaddingFor(isMobile: isMobile),
         decoration: BoxDecoration(
           border: Border(bottom: BorderSide(color: tokens.divider, width: 0.5)),
         ),
@@ -585,7 +612,9 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
                     message: _labelForType(type),
                     waitDuration: const Duration(milliseconds: 500),
                     child: QuillIcon(_iconForType(type),
-                        size: 12, strokeWidth: 1.7, color: tokens.text3),
+                        size: propertiesRowIconSizeFor(isMobile: isMobile),
+                        strokeWidth: 1.7,
+                        color: tokens.text3),
                   ),
                   const SizedBox(width: 6),
                   Flexible(
@@ -594,7 +623,12 @@ class _EditableFrontmatterRowState extends State<_EditableFrontmatterRow> {
                       waitDuration: const Duration(milliseconds: 600),
                       child: Text(
                         widget.entry.key,
-                        style: mono(fontSize: 12, color: tokens.text3),
+                        style: mono(
+                          fontSize: propertiesRowKeyFontSizeFor(
+                            isMobile: isMobile,
+                          ),
+                          color: tokens.text3,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
