@@ -14,7 +14,7 @@ Branded as "Quill" inside the app; package name `my_notion`.
 
 ## Status
 
-**v1 mostly shipped (M0–M1186+).** Latest commit on `main` is M1186 (Stripe doc example to .env-loaded test fixture). The original Pick-next queue (items 1/3/4/6/9 from FEATURES.md) is fully landed; subsequent milestones extended through 1,200+ commits adding block-editor depth, database polish, slash-menu extractors (M1100–M1186 series — ~110 source-text extractors), and many more features. ~2,600+ tests passing across 91 test files, `flutter analyze` clean.
+**v1 mostly shipped (M0–M1512+).** Latest commit on `main` is M1512 (Forms polish slice 3b complete — backend `dart analyze` reaches 0 issues for the first time). The original Pick-next queue (items 1/3/4/6/9 from FEATURES.md) is fully landed; subsequent milestones extended through 1,500+ commits adding block-editor depth, database polish, slash-menu extractors (M1100–M1186 series — ~110 source-text extractors), Phase E V2 backend (auth + sync + public + forms + presence + WebSocket CRDT seam), Phase G mobile shell + Phase H presence layer, and many more features. ~2,800+ Flutter tests passing across 144 test files + 192 backend tests across 15 test files, both `flutter analyze` and backend `dart analyze` clean.
 
 For the full roadmap and prioritized backlog read `docs/FEATURES.md`. It's the authoritative source for what's shipped, what's queued, and what's out of scope. The Pick-next queue at the bottom is the work list to follow.
 
@@ -25,7 +25,9 @@ Live verified end-to-end on macOS via the picker → vault tree → editor → p
 ```bash
 flutter pub get
 flutter analyze            # expect "No issues found"
-flutter test               # expect "All tests passed!" (~2,600 tests across 91 files)
+flutter test               # expect "All tests passed!" (~2,800 tests across 144 files)
+cd backend && dart analyze  # expect "No issues found!" (slice 3b cleared 252+ findings)
+cd backend && dart test     # expect "All tests passed!" (192 tests across 15 files)
 flutter build macos --debug
 open build/macos/Build/Products/Debug/my_notion.app
 ```
