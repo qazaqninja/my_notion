@@ -7,10 +7,25 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E59-b H4d — close the presence loop by wiring SyncWsBinder/SyncWsClient to dispatch `kind:'awareness'` messages into PresenceCubit AND broadcast outbound cursor changes when the local TextField selection moves. Two halves: (1) **inbound** — extend the existing per-page WS message handler to attempt `AwarenessMessage.tryDecode(raw)` first; on success route to `presenceCubit.remoteCursorReceived(msg)`, else fall through to the CRDT update handler. (2) **outbound** — debounce TextField selection changes (~100ms) and emit AwarenessMessage.encode() back through the WS sink. Also wire the RemoteCursorOverlay from M1454 into the editor body, providing the cursorRectAt resolver from the live RenderEditable. Path: `lib/features/sync/data/sync_ws_dispatcher.dart` (new) + edits in EditorWsAttachController + EditorSyncWsMount + _EditorBodyState. Recommend bite-sizing as: H4d-i (inbound dispatcher + tests), H4d-ii (outbound debounced broadcast), H4d-iii (overlay wire-in + RenderEditable rect resolver).
+- **Task:** E59-b H4d-ii — outbound presence broadcast. When the local TextField selection moves (cursor reposition or text edit), debounce ~100ms and emit `AwarenessMessage.encode()` through the existing `SyncWsBinder.send` path (or extend the binder with `sendAwareness(AwarenessMessage)`). The userId comes from the current SyncBloc's authenticated session; the color is derived deterministically from a userId hash (build a `peerColorFromUserId(String)` helper that maps to a stable palette of ~8 distinct accent colors). Outbound should NOT happen if the page is unauthed or if the WS isn't connected. Tests: stub the WS send sink, drive selection changes, assert one outbound per debounce window with the right shape. Paths: probably `lib/features/sync/data/sync_ws_binder.dart` (extend) + new `lib/features/sync/domain/usecases/peer_color_from_user_id.dart` + test mirrors. H4d-iii (overlay wire-in via PresenceCubit + RenderEditable cursorRectAt) closes the loop.
 - **Status:** pending
 
 ## Last completed
+
+- **M1458 — TS-04 rename fix-forward on M1457 awareness tests** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 141 (rolls into H4d-i fix-forward)
+- Notes: Orchestrator audit of M1457 returned 0 BLOCK / 1 WARN (TS-03 forward-looking to H4d-iii PresenceCubit blocTest — "no change needed in this file" per orchestrator) / 3 INFO. 2 actionable TS-04 INFOs fixed: (1) sub-group renamed from `'incoming → awareness (H4d-i)'` to `'awarenessStream (H4d-i)'` matching the TS-04 method-name convention. (2) test description renamed from `'malformed JSON falls through...'` to `'mismatched-kind JSON falls through...'` because the payload is valid JSON with a mismatched kind tag, not malformed JSON — body was already correct, only the description was imprecise. INFO 1 (CA-07 data→domain import) is informational confirming the downward direction is correct. 16 tests still pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1457 — E59-b H4d-i: inbound presence wire dispatcher** (first H4d slice)
+- Committed: (this iteration)
+- TaskList ID: 141
+- Notes: First H4d slice routing incoming WS payloads to either PresenceCubit (via awarenessStream) or the CRDT doc (via existing path) based on a kind-tag pre-check. `lib/features/sync/data/sync_ws_binder.dart` (modified): new import AwarenessMessage from sync/domain/entities; new field `_awarenessController = StreamController<AwarenessMessage>.broadcast()`; new public getter `awarenessStream`; in `attach()`'s `incoming.listen` handler, `AwarenessMessage.tryDecode(payload)` runs FIRST — on non-null emit to awarenessStream and return (short-circuit), on null fall through to existing `QuillCrdtSetBody` path unchanged; `dispose()` closes awarenessController too (teardown order: doc → error → awareness, all guarded by `isClosed` check before add). Effect: same per-page WS channel now carries both message kinds; awareness envelopes never reach the CRDT doc; non-awareness payloads behave identically to pre-M1457. Test additions: new sub-group `awarenessStream (H4d-i)` (post-M1458 rename) with 5 tests — parsed routed to stream / awareness skips CRDT doc / opaque still goes to CRDT / mixed-interleaved preserves both paths in order / mismatched-kind JSON falls through. Uses existing FakeChannel test infra. Orchestrator audit: 0 BLOCK / 1 WARN (TS-03 PresenceCubit blocTest forward-looking, no this-file action) / 3 INFO (CA-07 data→domain informational; 2 TS-04 renames fixed in M1458). 16 tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1456 — loop-state advance** (record M1454/M1455 + advance to H4d)
+- Committed: (this iteration)
+- TaskList ID: 140 closeout
+- Notes: Recorded M1454 (RemoteCursorOverlay widget) + M1455 (TH-03+BL-12+TS-03 fix-forwards). Advanced **Current** pointer to H4d (sliced into H4d-i/ii/iii). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1455 — TH-03+BL-12+TS-03 fix-forward on M1454 overlay** (orchestrator gate cleanup)
 - Committed: (this iteration)
