@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **bold autoformat live in WYSIWYG**
-- **Task:** D26 inline autoformat slice 2 — italic `*X*` + `_X_`. M1551 wired `BoldAutoformatReaction` into `_BetaEditorShellState._editor.reactionPipeline` (appended after super_editor's `defaultEditorReactions`). M1552 backfilled 5 reaction unit tests (4 guard paths + 1 dispatch path) using a `_RecordingDispatcher implements RequestDispatcher` test harness. Typing `**bold**` in WYSIWYG now strips the markers and applies `boldAttribution`. Slice 2 follows the same detector+reaction+tests template for italic — two opener/closer pairs (`*X*` and `_X_`). Detector must NOT match `**X**` (bold's job — checked first by reactionPipeline ordering). Each future inline mark (strike `~~X~~`, inline code `` `X` ``, highlight `==X==`, sub `~X~`, sup `^X^`) gets the same shape. After D26 closes: D24/D25 deferred plugin opt-ins, then D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **bold + italic autoformat live**
+- **Task:** D26 inline autoformat slice 3 — strike `~~X~~`. M1554 added italic detector + reaction + 26 tests (asterisk + underscore variants; bold-collision guard via `text[caret-2] == '*'` refuse; intra-word underscore guard via `_isWordChar`). Pipeline ordering: bold → italic, registered in `_BetaEditorShellState.initState`. Slice 3 applies the same detector+reaction+tests template to strike `~~X~~`: symmetric 2-char marker, inner must not contain `~~`, opener-walk-back guard. Register after italic in the pipeline. Following inline-mark slices: inline code `` `X` `` (slice 4), highlight `==X==` (slice 5), sub `~X~` and sup `^X^` (slices 6 + 7, must check after strike to avoid `~~` colliding with `~`). After D26 closes: D24/D25 plugin opt-ins, then D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1554 — D26 inline autoformat slice 2 — italic `*X*` + `_X_` detector + reaction + tests** (26 italic tests; cumulative D26 = 45)
+- Committed: (this iteration)
+- TaskList ID: 176 closeout
+- Notes: Applied the M1549/M1551/M1552 detector+reaction+tests template to italic. `lib/features/editor/domain/italic_autoformat.dart` (~60 lines): single `detectItalicAutoformat({text, caret})` covering both asterisk + underscore variants. Bold-collision guards baked in: asterisk italic refuses when `text[caret-2] == '*'`; opener `*` refuses when flanked by `*`; underscore opener refuses when preceded by a word char (`_isWordChar` matches `[A-Za-z0-9_]`) so `snake_case` doesn't false-italicize. `lib/features/editor/presentation/controllers/italic_autoformat_reaction.dart` (48 lines): `ItalicAutoformatReaction extends EditReaction` — react()-only, dispatches `DeleteContentRequest + InsertTextRequest(attributions: {italicsAttribution})`. Wired AFTER `BoldAutoformatReaction` in `_editor.reactionPipeline`. Tests: 19 detector (5 sub-groups: asterisk happy / underscore happy / bold collisions / no-match general / edge cases) + 7 reaction (4 guards + bold-collision sentinel + asterisk dispatch + underscore dispatch) using the same `_RecordingDispatcher implements RequestDispatcher` harness ported from bold. flutter analyze clean on all 5 touched files. Behaviour: `*x*` and `_x_` in WYSIWYG now auto-italicize; `**bold**` still wins; `snake_case` doesn't collide. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO. Cumulative D26: 14+5 + 19+7 = 45 tests. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1553 — loop-state advance** (record M1551+M1552 + queue D26 slice 2)
+- Committed: prior to M1554 (this iteration)
+- TaskList ID: 175 advance
+- Notes: Recorded bold reaction + reaction tests. Advanced **Current** pointer to slice 2. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1551 + M1552 — D26 inline autoformat slice 1b + TS-01 reaction tests (bold autoformat live in WYSIWYG)** (BoldAutoformatReaction + 5 reaction tests)
 - Committed: (this iteration)
