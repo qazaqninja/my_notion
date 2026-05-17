@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #14 — after BL-01 closure. Options remaining: (a) BL-11 D-fp callback cleanup (5 imperative setState + nav callbacks across D-fp1/2/3/3b/4b — could shift to a FindBarCubit / EditorActionCubit pattern); (b) BL-12 _FindBarHost child StatefulWidget (M1634 deferred — tight coupling to _doc/_editor); (c) Phase E continuation (G4 docker smoke user-time-gated, forms field-type expansion past E60 diminishing return); (d) Mobile polish (CLAUDE.md item 10 — mobile-first properties panel + touch-tuned slash menu, ~half day); (e) D-fp5 next parity port (outline / source toggle / lock toggle / properties panel — not cutover-critical); (f) NV-02 GoRouteData typed routes (M1649 deferred); (g) later D30b/c BlocSelector collapse + legacy deletion (still needs more dogfood). Decision criteria: deliver user-facing value or knock out tiny architectural wins.
+- **Task:** Mobile polish slice 2 — mobile-first properties panel. The other half of CLAUDE.md item 10. `properties_panel.dart` currently renders desktop-dense at all widths; on mobile (≤700px) the frontmatter rows wrap awkwardly and the icon kebab eats screen space. Plan: extract size-helper functions like the M1680 slash menu pattern (`propertiesRowPaddingFor({isMobile})`, etc.), use `isMobileWidth` on the row build, bump row height to ≥44pt + label/value font to 15 on mobile. Optional: collapse the right-rail panel into a draggable bottom sheet on mobile (heavier — separate slice).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1680 — pick-next #14 closeout: touch-tuned slash menu rows (CLAUDE.md item 10)** (2 files modified; +104 / -5; 8 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 236 closeout
+- Notes: Pick-next survey #14 picked mobile polish (option d). Slash menu rows previously rendered at ~28-30px on mobile (well below 44pt Material touch-target floor) with icon+text sized for dense desktop reading. Adds 4 pure-Dart top-level helpers at the top of `lib/features/editor/presentation/widgets/slash_menu_overlay.dart`: `slashRowPaddingFor({isMobile})` (mobile 12v/16h → ~44pt row, desktop 7v/12h dense), `slashRowIconSizeFor` (mobile 18 vs desktop 13), `slashRowLabelFontSizeFor` (mobile 15 vs desktop 13), `slashRowShowsKeyboardHint` (false on mobile — touch users can't press Enter on a physical keyboard, and the `Kbd('↵')` chip eats horizontal space). `_Row.build` calls `isMobileWidth(context)` once (same helper the mobile shell + responsive command palette already use, from `lib/shared/widgets/responsive_layout.dart`) and threads the bool through. 8 pure-Dart unit tests grouped per helper (mobile + desktop branches each). **Orchestrator audit: 0 BLOCK / 0 WARN / 2 INFO (TS-04 outer group named after the milestone rather than the unit under test; TS-04/TS-06 — misleading inline comment said "24 horizontal" while implementation is 16h side = 32h total). Both cosmetic, non-actionable.** After this slice, CLAUDE.md item 10 remaining work is mobile-first properties panel (queued as next). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1677 + M1678 — BL-01 slice 2 + same-iteration fix-forward — BL-01 FULLY CLOSED** (5 files modified; +210 / -134; 24/24 settings store + cubit tests pass; 102/102 full settings suite pass; analyze clean)
 - Committed: (this iteration)
