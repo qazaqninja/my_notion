@@ -293,7 +293,7 @@ void main() {
       });
     });
 
-    group('incoming → awareness (H4d-i)', () {
+    group('awarenessStream (H4d-i)', () {
       const awarenessJson =
           '{"kind":"awareness","userId":"alice","pageUlid":"U",'
           '"cursorIndex":42,"color":"#FF5722"}';
@@ -390,7 +390,8 @@ void main() {
         await binder.dispose();
       });
 
-      test('malformed JSON falls through to the CRDT path', () async {
+      test('mismatched-kind JSON falls through to the CRDT path',
+          () async {
         final ch = _FakeChannel();
         final client = _makeClient(out: ch);
         final binder = SyncWsBinder(
