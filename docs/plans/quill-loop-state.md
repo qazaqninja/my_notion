@@ -7,8 +7,8 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 4 sub-pass 4/4 — public_member_api_docs for the auth + sync + public tail (15 findings across 7 files). Distribution: auth/user.dart (4) + auth/tokens.dart (3) + auth/password.dart (2) + sync/frontmatter_probe.dart (3) + sync/ws_hub.dart (1) + sync/awareness_message.dart (1) + public/markdown_html.dart (1). After this sub-pass, cluster 4 is fully clear (68 docs added across M1502+M1504+M1506+M150x). Then ~25 misc info findings remain (mix of small clusters) before revisit-by-priority survey for next milestone.
-- **Status:** in_progress (sub-passes 1+2+3 of 4 complete)
+- **Task:** Forms polish slice 3b cluster 5 — final tail of ~26 misc info findings. Cluster 4 (public_member_api_docs) fully complete at M1508 (-68 across 4 sub-passes M1502/M1504/M1506/M1508). Cluster 5 distribution per orchestrator's M1508 audit: (1) `unnecessary_raw_strings` in lib/public/markdown_html.dart (mechanical 2-line fix); (2) test/* lints — `prefer_const_declarations`, `type_annotate_public_apis`, `always_declare_return_types` (mechanical, low-risk per-line); (3) `sort_constructors_first` + `avoid_equals_and_hash_code_on_mutable_classes` in awareness_message.dart + file_summary.dart (small design choice — add `@immutable` or per-line ignore). Slice in 2-3 sub-passes by rule cluster. After cluster 5 full clear: dart analyze should reach 0 issues; then revisit-by-priority survey to pivot to next milestone (G4 docker-compose smoke / E59 pick-next survey / D1 super_editor next slices / new feature work).
+- **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
   - BL-12 design smell on RemoteCursorOverlay: hard `BlocBuilder<PresenceCubit, PresenceState>` requires the cubit ancestor, blocking isolated SourceView tests. Switch to a maybeOf-tolerant pattern when the SourceView test sweep lands — paired refactor.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1508 — backend lint cleanup 4 sub-pass 4 (public_member_api_docs auth+sync+public tail 15 → 0)** (cluster 4 complete!)
+- Committed: (this iteration)
+- TaskList ID: 157 (slice 3b cluster 4 sub-pass 4 of 4; task #157 closeout)
+- Notes: Final sub-pass of cluster 4. 7 files, 25 inserts: lib/auth/user.dart (User const ctor + 3 fields = 4 findings), lib/auth/tokens.dart (TokenIssuer ctor + issuer + audience = 3), lib/auth/password.dart (PasswordHasher const ctor + cost = 2), lib/sync/frontmatter_probe.dart (fromBody factory + ulid + isPublic = 3), lib/sync/ws_hub.dart (WsHub() ctor = 1), lib/sync/awareness_message.dart (AwarenessMessage const ctor = 1), lib/public/markdown_html.dart (render() static method = 1). dart analyze: 40 → 26 (-14, one over-counted in the original scan resolved as a no-op since class-level ctor doc covered the apparent separate finding). **Cluster 4 complete across M1502+M1504+M1506+M1508** (-68 public_member_api_docs total). dart test: 192/192 still green. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO new — clean across all 5 specialists; explicitly noted that the 26 remaining info findings are all info-severity pre-existing items concentrated in awareness_message.dart (sort_constructors_first, avoid_equals_and_hash_code_on_mutable_classes, cross-file comment_references), public/markdown_html.dart (unnecessary_raw_strings), and test/* (prefer_const_declarations, type_annotate_public_apis, always_declare_return_types). Recommended sub-pass order for cluster 5. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1507 — loop-state advance** (record M1506 + advance to cluster 4 sub-pass 4)
+- Committed: prior to M1508 (this iteration)
+- TaskList ID: 157 sub-pass 3 closeout
+- Notes: Recorded M1506 (db/* docs). Advanced **Current** pointer to sub-pass 4 (auth + sync + public tail). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1506 — backend lint cleanup 4 sub-pass 3 (public_member_api_docs for db/* 17 → 0)** (pure-doc commit, third slice of cluster 4)
 - Committed: (this iteration)
