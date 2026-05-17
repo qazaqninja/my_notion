@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/ui/anchor_rect.dart';
+import '../../../../core/ui/anchor_rect_x.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -352,9 +353,10 @@ class _SourceViewState extends State<SourceView> {
   }
 
   /// Convert a Flutter [Rect] to the plain-Dart [AnchorRect] used by the
-  /// cubit states. Keeps the bloc/cubit layer Flutter-free per CA-01.
-  static AnchorRect _toAnchorRect(Rect r) =>
-      AnchorRect(left: r.left, top: r.top, right: r.right, bottom: r.bottom);
+  /// cubit states. Delegates to [anchorRectFromRect] in `core/ui/anchor_rect_x.dart`
+  /// so the WYSIWYG side (`EditorBetaPage` slice 2f) can share the same
+  /// mapping without re-implementing it.
+  static AnchorRect _toAnchorRect(Rect r) => anchorRectFromRect(r);
 
   /// Tab / Shift-Tab on the current selection. Indents or outdents
   /// every line touched by the selection (or the line under the caret
