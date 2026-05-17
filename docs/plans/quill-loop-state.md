@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a + D27b all closed. 244 D-phase tests, 7 Notion shortcuts live. Pivoting to D25 multi-select for biggest remaining user-visible value.**
-- **Task:** D25 slice 1 — `BlockSelection` value object (pure-Dart). Super_editor's `DocumentSelection` is a contiguous (base, extent) range only; Notion's multi-block-select (click block, ⌘+Click another to toggle a non-contiguous set) needs separate state. Slice 1 models the state: an immutable value object holding `Set<String> nodeIds` with `add`/`remove`/`toggle`/`clear`/`isSelected`/`isEmpty`/`size` operations. Subsequent slices will: (slice 2) a Cubit that owns the BlockSelection alongside super_editor's selection; (slice 3) UI overlay highlighting selected blocks via the cubit; (slice 4) wire ⌘+Click + Shift+Click gestures; (slice 5) make D24-family delete/duplicate/heading ops act on the whole set when non-empty. Keep slice 1 strictly value-object-and-ops; no super_editor imports needed.
+- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a + D27b closed; D25 slice 1 shipped. 259 D-phase tests.**
+- **Task:** D25 slice 2 — `BlockSelectionCubit`. Wraps the M1593 `BlockSelection` value object and exposes mutation events: `selectBlock(String nodeId)` (replaces selection with just that block), `toggleBlock(String nodeId)` (Cmd+Click semantics), `extendSelection(String anchor, String extent, Document doc)` (Shift+Click semantics: select all blocks between anchor and extent), `clearSelection()`. State emission via Cubit's `emit(BlockSelection)`. Pure-Dart-ish — depends on super_editor's `Document` for `extendSelection`'s range computation but doesn't touch Flutter widgets. Place at `lib/features/editor/presentation/cubit/block_selection_cubit.dart`. Test via `bloc_test` with `seed:` / `act:` / `expect:` style.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1593 — D25 slice 1 — BlockSelection value object (pure-Dart)** (15 tests in 5 sub-groups; ~70-line Equatable class)
+- Committed: (this iteration)
+- TaskList ID: 196 closeout
+- Notes: Pure-Dart immutable value object holding `Set<String> nodeIds`. Single import: `package:equatable/equatable.dart`. Read-only API (`isEmpty`/`isNotEmpty`/`size`/`isSelected`/`nodeIds`) + mutation API returning new instances (`add` idempotent / `remove` / `toggle` / `clear` / `replaceWith` copies input). 15 tests in 5 sub-groups: empty factory (2), add (3 incl. idempotency + immutability), remove (2), toggle (2), clear+replaceWith (3 incl. caller-mutation-safety), value equality (3 incl. order-independence). flutter analyze clean. Orchestrator audit: 0 BLOCK / 1 WARN (TS-04 — orchestrator suggested flattening test groups; ignored as my structure matches sibling block_reorder_test.dart precedent) / 2 INFO (BL-06 scope clarification non-actionable; Set-equality concern — orchestrator suggested `props => [...nodeIds]` but Equatable's DeepCollectionEquality already handles Set content equality, verified by the order-independence test passing). Both findings analyzed and dismissed as misreads. Cumulative D-phase WYSIWYG layer = 259 tests (244 + 15). Slice 2 wraps this in a Cubit alongside super_editor's selection. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1592 — D-phase pick-next survey #5 closeout — pivot to D25 multi-select (block selection set)** (no code; doc-only pivot decision)
 - Committed: (this iteration)
