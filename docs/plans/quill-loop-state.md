@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **TS-01 recurring carry-forward INFO closed** via M1618 lcov directive sweep.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. TS-01 recurring carry-forward closed via M1618.
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. Cutover deferred.
-- **Task:** E-phase pick-next survey #8. After M1618 closed the longest-running recurring orchestrator INFO, the carry-forward backlog is genuinely empty. Candidates remaining: (a) Editor parity arc (5-10 slices unblocking D28-D30 cutover; first slice: port Find-in-Page from EditorPage to EditorBetaPage — FindInPageController extracted at H3a is reusable, but currently consumes a String body; would need a DocumentSearch helper for super_editor MutableDocument). (b) D25 polish — reorder/duplicate on non-contiguous multi-selection. (c) TS-08 alchemist editor goldens (visual-regression net for the 292 D-phase tests). (d) Web clipper (separate package). (e) y_crdt WASM swap (perf). (f) G4 docker smoke (user-gated). (g) Other v1.x backlog from FEATURES.md (mostly checked off — should grep for remaining 🚧/📋 markers). Likely investigation-first pivot to (a) since it's the largest user-visible win.
+- **Task:** D-fp1 (editor feature-parity slice 1) — port Move-to-Trash kebab action to EditorBetaPage AppBar. Simplest first parity step — single AppBar `IconButton(Icons.delete_outline)` (or kebab menu with one item for now) that calls `context.read<VaultBloc>().add(MoveToTrash(widget.ulid))` then `Navigator.of(context).pop()` to leave the route. Matches the legacy editor's M195 wire-up at editor_page.dart:654. M1620 survey #8 re-read FEATURES.md 🚧/📋 markers: outstanding items are workspace-member-management (🔮 v2 backend), inbound share-sheet (iOS Xcode setup), home-screen widgets (platform-specific, G1 partial). The realistic actionable arc is editor parity. Find-in-Page would need a `DocumentSearch` helper for super_editor's `MutableDocument`; kebab Move-to-Trash is the simplest first port — single bloc dispatch + route pop. Then Pull-from-server + Share-via-OS-sheet + Find-in-Page slices. After parity: D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1620 — Pick-next #8 closeout — pivot to editor parity arc, starting with Move-to-Trash** (no code; doc-only pivot decision)
+- Committed: (this iteration)
+- TaskList ID: 209 closeout
+- Notes: Re-surveyed FEATURES.md 🚧/📋 markers. Outstanding items: workspace-member-management (🔮 v2 backend), inbound-share-sheet (iOS Xcode setup), home-screen widgets (platform-specific). Realistic actionable arc remaining is editor parity for D28-D30 cutover. Of the parity ports (Move-to-Trash, Pull-from-server, Share-via-OS-sheet, Find-in-Page), Move-to-Trash is the simplest: single VaultBloc dispatch + route pop, matching legacy editor_page.dart:654's M195 wire-up. Find-in-Page is multi-sub-slice (needs DocumentSearch helper for super_editor MutableDocument — current FindInPageController consumes a String body). Pivot decision: queue D-fp1 = Move-to-Trash, follow with D-fp2/3 = Pull/Share, then D-fp4 = Find-in-Page (which itself may be 3-4 slices). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1618 — TS-01 lcov directive sweep (pick-next #7 closeout)** (no new tests; 5 controller files modified; 7 functions wrapped)
 - Committed: (this iteration)
