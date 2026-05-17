@@ -7,10 +7,20 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** FS-04 slice 2 — extract SyncPane from settings_page.dart. The sync cluster is the next-largest single concern: _syncPane method body + _SyncCard + _SyncLoginCard + the workspace-config helpers used inside the sync card. Target: new lib/features/settings/presentation/widgets/sync_pane.dart (public SyncPane widget + the private widgets and the _onPushAllUnsynced helper). settings_page.dart drops the corresponding ~250-300 lines + 5-6 imports, going from 2,036 → ~1,750 lines.
+- **Task:** FS-04 slice 3 — extract the structural helpers from settings_page.dart. The remaining single-feature private widgets in the file are: _Nav (the 220-px left rail with grouped items, ~50 lines), _NavItem (the row + hover state, ~80 lines), _SettingRow (the labeled value row used across panes, ~30 lines), _WorkspaceIconButton (emoji picker → workspace.icon writer, ~70 lines), _WorkspaceNameField (vault-config name input with debounced save, ~75 lines), _SyncCard (placeholder cards for Git/S3/WebDAV — visual-only sitting in the vault pane, ~50 lines), _Toggle (the 34×20 toggle pill used in Appearance + Advanced panes, ~50 lines). Target: a single `lib/features/settings/presentation/widgets/settings_shared.dart` file holding all of them; settings_page.dart drops ~400 lines, going from 1,846 → ~1,450 lines. Drop the corresponding imports too (emoji_picker, tag_chip, person_chip, status_dot for some helpers).
 - **Status:** pending
 
 ## Last completed
+
+- **M1424 — FS-04 slice 2 cleanup** (orchestrator gate: CA-04 inline-context.read rationale comment)
+- Committed: (this iteration)
+- TaskList ID: 127b
+- Notes: Orchestrator audit of M1423 returned 0 BLOCK / 2 WARN / 3 INFO. The CA-04 WARN suggested pushing the VaultBloc read up to the settings page and passing `VaultState? vault` as a prop into SyncPane. That would regress correctness: the user can tap "Push all" several seconds after build, by which point a prop snapshot could be stale (vault picker swap, reindex completion). Reading via context.read<VaultBloc>() inside the async callback always gets the live state. Added an inline doc-comment on `_onPushAllUnsynced` documenting this trade-off so a future reader doesn't try the same extraction. TS-01 WARN (no widget test for SyncPane) and the BL-11 / TS-01 / FS-04 INFOs all deferred per the M1421 backfill pattern. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1423 — FS-04 slice 2** (extract SyncPane to widgets/sync_pane.dart — pure refactor, no behavior change)
+- Committed: (this iteration)
+- TaskList ID: 127
+- Notes: Pure refactor. Sync cluster was the next-largest single concern after FormsPane landed in M1421. New `lib/features/settings/presentation/widgets/sync_pane.dart` (~221 lines): public `SyncPane` StatelessWidget extracted from `_SettingsPageState._syncPane`; private `_SyncLoginCard` (StatefulWidget) moved verbatim; the `_onPushAllUnsynced` helper moved from `_SettingsPageState` to a private method on `SyncPane` (was only called from inside `_syncPane` via SyncConnectedCard.onPushAll). Imports trimmed to: SyncBloc/Event/State, SyncConnectedCard, collectBulkPushEntries, VaultBloc + state, QuillTokens + toast extension. settings_page.dart: dropped `_syncPane(tokens)` method (~62 lines), `_onPushAllUnsynced(context)` (~32 lines), and `_SyncLoginCard` + state class (~95 lines) — net ~190 lines removed. Five sync-feature imports collapsed to one `import '../widgets/sync_pane.dart';`. File sizes: settings_page.dart 2,036 → 1,846 (-190); sync_pane.dart 0 → 221 (new). flutter analyze clean; sync + forms tests all pass (no behavioral change). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1421 — FS-04 slice 1** (extract FormsPane to widgets/forms_pane.dart — pure refactor, no behavior change)
 - Committed: (this iteration)
