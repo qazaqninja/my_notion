@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder, 18 tests). D24c closed (block duplicate, 18 tests). D24-family cumulative = 36 tests.**
-- **Task:** D24d slice 1 — block delete resolver (pure-Dart). Notion uses Cmd+Shift+Backspace for block-level delete. Super_editor ships `DeleteNodeRequest` (multi_node_editing.dart:1384). Source-mode equivalent at `lib/features/editor/domain/source_line_ops.dart:315` `deleteLineAt`. Slice 1: pure-Dart resolver `({String nodeId})? resolveBlockDelete({document, selection})` returning the active nodeId (or null on null-selection / non-collapsed / unknown-nodeId / last-remaining-node-in-document — never let the document become empty). Slice 2: parser+handler for Cmd+Shift+Backspace following the D24a M1570 template. Same shape as the resolver+handler pair already shipped twice (reorder + duplicate); should land in 2 iterations like D24c.
+- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder, 18 tests). D24c closed (block duplicate, 18 tests). D24d slice 1 (resolver) shipped. D24-family cumulative = 44 tests.**
+- **Task:** D24d slice 2 — wire `resolveBlockDelete` into a `SuperEditorKeyboardAction` bound to Cmd+Shift+Backspace. Handler: (1) parse Cmd+Shift+Backspace via the M1570 parser-split convention, (2) call `resolveBlockDelete(...)`, (3) dispatch `DeleteNodeRequest(nodeId: result.nodeId)`, (4) return haltExecution. Place handler at `lib/features/editor/presentation/controllers/block_delete_keyboard_action.dart`. Wire into `editor_beta_page.dart`'s `keyboardActions` list AFTER block_duplicate. Test the parser path (Cmd+Shift+Backspace detection, KeyDown/KeyRepeat filter, no-Shift no-match, no-Cmd no-match). Apply M1571 coverage exemption comment on the handler.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1578 — D24d slice 1 — block delete resolver (pure-Dart)** (8 tests in 3 sub-groups; ~30-line helper)
+- Committed: (this iteration)
+- TaskList ID: 188 closeout
+- Notes: Third resolver in the D24-family. `resolveBlockDelete({document, selection})` returns `({String nodeId})?`. Four exit paths vs. the two siblings' three: adds the **last-node guard** (`document.nodeCount <= 1`) since super_editor's DeleteNodeRequest doesn't allow emptying the document — the user can still clear the last node's text via normal backspace. 8 tests in 3 sub-groups: happy path (3 — middle/first/last), no-op (4 — null / non-collapsed / unknown-nodeId / single-node-guard), edge cases (1 — two-node document confirms both nodes deletable). flutter analyze clean on both files. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 cosmetic — outer `group('resolveBlockDelete', ...)` wrapper is consistent with siblings; non-blocking). Cumulative D24-family: D24a 18 + D24c 18 + D24d slice 1 8 = 44 tests. Slice 2 will wire the keyboard handler with Cmd+Shift+Backspace dispatching DeleteNodeRequest. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1576 — D24c slice 2 — block duplicate keyboard handler + EditorBetaPage wiring (D24c closed)** (10 handler tests; cumulative D24c = 18 tests; D24-family cumulative = 36)
 - Committed: (this iteration)
