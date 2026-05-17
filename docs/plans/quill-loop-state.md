@@ -7,10 +7,20 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E56b — wire `GET /forms/<ulid>` into buildFormsRouter. Loads the page's form schema via FormsRepositoryBase (needs a new method like `loadFormContextFor(ulid)` returning (schema, pageTitle) or extends existing loadSchemaFor + a title-fetch hop), 404s when no form definition exists, 200s the renderer output. Update CSP at the same time per the M1401 orchestrator info note (nonce-stamped style tag, or move inline <style> to a separate stylesheet route).
+- **Task:** E57 — Flutter-side editor surface for form-bearing pages. Add a "Copy form link" action in the editor kebab so authors can share the public /forms/<ulid> URL without leaving the editor. Gated on `_hasForms(loaded)` returning true. URL derived from app.dart's backendBaseUrl (same single-source-of-truth target as the ws://localhost:8080 hardcode in editor_page.dart). Optional: add an "Open form preview" that launches the URL in a browser via url_launcher.
 - **Status:** pending
 
 ## Last completed
+
+- **M1404 — E56b cleanup** (orchestrator gate: TS-05 focused _SchemaStub + TS-04 GET /<ulid> sub-group label)
+- Committed: (this iteration)
+- TaskList ID: 113b
+- Notes: Orchestrator audit of M1403 returned 0 BLOCK / 2 WARN (TS-05 + TS-04 actionable) / 4 INFO (CSP deferred, page-title deferred, LT-01/LT-02/LT-03 backend-N/A). Fixes: extracted `_SchemaStub` for the 4 E56b GET tests — only overrides `loadSchemaFor` and throws UnimplementedError on the other three FormsRepositoryBase methods so a future GET-handler bug that accidentally calls them surfaces loudly instead of silently using stale stub data. Wrapped the 4 E56b tests in `group('GET /<ulid> (E56b)', ...)` so dart test --reporter=expanded output reads self-descriptively instead of mixing inline with the surrounding submit tests. Touched up doc comment to escape angle brackets (unintended_html_in_doc_comment lint). 30/30 forms route tests pass; dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1403 — E56b** (wire GET /forms/<ulid> into buildFormsRouter)
+- Committed: (this iteration)
+- TaskList ID: 113
+- Notes: Wired the M1401 renderer into a public GET handler. Visitors can now load the HTML form for any form-bearing page; the existing POST /forms/<ulid>/submit handles the submission. `router.get('/<ulid>', ...)` in buildFormsRouter: ULID-validates the path (404 not_found on malformed), calls `repo.loadSchemaFor(ulid)`, null → 404 no_form_definition (same semantic as hasFormDefinition false), non-null (including FormSchema.empty) → 200 with `content-type: text/html; charset=utf-8`. Empty-schema policy: still returns 200 with the form skeleton + submit button so the legacy "any non-empty body" fallback remains visible (submit endpoint 400s empty_body on empty actual posts). CSP intentionally deferred — backend currently sets no CSP header anywhere, so no active regression; a separate cross-cutting middleware slice can handle that. Page-title hydration also deferred — would need a new repo method just for one cosmetic field. 4 new tests in the existing Forms routes (E46) group exercise malformed-404 + missing-schema-404 + real-schema-200 (asserts form action + named inputs + select options) + FormSchema.empty-200 (skeleton with no <input> tags). 30/30 forms route + 149/149 backend tests pass; dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1401 — E56** (public form HTML renderer for GET /forms/<ulid> — pure renderer + 13 tests, no route wire-in yet)
 - Committed: (this iteration)
