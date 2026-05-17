@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 (Move-to-Trash) shipped.**
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 shipped (Move-to-Trash + Pull-from-server).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** D-fp2 — port Pull-from-server kebab action to EditorBetaPage AppBar. Add an `IconButton(Icons.cloud_download_outlined)` next to Move-to-Trash, dispatch `context.read<SyncBloc>().add(SyncPullFileRequested(relpath: widget.relativePath))`. Conditionally show only when `sync.state.isAuthed` (use a `BlocBuilder<SyncBloc, SyncState>` wrapper for the button). Reference: legacy editor's M1241 wire-up at editor_page.dart (search for `SyncPullFileRequested`). After D-fp2: D-fp3 Share-via-OS-sheet, then D-fp4 Find-in-Page (multi-sub-slice — needs `DocumentSearch` helper for super_editor's MutableDocument since FindInPageController consumes a String body).
+- **Task:** D-fp3 — port Share-via-OS-sheet to EditorBetaPage AppBar. Reference legacy editor_page.dart (grep for `share_plus`/`Share.share`/`'Share via OS'`). Add an `IconButton(Icons.share_outlined)` next to Pull-from-server, dispatch `Share.shareXFiles([XFile(loaded.page.absolutePath)])` or `Share.share(loaded.page.body)`. The path may need building from VaultBloc state. After D-fp3: D-fp4 Find-in-Page (multi-sub-slice — needs `DocumentSearch` helper for super_editor's MutableDocument since FindInPageController consumes a String body).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1623 — D-fp2 — port Pull-from-server kebab action to EditorBetaPage** (1 file modified, +37 lines; 2455 editor tests pass; no new tests)
+- Committed: (this iteration)
+- TaskList ID: 211 closeout
+- Notes: Second parity slice. AppBar `IconButton(Icons.cloud_download_outlined)` wrapped in `BlocBuilder<SyncBloc, SyncState>` with `buildWhen: (p, n) => p.isAuthed != n.isAuthed` so the button hides when not authed, shows when authed (narrow rebuild surface — BL-12 compliant). `_onPullFromServer` dispatches `SyncFetchFileRequested(relpath: widget.relativePath)` + ScaffoldMessenger SnackBar 'Pulling latest from server…'. 1:1 port of legacy editor_page.dart:604-612 (M1241), minus the redundant `if (!sync.state.isAuthed)` guard since the BlocBuilder gate already hides the button. Handler wrapped `// coverage:ignore-start/end` per M1618 sweep. New import: `sync_state.dart` (for BlocBuilder generic). flutter analyze clean. 2455 editor tests still pass. Orchestrator audit: 0 BLOCK / 1 WARN (BL-11 — unconditional SnackBar fires before server responds rather than via BlocListener on SyncFetchSuccess/Failure transitions; same parity-port tech-debt category as M1621 BL-11 carry-forward) / 1 INFO (DI-04 positive note). Acknowledged carry-forward; refactor opportunity bundled into D28-D30 cutover prep. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1621 — D-fp1 — port Move-to-Trash kebab action to EditorBetaPage** (1 file modified, +63 lines; 2455 editor tests pass; no new tests)
 - Committed: (this iteration)
