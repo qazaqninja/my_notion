@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder, 18 tests). D24c closed (block duplicate, 18 tests). D24d slice 1 (resolver) shipped. D24-family cumulative = 44 tests.**
-- **Task:** D24d slice 2 — wire `resolveBlockDelete` into a `SuperEditorKeyboardAction` bound to Cmd+Shift+Backspace. Handler: (1) parse Cmd+Shift+Backspace via the M1570 parser-split convention, (2) call `resolveBlockDelete(...)`, (3) dispatch `DeleteNodeRequest(nodeId: result.nodeId)`, (4) return haltExecution. Place handler at `lib/features/editor/presentation/controllers/block_delete_keyboard_action.dart`. Wire into `editor_beta_page.dart`'s `keyboardActions` list AFTER block_duplicate. Test the parser path (Cmd+Shift+Backspace detection, KeyDown/KeyRepeat filter, no-Shift no-match, no-Cmd no-match). Apply M1571 coverage exemption comment on the handler.
+- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder, 18 tests). D24c closed (block duplicate, 18 tests). D24d closed (block delete, 14 tests). D24-family fully closed = 50 tests across 3 Notion-native shortcuts.**
+- **Task:** D-phase pick-next survey #3. D24-family complete. Candidates: (a) **D25 multi-select port** — no super_editor built-in; would need a Notion-style click+shift-click selection-set with keyboard ops affecting the whole set. Bigger lift (3-5 slices). (b) **D28-D30 cutover** — flip `/editor-beta` to default `/editor` route. Needs dogfooding budget; risky without final polish pass. (c) **E59 pick-next #3 ladder** — y_crdt WASM swap / web clipper / forms polish / FS-04 decomposition cleanup. Each opens fresh feature surface. (d) **G4 live docker smoke** — gated by user-time. (e) **TS-08 alchemist editor goldens** — pure test investment, catches WYSIWYG regressions. (f) **Other v1.x backlog** — re-read FEATURES.md for items not yet checked. Lean toward (e) or (c) for continued incremental progress; (a) is the highest-value-but-biggest-lift; (b) is dogfooding-gated. Commit pivot as M1581.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1580 — D24d slice 2 — block delete keyboard handler + EditorBetaPage wiring (D24d closed; D24-family fully closed)** (6 parser tests; cumulative D24d = 14 tests; D24-family cumulative = 50 tests)
+- Committed: (this iteration)
+- TaskList ID: 189 closeout
+- Notes: Third instance of the D24a M1570 template. `parseBlockDeleteKey({keyEvent, isShiftPressed, isPrimaryShortcutPressed})` matches Cmd+Shift+Backspace (no flanking concerns since Backspace + double-modifier is unambiguous). `blockDeleteKeyboardAction` orchestrates parse → resolveBlockDelete → dispatch `DeleteNodeRequest(nodeId)`. EditorBetaPage `keyboardActions` now `[blockReorderKeyboardAction, blockDuplicateKeyboardAction, blockDeleteKeyboardAction, ...defaultKeyboardActions]`. 6 parser tests in 2 sub-groups: happy (2: KeyDown + KeyRepeat), no-match (4: KeyUp / shift-only / Cmd-only / non-Backspace). M1571-style coverage exemption comment on the handler. flutter analyze clean on all 3 touched files. Orchestrator audit: 0 BLOCK / 1 WARN (TS-01 — acknowledged exemption, no action required, consistent with M1570 + M1576 D24-family precedent) / 0 INFO. **D24-family fully closed: 3 keyboard shortcuts (reorder Cmd+Shift+Up/Down, duplicate Cmd+D, delete Cmd+Shift+Backspace) across 50 cumulative tests.** Behaviour: WYSIWYG /editor-beta now has Notion-parity for the four most-used block ops. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1578 — D24d slice 1 — block delete resolver (pure-Dart)** (8 tests in 3 sub-groups; ~30-line helper)
 - Committed: (this iteration)
