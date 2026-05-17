@@ -22,8 +22,9 @@ class EditorPreferencesState extends Equatable {
   /// Construct an immutable preferences snapshot.
   const EditorPreferencesState({required this.useBetaEditor});
 
-  /// True when the user has opted in to the beta WYSIWYG editor.
-  /// Default at first run is `false`.
+  /// True when the user is on the beta WYSIWYG editor. Default at
+  /// first run is `true` after the D29 cutover — see
+  /// [EditorPreferencesCubit.defaultUseBetaEditor].
   final bool useBetaEditor;
 
   /// Copy with a new [useBetaEditor] value.
