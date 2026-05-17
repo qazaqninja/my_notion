@@ -18,7 +18,9 @@ import 'features/database/presentation/pages/database_table_page.dart';
 import 'features/database/presentation/pages/databases_page.dart';
 import 'features/reminders/data/datasources/notification_scheduler.dart';
 import 'features/reminders/presentation/bloc/reminders_bloc.dart';
+import 'features/forms/data/repositories/drift_form_bearing_pages_repository.dart';
 import 'features/forms/data/repositories/http_forms_repository.dart';
+import 'features/forms/domain/repositories/form_bearing_pages_repository.dart';
 import 'features/forms/domain/repositories/forms_repository.dart';
 import 'features/sharing/data/receive_sharing_intent_source.dart';
 import 'features/sharing/presentation/incoming_share_binder.dart';
@@ -67,6 +69,12 @@ class _QuillAppState extends State<QuillApp> {
   // base URL — but stays bloc-less for now. The editor consumes it via
   // RepositoryProvider directly inside a FutureBuilder dialog.
   late final FormsRepository _formsRepo;
+  // E58b: local Drift-backed loader for the Settings → Forms pane.
+  // No network — reads frontmatter_json directly off the cache and
+  // projects to FormBearingPage rows. Constructed after _db, before
+  // _syncBloc, so the RepositoryProvider chain can hand it to the
+  // pane's FormBearingPagesCubit.
+  late final FormBearingPagesRepository _formBearingPagesRepo;
   // F2: binds the OS share-sheet stream to QuickCapture for whichever
   // vault is currently loaded. Created in initState, attached after
   // the bloc + restore are kicked off, detached on dispose.
@@ -97,6 +105,10 @@ class _QuillAppState extends State<QuillApp> {
     // truth.
     _syncRepo = HttpSyncRepository(baseUrl: kBackendHttpBaseUrl);
     _formsRepo = HttpFormsRepository(baseUrl: kBackendHttpBaseUrl);
+    // E58b: backed by the same QuillDatabase as the rest of the
+    // data layer; nothing async on construction so it's safe to
+    // build inline.
+    _formBearingPagesRepo = DriftFormBearingPagesRepository(_db);
     _syncBloc = SyncBloc(repo: _syncRepo)
       // E15: restore the persisted JWT (if any) so a quit + relaunch
       // doesn't force users to re-authenticate.
@@ -143,6 +155,8 @@ class _QuillAppState extends State<QuillApp> {
         RepositoryProvider<NotificationScheduler>.value(value: _scheduler),
         RepositoryProvider<SyncRepository>.value(value: _syncRepo),
         RepositoryProvider<FormsRepository>.value(value: _formsRepo),
+        RepositoryProvider<FormBearingPagesRepository>.value(
+            value: _formBearingPagesRepo),
       ],
       child: MultiBlocProvider(
         // DI-03 (docs/RULES.md): blocs are normally scoped to the
