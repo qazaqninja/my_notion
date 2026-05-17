@@ -55,8 +55,14 @@ class FormBearingPagesCubit extends Cubit<FormBearingPagesState> {
 
   /// Re-fetch the form-bearing page list. Clears any prior error
   /// on entry so the UI's stale "load failed" copy disappears
-  /// during the new attempt.
+  /// during the new attempt. A second call while a previous load
+  /// is still in flight is silently dropped — droppable semantics
+  /// since this Cubit isn't event-driven and can't use the
+  /// `droppable()` transformer (BL-10 guard added before E58b-iii
+  /// wires the retry button, which is the call site that can
+  /// double-fire).
   Future<void> load() async {
+    if (state.status == FormBearingPagesStatus.loading) return;
     emit(state.copyWith(
       status: FormBearingPagesStatus.loading,
       clearError: true,

@@ -15,12 +15,14 @@ void main() {
       repo = _MockRepo();
     });
 
-    test('initial state is FormBearingPagesState.initial()', () {
-      final cubit = FormBearingPagesCubit(repo: repo);
-      expect(cubit.state.status, FormBearingPagesStatus.initial);
-      expect(cubit.state.pages, isEmpty);
-      expect(cubit.state.lastError, isNull);
-      cubit.close();
+    group('initial state', () {
+      test('is FormBearingPagesState.initial()', () {
+        final cubit = FormBearingPagesCubit(repo: repo);
+        expect(cubit.state.status, FormBearingPagesStatus.initial);
+        expect(cubit.state.pages, isEmpty);
+        expect(cubit.state.lastError, isNull);
+        cubit.close();
+      });
     });
 
     group('load()', () {
@@ -128,6 +130,41 @@ void main() {
             pages: [pageA],
           ),
         ],
+      );
+
+      blocTest<FormBearingPagesCubit, FormBearingPagesState>(
+        'double-fire while a load is in flight is dropped (BL-10 guard)',
+        build: () {
+          // Slow repo: completes only after both load() calls have been
+          // dispatched. The second call must early-return without
+          // emitting a second loading state OR calling the repo twice.
+          when(repo.loadAll).thenAnswer(
+            (_) => Future<List<FormBearingPage>>.delayed(
+              const Duration(milliseconds: 10),
+              () => const [pageA],
+            ),
+          );
+          return FormBearingPagesCubit(repo: repo);
+        },
+        act: (cubit) {
+          // ignore: unawaited_futures — intentional fire-and-forget so
+          // the second load() races the first.
+          cubit.load();
+          return cubit.load();
+        },
+        // Wait past the 10 ms repo delay so the success emit lands
+        // before blocTest snapshots the stream.
+        wait: const Duration(milliseconds: 50),
+        expect: () => [
+          const FormBearingPagesState(
+            status: FormBearingPagesStatus.loading,
+          ),
+          const FormBearingPagesState(
+            status: FormBearingPagesStatus.success,
+            pages: [pageA],
+          ),
+        ],
+        verify: (_) => verify(repo.loadAll).called(1),
       );
 
       blocTest<FormBearingPagesCubit, FormBearingPagesState>(
