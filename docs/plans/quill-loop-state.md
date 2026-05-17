@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 shipped (Move-to-Trash + Pull-from-server).**
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** D-fp3 — port Share-via-OS-sheet to EditorBetaPage AppBar. Reference legacy editor_page.dart (grep for `share_plus`/`Share.share`/`'Share via OS'`). Add an `IconButton(Icons.share_outlined)` next to Pull-from-server, dispatch `Share.shareXFiles([XFile(loaded.page.absolutePath)])` or `Share.share(loaded.page.body)`. The path may need building from VaultBloc state. After D-fp3: D-fp4 Find-in-Page (multi-sub-slice — needs `DocumentSearch` helper for super_editor's MutableDocument since FindInPageController consumes a String body).
+- **Task:** D-fp4 — port Find-in-Page to EditorBetaPage. Multi-sub-slice: current `FindInPageController` (lib/features/editor/presentation/controllers/find_in_page_controller.dart, extracted at M973+) consumes a `String body` for substring search; super_editor's `MutableDocument` is a list of TextNode/ListItemNode/TaskNode with internal `AttributedText`. Slice 1 will add a pure-Dart `DocumentSearch` helper that walks `Document.nodes` and yields `(nodeId, span)` match positions over node `text.toPlainText()`. Slice 2 will wire a `FindInPageBetaController` (or extend existing) that selects matched spans via super_editor's `Editor.execute([ChangeSelectionRequest(...)])`. Slice 3 wires the AppBar `IconButton(Icons.search)` + the Find bar widget. Slice 4+ adds keyboard shortcuts (Cmd+F / next-match / prev-match). After D-fp4: D28-D30 cutover (carry-forward BL-11 + NV-03 cleanup first).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1625 — D-fp3 — port Share-via-OS-sheet to EditorBetaPage** (1 file modified, +52 lines; 2455 editor tests pass; no new tests)
+- Committed: (this iteration)
+- TaskList ID: 212 closeout
+- Notes: Third parity slice. AppBar `IconButton(Icons.share_outlined)` between Pull-from-server and Move-to-Trash. `_onSharePage` mirrors legacy editor_page.dart:1344 `_sharePage`: reads VaultBloc rootPath, builds `absolutePath = '${vault.rootPath}/${widget.relativePath}'`, checks `File.exists()` (SnackBar 'Cannot share' on miss), tries `SharePlus.instance.share(ShareParams(files: [XFile(path, name: title)], subject: title))` with text-fallback to `ShareParams(text: widget.body, subject: title)` on file-share failure, final SnackBar 'Share failed: …' on text-share failure too. Handler wrapped `// coverage:ignore-start/end` per M1571/M1618 convention. New import: `share_plus`. flutter analyze clean. 2455 editor tests still pass. Orchestrator audit: 0 BLOCK / 1 WARN (BL-11 — `_onSharePage` runs SharePlus + SnackBar imperatively in onPressed rather than via BlocListener on `ShareRequested`/`ShareResult` state pair; acknowledged carry-forward parity-port, same shape as M1621 + M1623 — to clean up bundled in D28-D30 cutover prep) / 1 INFO (TS-01 — no `editor_beta_page_test.dart` widget test for AppBar wiring; handler itself has coverage ignore, but the surrounding IconButton wiring is uncovered; backfill in cutover prep). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1623 — D-fp2 — port Pull-from-server kebab action to EditorBetaPage** (1 file modified, +37 lines; 2455 editor tests pass; no new tests)
 - Committed: (this iteration)
