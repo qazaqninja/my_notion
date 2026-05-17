@@ -31,6 +31,9 @@ class BlockSelectionOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BlockSelectionCubit, BlockSelection>(
+      // BL-12: short-circuit identical-content emissions explicitly even
+      // though Equatable already handles it — documents intent.
+      buildWhen: (prev, next) => prev != next,
       builder: (context, selection) {
         if (selection.isEmpty) {
           return const SizedBox.shrink();
