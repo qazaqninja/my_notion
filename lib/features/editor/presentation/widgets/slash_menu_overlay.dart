@@ -5,8 +5,37 @@ import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/kbd.dart';
 import '../../../../shared/widgets/quill_icon.dart';
+import '../../../../shared/widgets/responsive_layout.dart';
 import '../../domain/slash_entries.dart';
 import '../cubit/slash_menu_cubit.dart';
+
+// ---------------------------------------------------------------------------
+// M1680 — touch-tuned slash menu rows. Pure-Dart helpers picked between
+// dense (desktop) and tall-touch (mobile) sizing. Exported for unit test
+// coverage; production reads them from [_Row.build] via [isMobileWidth].
+// ---------------------------------------------------------------------------
+
+/// Row container padding. Mobile bumps to 12 vertical + 16 horizontal so
+/// the resulting row height clears the 44pt Material touch-target floor
+/// (12 + ~20 content + 12 = ~44). Desktop stays at the current dense
+/// 7 / 12.
+EdgeInsets slashRowPaddingFor({required bool isMobile}) => isMobile
+    ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
+    : const EdgeInsets.symmetric(horizontal: 12, vertical: 7);
+
+/// Leading-icon size. Mobile bumps to 18 (matches typical tab-bar icon
+/// affordance); desktop stays at 13.
+double slashRowIconSizeFor({required bool isMobile}) => isMobile ? 18 : 13;
+
+/// Label text size. Mobile bumps to 15 (touch-comfortable body); desktop
+/// stays at the dense 13.
+double slashRowLabelFontSizeFor({required bool isMobile}) =>
+    isMobile ? 15 : 13;
+
+/// Whether to render the trailing `Kbd('↵')` hint chip on the selected
+/// row. Hidden on mobile — touch users can't press Enter on a physical
+/// keyboard, and the chip eats horizontal space.
+bool slashRowShowsKeyboardHint({required bool isMobile}) => !isMobile;
 
 /// 320-px popover that anchors below the caret. Shows filterable list of
 /// markdown-snippet entries; activating one calls [onPick].
@@ -175,23 +204,32 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // M1680: switch between desktop-dense and mobile-touch sizing on a
+    // per-row basis. The breakpoint is the same `isMobileWidth` helper
+    // the mobile shell + responsive command palette already use.
+    final isMobile = isMobileWidth(context);
     return GestureDetector(
       onTap: onTap,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: onHover == null ? null : (_) => onHover!(),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          padding: slashRowPaddingFor(isMobile: isMobile),
           color: selected ? tokens.hover : Colors.transparent,
           child: Row(
             children: [
-              QuillIcon(entry.icon, size: 13, strokeWidth: 1.7, color: tokens.text3),
+              QuillIcon(
+                entry.icon,
+                size: slashRowIconSizeFor(isMobile: isMobile),
+                strokeWidth: 1.7,
+                color: tokens.text3,
+              ),
               const SizedBox(width: 9),
               Expanded(
                 child: Text(
                   entry.label,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: slashRowLabelFontSizeFor(isMobile: isMobile),
                     color: tokens.text,
                     fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
                   ),
@@ -200,8 +238,11 @@ class _Row extends StatelessWidget {
                 ),
               ),
               Text(entry.hint, style: mono(fontSize: 11, color: tokens.text3)),
-              if (selected)
-                const Padding(padding: EdgeInsets.only(left: 8), child: Kbd('↵')),
+              if (selected && slashRowShowsKeyboardHint(isMobile: isMobile))
+                const Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Kbd('↵'),
+                ),
             ],
           ),
         ),
