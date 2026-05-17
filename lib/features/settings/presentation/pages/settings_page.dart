@@ -19,12 +19,8 @@ import '../../../../shared/theme/accent.dart';
 import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
-import '../../../sync/domain/usecases/collect_bulk_push_entries.dart';
-import '../../../sync/presentation/bloc/sync_bloc.dart';
-import '../../../sync/presentation/bloc/sync_event.dart';
 import '../widgets/forms_pane.dart';
-import '../../../sync/presentation/widgets/sync_connected_card.dart';
-import '../../../sync/presentation/bloc/sync_state.dart';
+import '../widgets/sync_pane.dart';
 import '../../../vault/data/exporter.dart';
 import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/pdf_exporter.dart';
@@ -99,7 +95,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (_active == 'advanced') return _advancedPane(tokens);
     if (_active == 'users') return _usersPane(tokens);
     if (_active == 'sidebar') return _sidebarPane(tokens);
-    if (_active == 'sync') return _syncPane(tokens);
+    if (_active == 'sync') return SyncPane(tokens: tokens);
     if (_active == 'forms') return FormsPane(tokens: tokens);
 
     final state = context.watch<VaultBloc>().state;
@@ -267,42 +263,9 @@ class _SettingsPageState extends State<SettingsPage> {
     // to VaultInitial the shell router will replace it with the picker.
   }
 
-  /// E32 — walk the vault tree, read every `.md` file, compute sha256,
-  /// and dispatch `SyncPushAllRequested`. The bloc handler skips
-  /// entries whose local sha already matches `knownShas[relpath]`, so
-  /// re-clicking the button after a successful seed is a no-op.
-  Future<void> _onPushAllUnsynced(BuildContext context) async {
-    final vault = context.read<VaultBloc>().state;
-    if (vault is! VaultLoaded) {
-      context.toastWarn('No vault open',
-          sub: 'Pick a vault folder first.');
-      return;
-    }
-    final sync = context.read<SyncBloc>();
-    if (!sync.state.isAuthed) {
-      context.toastWarn('Not logged in',
-          sub: 'Sign in to the v2 backend first.');
-      return;
-    }
-    final entries = await collectBulkPushEntries(
-      tree: vault.tree,
-      vaultRoot: vault.rootPath,
-    );
-    if (entries.isEmpty) {
-      if (context.mounted) {
-        context.toastInfo('No files to push',
-            sub: 'Vault is empty.');
-      }
-      return;
-    }
-    sync.add(SyncPushAllRequested(entries));
-    if (context.mounted) {
-      context.toastInfo(
-        'Bulk push queued',
-        sub: '${entries.length} file${entries.length == 1 ? '' : 's'}',
-      );
-    }
-  }
+  // E32 / sync helper `_onPushAllUnsynced` was extracted to
+  // widgets/sync_pane.dart in M1423 (FS-04 slice 2) — it was only
+  // called from inside _syncPane, so it moves with the pane.
 
   Future<void> _exportVault(BuildContext context) async {
     final state = context.read<VaultBloc>().state;
@@ -861,71 +824,9 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // Phase E E14 (M1312): Settings → Sync pane.
-  // Exposes the SyncBloc state to the user: login / signup form when
-  // disconnected, status + logout when connected, error chip on failure.
-  Widget _syncPane(QuillTokens tokens) {
-    return BlocBuilder<SyncBloc, SyncState>(
-      builder: (context, state) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Sync target',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: tokens.text,
-                letterSpacing: -0.3,
-              ),
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: 600,
-              child: Text(
-                'Connect your vault to a self-hosted Quill v2 backend for '
-                'multi-device sync, public page sharing, and (eventually) '
-                'multiplayer. The backend lives at `http://localhost:8080` '
-                'in dev — production deploys swap the URL in app.dart.',
-                style: TextStyle(fontSize: 13, color: tokens.text3, height: 1.5),
-              ),
-            ),
-            const SizedBox(height: 18),
-            if (state.isAuthed)
-              SyncConnectedCard(
-                state: state,
-                tokens: tokens,
-                onPushAll: () => _onPushAllUnsynced(context),
-              )
-            else
-              _SyncLoginCard(state: state, tokens: tokens),
-            if (state.lastError != null && state.lastError != 'conflict') ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .errorContainer
-                      .withValues(alpha: 0.4),
-                  borderRadius:
-                      const BorderRadius.all(Radius.circular(4)),
-                ),
-                child: Text(
-                  state.lastError!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        );
-      },
-    );
-  }
+  // Phase E E14 (M1312): Settings → Sync pane lived inline here
+  // until M1423 (FS-04 slice 2). Extracted to widgets/sync_pane.
+  // dart together with _SyncLoginCard + the bulk-push helper.
 
   // E58b-iii — Settings → Forms pane was inline here until M1421.
   // Extracted to widgets/forms_pane.dart along with its three
@@ -1425,101 +1326,10 @@ class _Stat extends StatelessWidget {
 // E26 — SyncConnectedCard lives in
 // `features/sync/presentation/widgets/sync_connected_card.dart` so it
 // can be pumped in isolation from this page's sidebar chrome.
-
-class _SyncLoginCard extends StatefulWidget {
-  const _SyncLoginCard({required this.state, required this.tokens});
-  final SyncState state;
-  final QuillTokens tokens;
-
-  @override
-  State<_SyncLoginCard> createState() => _SyncLoginCardState();
-}
-
-class _SyncLoginCardState extends State<_SyncLoginCard> {
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-
-  @override
-  void dispose() {
-    _email.dispose();
-    _password.dispose();
-    super.dispose();
-  }
-
-  void _submit({required bool signup}) {
-    final email = _email.text.trim();
-    final password = _password.text;
-    if (email.isEmpty || password.isEmpty) return;
-    final bloc = context.read<SyncBloc>();
-    if (signup) {
-      bloc.add(SyncSignupRequested(email: email, password: password));
-    } else {
-      bloc.add(SyncLoginRequested(email: email, password: password));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = widget.tokens;
-    final busy = widget.state.status == SyncStatus.loading;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: tokens.surface2,
-        border: Border.all(color: tokens.divider2, width: 0.5),
-        borderRadius: const BorderRadius.all(Radius.circular(6)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: _email,
-            enabled: !busy,
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(),
-              isDense: true,
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _password,
-            obscureText: true,
-            enabled: !busy,
-            decoration: const InputDecoration(
-              labelText: 'Password (8+ chars)',
-              border: OutlineInputBorder(),
-              isDense: true,
-            ),
-            onSubmitted: (_) => _submit(signup: false),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              FilledButton(
-                onPressed: busy ? null : () => _submit(signup: false),
-                child: const Text('Log in'),
-              ),
-              const SizedBox(width: 10),
-              OutlinedButton(
-                onPressed: busy ? null : () => _submit(signup: true),
-                child: const Text('Sign up'),
-              ),
-              if (busy) ...[
-                const SizedBox(width: 14),
-                const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
+//
+// _SyncLoginCard was inline here until M1423 (FS-04 slice 2) —
+// moved to widgets/sync_pane.dart along with the rest of the sync
+// cluster.
 
 class _Toggle extends StatelessWidget {
   const _Toggle({required this.on});
