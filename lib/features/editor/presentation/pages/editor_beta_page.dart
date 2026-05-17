@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:super_editor/super_editor.dart';
@@ -12,6 +14,7 @@ import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../../core/ui/anchor_rect.dart';
 import '../../../../core/ui/anchor_rect_x.dart';
+import '../../domain/attachment_writer.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
@@ -235,11 +238,6 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     cubit.dismiss();
     _session.reset();
 
-    if (entry.action != SlashAction.insertSnippet) {
-      // pickImage / pickFile / convert-via-snippet variants deferred to
-      // slice 2g-d. Close + bail.
-      return;
-    }
     if (selection == null || !selection.isCollapsed) return;
     final extent = selection.extent;
     final localPosition = extent.nodePosition;
@@ -257,6 +255,28 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       nodeId: nodeId,
       nodePosition: TextNodePosition(offset: triggerLocal),
     );
+
+    // Async picker actions branch off here: strip `/query` first, then
+    // delegate to the async helper. The helper inserts an ImageNode (or
+    // file-attachment paragraph) after the current node once the picker
+    // resolves. Fire-and-forget — errors land in the catch and surface
+    // via debug logs; no toast yet (TS-01 carry-forward).
+    if (entry.action == SlashAction.pickImage ||
+        entry.action == SlashAction.pickFile) {
+      _editor.execute([
+        DeleteContentRequest(
+          documentRange: DocumentRange(start: triggerPos, end: extent),
+        ),
+      ]);
+      unawaited(_runPickerAction(entry, nodeId));
+      return;
+    }
+    if (entry.action != SlashAction.insertSnippet) {
+      // Remaining variants (insertDailyNoteLink, insertToday, etc.) are
+      // deferred to a follow-up slice — they touch DailyNote scaffolding
+      // beyond the D23 scope.
+      return;
+    }
 
     // Build the request list. First request always strips `/query`.
     // Second request varies by entry.linePrefix:
@@ -285,6 +305,64 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
           textToInsert: entry.snippet,
           attributions: const {},
         ),
+    ]);
+  }
+
+  /// D23 slice 2g-e (M1545) — open a file_picker, copy the result into
+  /// the vault via [AttachmentWriter], and insert an `ImageNode` (or a
+  /// file-attachment ParagraphNode for `pickFile`) immediately after
+  /// [triggerNodeId]. Failures are swallowed silently — the in-app
+  /// toast surface for EditorBetaPage hasn't landed yet (TS-01 carry-
+  /// forward).
+  Future<void> _runPickerAction(SlashEntry entry, String triggerNodeId) async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+
+    final result = await FilePicker.platform.pickFiles(
+      type: entry.action == SlashAction.pickImage
+          ? FileType.image
+          : FileType.any,
+      withData: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final picked = result.files.first;
+    if (picked.path == null) return;
+
+    final String relpath;
+    try {
+      relpath = await const AttachmentWriter().copy(
+        source: File(picked.path!),
+        vaultRoot: Directory(vault.rootPath),
+      );
+    } on Object {
+      return;
+    }
+
+    if (!mounted) return;
+    // Find the trigger node's index so the new media block lands right
+    // after it. Defensive: if the node was removed concurrently, fall
+    // back to appending at the end.
+    final nodes = _doc.toList();
+    final triggerIndex = nodes.indexWhere((n) => n.id == triggerNodeId);
+    final insertIndex = triggerIndex < 0 ? nodes.length : triggerIndex + 1;
+
+    final newNode = entry.action == SlashAction.pickImage
+        ? ImageNode(
+            id: Editor.createNodeId(),
+            imageUrl: relpath,
+            altText: 'image',
+          )
+        : ParagraphNode(
+            id: Editor.createNodeId(),
+            text: AttributedText('![${picked.name}]($relpath)'),
+            metadata: {
+              'blockType': fileAttachmentAttribution,
+              'label': picked.name,
+              'path': relpath,
+            },
+          );
+    _editor.execute([
+      InsertNodeAtIndexRequest(nodeIndex: insertIndex, newNode: newNode),
     ]);
   }
 }
