@@ -260,6 +260,11 @@ void main() {
       });
     });
 
+    // blocTest not used here: the PresenceCubit is driven
+    // indirectly via the EditorSyncWsMount widget tree (real
+    // fake channel → real binder → real controller → real cubit),
+    // so state assertions on the cubit substitute. The cubit's
+    // own blocTest coverage lives in presence_cubit_test.dart.
     group('PresenceCubit mount (H4d-iii-b)', () {
       const awarenessJson =
           '{"kind":"awareness","userId":"alice","pageUlid":"U",'
