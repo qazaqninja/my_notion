@@ -21,6 +21,7 @@ import '../bloc/editor_state.dart';
 import '../../domain/slash_entries.dart';
 import '../../domain/slash_entry_block_type.dart';
 import '../controllers/bold_autoformat_reaction.dart';
+import '../controllers/italic_autoformat_reaction.dart';
 import '../controllers/slash_trigger_session.dart';
 import '../controllers/super_editor_caret.dart';
 import '../cubit/slash_menu_cubit.dart';
@@ -148,6 +149,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     // the `**X**` keystroke. Future sibling reactions (italic, strike,
     // inline code, highlight, sub, sup) plug in here.
     _editor.reactionPipeline.add(const BoldAutoformatReaction());
+    _editor.reactionPipeline.add(const ItalicAutoformatReaction());
     _session = SlashTriggerSession();
     // D23 slice 2d (M1531): every composer selection / document mutation
     // projects to a flat (text, caret) via M1528's plainTextAndCaret and
