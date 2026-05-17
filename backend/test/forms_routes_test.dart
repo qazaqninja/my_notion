@@ -34,6 +34,36 @@ class _ThrowingRepo implements FormsRepositoryBase {
       );
 }
 
+/// E56b — minimal stub for the GET `/{ulid}` handler that only
+/// exercises `loadSchemaFor`. Reusing the larger `_StubRepo` here
+/// would expose 4 unrelated method overrides per test (TS-05).
+class _SchemaStub implements FormsRepositoryBase {
+  _SchemaStub(this.schemas);
+  final Map<String, FormSchema?> schemas;
+
+  @override
+  Future<FormSchema?> loadSchemaFor(String ulid) async => schemas[ulid];
+
+  @override
+  Future<bool> hasFormDefinition(String ulid) =>
+      throw UnimplementedError('GET /<ulid> does not gate on hasFormDefinition');
+
+  @override
+  Future<String> insertSubmission({
+    required String pageUlid,
+    required Map<String, Object?> fields,
+    String? sourceIp,
+  }) =>
+      throw UnimplementedError('GET /<ulid> does not insert submissions');
+
+  @override
+  Future<List<FormSubmission>?> listSubmissionsFor({
+    required String userId,
+    required String pageUlid,
+  }) =>
+      throw UnimplementedError('GET /<ulid> does not list submissions');
+}
+
 class _StubRepo implements FormsRepositoryBase {
   _StubRepo({
     this.definedFor = const <String>{},
@@ -207,66 +237,70 @@ void main() {
       expect(await res.readAsString(), contains('Thanks!'));
     });
 
-    // E56b — public GET /<ulid> renders the form HTML.
-    test('GET /<malformed> → 404 not_found', () async {
-      final res = await _hit(
-        '/not-a-ulid',
-        repo: _StubRepo(),
-        method: 'GET',
-      );
-      expect(res.statusCode, 404);
-    });
+    group('GET /<ulid> (E56b)', () {
+      // Focused stub: the GET handler only calls loadSchemaFor, so
+      // overriding the rest of FormsRepositoryBase is dead weight
+      // (TS-05). _StubRepo stays in use for the surrounding submit
+      // tests that exercise the full surface.
+      _SchemaStub schemaStub({Map<String, FormSchema?> schemas = const {}}) =>
+          _SchemaStub(schemas);
 
-    test('GET /<ulid> with no schema → 404 no_form_definition', () async {
-      final res = await _hit(
-        '/$ulid',
-        repo: _StubRepo(),
-        method: 'GET',
-      );
-      expect(res.statusCode, 404);
-      expect(await res.readAsString(), 'no_form_definition');
-    });
+      test('malformed ULID → 404 not_found', () async {
+        final res = await _hit(
+          '/not-a-ulid',
+          repo: schemaStub(),
+          method: 'GET',
+        );
+        expect(res.statusCode, 404);
+      });
 
-    test('GET /<ulid> with a real schema → 200 form HTML', () async {
-      final res = await _hit(
-        '/$ulid',
-        repo: _StubRepo(
-          schemas: const {
+      test('no schema → 404 no_form_definition', () async {
+        final res = await _hit('/$ulid', repo: schemaStub(), method: 'GET');
+        expect(res.statusCode, 404);
+        expect(await res.readAsString(), 'no_form_definition');
+      });
+
+      test('real schema → 200 form HTML', () async {
+        final res = await _hit(
+          '/$ulid',
+          repo: schemaStub(schemas: const {
             ulid: FormSchema(fields: [
               FormFieldDef(name: 'subject', type: FormFieldType.text),
-              FormFieldDef(name: 'priority', type: FormFieldType.select,
-                  options: ['low', 'high']),
+              FormFieldDef(
+                name: 'priority',
+                type: FormFieldType.select,
+                options: ['low', 'high'],
+              ),
             ]),
-          },
-        ),
-        method: 'GET',
-      );
-      expect(res.statusCode, 200);
-      expect(res.headersAll['content-type']?.single,
-          'text/html; charset=utf-8');
-      final html = await res.readAsString();
-      expect(html, contains('<form method="POST" action="/forms/$ulid/submit"'));
-      expect(html, contains('name="subject"'));
-      expect(html, contains('<option value="high">high</option>'));
-    });
+          }),
+          method: 'GET',
+        );
+        expect(res.statusCode, 200);
+        expect(res.headersAll['content-type']?.single,
+            'text/html; charset=utf-8');
+        final html = await res.readAsString();
+        expect(html,
+            contains('<form method="POST" action="/forms/$ulid/submit"'));
+        expect(html, contains('name="subject"'));
+        expect(html, contains('<option value="high">high</option>'));
+      });
 
-    test('GET /<ulid> with FormSchema.empty → 200 form HTML (no inputs)',
-        () async {
-      // F5 fallback: form-bearing page but no resolvable schema (e.g.
-      // `forms: true` with no linked .database.yaml) still renders the
-      // skeleton — the submit endpoint will 400 empty_body if the user
-      // posts nothing, but the GET shouldn't 404 a real form page.
-      final res = await _hit(
-        '/$ulid',
-        repo: _StubRepo(
-          schemas: const {ulid: FormSchema.empty},
-        ),
-        method: 'GET',
-      );
-      expect(res.statusCode, 200);
-      final html = await res.readAsString();
-      expect(html, contains('<form method="POST"'));
-      expect(html, isNot(contains('<input')));
+      test('FormSchema.empty → 200 form HTML (no inputs)', () async {
+        // F5 fallback: form-bearing page but no resolvable schema
+        // (e.g. `forms: true` with no linked .database.yaml) still
+        // renders the skeleton — the submit endpoint will 400
+        // empty_body if the user posts nothing, but the GET
+        // shouldn't 404 a real form page.
+        final res = await _hit(
+          '/$ulid',
+          repo: schemaStub(schemas: const {ulid: FormSchema.empty}),
+          method: 'GET',
+        );
+        expect(res.statusCode, 200);
+        final html = await res.readAsString();
+        expect(html, contains('<form method="POST"'));
+        expect(html, isNot(contains('<input')));
+      });
     });
 
     test('Malformed percent-encoding is skipped, not 500ed', () async {
