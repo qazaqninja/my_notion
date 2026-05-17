@@ -1,5 +1,12 @@
 import 'dart:async';
 
+// CA-04 note: this `presentation/` file imports directly from
+// `sync/data/sync_ws_binder.dart` because SyncWsBinder is the
+// lowest-level multiplayer primitive in the sync feature — there
+// is no domain-layer repository wrapping it, and introducing one
+// purely for the editor's lifecycle would be pure indirection with
+// no payoff. The crdt import below is at the domain/entities seam
+// (CA-07 boundary already documented on the binder itself).
 import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
 import 'package:my_notion/features/sync/data/sync_ws_binder.dart';
 
