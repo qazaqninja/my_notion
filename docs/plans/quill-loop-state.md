@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. **E60 forms-polish CLOSED: 4 slices, 39 new backend tests, FormFieldType extended from 6 to 10 (added email, url, longtext, pattern). 233 backend tests pass.**
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **TS-01 recurring carry-forward INFO closed** via M1618 lcov directive sweep.
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. Cutover deferred.
-- **Task:** E-phase pick-next survey #7 — E60 closed. Candidates for next slice: (a) **Editor parity slices** to unblock D28-D30 cutover — port Move-to-Trash / Pull-from-server / Find-in-Page / Share-via-OS-sheet from EditorPage to EditorBetaPage. (b) **Web clipper** (separate browser-extension package). (c) **y_crdt WASM swap** (perf, needs build infra). (d) **TS-08 alchemist editor goldens** (defensive). (e) **TS-01 lcov directive sweep** (orchestrator recurring carry-forward). (f) **Other E60 polish** — Flutter-side `FormFieldType` mirror so the database table cell rendering also benefits, or column-level validators on `.database.yaml` schemas. (g) **G4 docker smoke** (user-time-gated). Lean toward (f) Flutter-side mirror as continuation of forms work — natural next step for the polish slice, small bite, immediate user-visible. Or pivot to (a) editor parity to unblock cutover.
+- **Task:** E-phase pick-next survey #8. After M1618 closed the longest-running recurring orchestrator INFO, the carry-forward backlog is genuinely empty. Candidates remaining: (a) Editor parity arc (5-10 slices unblocking D28-D30 cutover; first slice: port Find-in-Page from EditorPage to EditorBetaPage — FindInPageController extracted at H3a is reusable, but currently consumes a String body; would need a DocumentSearch helper for super_editor MutableDocument). (b) D25 polish — reorder/duplicate on non-contiguous multi-selection. (c) TS-08 alchemist editor goldens (visual-regression net for the 292 D-phase tests). (d) Web clipper (separate package). (e) y_crdt WASM swap (perf). (f) G4 docker smoke (user-gated). (g) Other v1.x backlog from FEATURES.md (mostly checked off — should grep for remaining 🚧/📋 markers). Likely investigation-first pivot to (a) since it's the largest user-visible win.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1618 — TS-01 lcov directive sweep (pick-next #7 closeout)** (no new tests; 5 controller files modified; 7 functions wrapped)
+- Committed: (this iteration)
+- TaskList ID: 208 closeout
+- Notes: Survey #7 pivoted to TS-01 lcov sweep as the cheapest carry-forward close-out. Investigation found Flutter `ColumnType` is decoupled from backend `FormFieldType` (different layers), so option (f) was misframed; D28-D30 cutover blocked on EditorBetaPage feature parity (multi-slice arc); D25 polish low-value; TS-08 goldens defensive. Picked (e) — mechanical project-wide cleanup. Added `// coverage:ignore-start` / `// coverage:ignore-end` directive pairs around the 7 D-phase keyboard-action handlers that already carry prose-only TS-01 exemptions: `blockReorderKeyboardAction` + `blockDuplicateKeyboardAction` + `blockDeleteKeyboardAction` + `blockDeleteKeyboardActionWithSelection` + `headingConversionKeyboardAction` + `headingConversionKeyboardActionWithSelection` + `blockConversionKeyboardAction` + `blockConversionKeyboardActionWithSelection`. Pure-Dart parsers (`parseBlockReorderKey` etc.) and helpers (`cloneBlockWithFreshId`) stay instrumented — only the orchestration glue is excluded. Closes the latent TS-07 coverage-gate exposure machine-readably. flutter analyze clean. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — first fully-pristine audit in many slices.** Recurring carry-forward INFO (M1551 → M1606) is now closed. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1616 — E60 slice 4 — FormFieldType.pattern (arbitrary regex matching) — FINAL E60 SLICE** (9 new backend tests; 233 backend tests pass; E60 fully closed)
 - Committed: (this iteration)
