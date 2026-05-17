@@ -1498,7 +1498,7 @@ class _TranscludedBlock extends StatelessWidget {
         }
         return GestureDetector(
           onTap: () =>
-              Navigator.of(context).pushReplacementNamed(Routes.editor(ulid)),
+              GoRouter.of(context).replace<void>(Routes.editor(ulid)),
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: Container(
@@ -1712,8 +1712,8 @@ class _SubpageCardState extends State<_SubpageCard> {
           onEnter: (_) => setState(() => _hover = true),
           onExit: (_) => setState(() => _hover = false),
           child: GestureDetector(
-            onTap: () => Navigator.of(context)
-                .pushReplacementNamed(Routes.editor(ulid)),
+            onTap: () => GoRouter.of(context)
+                .replace<void>(Routes.editor(ulid)),
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
@@ -4499,6 +4499,8 @@ class _ResolvedChip extends StatelessWidget {
           onTap: isBroken
               ? null
               : () {
+                  // .push (not .go): user must be able to return to the
+                  // source page after a cross-page anchor jump.
                   GoRouter.of(context).push(Routes.editor(ulid, anchor: anchor));
                 },
         );
