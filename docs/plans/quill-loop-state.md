@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **6/7 inline marks live (bold, italic, strike, inline code, highlight, subscript)**
-- **Task:** D26 inline autoformat slice 7 — superscript `^X^` (FINAL slice). M1563 added subscript detector + reaction + 22 tests via single-`~` marker with Pandoc semantics (no whitespace inner; strike-collision guard via `text[caret-2] != '~'`; opener neighbors must not be `~`). Reuses super_editor's built-in `subscriptAttribution`. Pipeline order now: bold → italic → strike → inline code → highlight → subscript. Slice 7 applies the template to superscript `^X^` (Pandoc convention): single-char `^` marker, no double-char sibling to disambiguate from (unlike sub's `~`-vs-`~~`), opener-walk-back must find a `^` (no flanking concern unless we get strict), inner must not contain whitespace (sub/sup Pandoc rule — same as sub). Reaction uses super_editor's built-in `superscriptAttribution`. Register after subscript. After D26 closes: D24/D25 plugin opt-ins, D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **D26 CLOSED. 7/7 inline marks live (bold, italic, strike, inline code, highlight, subscript, superscript). 148 cumulative tests.**
+- **Task:** D-phase pivot survey — pick next slice after D26 closes. Candidates: (a) D24 drag-handle plugin opt-in (super_editor likely ships a `MoveDocumentHandles*` plugin — investigate `defaultEditorPlugins` for the toggle), (b) D25 multi-select port (super_editor selection model already supports it; bind keyboard shortcuts + visual chrome), (c) D28-D30 cutover (flip `/editor-beta` to be the default `/editor` route — needs dogfooding first), (d) other deferred items (G4 live docker smoke, E59 pick-next #3 survey, TS-08 alchemist editor goldens). Read `defaultEditorPlugins` source to confirm (a)/(b) are 1-line opt-ins as suspected during the M1547 pivot.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1565 — D26 inline autoformat slice 7 — superscript `^X^` (detector + reaction + tests) — FINAL D26 SLICE** (21 superscript tests; cumulative D26 = 148; D26 fully closed)
+- Committed: (this iteration)
+- TaskList ID: 181 closeout
+- Notes: Final inline-mark autoformat slice. Simpler than subscript because Quill has no `^^` mark — no double-char sibling to disambiguate against, so no strike-collision-style guard needed. `lib/features/editor/domain/superscript_autoformat.dart` (~38 lines): `detectSuperscriptAutoformat({text, caret})` checks `text[caret-1]=='^'`, walks back for nearest `^` opener, refuses whitespace inner (Pandoc rule covering space/tab/CR/LF). 16 detector tests in 3 sub-groups (3 happy / 8 no-match including chemistry-grade `x^2^` exponent + whitespace-inner + caret<3 + closer-adjacent / 5 edge — greedy / past-end / negative / special-chars / 2-char-text-with-caret-at-2). `SuperscriptAutoformatReaction` reuses super_editor's built-in `superscriptAttribution`. 5 reaction tests via `_RecordingDispatcher` harness in `guards (no-op paths)` + `dispatch (positive path)` sub-groups per M1559 convention. Wired AFTER subscript in `_editor.reactionPipeline`. flutter analyze clean on all 5 touched files; 16+5 = 21 superscript tests green in <1s. Orchestrator audit: 0 BLOCK / 0 WARN / 2 INFO (both cosmetic non-blocking: TS-04 minor — one edge-case test duplicates a no-match case; CA-01 traceability note only). **D26 closeout: 7/7 inline marks live. Cumulative D26: 14+5 + 19+7 + 15+5 + 15+5 + 15+5 + 17+5 + 16+5 = 148 tests.** Final pipeline order: bold → italic → strike → inline code → highlight → subscript → superscript. Behaviour: `x^2^` in WYSIWYG strips markers and applies superscriptAttribution. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1563 — D26 inline autoformat slice 6 — subscript `~X~` (detector + reaction + tests)** (22 subscript tests; cumulative D26 = 127)
 - Committed: (this iteration)
