@@ -408,7 +408,7 @@ Future<Response> _handleSubmit(
 ///
 /// Routes:
 ///   - `GET /forms/owner/<ulid>/submissions` — JSON list of submissions
-///     for [ulid]. Returns 403 `not_owner` when the caller doesn't own
+///     for `ulid`. Returns 403 `not_owner` when the caller doesn't own
 ///     the page (also when the page doesn't exist — by design, no ULID
 ///     enumeration). Returns `{"submissions": [...]}` on success.
 Router buildOwnerFormsRouter({required FormsRepositoryBase repo}) {
@@ -467,9 +467,13 @@ Map<String, String> parseUrlEncodedForm(String body) {
       if (key.isEmpty) continue;
       final prior = out[key];
       out[key] = prior == null ? value : '$prior,$value';
-    } on ArgumentError {
-      // `Uri.decodeQueryComponent` throws ArgumentError on invalid
-      // percent-encoding. Skip the offending pair rather than 500ing.
+    }
+    // `Uri.decodeQueryComponent` throws ArgumentError on invalid
+    // percent-encoding. Catching it (an Error subtype) is intentional
+    // — it's the documented throw shape of decodeQueryComponent. Skip
+    // the offending pair rather than 500ing.
+    // ignore: avoid_catching_errors
+    on ArgumentError {
       continue;
     } on FormatException {
       continue;

@@ -80,7 +80,7 @@ Future<Map<String, dynamic>?> _readJson(Request req) async {
     final decoded = jsonDecode(raw);
     if (decoded is! Map<String, dynamic>) return null;
     return decoded;
-  } catch (_) {
+  } on Object {
     return null;
   }
 }

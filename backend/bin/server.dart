@@ -41,7 +41,7 @@ Future<Response> _healthHandler(Request req) async {
       return Response(503, body: 'db: empty response\n');
     }
     return Response.ok('ok\n');
-  } catch (e) {
+  } on Object catch (e) {
     return Response(503, body: 'db: $e\n');
   }
 }
@@ -56,7 +56,7 @@ void main(List<String> args) async {
     _conn = await openDatabase();
     await runMigrations(_conn!);
     stdout.writeln('database: connected + migrations applied');
-  } catch (e) {
+  } on Object catch (e) {
     stderr.writeln('database: failed to connect ($e). /health will report.');
   }
 

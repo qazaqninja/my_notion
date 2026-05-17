@@ -41,7 +41,7 @@ void main() {
     group('fromJson validation', () {
       test('rejects a payload with the wrong kind tag', () {
         expect(
-          () => AwarenessMessage.fromJson(<String, Object?>{
+          () => AwarenessMessage.fromJson(const <String, Object?>{
             'kind': 'update',
             'userId': 'x',
             'pageUlid': 'y',
@@ -54,7 +54,7 @@ void main() {
 
       test('rejects when the kind tag is missing', () {
         expect(
-          () => AwarenessMessage.fromJson(<String, Object?>{
+          () => AwarenessMessage.fromJson(const <String, Object?>{
             'userId': 'x',
             'pageUlid': 'y',
             'cursorIndex': 0,
@@ -66,7 +66,7 @@ void main() {
 
       test('rejects when a required field is missing', () {
         expect(
-          () => AwarenessMessage.fromJson(<String, Object?>{
+          () => AwarenessMessage.fromJson(const <String, Object?>{
             'kind': 'awareness',
             'userId': 'x',
             'pageUlid': 'y',
@@ -79,7 +79,7 @@ void main() {
 
       test('rejects when cursorIndex is a non-int', () {
         expect(
-          () => AwarenessMessage.fromJson(<String, Object?>{
+          () => AwarenessMessage.fromJson(const <String, Object?>{
             'kind': 'awareness',
             'userId': 'x',
             'pageUlid': 'y',

@@ -1,6 +1,9 @@
+import 'package:meta/meta.dart';
+
 /// Per-file summary returned by `GET /sync/list`. The body itself is NOT
 /// included — clients fetch bodies on demand via `GET /sync/get/<relpath>`
 /// (slice E10), or push their own via `PUT /sync/put/<relpath>` (slice E9).
+@immutable
 class FileSummary {
   /// Construct a summary row hydrated from `vault_files`.
   const FileSummary({

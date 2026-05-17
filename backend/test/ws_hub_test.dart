@@ -18,7 +18,7 @@ class _FakeChannel implements WebSocketChannel {
   // The hub never reads these — give them throwers so accidental
   // wider usage is loud.
   @override
-  noSuchMethod(Invocation i) => super.noSuchMethod(i);
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
 class _Sink implements WebSocketSink {
@@ -32,7 +32,7 @@ class _Sink implements WebSocketSink {
   Future<void> close([int? closeCode, String? closeReason]) async {}
 
   @override
-  noSuchMethod(Invocation i) => super.noSuchMethod(i);
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
 }
 
 void main() {

@@ -10,6 +10,12 @@ dependencies:
   bcrypt: ^1.2.0
   crypto: ^3.0.6
   dart_jsonwebtoken: ^3.4.1
+  # `@immutable` annotation for value-equal entity classes (used by
+  # lib/auth/user.dart, lib/sync/file_summary.dart, lib/sync/awareness_message.dart
+  # to satisfy avoid_equals_and_hash_code_on_mutable_classes). meta
+  # ships with the SDK but VGA's `depend_on_referenced_packages` requires
+  # an explicit declaration.
+  meta: ^1.16.0
   postgres: ^3.5.11
   shelf: ^1.4.2
   shelf_router: ^1.1.2

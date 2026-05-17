@@ -12,7 +12,7 @@ import 'package:shelf/shelf.dart';
 /// token but no longer existing user → 401 stale_session.
 ///
 /// Usage:
-/// ```
+/// ```dart
 /// final pipeline = Pipeline()
 ///   .addMiddleware(logRequests())
 ///   .addMiddleware(requireAuth(users: ..., tokens: ...))

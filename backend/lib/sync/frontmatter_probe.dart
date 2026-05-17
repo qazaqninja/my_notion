@@ -101,8 +101,7 @@ class FrontmatterProbe {
   /// Extract the inner YAML block from a markdown body, or null if no
   /// frontmatter is present. Matches `^---\n…\n---\n?` at file start.
   static String? _extractBlock(String body) {
-    final m = RegExp(r'^---\s*\n([\s\S]*?)\n---', multiLine: false)
-        .firstMatch(body);
+    final m = RegExp(r'^---\s*\n([\s\S]*?)\n---').firstMatch(body);
     return m?.group(1);
   }
 

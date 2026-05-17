@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('PasswordHasher (E3)', () {
-    final hasher = const PasswordHasher(cost: 4); // low cost = fast tests
+    const hasher = PasswordHasher(cost: 4); // low cost = fast tests
 
     test('hash produces a bcrypt modular crypt string', () {
       final h = hasher.hash('correct horse battery staple');

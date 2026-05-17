@@ -1,6 +1,9 @@
+import 'package:meta/meta.dart';
+
 /// Auth-layer User entity. Matches the columns in the `users` table from
 /// the E2 initial migration (M1288). Immutable + value-equal so it can
 /// flow through repository / service boundaries without surprise mutation.
+@immutable
 class User {
   /// Construct a User entity hydrated from a `users` row.
   const User({
