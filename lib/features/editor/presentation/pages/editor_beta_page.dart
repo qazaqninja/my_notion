@@ -18,6 +18,7 @@ import '../bloc/editor_state.dart';
 import '../controllers/slash_trigger_session.dart';
 import '../controllers/super_editor_caret.dart';
 import '../cubit/slash_menu_cubit.dart';
+import '../widgets/slash_menu_overlay.dart';
 
 /// Beta WYSIWYG editor route powered by `super_editor` (Phase D / D1 slice 23
 /// of the 1m-loop plan). Wired in parallel to the existing `/editor/<ulid>`
@@ -196,10 +197,31 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
           ),
         ],
       ),
-      body: SuperEditor(
-        editor: _editor,
-        documentLayoutKey: _docLayoutKey,
+      // D23 slice 2g-a (M1537): wrap the SuperEditor in a Stack so the
+      // SlashMenuOverlay can paint on top of the document, positioned by
+      // the cubit's anchorRect. The overlay's onPick handler is a stub
+      // (`dismiss + log`) for now — slice 2g-b adds the
+      // selection-splice command that mutates the document.
+      body: Stack(
+        children: [
+          SuperEditor(
+            editor: _editor,
+            documentLayoutKey: _docLayoutKey,
+          ),
+          SlashMenuOverlay(
+            onPick: _onSlashEntryPicked,
+            onDismiss: () => context.read<SlashMenuCubit>().dismiss(),
+          ),
+        ],
       ),
     );
+  }
+
+  /// Stub for slice 2g-a — closes the menu but doesn't yet splice the
+  /// chosen entry into the document. Slice 2g-b lands the real Editor
+  /// command that strips `/query` and inserts the entry's snippet.
+  void _onSlashEntryPicked(_) {
+    context.read<SlashMenuCubit>().dismiss();
+    _session.reset();
   }
 }
