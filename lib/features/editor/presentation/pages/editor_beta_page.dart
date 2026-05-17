@@ -24,6 +24,7 @@ import '../controllers/block_delete_keyboard_action.dart';
 import '../controllers/block_duplicate_keyboard_action.dart';
 import '../controllers/block_reorder_keyboard_action.dart';
 import '../controllers/bold_autoformat_reaction.dart';
+import '../controllers/heading_conversion_keyboard_action.dart';
 import '../controllers/highlight_autoformat_reaction.dart';
 import '../controllers/inline_code_autoformat_reaction.dart';
 import '../controllers/italic_autoformat_reaction.dart';
@@ -247,6 +248,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
               blockReorderKeyboardAction,
               blockDuplicateKeyboardAction,
               blockDeleteKeyboardAction,
+              headingConversionKeyboardAction,
               ...defaultKeyboardActions,
             ],
           ),
