@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **bold + italic + strike + inline code live**
-- **Task:** D26 inline autoformat slice 5 — highlight `==X==`. M1558 added inline code detector + reaction + 20 tests. M1559 fix-forward sub-grouped the inline-code reaction tests per orchestrator's TS-04 INFO suggestion; new convention (`guards / dispatch` inner groups) applies forward from this slice onward. Pipeline order now: bold → italic → strike → inline code. Slice 5 applies the template to highlight: symmetric 2-char `=` marker, inner must not contain `==` or newline. Use the existing `highlightAttribution` NamedAttribution defined at `lib/core/markdown/super_editor_serializer.dart:907` (super_editor doesn't ship one). Register after inline code. Following: sub `~X~` (6 — must check after strike's `~~`), sup `^X^` (7). After D26 closes: D24/D25 plugin opt-ins, D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **5/7 inline marks live (bold, italic, strike, inline code, highlight)**
+- **Task:** D26 inline autoformat slice 6 — subscript `~X~`. M1561 added highlight detector + reaction + 20 tests via `==` marker; reuses Quill-custom `highlightAttribution` from `lib/core/markdown/super_editor_serializer.dart:907` via cross-tier (presentation → core) `show` import. Pipeline order now: bold → italic → strike → inline code → highlight. Slice 6 applies the template to subscript `~X~` (Pandoc convention): single-char `~` marker, MUST check after strike's `~~` (already registered earlier in pipeline so this is automatic), opener at caret-1 must be `~` but text[caret-2] must NOT be `~` (else it's strike's closer being seen); opener-walk-back must find a `~` whose neighbors aren't `~`; inner must not contain whitespace (sub/sup Pandoc rule). Reaction uses super_editor's built-in `subscriptAttribution`. Register after highlight. Following: sup `^X^` (7). After D26 closes: D24/D25 plugin opt-ins, D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1561 — D26 inline autoformat slice 5 — highlight `==X==` (detector + reaction + tests)** (20 highlight tests; cumulative D26 = 105)
+- Committed: (this iteration)
+- TaskList ID: 179 closeout
+- Notes: Near-clone of bold/strike with `=` marker (no flanking concerns, no double-char sibling). `lib/features/editor/domain/highlight_autoformat.dart` (~37 lines, 15 tests in 3 sub-groups including the boundary "single `=` is NOT highlight" since `=X=` has no v1.x marker meaning). `HighlightAutoformatReaction` reuses `highlightAttribution` from `lib/core/markdown/super_editor_serializer.dart:907` via cross-tier (presentation → core) `show` import — super_editor doesn't ship a built-in highlight attribution, so the Quill-side custom is the canonical one. Reaction test uses the M1559 sub-group convention (`guards (no-op paths)` + `dispatch (positive path)`). Wired AFTER inline code in `_editor.reactionPipeline`. flutter analyze clean on all 5 touched files; 15+5 = 20 highlight tests green in <1s. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 cosmetic — sub-group names diverge slightly between domain and reaction tests; not blocking). Cumulative D26: 14+5 + 19+7 + 15+5 + 15+5 + 15+5 = 105 tests. Behaviour: `==hi==` in WYSIWYG now strips markers and applies highlightAttribution (renderer background-color treatment was already wired at M1280-era). Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1560 — loop-state advance** (record M1558+M1559 + queue D26 slice 5)
+- Committed: prior to M1561 (this iteration)
+- TaskList ID: 178 advance
+- Notes: Recorded inline code detector + reaction + tests + TS-04 fix-forward. Advanced **Current** pointer to slice 5. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1558 + M1559 — D26 inline autoformat slice 4 — inline code `` `X` `` (detector + reaction + tests + TS-04 fix-forward)** (20 tests; cumulative D26 = 85)
 - Committed: (this iteration)
