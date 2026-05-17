@@ -141,8 +141,7 @@ class _SourceViewState extends State<SourceView> {
   void _scheduleOutboundPresence() {
     final ulid = widget.pageUlid;
     if (ulid == null || ulid.isEmpty) return;
-    final scope = EditorSyncWsScope.maybeOf(context);
-    if (scope == null) return;
+    if (EditorSyncWsScope.maybeOf(context) == null) return;
     final sync = context.read<SyncBloc>();
     if (!sync.state.isAuthed) return;
     final userId = sync.state.userId;
@@ -157,7 +156,14 @@ class _SourceViewState extends State<SourceView> {
       final live = _controller.selection.baseOffset;
       if (live < 0) return;
       if (live == _lastSentCursor) return;
-      scope.sendAwareness(AwarenessMessage(
+      // BL-11 / M1477: re-resolve the scope inside the timer
+      // closure rather than capturing the schedule-time
+      // reference. If the EditorSyncWsScope ancestor rebuilds
+      // between schedule and fire (e.g. parent route swap), the
+      // schedule-time scope would point at a disposed sink.
+      final liveScope = EditorSyncWsScope.maybeOf(context);
+      if (liveScope == null) return;
+      liveScope.sendAwareness(AwarenessMessage(
         userId: userId,
         pageUlid: ulid,
         cursorIndex: live,
