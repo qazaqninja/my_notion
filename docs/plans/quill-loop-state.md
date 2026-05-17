@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **all linePrefix variants live**
-- **Task:** D23 interactions slice 2g-e — async picker actions (pickImage / pickFile). M1543 closed slice 2g-d part 1 by extending the linePrefix mapper trio: `blockTypeForLinePrefix` (H1-H3 + blockquote → ChangeParagraphBlockTypeRequest), `listItemTypeForLinePrefix` (bullet + ordered → ConvertParagraphToListItemRequest), `isTaskLinePrefix` (todo → ConvertParagraphToTaskRequest). All 7 linePrefix variants in `kSlashEntries` are now functional in WYSIWYG. Only the two async picker SlashAction variants remain: `pickImage` and `pickFile`. Plan: a private async helper that strips `/query`, awaits file_picker, then dispatches a ReplaceNodeRequest with ImageNode (for pickImage) or a file-attachment paragraph (for pickFile). After 2g-e closes D23 fully: D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts ported) + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **D23 fully closed**
+- **Task:** D24-D30 pivot survey — pick the next slice from the remaining D-phase work. **D23 is functionally complete**: M1545 wired the two async picker SlashActions (pickImage / pickFile) via `unawaited(_runPickerAction(...))` — strips `/query` first, runs FilePicker, copies via AttachmentWriter, inserts an ImageNode (or file-attachment paragraph) after the trigger node. M1546 fix-forward made AttachmentWriter `@visibleForTesting`-injectable to unblock future widget tests. End-to-end loop in WYSIWYG: `/` opens the menu at the caret with anchor positioning; filtering as the user types; picking dispatches the right super_editor request per SlashAction (snippet text / block-type change / list-item conversion / task conversion / ImageNode insertion / file-attachment insertion). Remaining D-phase work: D24 super_editor drag handles for block reorder; D25 multi-select port; D26-D27 M234-M268 source-mode keyboard shortcut port; D28-D30 cutover (flip default `/editor` route, delete old route). Plus the deferred TS-01 EditorBetaPage widget test for `_onSlashEntryPicked` / `_runPickerAction` branches (RP-02 injection in M1546 unblocked it). Pivot iteration should rank the slices and queue the first concrete TDD bite.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1545 + M1546 — D23 interactions slice 2g-e + RP-02 fix-forward (D23 fully closed)** (async pickImage/pickFile + injectable AttachmentWriter)
+- Committed: (this iteration)
+- TaskList ID: 172 closeout (slice 2g-e); also closed #163 (parent slice 2)
+- Notes: M1545 wired the two async picker SlashAction variants into `_onSlashEntryPicked`: detect pickImage/pickFile BEFORE the insertSnippet branch, dispatch DeleteContentRequest to strip `/query`, then `unawaited(_runPickerAction(entry, nodeId))`. New `_runPickerAction(SlashEntry, String) async`: read VaultBloc state (bail if no vault), `FilePicker.platform.pickFiles(type: image-or-any, withData: false)`, `AttachmentWriter().copy(...)`, mounted-guard, find trigger node index + 1, insert `ImageNode(imageUrl, altText: 'image')` for pickImage or `ParagraphNode(text: '![label](path)', metadata: {blockType: fileAttachmentAttribution, label, path})` for pickFile via InsertNodeAtIndexRequest. Errors swallowed silently (no toast surface on EditorBetaPage). 83 inserts. Orchestrator audit: 0 BLOCK / 2 WARN / 1 INFO — RP-02 inline `const AttachmentWriter()` (fixed in M1546) + TS-01 widget-test carry-forward. M1546 hoisted AttachmentWriter to a `@visibleForTesting` field with const default so future widget tests can swap a fake without standing up file_picker platform channels. flutter analyze clean on both commits. **D23 fully closes here.** End-to-end loop: `/` in WYSIWYG opens menu at caret with anchor positioning, filters as user types, picks dispatch the right super_editor request per SlashAction (snippet / block-type / list / task / ImageNode / file-attachment). Behaviour delta over the prior slice: `/image` and `/file` now actually copy into the vault and insert the media block. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1544 — loop-state advance** (record M1543 + queue D23 slice 2g-e)
+- Committed: prior to M1545 (this iteration)
+- TaskList ID: 171 advance
+- Notes: Recorded list/ordered/todo convert-in-place. Advanced **Current** pointer to slice 2g-e. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1543 — D23 interactions slice 2g-d part 1 — list/ordered/todo convert-in-place** (all 7 linePrefix variants now functional in WYSIWYG)
 - Committed: (this iteration)
