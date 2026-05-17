@@ -238,6 +238,39 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     );
   }
 
+  /// D25 slice 5b (M1607): named-method keyboard handlers that read
+  /// the BlockSelectionCubit at callback time (not at build time), so
+  /// DI-04 lint doesn't fire on `context.read` inside `build`.
+  ExecutionInstruction _multiBlockDeleteAction({
+    required SuperEditorContext editContext,
+    required KeyEvent keyEvent,
+  }) =>
+      blockDeleteKeyboardActionWithSelection(
+        editContext: editContext,
+        keyEvent: keyEvent,
+        blockSelection: context.read<BlockSelectionCubit>().state,
+      );
+
+  ExecutionInstruction _multiHeadingConversionAction({
+    required SuperEditorContext editContext,
+    required KeyEvent keyEvent,
+  }) =>
+      headingConversionKeyboardActionWithSelection(
+        editContext: editContext,
+        keyEvent: keyEvent,
+        blockSelection: context.read<BlockSelectionCubit>().state,
+      );
+
+  ExecutionInstruction _multiBlockConversionAction({
+    required SuperEditorContext editContext,
+    required KeyEvent keyEvent,
+  }) =>
+      blockConversionKeyboardActionWithSelection(
+        editContext: editContext,
+        keyEvent: keyEvent,
+        blockSelection: context.read<BlockSelectionCubit>().state,
+      );
+
   /// D25 slice 4b (M1602): passive pointer-down observer that mutates
   /// `BlockSelectionCubit` based on the click's hit-test + modifier
   /// state. Wired via a `Listener` (not a `GestureDetector`) so we
@@ -332,30 +365,15 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
               keyboardActions: [
                 blockReorderKeyboardAction,
                 blockDuplicateKeyboardAction,
-                // D25 slice 5b (M1606): closure-bind cubit state so
-                // delete/heading/conversion ops act on the whole
-                // multi-block selection when non-empty. Re-reads cubit
-                // each fire so the user gets fresh state. Reorder +
-                // duplicate stay single-block in v1 (non-contiguous
-                // semantics deferred).
-                ({required editContext, required keyEvent}) =>
-                    blockDeleteKeyboardActionWithSelection(
-                  editContext: editContext,
-                  keyEvent: keyEvent,
-                  blockSelection: context.read<BlockSelectionCubit>().state,
-                ),
-                ({required editContext, required keyEvent}) =>
-                    headingConversionKeyboardActionWithSelection(
-                  editContext: editContext,
-                  keyEvent: keyEvent,
-                  blockSelection: context.read<BlockSelectionCubit>().state,
-                ),
-                ({required editContext, required keyEvent}) =>
-                    blockConversionKeyboardActionWithSelection(
-                  editContext: editContext,
-                  keyEvent: keyEvent,
-                  blockSelection: context.read<BlockSelectionCubit>().state,
-                ),
+                // D25 slice 5b (M1606 + M1607 DI-04 fix-forward):
+                // named-method handlers so the cubit lookup happens
+                // inside the callback body, not in the closure literal
+                // inside `build` (DI-04). Reorder + duplicate stay
+                // single-block in v1 (non-contiguous semantics
+                // deferred).
+                _multiBlockDeleteAction,
+                _multiHeadingConversionAction,
+                _multiBlockConversionAction,
                 ...defaultKeyboardActions,
               ],
             ),
