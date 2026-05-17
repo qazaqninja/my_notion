@@ -2,14 +2,20 @@
 /// the E2 initial migration (M1288). Immutable + value-equal so it can
 /// flow through repository / service boundaries without surprise mutation.
 class User {
+  /// Construct a User entity hydrated from a `users` row.
   const User({
     required this.id,
     required this.email,
     required this.createdAt,
   });
 
+  /// Stable ULID — primary key on the `users` table.
   final String id; // ULID
+
+  /// Normalized lowercase email — the unique secondary key.
   final String email;
+
+  /// Server-set creation timestamp (UTC).
   final DateTime createdAt;
 
   @override

@@ -6,8 +6,10 @@ import 'package:bcrypt/bcrypt.dart';
 /// Cost factor 12 is the standard balance between strength and CPU. Tune via
 /// `BCRYPT_COST` env var only if a deploy actually needs it.
 class PasswordHasher {
+  /// Construct a hasher with the given bcrypt [cost] factor (default 12).
   const PasswordHasher({this.cost = 12});
 
+  /// Bcrypt log-rounds. 12 ≈ 250 ms hash on a 2024-class CPU.
   final int cost;
 
   /// Hash [plain] with a freshly-generated salt. Result is the full bcrypt

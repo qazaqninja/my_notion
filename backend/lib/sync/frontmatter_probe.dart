@@ -17,6 +17,10 @@ class FrontmatterProbe {
     this.formsRef,
   });
 
+  /// Probe [body]'s YAML frontmatter for the v2-backend-relevant
+  /// fields (id, public, public_password, forms). Lines outside the
+  /// `---\n…\n---` block are ignored; missing fields default to safe
+  /// off/null values.
   factory FrontmatterProbe.fromBody(String body) {
     // Frontmatter block: starts with `---\n` and ends with `\n---` or
     // `---\n` further down. Anything outside is skipped.
@@ -65,7 +69,12 @@ class FrontmatterProbe {
     );
   }
 
+  /// 26-char Crockford-base32 ULID parsed from `id:`. Null when the
+  /// frontmatter is missing or the value isn't a valid ULID.
   final String? ulid;
+
+  /// True when `public: true` (or `yes`) appears in the frontmatter
+  /// — the `GET /public/<ulid>` route gates on this flag.
   final bool isPublic;
 
   /// E43 — bcrypt hash of the public-page password, when set. Null

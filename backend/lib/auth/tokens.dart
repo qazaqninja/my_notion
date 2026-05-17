@@ -9,13 +9,20 @@ import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 /// env var crashes rather than ships a weak secret. Production rotates via
 /// re-deploy; refresh-token rotation lands at E15+.
 class TokenIssuer {
+  /// Construct an issuer. [secret] defaults to `JWT_SECRET` env var,
+  /// falling back to a loud-and-obvious dev-only string so production
+  /// crashes rather than ships a weak secret.
   TokenIssuer({String? secret, this.issuer = 'quill', this.audience = 'quill'})
       : _secret = secret ??
             Platform.environment['JWT_SECRET'] ??
             'localhost-dev-only-DO-NOT-SHIP';
 
   final String _secret;
+
+  /// JWT `iss` claim — validated on verify.
   final String issuer;
+
+  /// JWT `aud` claim — validated on verify.
   final String audience;
 
   /// Mint a short-lived (1 h) JWT containing [userId] in `sub`. Callers

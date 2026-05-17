@@ -27,6 +27,7 @@ import 'dart:convert';
 /// The backend doesn't validate it — bad input is the sender's
 /// problem; peers just render whatever they get.
 class AwarenessMessage {
+  /// Construct an awareness message for broadcast via [WsHub].
   const AwarenessMessage({
     required this.userId,
     required this.pageUlid,
