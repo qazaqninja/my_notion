@@ -19,6 +19,11 @@ import 'dart:convert';
 /// Pure function — no signature verification. The token is treated
 /// as trusted because the backend issued it; this helper only
 /// extracts a claim the client already received.
+///
+/// **Do NOT use this to gate access-control decisions on the
+/// client.** It exists only to surface the userId for UI-affecting
+/// hints (e.g. presence color, "you are X" displays). Server-side
+/// auth is the source of truth.
 String? decodeJwtSub(String? token) {
   if (token == null || token.isEmpty) return null;
   final segments = token.split('.');

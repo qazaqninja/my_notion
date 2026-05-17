@@ -63,6 +63,10 @@ class SyncState extends Equatable {
   /// claim. Null when unauthed or when the token is malformed.
   /// Used by the outbound presence path to populate the AwarenessMessage
   /// without a separate `/me` round-trip.
+  ///
+  /// Intentionally excluded from [props]: derived purely from
+  /// [token], so any userId change is already captured by the
+  /// token's presence in props (M1474 BL-06 doc fix-forward).
   String? get userId => decodeJwtSub(token);
 
   /// Last-known server sha for [relpath], or null if we've never seen

@@ -52,8 +52,11 @@ void main() {
     });
 
     group('malformed inputs', () {
-      test('returns null on a non-three-segment string', () {
+      test('returns null when segment count is 2', () {
         expect(decodeJwtSub('not.jwt'), isNull);
+      });
+
+      test('returns null when segment count is 4', () {
         expect(decodeJwtSub('a.b.c.d'), isNull);
       });
 
