@@ -268,12 +268,35 @@ GoRouter _buildRouter(VaultBloc vault) {
           GoRoute(path: Routes.home, builder: (_, __) => const HomePage()),
           GoRoute(
             path: '/editor/:ulid',
-            builder: (context, state) => EditorPage(
-              key: ValueKey(
-                  '${state.pathParameters['ulid']}#${state.uri.queryParameters['anchor'] ?? ''}'),
-              ulid: state.pathParameters['ulid']!,
-              anchor: state.uri.queryParameters['anchor'],
-            ),
+            // D28 cutover slice 1c (M1667): wrap in BlocSelector on
+            // EditorPreferencesCubit so flipping the Settings →
+            // Advanced toggle takes effect immediately (no app
+            // restart). Selects only the `useBetaEditor` bool so the
+            // route rebuilds at most once per toggle, not on every
+            // unrelated state emission. When true: route renders the
+            // beta WYSIWYG `EditorBetaPage`; when false: legacy
+            // `EditorPage`. `/editor-beta/:ulid` stays available for
+            // direct beta entry regardless of the toggle (slice 1c
+            // is non-destructive — D30 deletes the legacy branch).
+            builder: (context, state) {
+              final ulid = state.pathParameters['ulid']!;
+              final anchor = state.uri.queryParameters['anchor'];
+              return BlocSelector<EditorPreferencesCubit,
+                  EditorPreferencesState, bool>(
+                selector: (prefs) => prefs.useBetaEditor,
+                builder: (context, useBeta) => useBeta
+                    ? EditorBetaPage(
+                        key: ValueKey('beta-fork-$ulid'),
+                        ulid: ulid,
+                      )
+                    : EditorPage(
+                        key: ValueKey(
+                            '$ulid#${anchor ?? ''}'),
+                        ulid: ulid,
+                        anchor: anchor,
+                      ),
+              );
+            },
           ),
           // Phase D D1 slice 23 (M1284): beta WYSIWYG editor backed by
           // super_editor + SuperEditorSerializer. Lives at /editor-beta/
