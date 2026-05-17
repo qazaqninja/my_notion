@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** H3 — pick-next survey: H2 (WebSocket multiplayer) is now end-to-end live. Survey the remaining roadmap and choose between (a) H3 y_crdt WASM swap (replace opaque-text wire format with CRDT binary updates), (b) presence/cursor-awareness piggybacked on the same WS, (c) Phase E sync polish (deferred items: BL-11 listener for onConnectionError + onRemoteDoc, BL-12 toast throttling, TS-01 widget integration test for editor_page, G4 docker-compose smoke), (d) Phase E E56-E65 public sharing forms work, or (e) close out long-tail Phase A/F debt (TS-07 coverage ratchet, FS-03 packages restructure)
+- **Task:** H3a — extract FindInPageController from _EditorBodyState (the 5-field find cluster: _findOpen, _findCtl, _findFocus, _findMatches, _findCursor; M1396 orchestrator flagged _EditorBodyState reached 10 fields and this self-contained cluster is the obvious extraction). OR next H2 polish item: presence/cursor awareness on the same WS, or H3 y_crdt WASM swap. Recommend FindInPage extraction first — closes the M1396 tracking-info item before moving to a new architectural push.
 - **Status:** pending
 
 ## Last completed
+
+- **M1396 — H2.5** (Throttle utility + 8s-window for "Multiplayer disconnected" toasts; closes BL-12 deferred from M1393)
+- Committed: (this iteration)
+- TaskList ID: 108
+- Notes: Closed the BL-12 polish deferred from M1393. New `lib/core/util/throttle.dart` (~35 lines): generic `Throttle<T>` class with leading-edge semantics — first call fires immediately, subsequent calls inside the window suppressed, next call after window fires again. Constructor takes (Duration window, {DateTime Function()? now}); time source injected so tests advance the clock without sleeping. `run(T Function())` returns the function's value on fire, null on suppress. `reset()` clears the stamp. 6 tests: first-call-fires, second-inside-suppressed, second-after-runs, 20-call-burst-only-first-fires, return-value-forwards, reset-rearms. editor_page.dart: added `Throttle<void> _connErrorToastThrottle = Throttle<void>(const Duration(seconds: 8))` field on _EditorBodyState; wrapped the existing onConnectionError toast in `_connErrorToastThrottle.run(...)`. 8-second window is generous enough to absorb a typical reconnect burst but short enough that a sustained outage surfaces a fresh toast every ~8s. Orchestrator audit: 0 BLOCK / 0 WARN / 3 INFO (all tracking-only): FS-01 confirms core/util/ placement OK alongside existing core/ui/ + core/text/ siblings; BL-12 throttle as State field is acceptable per scope; TS-03 inapplicable (Throttle isn't a Bloc). Orchestrator also noted _EditorBodyState now has 10 fields and flagged the find-in-page cluster (_findOpen, _findCtl, _findFocus, _findMatches, _findCursor) as a future extraction target — queued as H3a. flutter analyze clean; 6/6 throttle + 15/15 editor_bloc tests pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1394 — H2.4d-iii cleanup** (orchestrator gate: silence _onChanged during programmatic mutation to prevent echo amplification)
 - Committed: (this iteration)
