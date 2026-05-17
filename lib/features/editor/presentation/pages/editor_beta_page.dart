@@ -11,6 +11,7 @@ import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../../core/ui/anchor_rect.dart';
+import '../../../../core/ui/anchor_rect_x.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
@@ -112,6 +113,12 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
   late final SlashTriggerSession _session;
+  // D23 slice 2f (M1535): GlobalKey on the SuperEditor mount so the
+  // composer listener can reach DocumentLayout.getRectForPosition to
+  // anchor the slash menu at the caret. Editor-local coordinates —
+  // overlay positioning (slice 2g) stacks against the same parent so
+  // the local rect maps 1-to-1 without a localToGlobal hop.
+  final GlobalKey _docLayoutKey = GlobalKey();
 
   @override
   void initState() {
@@ -148,12 +155,28 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       text: snapshot.text,
       caret: snapshot.caret,
       onOpen: (triggerOffset) => cubit.openAt(
-        anchor: const AnchorRect(left: 0, top: 0, right: 0, bottom: 0),
+        anchor: _caretAnchor(),
         triggerOffset: triggerOffset,
       ),
       onDismiss: cubit.dismiss,
       onQuery: cubit.setQuery,
     );
+  }
+
+  /// Resolve the caret's editor-local Rect via [DocumentLayout.getRectForPosition]
+  /// and convert through M1533's [anchorRectFromRect]. Falls back to a zero
+  /// anchor when the layout hasn't been realized (pre-first-frame) or the
+  /// composer's selection is collapsed but its node isn't laid out yet.
+  AnchorRect _caretAnchor() {
+    const zero = AnchorRect(left: 0, top: 0, right: 0, bottom: 0);
+    final DocumentLayout? layout =
+        _docLayoutKey.currentState as DocumentLayout?;
+    if (layout == null) return zero;
+    final selection = _composer.selection;
+    if (selection == null) return zero;
+    final rect = layout.getRectForPosition(selection.extent);
+    if (rect == null) return zero;
+    return anchorRectFromRect(rect);
   }
 
   @override
@@ -173,7 +196,10 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
           ),
         ],
       ),
-      body: SuperEditor(editor: _editor),
+      body: SuperEditor(
+        editor: _editor,
+        documentLayoutKey: _docLayoutKey,
+      ),
     );
   }
 }
