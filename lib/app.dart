@@ -279,28 +279,23 @@ GoRouter _buildRouter(VaultBloc vault) {
             // Advanced toggle takes effect immediately (no app
             // restart). Selects only the `useBetaEditor` bool so the
             // route rebuilds at most once per toggle, not on every
-            // unrelated state emission. When true: route renders the
-            // beta WYSIWYG `EditorBetaPage`; when false: legacy
-            // `EditorPage`. `/editor-beta/:ulid` stays available for
-            // direct beta entry regardless of the toggle (slice 1c
-            // is non-destructive — D30 deletes the legacy branch).
+            // unrelated state emission. The branch decision lives in
+            // [buildEditorPageForFork] for unit-testability (D30a /
+            // M1673 — pre-deletion regression coverage). `/editor-
+            // beta/:ulid` stays available for direct beta entry
+            // regardless of the toggle (slice 1c is non-destructive
+            // — D30 deletes the legacy branch).
             builder: (context, state) {
               final ulid = state.pathParameters['ulid']!;
               final anchor = state.uri.queryParameters['anchor'];
               return BlocSelector<EditorPreferencesCubit,
                   EditorPreferencesState, bool>(
                 selector: (prefs) => prefs.useBetaEditor,
-                builder: (context, useBeta) => useBeta
-                    ? EditorBetaPage(
-                        key: ValueKey('beta-fork-$ulid'),
-                        ulid: ulid,
-                      )
-                    : EditorPage(
-                        key: ValueKey(
-                            '$ulid#${anchor ?? ''}'),
-                        ulid: ulid,
-                        anchor: anchor,
-                      ),
+                builder: (context, useBeta) => buildEditorPageForFork(
+                  useBetaEditor: useBeta,
+                  ulid: ulid,
+                  anchor: anchor,
+                ),
               );
             },
           ),
@@ -360,4 +355,32 @@ class _StreamListenable extends ChangeNotifier {
     _sub.cancel();
     super.dispose();
   }
+}
+
+/// D28 cutover branch helper (D30a / M1673): given the live
+/// `useBetaEditor` value plus the route's `ulid` + optional `anchor`
+/// query param, returns the editor widget the `/editor/:ulid`
+/// GoRoute should render.
+///
+/// Split out as a top-level function so it can be unit-tested without
+/// pumping a full app harness — the helper is pure given inputs.
+/// Production calls it from the `BlocSelector` builder inside
+/// `_buildRouter`. D30 will collapse this helper to a direct
+/// `EditorBetaPage` build once the dogfood window closes.
+Widget buildEditorPageForFork({
+  required bool useBetaEditor,
+  required String ulid,
+  required String? anchor,
+}) {
+  if (useBetaEditor) {
+    return EditorBetaPage(
+      key: ValueKey('beta-fork-$ulid'),
+      ulid: ulid,
+    );
+  }
+  return EditorPage(
+    key: ValueKey('$ulid#${anchor ?? ''}'),
+    ulid: ulid,
+    anchor: anchor,
+  );
 }
