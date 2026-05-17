@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 fully closed. 198 cumulative tests. 4 Notion shortcuts (reorder Cmd+Shift+Up/Down, duplicate Cmd+D, delete Cmd+Shift+Backspace) + 7 inline marks all live in WYSIWYG.**
-- **Task:** D27a slice 1 — heading keyboard shortcut resolver (pure-Dart). Notion uses Cmd+Opt+1/2/3 for h1/h2/h3 and Cmd+Opt+0 for paragraph on macOS. M1582 pick-next survey ruled out: mermaid native rendering already shipped (MermaidView at lib/shared/widgets/mermaid_view.dart:25), super_editor's defaultReactions already handle `# `/`-`/`1. `/`> `/`---`/`![]()`/`--` auto-format on type, so slice surface there is empty. D25 multi-select is 3-5 slices (deferred). D28-D30 cutover risk-gated. Pivoted to D27a heading shortcuts as the natural next D24-family-shaped slice — super_editor ships `ChangeParagraphBlockTypeRequest({nodeId, blockType: Attribution?})` at paragraph.dart:626 + `header1/2/3Attribution` exports. Resolver returns `({String nodeId, Attribution? blockType})?` given (document, selection, target). Slice 2 wires Cmd+Opt+1/2/3 and Cmd+Opt+0 keyboard handlers (one handler with a switch on logicalKey).
+- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 closed. D27a slice 1 (resolver) shipped. 209 cumulative tests across the D-phase WYSIWYG keyboard/autoformat layer.**
+- **Task:** D27a slice 2 — wire `resolveHeadingConversion` into a `SuperEditorKeyboardAction` bound to Cmd+Opt+1/2/3/0 (Ctrl+Alt on Linux/Windows). One handler with a logicalKey switch mapping digit1→HeadingLevel.h1, digit2→h2, digit3→h3, digit0→paragraph. Parse: KeyDown/Repeat + primary shortcut + alt + matching digit. Dispatch `ChangeParagraphBlockTypeRequest(nodeId: result.nodeId, blockType: result.blockType)`. Place handler at `lib/features/editor/presentation/controllers/heading_conversion_keyboard_action.dart`. Wire into `editor_beta_page.dart` `keyboardActions` AFTER block_delete. Apply M1571 coverage exemption on the handler. Test the parser (4 happy: Cmd+Opt+1/2/3/0, 4 no-match: no-Alt / no-Cmd / KeyUp / non-digit).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1583 — D27a slice 1 — heading conversion resolver (pure-Dart)** (11 tests in 3 sub-groups; ~44-line helper + enum)
+- Committed: (this iteration)
+- TaskList ID: 191 closeout
+- Notes: Fourth resolver in the family. `enum HeadingLevel { h1, h2, h3, paragraph }` + `resolveHeadingConversion({document, selection, target})` returns `({String nodeId, Attribution? blockType})?`. Four exit paths: null / non-collapsed / non-ParagraphNode (ChangeParagraphBlockType doesn't apply to ListItem/Task/HorizontalRule) / unknown nodeId. Otherwise returns (nodeId, blockType) with switch-expression on target: h1→header1Attribution, h2→header2, h3→header3, paragraph→null (resets blockType metadata). 11 tests in 3 sub-groups: happy path (4 — each target level), no-op (5 — null/non-collapsed/unknown/ListItem/HorizontalRule), edge cases (2 — h1→paragraph round-trip / all-four-levels loop). flutter analyze clean. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 cosmetic — outcome-category sub-groups vs. parameter-variation convention; consistent with siblings, non-blocking). Cumulative D-phase keyboard/autoformat layer = 209 tests. Slice 2 will wire `ChangeParagraphBlockTypeRequest` dispatch via Cmd+Opt+1/2/3/0 keyboard handler. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1582 — D-phase pick-next survey #3 closeout — pivot to D27a (heading keyboard shortcuts Cmd+Opt+1/2/3/0)** (no code; doc-only pivot decision)
 - Committed: (this iteration)
