@@ -7,10 +7,25 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E59-b H4d-iii-c — wire the M1454 RemoteCursorOverlay into the editor body with a cursorRectAt resolver from the live TextField's RenderEditable. The editor's source-mode TextField has a GlobalKey<EditableTextState>; from `_editableTextKey.currentState!.renderEditable.getLocalRectForCaret(TextPosition(offset: idx))` we can derive the screen-space rect per character offset. Mount the overlay as a Stack sibling of the TextField inside _EditorBodyState so it inherits the same coordinate space; consume the cubit from the M1465 BlocProvider scope. Defensive: resolver returns null for out-of-range indices and during the TextField's pre-paint phase. Tests: widget test that pumps an editor with a known body, pushes an awareness JSON through the WS pipeline, asserts a chiclet renders. Paths: edit `lib/features/editor/presentation/pages/editor_page.dart` (or wherever _EditorBodyState lives) + extend editor_page_test.dart. H4d-iii-d (debounced outbound) closes the loop.
+- **Task:** E59-b H4d-iii-d — outbound presence: wire local TextField selection changes to broadcast via `SyncWsBinder.sendAwareness` (M1460 method). When the user moves the source-mode caret, debounce ~100ms and emit an AwarenessMessage encoded with the current userId (from SyncBloc auth context) + cursor index + `peerColorFromUserId(userId)` (M1460 helper). Use the existing EditorSyncWsScope.maybeOf(context) to find the controller. Outbound should NOT happen if the WS isn't connected or the user isn't authed. Skip if no userId is available. Path: extend SourceView's `_controller` selection listener with a debounced broadcast helper + a new sendAwareness path on the attach controller (or call binder directly). H4d-iii-d closes the full presence loop visually and over the network.
 - **Status:** pending
+- **Carried-forward deferred items from H4d-iii sub-bite audits:**
+  - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
+  - BL-12 design smell on RemoteCursorOverlay: hard `BlocBuilder<PresenceCubit, PresenceState>` requires the cubit ancestor, blocking isolated SourceView tests. Switch to a maybeOf-tolerant pattern when the SourceView test sweep lands — paired refactor.
+  - performance watch (info): `_remoteCursorRectAt` re-walks the field's RenderObject subtree on every awareness emit. ~10-20 nodes × 5 peers × 10 updates/sec = ~1000 walks/sec. Tolerable for v1; cache RenderEditable per-build if profiling surfaces it.
+  - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1468 — E59-b H4d-iii-c: wire RemoteCursorOverlay into SourceView** (third H4d-iii sub-bite)
+- Committed: (this iteration)
+- TaskList ID: 145
+- Notes: Closes the inbound presence visual loop. Remote peer cursors now paint at correct char offsets in the source editor. `lib/features/editor/presentation/widgets/source_view.dart` (modified, +~30 lines): new import remote_cursor_overlay.dart (sibling, same layer); new `_remoteCursorRectAt(int charIndex)` method that walks the field's RenderObject subtree for a RenderEditable then returns `editable.getLocalRectForCaret(TextPosition(offset: charIndex))` in local coords (mirrors the existing `_caretRect()` pattern); defensive returns null for `charIndex < 0`, `charIndex > _controller.text.length`, missing RenderBox (pre-paint), or missing RenderEditable; added a third `Positioned.fill(child: RemoteCursorOverlay(cursorRectAt: _remoteCursorRectAt))` to the existing Stack of overlays. Runtime PresenceCubit comes from the M1465 EditorSyncWsMount's existing `BlocProvider<PresenceCubit>.value(...)` wrap — no editor_page.dart wiring change needed. No new test file in this slice — overlay has its own M1454 unit tests + cubit/mount integration covered by M1451 + M1465. Orchestrator audit: 0 BLOCK / 1 WARN (TS-01/FS-04 pre-existing SourceView zero-test-coverage — deferred to a dedicated editor TS-01 sweep) / 2 INFO (BL-12 design smell maybeOf pattern + perf watch on render-tree walk caching — both deferred). 63/63 presence-touching tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1467 — loop-state advance** (record M1465/M1466 + advance to H4d-iii-c)
+- Committed: (this iteration)
+- TaskList ID: 144 closeout
+- Notes: Recorded M1465 + M1466. Advanced **Current** pointer to H4d-iii-c. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1466 — TS-03 doc fix-forward on M1465 PresenceCubit mount tests** (orchestrator gate cleanup)
 - Committed: (this iteration)
