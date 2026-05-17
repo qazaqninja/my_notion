@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **bold + italic autoformat live**
-- **Task:** D26 inline autoformat slice 3 — strike `~~X~~`. M1554 added italic detector + reaction + 26 tests (asterisk + underscore variants; bold-collision guard via `text[caret-2] == '*'` refuse; intra-word underscore guard via `_isWordChar`). Pipeline ordering: bold → italic, registered in `_BetaEditorShellState.initState`. Slice 3 applies the same detector+reaction+tests template to strike `~~X~~`: symmetric 2-char marker, inner must not contain `~~`, opener-walk-back guard. Register after italic in the pipeline. Following inline-mark slices: inline code `` `X` `` (slice 4), highlight `==X==` (slice 5), sub `~X~` and sup `^X^` (slices 6 + 7, must check after strike to avoid `~~` colliding with `~`). After D26 closes: D24/D25 plugin opt-ins, then D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **bold + italic + strike autoformat live**
+- **Task:** D26 inline autoformat slice 4 — inline code `` `X` ``. M1556 added strike detector + reaction + 20 tests with the explicit boundary that `~X~` (single tilde) is NOT strike — protects the upcoming sub/sup slices. Pipeline order now: bold → italic → strike. Slice 4 applies the template to inline code: single backtick marker, inner must not contain another backtick or newline. Register after strike. Use `codeAttribution` (super_editor reuses the same NamedAttribution for code-block blockType metadata and inline-code attribution — they live in different scopes so the overload is intentional). Following slices: highlight `==X==` (5), sub `~X~` (6 — must check after strike), sup `^X^` (7). After D26 closes: D24/D25 plugin opt-ins, D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1556 — D26 inline autoformat slice 3 — strike `~~X~~` detector + reaction + tests** (20 strike tests; cumulative D26 = 65)
+- Committed: (this iteration)
+- TaskList ID: 177 closeout
+- Notes: Strikethrough is symmetric with bold (same 2-char marker), so `detectStrikeAutoformat` is a near-copy of `detectBoldAutoformat` with `~` substituted for `*`. 15 detector tests in 3 sub-groups (happy / no match / edge cases) — includes the explicit boundary "single tilde `~X~` is NOT strike — that's subscript (later slice)" to protect the upcoming sub/sup detectors from shadowing. `StrikeAutoformatReaction extends EditReaction` mirrors the bold/italic template; dispatches `DeleteContentRequest + InsertTextRequest(attributions: {strikethroughAttribution})`. 5 reaction tests via the standard `_RecordingDispatcher` harness. Wired AFTER bold + italic in `_editor.reactionPipeline`. Pipeline-ordering invariant documented: sub/sup's single `~` / `^` must check AFTER strike's `~~`. One in-iteration `avoid_escaping_inner_quotes` info auto-fixed by switching the outer test-name string to double quotes. flutter analyze clean on all 5 touched files. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO. Cumulative D26: 14+5 + 19+7 + 15+5 = 65 tests. Behaviour: `~~strike~~` in WYSIWYG now strips markers and applies strikethroughAttribution. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1555 — loop-state advance** (record M1554 + queue D26 slice 3)
+- Committed: prior to M1556 (this iteration)
+- TaskList ID: 176 advance
+- Notes: Recorded italic detector + reaction + tests. Advanced **Current** pointer to slice 3. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1554 — D26 inline autoformat slice 2 — italic `*X*` + `_X_` detector + reaction + tests** (26 italic tests; cumulative D26 = 45)
 - Committed: (this iteration)
