@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete (D24-family + D25 + D26 + D27a + D27b all closed); D28-D30 cutover blocked on EditorBetaPage feature parity. Pivoted back to E-phase. E60 slices 1+2 shipped — email + url HTML5 input types.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. Pivoted back to E-phase. E60 slices 1+2+3 shipped — email, url, longtext HTML5 input types.
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. Cutover deferred.
-- **Task:** E60 slice 3 — `FormFieldType.longtext` → multi-line `<textarea>`. Different shape than email/url (no regex validation; just treat as text but emit `<textarea>` instead of `<input>`). Changes: enum variant, `_parseType` accepts `'longtext'` / `'textarea'` / `'paragraph'`, validator case copies through as text, renderer emits `<textarea name="…" rows="4"></textarea>`, CSS extended with textarea styling. Tests: parse + 3 aliases + length round-trip + renderer (textarea tag + required + multiline content roundtrip). Slice 4: `pattern` → `<input pattern="...">` for arbitrary regex matching from yaml `pattern:` field. After E60 closes, survey next.
+- **Task:** E60 slice 4 — `FormFieldType.pattern` for arbitrary regex matching. New field shape: schema includes a per-field `pattern:` string from yaml; renderer emits `<input pattern="…">`; validator compiles the pattern at validate-time and matches against input. Edge: if pattern is invalid regex, fail-soft (accept input — log a warning rather than reject all submissions for a broken schema). Changes: enum variant `pattern`, `FormFieldDef` adds `String? pattern` field, `_parseType` accepts `'pattern'`/`'regex'`, parser reads new `pattern: '...'` yaml key, validator case-tests regex with `RegExp(...)`-try-catch, renderer emits `<input pattern="…">` HTML-escaped. After E60 slice 4 → E60 closes; survey what's next.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1614 — E60 slice 3 — FormFieldType.longtext → multi-line textarea** (9 new backend tests; 224 backend tests pass)
+- Committed: (this iteration)
+- TaskList ID: 206 closeout
+- Notes: Third forms-polish HTML5 input-type slice. Different shape than email/url — emits `<textarea>` instead of `<input>`. Validator uses case-fallthrough: `case FormFieldType.text: case FormFieldType.longtext:` shares body that copies input unchanged (newlines/tabs round-trip). 3 parse aliases (`longtext`/`textarea`/`paragraph`) + 3 validator tests + 3 renderer tests. CSS adds `textarea{resize:vertical;min-height:80px}` rule. 224/215+9 backend tests pass; `dart analyze` clean. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 cosmetic — alias and validator tests in single group, consistent with email/url sibling pattern). E60 slice 4 will be `pattern` for arbitrary regex matching — different shape (per-field `pattern:` yaml key). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1612 — E60 slice 2 — FormFieldType.url (parser + validator + HTML5 renderer)** (12 new backend tests; 215 backend tests pass)
 - Committed: (this iteration)
