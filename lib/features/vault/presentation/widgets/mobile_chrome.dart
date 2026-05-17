@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
 import '../../../commands/presentation/cubit/command_palette_cubit.dart';
@@ -22,7 +23,7 @@ class MobileTabBar extends StatelessWidget {
         .getSingleOrNull();
     if (!context.mounted) return;
     if (row == null) {
-      context.go('/home');
+      context.go(Routes.home);
     } else {
       context.go('/editor/${row.ulid}');
     }
@@ -33,7 +34,7 @@ class MobileTabBar extends StatelessWidget {
     final tokens = QuillTokens.of(context);
     final route = GoRouterState.of(context).matchedLocation;
     // Mobile editor pane uses /home as its idle/landing surface.
-    void goHome() => context.go('/home');
+    void goHome() => context.go(Routes.home);
     return Container(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
       decoration: BoxDecoration(
@@ -45,7 +46,7 @@ class MobileTabBar extends StatelessWidget {
           _Tab(
             icon: 'home',
             label: 'Home',
-            active: route == '/home',
+            active: route == Routes.home,
             onTap: goHome,
           ),
           _Tab(

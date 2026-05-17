@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import '../../../../core/paths.dart';
+import '../../../../core/routing/routes.dart';
 
 import 'package:drift/drift.dart' as drift;
 import 'package:file_picker/file_picker.dart';
@@ -170,13 +171,13 @@ class _VaultShellPageState extends State<VaultShellPage> {
           const SingleActivator(LogicalKeyboardKey.bracketLeft, control: true): () =>
               _navigateBack(context),
           const SingleActivator(LogicalKeyboardKey.comma, meta: true): () =>
-              context.go('/settings'),
+              context.go(Routes.settings),
           const SingleActivator(LogicalKeyboardKey.comma, control: true): () =>
-              context.go('/settings'),
+              context.go(Routes.settings),
           const SingleActivator(LogicalKeyboardKey.keyH, meta: true): () =>
-              context.go('/home'),
+              context.go(Routes.home),
           const SingleActivator(LogicalKeyboardKey.keyH, control: true): () =>
-              context.go('/home'),
+              context.go(Routes.home),
           const SingleActivator(LogicalKeyboardKey.period, meta: true): () =>
               _openQuickCapture(context),
           // ⌘1..⌘9 — jump to the Nth pinned page (1-based). Power-user
