@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 1 — fix the **`avoid_dynamic_calls` cluster (22 findings)** that the M1485 baseline swap surfaced. Orchestrator prioritised this cluster first in the 3b sweep because it's the only one with runtime-safety implications (the other clusters are style/readability). Findings cluster around dynamic JSON map access in routes + DB layer. Type the lookups with explicit casts or null-safe getters. Files: bin/server.dart, sync_routes.dart, possibly auth/users and sync/file_table. Same-slice doc cleanup acceptable if it touches the same files. After this, queue: cluster 2 (`always_use_package_imports` 23 mechanical), cluster 3 (style mechanicals: cascade/whitespace/const/cast bundle ~100 findings), cluster 4 (`public_member_api_docs` 68 doc-only).
+- **Task:** Forms polish slice 3b cluster 2 — fix the **`always_use_package_imports` cluster (23 findings)**. Pure mechanical: every `import '../foo.dart'` becomes `import 'package:backend/foo.dart'`. No semantic changes, no test changes. Run `dart fix --code=always_use_package_imports --apply backend/` (probably enough; verify nothing weird with the `bin/` boundary). After this slice: cluster 3 (style mechanicals — cascade_invocations 26 + missing_whitespace_between_adjacent_strings 36 + prefer_const_constructors 20 + cast_nullable_to_non_nullable 19 + lines_longer_than_80_chars 18 ≈ 119 findings; consider splitting), cluster 4 (`public_member_api_docs` 68 doc-only — last because it's the largest and lowest-risk).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1487 — backend lint cleanup 3b cluster 1 (avoid_dynamic_calls 22 → 0)** (highest-risk cluster of the M1485 baseline cleanup)
+- Committed: (this iteration)
+- TaskList ID: 152
+- Notes: First cluster-fix of the 252 info findings the M1485 very_good_analysis baseline revealed. Targeted ONLY the 22 `avoid_dynamic_calls` findings (orchestrator-prioritized as the only cluster with runtime-safety implications). All 22 lived in 4 test files; no production code touched. `routes_test.dart` (4 fixes): imported shelf_router, typed `late dynamic router` → `late Router router`, retyped `_request` helper signature (Map<String, dynamic> → Map<String, Object?>; dynamic router → Router), dropped redundant `as Future<Response>` cast, 5x `jsonDecode(...)['error']` cast to `(jsonDecode(...) as Map<String, Object?>)['error']`. `middleware_test.dart` (5 fixes): same cast pattern. `sync_routes_test.dart` (6 fixes): two `as List` lifted with `.cast<Map<String, Object?>>()` for `body[N]['relpath']` typing; three `jsonDecode(...)['error']` cast. `forms_routes_test.dart` (4 fixes): `body['submissions'] as List` lifted with `.cast<Map<String, Object?>>()` so `list[N]['id']` is typed; dropped redundant `(list[1] as Map)` cast. Net analyze: 252 → 235 info findings (-22 avoid_dynamic_calls, +5 lines_longer_than_80_chars from wider cast expressions — joins the existing 13 in the future style cluster). Orchestrator audit: 0 BLOCK / 0 WARN / 2 INFO (LT-01 line-length acknowledged as deferred to style cluster, plus a non-finding on the TS-03 N/A for shelf-server test files). 192/192 backend tests pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1486 — loop-state advance** (record M1485 + advance to slice 3b cluster 1)
+- Committed: (this iteration)
+- TaskList ID: 151 closeout
+- Notes: Recorded M1485 (backend infra: very_good_analysis + mocktail). Advanced **Current** pointer to slice 3b cluster 1 (avoid_dynamic_calls). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1485 — backend infra: very_good_analysis + mocktail** (clears LT-01 + TS-02 backend deferrals; slice 3a of forms polish 3)
 - Committed: (this iteration)
