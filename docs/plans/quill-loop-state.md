@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a + D27b closed; D25 slice 1 shipped. 259 D-phase tests.**
-- **Task:** D25 slice 2 — `BlockSelectionCubit`. Wraps the M1593 `BlockSelection` value object and exposes mutation events: `selectBlock(String nodeId)` (replaces selection with just that block), `toggleBlock(String nodeId)` (Cmd+Click semantics), `extendSelection(String anchor, String extent, Document doc)` (Shift+Click semantics: select all blocks between anchor and extent), `clearSelection()`. State emission via Cubit's `emit(BlockSelection)`. Pure-Dart-ish — depends on super_editor's `Document` for `extendSelection`'s range computation but doesn't touch Flutter widgets. Place at `lib/features/editor/presentation/cubit/block_selection_cubit.dart`. Test via `bloc_test` with `seed:` / `act:` / `expect:` style.
+- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a + D27b closed; D25 slice 1+2 shipped. 271 D-phase tests.**
+- **Task:** D25 slice 3 — UI overlay highlighting selected blocks. Wire a `BlockSelectionOverlay` widget that subscribes to `BlockSelectionCubit` and paints a faint colored background behind each selected block in the WYSIWYG editor. Approach options: (a) decorate via `ComponentBuilder` on super_editor that consumes the cubit; (b) overlay layer in `_BetaEditorShellState` that paints over each selected node's `DocumentLayout` rect. Option (b) is closer to the slash menu overlay pattern from D23 and doesn't require touching super_editor's component pipeline. Use `QuillTokens.of(context).accentSubtle` or `QuillTokens.selectionFill` for the highlight color. Provide the cubit via `BlocProvider` in EditorBetaPage's `MultiBlocProvider`. After this slice the selection state is visible; slice 4 wires gestures, slice 5 integrates ops.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1595 — D25 slice 2 — BlockSelectionCubit** (12 bloc_test cases in 5 sub-groups; ~63-line Cubit)
+- Committed: (this iteration)
+- TaskList ID: 197 closeout
+- Notes: `BlockSelectionCubit extends Cubit<BlockSelection>` with `BlockSelection.empty()` initial state. Four mutation methods: `selectBlock(nodeId)` (replaces), `toggleBlock(nodeId)` (Cmd+Click), `extendSelection({anchor, extent, document})` (Shift+Click range — direction-agnostic, no-op on unknown ids), `clearSelection()` (no-op when empty — relies on Equatable to short-circuit). Imports flutter_bloc + super_editor (for Document only) + the M1593 domain value object. 12 blocTest cases via bloc_test (TS-03 compliant): initial (1) / selectBlock × 2 / toggleBlock × 2 / extendSelection × 5 (forward, backward, single-node, unknown-anchor, unknown-extent — last two assert empty emission list to verify no-op) / clearSelection × 2 (incl. no-op-when-empty). flutter analyze clean. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04/BL-03 cosmetic — `initial state` group label could be `BlockSelectionCubit()` per strict VGV convention; non-blocking). Cumulative D25 = 27 (15 value object + 12 cubit). Cumulative D-phase WYSIWYG layer = 271 tests. Slice 3 wires the UI overlay. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1593 — D25 slice 1 — BlockSelection value object (pure-Dart)** (15 tests in 5 sub-groups; ~70-line Equatable class)
 - Committed: (this iteration)
