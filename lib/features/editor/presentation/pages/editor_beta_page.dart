@@ -20,6 +20,7 @@ import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
 import '../../domain/slash_entries.dart';
 import '../../domain/slash_entry_block_type.dart';
+import '../controllers/block_duplicate_keyboard_action.dart';
 import '../controllers/block_reorder_keyboard_action.dart';
 import '../controllers/bold_autoformat_reaction.dart';
 import '../controllers/highlight_autoformat_reaction.dart';
@@ -243,6 +244,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
             // super_editor's default arrow-key selection-move fires.
             keyboardActions: [
               blockReorderKeyboardAction,
+              blockDuplicateKeyboardAction,
               ...defaultKeyboardActions,
             ],
           ),
