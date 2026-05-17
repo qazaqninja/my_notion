@@ -4,6 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('SharedPreferencesEditorPreferencesStore', () {
+    // setUp here only — the InMemoryEditorPreferencesStore group below
+    // doesn't touch SharedPreferences at all (TS-05: per-group test
+    // isolation).
     setUp(() {
       SharedPreferences.setMockInitialValues({});
     });
@@ -67,6 +70,8 @@ void main() {
   });
 
   group('LazySharedPreferencesEditorPreferencesStore', () {
+    // Lazy wrapper still uses SharedPreferences under the hood — needs
+    // its own setUp so the InMemory group below stays SP-free.
     setUp(() {
       SharedPreferences.setMockInitialValues({});
     });

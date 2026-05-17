@@ -65,21 +65,17 @@ void main() {
         expect: () => [const EditorPreferencesState(useBetaEditor: false)],
       );
 
+      // Closure-scoped store so the blocTest's `verify` can read
+      // through the SAME store the cubit-under-test wrote to (TS-04
+      // fix-forward — was indirectly constructing a parallel cubit).
+      late InMemoryEditorPreferencesStore persistStore;
       blocTest<EditorPreferencesCubit, EditorPreferencesState>(
         'persists the toggle value to the store',
-        build: () =>
-            EditorPreferencesCubit(InMemoryEditorPreferencesStore()),
+        setUp: () => persistStore = InMemoryEditorPreferencesStore(),
+        build: () => EditorPreferencesCubit(persistStore),
         act: (cubit) => cubit.setUseBetaEditor(useBeta: false),
-        verify: (cubit) async {
-          // The store is reachable via a closure over the test-scoped
-          // instance; build a parallel store + cubit to verify
-          // round-trip semantics via the public API instead.
-          final store = InMemoryEditorPreferencesStore();
-          final c2 = EditorPreferencesCubit(store);
-          addTearDown(c2.close);
-          await c2.setUseBetaEditor(useBeta: false);
-          expect(await store.readUseBetaEditor(), isFalse);
-        },
+        verify: (_) async =>
+            expect(await persistStore.readUseBetaEditor(), isFalse),
       );
 
       blocTest<EditorPreferencesCubit, EditorPreferencesState>(

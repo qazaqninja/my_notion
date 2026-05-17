@@ -77,6 +77,9 @@ class LazySharedPreferencesEditorPreferencesStore
   /// resolution after the first await).
   LazySharedPreferencesEditorPreferencesStore(this._prefs);
 
+  // Dart's `Future` memoises its single resolution — repeated `await`s
+  // return the same `SharedPreferences` value without re-invoking the
+  // platform channel (BL-12 audit clarification at M1678 fix-forward).
   final Future<SharedPreferences> _prefs;
 
   @override
