@@ -20,6 +20,7 @@ import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
 import '../../domain/slash_entries.dart';
 import '../../domain/slash_entry_block_type.dart';
+import '../controllers/block_reorder_keyboard_action.dart';
 import '../controllers/bold_autoformat_reaction.dart';
 import '../controllers/highlight_autoformat_reaction.dart';
 import '../controllers/inline_code_autoformat_reaction.dart';
@@ -237,6 +238,13 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
           SuperEditor(
             editor: _editor,
             documentLayoutKey: _docLayoutKey,
+            // D24a slice 2 (M1570): prepend the block-reorder shortcut so
+            // Cmd+Shift+ArrowUp/Down moves the active block before
+            // super_editor's default arrow-key selection-move fires.
+            keyboardActions: [
+              blockReorderKeyboardAction,
+              ...defaultKeyboardActions,
+            ],
           ),
           SlashMenuOverlay(
             onPick: _onSlashEntryPicked,
