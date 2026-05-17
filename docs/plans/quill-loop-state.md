@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 2 — fix the **`always_use_package_imports` cluster (23 findings)**. Pure mechanical: every `import '../foo.dart'` becomes `import 'package:backend/foo.dart'`. No semantic changes, no test changes. Run `dart fix --code=always_use_package_imports --apply backend/` (probably enough; verify nothing weird with the `bin/` boundary). After this slice: cluster 3 (style mechanicals — cascade_invocations 26 + missing_whitespace_between_adjacent_strings 36 + prefer_const_constructors 20 + cast_nullable_to_non_nullable 19 + lines_longer_than_80_chars 18 ≈ 119 findings; consider splitting), cluster 4 (`public_member_api_docs` 68 doc-only — last because it's the largest and lowest-risk).
+- **Task:** Forms polish slice 3b cluster 3a — auto-fixable style mechanicals. `dart fix --apply` resolves these cleanly. Target the auto-fixable rules in this cluster: `cascade_invocations` (26), `prefer_const_constructors` (20), `missing_whitespace_between_adjacent_strings` (36) — total ~82 findings, all mechanical. The non-auto-fixable rules in cluster 3 (`cast_nullable_to_non_nullable` 19, `lines_longer_than_80_chars` 18, `avoid_catches_without_on_clauses` 3) need human judgment and get their own slice 3b cluster 3b. After cluster 3a: cluster 3b (~40 human-judgment findings), cluster 4 (`public_member_api_docs` 68 doc-only, last).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1489 — backend lint cleanup 3b cluster 2 (always_use_package_imports 23 → 0)** (pure mechanical via dart fix)
+- Committed: (this iteration)
+- TaskList ID: 153
+- Notes: `dart fix --code=always_use_package_imports --apply` resolved all 23 findings in one pass. 8 backend lib/ files touched (auth/middleware, auth/routes, db/sync, db/users, forms/routes (4), public/routes (1), sync/routes (4), sync/ws_routes (2)); zero test/ or bin/ files (those already used package: imports). Pure import-style rewrite; no semantic changes. Net analyze: 235 → 212 info findings (-23). 192/192 backend tests still pass. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — clean across all 5 specialist reviewers. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1488 — loop-state advance** (record M1487 + advance to slice 3b cluster 2)
+- Committed: (this iteration)
+- TaskList ID: 152 closeout
+- Notes: Recorded M1487 (avoid_dynamic_calls). Advanced **Current** pointer to slice 3b cluster 2 (always_use_package_imports). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1487 — backend lint cleanup 3b cluster 1 (avoid_dynamic_calls 22 → 0)** (highest-risk cluster of the M1485 baseline cleanup)
 - Committed: (this iteration)
