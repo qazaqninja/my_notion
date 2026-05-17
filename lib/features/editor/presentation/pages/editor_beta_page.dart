@@ -14,6 +14,7 @@ import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
+import '../../../sync/presentation/bloc/sync_state.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
@@ -251,6 +252,28 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     );
   }
 
+  /// D-fp2 (M1623): port Pull-from-server from legacy editor_page.dart:604.
+  /// Dispatches `SyncFetchFileRequested` against the server-known relpath
+  /// when authed; shows a SnackBar with the result. Mirrors the legacy
+  /// kebab `'pull'` case at editor_page.dart:604-612.
+  ///
+  /// The button is hidden when not authed via a `BlocBuilder` gate at the
+  /// AppBar level, so this handler doesn't need the redundant
+  /// `if (!sync.state.isAuthed)` check the legacy editor still carries
+  /// (its kebab item is always visible).
+  // coverage:ignore-start
+  void _onPullFromServer() {
+    final sync = context.read<SyncBloc>();
+    sync.add(SyncFetchFileRequested(relpath: widget.relativePath));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Pulling latest from server…'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
   /// D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
   /// Confirm via dialog, dispatch VaultBloc(MoveToTrash) + optional
   /// SyncBloc(SyncDeleteFileRequested) when authed, navigate home.
@@ -390,6 +413,20 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
+          // D-fp2 (M1623): port Pull-from-server from legacy editor_page.dart:604.
+          // Only visible when authed to the v2 backend — sync state drives
+          // a BlocBuilder gate so the button vanishes when SyncBloc is in
+          // its anonymous/unauthed state.
+          BlocBuilder<SyncBloc, SyncState>(
+            buildWhen: (prev, next) => prev.isAuthed != next.isAuthed,
+            builder: (context, syncState) => syncState.isAuthed
+                ? IconButton(
+                    icon: const Icon(Icons.cloud_download_outlined),
+                    tooltip: 'Pull from server',
+                    onPressed: _onPullFromServer,
+                  )
+                : const SizedBox.shrink(),
+          ),
           // D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
           IconButton(
             icon: const Icon(Icons.delete_outline),
