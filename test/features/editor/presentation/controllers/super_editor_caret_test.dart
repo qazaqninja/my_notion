@@ -120,8 +120,17 @@ void main() {
           SelectionReason.userInteraction,
         );
       final result = plainTextAndCaret(doc: doc, composer: composer);
-      // foo (3) + \n (1) + hr placeholder line (0 chars) + \n (1) + 1 inside bar
+      // foo (3) + \n separator (1) + empty hr contribution + \n separator (1)
+      // + 1 inside bar = 6
       expect(result.caret, 3 + 1 + 0 + 1 + 1);
+    });
+  });
+
+  group('DocumentPlainSelection', () {
+    test('value fields round-trip through the const constructor', () {
+      const sel = DocumentPlainSelection(text: 'hello', caret: 3);
+      expect(sel.text, 'hello');
+      expect(sel.caret, 3);
     });
   });
 }
