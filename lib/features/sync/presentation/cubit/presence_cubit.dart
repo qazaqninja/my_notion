@@ -60,10 +60,12 @@ class PresenceCubit extends Cubit<PresenceState> {
     _timers[msg.userId] = Timer(ttl, () => _expire(msg.userId));
   }
 
-  /// Drop the entry for [userId] (no-op if absent). Public so the
-  /// H4d dispatcher can react to an explicit
-  /// `{"kind":"awareness-leave"}` envelope later; today only
-  /// the TTL path invokes it.
+  /// Drop the entry for [userId] (no-op if absent). Private —
+  /// today only the per-user TTL Timer invokes it. When H4d's
+  /// wire dispatcher adds an explicit `{"kind":"awareness-leave"}`
+  /// envelope it can be promoted to public; until then keeping it
+  /// private avoids signalling an API surface the cubit doesn't
+  /// yet have.
   void _expire(String userId) {
     if (isClosed) return;
     if (!state.cursors.containsKey(userId)) return;

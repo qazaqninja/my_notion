@@ -23,6 +23,17 @@ import 'package:equatable/equatable.dart';
 /// transitive dep on every other state class in the project, so
 /// the cost is zero here and the consistency is worth more than
 /// the symmetry with the backend file.
+///
+/// CA-05/MD-01 tech-debt note (M1451 audit): the wire JSON
+/// serialization below (`toJson`/`fromJson`/`encode`/`tryDecode`)
+/// is strictly data-layer concerns — strict Clean Architecture
+/// would place them on a `data/models/awareness_dto.dart`
+/// adapter and keep the domain entity as fields-only. We're
+/// keeping both responsibilities here through the H4b slice so
+/// the round-trip contract stays in one file while the wire
+/// shape is still being validated. H4d's wire dispatcher is the
+/// natural seam for the eventual entity↔DTO split — promote
+/// when that lands.
 class AwarenessMessage extends Equatable {
   const AwarenessMessage({
     required this.userId,
