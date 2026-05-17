@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E59-b H4d-iii-d — outbound presence: wire local TextField selection changes to broadcast via `SyncWsBinder.sendAwareness` (M1460 method). When the user moves the source-mode caret, debounce ~100ms and emit an AwarenessMessage encoded with the current userId (from SyncBloc auth context) + cursor index + `peerColorFromUserId(userId)` (M1460 helper). Use the existing EditorSyncWsScope.maybeOf(context) to find the controller. Outbound should NOT happen if the WS isn't connected or the user isn't authed. Skip if no userId is available. Path: extend SourceView's `_controller` selection listener with a debounced broadcast helper + a new sendAwareness path on the attach controller (or call binder directly). H4d-iii-d closes the full presence loop visually and over the network.
+- **Task:** E59-b H4d-iii-d-ii — wire SourceView's TextField selection listener to broadcast outbound presence via the M1470 EditorWsAttachController.sendAwareness seam. Steps: (1) expose userId from the JWT in SyncBloc/SyncState (decode the JWT's `sub` claim on auth) — currently only the raw token is exposed; (2) extend SourceView's existing `_controller` listener to detect selection-only changes (selection.baseOffset moved but text unchanged); (3) debounce ~100ms via a Timer so dragging a selection doesn't flood the WS; (4) construct AwarenessMessage(userId: <derived from SyncBloc>, pageUlid: widget.ulid?, cursorIndex: _controller.selection.baseOffset, color: peerColorFromUserId(userId)) and push via EditorSyncWsScope.maybeOf(context)?.sendAwareness(msg). Gate on the scope being non-null + sync.state.isAuthed. Path: edit `lib/features/sync/presentation/bloc/sync_bloc.dart` (or sync_state.dart) to add userId, edit `lib/features/editor/presentation/widgets/source_view.dart` for the selection listener + debounce. Closes the bidirectional presence loop end-to-end.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,21 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1471 — TS-04 baseline tightening on M1470 sendAwareness test** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 146 (rolls into H4d-iii-d foundation fix-forward)
+- Notes: Orchestrator audit of M1470 returned 0 BLOCK / 1 WARN / 2 INFO. WARN (CA-04 presentation→data import) is pre-existing and inline-documented; orchestrator's own fix said "No action required for this slice." INFO 1 (TS-03) confirms blocTest doesn't apply (controller is plain Dart). INFO 2 (TS-04 baseline) fixed: added an explicit `expect(rec.channels.single.outbound, isEmpty)` after the first reconcile and BEFORE the gate-close reconcile so the final empty assertion can't pass for the wrong reason. One-line tightening. 19/19 controller tests still pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1470 — E59-b H4d-iii-d (foundation): sendAwareness passthrough on controller** (first half of final H4d slice)
+- Committed: (this iteration)
+- TaskList ID: 146
+- Notes: Foundation half. `lib/features/sync/presentation/editor_ws_attach_controller.dart` (modified, +12 lines): new `void sendAwareness(AwarenessMessage msg)` method below pushLocalUpdate; one-liner body `_activeBinder?.sendAwareness(msg)` matching the no-op-when-detached pattern. Active binder's own M1460 sendAwareness gates on isConnected so no extra guards needed. 3 new tests in `sendAwareness() (H4d-iii-d)` sub-group of editor_ws_attach_controller_test.dart: proxies to attached binder (msg.encode() lands on recorded WS sink), before-attach is silent no-op, after gate-close detach is silent no-op (post-M1471 with the baseline tightening). SourceView selection-listener + userId-extraction is deferred to a follow-up slice (H4d-iii-d-ii) because it touches SyncBloc state shape (need to expose userId) — larger than a single bite. This commit gets the seam in place so the follow-up only needs to call into it. Orchestrator audit: 0 BLOCK / 1 WARN (pre-existing CA-04 inline-documented; no action) / 2 INFO (TS-03 confirms blocTest N/A; TS-04 baseline fixed in M1471). 19 controller tests pass (16 existing + 3 new); flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1469 — loop-state advance** (record M1468 + advance to H4d-iii-d)
+- Committed: (this iteration)
+- TaskList ID: 145 closeout
+- Notes: Recorded M1468 (RemoteCursorOverlay wire-in via _remoteCursorRectAt). Advanced **Current** pointer to H4d-iii-d with 4 carried-forward deferrals captured (SourceView zero-coverage, BL-12 maybeOf, perf cache, TS-08 golden). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1468 — E59-b H4d-iii-c: wire RemoteCursorOverlay into SourceView** (third H4d-iii sub-bite)
 - Committed: (this iteration)
