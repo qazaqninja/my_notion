@@ -1701,6 +1701,27 @@ class _EditorBodyState extends State<_EditorBody> {
               // the CA-04 cleanup deferred from M1385).
               binderFactory:
                   defaultEditorSyncBinderFactory(wsUrl: 'ws://localhost:8080'),
+              // H2.4d-iii: inbound peer updates apply via the
+              // EditorBloc.EditBody event, which mutates the loaded
+              // state's body. The renderer / SourceView re-render
+              // from that state — same path a local edit takes,
+              // minus the onBodyChange / _onChanged fan-out, so no
+              // loop (see M1391 rationale at the dispatch sites).
+              onRemoteDoc: (doc) {
+                context.read<EditorBloc>().add(EditBody(doc.body));
+              },
+              // H2.4d-iii: surface transport drops as a transient
+              // toast. SyncConnectionLostException covers the
+              // "connection established then lost" case; the
+              // EditorSyncWsMount will auto-reattach on the next
+              // SyncBloc/published-flag reconcile so users don't
+              // need to manually retry.
+              onConnectionError: (_) {
+                context.toastError(
+                  'Multiplayer disconnected',
+                  sub: 'Reconnecting…',
+                );
+              },
               child: Focus(
             autofocus: true,
             child: Column(
