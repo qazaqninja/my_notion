@@ -15,6 +15,7 @@ import '../../../../core/ui/anchor_rect_x.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
+import '../../domain/slash_entries.dart';
 import '../controllers/slash_trigger_session.dart';
 import '../controllers/super_editor_caret.dart';
 import '../cubit/slash_menu_cubit.dart';
@@ -217,11 +218,53 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     );
   }
 
-  /// Stub for slice 2g-a — closes the menu but doesn't yet splice the
-  /// chosen entry into the document. Slice 2g-b lands the real Editor
-  /// command that strips `/query` and inserts the entry's snippet.
-  void _onSlashEntryPicked(_) {
-    context.read<SlashMenuCubit>().dismiss();
+  /// Strip the typed `/query` from the document, insert the entry's
+  /// snippet at the trigger offset, dismiss the menu, and reset the
+  /// session. D23 slice 2g-b (M1539).
+  ///
+  /// Only `SlashAction.insertSnippet` without `linePrefix` is implemented
+  /// — other actions (pickImage / pickFile / convert-in-place) close the
+  /// menu without mutating the document; follow-up slices wire them.
+  void _onSlashEntryPicked(SlashEntry entry) {
+    final cubit = context.read<SlashMenuCubit>();
+    final triggerGlobal = cubit.state.triggerOffset;
+    final selection = _composer.selection;
+    // Reset trigger state BEFORE mutating the document — same lesson as
+    // source_view's M-era splice (see comment at source_view.dart:822).
+    cubit.dismiss();
     _session.reset();
+
+    if (entry.action != SlashAction.insertSnippet || entry.linePrefix != null) {
+      // Non-snippet actions and convert-in-place entries deferred to a
+      // follow-up slice. Close + bail.
+      return;
+    }
+    if (selection == null || !selection.isCollapsed) return;
+    final extent = selection.extent;
+    final localPosition = extent.nodePosition;
+    if (localPosition is! TextNodePosition) return;
+    final localCaret = localPosition.offset;
+
+    // Project the global caret back to local-node coords via the same
+    // helper that produced the global offset on the trigger fire.
+    final snapshot = plainTextAndCaret(doc: _doc, composer: _composer);
+    final triggerLocal = localCaret - (snapshot.caret - triggerGlobal);
+    if (triggerLocal < 0) return; // Same-node invariant — guard defensively.
+
+    final nodeId = extent.nodeId;
+    final triggerPos = DocumentPosition(
+      nodeId: nodeId,
+      nodePosition: TextNodePosition(offset: triggerLocal),
+    );
+    _editor.execute([
+      DeleteContentRequest(
+        documentRange: DocumentRange(start: triggerPos, end: extent),
+      ),
+      InsertTextRequest(
+        documentPosition: triggerPos,
+        textToInsert: entry.snippet,
+        attributions: const {},
+      ),
+    ]);
   }
 }
