@@ -32,7 +32,9 @@ pg.Page _pg({
 }
 
 void main() {
-  group('listFormBearingPages (E58)', () {
+  // M1409 — slice milestone tag lives in the file-level history
+  // comments above, not in the group name (TS-04 info).
+  group('listFormBearingPages', () {
     test('empty input → empty output', () {
       expect(listFormBearingPages(const []), isEmpty);
     });

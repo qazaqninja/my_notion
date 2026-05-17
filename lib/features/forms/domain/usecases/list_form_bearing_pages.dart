@@ -1,3 +1,7 @@
+// Cross-feature domain→domain dep: forms reads vault's stable
+// Page value type. Same pattern as relations/domain/usecases/
+// search_pages.dart — acceptable per CA-* precedent (M1409 audit).
+import 'package:equatable/equatable.dart';
 import 'package:my_notion/features/vault/domain/entities/page.dart' as pg;
 
 /// E58 — projection over [pg.Page] for the Settings → Forms pane.
@@ -6,10 +10,10 @@ import 'package:my_notion/features/vault/domain/entities/page.dart' as pg;
 /// the UI can render a list without holding a reference to the
 /// full Page object.
 ///
-/// Equatable is intentionally NOT used — these aren't compared in
-/// any state machine; the pane just maps them straight into list
-/// tiles.
-class FormBearingPage {
+/// Equatable used so the E58b Cubit can put `List<FormBearingPage>`
+/// into state without identity-comparison surprises (M1409 audit
+/// BL-06 fix-forward).
+class FormBearingPage extends Equatable {
   const FormBearingPage({
     required this.ulid,
     required this.title,
@@ -36,6 +40,9 @@ class FormBearingPage {
   /// can surface this as a secondary line ("→ Bugs.database.yaml")
   /// to help authors orient.
   final String formsRef;
+
+  @override
+  List<Object?> get props => [ulid, title, relativePath, formsRef];
 }
 
 /// Filter + project [pages] down to the ones that declare a
