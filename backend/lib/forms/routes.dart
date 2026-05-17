@@ -71,6 +71,7 @@ abstract class FormsRepositoryBase {
 /// aren't compared in any state machine; the route layer just maps
 /// them to JSON.
 class FormSubmission {
+  /// Construct a submission row hydrated from `form_submissions`.
   const FormSubmission({
     required this.id,
     required this.pageUlid,
@@ -78,12 +79,24 @@ class FormSubmission {
     required this.createdAt,
     this.sourceIp,
   });
+
+  /// Server-generated ULID identifying this submission row.
   final String id;
+
+  /// ULID of the page that hosts the form definition.
   final String pageUlid;
+
+  /// Submitted payload (post-validation, JSONB-shaped).
   final Map<String, dynamic> fields;
+
+  /// Server-side insertion timestamp (UTC).
   final DateTime createdAt;
+
+  /// Best-effort source IP (X-Forwarded-For or shelf connection info).
+  /// May be null in unit-test invocations.
   final String? sourceIp;
 
+  /// Serialize to the wire shape returned by `/forms/owner/<ulid>/submissions`.
   Map<String, dynamic> toJson() => {
         'id': id,
         'page_ulid': pageUlid,
@@ -98,6 +111,8 @@ class FormSubmission {
 /// implements `insertSubmission` as an unreachable error because the
 /// route guards on `hasFormDefinition` first.
 class NoFormsRepository implements FormsRepositoryBase {
+  /// Construct the no-op repo. `insertSubmission` is unreachable
+  /// because every entry point guards on `hasFormDefinition` first.
   const NoFormsRepository();
   @override
   Future<bool> hasFormDefinition(String ulid) async => false;
@@ -130,6 +145,8 @@ class NoFormsRepository implements FormsRepositoryBase {
 /// `FrontmatterProbe` sets `has_forms = true` on upsert). E48 adds the
 /// `form_submissions` row insert.
 class FormsRepository implements FormsRepositoryBase {
+  /// Construct the Postgres-backed repo over [_conn]. Caller owns the
+  /// connection lifecycle.
   const FormsRepository(this._conn);
   final Connection _conn;
 
