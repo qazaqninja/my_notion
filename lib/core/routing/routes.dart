@@ -37,4 +37,36 @@ abstract class Routes {
   /// vault-loaded gate (the redirect callback short-circuits when
   /// the matched location is `/lab`).
   static const lab = '/lab';
+
+  /// Build the legacy `/editor/<ulid>` route, optionally with an
+  /// `?anchor=<slug>` query parameter for in-page jump-to-block
+  /// behaviour. Returns the bare path when [anchor] is null or empty
+  /// — matches existing call-site interpolation for parity.
+  ///
+  /// No URI-encoding is applied to [anchor] for parity with existing
+  /// call sites (`markdown_renderer.dart:4503` etc.). Callers passing
+  /// untrusted values should encode upstream.
+  static String editor(String ulid, {String? anchor}) {
+    if (anchor == null || anchor.isEmpty) return '/editor/$ulid';
+    return '/editor/$ulid?anchor=$anchor';
+  }
+
+  /// Build the beta `/editor-beta/<ulid>` route. Used by the
+  /// `EditorBetaPage` route declaration in `app.dart` + any future
+  /// direct nav into the beta editor.
+  static String editorBeta(String ulid) => '/editor-beta/$ulid';
+
+  /// Build the `/db/<dbId>` or `/db/<dbId>/<viewId>` route. Returns
+  /// the bare two-segment form when [viewId] is null or empty. The
+  /// double-route declaration in `app.dart` accepts both shapes.
+  static String db(String dbId, {String? viewId}) {
+    if (viewId == null || viewId.isEmpty) return '/db/$dbId';
+    return '/db/$dbId/$viewId';
+  }
+
+  /// Build the `/settings/<section>` route used for deep-linking
+  /// into a specific Settings pane (Vault / Appearance / Sync /
+  /// Forms / etc.). Compare with the bare [settings] constant for
+  /// the index page.
+  static String settingsSection(String section) => '/settings/$section';
 }
