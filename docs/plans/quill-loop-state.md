@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 3a — auto-fixable style mechanicals. `dart fix --apply` resolves these cleanly. Target the auto-fixable rules in this cluster: `cascade_invocations` (26), `prefer_const_constructors` (20), `missing_whitespace_between_adjacent_strings` (36) — total ~82 findings, all mechanical. The non-auto-fixable rules in cluster 3 (`cast_nullable_to_non_nullable` 19, `lines_longer_than_80_chars` 18, `avoid_catches_without_on_clauses` 3) need human judgment and get their own slice 3b cluster 3b. After cluster 3a: cluster 3b (~40 human-judgment findings), cluster 4 (`public_member_api_docs` 68 doc-only, last).
+- **Task:** Forms polish slice 3b cluster 3b — manual `cascade_invocations` cleanup (26 findings). The largest remaining non-docs cluster after auto-fixes; orchestrator's recommended next cluster. Each finding is `receiver.foo(); receiver.bar();` → `receiver..foo()..bar();`. Mechanical per-site but `dart fix` cannot resolve (likely because the receiver patterns are heterogeneous — some include conditionals or other intervening statements). Distribution: bin/server.dart, several lib/sync/* files, test/ws_hub_test.dart (10+ findings concentrated here per earlier breakdown). After this slice: cluster 3c (missing_whitespace_between_adjacent_strings 36 + cast_nullable_to_non_nullable 19 + lines_longer_than_80_chars 18), then cluster 4 (public_member_api_docs 68 doc-only).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,21 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1492 — LT-02+TS-03 doc fix-forward on M1491 backend lint cleanup** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 154 (rolls into cluster 3a fix-forward)
+- Notes: Orchestrator audit of M1491 returned 0 BLOCK / 2 WARN / 4 INFO. 2 actionable WARNs addressed via inline rationale comments: (1) LT-02 (bloc_lint not configured) → added a comment block in `backend/analysis_options.yaml` stating bloc_lint + custom_lint are intentionally omitted (backend is pure-Dart Shelf with zero Bloc/Cubit classes). (2) TS-03/TS-05 (mocktail in dev_deps but unused) → added a comment block in `backend/pubspec.yaml` documenting the explicit trade-off: M1485 orchestrator approved the preemptive add; M1491 audit re-flagged the same condition; comment records both findings so future audits don't re-litigate. 4 deferred INFO items (LT-03 same rationale; TS-07 backend coverage gate; remaining 192 findings queued; cascade_invocations next slice recommendation). 192 backend tests still pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1491 — backend lint cleanup 3b cluster 3a (prefer_const_constructors + directives_ordering)** (auto-fixable subset of the style sweep)
+- Committed: (this iteration)
+- TaskList ID: 154
+- Notes: `dart fix --apply` resolved the auto-fixable subset of cluster 3a. Two rules cleared: `prefer_const_constructors` 20 → 0 (20 fixes across bin/server.dart + lib/sync/routes.dart + test/sync_routes_test.dart, mostly const-ifying Pipeline() constructions); `directives_ordering` 12 → 0 (8 fixes across 8 lib/ files — appeared because M1489's import-style rewrite re-triggered VGA's directive-ordering rule). The other targeted rules (cascade_invocations 26, missing_whitespace_between_adjacent_strings 36) had nothing dart fix could resolve ("Nothing to fix!") and roll into cluster 3b. Net analyze: 212 → 192 info findings (-20). 11 backend files touched (8 lib/ + 1 bin/ + 2 test/), all purely stylistic. 192/192 backend tests pass. Orchestrator audit: 0 BLOCK / 2 WARN (both fixed M1492 via doc comments) / 4 INFO (LT-03 + TS-07 + remaining backlog + next-slice recommendation). Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1490 — loop-state advance** (record M1489 + advance to slice 3b cluster 3a)
+- Committed: (this iteration)
+- TaskList ID: 153 closeout
+- Notes: Recorded M1489 (always_use_package_imports). Advanced **Current** pointer to cluster 3a (auto-fixable style mechanicals). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1489 — backend lint cleanup 3b cluster 2 (always_use_package_imports 23 → 0)** (pure mechanical via dart fix)
 - Committed: (this iteration)
