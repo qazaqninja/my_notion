@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entities/sync_file.dart';
+import '../../domain/usecases/decode_jwt_sub.dart';
 
 /// E39 (orchestrator BL-05): the standard four states used across
 /// VaultStatus / EditorStatus / etc. Maps to old names:
@@ -57,6 +58,12 @@ class SyncState extends Equatable {
   final Map<String, String> knownShas;
 
   bool get isAuthed => token != null && token!.isNotEmpty;
+
+  /// H4d-iii-d-ii — user identifier decoded from the JWT's `sub`
+  /// claim. Null when unauthed or when the token is malformed.
+  /// Used by the outbound presence path to populate the AwarenessMessage
+  /// without a separate `/me` round-trip.
+  String? get userId => decodeJwtSub(token);
 
   /// Last-known server sha for [relpath], or null if we've never seen
   /// it. Callers wire this into `ifMatch` of the next push for the
