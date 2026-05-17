@@ -7,10 +7,20 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** H2.3 — SyncWsBinder wiring — subscribe a SyncWsClient when an editor mounts, dispose on unmount; route incoming → QuillCrdtDoc.apply; route local edits → SyncWsClient.send
+- **Task:** H2.4 — wire SyncWsBinder into editor_page.dart (initState/dispose, gated on authed+published; outgoing local edits → binder.pushLocalUpdate; incoming docStream → editor re-render)
 - **Status:** pending
 
 ## Last completed
+
+- **M1377 — H2.3 cleanup** (orchestrator gate: pumpEventQueue + dispose() group + CA-07 boundary comment)
+- Committed: (this iteration)
+- TaskList ID: 94b
+- Notes: flutter-arch-orchestrator returned 0 BLOCK / 1 WARN (TS-03 Future.delayed timing crutch — 4 sites at 5/10 ms wall-clock guesses) / 2 actionable INFO (TS-04 missing dispose() test group, CA-07 cross-feature import lacks boundary comment). Q&A from the audit explicitly confirmed: (1) cross-feature import sync/data → crdt/domain/entities is OK so long as it stays at the entity-only seam; (2) SyncWsBinder being a plain class instead of a Cubit is the right call (stateful resource holder, not a state machine — same shape as StreamController or AnimationController); (3) silent no-op on pushLocalUpdate-before-attach is correct since a throw would surface during editor dispose/hot-restart where there's no user handler. Fixes: replaced 4 `Future<void>.delayed(const Duration(milliseconds: N))` sites with `pumpEventQueue()` (deterministic event-loop drain); added `group('dispose()', ...)` with cold-dispose and warm-dispose-then-second-dispose-noop cases — brings binder test count 9 → 11; added a 5-line boundary comment above the crdt entities import documenting "pinned to crdt/domain/entities only — do NOT widen to crdt/data or crdt/presentation (CA-07)". 11/11 pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1376 — H2.3** (SyncWsBinder — per-editor CRDT lifecycle, no UI wiring)
+- Committed: (this iteration)
+- TaskList ID: 94
+- Notes: First slice of H2.3. Glues SyncWsClient (H2.2) to QuillCrdtDoc (H1) for a single editor mount. Constructor takes (client, ulid, token, initialDoc) — host passes QuillCrdtDoc.fromMarkdown(loadedBody) so the binder starts on the editor's current view. `attach()` opens the WS to /sync/sub/<ulid> (via SyncWsClient.connect) and listens to incoming; each text payload applies as QuillCrdtSetBody on the local doc. Idempotent. `pushLocalUpdate(body)` applies SetBody locally + sends to peers; silent no-op before attach to avoid pre-mount race crashes. `detach()` cancels the subscription + closes the client; idempotent. `dispose()` additionally closes the broadcast stream controllers. Exposed surface: `doc` getter, `docStream` (emits on BOTH incoming peer messages AND local pushes so a single subscription drives editor re-render), `errorStream` (surfaces SyncConnectionLostException from the client's onError-addError pipeline added in M1374 so a host editor can render "reconnect needed"). No Bloc/Cubit — orchestrator confirmed plain-class is the right architectural call here. 9 tests via the same _FakeChannel / _Sink pair as the H2.1 backend hub tests + H2.2 client tests (test seam stays symmetric across all three layers), sub-grouped per TS-04: attach (2), incoming → CRDT (2), pushLocalUpdate (3), errors (1), detach (1). Wiring into editor_page.dart's initState/dispose is queued as H2.4. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1374 — H2.2 cleanup** (orchestrator gate: move SyncWsClient → sync/data + typed SyncConnectionLostException + test sub-grouping)
 - Committed: (this iteration)
