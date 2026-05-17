@@ -20,6 +20,7 @@ import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../widgets/forms_pane.dart';
+import '../widgets/settings_nav.dart';
 import '../widgets/sync_pane.dart';
 import '../../../vault/data/exporter.dart';
 import '../../../vault/data/html_exporter.dart';
@@ -57,7 +58,7 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _Nav(active: _active, onSelect: (id) => setState(() => _active = id)),
+              SettingsNav(active: _active, onSelect: (id) => setState(() => _active = id)),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(36, 24, 36, 40),
@@ -984,150 +985,9 @@ class _WorkspaceNameFieldState extends State<_WorkspaceNameField> {
   }
 }
 
-class _Nav extends StatelessWidget {
-  const _Nav({required this.active, required this.onSelect});
-  final String active;
-  final void Function(String id) onSelect;
-
-  static const _groups = [
-    ('Workspace', [
-      ('vault', 'Vault', 'folder'),
-      ('theme', 'Appearance', 'eye'),
-      ('sidebar', 'Sidebar', 'sidebar'),
-    ]),
-    ('Sync', [('sync', 'Sync target', 'sync'), ('git', 'Git', 'git'), ('s3', 'S3 / WebDAV', 'cloud')]),
-    ('Access', [('users', 'Users', 'users'), ('perms', 'Permissions', 'lock')]),
-    // E58b-iii: 'forms' surfaces every form-bearing page in the
-    // current vault + opens the existing FormSubmissionsDialog per
-    // row. Sits next to Export & Backup in the Data group since
-    // it's about reading from rather than writing to the vault.
-    ('Data', [
-      ('forms', 'Forms', 'inbox'),
-      ('export', 'Export & Backup', 'export'),
-      ('advanced', 'Advanced', 'gear'),
-    ]),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    return Container(
-      width: 220,
-      decoration: BoxDecoration(
-        border: Border(right: BorderSide(color: tokens.divider, width: 0.5)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (label, items) in _groups) ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 4, 10, 2),
-                child: Text(
-                  label.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
-                    color: tokens.text3,
-                  ),
-                ),
-              ),
-              for (final (id, label, icon) in items)
-                _item(tokens, id: id, label: label, icon: icon),
-              const SizedBox(height: 14),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _item(QuillTokens tokens,
-      {required String id, required String label, required String icon}) {
-    return _NavItem(
-      id: id,
-      label: label,
-      icon: icon,
-      active: id == active,
-      onTap: () => onSelect(id),
-    );
-  }
-}
-
-class _NavItem extends StatefulWidget {
-  const _NavItem({
-    required this.id,
-    required this.label,
-    required this.icon,
-    required this.active,
-    required this.onTap,
-  });
-
-  final String id;
-  final String label;
-  final String icon;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  State<_NavItem> createState() => _NavItemState();
-}
-
-class _NavItemState extends State<_NavItem> {
-  bool _hover = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    final isActive = widget.active;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
-          decoration: BoxDecoration(
-            color: isActive
-                ? tokens.selected
-                : (_hover ? tokens.hover : Colors.transparent),
-            border: Border(
-              left: BorderSide(
-                color: isActive ? tokens.accent : Colors.transparent,
-                width: 2,
-              ),
-            ),
-          ),
-          child: Row(
-            children: [
-              QuillIcon(widget.icon,
-                  size: 14,
-                  strokeWidth: 1.7,
-                  color: isActive
-                      ? tokens.text2
-                      : (_hover ? tokens.text2 : tokens.text3)),
-              const SizedBox(width: 8),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight:
-                      isActive ? FontWeight.w500 : FontWeight.w400,
-                  color: isActive
-                      ? tokens.text
-                      : (_hover ? tokens.text : tokens.text2),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+// _Nav + _NavItem extracted to widgets/settings_nav.dart in
+// M1426 (FS-04 slice 3). The 220-px left rail is now a public
+// SettingsNav widget that the page constructs from build.
 
 class _SettingRow extends StatelessWidget {
   const _SettingRow({
