@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **anchor positioning live in WYSIWYG**
-- **Task:** D23 interactions slice 2g — final D23 slice: overlay rendering + selection-splice. M1535 landed the `_caretAnchor()` helper inside `_BetaEditorShellState`: it queries the SuperEditor's GlobalKey-attached DocumentLayout, falls back to AnchorRect.zero on each of three null branches (no layout / no selection / no rect-for-position), and otherwise routes through M1533's `anchorRectFromRect`. Typing `/` in WYSIWYG now opens SlashMenuCubit at the real caret. Slice 2g closes the loop in two parts: (a) wrap the SuperEditor body in a Stack and render SlashMenuOverlay positioned by the cubit's `anchorRect` when `state.open`; (b) handle entry-selection by stripping the typed `/query` from the document (super_editor Document mutation via Editor.execute) and splicing the chosen snippet at the trigger offset. After 2g closes: D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts ported) + D28-D30 cutover (flip default `/editor` route, delete old route).
+- **Phase:** D (super_editor WYSIWYG migration) — **overlay paints; splice still stubbed**
+- **Task:** D23 interactions slice 2g-b — selection-splice command. M1537 closed slice 2g-a: SuperEditor body wrapped in a `Stack` with `SlashMenuOverlay` reading the same SlashMenuCubit; clicking outside dismisses. The `_onSlashEntryPicked` callback currently just `dismiss + session.reset` — slice 2g-b makes it actually mutate the document. Plan: read the cubit's `triggerOffset` (where the `/` lives) + the chosen `SlashEntry.snippet`, then dispatch a super_editor `Editor.execute(...)` sequence that (i) deletes the `/query` range from the source node's text and (ii) inserts the entry's snippet at that offset. The source_view path uses `text_scaffolds.dart`'s splice helpers — port the offset math into a pure-Dart helper if testable. After 2g-b closes: D24-D27 polish + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1537 — D23 interactions slice 2g-a — SlashMenuOverlay above SuperEditor** (overlay paints; splice stubbed)
+- Committed: (this iteration)
+- TaskList ID: 169 partial (2g-a; 2g-b lands the splice command)
+- Notes: Wrap `_BetaEditorShellState.build()`'s SuperEditor in a `Stack` whose second child is `SlashMenuOverlay(onPick: _onSlashEntryPicked, onDismiss: () => context.read<SlashMenuCubit>().dismiss())`. The overlay is the same widget source_view renders — it BlocBuilds on the provided SlashMenuCubit (M1523) and positions itself by the cubit's `anchorRect` (which M1535's `_caretAnchor()` now sets to the real caret rect). New private `_onSlashEntryPicked(_)` stub closes the menu + resets SlashTriggerSession but doesn't yet mutate the document — slice 2g-b lands the real Editor.execute splice. 5-line rationale comment in build() cites the 2g-a/2g-b split. flutter analyze clean on the touched file. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO (explicit CA-* presentation→widgets intra-feature OK, DI-04 `context.read` only in callbacks, TS-01 EditorBetaPage widget-test carry-forward not widened — overlay's own paths covered by source_view tests). Behaviour: `/` in WYSIWYG now visually opens the slash menu at the caret; outside-tap dismisses; picking an entry closes but doesn't insert yet. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1536 — loop-state advance** (record M1535 + queue D23 slice 2g)
+- Committed: prior to M1537 (this iteration)
+- TaskList ID: 168 advance
+- Notes: Recorded DocumentLayout caret-rect lookup. Advanced **Current** pointer to slice 2g. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1535 — D23 interactions slice 2f — DocumentLayout caret-rect lookup in EditorBetaPage** (`/` in WYSIWYG now anchors at the caret)
 - Committed: (this iteration)
