@@ -16,12 +16,12 @@ import '../../../../shared/widgets/status_dot.dart';
 import '../../../../shared/widgets/person_chip.dart';
 import '../../../../shared/widgets/tag_chip.dart';
 import '../../../../shared/theme/accent.dart';
-import '../../../../shared/widgets/emoji_picker.dart';
 import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
 import '../widgets/forms_pane.dart';
 import '../widgets/settings_nav.dart';
 import '../widgets/sync_pane.dart';
+import '../widgets/workspace_controls.dart';
 import '../../../vault/data/exporter.dart';
 import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/pdf_exporter.dart';
@@ -151,13 +151,13 @@ class _SettingsPageState extends State<SettingsPage> {
           _SettingRow(
             label: 'Workspace name',
             hint: 'Override the folder name in the sidebar header.',
-            child: _WorkspaceNameField(state: state),
+            child: WorkspaceNameField(state: state),
           ),
         if (state is VaultLoaded)
           _SettingRow(
             label: 'Workspace icon',
             hint: 'Renders in the sidebar header. Tap to pick.',
-            child: _WorkspaceIconButton(state: state),
+            child: WorkspaceIconButton(state: state),
           ),
         _SettingRow(
           label: 'Vault stats',
@@ -839,151 +839,8 @@ class _SettingsPageState extends State<SettingsPage> {
 /// .quill.yaml's workspace.icon. Mirrors the sidebar's WorkspaceHead
 /// affordance from M107 but lives here so users browsing settings can
 /// find it too.
-class _WorkspaceIconButton extends StatelessWidget {
-  const _WorkspaceIconButton({required this.state});
-  final VaultLoaded state;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    final icon = state.workspace.icon;
-    final hasIcon = icon != null && icon.trim().isNotEmpty;
-    return GestureDetector(
-      onTap: () async {
-        final picked = await pickEmoji(context);
-        if (picked == null) return;
-        final current = (icon ?? '').trim();
-        final pickedTrimmed = picked.trim();
-        if (current == pickedTrimmed) {
-          if (!context.mounted) return;
-          context.toastInfo(pickedTrimmed.isEmpty
-              ? 'Workspace already has no icon'
-              : 'Workspace icon already $pickedTrimmed');
-          return;
-        }
-        final next =
-            state.workspace.copyWith(icon: picked.isEmpty ? '' : picked);
-        try {
-          await next.save(Directory(state.rootPath));
-        } catch (e) {
-          if (!context.mounted) return;
-          context.toastError('Could not save workspace icon', sub: '$e');
-          return;
-        }
-        if (!context.mounted) return;
-        context.read<VaultBloc>().add(const RefreshFromDisk());
-        context.toastSuccess(picked.isEmpty
-            ? 'Workspace icon cleared'
-            : 'Workspace icon: $picked');
-      },
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Tooltip(
-          message: hasIcon ? 'Change workspace icon' : 'Pick workspace icon',
-          waitDuration: const Duration(milliseconds: 500),
-          child: Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: hasIcon ? tokens.surface2 : tokens.accent,
-              border: Border.all(color: tokens.divider2, width: 0.5),
-              borderRadius: const BorderRadius.all(Radius.circular(6)),
-            ),
-            child: hasIcon
-                ? Text(icon, style: const TextStyle(fontSize: 18))
-                : Icon(Icons.tag_faces_outlined,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.onPrimary),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// TextField that edits .quill.yaml's workspace.name on commit (focus
-/// loss or Enter). Clearing the field removes the override so the
-/// sidebar falls back to the folder basename.
-class _WorkspaceNameField extends StatefulWidget {
-  const _WorkspaceNameField({required this.state});
-  final VaultLoaded state;
-
-  @override
-  State<_WorkspaceNameField> createState() => _WorkspaceNameFieldState();
-}
-
-class _WorkspaceNameFieldState extends State<_WorkspaceNameField> {
-  late final TextEditingController _ctl;
-  final _focus = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-    _ctl = TextEditingController(text: widget.state.workspace.name ?? '');
-    _focus.addListener(() {
-      if (!_focus.hasFocus) _commit();
-    });
-  }
-
-  @override
-  void dispose() {
-    _focus.dispose();
-    _ctl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _commit() async {
-    final trimmed = _ctl.text.trim();
-    final current = widget.state.workspace.name ?? '';
-    if (trimmed == current) return;
-    final next = widget.state.workspace.copyWith(
-      name: trimmed.isEmpty ? '' : trimmed,
-    );
-    try {
-      await next.save(Directory(widget.state.rootPath));
-    } catch (e) {
-      if (!mounted) return;
-      context.toastError('Could not save workspace name', sub: '$e');
-      return;
-    }
-    if (!mounted) return;
-    context.read<VaultBloc>().add(const RefreshFromDisk());
-    context.toastSuccess(trimmed.isEmpty
-        ? 'Workspace name cleared'
-        : 'Workspace name: $trimmed');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = QuillTokens.of(context);
-    return SizedBox(
-      width: 300,
-      child: TextField(
-        controller: _ctl,
-        focusNode: _focus,
-        onSubmitted: (_) => _commit(),
-        style: TextStyle(fontSize: 13, color: tokens.text),
-        decoration: InputDecoration(
-          isCollapsed: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          border: OutlineInputBorder(
-            borderSide: BorderSide(color: tokens.divider2),
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: tokens.divider2),
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
-          ),
-          hintText:
-              widget.state.rootPath.split('/').last.replaceAll('_', ' '),
-          hintStyle: TextStyle(fontSize: 13, color: tokens.text3),
-        ),
-      ),
-    );
-  }
-}
+// WorkspaceIconButton + WorkspaceNameField extracted to
+// widgets/workspace_controls.dart in M1428 (FS-04 slice 4).
 
 // _Nav + _NavItem extracted to widgets/settings_nav.dart in
 // M1426 (FS-04 slice 3). The 220-px left rail is now a public
