@@ -157,14 +157,22 @@ class _NavItemState extends State<_NavItem> {
                       ? tokens.text2
                       : (_hover ? tokens.text2 : tokens.text3)),
               const SizedBox(width: 8),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
-                  color: isActive
-                      ? tokens.text
-                      : (_hover ? tokens.text : tokens.text2),
+              // Flexible + ellipsis: labels fit comfortably at the
+              // 220-px rail in the real InterVariable font, but the
+              // widget-test default font is wider and overflows. This
+              // also future-proofs against longer labels (e.g. once
+              // i18n lands).
+              Flexible(
+                child: Text(
+                  widget.label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: isActive ? FontWeight.w500 : FontWeight.w400,
+                    color: isActive
+                        ? tokens.text
+                        : (_hover ? tokens.text : tokens.text2),
+                  ),
                 ),
               ),
             ],
