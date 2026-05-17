@@ -1586,12 +1586,6 @@ class _EditorBodyState extends State<_EditorBody> {
         final crumbs = stripMdExtension(page.relativePath).split('/');
         final mobile = isMobileWidth(context);
         final locked = EditorBloc.isLocked(loaded);
-        // H2.4c: project SyncBloc state so EditorSyncWsMount's
-        // (isAuthed, token) props change re-trigger reconcile().
-        // context.watch subscribes this build to SyncState changes
-        // — toggling auth elsewhere (Settings → Sign out) flows
-        // through here and detaches the WS binder.
-        final syncState = context.watch<SyncBloc>().state;
         return CallbackShortcuts(
           bindings: {
             const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
@@ -1685,28 +1679,36 @@ class _EditorBodyState extends State<_EditorBody> {
                 control: true, shift: true): () =>
                 context.read<EditorBloc>().add(const RedoEdit()),
           },
-          child: EditorSyncWsMount(
-            ulid: page.ulid,
-            isPublished: _isPublic(loaded),
-            isAuthed: syncState.isAuthed,
-            token: syncState.token,
-            initialBody: page.body,
-            // H2.4c: wsUrl mirrors app.dart's hardcoded
-            // backendBaseUrl ('http://localhost:8080'). When
-            // E14+ exposes a settings-page override, both
-            // strings will read from the same source.
-            binderFactory: ({
-              required String ulid,
-              required String token,
-              required String initialBody,
-            }) =>
-                SyncWsBinder(
-              client: SyncWsClient(wsUrl: 'ws://localhost:8080'),
-              ulid: ulid,
-              token: token,
-              initialDoc: QuillCrdtDoc.fromMarkdown(initialBody),
-            ),
-            child: Focus(
+          // H2.4c (BL-12 cleanup): narrow rebuild scope to the two
+          // SyncState fields the mount actually cares about. Without
+          // buildWhen, every SyncState emission (heartbeats,
+          // reconnect attempts, lastError churn) would rebuild the
+          // entire editor body subtree.
+          child: BlocBuilder<SyncBloc, SyncState>(
+            buildWhen: (prev, next) =>
+                prev.isAuthed != next.isAuthed || prev.token != next.token,
+            builder: (context, syncState) => EditorSyncWsMount(
+              ulid: page.ulid,
+              isPublished: _isPublic(loaded),
+              isAuthed: syncState.isAuthed,
+              token: syncState.token,
+              initialBody: page.body,
+              // H2.4c: wsUrl mirrors app.dart's hardcoded
+              // backendBaseUrl ('http://localhost:8080'). When
+              // E14+ exposes a settings-page override, both
+              // strings will read from the same source.
+              binderFactory: ({
+                required String ulid,
+                required String token,
+                required String initialBody,
+              }) =>
+                  SyncWsBinder(
+                client: SyncWsClient(wsUrl: 'ws://localhost:8080'),
+                ulid: ulid,
+                token: token,
+                initialDoc: QuillCrdtDoc.fromMarkdown(initialBody),
+              ),
+              child: Focus(
             autofocus: true,
             child: Column(
           children: [
@@ -2009,6 +2011,7 @@ class _EditorBodyState extends State<_EditorBody> {
           ],
         ),
       ),
+          ),
           ),
     );
       },
