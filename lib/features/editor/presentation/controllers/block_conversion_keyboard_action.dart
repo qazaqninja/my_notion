@@ -49,6 +49,7 @@ BlockConversion? parseBlockConversionKey({
 ///      ConvertTaskToParagraph) with their own upstream coverage.
 /// Constructing a real [SuperEditorContext] for a unit test requires
 /// a `DocumentLayout` widget-tier stub.
+// coverage:ignore-start
 ExecutionInstruction blockConversionKeyboardAction({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -75,12 +76,14 @@ ExecutionInstruction blockConversionKeyboardAction({
   editContext.editor.execute(requests);
   return ExecutionInstruction.haltExecution;
 }
+// coverage:ignore-end
 
 /// D25 slice 5b (M1606): when [blockSelection] is non-empty, apply
 /// the list/todo conversion to every selected node in one batch
 /// (each node converted via its own type-aware dispatch).
 /// Otherwise falls through to [blockConversionKeyboardAction]'s
 /// single-block path.
+// coverage:ignore-start
 ExecutionInstruction blockConversionKeyboardActionWithSelection({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -107,3 +110,4 @@ ExecutionInstruction blockConversionKeyboardActionWithSelection({
   editContext.editor.execute(requests);
   return ExecutionInstruction.haltExecution;
 }
+// coverage:ignore-end

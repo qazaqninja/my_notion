@@ -44,6 +44,7 @@ HeadingLevel? parseHeadingConversionKey({
 /// Constructing a real [SuperEditorContext] for a unit test requires
 /// a `DocumentLayout` widget-tier stub. Tested end-to-end via the
 /// EditorBetaPage widget mount.
+// coverage:ignore-start
 ExecutionInstruction headingConversionKeyboardAction({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -68,11 +69,13 @@ ExecutionInstruction headingConversionKeyboardAction({
   ]);
   return ExecutionInstruction.haltExecution;
 }
+// coverage:ignore-end
 
 /// D25 slice 5b (M1606): when [blockSelection] is non-empty, apply
 /// the heading conversion to every selected paragraph in one batch.
 /// Otherwise falls through to [headingConversionKeyboardAction]'s
 /// single-block path.
+// coverage:ignore-start
 ExecutionInstruction headingConversionKeyboardActionWithSelection({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -99,3 +102,4 @@ ExecutionInstruction headingConversionKeyboardActionWithSelection({
   editContext.editor.execute(requests);
   return ExecutionInstruction.haltExecution;
 }
+// coverage:ignore-end

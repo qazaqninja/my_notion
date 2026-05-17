@@ -46,6 +46,7 @@ bool parseBlockDeleteKey({
 /// a `DocumentLayout` widget-tier stub that adds more coupling than
 /// the orchestration under test. Tested end-to-end via the
 /// EditorBetaPage widget mount.
+// coverage:ignore-start
 ExecutionInstruction blockDeleteKeyboardAction({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -66,6 +67,7 @@ ExecutionInstruction blockDeleteKeyboardAction({
   ]);
   return ExecutionInstruction.haltExecution;
 }
+// coverage:ignore-end
 
 /// D25 slice 5b (M1606): when [blockSelection] is non-empty, delete
 /// every selected block in one batch. Otherwise falls through to
@@ -78,6 +80,7 @@ ExecutionInstruction blockDeleteKeyboardAction({
 /// Coverage exemption inherits from [blockDeleteKeyboardAction] —
 /// the multi-block branch is a thin wrapper over the M1604
 /// `deleteSelectedBlocks` helper (3 unit tests) + a node-count guard.
+// coverage:ignore-start
 ExecutionInstruction blockDeleteKeyboardActionWithSelection({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -107,3 +110,4 @@ ExecutionInstruction blockDeleteKeyboardActionWithSelection({
   editContext.editor.execute(requests);
   return ExecutionInstruction.haltExecution;
 }
+// coverage:ignore-end

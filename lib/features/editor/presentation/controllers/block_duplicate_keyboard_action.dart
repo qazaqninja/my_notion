@@ -73,6 +73,7 @@ DocumentNode? cloneBlockWithFreshId(DocumentNode source) {
 /// a `DocumentLayout` widget-tier stub that adds more coupling than
 /// the orchestration under test. Tested end-to-end via the
 /// EditorBetaPage widget mount.
+// coverage:ignore-start
 ExecutionInstruction blockDuplicateKeyboardAction({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -96,3 +97,4 @@ ExecutionInstruction blockDuplicateKeyboardAction({
   ]);
   return ExecutionInstruction.haltExecution;
 }
+// coverage:ignore-end

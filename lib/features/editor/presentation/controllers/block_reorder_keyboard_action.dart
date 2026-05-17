@@ -52,6 +52,7 @@ BlockMoveDirection? parseBlockReorderKey({
 /// a `DocumentLayout` stub (an abstract widget-tier interface) that
 /// adds more coupling than the orchestration line under test. Tested
 /// end-to-end via the EditorBetaPage widget mount.
+// coverage:ignore-start
 ExecutionInstruction blockReorderKeyboardAction({
   required SuperEditorContext editContext,
   required KeyEvent keyEvent,
@@ -73,3 +74,4 @@ ExecutionInstruction blockReorderKeyboardAction({
   ]);
   return ExecutionInstruction.haltExecution;
 }
+// coverage:ignore-end
