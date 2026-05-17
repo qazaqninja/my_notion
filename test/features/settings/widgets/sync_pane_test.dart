@@ -42,7 +42,11 @@ void main() {
     tokens = theme.extension<QuillTokens>()!;
   });
 
-  Widget pumpPane({
+  /// Returns the widget tree plus references to both mocks so
+  /// form-submit tests can `verify(() => sync.add(...))`. Records
+  /// removed ~90 lines of triplication post-orchestrator gate
+  /// (M1441 TS-05/TS-06 fix-forward of M1440).
+  ({Widget widget, _MockSyncBloc sync, _MockVaultBloc vault}) pumpPane({
     required SyncState syncState,
     VaultState vaultState = const VaultInitial(),
   }) {
@@ -50,7 +54,7 @@ void main() {
     when(() => sync.state).thenReturn(syncState);
     final vault = _MockVaultBloc();
     when(() => vault.state).thenReturn(vaultState);
-    return MaterialApp(
+    final widget = MaterialApp(
       theme: theme,
       home: QuillToastHost(
         child: Scaffold(
@@ -73,6 +77,7 @@ void main() {
         ),
       ),
     );
+    return (widget: widget, sync: sync, vault: vault);
   }
 
   group('SyncPane (M1423)', () {
@@ -80,7 +85,7 @@ void main() {
       testWidgets('renders the "Sync target" header', (tester) async {
         await tester.pumpWidget(pumpPane(
           syncState: const SyncState(status: SyncStatus.initial),
-        ));
+        ).widget);
         expect(find.text('Sync target'), findsOneWidget);
       });
     });
@@ -90,7 +95,7 @@ void main() {
           (tester) async {
         await tester.pumpWidget(pumpPane(
           syncState: const SyncState(status: SyncStatus.initial),
-        ));
+        ).widget);
         expect(find.text('Email'), findsOneWidget);
         expect(find.text('Password (8+ chars)'), findsOneWidget);
       });
@@ -98,7 +103,7 @@ void main() {
       testWidgets('renders the Log in + Sign up buttons', (tester) async {
         await tester.pumpWidget(pumpPane(
           syncState: const SyncState(status: SyncStatus.initial),
-        ));
+        ).widget);
         expect(find.text('Log in'), findsOneWidget);
         expect(find.text('Sign up'), findsOneWidget);
       });
@@ -106,7 +111,7 @@ void main() {
       testWidgets('Connected card is NOT rendered', (tester) async {
         await tester.pumpWidget(pumpPane(
           syncState: const SyncState(status: SyncStatus.initial),
-        ));
+        ).widget);
         expect(find.text('Connected'), findsNothing);
       });
     });
@@ -116,16 +121,19 @@ void main() {
           (tester) async {
         await tester.pumpWidget(pumpPane(
           syncState: const SyncState(status: SyncStatus.loading),
-        ));
+        ).widget);
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
       });
 
       testWidgets('Log in button is disabled while busy', (tester) async {
         await tester.pumpWidget(pumpPane(
           syncState: const SyncState(status: SyncStatus.loading),
-        ));
-        final button =
-            tester.widget<FilledButton>(find.byType(FilledButton));
+        ).widget);
+        // Anchor the finder to the specific "Log in" FilledButton so
+        // the assertion stays correct if the pane ever renders a
+        // second FilledButton (M1441 TS-06 INFO fix-forward).
+        final button = tester.widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Log in'));
         expect(button.onPressed, isNull);
       });
     });
@@ -138,7 +146,7 @@ void main() {
             status: SyncStatus.success,
             token: 'jwt-t',
           ),
-        ));
+        ).widget);
         expect(find.text('Connected'), findsOneWidget);
         expect(find.text('Last push'), findsOneWidget);
       });
@@ -149,7 +157,7 @@ void main() {
             status: SyncStatus.success,
             token: 'jwt-t',
           ),
-        ));
+        ).widget);
         expect(find.text('Sign up'), findsNothing);
       });
     });
@@ -161,7 +169,7 @@ void main() {
             status: SyncStatus.failure,
             lastError: 'network unreachable',
           ),
-        ));
+        ).widget);
         expect(find.text('network unreachable'), findsOneWidget);
       });
 
@@ -172,7 +180,7 @@ void main() {
             status: SyncStatus.failure,
             lastError: 'conflict',
           ),
-        ));
+        ).widget);
         // Conflict has its own UI in SyncConnectedCard; the pane-level
         // chip explicitly skips it to avoid duplication.
         expect(find.text('conflict'), findsNothing);
@@ -181,7 +189,7 @@ void main() {
       testWidgets('lastError == null renders no chip', (tester) async {
         await tester.pumpWidget(pumpPane(
           syncState: const SyncState(status: SyncStatus.initial),
-        ));
+        ).widget);
         // Sanity — pane has no chips when there's no error.
         // (The buttons render their own labels; this assertion narrows
         // to the error-chip surface specifically by checking a sample
@@ -194,78 +202,35 @@ void main() {
   group('_SyncLoginCard form submit', () {
     testWidgets('Log in button dispatches SyncLoginRequested with credentials',
         (tester) async {
-      final sync = _MockSyncBloc();
-      when(() => sync.state)
-          .thenReturn(const SyncState(status: SyncStatus.initial));
-      final vault = _MockVaultBloc();
-      when(() => vault.state).thenReturn(const VaultInitial());
-      await tester.pumpWidget(MaterialApp(
-        theme: theme,
-        home: QuillToastHost(
-          child: Scaffold(
-            body: MultiBlocProvider(
-              providers: [
-                BlocProvider<SyncBloc>.value(value: sync),
-                BlocProvider<VaultBloc>.value(value: vault),
-              ],
-              child: Center(
-                child: SizedBox(
-                  width: 800,
-                  child: SingleChildScrollView(
-                    child: SyncPane(tokens: tokens),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ));
+      final tree = pumpPane(
+        syncState: const SyncState(status: SyncStatus.initial),
+      );
+      await tester.pumpWidget(tree.widget);
       await tester.enterText(find.widgetWithText(TextField, 'Email'),
           'user@example.com');
       await tester.enterText(
           find.widgetWithText(TextField, 'Password (8+ chars)'), 'hunter22');
       await tester.tap(find.text('Log in'));
       await tester.pump();
-      verify(() => sync.add(const SyncLoginRequested(
+      verify(() => tree.sync.add(const SyncLoginRequested(
             email: 'user@example.com',
             password: 'hunter22',
           ))).called(1);
     });
 
-    testWidgets('Sign up button dispatches SyncSignupRequested', (tester) async {
-      final sync = _MockSyncBloc();
-      when(() => sync.state)
-          .thenReturn(const SyncState(status: SyncStatus.initial));
-      final vault = _MockVaultBloc();
-      when(() => vault.state).thenReturn(const VaultInitial());
-      await tester.pumpWidget(MaterialApp(
-        theme: theme,
-        home: QuillToastHost(
-          child: Scaffold(
-            body: MultiBlocProvider(
-              providers: [
-                BlocProvider<SyncBloc>.value(value: sync),
-                BlocProvider<VaultBloc>.value(value: vault),
-              ],
-              child: Center(
-                child: SizedBox(
-                  width: 800,
-                  child: SingleChildScrollView(
-                    child: SyncPane(tokens: tokens),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ));
+    testWidgets('Sign up button dispatches SyncSignupRequested',
+        (tester) async {
+      final tree = pumpPane(
+        syncState: const SyncState(status: SyncStatus.initial),
+      );
+      await tester.pumpWidget(tree.widget);
       await tester.enterText(
           find.widgetWithText(TextField, 'Email'), 'new@example.com');
       await tester.enterText(
           find.widgetWithText(TextField, 'Password (8+ chars)'), 'sekret99');
       await tester.tap(find.text('Sign up'));
       await tester.pump();
-      verify(() => sync.add(const SyncSignupRequested(
+      verify(() => tree.sync.add(const SyncSignupRequested(
             email: 'new@example.com',
             password: 'sekret99',
           ))).called(1);
@@ -273,36 +238,14 @@ void main() {
 
     testWidgets('submit with empty fields is a no-op (no dispatch)',
         (tester) async {
-      final sync = _MockSyncBloc();
-      when(() => sync.state)
-          .thenReturn(const SyncState(status: SyncStatus.initial));
-      final vault = _MockVaultBloc();
-      when(() => vault.state).thenReturn(const VaultInitial());
-      await tester.pumpWidget(MaterialApp(
-        theme: theme,
-        home: QuillToastHost(
-          child: Scaffold(
-            body: MultiBlocProvider(
-              providers: [
-                BlocProvider<SyncBloc>.value(value: sync),
-                BlocProvider<VaultBloc>.value(value: vault),
-              ],
-              child: Center(
-                child: SizedBox(
-                  width: 800,
-                  child: SingleChildScrollView(
-                    child: SyncPane(tokens: tokens),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ));
+      final tree = pumpPane(
+        syncState: const SyncState(status: SyncStatus.initial),
+      );
+      await tester.pumpWidget(tree.widget);
       // Don't enter anything; tap Log in.
       await tester.tap(find.text('Log in'));
       await tester.pump();
-      verifyNever(() => sync.add(any()));
+      verifyNever(() => tree.sync.add(any()));
     });
   });
 }
