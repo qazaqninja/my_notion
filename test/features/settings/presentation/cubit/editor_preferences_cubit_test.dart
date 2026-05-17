@@ -67,6 +67,37 @@ void main() {
       );
     });
 
+    group('hydrate (lazy load)', () {
+      blocTest<EditorPreferencesCubit, EditorPreferencesState>(
+        'no-arg constructor starts at default false then hydrates true',
+        setUp: () =>
+            SharedPreferences.setMockInitialValues({'editor.useBeta': true}),
+        build: EditorPreferencesCubit.new,
+        act: (cubit) => cubit.hydrate(),
+        expect: () => [const EditorPreferencesState(useBetaEditor: true)],
+      );
+
+      blocTest<EditorPreferencesCubit, EditorPreferencesState>(
+        'hydrate is a no-op when persisted value matches default',
+        setUp: () => SharedPreferences.setMockInitialValues({}),
+        build: EditorPreferencesCubit.new,
+        act: (cubit) => cubit.hydrate(),
+        expect: () => const <EditorPreferencesState>[],
+      );
+
+      blocTest<EditorPreferencesCubit, EditorPreferencesState>(
+        'hydrate is idempotent — second call does nothing',
+        setUp: () =>
+            SharedPreferences.setMockInitialValues({'editor.useBeta': true}),
+        build: EditorPreferencesCubit.new,
+        act: (cubit) async {
+          await cubit.hydrate(); // first call: emits true
+          await cubit.hydrate(); // second call: idempotent no-op
+        },
+        expect: () => [const EditorPreferencesState(useBetaEditor: true)],
+      );
+    });
+
     group('equality', () {
       test('EditorPreferencesState equality is value-based', () {
         const a = EditorPreferencesState(useBetaEditor: true);

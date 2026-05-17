@@ -32,6 +32,7 @@ import 'features/sync/presentation/bloc/sync_event.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
 import 'features/editor/presentation/pages/editor_beta_page.dart';
 import 'features/editor/presentation/pages/editor_page.dart';
+import 'features/settings/presentation/cubit/editor_preferences_cubit.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/vault/data/indexer.dart';
 import 'features/vault/data/repositories/vault_repository_impl.dart';
@@ -66,6 +67,12 @@ class _QuillAppState extends State<QuillApp> {
   late final RemindersBloc _remindersBloc;
   late final SyncRepository _syncRepo;
   late final SyncBloc _syncBloc;
+  // D28 cutover slice 1b (M1665): the WYSIWYG opt-in. Constructed
+  // sync at app start, then `..hydrate()` loads the persisted
+  // SharedPreferences value asynchronously. /editor/:ulid (slice 1c)
+  // will fork on `state.useBetaEditor`; default false until the user
+  // flips the Settings → Advanced toggle.
+  late final EditorPreferencesCubit _editorPreferencesCubit;
   // E51: forms repo lives alongside the sync one — same backend, same
   // base URL — but stays bloc-less for now. The editor consumes it via
   // RepositoryProvider directly inside a FutureBuilder dialog.
@@ -114,6 +121,11 @@ class _QuillAppState extends State<QuillApp> {
       // E15: restore the persisted JWT (if any) so a quit + relaunch
       // doesn't force users to re-authenticate.
       ..add(const SyncRestoreRequested());
+    // D28 cutover slice 1b (M1665): hydrate from SharedPreferences in
+    // the background. The cubit starts at `useBetaEditor: false` and
+    // emits the persisted value once the async load resolves.
+    _editorPreferencesCubit = EditorPreferencesCubit();
+    unawaited(_editorPreferencesCubit.hydrate());
     _router = _buildRouter(_vaultBloc);
     // F2: start the inbound share-sheet binder. It attaches to the
     // VaultBloc stream and starts/stops an IncomingShareListener as
@@ -137,6 +149,7 @@ class _QuillAppState extends State<QuillApp> {
     _remindersBloc.close();
     _vaultBloc.close();
     _themeCubit.close();
+    _editorPreferencesCubit.close();
     _db.close();
     super.dispose();
   }
@@ -186,6 +199,11 @@ class _QuillAppState extends State<QuillApp> {
           BlocProvider.value(value: _vaultBloc),
           BlocProvider.value(value: _remindersBloc),
           BlocProvider.value(value: _syncBloc),
+          // D28 cutover slice 1b (M1665): root-scoped because the
+          // /editor/:ulid GoRoute builder (slice 1c) will read it to
+          // pick EditorPage vs EditorBetaPage. Settings → Advanced
+          // also reads + writes the same instance.
+          BlocProvider.value(value: _editorPreferencesCubit),
         ],
         child: BlocBuilder<ThemeCubit, ThemeState>(
           builder: (context, themeState) {

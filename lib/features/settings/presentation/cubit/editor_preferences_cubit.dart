@@ -37,21 +37,48 @@ class EditorPreferencesState extends Equatable {
 /// [SharedPreferences]; thereafter all writes flush back to the
 /// store.
 class EditorPreferencesCubit extends Cubit<EditorPreferencesState> {
+  /// Default unhydrated constructor used at the app composition root.
+  /// Pair with `..hydrate()` so the persisted value loads
+  /// asynchronously after the bloc is provided to the widget tree —
+  /// the cubit starts at the safe `useBetaEditor: false` default and
+  /// emits the persisted value (if any) once
+  /// [SharedPreferences.getInstance] resolves.
+  EditorPreferencesCubit()
+      : _prefs = null,
+        super(const EditorPreferencesState(useBetaEditor: false));
+
   /// Construct a cubit from a pre-fetched [SharedPreferences] handle.
-  /// Use [EditorPreferencesCubit.fromPrefs] from the app
-  /// composition root after the async [SharedPreferences.getInstance]
-  /// has resolved.
-  EditorPreferencesCubit.fromPrefs(this._prefs)
-      : super(
+  /// Preferred by tests since it sidesteps the async wait — the
+  /// initial state reads the persisted value synchronously.
+  EditorPreferencesCubit.fromPrefs(SharedPreferences prefs)
+      : _prefs = prefs,
+        super(
           EditorPreferencesState(
-            useBetaEditor: _prefs.getBool(useBetaPrefKey) ?? false,
+            useBetaEditor: prefs.getBool(useBetaPrefKey) ?? false,
           ),
         );
 
   /// SharedPreferences key used for [EditorPreferencesState.useBetaEditor].
   static const useBetaPrefKey = 'editor.useBeta';
 
-  final SharedPreferences _prefs;
+  SharedPreferences? _prefs;
+
+  /// Idempotent: resolves [SharedPreferences] and reconciles the
+  /// state if the persisted value differs from the current state.
+  /// No-op once `_prefs` is set (either via the [fromPrefs]
+  /// constructor or a prior [hydrate] call).
+  ///
+  /// Safe to call from `BlocProvider.create` — the cubit is usable
+  /// before hydration with the default `useBetaEditor: false`.
+  Future<void> hydrate() async {
+    if (_prefs != null) return;
+    final prefs = await SharedPreferences.getInstance();
+    _prefs = prefs;
+    final stored = prefs.getBool(useBetaPrefKey) ?? false;
+    if (stored != state.useBetaEditor) {
+      emit(state.copyWith(useBetaEditor: stored));
+    }
+  }
 
   /// Toggle the beta-editor opt-in. Explicit no-op when [useBeta]
   /// equals the current state — skips the prefs write and the emit.
@@ -59,9 +86,15 @@ class EditorPreferencesCubit extends Cubit<EditorPreferencesState> {
   /// AFTER the first real emit, so the first redundant write would
   /// otherwise still go through; this early-return belt-and-braces
   /// the no-op semantics for the first-emit case.)
+  ///
+  /// Lazily resolves the [SharedPreferences] handle when the cubit
+  /// was constructed without one (default constructor + no
+  /// [hydrate] yet) — matches the SyncBloc per-handler pattern.
   Future<void> setUseBetaEditor({required bool useBeta}) async {
     if (state.useBetaEditor == useBeta) return;
-    await _prefs.setBool(useBetaPrefKey, useBeta);
+    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = prefs;
+    await prefs.setBool(useBetaPrefKey, useBeta);
     emit(state.copyWith(useBetaEditor: useBeta));
   }
 }

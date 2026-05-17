@@ -16,6 +16,7 @@ import '../../../../shared/widgets/tag_chip.dart';
 import '../../../../shared/theme/accent.dart';
 import '../../../../shared/theme/app_theme_mode.dart';
 import '../../../../shared/theme/theme_cubit.dart';
+import '../cubit/editor_preferences_cubit.dart';
 import '../widgets/forms_pane.dart';
 import '../widgets/settings_atoms.dart';
 import '../widgets/settings_nav.dart';
@@ -354,6 +355,28 @@ class _SettingsPageState extends State<SettingsPage> {
                 : () => context
                     .read<VaultBloc>()
                     .add(const RefreshFromDisk()),
+          ),
+        ),
+        const SizedBox(height: 18),
+        _sectionLabel(tokens, 'Editor'),
+        // D28 cutover slice 1b (M1665): opts the user in to the beta
+        // WYSIWYG editor. /editor/:ulid (slice 1c) reads the same
+        // cubit state to fork between EditorPage and EditorBetaPage.
+        BlocBuilder<EditorPreferencesCubit, EditorPreferencesState>(
+          buildWhen: (prev, next) =>
+              prev.useBetaEditor != next.useBetaEditor,
+          builder: (context, prefs) => SettingRow(
+            label: 'Use beta WYSIWYG editor',
+            hint: 'Open `.md` files with the new block editor '
+                '(super_editor) instead of the legacy source/rendered '
+                'split. Per-page Find (⌘F), drag-handles, and '
+                'Notion-style block selection are beta-only today.',
+            child: Switch.adaptive(
+              value: prefs.useBetaEditor,
+              onChanged: (next) => context
+                  .read<EditorPreferencesCubit>()
+                  .setUseBetaEditor(useBeta: next),
+            ),
           ),
         ),
       ],
