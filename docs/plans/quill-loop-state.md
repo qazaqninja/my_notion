@@ -7,10 +7,25 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E59-b H4d-iii-b — mount PresenceCubit inside EditorSyncWsMount + wire the awarenessStream relay. Now that the controller (M1463) relays `awarenessStream` at one stable seam, `EditorSyncWsMount` can: (1) construct a per-page `PresenceCubit` on initState (with default 5s TTL), (2) listen to `_controller.awarenessStream` and forward each msg to `cubit.remoteCursorReceived`, (3) wrap `child` in a `BlocProvider<PresenceCubit>.value(...)` so descendants (the M1454 RemoteCursorOverlay) can find it via BlocBuilder, (4) dispose the cubit + cancel the subscription on dispose. Tests: widget test the mount with a fake binder factory emitting awareness, assert the cubit's state ends with the right cursors after pumpAndSettle. Path: edit `lib/features/sync/presentation/editor_sync_ws_mount.dart` + extend test mirror. H4d-iii-c (rect resolver) and H4d-iii-d (debounced outbound) close the loop after.
+- **Task:** E59-b H4d-iii-c — wire the M1454 RemoteCursorOverlay into the editor body with a cursorRectAt resolver from the live TextField's RenderEditable. The editor's source-mode TextField has a GlobalKey<EditableTextState>; from `_editableTextKey.currentState!.renderEditable.getLocalRectForCaret(TextPosition(offset: idx))` we can derive the screen-space rect per character offset. Mount the overlay as a Stack sibling of the TextField inside _EditorBodyState so it inherits the same coordinate space; consume the cubit from the M1465 BlocProvider scope. Defensive: resolver returns null for out-of-range indices and during the TextField's pre-paint phase. Tests: widget test that pumps an editor with a known body, pushes an awareness JSON through the WS pipeline, asserts a chiclet renders. Paths: edit `lib/features/editor/presentation/pages/editor_page.dart` (or wherever _EditorBodyState lives) + extend editor_page_test.dart. H4d-iii-d (debounced outbound) closes the loop.
 - **Status:** pending
 
 ## Last completed
+
+- **M1466 — TS-03 doc fix-forward on M1465 PresenceCubit mount tests** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 144 (rolls into H4d-iii-b fix-forward)
+- Notes: Orchestrator audit of M1465 returned 0 BLOCK / 1 WARN / 2 INFO. WARN (TS-03 widget-test-via-real-tree exemption not documented) fixed: added a 5-line comment above the `PresenceCubit mount (H4d-iii-b)` sub-group explaining why blocTest isn't used here (cubit driven indirectly via real widget tree; direct blocTest coverage lives in presence_cubit_test.dart). Both INFO items deferred per orchestrator: BL-12 (no debounce/distinct on awareness stream) is YAGNI-acceptable today, and the asymmetry of `if (mounted)` vs cubit.isClosed is already documented inline. 10/10 mount tests still pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1465 — E59-b H4d-iii-b: mount PresenceCubit inside EditorSyncWsMount** (second H4d-iii sub-bite)
+- Committed: (this iteration)
+- TaskList ID: 144
+- Notes: Closes most of the inbound presence loop end-to-end. Remote peer cursors now flow: WS payload → SyncWsBinder.tryDecode → binder.awarenessStream → controller.awarenessStream (M1463 relay) → mount's _awarenessSub → PresenceCubit.remoteCursorReceived → BlocProvider<PresenceCubit> scope. RemoteCursorOverlay (M1454) can mount as a descendant and consume via BlocBuilder. `lib/features/sync/presentation/editor_sync_ws_mount.dart` (modified): new imports flutter_bloc + AwarenessMessage + PresenceCubit; new `late final PresenceCubit _presenceCubit` + `StreamSubscription<AwarenessMessage>? _awarenessSub` fields; initState wires the subscription forwarding each event to `_presenceCubit.remoteCursorReceived(msg)` (cubit's own isClosed guard handles dispose race; documented in inline comment); dispose closes the cubit + cancels the sub alongside existing teardown; build wraps widget.child in `BlocProvider<PresenceCubit>.value(value: _presenceCubit, ...)` inside the existing EditorSyncWsScope wrapper. 3 new tests in `PresenceCubit mount (H4d-iii-b)` sub-group (post-M1466 with TS-03 exemption comment): descendants find the cubit via BlocProvider scope, relayed awareness reaches the cubit state, unmount closes the cubit. Test setup error fixed in commit: stray extra `})` from earlier edit corrupted the file structure briefly, fixed by removing the dup. Orchestrator audit: 0 BLOCK / 1 WARN (TS-03 doc-fixed M1466) / 2 INFO (BL-12 debounce YAGNI; mounted-guard asymmetry already documented). 10/10 mount tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1464 — loop-state advance** (record M1463 + advance to H4d-iii-b)
+- Committed: (this iteration)
+- TaskList ID: 143 closeout
+- Notes: Recorded M1463 (awarenessStream relay through EditorWsAttachController). Advanced **Current** pointer to H4d-iii-b. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1463 — E59-b H4d-iii-a: relay awarenessStream through EditorWsAttachController** (first H4d-iii sub-bite)
 - Committed: (this iteration)
