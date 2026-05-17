@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
@@ -252,6 +253,49 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     );
   }
 
+  /// D-fp3 (M1625): port Share-via-OS-sheet from legacy
+  /// editor_page.dart:1344 `_sharePage`. Tries `SharePlus.instance.share`
+  /// with the file as `XFile` first (works on iOS / macOS / Android), falls
+  /// back to plain-text body share on platforms without file-share
+  /// (notably plain Linux). Reads the vault rootPath to compute the
+  /// absolute file path.
+  // coverage:ignore-start
+  Future<void> _onSharePage() async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final absolutePath = '${vault.rootPath}/${widget.relativePath}';
+    final file = File(absolutePath);
+    if (!await file.exists()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cannot share: $absolutePath not found')),
+      );
+      return;
+    }
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(absolutePath, name: widget.title)],
+          subject: widget.title,
+        ),
+      );
+    } on Object catch (e) {
+      // Fallback to plain-text share of the body — keeps the entry
+      // useful on platforms without native file-share (plain Linux).
+      try {
+        await SharePlus.instance.share(
+          ShareParams(text: widget.body, subject: widget.title),
+        );
+      } on Object catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Share failed: $e')),
+        );
+      }
+    }
+  }
+  // coverage:ignore-end
+
   /// D-fp2 (M1623): port Pull-from-server from legacy editor_page.dart:604.
   /// Dispatches `SyncFetchFileRequested` against the server-known relpath
   /// when authed; shows a SnackBar with the result. Mirrors the legacy
@@ -426,6 +470,14 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
                     onPressed: _onPullFromServer,
                   )
                 : const SizedBox.shrink(),
+          ),
+          // D-fp3 (M1625): port Share-via-OS-sheet from legacy
+          // editor_page.dart:1344 _sharePage. Same try-XFile-then-fall-back-
+          // to-text strategy.
+          IconButton(
+            icon: const Icon(Icons.share_outlined),
+            tooltip: 'Share',
+            onPressed: _onSharePage,
           ),
           // D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
           IconButton(
