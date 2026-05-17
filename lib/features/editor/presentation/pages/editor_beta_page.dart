@@ -5,13 +5,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/super_editor_serializer.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
+import '../../../sync/presentation/bloc/sync_bloc.dart';
+import '../../../sync/presentation/bloc/sync_event.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
+import '../../../vault/presentation/bloc/vault_event.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
 import '../../../../core/ui/anchor_rect.dart';
 import '../../../../core/ui/anchor_rect_x.dart';
@@ -116,6 +120,8 @@ class _BetaEditorBody extends StatelessWidget {
         }
         if (state is EditorLoaded) {
           return _BetaEditorShell(
+            ulid: state.page.ulid,
+            relativePath: state.page.relativePath,
             title: state.page.title,
             body: state.page.body,
           );
@@ -127,7 +133,14 @@ class _BetaEditorBody extends StatelessWidget {
 }
 
 class _BetaEditorShell extends StatefulWidget {
-  const _BetaEditorShell({required this.title, required this.body});
+  const _BetaEditorShell({
+    required this.ulid,
+    required this.relativePath,
+    required this.title,
+    required this.body,
+  });
+  final String ulid;
+  final String relativePath;
   final String title;
   final String body;
 
@@ -238,6 +251,47 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     );
   }
 
+  /// D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
+  /// Confirm via dialog, dispatch VaultBloc(MoveToTrash) + optional
+  /// SyncBloc(SyncDeleteFileRequested) when authed, navigate home.
+  /// Coverage exemption (TS-01): widget-tier handler over already-tested
+  /// bloc paths — matches the legacy M195 wire-up.
+  // coverage:ignore-start
+  Future<void> _onMoveToTrash() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Move to trash?'),
+        content: Text(
+          'The .md file moves to .trash/. '
+          'You can restore it from the Trash dialog later.\n\n'
+          '${widget.relativePath}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: const Text('Move to trash'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    context.read<VaultBloc>().add(MoveToTrash(widget.ulid));
+    // Mirror to the v2 backend when authed so the server tombstones
+    // the row and forgets the knownSha (matches editor_page.dart:660-663).
+    final sync = context.read<SyncBloc>();
+    if (sync.state.isAuthed) {
+      sync.add(SyncDeleteFileRequested(relpath: widget.relativePath));
+    }
+    if (!mounted) return;
+    GoRouter.of(context).go('/home');
+  }
+  // coverage:ignore-end
+
   /// D25 slice 5b (M1607): named-method keyboard handlers that read
   /// the BlockSelectionCubit at callback time (not at build time), so
   /// DI-04 lint doesn't fire on `context.read` inside `build`.
@@ -335,8 +389,14 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        actions: const [
-          Padding(
+        actions: [
+          // D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Move to trash',
+            onPressed: _onMoveToTrash,
+          ),
+          const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Center(
               child: Text(
