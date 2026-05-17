@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** FS-04 slice 3 — extract the structural helpers from settings_page.dart. The remaining single-feature private widgets in the file are: _Nav (the 220-px left rail with grouped items, ~50 lines), _NavItem (the row + hover state, ~80 lines), _SettingRow (the labeled value row used across panes, ~30 lines), _WorkspaceIconButton (emoji picker → workspace.icon writer, ~70 lines), _WorkspaceNameField (vault-config name input with debounced save, ~75 lines), _SyncCard (placeholder cards for Git/S3/WebDAV — visual-only sitting in the vault pane, ~50 lines), _Toggle (the 34×20 toggle pill used in Appearance + Advanced panes, ~50 lines). Target: a single `lib/features/settings/presentation/widgets/settings_shared.dart` file holding all of them; settings_page.dart drops ~400 lines, going from 1,846 → ~1,450 lines. Drop the corresponding imports too (emoji_picker, tag_chip, person_chip, status_dot for some helpers).
+- **Task:** FS-04 slice 4 — extract the workspace controls (_WorkspaceIconButton + _WorkspaceNameField + _WorkspaceNameFieldState) to widgets/workspace_controls.dart. Both write to .quill.yaml on commit (emoji picker → icon, debounced TextField → name) and dispatch RefreshFromDisk on success. ~145 lines combined; settings_page.dart should drop 1,706 → ~1,560 lines. The pair is well-scoped (only used inside the vault pane) so the extraction is straightforward — public Workspace... widget targets with VaultLoaded state passed in.
 - **Status:** pending
 
 ## Last completed
+
+- **M1426 — FS-04 slice 3** (extract SettingsNav to widgets/settings_nav.dart — pure refactor, no behavior change)
+- Committed: (this iteration)
+- TaskList ID: 129
+- Notes: Pure refactor. Third slice of the settings_page.dart decomposition (M1421 FormsPane, M1423 SyncPane, now Nav). New `lib/features/settings/presentation/widgets/settings_nav.dart` (~176 lines): public `SettingsNav` StatelessWidget extracted from `_Nav` (220-px left rail with grouped items + hover/active states); private `_NavItem` + `_NavItemState` moved verbatim; static `_groups` list (4 sections, 11 items) moved with SettingsNav. Imports trimmed to flutter/material + QuillTokens + QuillIcon. settings_page.dart: `_Nav(...)` call site became `SettingsNav(...)`, dropped both classes (~140 lines), added one import. File sizes: settings_page.dart 1,846 → 1,706 (-140); settings_nav.dart 0 → 176 (new). Orchestrator audit: 0 BLOCK / 0 WARN / 3 INFO (all tracking notes: TS-01 widget tests batched for end-of-decomposition sweep; optional `groups` constructor param for future feature flags; Colors.transparent grey-area note on TH-03). flutter analyze clean; no tests touched. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1424 — FS-04 slice 2 cleanup** (orchestrator gate: CA-04 inline-context.read rationale comment)
 - Committed: (this iteration)
