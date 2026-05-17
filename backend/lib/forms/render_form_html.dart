@@ -27,6 +27,7 @@ import 'package:backend/forms/form_schema.dart';
 ///                 as `'a,b,c'` in validateSubmission's raw map).
 ///   - email     → <input type="email" name="…">  (E60 slice 1)
 ///   - url       → <input type="url" name="…">  (E60 slice 2)
+///   - longtext  → <textarea name="…" rows="4"></textarea>  (E60 slice 3)
 ///
 /// `required: true` fields get the HTML `required` attribute so
 /// the browser validates before submit (the server still re-
@@ -67,8 +68,9 @@ String renderFormHtml({
       'label{display:flex;flex-direction:column;gap:4px;'
       'font-size:13px;color:#555}'
       'input[type=text],input[type=number],input[type=date],'
-      'input[type=email],input[type=url],select'
+      'input[type=email],input[type=url],select,textarea'
       '{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:6px}'
+      'textarea{resize:vertical;min-height:80px}'
       'button{font:inherit;padding:10px 16px;border-radius:6px;'
       'border:0;background:#222;color:#fff;cursor:pointer;'
       'align-self:flex-start}'
@@ -128,6 +130,12 @@ String _renderField(
       // E60 slice 2: HTML5 url input — server enforces http/https only.
       return '<label>$label'
           '<input type="url" name="$attrName"$req></label>';
+    case FormFieldType.longtext:
+      // E60 slice 3: multi-line free text. `rows="4"` is the standard
+      // Notion-form default; the CSS allows vertical resize so users
+      // can grow the box for longer answers.
+      return '<label>$label'
+          '<textarea name="$attrName" rows="4"$req></textarea></label>';
     case FormFieldType.multi:
       // Group of checkboxes — one per option, all sharing the
       // field name. Each checked box posts as `name=value`,

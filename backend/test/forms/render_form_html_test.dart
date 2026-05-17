@@ -371,5 +371,46 @@ void main() {
         expect(html, contains('input[type=url]'));
       });
     });
+
+    // E60 slice 3 (M1614) — longtext field renders as textarea.
+    group('longtext field', () {
+      test('renders <textarea rows="4">', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(name: 'notes', type: FormFieldType.longtext),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('<textarea name="notes" rows="4"'));
+        expect(html, contains('</textarea>'));
+      });
+
+      test('required longtext gets HTML `required` attribute', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+              name: 'notes', type: FormFieldType.longtext, required: true),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(
+          html,
+          contains('<textarea name="notes" rows="4" required></textarea>'),
+        );
+      });
+
+      test('textarea picked up by the CSS rule', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(name: 'notes', type: FormFieldType.longtext),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('textarea{resize:vertical'));
+      });
+    });
   });
 }

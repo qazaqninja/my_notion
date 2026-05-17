@@ -32,6 +32,11 @@ enum FormFieldType {
   /// Absolute URL → `<input type="url">` validated server-side
   /// against `^https?://...` (E60 slice 2).
   url,
+
+  /// Multi-line free text → `<textarea>` (E60 slice 3). No validator
+  /// rejection — same passthrough as [FormFieldType.text]; the
+  /// rendered widget shape is the only difference.
+  longtext,
 }
 
 /// One column definition pulled from a `.database.yaml` `columns:`
@@ -186,6 +191,10 @@ FormFieldType _parseType(String raw) {
     case 'uri':
     case 'link':
       return FormFieldType.url;
+    case 'longtext':
+    case 'textarea':
+    case 'paragraph':
+      return FormFieldType.longtext;
     case 'text':
     case 'string':
     case '':
@@ -253,6 +262,10 @@ FormValidationResult validateSubmission(
     }
     switch (field.type) {
       case FormFieldType.text:
+      case FormFieldType.longtext:
+        // E60 slice 3: textarea is just text with a different rendered
+        // widget — no rejection beyond the required-check above. Newlines
+        // and tabs round-trip through into the stored JSONB unchanged.
         normalized[field.name] = input;
       case FormFieldType.number:
         final n = num.tryParse(input);

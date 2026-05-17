@@ -594,4 +594,70 @@ columns:
       expect(r.errors['website'], 'expected_url');
     });
   });
+
+  // E60 slice 3 (M1614) — longtext / textarea.
+  group('parseFormSchema longtext types', () {
+    test('"longtext" parses to FormFieldType.longtext', () {
+      const src = '''
+columns:
+  - name: notes
+    type: longtext
+''';
+      expect(parseFormSchema(src).fields.single.type, FormFieldType.longtext);
+    });
+
+    test('"textarea" alias parses to FormFieldType.longtext', () {
+      const src = '''
+columns:
+  - name: notes
+    type: textarea
+''';
+      expect(parseFormSchema(src).fields.single.type, FormFieldType.longtext);
+    });
+
+    test('"paragraph" alias parses to FormFieldType.longtext', () {
+      const src = '''
+columns:
+  - name: notes
+    type: paragraph
+''';
+      expect(parseFormSchema(src).fields.single.type, FormFieldType.longtext);
+    });
+
+    test('any text passes through unchanged', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'notes', type: FormFieldType.longtext),
+        ]),
+        const {'notes': 'hello world'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['notes'], 'hello world');
+    });
+
+    test('newlines round-trip into normalized', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'notes', type: FormFieldType.longtext),
+        ]),
+        const {'notes': 'line 1\nline 2\nline 3'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['notes'], 'line 1\nline 2\nline 3');
+    });
+
+    test('empty + required emits required error', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+              name: 'notes',
+              type: FormFieldType.longtext,
+              required: true),
+        ]),
+        const {'notes': ''},
+      );
+      expect(r.isValid, isFalse);
+      expect(r.errors['notes'], 'required');
+    });
+  });
 }
