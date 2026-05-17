@@ -16,6 +16,7 @@ import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
 import '../../domain/slash_entries.dart';
+import '../../domain/slash_entry_block_type.dart';
 import '../controllers/slash_trigger_session.dart';
 import '../controllers/super_editor_caret.dart';
 import '../cubit/slash_menu_cubit.dart';
@@ -234,9 +235,9 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     cubit.dismiss();
     _session.reset();
 
-    if (entry.action != SlashAction.insertSnippet || entry.linePrefix != null) {
-      // Non-snippet actions and convert-in-place entries deferred to a
-      // follow-up slice. Close + bail.
+    if (entry.action != SlashAction.insertSnippet) {
+      // pickImage / pickFile / convert-via-snippet variants deferred to
+      // slice 2g-d. Close + bail.
       return;
     }
     if (selection == null || !selection.isCollapsed) return;
@@ -256,15 +257,30 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       nodeId: nodeId,
       nodePosition: TextNodePosition(offset: triggerLocal),
     );
+
+    // Build the request list: always strip `/query`. Then either insert
+    // the entry's snippet (default) OR change the node's block type
+    // (when linePrefix maps to a known super_editor block attribution).
+    // Both branches dispatch through `_editor.execute(...)`.
+    final blockType = entry.linePrefix == null
+        ? null
+        : blockTypeForLinePrefix(entry.linePrefix!);
     _editor.execute([
       DeleteContentRequest(
         documentRange: DocumentRange(start: triggerPos, end: extent),
       ),
-      InsertTextRequest(
-        documentPosition: triggerPos,
-        textToInsert: entry.snippet,
-        attributions: const {},
-      ),
+      if (blockType != null)
+        ChangeParagraphBlockTypeRequest(nodeId: nodeId, blockType: blockType)
+      else if (entry.linePrefix == null)
+        InsertTextRequest(
+          documentPosition: triggerPos,
+          textToInsert: entry.snippet,
+          attributions: const {},
+        ),
+      // linePrefix entries with no mapped block type (list `- `, ordered
+      // `1. `, todo `- [ ] `) fall through to delete-only. Slice 2g-d
+      // wires the node-type replacement (ParagraphNode → ListItemNode /
+      // TaskNode) for those.
     ]);
   }
 }
