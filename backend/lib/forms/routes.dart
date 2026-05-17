@@ -5,11 +5,11 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:ulid/ulid.dart';
 
-import '../auth/middleware.dart';
-import '../db/exceptions.dart';
-import '../sync/frontmatter_probe.dart';
-import 'form_schema.dart';
-import 'render_form_html.dart';
+import 'package:backend/auth/middleware.dart';
+import 'package:backend/db/exceptions.dart';
+import 'package:backend/sync/frontmatter_probe.dart';
+import 'package:backend/forms/form_schema.dart';
+import 'package:backend/forms/render_form_html.dart';
 
 /// Repository contract for form-definition lookups + submission storage.
 /// Slice E46 ships only the abstract interface plus a default impl that

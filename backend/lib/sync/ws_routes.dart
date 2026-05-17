@@ -2,8 +2,8 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_web_socket/shelf_web_socket.dart';
 
-import '../auth/middleware.dart';
-import 'ws_hub.dart';
+import 'package:backend/auth/middleware.dart';
+import 'package:backend/sync/ws_hub.dart';
 
 /// H2 — `/sync/sub/<ulid>` WebSocket subscription endpoint.
 ///

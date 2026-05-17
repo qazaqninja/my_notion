@@ -3,7 +3,7 @@ import 'package:postgres/postgres.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
-import 'markdown_html.dart';
+import 'package:backend/public/markdown_html.dart';
 
 /// Public read-only access surface. Mounted at `/public/` with NO
 /// authentication so anyone with a ULID can read a page IF the owner

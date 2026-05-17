@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:shelf/shelf.dart';
 
-import '../db/users.dart';
-import 'tokens.dart';
-import 'user.dart';
+import 'package:backend/db/users.dart';
+import 'package:backend/auth/tokens.dart';
+import 'package:backend/auth/user.dart';
 
 /// Build a shelf `Middleware` that turns `Authorization: Bearer <jwt>`
 /// into a verified `User` on `request.context['user']` for downstream
