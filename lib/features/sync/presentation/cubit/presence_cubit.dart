@@ -50,14 +50,19 @@ class PresenceCubit extends Cubit<PresenceState> {
   /// message + on close so we never call [emit] after dispose.
   final Map<String, Timer> _timers = {};
 
-  /// Upsert the entry for [msg.userId]. Restarts the TTL clock.
+  /// Upsert the entry for [msg.userId]. Restarts the TTL clock
+  /// unless [ttl] is `Duration.zero`, in which case no Timer is
+  /// scheduled at all (lets widget tests opt out of pending-
+  /// timer leak detection without needing to drain the cubit).
   void remoteCursorReceived(AwarenessMessage msg) {
     if (isClosed) return;
     final next = Map<String, AwarenessMessage>.from(state.cursors);
     next[msg.userId] = msg;
     emit(state.copyWith(cursors: next));
     _timers.remove(msg.userId)?.cancel();
-    _timers[msg.userId] = Timer(ttl, () => _expire(msg.userId));
+    if (ttl > Duration.zero) {
+      _timers[msg.userId] = Timer(ttl, () => _expire(msg.userId));
+    }
   }
 
   /// Drop the entry for [userId] (no-op if absent). Private —
