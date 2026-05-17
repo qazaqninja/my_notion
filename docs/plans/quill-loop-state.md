@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D23 core loop works end-to-end**
-- **Task:** D23 interactions slice 2g-c — linePrefix + pickImage/pickFile actions. M1539 closed slice 2g-b: typing `/` in WYSIWYG followed by picking a snippet entry now strips `/query` and inserts the entry's snippet via super_editor's `DeleteContentRequest` + `InsertTextRequest`. The end-to-end D23 loop works for `SlashAction.insertSnippet` without `linePrefix` (paragraphs, math, code fences, bookmarks, inline marks — the majority of slash entries). Slice 2g-c handles the remaining variants: (a) `linePrefix != null` — convert-in-place block type change (e.g. `/h1` replaces the current line's prefix with `# `); (b) `SlashAction.pickImage` / `pickFile` — async picker + ImageNode/file-attachment insert. Port source_view lines 835-880's logic to super_editor's Document mutation API. Then D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts) + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **H1-H3 + blockquote convert-in-place live**
+- **Task:** D23 interactions slice 2g-d — list/todo node-type conversion + picker actions. M1541 closed slice 2g-c for the 4 linePrefix variants that map to super_editor block-type attributions (`# `/`## `/`### `/`> ` → header1/2/3/blockquote). The remaining slash-menu actions still bail or no-op: (a) `- `, `1. `, `- [ ] ` linePrefixes need a node-class change (ParagraphNode → ListItemNode unordered/ordered, or → TaskNode) which is a node-replacement, not a metadata edit; (b) `SlashAction.pickImage` / `pickFile` need async file_picker + ImageNode/file-attachment insert. Slice 2g-d wires both. After: D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts ported) + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1541 — D23 interactions slice 2g-c — linePrefix convert-in-place** (H1/H2/H3/blockquote land via super_editor ChangeParagraphBlockTypeRequest)
+- Committed: (this iteration)
+- TaskList ID: 170 closeout (slice 2g-c; lists/todos + pickers in 2g-d)
+- Notes: New pure-Dart helper `lib/features/editor/domain/slash_entry_block_type.dart` (33 lines): `blockTypeForLinePrefix(String) → NamedAttribution?` switch returning `header1Attribution` / `header2Attribution` / `header3Attribution` / `blockquoteAttribution` for `# ` / `## ` / `### ` / `> `; null for other prefixes (lists / todos need node-type changes — slice 2g-d). Test at `test/features/editor/domain/slash_entry_block_type_test.dart` (6 tests: 4 supported, 3 unsupported, edge-cases). EditorBetaPage's `_onSlashEntryPicked` no longer bails on `linePrefix != null`. Always dispatches `DeleteContentRequest` to strip `/query`. Second request varies: `ChangeParagraphBlockTypeRequest(nodeId, blockType)` when mapping returns non-null; `InsertTextRequest(snippet)` for plain insertSnippet; delete-only when there's an unmappable linePrefix. flutter analyze clean on all 3 touched files; 6/6 tests green in <1s. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 — optional sub-grouping of the 6 tests into "unsupported prefixes" + "non-prefix strings" inner groups; not blocking, skipped this iteration). Behaviour: `/h1`, `/h2`, `/h3`, `/quote` in WYSIWYG now strip `/query` and switch the current paragraph's block type. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1540 — loop-state advance** (record M1539 + queue D23 slice 2g-c)
+- Committed: prior to M1541 (this iteration)
+- TaskList ID: 169 closeout
+- Notes: Recorded selection-splice command (M1539). D23 core loop confirmed functional end-to-end. Advanced **Current** pointer to slice 2g-c. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1539 — D23 interactions slice 2g-b — selection-splice command in EditorBetaPage** (D23 core loop end-to-end)
 - Committed: (this iteration)
