@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete (D24-family + D25 + D26 + D27a + D27b all closed); D28-D30 cutover blocked on EditorBetaPage feature parity. Pivoted back to E-phase. E60 slice 1 shipped — first HTML5 input-type slice for forms-polish.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete (D24-family + D25 + D26 + D27a + D27b all closed); D28-D30 cutover blocked on EditorBetaPage feature parity. Pivoted back to E-phase. E60 slices 1+2 shipped — email + url HTML5 input types.
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. Cutover deferred.
-- **Task:** E60 slice 2 — `FormFieldType.url` (HTML5 `<input type="url">`). Same shape as slice 1 (M1610): enum variant, `_parseType` recognises `'url'`, validator regex (`^https?://...`), renderer emits `<input type="url">`, CSS selector extended, tests for parse + validator + render. Slice 3: `longtext` → `<textarea>`. Slice 4: `pattern` → `<input pattern="...">` for arbitrary regex matching. After E60 closes, survey next (other v1.x backlog or back to D-phase parity for cutover prep).
+- **Task:** E60 slice 3 — `FormFieldType.longtext` → multi-line `<textarea>`. Different shape than email/url (no regex validation; just treat as text but emit `<textarea>` instead of `<input>`). Changes: enum variant, `_parseType` accepts `'longtext'` / `'textarea'` / `'paragraph'`, validator case copies through as text, renderer emits `<textarea name="…" rows="4"></textarea>`, CSS extended with textarea styling. Tests: parse + 3 aliases + length round-trip + renderer (textarea tag + required + multiline content roundtrip). Slice 4: `pattern` → `<input pattern="...">` for arbitrary regex matching from yaml `pattern:` field. After E60 closes, survey next.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1612 — E60 slice 2 — FormFieldType.url (parser + validator + HTML5 renderer)** (12 new backend tests; 215 backend tests pass)
+- Committed: (this iteration)
+- TaskList ID: 205 closeout
+- Notes: Second forms-polish HTML5 input-type slice. Same shape as M1610 slice 1. Adds `url` enum + `_parseType` accepts `'url'`/`'uri'`/`'link'` + validator regex `^https?://[^\s]+$` emitting `expected_url`. Security: rejects ftp/javascript/file schemes explicitly to avoid open-redirect + XSS shapes. Renderer emits `<input type="url">` + CSS selector extended. 9 schema tests (3 parse aliases + 6 validator: https + http + missing-scheme + ftp-rejected + javascript-rejected + whitespace) + 3 renderer tests. All 215 backend tests pass (203 + 12 new); `dart analyze` clean. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 cosmetic — consistent with sibling email/date/multi groups). E60 slice 3 will be `longtext` → `<textarea>`. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1610 — E60 slice 1 — FormFieldType.email (parser + validator + HTML5 renderer)** (10 new backend tests; 203 backend tests pass)
 - Committed: (this iteration)
