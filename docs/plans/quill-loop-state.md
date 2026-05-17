@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** FS-04 slice 4 — extract the workspace controls (_WorkspaceIconButton + _WorkspaceNameField + _WorkspaceNameFieldState) to widgets/workspace_controls.dart. Both write to .quill.yaml on commit (emoji picker → icon, debounced TextField → name) and dispatch RefreshFromDisk on success. ~145 lines combined; settings_page.dart should drop 1,706 → ~1,560 lines. The pair is well-scoped (only used inside the vault pane) so the extraction is straightforward — public Workspace... widget targets with VaultLoaded state passed in.
+- **Task:** FS-04 slice 5 — extract the remaining atom widgets to widgets/settings_atoms.dart. Private widgets still in settings_page.dart: `_SettingRow` (labeled value row used across panes, ~50 lines), `_Field` (~30 lines + tiny `Tokens` static class), `_Btn` + `_BtnState` (~70 lines), `_Stat` (~35 lines), `_Toggle` (~50 lines), `_SyncCard` (~80 lines — Git/S3/WebDAV visual placeholders in vault pane, distinct from the sync pane). Each currently private; extraction flips them public. ~260 lines combined; settings_page.dart should drop 1,563 → ~1,300 lines, closing FS-04 below the practical 1,500-line threshold.
 - **Status:** pending
 
 ## Last completed
+
+- **M1428 — FS-04 slice 4** (extract WorkspaceIconButton + WorkspaceNameField to widgets/workspace_controls.dart — pure refactor, no behavior change)
+- Committed: (this iteration)
+- TaskList ID: 130
+- Notes: Pure refactor. Fourth slice of the settings_page.dart decomposition (M1421 FormsPane, M1423 SyncPane, M1426 SettingsNav, now this). New `lib/features/settings/presentation/widgets/workspace_controls.dart` (~171 lines): public `WorkspaceIconButton` StatelessWidget extracted from `_WorkspaceIconButton` (32×32 emoji button that writes .quill.yaml's workspace.icon on pick and dispatches RefreshFromDisk + a confirmation toast); public `WorkspaceNameField` StatefulWidget extracted from `_WorkspaceNameField` (300-px text field that commits workspace.name on focus loss or Enter, falls back to folder basename via hintText); private `_WorkspaceNameFieldState` moved verbatim. Imports trimmed to dart:io (Directory), flutter/material, flutter_bloc (context.read<VaultBloc>), QuillTokens, EmojiPicker, toast extension, VaultBloc + events + state. settings_page.dart: both `_Workspace...` call sites became `Workspace...`, dropped both classes (~145 lines), comment marker points to new file, new workspace_controls import, removed now-unused emoji_picker import. File sizes: settings_page.dart 1,706 → 1,563 (-143); workspace_controls.dart 0 → 171 (new). Orchestrator audit: 0 BLOCK / 1 WARN (TS-01 widget-tests batched for end-of-decomposition sweep — same pattern as prior slices) / 3 INFO (CA lateral coupling established precedent; FS-05 co-location acceptable until lifecycle diverges; BL-11 fire-and-forget pattern OK). flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1426 — FS-04 slice 3** (extract SettingsNav to widgets/settings_nav.dart — pure refactor, no behavior change)
 - Committed: (this iteration)
