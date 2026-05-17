@@ -26,5 +26,9 @@ void main() {
     test('exposes the static `settings` path', () {
       expect(Routes.settings, '/settings');
     });
+
+    test('exposes the static `lab` path', () {
+      expect(Routes.lab, '/lab');
+    });
   });
 }

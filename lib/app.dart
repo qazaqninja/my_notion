@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'core/db/quill_database.dart' hide Page;
 import 'core/network/backend_endpoint.dart';
+import 'core/routing/routes.dart';
 // Composition root — app.dart is the one place that constructs concrete
 // data-layer impls and wires them through RepositoryProvider. Other
 // presentation files MUST consume the abstract interfaces, never the
@@ -222,31 +223,31 @@ class _QuillAppState extends State<QuillApp> {
 
 GoRouter _buildRouter(VaultBloc vault) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: Routes.picker,
     refreshListenable: _StreamListenable(vault.stream),
     redirect: (context, state) {
       final s = vault.state;
       final path = state.matchedLocation;
-      final isLab = path == '/lab';
-      final isPicker = path == '/' || path == '/vault';
+      final isLab = path == Routes.lab;
+      final isPicker = path == Routes.picker || path == Routes.vault;
       if (s is VaultLoaded) {
-        if (isPicker) return '/home';
+        if (isPicker) return Routes.home;
       } else {
-        if (!isLab && !isPicker) return '/vault';
+        if (!isLab && !isPicker) return Routes.vault;
       }
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (_, __) => const VaultPickerPage()),
-      GoRoute(path: '/vault', builder: (_, __) => const VaultPickerPage()),
-      GoRoute(path: '/lab', builder: (_, __) => const ComponentSheetPage()),
+      GoRoute(path: Routes.picker, builder: (_, __) => const VaultPickerPage()),
+      GoRoute(path: Routes.vault, builder: (_, __) => const VaultPickerPage()),
+      GoRoute(path: Routes.lab, builder: (_, __) => const ComponentSheetPage()),
       ShellRoute(
         builder: (context, state, child) {
           final ulid = state.pathParameters['ulid'];
           return VaultShellPage(activeUlid: ulid, child: child);
         },
         routes: [
-          GoRoute(path: '/home', builder: (_, __) => const HomePage()),
+          GoRoute(path: Routes.home, builder: (_, __) => const HomePage()),
           GoRoute(
             path: '/editor/:ulid',
             builder: (context, state) => EditorPage(
@@ -286,9 +287,9 @@ GoRouter _buildRouter(VaultBloc vault) {
               ),
             ],
           ),
-          GoRoute(path: '/databases', builder: (_, __) => const DatabasesPage()),
-          GoRoute(path: '/tags', builder: (_, __) => const TagsPage()),
-          GoRoute(path: '/settings', builder: (_, __) => const SettingsPage()),
+          GoRoute(path: Routes.databases, builder: (_, __) => const DatabasesPage()),
+          GoRoute(path: Routes.tags, builder: (_, __) => const TagsPage()),
+          GoRoute(path: Routes.settings, builder: (_, __) => const SettingsPage()),
           GoRoute(
             path: '/settings/:section',
             builder: (context, state) => SettingsPage(

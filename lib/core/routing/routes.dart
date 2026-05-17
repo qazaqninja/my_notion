@@ -32,4 +32,9 @@ abstract class Routes {
   /// `/settings` — the settings page (Vault / Appearance / Sync /
   /// Forms / etc. panes).
   static const settings = '/settings';
+
+  /// `/lab` — debug-only ComponentSheetPage. Allowed outside the
+  /// vault-loaded gate (the redirect callback short-circuits when
+  /// the matched location is `/lab`).
+  static const lab = '/lab';
 }
