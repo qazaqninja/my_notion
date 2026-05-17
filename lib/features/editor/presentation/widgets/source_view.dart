@@ -30,6 +30,7 @@ import '../../domain/attachment_writer.dart';
 import '../../domain/emoji_shortcodes.dart';
 import '../../domain/insert_link.dart';
 import '../../domain/slash_entries.dart';
+import '../../domain/slash_trigger.dart';
 import '../../domain/source_line_ops.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_state.dart';
@@ -212,34 +213,24 @@ class _SourceViewState extends State<SourceView> {
     final caret = selection.start;
 
     // --- Slash menu trigger / query update ----------------------------------
+    // Heuristics live in `lib/features/editor/domain/slash_trigger.dart`
+    // (M1518) so EditorBetaPage's super_editor keyboard listener can share
+    // identical semantics with this source-mode listener.
     if (_slashTriggerStart == null) {
-      // A fresh `/` immediately after start-of-line or whitespace fires it.
-      if (caret >= 1 && text[caret - 1] == '/') {
-        final atStart = caret == 1;
-        final prevChar = caret >= 2 ? text[caret - 2] : '';
-        final boundary = prevChar.isEmpty ||
-            prevChar == '\n' ||
-            prevChar == ' ' ||
-            prevChar == '\t';
-        if (atStart || boundary) {
-          _slashTriggerStart = caret;
-          final rect = _caretRect() ?? Rect.zero;
-          _slash.openAt(anchor: _toAnchorRect(rect), triggerOffset: caret - 1);
-        }
+      if (slashShouldOpen(text: text, caret: caret)) {
+        _slashTriggerStart = caret;
+        final rect = _caretRect() ?? Rect.zero;
+        _slash.openAt(anchor: _toAnchorRect(rect), triggerOffset: caret - 1);
       }
     } else {
       final start = _slashTriggerStart!;
-      if (caret < start || start > text.length) {
+      if (slashShouldDismiss(text: text, triggerStart: start, caret: caret)) {
         _slash.dismiss();
         _slashTriggerStart = null;
       } else {
-        final between = text.substring(start, caret);
-        if (between.contains('\n') || between.contains(' ')) {
-          _slash.dismiss();
-          _slashTriggerStart = null;
-        } else {
-          _slash.setQuery(between);
-        }
+        _slash.setQuery(
+          slashQueryBetween(text: text, triggerStart: start, caret: caret),
+        );
       }
     }
 
