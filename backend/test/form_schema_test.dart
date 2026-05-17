@@ -298,4 +298,123 @@ columns:
       expect(r.normalized, isEmpty);
     });
   });
+
+  // M1482-added multi-select support. Same TS-04 convention as the
+  // M1479 date group above.
+  group('parseFormSchema multi types', () {
+    test('"multi" parses to FormFieldType.multi', () {
+      const src = '''
+columns:
+  - name: tags
+    type: multi
+    options: [a, b, c]
+''';
+      final s = parseFormSchema(src);
+      expect(s.fields.single.type, FormFieldType.multi);
+      expect(s.fields.single.options, ['a', 'b', 'c']);
+    });
+
+    test('"multi_select" alias parses to FormFieldType.multi', () {
+      const src = '''
+columns:
+  - name: tags
+    type: multi_select
+''';
+      expect(parseFormSchema(src).fields.single.type, FormFieldType.multi);
+    });
+
+    test('"multiselect" alias parses to FormFieldType.multi', () {
+      const src = '''
+columns:
+  - name: tags
+    type: multiselect
+''';
+      expect(parseFormSchema(src).fields.single.type, FormFieldType.multi);
+    });
+
+    test('comma-joined picks all in options → normalized to List<String>',
+        () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              options: ['red', 'green', 'blue']),
+        ]),
+        const {'tags': 'red,blue'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['tags'], ['red', 'blue']);
+    });
+
+    test('any pick outside options surfaces not_in_options', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              options: ['red', 'green', 'blue']),
+        ]),
+        const {'tags': 'red,purple'},
+      );
+      expect(r.isValid, isFalse);
+      expect(r.errors, {'tags': 'not_in_options'});
+    });
+
+    test('whitespace-padded picks are trimmed', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              options: ['red', 'green']),
+        ]),
+        const {'tags': '  red ,green  '},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['tags'], ['red', 'green']);
+    });
+
+    test('missing required multi errors with required', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              required: true,
+              options: ['a', 'b']),
+        ]),
+        const {},
+      );
+      expect(r.errors, {'tags': 'required'});
+    });
+
+    test('missing optional multi is skipped entirely', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              options: ['a', 'b']),
+        ]),
+        const {},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized, isEmpty);
+    });
+
+    test('single pick still normalizes to a one-element list', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              options: ['a', 'b']),
+        ]),
+        const {'tags': 'a'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['tags'], ['a']);
+    });
+  });
 }

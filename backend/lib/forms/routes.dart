@@ -429,8 +429,13 @@ Router buildOwnerFormsRouter({required FormsRepositoryBase repo}) {
 }
 
 /// Parse an `application/x-www-form-urlencoded` body into a flat map.
-/// Repeated keys collapse to the last value (forms typically don't
-/// use repeats; checkbox groups carry a single comma-joined value).
+/// Repeated keys join with `,` so a multi-select checkbox group
+/// (M1482 FormFieldType.multi) submits as `tag=a&tag=b&tag=c` and
+/// surfaces as a single `'a,b,c'` value here. Single-value fields
+/// (text, number, date, etc.) post the key exactly once, so this
+/// degrades gracefully — no observable change for existing
+/// callers. validateSubmission for `multi` splits on `,` and
+/// validates each value against `field.options`.
 Map<String, String> _parseForm(String body) {
   final out = <String, String>{};
   for (final pair in body.split('&')) {
@@ -441,7 +446,8 @@ Map<String, String> _parseForm(String body) {
       final key = Uri.decodeQueryComponent(pair.substring(0, idx));
       final value = Uri.decodeQueryComponent(pair.substring(idx + 1));
       if (key.isEmpty) continue;
-      out[key] = value;
+      final prior = out[key];
+      out[key] = prior == null ? value : '$prior,$value';
     } on ArgumentError {
       // `Uri.decodeQueryComponent` throws ArgumentError on invalid
       // percent-encoding. Skip the offending pair rather than 500ing.

@@ -229,5 +229,68 @@ void main() {
                 '<input type="date" name="due_by" required></label>'));
       });
     });
+
+    group('multi-select fields (M1482)', () {
+      test('FormFieldType.multi emits a fieldset of checkboxes', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              options: ['red', 'green', 'blue']),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('<fieldset>'));
+        expect(html, contains('<legend>tags</legend>'));
+        expect(
+            html,
+            contains(
+                '<input type="checkbox" name="tags" value="red">'));
+        expect(
+            html,
+            contains(
+                '<input type="checkbox" name="tags" value="green">'));
+        expect(
+            html,
+            contains(
+                '<input type="checkbox" name="tags" value="blue">'));
+      });
+
+      test('multi never emits a `required` attribute on the boxes',
+          () {
+        // `required` on a checkbox group is a UX wart (browsers
+        // require ALL boxes checked). Server-side `required`
+        // catches the empty-submission case.
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              required: true,
+              options: ['a']),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, isNot(contains('checkbox" name="tags" value="a" required')));
+      });
+
+      test('multi options are HTML-escaped', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+              name: 'tags',
+              type: FormFieldType.multi,
+              options: ['<script>alert(1)</script>']),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, isNot(contains('<script>alert(1)</script>')));
+        expect(html, contains('&lt;script&gt;'));
+      });
+    });
   });
 }

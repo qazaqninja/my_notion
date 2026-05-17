@@ -14,6 +14,10 @@ import 'package:backend/forms/form_schema.dart';
 ///   - checkbox  → <input type="checkbox" name="…">
 ///   - select    → <select name="…">… options …</select>
 ///   - date      → <input type="date" name="…">  (ISO YYYY-MM-DD)
+///   - multi     → N <input type="checkbox" name="…" value="…"> per
+///                 option (the route's _parseForm joins repeated
+///                 keys with `,` so a multi-select group surfaces
+///                 as `'a,b,c'` in validateSubmission's raw map).
 ///
 /// `required: true` fields get the HTML `required` attribute so
 /// the browser validates before submit (the server still re-
@@ -98,5 +102,26 @@ String _renderField(
     case FormFieldType.date:
       return '<label>$label'
           '<input type="date" name="$attrName"$req></label>';
+    case FormFieldType.multi:
+      // Group of checkboxes — one per option, all sharing the
+      // field name. Each checked box posts as `name=value`,
+      // which `_parseForm` joins into a comma-separated string
+      // for `validateSubmission`.
+      //
+      // `required` on a checkbox group is a UX wart in browsers
+      // (it requires ALL boxes to be checked), so we omit the
+      // attribute and rely on the server-side `required` check
+      // (the `missing` branch in validateSubmission fires when
+      // no boxes are checked because nothing posts the key).
+      final boxes = StringBuffer();
+      for (final opt in f.options) {
+        final optLabel = elementEsc.convert(opt);
+        final optAttr = attrEsc.convert(opt);
+        boxes.writeln(
+            '<label style="flex-direction:row;align-items:center;gap:8px">'
+            '<input type="checkbox" name="$attrName" value="$optAttr">'
+            '$optLabel</label>');
+      }
+      return '<fieldset><legend>$label</legend>$boxes</fieldset>';
   }
 }
