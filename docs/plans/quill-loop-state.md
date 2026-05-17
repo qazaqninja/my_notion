@@ -7,8 +7,8 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 3c sub-pass 3/3 — manual cleanup of lines_longer_than_80_chars (~23 findings). Sub-passes 1 (whitespace) + 2 (nullable casts) cleared in M1496 + M1498. Line-length splits depend on local context: long string concatenations break naturally at adjacent string boundaries; long SQL splits across multiple `'''` lines; long expressions extract to helper variables. After cluster 3c full clear: cluster 4 (public_member_api_docs 68 doc-only — the largest remaining cluster, then ~9 misc info findings).
-- **Status:** in_progress (sub-passes 1+2 of 3 complete)
+- **Task:** Forms polish slice 3b cluster 4 — public_member_api_docs (~68 findings). Doc-only cluster: add `///` doc comments to public members the VGA rule flags. No behavior change; pure doc additions. Distribution likely concentrates in lib/db/* (entity classes, repository interfaces, exception types). Slice in 2-3 sub-passes by file if too large for one commit. After cluster 4 full clear: revisit-by-priority survey to plan next milestone (remaining ~25 misc info findings vs. picking up paused work like G4 docker-compose smoke / E59 pick-next survey / D1 next slices / new feature work).
+- **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
   - BL-12 design smell on RemoteCursorOverlay: hard `BlocBuilder<PresenceCubit, PresenceState>` requires the cubit ancestor, blocking isolated SourceView tests. Switch to a maybeOf-tolerant pattern when the SourceView test sweep lands — paired refactor.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1500 — backend lint cleanup 3c sub-pass 3 (lines_longer_than_80_chars 18 → 0)** (heterogeneous reflows across lib + tests)
+- Committed: (this iteration)
+- TaskList ID: 156 (slice 3c sub-pass 3 of 3; task #156 closeout)
+- Notes: Heterogeneous splits across 9 files, 51 inserts / 20 deletes. Strategy varied by site: (a) **lib code 3 sites** — `auth/password.dart` arrow-body wrap, `auth/routes.dart` 4-way `||` chain to one condition per line, `render_form_html.dart:47` ternary wrap. (b) **lib HTML/CSS templates 8 sites** — `render_form_html.dart` lines 60+63+64+65 + `public/routes.dart` lines 175+176+212 — split each long CSS rule into 2-3 adjacent string literals; this relies on M1496's existing file-level `// ignore_for_file: missing_whitespace_between_adjacent_strings` allowance so the split doesn't trigger that rule. (c) **tests 7 sites** — `middleware_test.dart` (4 of 4 long `expect((jsonDecode... 'token_expired')` lines reflowed to multi-line `expect(\n  cast,\n  'X',\n);`), `routes_test.dart` (1 same shape), `forms/render_form_html_test.dart` (1: `expect(html, isNot(contains(...)))` reflow), `frontmatter_probe_test.dart` + `markdown_html_test.dart` (1 each: split long frontmatter string literal at `\n` boundary — no missing_whitespace trigger since `\n` is whitespace). dart analyze: 111 → 93 (-18, exact match). dart test: 192/192 still green. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — clean across all 5 specialists. Cluster 3c complete (sub-passes 1+2+3 across M1496/M1498/M1500). Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1499 — loop-state advance** (record M1498 + advance to cluster 3c sub-pass 3)
+- Committed: prior to M1500 (this iteration)
+- TaskList ID: 156 sub-pass 2 closeout
+- Notes: Recorded M1498 (nullable cast cleanup). Advanced **Current** pointer to sub-pass 3 (lines_longer_than_80_chars). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1498 — backend lint cleanup 3c sub-pass 2 (cast_nullable_to_non_nullable 19 → 0)** (Postgres ResultRow non-nullable casts)
 - Committed: (this iteration)
