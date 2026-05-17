@@ -11,6 +11,7 @@ import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/frontmatter_icon.dart';
 import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
+import '../../../../core/routing/routes.dart';
 import '../../../../core/ulid/ulid_generator.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
@@ -1497,7 +1498,7 @@ class _TranscludedBlock extends StatelessWidget {
         }
         return GestureDetector(
           onTap: () =>
-              Navigator.of(context).pushReplacementNamed('/editor/$ulid'),
+              Navigator.of(context).pushReplacementNamed(Routes.editor(ulid)),
           child: MouseRegion(
             cursor: SystemMouseCursors.click,
             child: Container(
@@ -1712,7 +1713,7 @@ class _SubpageCardState extends State<_SubpageCard> {
           onExit: (_) => setState(() => _hover = false),
           child: GestureDetector(
             onTap: () => Navigator.of(context)
-                .pushReplacementNamed('/editor/$ulid'),
+                .pushReplacementNamed(Routes.editor(ulid)),
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
@@ -2708,7 +2709,7 @@ class _ButtonBlockState extends State<_ButtonBlock> {
       case 'page':
         if (value.isNotEmpty) {
           if (!context.mounted) return;
-          context.go('/editor/$value');
+          context.go(Routes.editor(value));
         }
         break;
       default:
@@ -4498,10 +4499,7 @@ class _ResolvedChip extends StatelessWidget {
           onTap: isBroken
               ? null
               : () {
-                  final route = anchor == null
-                      ? '/editor/$ulid'
-                      : '/editor/$ulid?anchor=$anchor';
-                  GoRouter.of(context).push(route);
+                  GoRouter.of(context).push(Routes.editor(ulid, anchor: anchor));
                 },
         );
       },

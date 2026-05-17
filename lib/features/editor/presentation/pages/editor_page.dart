@@ -632,7 +632,7 @@ class _EditorBodyState extends State<_EditorBody> {
                       sub: 'New ULID: $newUlid',
                       subMono: true);
                 }
-                router.go('/editor/$newUlid');
+                router.go(Routes.editor(newUlid));
               },
             ));
       case 'trash':
@@ -2218,7 +2218,7 @@ class _DailyNoteNav extends StatelessWidget {
       if (!result.alreadyExisted) {
         vaultBloc.add(const ReindexVault());
       }
-      router.go('/editor/${result.ulid}');
+      router.go(Routes.editor(result.ulid));
     } catch (e) {
       if (context.mounted) context.toastError('Daily note nav failed', sub: '$e');
     }
