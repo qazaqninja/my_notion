@@ -1914,6 +1914,21 @@ class _EditorBodyState extends State<_EditorBody> {
                                           // mounted outside an active
                                           // multiplayer session
                                           // (unauthed or unpublished).
+                                          //
+                                          // Why dispatch-site, not a
+                                          // BlocListener on EditorBloc.
+                                          // body? BL-11 (M1390 audit)
+                                          // suggested the listener
+                                          // shape; the call-site
+                                          // placement is intentional
+                                          // because we want to push
+                                          // ONLY user-originated edits.
+                                          // EditBody is also dispatched
+                                          // by Pull-from-server (line
+                                          // 196) and by inbound peer
+                                          // updates (H2.4d-iii) — a
+                                          // listener would re-broadcast
+                                          // those and create a loop.
                                           EditorSyncWsScope.maybeOf(context)
                                               ?.pushLocalUpdate(next);
                                         },

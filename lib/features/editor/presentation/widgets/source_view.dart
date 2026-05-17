@@ -104,6 +104,13 @@ class _SourceViewState extends State<SourceView> {
     // H2.4d-ii: fan out the local edit to peers. Silent no-op
     // when the editor is mounted outside an active multiplayer
     // session (unauthed or unpublished page).
+    //
+    // Dispatch-site placement is intentional (see longer
+    // rationale in editor_page.dart's rendered-mode handler):
+    // BL-11 would prefer a BlocListener on EditorState.body, but
+    // EditBody is also dispatched by Pull-from-server and (in
+    // H2.4d-iii) by inbound peer updates — a listener would
+    // re-broadcast those and loop.
     EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(_controller.text);
 
     final text = _controller.text;
