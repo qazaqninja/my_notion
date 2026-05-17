@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #11 — after NV-03 arc fully closed across the codebase. Remaining D-fp carry-forward debt is unchanged: (i) BL-11 widget-tier setState + editor.execute / SnackBar / nav from callbacks (5 instances across D-fp1/2/3/3b/4b — needs FindBarCubit/EditorActionCubit shift), (ii) TS-01 editor_beta_page_test.dart widget smoke (needs full provider stack harness), (iii) BL-12 _FindBarHost child StatefulWidget extraction. Other directions: (iv) D28-D30 cutover (could proceed accepting carry-forwards), (v) NV-02 typed-route migration (GoRouteData subclasses replacing Routes string-builder methods — the deferred INFO from M1649), (vi) Phase E continuation (G4 docker needs user; forms field-type expansion past E60 has diminishing return; web clipper is a big standalone package), (vii) D-fp5 next parity port (outline / source toggle / lock toggle / properties panel — not cutover-critical), (viii) revisit CLAUDE.md backlog item 10 (mobile-tuned per-page editor toolbar / mobile-first properties panel / touch-tuned slash menu — ~1 day remaining per CLAUDE.md). Decision criteria: deliver user-facing value where possible, or knock out tiny architectural wins between bigger features.
+- **Task:** Strike shipped items in CLAUDE.md v1.x backlog (Task A2 from the original plan). The "What is NOT implemented" list has 10 items with 7 already struck through (~~bold~~). The unstruck items are #7 (macOS bookmarks), #9 (WYSIWYG editor — but D-fp1/2/3/4 just landed), #10 (mobile UI — CLAUDE.md notes "1 day remaining"). Verify each still pending or update — particularly #9 since D-fp parity arc landed. Then re-think pick-next: D28-D30 cutover, BL-12 refactor, mobile polish, NV-02 typed routes, Phase E continuation, D-fp5 parity ports remain on the menu.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1658 — pick-next #11 closeout: sync CLAUDE.md status block to current milestone** (1 file modified; 1 line replaced; doc-only)
+- Committed: (this iteration)
+- TaskList ID: 227 closeout
+- Notes: Pick-next survey #11 picked Task A1 from the original plan (was meant to run at loop start but the status block was bumped to M1512 and then went stale 145 milestones). Updates "M0–M1512+" → "M0–M1657+"; revised latest commit description to call out M1657 (NV-03 carry-forward fully resolved — 53+ call sites migrated to Routes constants + helpers across 6 slices); added mention of full WYSIWYG D-fp parity ports (Move-to-Trash + Pull-from-server + Share + Find-in-page with Cmd+F/⌘G/⌘⇧G/Esc shortcuts) + `lib/core/routing/routes.dart` typed-route helper module. Test count refreshed: 144 → 180 test files per `find test -name '*_test.dart' | wc -l`. Future sessions reading the status block get accurate context. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine (doc-only diff, no Dart files touched).** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1656 — NV-03 slice 3c — migrate vault feature route interpolations — NV-03 FULLY RESOLVED** (5 files modified; +37 / -34; no new tests; lib/features/vault/ analyze clean)
 - Committed: (this iteration)
