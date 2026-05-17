@@ -412,6 +412,10 @@ void main() {
       });
     });
 
+    // TODO(TS-03): port these tests to `blocTest<SyncPresenceCubit,
+    // ...>` once a cubit wraps the binder's awareness flows. Today
+    // the binder is a stateful service, not a cubit, so hand-rolled
+    // stream subscriptions are the canonical pattern.
     group('sendAwareness() (H4d-ii)', () {
       const msg = AwarenessMessage(
         userId: 'alice',

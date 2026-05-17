@@ -1,3 +1,7 @@
+// Pure Dart helper — using flutter_test (not package:test) per
+// project convention (see test/features/sync/awareness_message_test.dart
+// and the M1407/E57-b TS-01 INFO precedent). `package:test` isn't a
+// direct dev_dependency; flutter_test re-exports it transitively.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/sync/domain/usecases/peer_color_from_user_id.dart';
 
@@ -45,6 +49,17 @@ void main() {
         // helper degenerated to "always return red" this would
         // fail loudly.
         expect(seen.length, greaterThanOrEqualTo(6));
+      });
+
+      test('known sum-collision aliases map to the same color', () {
+        // Sum-of-codeunits is order-independent and gives the
+        // same hash for any permutation. 'abc' and 'cba' are the
+        // canonical collision pair under this scheme. Test
+        // documents the trade-off explicitly so a future reviewer
+        // doesn't mistake it for a bug — M1461 INFO from
+        // orchestrator. If the hash is ever upgraded (fnv1a,
+        // xorshift, etc.) this test will need updating.
+        expect(peerColorFromUserId('abc'), peerColorFromUserId('cba'));
       });
     });
 

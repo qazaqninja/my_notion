@@ -1,6 +1,13 @@
 /// H4d-ii — deterministically map a userId to one of 8 distinct
 /// hex colors used by the remote-cursor overlay (M1454).
 ///
+/// Placed in `features/sync/domain/usecases/` (not `lib/shared/`)
+/// because it's specific to the sync feature's presence
+/// subsystem — the palette + hash policy are presence-design
+/// decisions, not general utilities. Matches the M1409
+/// `collect_bulk_push_entries.dart` precedent for pure
+/// sync-domain functions.
+///
 /// Same userId → same color always, so two devices for the same
 /// user paint the same chiclet across devices and across app
 /// restarts. The hash uses explicit char-code arithmetic rather
