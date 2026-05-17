@@ -17,6 +17,7 @@ import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../relations/presentation/cubit/relation_picker_cubit.dart';
 import '../../../relations/presentation/widgets/relation_picker_overlay.dart';
 import '../../../sync/presentation/editor_sync_ws_mount.dart';
+import 'remote_cursor_overlay.dart';
 import '../../../vault/data/daily_note.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
@@ -221,6 +222,37 @@ class _SourceViewState extends State<SourceView> {
       return;
     }
     _picker.setQuery(between);
+  }
+
+  /// H4d-iii-c — rect resolver for the RemoteCursorOverlay. Walks
+  /// the TextField's RenderObject subtree to find the underlying
+  /// `RenderEditable`, then returns the local-space caret rect at
+  /// [charIndex]. Returns null when:
+  ///   - the field hasn't laid out yet (no RenderBox),
+  ///   - the descendant walk doesn't find a RenderEditable (shouldn't
+  ///     happen for a regular TextField but defensive),
+  ///   - or [charIndex] is out of range relative to the current text.
+  /// The overlay drops those entries silently instead of painting an
+  /// off-screen chiclet.
+  Rect? _remoteCursorRectAt(int charIndex) {
+    if (charIndex < 0) return null;
+    final maxLen = _controller.text.length;
+    if (charIndex > maxLen) return null;
+    final fieldBox =
+        _fieldKey.currentContext?.findRenderObject() as RenderBox?;
+    if (fieldBox == null) return null;
+    RenderEditable? editable;
+    void visit(RenderObject node) {
+      if (editable != null) return;
+      if (node is RenderEditable) {
+        editable = node;
+        return;
+      }
+      node.visitChildren(visit);
+    }
+    fieldBox.visitChildren(visit);
+    if (editable == null) return null;
+    return editable!.getLocalRectForCaret(TextPosition(offset: charIndex));
   }
 
   Rect? _caretRect() {
@@ -2394,6 +2426,17 @@ class _SourceViewState extends State<SourceView> {
                 _slashTriggerStart = null;
                 _slash.dismiss();
               },
+            ),
+          ),
+          // H4d-iii-c — peer-cursor chiclets overlay. The
+          // EditorSyncWsMount in editor_page wraps SourceView in
+          // a BlocProvider<PresenceCubit>, so the overlay finds
+          // it via BlocBuilder without further wiring. The rect
+          // resolver pulls from this field's RenderEditable so
+          // chiclets paint in the same coordinate space.
+          Positioned.fill(
+            child: RemoteCursorOverlay(
+              cursorRectAt: _remoteCursorRectAt,
             ),
           ),
         ],
