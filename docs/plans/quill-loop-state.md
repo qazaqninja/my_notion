@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 2 — add **FormFieldType.multi (multi-select)** to the backend forms layer mirroring the M1479 date pattern. Steps: (1) extend enum `FormFieldType { ..., date, multi }`; (2) `_parseType` accepts `'multi'` + `'multi_select'` + `'multiselect'`; (3) `validateSubmission` for multi takes a comma-separated string OR honors application/x-www-form-urlencoded's repeated key shape (each value in raw values must be ∈ field.options) and normalizes to `List<String>`; (4) renderer emits `<select multiple>` or N `<input type="checkbox">` per option (cleaner — checkboxes don't need JS to surface selected list back to form submission); (5) error code `not_in_options` (reuse from select); (6) tests parallel to M1479's date sub-group. After this, candidates: **person** type (deterministic to render but auth-coupled), **G4 docker-compose smoke** (the verification-as-feature option that hasn't moved). Stay on forms polish for one more slice unless test infrastructure blocks.
+- **Task:** Forms polish slice 3 — backend infra cleanup OR person/relation type. Two candidates: **(a) Backend LT-01 + TS-02 cleanup** — swap `backend/analysis_options.yaml` from `lints/recommended.yaml` to `package:very_good_analysis/analysis_options.yaml`; add `very_good_analysis` + `mocktail` to `backend/pubspec.yaml` dev_dependencies. Confirmed deferred at M1479 + M1482; backend now carries 192 tests across 13+ files so the lint baseline matters. Pure infra slice — touches pubspec + analysis_options + maybe one .pub-cache resolve, plus whatever lint findings the new baseline surfaces (fix-forward in the same commit). **(b) FormFieldType.person** — needs auth-side wiring to look up users by id for option enumeration, more couple to the workspace user model. Recommend (a) for this slice — clears the orchestrator's standing WARNs across the backend and unblocks cleaner subsequent forms work. After (a), the person/relation types are next; if (a) surfaces too many cascading lint fixes for one slice, split into (a-i) include swap + (a-ii) fix the resulting findings.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,21 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1483 — TS-01 + doc fix-forward on M1482 multi-select** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 150 (rolls into multi-select fix-forward)
+- Notes: Orchestrator audit of M1482 returned 0 BLOCK / 3 WARN / 2 INFO. 2 actionable fixes: (1) TS-01 — renamed `_parseForm` to `parseUrlEncodedForm` (public) so the new repeated-key join contract can be unit-tested directly without standing up a route handler. New `backend/test/forms/parse_url_encoded_form_test.dart` (~75 lines, 10 tests across 3 sub-groups: single-key happy path, repeated-key join including the comma-in-value known limitation, malformed input handling). (2) Doc drift — updated `FormFieldDef.options` doc to mention FormFieldType.multi (was "only populated for select"). The third pre-existing WARN (LT-01 very_good_analysis backend swap + TS-02 mocktail) re-confirmed as deferred. 192 backend tests pass; dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1482 — forms polish slice 2 (multi-select)** (FormFieldType.multi end-to-end)
+- Committed: (this iteration)
+- TaskList ID: 150
+- Notes: Mirrors M1479's date pattern for many-of selection. `backend/lib/forms/routes.dart`: `_parseForm` (renamed `parseUrlEncodedForm` in M1483) changed from "repeated keys collapse to last" to "repeated keys join with `,`" — enables checkbox-group submission. Single-value fields degrade gracefully. `backend/lib/forms/form_schema.dart`: new `FormFieldType.multi` enum; `_parseType` accepts 'multi'/'multi_select'/'multiselect'; `validateSubmission` for multi splits on `,`, trims each, validates each ∈ options, normalizes to List<String>. `backend/lib/forms/render_form_html.dart`: new multi case emits `<fieldset><legend>` + N `<input type="checkbox">` per option; `required` deliberately omitted from boxes (browser would force ALL checked — server-side gate is canonical). 9 tests added to form_schema_test (3 alias parses, valid join, bad pick error, whitespace trim, required/optional missing, single pick). 3 tests added to render_form_html_test (fieldset+legend+checkboxes, required NOT on boxes, options HTML-escaped). 182 tests passed at gate-time, then M1483 added 10 more for 192. Orchestrator audit: 0 BLOCK / 3 WARN (2 pre-existing backend-infra deferrals re-confirmed; TS-01 _parseForm coverage gap — fixed M1483) / 2 INFO (1 doc drift on FormFieldDef.options — fixed M1483; 1 confirmation on omitted-required UX rationale). Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1481 — loop-state advance** (record M1479/M1480 + advance to forms polish slice 2)
+- Committed: (this iteration)
+- TaskList ID: 149 closeout
+- Notes: Recorded M1479 (date type) + M1480 (TS-04 rename fix-forward). Advanced **Current** pointer to forms polish slice 2 (multi-select). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1480 — TS-04 group-rename fix-forward on M1479 date tests** (orchestrator gate cleanup)
 - Committed: (this iteration)
