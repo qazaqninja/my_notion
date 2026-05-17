@@ -7,10 +7,25 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E59-b — Presence over WebSocket: surface other-users' cursors in the editor via the existing SyncWsClient channel. Phase H2.4 series already shipped the per-page CRDT update plumbing (EditorWsAttachController + EditorSyncWsMount + SyncWsBinder); presence adds a sibling "awareness" message piggybacked on the same WS connection. First slice: backend awareness broadcast endpoint (or extension of the existing sub endpoint) that fans out `{userId, cursorOffset, color}` events to all peers subscribed to the same pageUlid. Tracker fields: pageUlid, userId, cursorIndex, color (deterministic from userId hash). Path: `backend/lib/ws/awareness_hub.dart` (new) + extension of the existing per-page hub. Recommend bite-sizing as: H4a (backend awareness DTO + broadcast), H4b (Flutter PresenceState + cubit), H4c (editor cursor overlay widget), H4d (integration through EditorSyncWsScope). This iteration: H4a only.
+- **Task:** E59-b H4b — Flutter PresenceState + presence_cubit. Pairs with the M1448 backend AwarenessMessage DTO. Cubit holds `Map<userId, AwarenessMessage>` for the currently-open page; events: `RemoteCursorReceived(msg)` from the WS dispatcher updates the entry, `RemoteCursorTimedOut(userId)` (300ms after the most-recent message per user) removes it. Local cursor changes broadcast outbound via the existing SyncWsBinder.sink. Path: `lib/features/sync/presentation/cubit/presence_cubit.dart` + test mirror. The Flutter side needs its own copy of AwarenessMessage (or import it from backend — but backend isn't a shared dep). Pragmatic: vendor the DTO into `lib/features/sync/domain/entities/awareness_message.dart` with identical wire shape so encode/decode round-trips cross the network. H4c (overlay widget) and H4d (EditorSyncWsScope wiring) come after.
 - **Status:** pending
 
 ## Last completed
+
+- **M1449 — TS-04 fix-forward on M1448 awareness_message tests** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 138 (rolls into H4a fix-forward)
+- Notes: Orchestrator audit of M1448 returned 0 BLOCK / 1 WARN / 3 INFO. 1 actionable INFO fixed: "differs in any field" inequality test only covered userId + cursorIndex deltas (2 of 4 == fields). Extended to also cover pageUlid + color deltas so test surface matches the ==/hashCode contract. Non-actionable: WARN MD-02 (backend serialization-strategy decision — process gap, not a defect, deferred); INFO TS-04 group naming (orchestrator "minor, no action required"); INFO Q2 fromJson vs tryDecode dual entry confirmed convention-compliant. 12/12 still pass; dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1448 — E59-b H4a: AwarenessMessage wire DTO** (first slice of presence-over-WebSocket)
+- Committed: (this iteration)
+- TaskList ID: 138
+- Notes: First slice of presence-over-WebSocket. New `backend/lib/sync/awareness_message.dart` (~110 lines): wire DTO with fields {userId, pageUlid, cursorIndex (int), color (hex)}; kind discriminator constant `'awareness'` paired with the existing CRDT `'update'` path; `toJson()` + `encode()` (JSON string ready for hub.broadcast); `factory fromJson(Map)` strict (FormatException on wrong/missing kind or wrong-typed required field); `static tryDecode(String raw)` fall-through (returns null on malformed/non-object/kind-mismatch/missing-field, so H4b dispatcher can pass non-awareness messages on to CRDT update handler); hand-rolled operator == + hashCode via Object.hash (no equatable dep on backend); toString for debug. New `backend/test/awareness_message_test.dart` (~165 lines after M1449 extension): 12 tests across 4 sub-groups per TS-04 — round-trip (2), fromJson validation (4: wrong kind / missing kind / missing field / non-int cursorIndex), tryDecode fall-through (4: malformed JSON / non-object JSON / kind mismatch / missing fields), equality+hashCode (2, M1449 extended to all 4 field deltas). WsHub stays opaque — AwarenessMessage lives at the wire-format layer; clients encode/decode around hub.broadcast(payload: String). Orchestrator audit: 0 BLOCK / 1 WARN (MD-02 process-gap, deferred) / 3 INFO (1 TS-04 coverage gap fixed in M1449, 2 informational answering open questions). dart analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1447 — loop-state advance** (record M1446 + advance to E59-b H4a)
+- Committed: (this iteration)
+- TaskList ID: 137 closeout
+- Notes: Recorded M1446 (WorkspaceNameField double-commit fix via _committing guard). Advanced **Current** pointer to E59-b H4a (backend awareness DTO). Sliced the presence feature into H4a/H4b/H4c/H4d. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1446 — E59-a: fix WorkspaceNameField double-commit on Enter** (latent bug closeout from M1437)
 - Committed: (this iteration)
