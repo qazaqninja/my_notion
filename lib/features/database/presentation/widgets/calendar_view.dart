@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -309,7 +310,7 @@ class _DayPageRowState extends State<_DayPageRow> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
-        onTap: () => context.go('/editor/${r.ulid}'),
+        onTap: () => context.go(Routes.editor(r.ulid)),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           margin: const EdgeInsets.only(bottom: 6),

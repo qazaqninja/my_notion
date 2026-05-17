@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -330,7 +331,7 @@ class _CardState extends State<_Card> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
-        onTap: () => context.go('/editor/${row.ulid}'),
+        onTap: () => context.go(Routes.editor(row.ulid)),
         child: Container(
           decoration: BoxDecoration(
             color: _hover ? tokens.surface2 : tokens.surface,

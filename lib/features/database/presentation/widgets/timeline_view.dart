@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -354,7 +355,7 @@ class _RowState extends State<_Row> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
-        onTap: () => context.go('/editor/${row.ulid}'),
+        onTap: () => context.go(Routes.editor(row.ulid)),
         child: Container(
         height: TimelineView._rowH,
         decoration: BoxDecoration(

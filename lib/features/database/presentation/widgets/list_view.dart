@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
 import '../../../../shared/widgets/quill_icon.dart';
@@ -190,7 +191,7 @@ class _RowState extends State<_Row> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
-        onTap: () => context.go('/editor/${row.ulid}'),
+        onTap: () => context.go(Routes.editor(row.ulid)),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 7),
           decoration: BoxDecoration(

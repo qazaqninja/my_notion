@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -269,7 +270,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                   sub: 'New ULID: $newUlid',
                   subMono: true);
             }
-            router.go('/editor/$newUlid');
+            router.go(Routes.editor(newUlid));
           },
         ));
   }
@@ -494,7 +495,7 @@ class _DatabaseTablePageState extends State<DatabaseTablePage> {
                   ViewType.table => FrozenColumnTable(
                       schema: viewSchema,
                       rows: filtered,
-                      onOpenPage: (row) => context.go('/editor/${row.ulid}'),
+                      onOpenPage: (row) => context.go(Routes.editor(row.ulid)),
                       onEditCell: schema.locked ? null : _editCell,
                       onCreateRow: schema.locked ? null : _createRow,
                       onDuplicateRow: schema.locked ? null : _duplicateRow,

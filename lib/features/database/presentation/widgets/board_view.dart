@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/routing/routes.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tag_colors.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -229,7 +230,7 @@ class _CardState extends State<_Card> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
-        onTap: () => context.go('/editor/${row.ulid}'),
+        onTap: () => context.go(Routes.editor(row.ulid)),
         child: Container(
           padding: const EdgeInsets.fromLTRB(10, 9, 10, 9),
           decoration: BoxDecoration(
