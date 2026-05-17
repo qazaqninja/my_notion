@@ -1,7 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
+import '../../domain/block_selection.dart';
 import '../../domain/heading_conversion.dart';
+import '../../domain/multi_block_ops.dart';
 
 /// Pure-Dart key-event parser for the heading-conversion shortcut.
 /// Returns the target [HeadingLevel] iff the event matches
@@ -64,5 +66,36 @@ ExecutionInstruction headingConversionKeyboardAction({
       blockType: conv.blockType,
     ),
   ]);
+  return ExecutionInstruction.haltExecution;
+}
+
+/// D25 slice 5b (M1606): when [blockSelection] is non-empty, apply
+/// the heading conversion to every selected paragraph in one batch.
+/// Otherwise falls through to [headingConversionKeyboardAction]'s
+/// single-block path.
+ExecutionInstruction headingConversionKeyboardActionWithSelection({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+  required BlockSelection blockSelection,
+}) {
+  if (blockSelection.isEmpty) {
+    return headingConversionKeyboardAction(
+      editContext: editContext,
+      keyEvent: keyEvent,
+    );
+  }
+  final target = parseHeadingConversionKey(
+    keyEvent: keyEvent,
+    isAltPressed: HardwareKeyboard.instance.isAltPressed,
+    isPrimaryShortcutPressed: keyEvent.isPrimaryShortcutKeyPressed,
+  );
+  if (target == null) return ExecutionInstruction.continueExecution;
+  final requests = applyHeadingToSelection(
+    selection: blockSelection,
+    document: editContext.document,
+    target: target,
+  );
+  if (requests.isEmpty) return ExecutionInstruction.continueExecution;
+  editContext.editor.execute(requests);
   return ExecutionInstruction.haltExecution;
 }

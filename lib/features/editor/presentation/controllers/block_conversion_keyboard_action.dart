@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../domain/block_conversion.dart';
+import '../../domain/block_selection.dart';
+import '../../domain/multi_block_ops.dart';
 
 /// Pure-Dart key-event parser for the list/todo conversion shortcut.
 /// Returns the target [BlockConversion] iff the event matches
@@ -70,6 +72,38 @@ ExecutionInstruction blockConversionKeyboardAction({
     target: conv.target,
   );
   if (requests == null) return ExecutionInstruction.continueExecution;
+  editContext.editor.execute(requests);
+  return ExecutionInstruction.haltExecution;
+}
+
+/// D25 slice 5b (M1606): when [blockSelection] is non-empty, apply
+/// the list/todo conversion to every selected node in one batch
+/// (each node converted via its own type-aware dispatch).
+/// Otherwise falls through to [blockConversionKeyboardAction]'s
+/// single-block path.
+ExecutionInstruction blockConversionKeyboardActionWithSelection({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+  required BlockSelection blockSelection,
+}) {
+  if (blockSelection.isEmpty) {
+    return blockConversionKeyboardAction(
+      editContext: editContext,
+      keyEvent: keyEvent,
+    );
+  }
+  final target = parseBlockConversionKey(
+    keyEvent: keyEvent,
+    isShiftPressed: HardwareKeyboard.instance.isShiftPressed,
+    isPrimaryShortcutPressed: keyEvent.isPrimaryShortcutKeyPressed,
+  );
+  if (target == null) return ExecutionInstruction.continueExecution;
+  final requests = applyBlockConversionToSelection(
+    selection: blockSelection,
+    document: editContext.document,
+    target: target,
+  );
+  if (requests.isEmpty) return ExecutionInstruction.continueExecution;
   editContext.editor.execute(requests);
   return ExecutionInstruction.haltExecution;
 }

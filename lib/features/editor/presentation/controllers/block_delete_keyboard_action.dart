@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:super_editor/super_editor.dart';
 
 import '../../domain/block_delete.dart';
+import '../../domain/block_selection.dart';
+import '../../domain/multi_block_ops.dart';
 
 /// Pure-Dart key-event parser for the block-delete shortcut. Returns
 /// `true` iff the event matches Cmd+Shift+Backspace (Ctrl+Shift on
@@ -62,5 +64,46 @@ ExecutionInstruction blockDeleteKeyboardAction({
   editContext.editor.execute([
     DeleteNodeRequest(nodeId: del.nodeId),
   ]);
+  return ExecutionInstruction.haltExecution;
+}
+
+/// D25 slice 5b (M1606): when [blockSelection] is non-empty, delete
+/// every selected block in one batch. Otherwise falls through to
+/// [blockDeleteKeyboardAction]'s single-block path so the existing
+/// caret-only behaviour is preserved.
+///
+/// Last-node guard: refuses when the selection covers ALL nodes in
+/// the document (super_editor doesn't allow an empty document).
+///
+/// Coverage exemption inherits from [blockDeleteKeyboardAction] —
+/// the multi-block branch is a thin wrapper over the M1604
+/// `deleteSelectedBlocks` helper (3 unit tests) + a node-count guard.
+ExecutionInstruction blockDeleteKeyboardActionWithSelection({
+  required SuperEditorContext editContext,
+  required KeyEvent keyEvent,
+  required BlockSelection blockSelection,
+}) {
+  if (blockSelection.isEmpty) {
+    return blockDeleteKeyboardAction(
+      editContext: editContext,
+      keyEvent: keyEvent,
+    );
+  }
+  final isMatch = parseBlockDeleteKey(
+    keyEvent: keyEvent,
+    isShiftPressed: HardwareKeyboard.instance.isShiftPressed,
+    isPrimaryShortcutPressed: keyEvent.isPrimaryShortcutKeyPressed,
+  );
+  if (!isMatch) return ExecutionInstruction.continueExecution;
+  if (blockSelection.size >= editContext.document.nodeCount) {
+    // Refuse to empty the document.
+    return ExecutionInstruction.continueExecution;
+  }
+  final requests = deleteSelectedBlocks(
+    selection: blockSelection,
+    document: editContext.document,
+  );
+  if (requests.isEmpty) return ExecutionInstruction.continueExecution;
+  editContext.editor.execute(requests);
   return ExecutionInstruction.haltExecution;
 }

@@ -332,9 +332,30 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
               keyboardActions: [
                 blockReorderKeyboardAction,
                 blockDuplicateKeyboardAction,
-                blockDeleteKeyboardAction,
-                headingConversionKeyboardAction,
-                blockConversionKeyboardAction,
+                // D25 slice 5b (M1606): closure-bind cubit state so
+                // delete/heading/conversion ops act on the whole
+                // multi-block selection when non-empty. Re-reads cubit
+                // each fire so the user gets fresh state. Reorder +
+                // duplicate stay single-block in v1 (non-contiguous
+                // semantics deferred).
+                ({required editContext, required keyEvent}) =>
+                    blockDeleteKeyboardActionWithSelection(
+                  editContext: editContext,
+                  keyEvent: keyEvent,
+                  blockSelection: context.read<BlockSelectionCubit>().state,
+                ),
+                ({required editContext, required keyEvent}) =>
+                    headingConversionKeyboardActionWithSelection(
+                  editContext: editContext,
+                  keyEvent: keyEvent,
+                  blockSelection: context.read<BlockSelectionCubit>().state,
+                ),
+                ({required editContext, required keyEvent}) =>
+                    blockConversionKeyboardActionWithSelection(
+                  editContext: editContext,
+                  keyEvent: keyEvent,
+                  blockSelection: context.read<BlockSelectionCubit>().state,
+                ),
                 ...defaultKeyboardActions,
               ],
             ),
