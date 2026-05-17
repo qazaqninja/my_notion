@@ -23,6 +23,8 @@ import '../../../../core/ui/anchor_rect.dart';
 import '../../../../core/ui/anchor_rect_x.dart';
 import '../../domain/attachment_writer.dart';
 import '../../domain/block_selection_gesture.dart';
+import '../../domain/document_search.dart';
+import '../../domain/find_in_page_navigation.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
@@ -45,6 +47,7 @@ import '../controllers/superscript_autoformat_reaction.dart';
 import '../cubit/block_selection_cubit.dart';
 import '../cubit/slash_menu_cubit.dart';
 import '../widgets/block_selection_overlay.dart';
+import '../widgets/find_bar.dart';
 import '../widgets/slash_menu_overlay.dart';
 
 /// Beta WYSIWYG editor route powered by `super_editor` (Phase D / D1 slice 23
@@ -176,6 +179,16 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   /// off the document doesn't change the anchor).
   String? _lastClickedBlockNodeId;
 
+  /// D-fp4 slice 3b (M1634): Find-in-page state. `_findBarVisible`
+  /// toggles whether the [FindBar] mounts at the bottom of the body
+  /// Column; the controller / focus node back the bar's TextField;
+  /// `_findCursor` tracks the active match list + index. All state
+  /// is owned by this State so the bar widget can stay stateless.
+  bool _findBarVisible = false;
+  final TextEditingController _findController = TextEditingController();
+  final FocusNode _findFocusNode = FocusNode();
+  MatchCursor _findCursor = MatchCursor.empty();
+
   @override
   void initState() {
     super.initState();
@@ -213,6 +226,8 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     _session.reset();
     _composer.dispose();
     _doc.dispose();
+    _findController.dispose();
+    _findFocusNode.dispose();
     super.dispose();
   }
 
@@ -315,6 +330,75 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         duration: Duration(seconds: 2),
       ),
     );
+  }
+  // coverage:ignore-end
+
+  /// D-fp4 slice 3b (M1634): toggle the Find-in-page bar. On open,
+  /// requests focus on the bar's TextField after the next frame so
+  /// the user can start typing immediately. On close, clears the
+  /// query + resets the cursor — mirrors editor_page.dart's M85
+  /// behaviour at editor_page.dart:1989.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// state-setter + post-frame focus. Same M1571 pattern as the
+  /// other D-fp parity ports.
+  // coverage:ignore-start
+  void _toggleFindBar() {
+    setState(() {
+      _findBarVisible = !_findBarVisible;
+      if (!_findBarVisible) {
+        _findController.clear();
+        _findCursor = MatchCursor.empty();
+      }
+    });
+    if (_findBarVisible) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _findFocusNode.requestFocus();
+      });
+    }
+  }
+  // coverage:ignore-end
+
+  /// D-fp4 slice 3b (M1634): re-run `findMatches` against the current
+  /// document, build a fresh `MatchCursor`, and dispatch the
+  /// `selectionRequestForMatch` for the first match (when any). Pure
+  /// orchestration over M1627's `findMatches` + M1629's `MatchCursor` +
+  /// `selectionRequestForMatch`, all separately unit-tested.
+  // coverage:ignore-start
+  void _onFindQueryChanged(String query) {
+    final matches = findMatches(document: _doc, query: query);
+    final cursor = MatchCursor.initial(matches);
+    setState(() => _findCursor = cursor);
+    final current = cursor.current;
+    if (current != null) {
+      _editor.execute([selectionRequestForMatch(current)]);
+    }
+  }
+  // coverage:ignore-end
+
+  /// D-fp4 slice 3b (M1634): step to the next match, wrap from last
+  /// back to first per `MatchCursor.next` (Notion/VSCode convention).
+  // coverage:ignore-start
+  void _onFindNext() {
+    final advanced = _findCursor.next();
+    setState(() => _findCursor = advanced);
+    final current = advanced.current;
+    if (current != null) {
+      _editor.execute([selectionRequestForMatch(current)]);
+    }
+  }
+  // coverage:ignore-end
+
+  /// D-fp4 slice 3b (M1634): step to the previous match, wrap from
+  /// first back to last per `MatchCursor.previous`.
+  // coverage:ignore-start
+  void _onFindPrev() {
+    final advanced = _findCursor.previous();
+    setState(() => _findCursor = advanced);
+    final current = advanced.current;
+    if (current != null) {
+      _editor.execute([selectionRequestForMatch(current)]);
+    }
   }
   // coverage:ignore-end
 
@@ -471,6 +555,14 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
                   )
                 : const SizedBox.shrink(),
           ),
+          // D-fp4 slice 3b (M1634): Find-in-page toggle. The bar mounts
+          // at the bottom of the body Column when active (next to the
+          // Stack that hosts SuperEditor + overlays).
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'Find in page',
+            onPressed: _toggleFindBar,
+          ),
           // D-fp3 (M1625): port Share-via-OS-sheet from legacy
           // editor_page.dart:1344 _sharePage. Same try-XFile-then-fall-back-
           // to-text strategy.
@@ -501,40 +593,61 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       // the cubit's anchorRect. The overlay's onPick handler is a stub
       // (`dismiss + log`) for now — slice 2g-b adds the
       // selection-splice command that mutates the document.
-      body: Stack(
+      //
+      // D-fp4 slice 3b (M1634): wrap the Stack in a Column so the
+      // FindBar can attach below the editor when active. Stack stays
+      // inside an Expanded so it fills the remaining body height.
+      body: Column(
         children: [
-          Listener(
-            onPointerDown: _onPointerDown,
-            child: SuperEditor(
-              editor: _editor,
-              documentLayoutKey: _docLayoutKey,
-              // D24a slice 2 (M1570): prepend the block-reorder shortcut so
-              // Cmd+Shift+ArrowUp/Down moves the active block before
-              // super_editor's default arrow-key selection-move fires.
-              keyboardActions: [
-                blockReorderKeyboardAction,
-                blockDuplicateKeyboardAction,
-                // D25 slice 5b (M1606 + M1607 DI-04 fix-forward):
-                // named-method handlers so the cubit lookup happens
-                // inside the callback body, not in the closure literal
-                // inside `build` (DI-04). Reorder + duplicate stay
-                // single-block in v1 (non-contiguous semantics
-                // deferred).
-                _multiBlockDeleteAction,
-                _multiHeadingConversionAction,
-                _multiBlockConversionAction,
-                ...defaultKeyboardActions,
+          Expanded(
+            child: Stack(
+              children: [
+                Listener(
+                  onPointerDown: _onPointerDown,
+                  child: SuperEditor(
+                    editor: _editor,
+                    documentLayoutKey: _docLayoutKey,
+                    // D24a slice 2 (M1570): prepend the block-reorder shortcut so
+                    // Cmd+Shift+ArrowUp/Down moves the active block before
+                    // super_editor's default arrow-key selection-move fires.
+                    keyboardActions: [
+                      blockReorderKeyboardAction,
+                      blockDuplicateKeyboardAction,
+                      // D25 slice 5b (M1606 + M1607 DI-04 fix-forward):
+                      // named-method handlers so the cubit lookup happens
+                      // inside the callback body, not in the closure literal
+                      // inside `build` (DI-04). Reorder + duplicate stay
+                      // single-block in v1 (non-contiguous semantics
+                      // deferred).
+                      _multiBlockDeleteAction,
+                      _multiHeadingConversionAction,
+                      _multiBlockConversionAction,
+                      ...defaultKeyboardActions,
+                    ],
+                  ),
+                ),
+                // D25 slice 4a (M1600): paint the Notion-style multi-block
+                // selection highlight behind the document content. Gesture
+                // wiring to actually mutate the cubit ships in slice 4b.
+                BlockSelectionOverlay(rectForNode: _rectForBlockNode),
+                SlashMenuOverlay(
+                  onPick: _onSlashEntryPicked,
+                  onDismiss: () => context.read<SlashMenuCubit>().dismiss(),
+                ),
               ],
             ),
           ),
-          // D25 slice 4a (M1600): paint the Notion-style multi-block
-          // selection highlight behind the document content. Gesture
-          // wiring to actually mutate the cubit ships in slice 4b.
-          BlockSelectionOverlay(rectForNode: _rectForBlockNode),
-          SlashMenuOverlay(
-            onPick: _onSlashEntryPicked,
-            onDismiss: () => context.read<SlashMenuCubit>().dismiss(),
-          ),
+          if (_findBarVisible)
+            FindBar(
+              controller: _findController,
+              focusNode: _findFocusNode,
+              matches: _findCursor.count,
+              cursor: _findCursor.isEmpty ? 0 : _findCursor.index + 1,
+              onChanged: _onFindQueryChanged,
+              onPrev: _onFindPrev,
+              onNext: _onFindNext,
+              onClose: _toggleFindBar,
+            ),
         ],
       ),
     );
