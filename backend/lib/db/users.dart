@@ -10,8 +10,14 @@ import 'package:ulid/ulid.dart';
 /// Extends `DbException` (F7) so `runDb` passes it through untouched
 /// instead of re-wrapping it as `DbUnavailableException`.
 class EmailAlreadyTakenException extends DbException {
+  /// Construct an email-taken exception for [email]. The auth route
+  /// maps this to a 409 response.
   const EmailAlreadyTakenException(this.email) : super('email_taken');
+
+  /// Email address the caller tried to register. Logged server-side,
+  /// not surfaced over the wire.
   final String email;
+
   @override
   String toString() => 'EmailAlreadyTakenException: $email';
 }
@@ -20,15 +26,28 @@ class EmailAlreadyTakenException extends DbException {
 /// interface so tests can plug in a FakeUserRepository without
 /// constructing a real postgres connection.
 abstract class UserRepositoryBase {
+  /// Insert a new user. Throws [EmailAlreadyTakenException] if [email]
+  /// already exists (Postgres unique violation 23505 → typed throw).
   Future<User> create({required String email, required String passwordHash});
+
+  /// Fetch a user by ULID, or `null` if no row matches.
   Future<User?> findById(String id);
+
+  /// Fetch a user by email (case-sensitive — routes lowercase upstream),
+  /// or `null` if no row matches.
   Future<User?> findByEmail(String email);
+
+  /// Fetch the stored bcrypt password hash for [email], or `null` if no
+  /// row matches. Used by the auth route's verify step before issuing
+  /// a JWT.
   Future<String?> passwordHashOf(String email);
 }
 
 /// Postgres-backed implementation. Wraps the raw connection so callers
 /// (auth route handlers, session middleware) don't hand-craft SQL.
 class UserRepository implements UserRepositoryBase {
+  /// Construct the Postgres-backed repo over [_conn]. Caller owns the
+  /// connection lifecycle.
   const UserRepository(this._conn);
 
   final Connection _conn;

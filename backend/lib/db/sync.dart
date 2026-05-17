@@ -6,7 +6,11 @@ import 'package:postgres/postgres.dart';
 /// Result of `upsert` — either the new persisted summary, or a
 /// conflict-with-the-current-server-state when `ifMatch` didn't match.
 class UpsertOutcome {
+  /// Construct a success outcome carrying the persisted [summary].
   const UpsertOutcome.persisted(this.summary) : conflict = null;
+
+  /// Construct a conflict outcome carrying the server's current
+  /// [conflict] summary so the client can reconcile.
   const UpsertOutcome.conflict(this.conflict) : summary = null;
 
   /// Persisted summary on success, null on conflict.
@@ -16,6 +20,8 @@ class UpsertOutcome {
   /// reconcile by fetching this version. null on success.
   final FileSummary? conflict;
 
+  /// True iff this outcome carries a conflict (write rejected by the
+  /// `If-Match` preflight).
   bool get isConflict => conflict != null;
 }
 
@@ -23,6 +29,8 @@ class UpsertOutcome {
 /// this interface so tests can plug in `_FakeSync` without a real
 /// connection (same pattern as `UserRepositoryBase`).
 abstract class SyncRepositoryBase {
+  /// List per-file summaries (relpath / sha256 / mtime) owned by
+  /// [userId]. Ordered by relpath ascending.
   Future<List<FileSummary>> listFor(String userId);
 
   /// Upsert one file with optional optimistic-concurrency preflight via
@@ -59,7 +67,13 @@ abstract class SyncRepositoryBase {
   });
 }
 
+/// Postgres-backed implementation of [SyncRepositoryBase]. Wraps the
+/// raw connection so callers (sync route handlers) don't hand-craft
+/// SQL; runs every method body through [runDb] so transient transport
+/// failures surface as typed [DbUnavailableException].
 class SyncRepository implements SyncRepositoryBase {
+  /// Construct the Postgres-backed repo over [_conn]. Caller owns the
+  /// connection lifecycle.
   const SyncRepository(this._conn);
   final Connection _conn;
 

@@ -7,9 +7,18 @@ import 'package:shelf/shelf.dart';
 /// `package:postgres` errors should never escape a repo method (closes
 /// the RP-03 / Phase-E-audit deferred item).
 class DbException implements Exception {
+  /// Construct an exception with a human-readable [message] and an
+  /// optional [cause] (typically the original `package:postgres` error).
   const DbException(this.message, {this.cause});
+
+  /// Short, route-safe description of the failure (e.g. `'users.findById
+  /// failed: …'`). Surfaced verbatim in the 503 JSON body's `op` field.
   final String message;
+
+  /// Original error object — usually a `PgException` — preserved for
+  /// server-side logging. Not surfaced over the wire.
   final Object? cause;
+
   @override
   String toString() => 'DbException: $message';
 }
@@ -18,6 +27,8 @@ class DbException implements Exception {
 /// transient lock contention, etc. Maps to HTTP 503 at the route
 /// layer.
 class DbUnavailableException extends DbException {
+  /// Construct an unavailable-DB exception. Forwarded args match
+  /// [DbException]'s shape so `runDb` can rewrap any throw with one call.
   const DbUnavailableException(super.message, {super.cause});
 }
 
