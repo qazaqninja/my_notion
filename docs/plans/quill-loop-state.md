@@ -7,10 +7,25 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E59-b H4b — Flutter PresenceState + presence_cubit. Pairs with the M1448 backend AwarenessMessage DTO. Cubit holds `Map<userId, AwarenessMessage>` for the currently-open page; events: `RemoteCursorReceived(msg)` from the WS dispatcher updates the entry, `RemoteCursorTimedOut(userId)` (300ms after the most-recent message per user) removes it. Local cursor changes broadcast outbound via the existing SyncWsBinder.sink. Path: `lib/features/sync/presentation/cubit/presence_cubit.dart` + test mirror. The Flutter side needs its own copy of AwarenessMessage (or import it from backend — but backend isn't a shared dep). Pragmatic: vendor the DTO into `lib/features/sync/domain/entities/awareness_message.dart` with identical wire shape so encode/decode round-trips cross the network. H4c (overlay widget) and H4d (EditorSyncWsScope wiring) come after.
+- **Task:** E59-b H4c — RemoteCursorOverlay widget for the editor. Takes a `PresenceState` and paints one chiclet per active peer cursor at the correct character offset in the source-mode textarea. Uses the existing `RenderEditable` to translate `cursorIndex → caret rect`, then positions an `AnimatedPositioned` colored bar + small label tag near it. Path: `lib/features/editor/presentation/widgets/remote_cursor_overlay.dart` + golden test via alchemist for the 2-peer case. State-free widget consuming PresenceCubit via `BlocBuilder<PresenceCubit, PresenceState>`. H4d (EditorSyncWsScope dispatcher wiring + outbound cursor broadcast) closes the loop after.
 - **Status:** pending
 
 ## Last completed
+
+- **M1452 — CA-05+BL-12 doc fix-forward on M1451 presence layer** (orchestrator gate cleanup)
+- Committed: (this iteration)
+- TaskList ID: 139 (rolls into H4b fix-forward)
+- Notes: Orchestrator audit of M1451 returned 0 BLOCK / 2 WARN / 3 INFO. WARN 1 (CA-05/MD-01 — domain entity carries wire serialization) addressed via tracking comment in the class docstring referencing H4d as the natural seam for entity↔DTO split — orchestrator's own guidance said "lowest risk to defer." WARN 2 (CA-01 borderline flutter_bloc) — orchestrator classified as compliant, no action. INFO 1 (BL-12 stale `_expire` docstring) fixed: the comment said "Public so..." but the method is private. Rewrote to match actual visibility with explicit "promotion deferred until H4d awareness-leave envelope." INFO 2 (TS-04 TTL-restart positive assertion) and INFO 3 (TS-03 close-group test()) deferred per orchestrator's "optional" / "no action required" classifications. 19/19 tests pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1451 — E59-b H4b: Flutter PresenceCubit + AwarenessMessage DTO mirror** (second slice of presence-over-WS)
+- Committed: (this iteration)
+- TaskList ID: 139
+- Notes: Second slice of E59-b. Four new files (~525 lines): (1) `lib/features/sync/domain/entities/awareness_message.dart` — Equatable-based mirror of the M1448 backend DTO; identical wire JSON shape so encode/decode round-trips across the per-page WS sub channel; factory fromJson + static tryDecode (returns null for H4d dispatcher fall-through). Differs from backend's hand-rolled ==/hashCode because equatable is already a project transitive dep. (2) `lib/features/sync/presentation/cubit/presence_cubit.dart` — PresenceState holds Map<userId, AwarenessMessage>; remoteCursorReceived upserts + restarts per-user 5-second TTL Timer; clear() resets on page navigation + cancels timers; close() drains pending timers so late callbacks don't call emit after dispose. Uses flutter_bloc per project's depend_on_referenced_packages lint. (3) `test/features/sync/awareness_message_test.dart` — 10 tests, 4 sub-groups mirroring backend test, equality covers all 4 field deltas. (4) `test/features/sync/presence_cubit_test.dart` — 9 bloc_test cases, 5 sub-groups (initial state / remoteCursorReceived upsert+coexist+replace / TTL expiry / clear / close drains timers). File-level `// ignore_for_file: unnecessary_lambdas` on the cubit test with rationale comment since blocTest `act:` closures capture local fixtures. Orchestrator audit: 0 BLOCK / 2 WARN (CA-05 entity-vs-DTO addressed via M1452 doc comment; CA-01 borderline OK) / 3 INFO (BL-12 stale `_expire` docstring fixed in M1452; TS-04 + TS-03 deferred). 19/19 pass; flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1450 — loop-state advance** (record M1448/M1449 + advance to H4b)
+- Committed: (this iteration)
+- TaskList ID: 138 closeout
+- Notes: Recorded M1448 (H4a backend AwarenessMessage DTO) + M1449 (TS-04 inequality coverage extension). Advanced **Current** pointer to H4b. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1449 — TS-04 fix-forward on M1448 awareness_message tests** (orchestrator gate cleanup)
 - Committed: (this iteration)
