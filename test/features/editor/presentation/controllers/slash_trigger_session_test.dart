@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/editor/presentation/controllers/slash_trigger_session.dart';
 
 void main() {
-  group('SlashTriggerSession lifecycle', () {
+  group('SlashTriggerSession', () {
     late SlashTriggerSession session;
     late _CallbackRecorder rec;
 
@@ -11,6 +11,7 @@ void main() {
       rec = _CallbackRecorder();
     });
 
+    group('update — open path', () {
     test('fires onOpen when `/` is typed at column 0', () {
       session.update(
         text: '/',
@@ -45,7 +46,9 @@ void main() {
       );
       expect(rec.opens, isEmpty);
     });
+    });
 
+    group('update — query path', () {
     test('subsequent keystrokes emit onQuery with the typed substring', () {
       session
         ..update(
@@ -74,6 +77,9 @@ void main() {
       expect(rec.dismisses, 0);
     });
 
+    });
+
+    group('update — dismiss path', () {
     test('typing a space after the slash dismisses', () {
       session
         ..update(
@@ -121,6 +127,9 @@ void main() {
       expect(rec.dismisses, 1);
     });
 
+    });
+
+    group('reset', () {
     test('reset() clears the trigger so the next `/` opens cleanly', () {
       // Open the first trigger, reset it externally, then type more text
       // ending with a `/` after a space — the new `/` should open.
@@ -145,6 +154,9 @@ void main() {
       expect(rec.opens, [0, 2]);
     });
 
+    });
+
+    group('idle update', () {
     test('non-selection / no-caret update fires neither open nor query', () {
       session.update(
         text: 'foo',
@@ -156,6 +168,7 @@ void main() {
       expect(rec.opens, isEmpty);
       expect(rec.queries, isEmpty);
       expect(rec.dismisses, 0);
+    });
     });
   });
 }
