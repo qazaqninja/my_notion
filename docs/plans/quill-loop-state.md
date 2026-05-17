@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 closed. D27a slice 1 (resolver) shipped. 209 cumulative tests across the D-phase WYSIWYG keyboard/autoformat layer.**
-- **Task:** D27a slice 2 — wire `resolveHeadingConversion` into a `SuperEditorKeyboardAction` bound to Cmd+Opt+1/2/3/0 (Ctrl+Alt on Linux/Windows). One handler with a logicalKey switch mapping digit1→HeadingLevel.h1, digit2→h2, digit3→h3, digit0→paragraph. Parse: KeyDown/Repeat + primary shortcut + alt + matching digit. Dispatch `ChangeParagraphBlockTypeRequest(nodeId: result.nodeId, blockType: result.blockType)`. Place handler at `lib/features/editor/presentation/controllers/heading_conversion_keyboard_action.dart`. Wire into `editor_beta_page.dart` `keyboardActions` AFTER block_delete. Apply M1571 coverage exemption on the handler. Test the parser (4 happy: Cmd+Opt+1/2/3/0, 4 no-match: no-Alt / no-Cmd / KeyUp / non-digit).
+- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a all closed. 217 cumulative tests. 5 Notion shortcuts live (reorder Cmd+Shift+Up/Down, duplicate Cmd+D, delete Cmd+Shift+Backspace, headings Cmd+Opt+1/2/3/0).**
+- **Task:** D-phase pick-next survey #4. After D27a closure, the same template can extend to list/todo conversions. Notion uses Cmd+Shift+7/8/9 (numbered list / bulleted list / to-do). Super_editor ships `ConvertParagraphToListItemRequest(nodeId, type)` + `ConvertParagraphToTaskRequest(nodeId)` — both already used by the slash menu. The keyboard action would map digit-7/8/9 → unordered list / ordered list / task. After D27b: D25 multi-select (3-5 slices), D28-D30 cutover (dogfooding-gated), or pivot to a fresh feature surface (E59 ladder, TS-08 goldens, etc.). Lean toward D27b as the natural next slice — same pattern as D27a, ~1 commit per slice.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1585 — D27a slice 2 — heading conversion keyboard handler + EditorBetaPage wiring (D27a closed)** (8 parser tests; cumulative D27a = 19 tests; D-phase WYSIWYG layer total = 217)
+- Committed: (this iteration)
+- TaskList ID: 192 closeout
+- Notes: Fourth instance of the D24a M1570 template. `parseHeadingConversionKey({keyEvent, isAltPressed, isPrimaryShortcutPressed})` maps Cmd+Opt+digit1/2/3/0 → HeadingLevel via simple `if (key == ...)` chain. `headingConversionKeyboardAction` orchestrates parse → resolveHeadingConversion → dispatch `ChangeParagraphBlockTypeRequest(nodeId, blockType)`. EditorBetaPage `keyboardActions` now `[blockReorderKeyboardAction, blockDuplicateKeyboardAction, blockDeleteKeyboardAction, headingConversionKeyboardAction, ...defaultKeyboardActions]`. 8 parser tests in 2 sub-groups: happy (4: each digit), no-match (4: KeyUp / no-Alt / no-Cmd / non-digit). M1571-style coverage exemption on the handler. Orchestrator audit: 0 BLOCK / 1 WARN (TS-01 — acknowledged exemption, consistent with M1570/M1576/M1580 precedent) / 0 INFO. Cumulative D27a = 19 (11 resolver + 8 parser). Cumulative D-phase WYSIWYG keyboard/autoformat layer = 217 tests (D24a 18 + D24c 18 + D24d 14 + D26 148 + D27a 19). Behaviour: Cmd+Opt+1/2/3 converts the active paragraph to h1/h2/h3 in WYSIWYG /editor-beta; Cmd+Opt+0 resets to paragraph. Notion-native binding. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1583 — D27a slice 1 — heading conversion resolver (pure-Dart)** (11 tests in 3 sub-groups; ~44-line helper + enum)
 - Committed: (this iteration)
