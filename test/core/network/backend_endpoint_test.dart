@@ -1,3 +1,6 @@
+// flutter_test re-exports package:test/test.dart transitively, and
+// `test` isn't a direct dev_dependency in the app's pubspec —
+// matching the convention used by the rest of test/core/.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/core/network/backend_endpoint.dart';
 
@@ -47,12 +50,13 @@ void main() {
     });
 
     group('default endpoint constants', () {
-      test('kBackendHttpBaseUrl + kBackendWsBaseUrl resolve to localhost:8080',
-          () {
-        // Both share the host:port the backend serves on today.
-        // When E14+ settings expose an override, both constants will
-        // read from the same stored value.
+      // Both share the host:port the backend serves on today.
+      // When E14+ settings expose an override, both constants will
+      // read from the same stored value.
+      test('kBackendHttpBaseUrl resolves to localhost:8080', () {
         expect(kBackendHttpBaseUrl, 'http://localhost:8080');
+      });
+      test('kBackendWsBaseUrl resolves to localhost:8080', () {
         expect(kBackendWsBaseUrl, 'ws://localhost:8080');
       });
     });
