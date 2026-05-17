@@ -330,6 +330,10 @@ void main() {
           token: 't',
           initialBody: '',
         );
+        // Baseline: sink is empty before any sendAwareness so the
+        // final isEmpty assertion can't pass for the wrong reason
+        // (M1471 TS-04 tightening).
+        expect(rec.channels.single.outbound, isEmpty);
         await ctl.reconcile(
           authed: false, // gate-close → detach
           published: true,
@@ -339,9 +343,6 @@ void main() {
         );
         ctl.sendAwareness(msg);
         await pumpEventQueue();
-        // The earlier channel's sink may have a recorded value
-        // BEFORE detach, but the post-detach sendAwareness must
-        // NOT have added anything.
         expect(rec.channels.single.outbound, isEmpty);
         await ctl.dispose();
       });
