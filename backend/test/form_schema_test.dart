@@ -417,4 +417,89 @@ columns:
       expect(r.normalized['tags'], ['a']);
     });
   });
+
+  // E60 slice 1 (M1610) — email field type. Same TS-04 convention.
+  group('parseFormSchema email types', () {
+    test('"email" parses to FormFieldType.email', () {
+      const src = '''
+columns:
+  - name: contact
+    type: email
+''';
+      final s = parseFormSchema(src);
+      expect(s.fields.single.type, FormFieldType.email);
+    });
+
+    test('"e-mail" alias parses to FormFieldType.email', () {
+      const src = '''
+columns:
+  - name: contact
+    type: e-mail
+''';
+      final s = parseFormSchema(src);
+      expect(s.fields.single.type, FormFieldType.email);
+    });
+
+    test('valid email round-trips into normalized', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'contact', type: FormFieldType.email),
+        ]),
+        const {'contact': 'alice@example.com'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['contact'], 'alice@example.com');
+    });
+
+    test('email with subdomain + dots/dashes/underscores in local part', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'contact', type: FormFieldType.email),
+        ]),
+        const {'contact': 'alice_b.c-d+x@mail.sub.example.co.uk'},
+      );
+      expect(r.isValid, isTrue);
+    });
+
+    test('missing @ rejected with expected_email', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'contact', type: FormFieldType.email),
+        ]),
+        const {'contact': 'aliceexample.com'},
+      );
+      expect(r.isValid, isFalse);
+      expect(r.errors['contact'], 'expected_email');
+    });
+
+    test('missing TLD rejected', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'contact', type: FormFieldType.email),
+        ]),
+        const {'contact': 'alice@example'},
+      );
+      expect(r.errors['contact'], 'expected_email');
+    });
+
+    test('multiple @ rejected', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'contact', type: FormFieldType.email),
+        ]),
+        const {'contact': 'a@b@example.com'},
+      );
+      expect(r.errors['contact'], 'expected_email');
+    });
+
+    test('whitespace inside rejected', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'contact', type: FormFieldType.email),
+        ]),
+        const {'contact': 'alice @example.com'},
+      );
+      expect(r.errors['contact'], 'expected_email');
+    });
+  });
 }

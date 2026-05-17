@@ -295,5 +295,44 @@ void main() {
         expect(html, contains('&lt;script&gt;'));
       });
     });
+
+    // E60 slice 1 (M1610) — email field renders as HTML5 email input.
+    group('email field', () {
+      test('renders <input type="email">', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(name: 'contact', type: FormFieldType.email),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('<input type="email" name="contact"'));
+      });
+
+      test('required email gets HTML `required` attribute', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+              name: 'contact',
+              type: FormFieldType.email,
+              required: true),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('<input type="email" name="contact" required>'));
+      });
+
+      test('email input picked up by the CSS rule', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(name: 'contact', type: FormFieldType.email),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('input[type=email]'));
+      });
+    });
   });
 }

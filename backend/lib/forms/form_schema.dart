@@ -24,6 +24,10 @@ enum FormFieldType {
   /// Many-of choice from a fixed option set → checkbox group; repeated
   /// keys joined with `,` in the parser per M1482.
   multi,
+
+  /// Email address → `<input type="email">` validated server-side
+  /// via a permissive RFC-5322-lite regex (E60 slice 1).
+  email,
 }
 
 /// One column definition pulled from a `.database.yaml` `columns:`
@@ -171,6 +175,9 @@ FormFieldType _parseType(String raw) {
     case 'multi_select':
     case 'multiselect':
       return FormFieldType.multi;
+    case 'email':
+    case 'e-mail':
+      return FormFieldType.email;
     case 'text':
     case 'string':
     case '':
@@ -275,6 +282,21 @@ FormValidationResult validateSubmission(
           errors[field.name] = 'expected_date';
         } else {
           normalized[field.name] = dt.toIso8601String();
+        }
+      case FormFieldType.email:
+        // E60 slice 1: permissive RFC-5322-lite check. Browser
+        // `<input type="email">` already filters most garbage, but
+        // never trust the client — re-validate on the server. Pattern
+        // accepts `local@domain.tld` shapes with optional sub-domains
+        // + dots/dashes/underscores in the local part; rejects spaces,
+        // multiple `@`, and missing TLD.
+        final emailRe = RegExp(
+          r'^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$',
+        );
+        if (!emailRe.hasMatch(input)) {
+          errors[field.name] = 'expected_email';
+        } else {
+          normalized[field.name] = input;
         }
       case FormFieldType.multi:
         // The route's `_parseForm` (M1482) joins repeated keys with
