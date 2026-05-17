@@ -43,6 +43,7 @@ class FileSummary {
 /// Full file payload returned by `GET /sync/get/[relpath]` — the summary
 /// plus the raw markdown body. Kept separate from FileSummary so listings
 /// stay cheap.
+@immutable
 class FileBody {
   /// Construct a full payload (summary metadata + raw markdown body).
   const FileBody({
@@ -62,4 +63,11 @@ class FileBody {
         ...summary.toJson(),
         'body': body,
       };
+
+  @override
+  bool operator ==(Object other) =>
+      other is FileBody && other.summary == summary && other.body == body;
+
+  @override
+  int get hashCode => Object.hash(summary, body);
 }
