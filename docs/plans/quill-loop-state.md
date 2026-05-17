@@ -7,10 +7,20 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** E58 — Settings → Forms pane. Surface the existing per-page submissions list endpoint (E49 backend, E51 editor kebab dialog) in a new tab of the Settings page so authors can browse all their form-bearing pages + recent submissions across the vault without opening each page's kebab individually. UI: a left-rail "Forms" item under Settings, right pane lists form-bearing pages (queryable via probe + frontmatter scan), each row links into the existing FormSubmissionsDialog. Lower priority alternatives: (a) "Open form preview" using url_launcher to launch the publicFormUrl in a browser from the editor kebab; (b) E59-E60 server-side public form embed (iframe-friendly route with no chrome).
+- **Task:** E58b — Settings → Forms pane UI. Adds a left-rail "Forms" tab under Settings. Right pane runs `listFormBearingPages(vaultPages)` (M1409 usecase) and renders one row per FormBearingPage: title + relativePath + formsRef chip. Each row taps open the existing FormSubmissionsDialog (E51) seeded with the row's ulid. Empty-state copy: "No form-bearing pages yet — add `forms: true` to a page's frontmatter to create one." If a Cubit is needed (e.g. to drive a loading state while the vault rescans), put it in `lib/features/forms/presentation/cubit/`.
 - **Status:** pending
 
 ## Last completed
+
+- **M1410 — E58 cleanup** (orchestrator gate: BL-06 Equatable on FormBearingPage + CA cross-feature import comment + TS-04 group rename)
+- Committed: (this iteration)
+- TaskList ID: 117b
+- Notes: Orchestrator audit of M1409 returned 0 BLOCK / 2 WARN / 2 INFO. BL-06 (warn): FormBearingPage now extends Equatable with `props = [ulid, title, relativePath, formsRef]` — done before the E58b Cubit lands since orchestrator explicitly flagged that "doing it after means re-auditing the state shape." CA-* (warn): added a comment above the `vault/domain/entities/page.dart` import noting the precedent (relations/domain/usecases/search_pages.dart does the same cross-feature domain→domain reach) so future reviewers see the established pattern. TS-04 (info): renamed the test group from `listFormBearingPages (E58)` to plain `listFormBearingPages`; milestone tag moved to the file-level history comment so the group name doesn't drift as the code evolves. TS-01 (info) `flutter_test → package:test` swap NOT applied for the same reason as M1407/E57 — package:test isn't a direct dev_dependency, flutter_test re-exports it transitively, and the codebase convention is to import flutter_test even for pure-Dart tests. flutter analyze clean; 8/8 still pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1409 — E58** (listFormBearingPages usecase + FormBearingPage DTO — domain filter for the Settings → Forms pane)
+- Committed: (this iteration)
+- TaskList ID: 117
+- Notes: First slice of E58. Pure-Dart usecase + DTO that the upcoming Settings → Forms pane (E58b) will project a vault's pages through. New `lib/features/forms/domain/usecases/list_form_bearing_pages.dart` (~70 lines): FormBearingPage class (ulid + title + relativePath + formsRef) + top-level pure function `List<FormBearingPage> listFormBearingPages(Iterable<pg.Page> pages)` that filters by frontmatter `forms:` non-blank-when-trimmed (mirrors the existing `_hasForms` predicate in editor_page.dart + backend FrontmatterProbe.hasForms — keeps client/server views of "form-bearing" in lockstep). Result sorted alphabetically by title case-insensitive for predictable UX across vault rescans. formsRef preserves the raw value so the pane can surface it ("→ Bugs.database.yaml"). 8 tests: empty input, no-key skip, blank skip, true-include, db-ref preservation, alphabetical sort, case-insensitive sort, mixed-input filter. flutter analyze clean; 8/8 pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1407 — E57 cleanup** (orchestrator gate: TS-04 split constants test; documented flutter_test import rationale)
 - Committed: (this iteration)
