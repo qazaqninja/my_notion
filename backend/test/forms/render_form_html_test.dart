@@ -274,7 +274,10 @@ void main() {
           ulid: '01JABCD1234567890ABCDEFGHJ',
           schema: schema,
         );
-        expect(html, isNot(contains('checkbox" name="tags" value="a" required')));
+        expect(
+          html,
+          isNot(contains('checkbox" name="tags" value="a" required')),
+        );
       });
 
       test('multi options are HTML-escaped', () {

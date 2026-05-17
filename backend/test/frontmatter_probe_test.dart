@@ -79,7 +79,8 @@ void main() {
 
     test('public_password: a malformed value is ignored (defensive)', () {
       final p = FrontmatterProbe.fromBody(
-        '---\nid: $ulid\npublic: true\npublic_password: not-a-bcrypt-hash\n---\n',
+        '---\nid: $ulid\npublic: true\n'
+        'public_password: not-a-bcrypt-hash\n---\n',
       );
       expect(p.publicPasswordHash, isNull);
       expect(p.isPasswordProtected, isFalse);

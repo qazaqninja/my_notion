@@ -141,7 +141,8 @@ void main() {
 
     test('strips YAML frontmatter', () {
       expect(
-        render('---\nid: 01HX0V0000000000000000000A\npublic: true\n---\n# Hello\n'),
+        render('---\nid: 01HX0V0000000000000000000A\npublic: true\n'
+            '---\n# Hello\n'),
         '<h1>Hello</h1>',
       );
     });

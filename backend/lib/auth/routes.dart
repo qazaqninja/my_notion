@@ -24,7 +24,10 @@ Router buildAuthRouter({
     }
     final email = (body['email'] as String?)?.trim().toLowerCase();
     final password = body['password'] as String?;
-    if (email == null || email.isEmpty || password == null || password.length < 8) {
+    if (email == null ||
+        email.isEmpty ||
+        password == null ||
+        password.length < 8) {
       return _err(400, 'email_or_password_invalid');
     }
     try {

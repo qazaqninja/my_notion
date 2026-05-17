@@ -44,7 +44,8 @@ String renderFormHtml({
 }) {
   const esc = HtmlEscape(HtmlEscapeMode.element);
   const attrEsc = HtmlEscape(HtmlEscapeMode.attribute);
-  final title = pageTitle == null ? 'Submit a response' : esc.convert(pageTitle);
+  final title =
+      pageTitle == null ? 'Submit a response' : esc.convert(pageTitle);
   final escUlid = attrEsc.convert(ulid);
   final fieldsHtml = StringBuffer();
   for (final f in schema.fields) {
@@ -57,12 +58,17 @@ String renderFormHtml({
       '<meta name="viewport" content="width=device-width, initial-scale=1">'
       '<title>$title</title>'
       '<style>'
-      'body{font-family:system-ui,sans-serif;max-width:560px;margin:40px auto;padding:0 16px;color:#222}'
+      'body{font-family:system-ui,sans-serif;max-width:560px;'
+      'margin:40px auto;padding:0 16px;color:#222}'
       'h1{font-size:20px;margin:0 0 16px}'
       'form{display:flex;flex-direction:column;gap:14px}'
-      'label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#555}'
-      'input[type=text],input[type=number],input[type=date],select{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:6px}'
-      'button{font:inherit;padding:10px 16px;border-radius:6px;border:0;background:#222;color:#fff;cursor:pointer;align-self:flex-start}'
+      'label{display:flex;flex-direction:column;gap:4px;'
+      'font-size:13px;color:#555}'
+      'input[type=text],input[type=number],input[type=date],select'
+      '{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:6px}'
+      'button{font:inherit;padding:10px 16px;border-radius:6px;'
+      'border:0;background:#222;color:#fff;cursor:pointer;'
+      'align-self:flex-start}'
       '</style>'
       '</head>'
       '<body>'

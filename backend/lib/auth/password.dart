@@ -13,7 +13,8 @@ class PasswordHasher {
   /// Hash [plain] with a freshly-generated salt. Result is the full bcrypt
   /// modular crypt string (`$2b$12$…`) safe to store directly in the
   /// `users.password_hash` column.
-  String hash(String plain) => BCrypt.hashpw(plain, BCrypt.gensalt(logRounds: cost));
+  String hash(String plain) =>
+      BCrypt.hashpw(plain, BCrypt.gensalt(logRounds: cost));
 
   /// Constant-time check: true iff [plain] hashes to [hashed].
   bool verify(String plain, String hashed) =>

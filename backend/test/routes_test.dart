@@ -136,7 +136,10 @@ void main() {
         router,
       );
       expect(res.statusCode, 409);
-      expect((jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'], 'email_taken');
+      expect(
+        (jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
+        'email_taken',
+      );
     });
 
     test('POST /signup normalises email to lowercase', () async {

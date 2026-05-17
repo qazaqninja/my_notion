@@ -48,8 +48,10 @@ void main() {
         Request('GET', Uri.parse('http://localhost/x')),
       );
       expect(res.statusCode, 401);
-      expect((jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
-          'missing_bearer_token');
+      expect(
+        (jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
+        'missing_bearer_token',
+      );
     });
 
     test('non-Bearer scheme → 401 missing_bearer_token', () async {
@@ -64,8 +66,10 @@ void main() {
         ),
       );
       expect(res.statusCode, 401);
-      expect((jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
-          'missing_bearer_token');
+      expect(
+        (jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
+        'missing_bearer_token',
+      );
     });
 
     test('garbage JWT → 401 invalid_token', () async {
@@ -103,7 +107,10 @@ void main() {
         ),
       );
       expect(res.statusCode, 401);
-      expect((jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'], 'token_expired');
+      expect(
+        (jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
+        'token_expired',
+      );
     });
 
     test('valid JWT for missing user → 401 stale_session', () async {
@@ -119,7 +126,10 @@ void main() {
         ),
       );
       expect(res.statusCode, 401);
-      expect((jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'], 'stale_session');
+      expect(
+        (jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
+        'stale_session',
+      );
     });
 
     test('valid JWT + present user → 200 with user in context', () async {
