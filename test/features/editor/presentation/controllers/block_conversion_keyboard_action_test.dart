@@ -235,6 +235,25 @@ void main() {
           ListItemType.ordered,
         );
       });
+
+      test('to unordered list chains task→paragraph→list', () {
+        final source = TaskNode(
+          id: 't1',
+          text: AttributedText('x'),
+          isComplete: false,
+        );
+        final requests = requestsForBlockConversion(
+          source: source,
+          target: BlockConversion.unorderedList,
+        );
+        expect(requests, hasLength(2));
+        expect(requests![0], isA<ConvertTaskToParagraphRequest>());
+        expect(requests[1], isA<ConvertParagraphToListItemRequest>());
+        expect(
+          (requests[1] as ConvertParagraphToListItemRequest).type,
+          ListItemType.unordered,
+        );
+      });
     });
 
     group('non-text source', () {
