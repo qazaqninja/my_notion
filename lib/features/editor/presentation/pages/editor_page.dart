@@ -17,10 +17,14 @@ import '../../../reminders/presentation/bloc/reminders_bloc.dart';
 import '../../../reminders/presentation/bloc/reminders_event.dart';
 import '../../../forms/domain/repositories/forms_repository.dart';
 import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
+import '../../../crdt/domain/entities/quill_crdt_doc.dart';
+import '../../../sync/data/sync_ws_binder.dart';
+import '../../../sync/data/sync_ws_client.dart';
 import '../../../sync/domain/usecases/build_public_password_entries.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
 import '../../../sync/presentation/bloc/sync_state.dart';
+import '../../../sync/presentation/editor_sync_ws_mount.dart';
 import '../../../sync/presentation/widgets/pull_reconcile_dialog.dart';
 import '../../../../shared/theme/quill_tokens.dart';
 import '../../../../shared/theme/tokens.dart';
@@ -1582,6 +1586,12 @@ class _EditorBodyState extends State<_EditorBody> {
         final crumbs = stripMdExtension(page.relativePath).split('/');
         final mobile = isMobileWidth(context);
         final locked = EditorBloc.isLocked(loaded);
+        // H2.4c: project SyncBloc state so EditorSyncWsMount's
+        // (isAuthed, token) props change re-trigger reconcile().
+        // context.watch subscribes this build to SyncState changes
+        // — toggling auth elsewhere (Settings → Sign out) flows
+        // through here and detaches the WS binder.
+        final syncState = context.watch<SyncBloc>().state;
         return CallbackShortcuts(
           bindings: {
             const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
@@ -1675,7 +1685,28 @@ class _EditorBodyState extends State<_EditorBody> {
                 control: true, shift: true): () =>
                 context.read<EditorBloc>().add(const RedoEdit()),
           },
-          child: Focus(
+          child: EditorSyncWsMount(
+            ulid: page.ulid,
+            isPublished: _isPublic(loaded),
+            isAuthed: syncState.isAuthed,
+            token: syncState.token,
+            initialBody: page.body,
+            // H2.4c: wsUrl mirrors app.dart's hardcoded
+            // backendBaseUrl ('http://localhost:8080'). When
+            // E14+ exposes a settings-page override, both
+            // strings will read from the same source.
+            binderFactory: ({
+              required String ulid,
+              required String token,
+              required String initialBody,
+            }) =>
+                SyncWsBinder(
+              client: SyncWsClient(wsUrl: 'ws://localhost:8080'),
+              ulid: ulid,
+              token: token,
+              initialDoc: QuillCrdtDoc.fromMarkdown(initialBody),
+            ),
+            child: Focus(
             autofocus: true,
             child: Column(
           children: [
@@ -1978,6 +2009,7 @@ class _EditorBodyState extends State<_EditorBody> {
           ],
         ),
       ),
+          ),
     );
       },
     );
