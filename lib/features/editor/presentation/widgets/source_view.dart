@@ -16,6 +16,7 @@ import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../relations/presentation/cubit/relation_picker_cubit.dart';
 import '../../../relations/presentation/widgets/relation_picker_overlay.dart';
+import '../../../sync/presentation/editor_sync_ws_mount.dart';
 import '../../../vault/data/daily_note.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_event.dart';
@@ -100,6 +101,10 @@ class _SourceViewState extends State<SourceView> {
     // belt-and-suspenders for any programmatic mutations.
     if (widget.locked) return;
     context.read<EditorBloc>().add(EditBody(_controller.text));
+    // H2.4d-ii: fan out the local edit to peers. Silent no-op
+    // when the editor is mounted outside an active multiplayer
+    // session (unauthed or unpublished page).
+    EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(_controller.text);
 
     final text = _controller.text;
     final selection = _controller.selection;

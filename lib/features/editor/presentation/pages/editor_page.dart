@@ -1904,9 +1904,19 @@ class _EditorBodyState extends State<_EditorBody> {
                                   relativePath: page.relativePath,
                                   onBodyChange: locked
                                       ? null
-                                      : (next) => context
-                                          .read<EditorBloc>()
-                                          .add(EditBody(next)),
+                                      : (next) {
+                                          context
+                                              .read<EditorBloc>()
+                                              .add(EditBody(next));
+                                          // H2.4d-ii: fan out local
+                                          // edits to peers. Silent
+                                          // no-op when the editor is
+                                          // mounted outside an active
+                                          // multiplayer session
+                                          // (unauthed or unpublished).
+                                          EditorSyncWsScope.maybeOf(context)
+                                              ?.pushLocalUpdate(next);
+                                        },
                                   onBlockComment: locked
                                       ? null
                                       : (blockId) => _openBlockComments(
