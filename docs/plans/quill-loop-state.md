@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3 — backend infra cleanup OR person/relation type. Two candidates: **(a) Backend LT-01 + TS-02 cleanup** — swap `backend/analysis_options.yaml` from `lints/recommended.yaml` to `package:very_good_analysis/analysis_options.yaml`; add `very_good_analysis` + `mocktail` to `backend/pubspec.yaml` dev_dependencies. Confirmed deferred at M1479 + M1482; backend now carries 192 tests across 13+ files so the lint baseline matters. Pure infra slice — touches pubspec + analysis_options + maybe one .pub-cache resolve, plus whatever lint findings the new baseline surfaces (fix-forward in the same commit). **(b) FormFieldType.person** — needs auth-side wiring to look up users by id for option enumeration, more couple to the workspace user model. Recommend (a) for this slice — clears the orchestrator's standing WARNs across the backend and unblocks cleaner subsequent forms work. After (a), the person/relation types are next; if (a) surfaces too many cascading lint fixes for one slice, split into (a-i) include swap + (a-ii) fix the resulting findings.
+- **Task:** Forms polish slice 3b cluster 1 — fix the **`avoid_dynamic_calls` cluster (22 findings)** that the M1485 baseline swap surfaced. Orchestrator prioritised this cluster first in the 3b sweep because it's the only one with runtime-safety implications (the other clusters are style/readability). Findings cluster around dynamic JSON map access in routes + DB layer. Type the lookups with explicit casts or null-safe getters. Files: bin/server.dart, sync_routes.dart, possibly auth/users and sync/file_table. Same-slice doc cleanup acceptable if it touches the same files. After this, queue: cluster 2 (`always_use_package_imports` 23 mechanical), cluster 3 (style mechanicals: cascade/whitespace/const/cast bundle ~100 findings), cluster 4 (`public_member_api_docs` 68 doc-only).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1485 — backend infra: very_good_analysis + mocktail** (clears LT-01 + TS-02 backend deferrals; slice 3a of forms polish 3)
+- Committed: (this iteration)
+- TaskList ID: 151
+- Notes: Pure backend infra swap. `backend/analysis_options.yaml`: `include: package:lints/recommended.yaml` → `package:very_good_analysis/analysis_options.yaml`; boilerplate header trimmed. `backend/pubspec.yaml`: dev_deps drop `lints: ^6.0.0`, add `very_good_analysis: ^9.0.0` + `mocktail: ^1.0.4` (preemptive — next forms slice that needs a mock uses project-wide standard immediately). `pubspec.lock` regenerated. The new baseline surfaces 252 info-level findings across the backend (cluster breakdown: 68 public_member_api_docs, 36 missing_whitespace_between_adjacent_strings, 26 cascade_invocations, 23 always_use_package_imports, 22 avoid_dynamic_calls, 20 prefer_const_constructors, 19 cast_nullable_to_non_nullable, 13 lines_longer_than_80_chars, plus smaller groups). All info-severity — `dart analyze` exits 0 — so the slice is non-breaking. The cascade is queued for slice 3b cluster-fixes. Orchestrator audit: 0 BLOCK / 0 WARN / 2 INFO (both confirming LT-01 + TS-02 resolved). Confirmed (a) shipping baseline-swap alone is acceptable, (b) preemptive mocktail isn't YAGNI since 3b will consume it, (c) deferring 9.0.0 → 10.2.0 bump until 3b clean is correct sequencing. 192 backend tests pass. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1484 — loop-state advance** (record M1482/M1483 + advance to backend infra cleanup)
+- Committed: (this iteration)
+- TaskList ID: 150 closeout
+- Notes: Recorded M1482 (FormFieldType.multi end-to-end) + M1483 (TS-01 parseUrlEncodedForm coverage). Advanced **Current** pointer to forms polish slice 3 backend infra cleanup. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1483 — TS-01 + doc fix-forward on M1482 multi-select** (orchestrator gate cleanup)
 - Committed: (this iteration)
