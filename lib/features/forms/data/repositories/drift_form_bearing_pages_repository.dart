@@ -1,16 +1,17 @@
 import 'dart:convert';
 
 import 'package:my_notion/core/db/quill_database.dart';
-import 'package:my_notion/features/forms/domain/usecases/list_form_bearing_pages.dart';
+import 'package:my_notion/features/forms/domain/entities/form_bearing_page.dart';
+import 'package:my_notion/features/forms/domain/repositories/form_bearing_pages_repository.dart';
 
-/// E58b — data layer for the Settings → Forms pane. Loads every
-/// form-bearing page out of the Drift cache, parses each row's
-/// JSON-encoded frontmatter for the `forms:` value, and projects
-/// down to [FormBearingPage] via the same blank/whitespace +
-/// alphabetical-sort rules as the in-memory `listFormBearingPages`
-/// usecase (M1409). Keeps client + server views of "form-bearing"
-/// in lockstep with the backend's `FrontmatterProbe.hasForms`
-/// rule.
+/// E58b — Drift-backed impl of [FormBearingPagesRepository]. Loads
+/// every form-bearing page out of the local cache, parses each
+/// row's JSON-encoded frontmatter for the `forms:` value, and
+/// projects down to [FormBearingPage] via the same blank/
+/// whitespace + alphabetical-sort rules as the in-memory
+/// `listFormBearingPages` usecase (M1409). Keeps client + server
+/// views of "form-bearing" in lockstep with the backend's
+/// `FrontmatterProbe.hasForms` rule.
 ///
 /// Why this lives in `forms/data/repositories/` and not just calls
 /// the pure usecase on a fetched `List<pg.Page>`: the indexer
@@ -20,8 +21,8 @@ import 'package:my_notion/features/forms/domain/usecases/list_form_bearing_pages
 /// raw markdown via FrontmatterParser, which is heavy work the
 /// pane doesn't need — it only cares about the `forms:` value.
 /// Reading `frontmatter_json` directly skips that round trip.
-class FormBearingPagesRepository {
-  FormBearingPagesRepository(this._db);
+class DriftFormBearingPagesRepository implements FormBearingPagesRepository {
+  DriftFormBearingPagesRepository(this._db);
 
   final QuillDatabase _db;
 
@@ -30,8 +31,18 @@ class FormBearingPagesRepository {
   /// unfiltered — Dart-side projection keeps the JSON parsing
   /// honest (a SQL `LIKE '%forms%'` filter would miss escaped
   /// values and produce false positives).
+  ///
+  /// Wraps any Drift / sqlite3 throw in a typed
+  /// [FormBearingPagesLoadException] so the Cubit can react with
+  /// a typed catch instead of a bare `Object`.
+  @override
   Future<List<FormBearingPage>> loadAll() async {
-    final rows = await _db.select(_db.pages).get();
+    List<Page> rows;
+    try {
+      rows = await _db.select(_db.pages).get();
+    } catch (e) {
+      throw FormBearingPagesLoadException(e.toString());
+    }
     final out = <FormBearingPage>[];
     for (final r in rows) {
       final ref = _extractFormsRef(r.frontmatterJson);

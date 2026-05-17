@@ -4,16 +4,16 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/core/db/quill_database.dart';
-import 'package:my_notion/features/forms/data/repositories/form_bearing_pages_repository.dart';
+import 'package:my_notion/features/forms/data/repositories/drift_form_bearing_pages_repository.dart';
 
 void main() {
-  group('FormBearingPagesRepository', () {
+  group('DriftFormBearingPagesRepository', () {
     late QuillDatabase db;
-    late FormBearingPagesRepository repo;
+    late DriftFormBearingPagesRepository repo;
 
     setUp(() {
       db = QuillDatabase.forTesting(NativeDatabase.memory());
-      repo = FormBearingPagesRepository(db);
+      repo = DriftFormBearingPagesRepository(db);
       addTearDown(() async {
         await db.close();
       });
@@ -36,6 +36,7 @@ void main() {
           ));
     }
 
+    group('loadAll', () {
     test('empty database → empty result', () async {
       expect(await repo.loadAll(), isEmpty);
     });
@@ -161,6 +162,7 @@ void main() {
       final result = await repo.loadAll();
       expect(result.map((p) => p.ulid).toList(),
           ['01HX0V000000000000000000OK']);
+    });
     });
   });
 }
