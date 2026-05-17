@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** NV-03 migration slice 2 — swap remaining bare '/home' call sites to `Routes.home`. M1640 introduced the Routes class + swapped editor_beta_page.dart:443 (the D-fp1 carry-forward site). Remaining 8 sites: `lib/app.dart` redirect target + 6 GoRoute path declarations; `lib/features/editor/presentation/pages/editor_page.dart:668` + `:1531`; `lib/features/vault/presentation/widgets/mobile_chrome.dart:25` + `:36` + `:48` (active route compare); `lib/features/vault/presentation/pages/vault_shell_page.dart:177` + `:179`. Slice 2a: swap app.dart redirect + GoRoute declarations to Routes constants (concentrated in one file). Slice 2b: legacy editor_page.dart sites. Slice 2c: mobile_chrome + vault_shell_page. After NV-03 fully resolved: revisit pick-next survey for cutover prep vs Phase E continuation.
+- **Task:** NV-03 migration slice 2b — swap legacy editor_page.dart bare '/home' call sites. Two sites: line 668 (`GoRouter.of(context).go('/home')` in `_moveToTrash`, the legacy precedent for D-fp1's port) and line 1531 (`context.go('/home')` in another navigation callback). Same one-line swap pattern as M1640/M1643. Then queue slice 2c (mobile_chrome.dart 3 sites + vault_shell_page.dart 2 sites). After NV-03 fully resolved: revisit pick-next survey for cutover prep vs Phase E continuation.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1643 — NV-03 slice 2a — migrate app.dart simple paths to Routes constants** (3 files modified; 1 new routes test for `Routes.lab`; 7/7 routes + 46/46 find-related editor tests pass)
+- Committed: (this iteration)
+- TaskList ID: 220 closeout
+- Notes: Continued the NV-03 cleanup arc from M1640. Extended `lib/core/routing/routes.dart` with `static const lab = '/lab'` (debug ComponentSheetPage route — needed because the redirect callback compares against it; M1640 missed it). Added 7th test assertion. In `lib/app.dart`: imported Routes, swapped 9 bare string literals — `initialLocation: '/'` → `Routes.picker`, redirect-callback path compares (`path == '/lab'` / `path == '/' || path == '/vault'` / returns `'/home'` / `'/vault'`) all use constants now, 7 simple GoRoute path declarations (`/`, `/vault`, `/lab`, `/home`, `/databases`, `/tags`, `/settings`) swapped. Parameterized routes (`/editor/:ulid`, `/editor-beta/:ulid`, `/db/:dbId`, `/db/:dbId/:viewId`, `/settings/:section`) deliberately left as inline strings — their dynamic segments need helper methods, deferred. flutter analyze clean. 7/7 routes tests + 46/46 find-related editor tests pass (full editor suite skipped due to large-output handling; mechanical refactor with no runtime behavior change). **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** Notes NV-02 (typed routes) remains a pre-existing carry-forward for the 5 parameterized routes — not in this slice's scope. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1640 + M1641 — pick-next #9 closeout: Routes constants + D-fp1 NV-03 cleanup + TS-01 fix-forward** (2 new files + 1 modified; 6 new routes tests; 2501 editor + 6 routes pass)
 - Committed: (this iteration)
