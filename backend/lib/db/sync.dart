@@ -1,8 +1,7 @@
-import 'package:postgres/postgres.dart';
-
+import 'package:backend/db/exceptions.dart';
 import 'package:backend/sync/file_summary.dart';
 import 'package:backend/sync/frontmatter_probe.dart';
-import 'package:backend/db/exceptions.dart';
+import 'package:postgres/postgres.dart';
 
 /// Result of `upsert` — either the new persisted summary, or a
 /// conflict-with-the-current-server-state when `ifMatch` didn't match.

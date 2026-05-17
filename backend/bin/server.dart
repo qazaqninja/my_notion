@@ -76,7 +76,7 @@ void main(List<String> args) async {
     // middleware so transient Postgres failures land as a 503 JSON
     // body instead of leaking a stack trace.
     final dbErrors = dbExceptionToResponse();
-    final authPipeline = Pipeline().addMiddleware(dbErrors).addHandler(
+    final authPipeline = const Pipeline().addMiddleware(dbErrors).addHandler(
           buildAuthRouter(
             users: users,
             hasher: const PasswordHasher(),
@@ -88,7 +88,7 @@ void main(List<String> args) async {
     // the lifetime of the server. Cross-process broadcast (LISTEN/
     // NOTIFY) is a future-slice concern.
     final wsHub = sync_ws.WsHub();
-    final syncPipeline = Pipeline()
+    final syncPipeline = const Pipeline()
         .addMiddleware(dbErrors)
         .addMiddleware(requireAuth(users: users, tokens: tokens))
         .addHandler(
@@ -102,7 +102,7 @@ void main(List<String> args) async {
     router.mount('/sync/', syncPipeline);
     // Public sharing surface (E16) — NO auth wrapper. `GET /public/<ulid>`
     // returns the public-flagged page body as HTML, or 404.
-    final publicPipeline = Pipeline().addMiddleware(dbErrors).addHandler(
+    final publicPipeline = const Pipeline().addMiddleware(dbErrors).addHandler(
           public_routes.buildPublicRouter(conn: conn).call,
         );
     router.mount('/public/', publicPipeline);
@@ -110,14 +110,14 @@ void main(List<String> args) async {
     // routes win the `/forms/owner/...` prefix before the unauthed
     // catch-all on `/forms/`.
     final formsRepo = forms_routes.FormsRepository(conn);
-    final ownerFormsPipeline = Pipeline()
+    final ownerFormsPipeline = const Pipeline()
         .addMiddleware(dbErrors)
         .addMiddleware(requireAuth(users: users, tokens: tokens))
         .addHandler(forms_routes
             .buildOwnerFormsRouter(repo: formsRepo)
             .call);
     router.mount('/forms/owner/', ownerFormsPipeline);
-    final formsPipeline = Pipeline().addMiddleware(dbErrors).addHandler(
+    final formsPipeline = const Pipeline().addMiddleware(dbErrors).addHandler(
           forms_routes.buildFormsRouter(repo: formsRepo).call,
         );
     router.mount('/forms/', formsPipeline);
@@ -133,7 +133,7 @@ void main(List<String> args) async {
   }
 
   final handler =
-      Pipeline().addMiddleware(logRequests()).addHandler(router.call);
+      const Pipeline().addMiddleware(logRequests()).addHandler(router.call);
 
   final port = int.parse(Platform.environment['PORT'] ?? '8080');
   final server = await serve(handler, ip, port);

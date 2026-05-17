@@ -1,13 +1,12 @@
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
-import 'package:shelf/shelf.dart';
-import 'package:shelf_router/shelf_router.dart';
-
 import 'package:backend/auth/middleware.dart';
 import 'package:backend/db/sync.dart';
 import 'package:backend/sync/ws_hub.dart';
 import 'package:backend/sync/ws_routes.dart';
+import 'package:crypto/crypto.dart';
+import 'package:shelf/shelf.dart';
+import 'package:shelf_router/shelf_router.dart';
 
 /// Build the `/sync/...` sub-router. Caller mounts at `/sync` *after*
 /// wrapping with `requireAuth` so `currentUser(req)` is safe to call.

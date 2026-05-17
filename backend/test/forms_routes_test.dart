@@ -471,7 +471,7 @@ void main() {
       // with the same middleware — the test only asserts the response
       // contract, not which layer caught the exception.
       final repo = _ThrowingRepo();
-      final handler = Pipeline()
+      final handler = const Pipeline()
           .addMiddleware(dbExceptionToResponse())
           .addHandler(buildFormsRouter(repo: repo).call);
       final req = Request(

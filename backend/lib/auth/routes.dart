@@ -1,11 +1,10 @@
 import 'dart:convert';
 
-import 'package:shelf/shelf.dart';
-import 'package:shelf_router/shelf_router.dart';
-
-import 'package:backend/db/users.dart';
 import 'package:backend/auth/password.dart';
 import 'package:backend/auth/tokens.dart';
+import 'package:backend/db/users.dart';
+import 'package:shelf/shelf.dart';
+import 'package:shelf_router/shelf_router.dart';
 
 /// Build the `/auth/...` sub-router. Caller mounts at `/auth`.
 ///

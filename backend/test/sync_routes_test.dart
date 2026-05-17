@@ -119,7 +119,7 @@ void main() {
     test('GET /list without Authorization → 401 from middleware', () async {
       final users = _Users({alice.id: alice});
       final sync = _Sync(const {});
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(
@@ -132,7 +132,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(
@@ -163,7 +163,7 @@ void main() {
       ];
       final sync = _Sync({alice.id: files});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(
@@ -186,7 +186,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(
@@ -219,7 +219,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(
@@ -240,7 +240,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(
@@ -261,7 +261,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       // PUT
@@ -293,7 +293,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       // Initial put — no If-Match.
@@ -329,7 +329,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(
@@ -350,7 +350,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       // First put a file.
@@ -378,7 +378,7 @@ void main() {
       final users = _Users({alice.id: alice});
       final sync = _Sync({alice.id: const []});
       final tok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(
@@ -407,7 +407,7 @@ void main() {
         sha256: 'b' * 64,
       );
       final aliceTok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       // Alice tries to read Bob's file.
@@ -433,7 +433,7 @@ void main() {
         ],
       });
       final aliceTok = tokens.issue(alice.id);
-      final pipeline = Pipeline()
+      final pipeline = const Pipeline()
           .addMiddleware(requireAuth(users: users, tokens: tokens))
           .addHandler(buildSyncRouter(sync: sync).call);
       final res = await pipeline(

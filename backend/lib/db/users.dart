@@ -1,8 +1,7 @@
-import 'package:postgres/postgres.dart';
-import 'package:ulid/ulid.dart';
-
 import 'package:backend/auth/user.dart';
 import 'package:backend/db/exceptions.dart';
+import 'package:postgres/postgres.dart';
+import 'package:ulid/ulid.dart';
 
 /// Thrown by `UserRepository.create` when the unique constraint on
 /// `users.email` is violated. The auth routes catch this and surface a
