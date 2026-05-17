@@ -1,0 +1,256 @@
+import 'dart:async';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
+import 'package:my_notion/features/sync/data/sync_ws_binder.dart';
+import 'package:my_notion/features/sync/data/sync_ws_client.dart';
+import 'package:my_notion/features/sync/domain/repositories/sync_repository.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+/// Hand-rolled fake — mirrors the SyncWsClient test's fake so the
+/// two layers are exercised against the same protocol shape.
+class _FakeChannel implements WebSocketChannel {
+  _FakeChannel();
+  final inbound = StreamController<dynamic>.broadcast();
+  final outbound = <Object?>[];
+
+  @override
+  Stream<dynamic> get stream => inbound.stream;
+
+  @override
+  WebSocketSink get sink => _Sink(this);
+
+  void simulateMessage(String s) => inbound.add(s);
+  void simulateError(Object e) => inbound.addError(e);
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+class _Sink implements WebSocketSink {
+  _Sink(this.parent);
+  final _FakeChannel parent;
+
+  @override
+  void add(Object? event) => parent.outbound.add(event);
+
+  @override
+  Future<void> close([int? code, String? reason]) async {
+    await parent.inbound.close();
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation i) => super.noSuchMethod(i);
+}
+
+SyncWsClient _makeClient({_FakeChannel? out}) {
+  return SyncWsClient(
+    wsUrl: 'ws://x',
+    channelFactory: ({
+      required String wsUrl,
+      required String token,
+      required String ulid,
+    }) =>
+        out ?? _FakeChannel(),
+  );
+}
+
+void main() {
+  group('SyncWsBinder (H2.3)', () {
+    group('attach()', () {
+      test('connects the WS client to the configured ULID + token',
+          () async {
+        final ch = _FakeChannel();
+        String? capturedToken;
+        String? capturedUlid;
+        final client = SyncWsClient(
+          wsUrl: 'ws://x',
+          channelFactory: ({
+            required String wsUrl,
+            required String token,
+            required String ulid,
+          }) {
+            capturedToken = token;
+            capturedUlid = ulid;
+            return ch;
+          },
+        );
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'ULID-1',
+          token: 'jwt',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        expect(capturedToken, 'jwt');
+        expect(capturedUlid, 'ULID-1');
+        expect(client.isConnected, isTrue);
+        await binder.detach();
+      });
+
+      test('second attach() is a no-op when already attached', () async {
+        final openedUlids = <String>[];
+        final client = SyncWsClient(
+          wsUrl: 'ws://x',
+          channelFactory: ({
+            required String wsUrl,
+            required String token,
+            required String ulid,
+          }) {
+            openedUlids.add(ulid);
+            return _FakeChannel();
+          },
+        );
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'ULID-1',
+          token: 'jwt',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        await binder.attach();
+        expect(openedUlids, ['ULID-1']);
+        await binder.detach();
+      });
+    });
+
+    group('incoming → CRDT', () {
+      test('incoming text applies QuillCrdtSetBody to the local doc',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.fromMarkdown('hello'),
+        );
+        await binder.attach();
+        expect(binder.doc.body, 'hello');
+        ch.simulateMessage('from peer 1');
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        expect(binder.doc.body, 'from peer 1');
+        expect(binder.doc.clock, greaterThan(0));
+        ch.simulateMessage('from peer 2');
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        expect(binder.doc.body, 'from peer 2');
+        await binder.detach();
+      });
+
+      test('docStream emits each new doc after an incoming message',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        final emitted = <String>[];
+        final sub = binder.docStream.listen((d) => emitted.add(d.body));
+        await binder.attach();
+        ch.simulateMessage('a');
+        ch.simulateMessage('b');
+        ch.simulateMessage('c');
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        expect(emitted, ['a', 'b', 'c']);
+        await sub.cancel();
+        await binder.detach();
+      });
+    });
+
+    group('pushLocalUpdate()', () {
+      test('writes the new body to the channel sink', () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        binder.pushLocalUpdate('local edit');
+        expect(ch.outbound, ['local edit']);
+        await binder.detach();
+      });
+
+      test('updates the local doc + emits on docStream', () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        final emitted = <String>[];
+        final sub = binder.docStream.listen((d) => emitted.add(d.body));
+        binder.pushLocalUpdate('mine');
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        expect(binder.doc.body, 'mine');
+        expect(emitted, ['mine']);
+        await sub.cancel();
+        await binder.detach();
+      });
+
+      test('before attach() is a silent no-op (no throw, no send)', () {
+        final ch = _FakeChannel();
+        final binder = SyncWsBinder(
+          client: _makeClient(out: ch),
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        // Should not throw, should not crash, but also should not
+        // hit the underlying sink — a local edit before attach is
+        // typically a pre-mount race the editor doesn't want to
+        // hard-fail on.
+        binder.pushLocalUpdate('orphan');
+        expect(ch.outbound, isEmpty);
+      });
+    });
+
+    group('errors', () {
+      test('connection-lost from the channel is exposed on errorStream',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        final errors = <Object>[];
+        final sub = binder.errorStream.listen(errors.add);
+        await binder.attach();
+        ch.simulateError('boom');
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+        expect(errors.single, isA<SyncConnectionLostException>());
+        await sub.cancel();
+        await binder.detach();
+      });
+    });
+
+    group('detach()', () {
+      test('disconnects the client + is idempotent', () async {
+        final client = _makeClient();
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        expect(client.isConnected, isTrue);
+        await binder.detach();
+        expect(client.isConnected, isFalse);
+        // Second detach() must not throw.
+        await binder.detach();
+      });
+    });
+  });
+}
