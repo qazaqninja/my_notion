@@ -7,10 +7,20 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** H2.4 — wire SyncWsBinder into editor_page.dart (initState/dispose, gated on authed+published; outgoing local edits → binder.pushLocalUpdate; incoming docStream → editor re-render)
+- **Task:** H2.4b — drop EditorWsAttachController into _EditorBodyState (initState construct, didUpdateWidget + BlocListener<SyncBloc> drive reconcile, editor save calls pushLocalUpdate, docStream feeds re-render, errorStream shows "reconnect needed" banner, State.dispose tears it down)
 - **Status:** pending
 
 ## Last completed
+
+- **M1380 — H2.4a cleanup** (orchestrator gate: CA-04 boundary comment on the sync/data import)
+- Committed: (this iteration)
+- TaskList ID: 96b
+- Notes: Audit returned 0 BLOCK / 1 WARN / 3 INFO. The WARN was a CA-04-spirit observation: presentation/editor_ws_attach_controller.dart imports directly from sync/data/sync_ws_binder.dart. Fix: 8-line comment documenting the deliberate cross-layer import — SyncWsBinder is the lowest-level multiplayer primitive in the sync feature, no domain-layer repository wraps it, and adding one purely for the editor's lifecycle would be pure indirection. References the existing CA-07 boundary comment on the crdt entities import (M1377) for consistency. The 3 INFO items belong to H2.4b decisions and are intentionally deferred: (2) introduce `freezed EditorWsGate` value object once the editor call sites exist so the change is contained; (3) decide sync `scheduleDispose()` vs `unawaited(dispose())` once the actual State.dispose race shape surfaces; (4) confirmed `_BinderFactoryRecorder` is N/A for TS-02 (factory closure, not a mock — same pattern the H2.2/H2.3 tests already use). flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1379 — H2.4a** (EditorWsAttachController — gates + lifecycle, no editor wiring)
+- Committed: (this iteration)
+- TaskList ID: 96
+- Notes: editor_page.dart is 2.5k lines so H2.4 split into 4a (controller + tests) and 4b (page wire-in). New `lib/features/sync/presentation/editor_ws_attach_controller.dart` (~125 lines): constructor takes a `SyncWsBinderFactory` typedef so tests stand up real binders backed by fake WebSocketChannels (same recipe the H2.2/H2.3 tests use — symmetric seam across the whole WS stack). Single entry point `reconcile({authed, published, ulid, token, initialBody})` — gate = authed && published && token != null && token.isNotEmpty; gate-closed → detach, gate-open + same ulid → no-op (cheap to call from every didUpdateWidget), gate-open + new ulid → detach-then-attach. `docStream` / `errorStream` broadcast relays from the active binder so editors subscribe once for the controller's lifetime (no re-sub across binder swaps). `pushLocalUpdate(body)` proxies; silent no-op when detached. `dispose()` tears down active binder + closes relayed streams; idempotent. 12 tests via `_BinderFactoryRecorder` (factory closure that captures (ulid, token, body) + the _FakeChannel each call constructs). Sub-grouped per TS-04: reconcile (6 — 3 gate-closed cases + correct-args attach + same-ulid idempotency + ulid-swap detach-then-attach + runtime-flip teardown), relayed streams (2 — docStream + errorStream forwarding), pushLocalUpdate (2 — proxy + silent-no-op-pre-attach), dispose (1 — idempotency + stream-closed). flutter analyze clean; 12/12 pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1377 — H2.3 cleanup** (orchestrator gate: pumpEventQueue + dispose() group + CA-07 boundary comment)
 - Committed: (this iteration)
