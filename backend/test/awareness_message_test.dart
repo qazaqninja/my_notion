@@ -144,6 +144,7 @@ void main() {
           cursorIndex: 10,
           color: '#f00',
         );
+        // userId differs
         expect(
           base ==
               const AwarenessMessage(
@@ -154,6 +155,18 @@ void main() {
               ),
           isFalse,
         );
+        // pageUlid differs (M1449 TS-04 INFO fix — coverage gap).
+        expect(
+          base ==
+              const AwarenessMessage(
+                userId: 'u',
+                pageUlid: 'p2',
+                cursorIndex: 10,
+                color: '#f00',
+              ),
+          isFalse,
+        );
+        // cursorIndex differs
         expect(
           base ==
               const AwarenessMessage(
@@ -161,6 +174,17 @@ void main() {
                 pageUlid: 'p',
                 cursorIndex: 11,
                 color: '#f00',
+              ),
+          isFalse,
+        );
+        // color differs (M1449 TS-04 INFO fix — coverage gap).
+        expect(
+          base ==
+              const AwarenessMessage(
+                userId: 'u',
+                pageUlid: 'p',
+                cursorIndex: 10,
+                color: '#00f',
               ),
           isFalse,
         );
