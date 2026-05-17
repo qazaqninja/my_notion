@@ -130,6 +130,15 @@ class EditorWsAttachController {
     _activeBinder?.pushLocalUpdate(body);
   }
 
+  /// H4d-iii-d — proxy an outbound presence message to the active
+  /// binder. Silent no-op when detached, mirroring the
+  /// [pushLocalUpdate] no-op pattern. The editor's source view
+  /// (and any future presence emitter) calls this whenever the
+  /// local caret moves, after debouncing.
+  void sendAwareness(AwarenessMessage msg) {
+    _activeBinder?.sendAwareness(msg);
+  }
+
   Future<void> _detach() async {
     final binder = _activeBinder;
     _activeBinder = null;

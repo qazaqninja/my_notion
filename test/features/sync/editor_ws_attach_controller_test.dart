@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
 import 'package:my_notion/features/sync/data/sync_ws_binder.dart';
 import 'package:my_notion/features/sync/data/sync_ws_client.dart';
+import 'package:my_notion/features/sync/domain/entities/awareness_message.dart';
 import 'package:my_notion/features/sync/domain/repositories/sync_repository.dart';
 import 'package:my_notion/features/sync/presentation/editor_ws_attach_controller.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -283,6 +284,66 @@ void main() {
         // No reconcile() → no attach.
         ctl.pushLocalUpdate('orphan');
         expect(rec.channels, isEmpty);
+      });
+    });
+
+    group('sendAwareness() (H4d-iii-d)', () {
+      const msg = AwarenessMessage(
+        userId: 'alice',
+        pageUlid: 'U',
+        cursorIndex: 42,
+        color: '#FF5722',
+      );
+
+      test('proxies to the attached binder (encoded onto the WS sink)',
+          () async {
+        final rec = _BinderFactoryRecorder();
+        final ctl = EditorWsAttachController(binderFactory: rec.make);
+        await ctl.reconcile(
+          authed: true,
+          published: true,
+          ulid: 'U',
+          token: 't',
+          initialBody: '',
+        );
+        ctl.sendAwareness(msg);
+        await pumpEventQueue();
+        expect(rec.channels.single.outbound, hasLength(1));
+        expect(rec.channels.single.outbound.single, msg.encode());
+        await ctl.dispose();
+      });
+
+      test('before attach is a silent no-op (no send, no throw)', () {
+        final rec = _BinderFactoryRecorder();
+        final ctl = EditorWsAttachController(binderFactory: rec.make);
+        ctl.sendAwareness(msg);
+        expect(rec.channels, isEmpty);
+      });
+
+      test('after gate-close detach is a silent no-op', () async {
+        final rec = _BinderFactoryRecorder();
+        final ctl = EditorWsAttachController(binderFactory: rec.make);
+        await ctl.reconcile(
+          authed: true,
+          published: true,
+          ulid: 'U',
+          token: 't',
+          initialBody: '',
+        );
+        await ctl.reconcile(
+          authed: false, // gate-close → detach
+          published: true,
+          ulid: 'U',
+          token: 't',
+          initialBody: '',
+        );
+        ctl.sendAwareness(msg);
+        await pumpEventQueue();
+        // The earlier channel's sink may have a recorded value
+        // BEFORE detach, but the post-detach sendAwareness must
+        // NOT have added anything.
+        expect(rec.channels.single.outbound, isEmpty);
+        await ctl.dispose();
       });
     });
 
