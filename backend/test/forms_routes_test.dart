@@ -207,6 +207,68 @@ void main() {
       expect(await res.readAsString(), contains('Thanks!'));
     });
 
+    // E56b — public GET /<ulid> renders the form HTML.
+    test('GET /<malformed> → 404 not_found', () async {
+      final res = await _hit(
+        '/not-a-ulid',
+        repo: _StubRepo(),
+        method: 'GET',
+      );
+      expect(res.statusCode, 404);
+    });
+
+    test('GET /<ulid> with no schema → 404 no_form_definition', () async {
+      final res = await _hit(
+        '/$ulid',
+        repo: _StubRepo(),
+        method: 'GET',
+      );
+      expect(res.statusCode, 404);
+      expect(await res.readAsString(), 'no_form_definition');
+    });
+
+    test('GET /<ulid> with a real schema → 200 form HTML', () async {
+      final res = await _hit(
+        '/$ulid',
+        repo: _StubRepo(
+          schemas: const {
+            ulid: FormSchema(fields: [
+              FormFieldDef(name: 'subject', type: FormFieldType.text),
+              FormFieldDef(name: 'priority', type: FormFieldType.select,
+                  options: ['low', 'high']),
+            ]),
+          },
+        ),
+        method: 'GET',
+      );
+      expect(res.statusCode, 200);
+      expect(res.headersAll['content-type']?.single,
+          'text/html; charset=utf-8');
+      final html = await res.readAsString();
+      expect(html, contains('<form method="POST" action="/forms/$ulid/submit"'));
+      expect(html, contains('name="subject"'));
+      expect(html, contains('<option value="high">high</option>'));
+    });
+
+    test('GET /<ulid> with FormSchema.empty → 200 form HTML (no inputs)',
+        () async {
+      // F5 fallback: form-bearing page but no resolvable schema (e.g.
+      // `forms: true` with no linked .database.yaml) still renders the
+      // skeleton — the submit endpoint will 400 empty_body if the user
+      // posts nothing, but the GET shouldn't 404 a real form page.
+      final res = await _hit(
+        '/$ulid',
+        repo: _StubRepo(
+          schemas: const {ulid: FormSchema.empty},
+        ),
+        method: 'GET',
+      );
+      expect(res.statusCode, 200);
+      final html = await res.readAsString();
+      expect(html, contains('<form method="POST"'));
+      expect(html, isNot(contains('<input')));
+    });
+
     test('Malformed percent-encoding is skipped, not 500ed', () async {
       final repo = _StubRepo(definedFor: {ulid});
       final res = await _hit(

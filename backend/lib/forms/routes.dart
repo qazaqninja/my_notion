@@ -9,6 +9,7 @@ import '../auth/middleware.dart';
 import '../db/exceptions.dart';
 import '../sync/frontmatter_probe.dart';
 import 'form_schema.dart';
+import 'render_form_html.dart';
 
 /// Repository contract for form-definition lookups + submission storage.
 /// Slice E46 ships only the abstract interface plus a default impl that
@@ -284,6 +285,28 @@ Router buildFormsRouter({required FormsRepositoryBase repo}) {
   final router = Router();
 
   router.post('/<ulid>/submit', (Request req) => _handleSubmit(req, repo));
+
+  // E56b — public form page. Renders the HTML form a visitor fills
+  // out before posting back to `/forms/<ulid>/submit`. The schema is
+  // resolved via FormsRepositoryBase.loadSchemaFor; a null result
+  // means the page doesn't exist or isn't form-bearing (404). A
+  // non-null result — including FormSchema.empty — gets a 200 with
+  // the rendered HTML so the legacy "any non-empty body" fallback
+  // still shows a usable skeleton.
+  router.get('/<ulid>', (Request req) async {
+    final ulid = req.params['ulid'];
+    if (ulid == null || !_isUlid(ulid)) {
+      return Response(404, body: 'not_found');
+    }
+    final schema = await repo.loadSchemaFor(ulid);
+    if (schema == null) {
+      return Response(404, body: 'no_form_definition');
+    }
+    return Response.ok(
+      renderFormHtml(ulid: ulid, schema: schema),
+      headers: const {'content-type': 'text/html; charset=utf-8'},
+    );
+  });
 
   router.get('/<ulid>/thanks', (Request req) async {
     final ulid = req.params['ulid'];
