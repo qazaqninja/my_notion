@@ -13,6 +13,7 @@ import '../../../vault/presentation/bloc/vault_state.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
+import '../cubit/slash_menu_cubit.dart';
 
 /// Beta WYSIWYG editor route powered by `super_editor` (Phase D / D1 slice 23
 /// of the 1m-loop plan). Wired in parallel to the existing `/editor/<ulid>`
@@ -32,21 +33,33 @@ class EditorBetaPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<EditorBloc>(
+    // D23 slice 2a (M1523): SlashMenuCubit is provided here as a sibling
+    // of the EditorBloc so the upcoming super_editor keyboard listener
+    // can `context.read<SlashMenuCubit>()` to drive `/` menu state — same
+    // pattern source_view's existing wiring uses inside the source-mode
+    // editor. Listener + overlay rendering land in subsequent sub-slices.
+    return MultiBlocProvider(
       key: ValueKey('beta-$ulid'),
-      create: (context) {
-        final bloc = EditorBloc(
-          repo: context.read<VaultRepository>(),
-          indexer: context.read<Indexer>(),
-          db: context.read<QuillDatabase>(),
-        );
-        final vault = context.read<VaultBloc>().state;
-        if (vault is VaultLoaded) {
-          bloc.setVaultRoot(Directory(vault.rootPath));
-        }
-        bloc.add(OpenEditor(ulid));
-        return bloc;
-      },
+      providers: [
+        BlocProvider<EditorBloc>(
+          create: (context) {
+            final bloc = EditorBloc(
+              repo: context.read<VaultRepository>(),
+              indexer: context.read<Indexer>(),
+              db: context.read<QuillDatabase>(),
+            );
+            final vault = context.read<VaultBloc>().state;
+            if (vault is VaultLoaded) {
+              bloc.setVaultRoot(Directory(vault.rootPath));
+            }
+            bloc.add(OpenEditor(ulid));
+            return bloc;
+          },
+        ),
+        BlocProvider<SlashMenuCubit>(
+          create: (_) => SlashMenuCubit(),
+        ),
+      ],
       child: const _BetaEditorBody(),
     );
   }
