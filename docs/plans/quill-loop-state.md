@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **bold autoformat detector landed**
-- **Task:** D26 inline autoformat slice 1b — super_editor EditReaction for bold. M1549 shipped the pure-Dart `detectBoldAutoformat({text, caret}) → ({markerStart, markerEnd, inner})?` helper with 14 tests across 3 sub-groups. Slice 1b wires a custom super_editor `EditReaction` subclass that consumes the composer's text-change stream, calls the detector, and on a non-null match dispatches: (1) `DeleteContentRequest` covering the `**...**` range; (2) `InsertTextRequest` at the marker start with the inner text + `boldAttribution`. Register by extending `_BetaEditorShellState`'s `createDefaultDocumentEditor(...)` call with `reactionPipeline: [...defaultEditorReactions, BoldAutoformatReaction()]`. After 1b: italic detector + reaction (sibling slices 2a/2b), then strike (3a/3b), inline code (4a/4b), highlight (5a/5b), sub/sup (6a/6b/7a/7b). Each pair follows this detector + reaction template.
+- **Phase:** D (super_editor WYSIWYG migration) — **bold autoformat live in WYSIWYG**
+- **Task:** D26 inline autoformat slice 2 — italic `*X*` + `_X_`. M1551 wired `BoldAutoformatReaction` into `_BetaEditorShellState._editor.reactionPipeline` (appended after super_editor's `defaultEditorReactions`). M1552 backfilled 5 reaction unit tests (4 guard paths + 1 dispatch path) using a `_RecordingDispatcher implements RequestDispatcher` test harness. Typing `**bold**` in WYSIWYG now strips the markers and applies `boldAttribution`. Slice 2 follows the same detector+reaction+tests template for italic — two opener/closer pairs (`*X*` and `_X_`). Detector must NOT match `**X**` (bold's job — checked first by reactionPipeline ordering). Each future inline mark (strike `~~X~~`, inline code `` `X` ``, highlight `==X==`, sub `~X~`, sup `^X^`) gets the same shape. After D26 closes: D24/D25 deferred plugin opt-ins, then D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1551 + M1552 — D26 inline autoformat slice 1b + TS-01 reaction tests (bold autoformat live in WYSIWYG)** (BoldAutoformatReaction + 5 reaction tests)
+- Committed: (this iteration)
+- TaskList ID: 174 + 175 closeout
+- Notes: M1551 added `lib/features/editor/presentation/controllers/bold_autoformat_reaction.dart` (67 lines): `BoldAutoformatReaction extends EditReaction` overriding `react()` only (NOT `modifyContent` — keeps undo cleanly flipping the bold off in its own transaction). Resolves composer + document via `editorContext.find<...>(Editor.{composer,document}Key)`, bails on null/non-collapsed/non-text-node selection, calls M1549's detectBoldAutoformat, dispatches `DeleteContentRequest` + `InsertTextRequest(textToInsert: inner, attributions: {boldAttribution})`. Wired by appending to `_editor.reactionPipeline` after createDefaultDocumentEditor so block-prefix reactions run first. Lint friction: `const {boldAttribution}` failed `const_set_element_not_primitive_equality` (NamedAttribution overrides `==`/`hashCode`); per-call non-const set construction is the documented escape hatch — 3-line rationale comment notes this. M1552 backfilled `test/features/editor/presentation/controllers/bold_autoformat_reaction_test.dart` (5 tests: null-selection no-op, non-collapsed no-op, non-TextNode no-op, caret-mid-span no-op, positive dispatch with DeleteContent+InsertText assertions). Test harness: lightweight `_RecordingDispatcher implements RequestDispatcher` captures every `execute(...)` without forwarding to a real command pipeline. Orchestrator audit on M1551: 0 BLOCK / 0 WARN / 1 INFO (TS-01 reaction unit test missing — fix-forward landed in M1552). Cumulative D26 1a+1b coverage: 14 detector + 5 reaction = 19 tests. flutter analyze clean on all touched files. Behaviour delta: `**bold**` in WYSIWYG now auto-strips markers and applies boldAttribution. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1550 — loop-state advance** (record M1549 + queue D26 slice 1b)
+- Committed: prior to M1551 (this iteration)
+- TaskList ID: 174 advance
+- Notes: Recorded bold detector helper. Advanced **Current** pointer to slice 1b. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1549 — D26 inline autoformat slice 1a — bold `**X**` pattern detector** (14 tests in 3 sub-groups; pure-Dart 48-line helper)
 - Committed: (this iteration)
