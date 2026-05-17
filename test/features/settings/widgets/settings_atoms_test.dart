@@ -62,7 +62,11 @@ void main() {
           ),
         );
         final text = tester.widget<Text>(find.text('01HX...'));
-        expect(text.style?.fontFamily, 'JetBrainsMono');
+        // Guard against silent vacuity: a null style would have a
+        // null fontFamily that wouldn't equal 'JetBrainsMono' but
+        // also wouldn't loudly fail in the intended way. M1432 TS-06.
+        expect(text.style, isNotNull);
+        expect(text.style!.fontFamily, 'JetBrainsMono');
       });
 
       testWidgets('monospace:false uses the default font family',
@@ -80,12 +84,20 @@ void main() {
       testWidgets('width:300 clamps the container width', (tester) async {
         await tester.pumpWidget(
           testApp(
-            const SettingField(value: 'x', width: 300),
+            // Anchor a local LOOSE constraint (maxWidth=500) so the
+            // SettingField can honour its own 300-px Container width
+            // without inheriting tight constraints from testApp's
+            // outer Center. SizedBox here would force tight 500 and
+            // override the Container width preference. M1432 TS-06.
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: const Align(
+                alignment: Alignment.topLeft,
+                child: SettingField(value: 'x', width: 300),
+              ),
+            ),
           ),
         );
-        // The widget renders inside a Container with width: 300.
-        // pumping inside Scaffold/Center constrains; assert width is
-        // bounded around 300.
         final size = tester.getSize(find.byType(SettingField));
         expect(size.width, 300);
       });
