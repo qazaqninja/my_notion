@@ -139,6 +139,10 @@ void main() {
       // current source — once via onSubmitted, once via the focus
       // listener since done dismisses focus. Either fires the
       // intended dispatch; the test asserts behavior, not count.
+      // TS-03 nuance: bloc_test's `blocTest` targets bare Blocs in
+      // unit tests; widget tests that pump a tree with a MockBloc
+      // use raw `verify(() => bloc.add(...))`, which is the same
+      // pattern as sync_connected_card_test in this project.
       verify(() => bloc.add(const RefreshFromDisk()));
       final cfg = File('${tempVault.path}/.quill.yaml');
       expect(cfg.existsSync(), isTrue);
@@ -171,13 +175,15 @@ void main() {
         WorkspaceNameField(state: loaded()),
         bloc,
       ));
-      // The hint comes from `state.rootPath.split('/').last.replaceAll('_', ' ')`.
+      // The hint is rendered as actual Text in the InputDecorator
+      // when the field is empty — assert via the user-observable
+      // finder instead of reading widget.decoration.hintText
+      // directly (TS-06 fix-forward, M1437 orchestrator).
       final expectedHint = tempVault.path
           .split(Platform.pathSeparator)
           .last
           .replaceAll('_', ' ');
-      final field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.decoration?.hintText, expectedHint);
+      expect(find.text(expectedHint), findsOneWidget);
     });
   });
 }
