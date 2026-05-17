@@ -26,6 +26,7 @@ import 'package:backend/forms/form_schema.dart';
 ///                 keys with `,` so a multi-select group surfaces
 ///                 as `'a,b,c'` in validateSubmission's raw map).
 ///   - email     → <input type="email" name="…">  (E60 slice 1)
+///   - url       → <input type="url" name="…">  (E60 slice 2)
 ///
 /// `required: true` fields get the HTML `required` attribute so
 /// the browser validates before submit (the server still re-
@@ -66,7 +67,7 @@ String renderFormHtml({
       'label{display:flex;flex-direction:column;gap:4px;'
       'font-size:13px;color:#555}'
       'input[type=text],input[type=number],input[type=date],'
-      'input[type=email],select'
+      'input[type=email],input[type=url],select'
       '{font:inherit;padding:8px 10px;border:1px solid #ccc;border-radius:6px}'
       'button{font:inherit;padding:10px 16px;border-radius:6px;'
       'border:0;background:#222;color:#fff;cursor:pointer;'
@@ -123,6 +124,10 @@ String _renderField(
       // validateSubmission.
       return '<label>$label'
           '<input type="email" name="$attrName"$req></label>';
+    case FormFieldType.url:
+      // E60 slice 2: HTML5 url input — server enforces http/https only.
+      return '<label>$label'
+          '<input type="url" name="$attrName"$req></label>';
     case FormFieldType.multi:
       // Group of checkboxes — one per option, all sharing the
       // field name. Each checked box posts as `name=value`,

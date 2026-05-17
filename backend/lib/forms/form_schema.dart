@@ -28,6 +28,10 @@ enum FormFieldType {
   /// Email address → `<input type="email">` validated server-side
   /// via a permissive RFC-5322-lite regex (E60 slice 1).
   email,
+
+  /// Absolute URL → `<input type="url">` validated server-side
+  /// against `^https?://...` (E60 slice 2).
+  url,
 }
 
 /// One column definition pulled from a `.database.yaml` `columns:`
@@ -178,6 +182,10 @@ FormFieldType _parseType(String raw) {
     case 'email':
     case 'e-mail':
       return FormFieldType.email;
+    case 'url':
+    case 'uri':
+    case 'link':
+      return FormFieldType.url;
     case 'text':
     case 'string':
     case '':
@@ -282,6 +290,18 @@ FormValidationResult validateSubmission(
           errors[field.name] = 'expected_date';
         } else {
           normalized[field.name] = dt.toIso8601String();
+        }
+      case FormFieldType.url:
+        // E60 slice 2: HTML5 url input accepts a wide range of schemes
+        // by spec, but for forms we restrict to http/https — anything
+        // else (`file://`, `javascript:`, custom schemes) is dropped to
+        // avoid open-redirect / XSS shapes. Permissive on host: accepts
+        // ports, paths, queries, fragments; rejects whitespace.
+        final urlRe = RegExp(r'^https?://[^\s]+$');
+        if (!urlRe.hasMatch(input)) {
+          errors[field.name] = 'expected_url';
+        } else {
+          normalized[field.name] = input;
         }
       case FormFieldType.email:
         // E60 slice 1: permissive RFC-5322-lite check. Browser

@@ -334,5 +334,42 @@ void main() {
         expect(html, contains('input[type=email]'));
       });
     });
+
+    // E60 slice 2 (M1612) — url field renders as HTML5 url input.
+    group('url field', () {
+      test('renders <input type="url">', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(name: 'website', type: FormFieldType.url),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('<input type="url" name="website"'));
+      });
+
+      test('required url gets HTML `required` attribute', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(
+              name: 'website', type: FormFieldType.url, required: true),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('<input type="url" name="website" required>'));
+      });
+
+      test('url input picked up by the CSS rule', () {
+        const schema = FormSchema(fields: [
+          FormFieldDef(name: 'website', type: FormFieldType.url),
+        ]);
+        final html = renderFormHtml(
+          ulid: '01JABCD1234567890ABCDEFGHJ',
+          schema: schema,
+        );
+        expect(html, contains('input[type=url]'));
+      });
+    });
   });
 }

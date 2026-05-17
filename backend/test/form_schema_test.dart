@@ -502,4 +502,96 @@ columns:
       expect(r.errors['contact'], 'expected_email');
     });
   });
+
+  // E60 slice 2 (M1612) — url field type.
+  group('parseFormSchema url types', () {
+    test('"url" parses to FormFieldType.url', () {
+      const src = '''
+columns:
+  - name: website
+    type: url
+''';
+      final s = parseFormSchema(src);
+      expect(s.fields.single.type, FormFieldType.url);
+    });
+
+    test('"uri" alias parses to FormFieldType.url', () {
+      const src = '''
+columns:
+  - name: website
+    type: uri
+''';
+      expect(parseFormSchema(src).fields.single.type, FormFieldType.url);
+    });
+
+    test('"link" alias parses to FormFieldType.url', () {
+      const src = '''
+columns:
+  - name: website
+    type: link
+''';
+      expect(parseFormSchema(src).fields.single.type, FormFieldType.url);
+    });
+
+    test('https URL passes', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'website', type: FormFieldType.url),
+        ]),
+        const {'website': 'https://example.com/path?q=1#section'},
+      );
+      expect(r.isValid, isTrue);
+      expect(r.normalized['website'], 'https://example.com/path?q=1#section');
+    });
+
+    test('http URL passes', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'website', type: FormFieldType.url),
+        ]),
+        const {'website': 'http://example.com'},
+      );
+      expect(r.isValid, isTrue);
+    });
+
+    test('missing scheme rejected with expected_url', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'website', type: FormFieldType.url),
+        ]),
+        const {'website': 'example.com'},
+      );
+      expect(r.errors['website'], 'expected_url');
+    });
+
+    test('non-http(s) scheme rejected (ftp://)', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'website', type: FormFieldType.url),
+        ]),
+        const {'website': 'ftp://files.example.com'},
+      );
+      expect(r.errors['website'], 'expected_url');
+    });
+
+    test('javascript: scheme rejected (XSS-shape)', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'website', type: FormFieldType.url),
+        ]),
+        const {'website': 'javascript:alert(1)'},
+      );
+      expect(r.errors['website'], 'expected_url');
+    });
+
+    test('whitespace inside rejected', () {
+      final r = validateSubmission(
+        const FormSchema(fields: [
+          FormFieldDef(name: 'website', type: FormFieldType.url),
+        ]),
+        const {'website': 'https://example .com'},
+      );
+      expect(r.errors['website'], 'expected_url');
+    });
+  });
 }
