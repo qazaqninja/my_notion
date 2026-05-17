@@ -53,11 +53,14 @@ class EditorPreferencesCubit extends Cubit<EditorPreferencesState> {
 
   final SharedPreferences _prefs;
 
-  /// Toggle the beta-editor opt-in. No-op when [useBeta] equals the
-  /// current state — keeps emitters quiet for repeated identical
-  /// writes (BL-12 friendly; Equatable handles the equality check
-  /// inside [emit] for free).
+  /// Toggle the beta-editor opt-in. Explicit no-op when [useBeta]
+  /// equals the current state — skips the prefs write and the emit.
+  /// (Note: flutter_bloc's Equatable-aware emit-dedup only kicks in
+  /// AFTER the first real emit, so the first redundant write would
+  /// otherwise still go through; this early-return belt-and-braces
+  /// the no-op semantics for the first-emit case.)
   Future<void> setUseBetaEditor({required bool useBeta}) async {
+    if (state.useBetaEditor == useBeta) return;
     await _prefs.setBool(useBetaPrefKey, useBeta);
     emit(state.copyWith(useBetaEditor: useBeta));
   }
