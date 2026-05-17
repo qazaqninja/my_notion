@@ -57,6 +57,44 @@ class SharedPreferencesEditorPreferencesStore
       _prefs.setBool(useBetaPrefKey, useBeta);
 }
 
+/// Production implementation that wraps a `Future<SharedPreferences>`
+/// so callers can construct the store synchronously while the
+/// platform-channel handle resolves in the background. Each read/
+/// write awaits the future (which caches its result after the first
+/// resolution) and delegates to a [SharedPreferencesEditorPreferencesStore].
+///
+/// The app composition root (`lib/app.dart`) constructs one of these
+/// at boot via `LazySharedPreferencesEditorPreferencesStore(
+/// SharedPreferences.getInstance())` and passes it to
+/// `EditorPreferencesCubit`. The cubit's default `useBetaEditor:
+/// true` is in effect during the first ~few-ms window before the
+/// future resolves; `cubit.hydrate()` runs in the background and
+/// emits the persisted value if it differs.
+class LazySharedPreferencesEditorPreferencesStore
+    implements EditorPreferencesStore {
+  /// Wrap an unresolved [Future] handle. The future is awaited once
+  /// per read/write call (`Future` itself caches its single
+  /// resolution after the first await).
+  LazySharedPreferencesEditorPreferencesStore(this._prefs);
+
+  final Future<SharedPreferences> _prefs;
+
+  @override
+  Future<bool?> readUseBetaEditor() async {
+    final prefs = await _prefs;
+    return prefs.getBool(SharedPreferencesEditorPreferencesStore.useBetaPrefKey);
+  }
+
+  @override
+  Future<void> writeUseBetaEditor({required bool useBeta}) async {
+    final prefs = await _prefs;
+    await prefs.setBool(
+      SharedPreferencesEditorPreferencesStore.useBetaPrefKey,
+      useBeta,
+    );
+  }
+}
+
 /// Volatile in-memory implementation for tests. Sidesteps the
 /// `SharedPreferences.setMockInitialValues({...})` ceremony — pass
 /// the desired initial value to the constructor and write/read

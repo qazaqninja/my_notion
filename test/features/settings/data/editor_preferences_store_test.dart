@@ -66,6 +66,48 @@ void main() {
     });
   });
 
+  group('LazySharedPreferencesEditorPreferencesStore', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('read awaits the future and returns the stored value', () async {
+      SharedPreferences.setMockInitialValues({'editor.useBeta': true});
+      final lazy = LazySharedPreferencesEditorPreferencesStore(
+        SharedPreferences.getInstance(),
+      );
+      expect(await lazy.readUseBetaEditor(), isTrue);
+    });
+
+    test('read returns null when the future-resolved store is empty',
+        () async {
+      final lazy = LazySharedPreferencesEditorPreferencesStore(
+        SharedPreferences.getInstance(),
+      );
+      expect(await lazy.readUseBetaEditor(), isNull);
+    });
+
+    test('write awaits the future and persists', () async {
+      final lazy = LazySharedPreferencesEditorPreferencesStore(
+        SharedPreferences.getInstance(),
+      );
+      await lazy.writeUseBetaEditor(useBeta: true);
+      // Round-trip via a fresh read off the same in-memory mock.
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('editor.useBeta'), isTrue);
+    });
+
+    test('round-trip read after write returns the written value', () async {
+      final lazy = LazySharedPreferencesEditorPreferencesStore(
+        SharedPreferences.getInstance(),
+      );
+      await lazy.writeUseBetaEditor(useBeta: true);
+      expect(await lazy.readUseBetaEditor(), isTrue);
+      await lazy.writeUseBetaEditor(useBeta: false);
+      expect(await lazy.readUseBetaEditor(), isFalse);
+    });
+  });
+
   group('InMemoryEditorPreferencesStore', () {
     test('starts with null when no initial value is supplied', () async {
       final store = InMemoryEditorPreferencesStore();
