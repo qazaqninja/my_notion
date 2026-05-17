@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **SlashMenuCubit provided in EditorBetaPage**
-- **Task:** D23 interactions slice 2b — keyboard listener + caret-driven slash menu in EditorBetaPage. M1523 expanded EditorBetaPage's single `BlocProvider<EditorBloc>` into a `MultiBlocProvider` that also creates `SlashMenuCubit` as a sibling (provider-only slice, no consumer yet). Next: attach a super_editor keyboard listener (or a wrapper Listener+Focus combo) on the SuperEditor mount that, on every text change, reads the document's plain text + caret offset from MutableDocumentComposer's selection and calls the three `slash_trigger` helpers against the provided SlashMenuCubit. No overlay rendering yet — slice 2c handles popover positioning, slice 2d handles selection splice via super_editor's command system. Then D24-D27 polish + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **SlashTriggerSession controller landed**
+- **Task:** D23 interactions slice 2c — wire SlashTriggerSession into EditorBetaPage's super_editor mount. M1525 + M1526 shipped the pure-Dart `SlashTriggerSession` controller (47 lines + 8 tests in 5 sub-groups) that owns the trigger-start state across keystrokes and routes through the slash_trigger helpers. Slice 2c now hooks it into `_BetaEditorShellState`: on every Composer selection or document change, extract the doc's plain text + caret offset from `_composer.selection`, call `_session.update(...)` with `onOpen → cubit.openAt`, `onDismiss → cubit.dismiss`, `onQuery → cubit.setQuery`. For this slice the onOpen anchor rect can be `Rect.zero` (overlay positioning lands in slice 2d). Then slice 2d adds the overlay rendering + selection splice via super_editor's command system. After that D24-D27 polish + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1525 + M1526 — D23 interactions slice 2b + TS-04 fix-forward (SlashTriggerSession controller)** (47 lines + 8 tests, sub-grouped)
+- Committed: (this iteration)
+- TaskList ID: 164 closeout (slice 2b — keyboard listener foundation; actual EditorBetaPage wiring lands in slice 2c)
+- Notes: Extract the trigger-start state machine that was inline in source_view.dart into a tiny pure-Dart controller at `lib/features/editor/presentation/controllers/slash_trigger_session.dart`. Public surface: default constructor, `bool get hasActiveTrigger`, `void update({text, caret, onOpen(int triggerOffset), onDismiss(), onQuery(String)})` — routes exactly one of three callbacks per call — and `void reset()` for external clears. Sits next to M1397's `find_in_page_controller.dart` for layering symmetry. Pure Dart, zero `package:flutter/*` import — Flutter consumers wire the callbacks to widget-tree methods. test/features/editor/presentation/controllers/slash_trigger_session_test.dart (8 tests across 5 sub-groups per VGV TS-04: update — open path / query path / dismiss path; reset; idle update) uses a `_CallbackRecorder` helper to aggregate the callback args and assert on public outcomes (TS-06: no `_triggerStart` introspection). M1525 initial commit had all 8 tests in a single group; M1526 fix-forward sub-grouped them by method per orchestrator's TS-04 info finding. 8/8 green in ~4s. Orchestrator M1525 audit: 0 BLOCK / 0 WARN / 1 INFO (TS-04 sub-grouping — fixed forward in M1526); CA/TS-* otherwise clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1524 — loop-state advance** (record M1523 + queue D23 slice 2b)
+- Committed: prior to M1525 (this iteration)
+- TaskList ID: 163 advance
+- Notes: Recorded slice 2a (SlashMenuCubit provider in EditorBetaPage). Advanced **Current** pointer to slice 2b (controller extraction). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1523 — D23 interactions slice 2a — SlashMenuCubit provider in EditorBetaPage** (no consumer yet, foundation for slice 2b listener)
 - Committed: (this iteration)
