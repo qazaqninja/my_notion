@@ -7,8 +7,8 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 3c — manual cleanup of three lints `dart fix` cannot auto-resolve: missing_whitespace_between_adjacent_strings (~36), cast_nullable_to_non_nullable (~19), lines_longer_than_80_chars (~18 + ~5 added by M1487 wider cast expressions = ~23). Total ~73 to clear. These are heterogeneous per-site fixes — adjacent-string whitespace needs literal review, nullable cast cleanups may need null-check or `!` justification, line-length splits depend on local context. Slice in 3 sub-passes (one rule per commit) if needed to keep diffs reviewable. After cluster 3c: cluster 4 (public_member_api_docs 68 doc-only — the largest remaining cluster).
-- **Status:** pending
+- **Task:** Forms polish slice 3b cluster 3c sub-pass 2/3 — manual cleanup of cast_nullable_to_non_nullable (~19 findings) + lines_longer_than_80_chars (~23 findings). Sub-pass 1 (whitespace) cleared in M1496. Nullable-cast cleanups need a null-check or `!` (whichever is semantically correct per site — runtime error if wrong). Line-length splits depend on local context (often falls out of the cast cleanups via the cast helper variable). Slice in 2 commits (one rule per commit) to keep diffs reviewable. After cluster 3c full clear: cluster 4 (public_member_api_docs 68 doc-only — the largest remaining cluster).
+- **Status:** in_progress (sub-pass 1 of 3 complete)
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
   - BL-12 design smell on RemoteCursorOverlay: hard `BlocBuilder<PresenceCubit, PresenceState>` requires the cubit ancestor, blocking isolated SourceView tests. Switch to a maybeOf-tolerant pattern when the SourceView test sweep lands — paired refactor.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1496 — backend lint cleanup 3c sub-pass 1 (missing_whitespace_between_adjacent_strings 36 → 0)** (HTML template rule mismatch)
+- Committed: (this iteration)
+- TaskList ID: 156 (slice 3c sub-pass 1 of 3)
+- Notes: 3 backend lib/ files contain HTML/CSS template renderers (`renderFormHtml`, `_renderThanksHtml`, `_renderUnlockForm`, `_renderHtml`) that build templates via adjacent string literal concatenation. VGA's `missing_whitespace_between_adjacent_strings` rule flags every literal pair where the strings don't sandwich a whitespace character — but in HTML/CSS templates the absence of whitespace is intentional (`<title>X</title>`, `body{font-family:…}`). Applied `// ignore_for_file: missing_whitespace_between_adjacent_strings` with 5-line rationale comment to: `lib/forms/render_form_html.dart` (11 findings, whole file is template), `lib/public/routes.dart` (20 findings — `_renderUnlockForm` + `_renderHtml`), `lib/forms/routes.dart` (5 findings — `_renderThanksHtml` only; file-level keeps the directive uniform across the forms layer). No semantic change to template output. dart analyze: 166 → 130 (-36, exact match). dart test: 192/192 still green. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — clean across all 5 specialist reviewers; explicitly approved the intent-documenting ignore pattern (same precedent as M1494's buildSyncRouter rationale). Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1495 — loop-state advance** (record M1494 + advance to slice 3b cluster 3c)
+- Committed: prior to M1496 (this iteration)
+- TaskList ID: 155 closeout
+- Notes: Recorded M1494 (cascade_invocations cleanup). Advanced **Current** pointer to cluster 3c (whitespace + casts + line length). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1494 — backend lint cleanup 3b cluster 3b (cascade_invocations 26 → 0)** (manual cluster after auto-fix exhaustion)
 - Committed: (this iteration)
