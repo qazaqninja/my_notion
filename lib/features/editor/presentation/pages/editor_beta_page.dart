@@ -34,7 +34,9 @@ import '../controllers/strike_autoformat_reaction.dart';
 import '../controllers/subscript_autoformat_reaction.dart';
 import '../controllers/super_editor_caret.dart';
 import '../controllers/superscript_autoformat_reaction.dart';
+import '../cubit/block_selection_cubit.dart';
 import '../cubit/slash_menu_cubit.dart';
+import '../widgets/block_selection_overlay.dart';
 import '../widgets/slash_menu_overlay.dart';
 
 /// Beta WYSIWYG editor route powered by `super_editor` (Phase D / D1 slice 23
@@ -80,6 +82,12 @@ class EditorBetaPage extends StatelessWidget {
         ),
         BlocProvider<SlashMenuCubit>(
           create: (_) => SlashMenuCubit(),
+        ),
+        // D25 slice 4a (M1600): Notion-style multi-block selection state.
+        // The cubit is empty by default and lives alongside super_editor's
+        // text-caret DocumentSelection — they don't conflict.
+        BlocProvider<BlockSelectionCubit>(
+          create: (_) => BlockSelectionCubit(),
         ),
       ],
       child: const _BetaEditorBody(),
@@ -203,6 +211,24 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   /// and convert through M1533's [anchorRectFromRect]. Falls back to a zero
   /// anchor when the layout hasn't been realized (pre-first-frame) or the
   /// composer's selection is collapsed but its node isn't laid out yet.
+  /// D25 slice 4a (M1600): resolve a block node id to its document-space
+  /// [Rect] via super_editor's `DocumentLayout.getRectForSelection`
+  /// (covers the whole node from `beginningPosition` to `endPosition`).
+  /// Returns null when the layout isn't built yet, the node has been
+  /// removed, or the layout can't compute a rect for that node type.
+  /// Passed to [BlockSelectionOverlay] as the `rectForNode` resolver.
+  Rect? _rectForBlockNode(String nodeId) {
+    final DocumentLayout? layout =
+        _docLayoutKey.currentState as DocumentLayout?;
+    if (layout == null) return null;
+    final node = _doc.getNodeById(nodeId);
+    if (node == null) return null;
+    return layout.getRectForSelection(
+      DocumentPosition(nodeId: nodeId, nodePosition: node.beginningPosition),
+      DocumentPosition(nodeId: nodeId, nodePosition: node.endPosition),
+    );
+  }
+
   AnchorRect _caretAnchor() {
     const zero = AnchorRect(left: 0, top: 0, right: 0, bottom: 0);
     final DocumentLayout? layout =
@@ -254,6 +280,10 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
               ...defaultKeyboardActions,
             ],
           ),
+          // D25 slice 4a (M1600): paint the Notion-style multi-block
+          // selection highlight behind the document content. Gesture
+          // wiring to actually mutate the cubit ships in slice 4b.
+          BlockSelectionOverlay(rectForNode: _rectForBlockNode),
           SlashMenuOverlay(
             onPick: _onSlashEntryPicked,
             onDismiss: () => context.read<SlashMenuCubit>().dismiss(),
