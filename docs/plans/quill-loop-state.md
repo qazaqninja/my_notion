@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** Mobile polish slice 2 — mobile-first properties panel. The other half of CLAUDE.md item 10. `properties_panel.dart` currently renders desktop-dense at all widths; on mobile (≤700px) the frontmatter rows wrap awkwardly and the icon kebab eats screen space. Plan: extract size-helper functions like the M1680 slash menu pattern (`propertiesRowPaddingFor({isMobile})`, etc.), use `isMobileWidth` on the row build, bump row height to ≥44pt + label/value font to 15 on mobile. Optional: collapse the right-rail panel into a draggable bottom sheet on mobile (heavier — separate slice).
+- **Task:** Pick-next survey #15 — after CLAUDE.md item 10 mobile polish closes. Remaining options on the menu: (a) BL-11 D-fp callback cleanup (5 imperative setState + nav callbacks across D-fp1/2/3/3b/4b — needs FindBarCubit/EditorActionCubit); (b) BL-12 _FindBarHost (M1634 deferred — tight _doc/_editor coupling); (c) Phase E continuation (G4 docker user-gated, forms past E60 diminishing return); (d) D-fp5 next parity port (outline / source toggle / lock toggle / properties panel — not cutover-critical); (e) NV-02 GoRouteData typed routes (M1649 deferred); (f) later D30b/c (still needs dogfood time); (g) update CLAUDE.md item 10 to strike through completely; (h) revisit FEATURES.md to see what's emerged as next. Decision: deliver user-facing value or knock out tiny wins.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1682 — mobile polish slice 2 — touch-tune properties panel rows (CLAUDE.md item 10 closeout)** (2 files modified; +83 / -3; 6 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 237 closeout
+- Notes: Mirrors the M1680 slash menu pattern. Properties panel `_EditableFrontmatterRow` previously rendered at ~22px height on mobile (well below 44pt touch target) with 12px icon + 12pt mono key text. Adds 3 pure-Dart top-level helpers at the top of `lib/features/editor/presentation/widgets/properties_panel.dart`: `propertiesRowPaddingFor({isMobile})` (mobile EdgeInsets.symmetric(vertical: 14) → ~44pt row, desktop 4 unchanged); `propertiesRowIconSizeFor` (mobile 16, desktop 12); `propertiesRowKeyFontSizeFor` (mobile 15, desktop 12). `_EditableFrontmatterRow.build` calls `isMobileWidth(context)` once and threads through. 6 pure-Dart unit tests grouped per helper. **CLAUDE.md item 10 (mobile UI polish) both halves now landed across M1680 + M1682.** **Orchestrator audit: 0 BLOCK / 0 WARN / 2 INFO (TS-06 loose ≥28 assertion vs exact 28; TS-04 milestone tag in outer group name — same pair as M1680 audit, cosmetic). Non-actionable; consistent with M1680.** Future deferred: convert right-rail panel to a draggable bottom sheet on mobile (heavier layout change). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1680 — pick-next #14 closeout: touch-tuned slash menu rows (CLAUDE.md item 10)** (2 files modified; +104 / -5; 8 new tests; analyze clean)
 - Committed: (this iteration)
