@@ -28,6 +28,7 @@ import '../controllers/slash_trigger_session.dart';
 import '../controllers/strike_autoformat_reaction.dart';
 import '../controllers/subscript_autoformat_reaction.dart';
 import '../controllers/super_editor_caret.dart';
+import '../controllers/superscript_autoformat_reaction.dart';
 import '../cubit/slash_menu_cubit.dart';
 import '../widgets/slash_menu_overlay.dart';
 
@@ -158,6 +159,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     _editor.reactionPipeline.add(const InlineCodeAutoformatReaction());
     _editor.reactionPipeline.add(const HighlightAutoformatReaction());
     _editor.reactionPipeline.add(const SubscriptAutoformatReaction());
+    _editor.reactionPipeline.add(const SuperscriptAutoformatReaction());
     _session = SlashTriggerSession();
     // D23 slice 2d (M1531): every composer selection / document mutation
     // projects to a flat (text, caret) via M1528's plainTextAndCaret and
