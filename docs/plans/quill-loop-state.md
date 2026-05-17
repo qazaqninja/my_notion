@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a + D27b all closed. 244 cumulative D-phase WYSIWYG tests. 7 Notion shortcuts live (reorder Cmd+Shift+Up/Down, duplicate Cmd+D, delete Cmd+Shift+Backspace, headings Cmd+Opt+1/2/3/0, list/todo Cmd+Shift+7/8/9).**
-- **Task:** D-phase pick-next survey #5. Most Notion-native single-key shortcuts now ship in WYSIWYG. Remaining candidates: (a) **D25 multi-select** — Notion's click+shift-click to select multiple blocks; keyboard ops act on the set. No super_editor built-in. 3-5 slices. (b) **D28-D30 cutover** — flip `/editor-beta` to default `/editor` route. Risky without final polish pass. (c) **Project-wide TS-01 lcov directives** — orchestrator's M1589 WARN suggested `// coverage:ignore-start/end` machine-readable markers on all six handler coverage exemptions (block_reorder, block_duplicate, block_delete, heading_conversion, block_conversion, plus any others). Cosmetic but project-wide. (d) **E59 ladder** — y_crdt WASM swap / web clipper / forms polish / etc. Fresh feature surface. (e) **G4 docker smoke** — user-time-gated. Lean toward (c) for a quick win that closes the latent TS-07 coverage-gate exposure, then (a) for the biggest user-visible value.
+- **Phase:** D (super_editor WYSIWYG migration) — **D24-family + D26 + D27a + D27b all closed. 244 D-phase tests, 7 Notion shortcuts live. Pivoting to D25 multi-select for biggest remaining user-visible value.**
+- **Task:** D25 slice 1 — `BlockSelection` value object (pure-Dart). Super_editor's `DocumentSelection` is a contiguous (base, extent) range only; Notion's multi-block-select (click block, ⌘+Click another to toggle a non-contiguous set) needs separate state. Slice 1 models the state: an immutable value object holding `Set<String> nodeIds` with `add`/`remove`/`toggle`/`clear`/`isSelected`/`isEmpty`/`size` operations. Subsequent slices will: (slice 2) a Cubit that owns the BlockSelection alongside super_editor's selection; (slice 3) UI overlay highlighting selected blocks via the cubit; (slice 4) wire ⌘+Click + Shift+Click gestures; (slice 5) make D24-family delete/duplicate/heading ops act on the whole set when non-empty. Keep slice 1 strictly value-object-and-ops; no super_editor imports needed.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1592 — D-phase pick-next survey #5 closeout — pivot to D25 multi-select (block selection set)** (no code; doc-only pivot decision)
+- Committed: (this iteration)
+- TaskList ID: 195 closeout
+- Notes: Investigated super_editor 0.3.0-dev.51's `DocumentSelection` (lib/src/core/document_selection.dart:22) — it extends `DocumentRange` (base + extent), strictly a contiguous range with no native support for a non-contiguous block-selection set. Notion's multi-select model needs a separate state object alongside it. Ruled out: lcov directive sweep (option c — orchestrator's WARN is a latent risk, not actionable until coverage tooling is wired; the project-wide gap is consistent across all 6 handlers and can stay batched). D28-D30 cutover (option b — needs dogfooding budget). E59 ladder (option d — fresh feature surface, can pick up after D25 lands). G4 docker (option e — user-time-gated). Picked D25 as the highest user-visible value remaining in Phase D. Slice 1 models the `BlockSelection` value object (immutable `Set<String> nodeIds`). Subsequent slices land cubit + UI overlay + gesture wiring + ops-affecting-selection. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1589 + M1590 — D27b slice 2 — list/todo keyboard handler + EditorBetaPage wiring + TS-04 fix-forward (D27b closed)** (17 tests; cumulative D27b = 27 tests; D-phase WYSIWYG layer = 244 tests)
 - Committed: (this iteration)
