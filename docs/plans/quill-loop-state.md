@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **H1-H3 + blockquote convert-in-place live**
-- **Task:** D23 interactions slice 2g-d — list/todo node-type conversion + picker actions. M1541 closed slice 2g-c for the 4 linePrefix variants that map to super_editor block-type attributions (`# `/`## `/`### `/`> ` → header1/2/3/blockquote). The remaining slash-menu actions still bail or no-op: (a) `- `, `1. `, `- [ ] ` linePrefixes need a node-class change (ParagraphNode → ListItemNode unordered/ordered, or → TaskNode) which is a node-replacement, not a metadata edit; (b) `SlashAction.pickImage` / `pickFile` need async file_picker + ImageNode/file-attachment insert. Slice 2g-d wires both. After: D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts ported) + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **all linePrefix variants live**
+- **Task:** D23 interactions slice 2g-e — async picker actions (pickImage / pickFile). M1543 closed slice 2g-d part 1 by extending the linePrefix mapper trio: `blockTypeForLinePrefix` (H1-H3 + blockquote → ChangeParagraphBlockTypeRequest), `listItemTypeForLinePrefix` (bullet + ordered → ConvertParagraphToListItemRequest), `isTaskLinePrefix` (todo → ConvertParagraphToTaskRequest). All 7 linePrefix variants in `kSlashEntries` are now functional in WYSIWYG. Only the two async picker SlashAction variants remain: `pickImage` and `pickFile`. Plan: a private async helper that strips `/query`, awaits file_picker, then dispatches a ReplaceNodeRequest with ImageNode (for pickImage) or a file-attachment paragraph (for pickFile). After 2g-e closes D23 fully: D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts ported) + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1543 — D23 interactions slice 2g-d part 1 — list/ordered/todo convert-in-place** (all 7 linePrefix variants now functional in WYSIWYG)
+- Committed: (this iteration)
+- TaskList ID: 170 + 171 closeout (slice 2g-c + 2g-d together — they shipped as one continuous extension of the prefix mapper helper trio)
+- Notes: Extended `lib/features/editor/domain/slash_entry_block_type.dart` from M1541's single helper to a trio: `blockTypeForLinePrefix` (unchanged), `listItemTypeForLinePrefix(String) → ListItemType?` mapping `- → unordered` and `1. → ordered`, `isTaskLinePrefix(String) → bool` matching `- [ ] ` exactly. Pre-checked todo `- [x] ` deliberately NOT matched (slash menu only emits the empty-checkbox variant; v1.x backlog item). Module doc comment rewritten to describe the trio. Tests grew from 6 in 1 group to 14 in 3 groups (one per function) — addresses M1541's optional TS-04 info finding. EditorBetaPage `_onSlashEntryPicked` resolves prefix once then chooses among 4 second-request shapes by precedence: ChangeParagraphBlockTypeRequest → ConvertParagraphToListItemRequest → ConvertParagraphToTaskRequest → InsertTextRequest (when prefix is null). Unmappable prefix → delete-only. 6-line comment block above the request list documents the mapping. Picker actions (pickImage/pickFile) still bail — those land in slice 2g-e. flutter analyze clean on all 3 touched files; 14/14 helper tests green in <1s. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (optional cross-function boundary test). Behaviour: `/bullet`, `/numbered`, `/todo` (and matching slash-menu keywords) in WYSIWYG now strip `/query` and convert the current paragraph to the right node type. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1542 — loop-state advance** (record M1541 + queue D23 slice 2g-d)
+- Committed: prior to M1543 (this iteration)
+- TaskList ID: 170 partial close
+- Notes: Recorded H1-H3 + blockquote linePrefix mapping. Advanced **Current** pointer to slice 2g-d. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1541 — D23 interactions slice 2g-c — linePrefix convert-in-place** (H1/H2/H3/blockquote land via super_editor ChangeParagraphBlockTypeRequest)
 - Committed: (this iteration)
