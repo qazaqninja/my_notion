@@ -24,6 +24,7 @@ void main() {
       dispatcher = _RecordingDispatcher();
     });
 
+    group('guards (no-op paths)', () {
     test('no-op when selection is null', () {
       reaction.react(context, dispatcher, []);
       expect(dispatcher.executedRequests, isEmpty);
@@ -78,6 +79,9 @@ void main() {
       expect(dispatcher.executedRequests, isEmpty);
     });
 
+    });
+
+    group('dispatch (positive path)', () {
     test('dispatches DeleteContentRequest + InsertTextRequest with '
         'codeAttribution when caret is at end of `foo`', () {
       composer.setSelectionWithReason(
@@ -109,6 +113,7 @@ void main() {
       final insert = batch[1] as InsertTextRequest;
       expect(insert.textToInsert, 'foo');
       expect(insert.attributions, contains(codeAttribution));
+    });
     });
   });
 }
