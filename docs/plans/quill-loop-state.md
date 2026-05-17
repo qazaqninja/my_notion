@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 3b — manual `cascade_invocations` cleanup (26 findings). The largest remaining non-docs cluster after auto-fixes; orchestrator's recommended next cluster. Each finding is `receiver.foo(); receiver.bar();` → `receiver..foo()..bar();`. Mechanical per-site but `dart fix` cannot resolve (likely because the receiver patterns are heterogeneous — some include conditionals or other intervening statements). Distribution: bin/server.dart, several lib/sync/* files, test/ws_hub_test.dart (10+ findings concentrated here per earlier breakdown). After this slice: cluster 3c (missing_whitespace_between_adjacent_strings 36 + cast_nullable_to_non_nullable 19 + lines_longer_than_80_chars 18), then cluster 4 (public_member_api_docs 68 doc-only).
+- **Task:** Forms polish slice 3b cluster 3c — manual cleanup of three lints `dart fix` cannot auto-resolve: missing_whitespace_between_adjacent_strings (~36), cast_nullable_to_non_nullable (~19), lines_longer_than_80_chars (~18 + ~5 added by M1487 wider cast expressions = ~23). Total ~73 to clear. These are heterogeneous per-site fixes — adjacent-string whitespace needs literal review, nullable cast cleanups may need null-check or `!` justification, line-length splits depend on local context. Slice in 3 sub-passes (one rule per commit) if needed to keep diffs reviewable. After cluster 3c: cluster 4 (public_member_api_docs 68 doc-only — the largest remaining cluster).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1494 — backend lint cleanup 3b cluster 3b (cascade_invocations 26 → 0)** (manual cluster after auto-fix exhaustion)
+- Committed: (this iteration)
+- TaskList ID: 155
+- Notes: Manual Router-builder + test-setup cascade conversions across 7 files. Lib routers (auth/routes, public/routes, sync/routes, sync/ws_routes, forms/routes): `final router = Router(); router.X(...); ...; return router;` → `return Router()..X(...)..Y(...);`. buildOwnerFormsRouter follows same shape for single GET. bin/server.dart: 4 db-down 503-fallback `router.all(...)` calls collapsed into single cascade chain. lib/forms/routes.dart: `final fields = parseUrlEncodedForm(raw); fields.removeWhere(...)` → `final fields = parseUrlEncodedForm(raw)..removeWhere(...)`. test/ws_hub_test.dart: 5 groups of consecutive `hub.subscribe(...)` / `hub.broadcast(...)` calls converted to `hub..subscribe(...)..subscribe(...);` cascades (10 findings cleared). buildSyncRouter intentionally diverges from the cascade-only pattern because its conditional `if (wsHub != null) router.mount(...)` must precede route registration — orchestrator audit explicitly approved this as the correct structural choice (LT-01 info-only note, not a finding). Net analyze: 192 → 166 info findings (-26, exact match to cascade_invocations count). 192/192 backend tests pass. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (the buildSyncRouter intentional non-cascade — confirmed correct). Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1493 — loop-state advance** (record M1491/M1492 + advance to slice 3b cluster 3b)
+- Committed: prior to M1494 (this iteration)
+- TaskList ID: 154 closeout
+- Notes: Recorded M1491 (auto-fix cluster 3a) + M1492 (LT-02+TS-03 fix-forward). Advanced **Current** pointer to cluster 3b (cascade_invocations). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1492 — LT-02+TS-03 doc fix-forward on M1491 backend lint cleanup** (orchestrator gate cleanup)
 - Committed: (this iteration)
