@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **slash trigger helper extracted**
-- **Task:** D23 interactions slice 1b — refactor source_view.dart to call the new slash_trigger.dart helper. M1518+M1519 shipped the pure-Dart helper (`lib/features/editor/domain/slash_trigger.dart` with `slashShouldOpen` / `slashQueryBetween` / `slashShouldDismiss` + 19 tests). Source view's inline trigger logic at `lib/features/editor/presentation/widgets/source_view.dart:215-244` still re-implements the same heuristics — refactor it to call the helpers so both call sites stay in sync. After slice 1b: D23 slice 2 wires the helper into EditorBetaPage's super_editor keyboard listener so `/` in WYSIWYG opens the menu identically. Then D24-D27 polish + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **slash trigger helper shared by source_view + ready for WYSIWYG**
+- **Task:** D23 interactions slice 2 — wire slash_trigger into EditorBetaPage's super_editor keyboard listener. M1518 + M1519 + M1521 shipped the shared helper (`lib/features/editor/domain/slash_trigger.dart`, 19 tests) and refactored source_view.dart to consume it. Next: bring the same `/` trigger semantics to the WYSIWYG side. Bite-sized first sub-slice (2a): expose `SlashMenuCubit` via BlocProvider in EditorBetaPage's widget tree + a smoke test that the cubit is reachable from a `context.read` call. Subsequent sub-slices (2b/2c/2d): attach a super_editor keyboard/listener plugin that reads the current document's plain text + caret offset, calls `slashShouldOpen` / `slashShouldDismiss` / `slashQueryBetween`, renders `SlashMenuOverlay` positioned by `anchorRect`, and on selection splices the entry into the document via super_editor's command system. Then D24-D27 polish + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1521 — D23 interactions slice 1b — source_view consumes slash_trigger helpers** (extracts inline trigger heuristics into shared call sites)
+- Committed: (this iteration)
+- TaskList ID: 162 closeout
+- Notes: Refactor `lib/features/editor/presentation/widgets/source_view.dart` lines 215-244 from ~30 lines of inline branches (caret-position char check + whitespace-boundary check + query-span scan + manual bounds check) to ~11 lines of three function calls: `slashShouldOpen` / `slashShouldDismiss` / `slashQueryBetween`. Added a 3-line comment block citing the helper's file path and naming EditorBetaPage's super_editor keyboard listener as the other consumer (M1518 rationale). Net diff: -9 lines. Zero behavioural delta — the 19 slash_trigger tests model the inline logic 1-to-1. `flutter analyze` clean on the refactored file. slash_trigger tests still 19/19 green. Source view widget tests don't exist (TS-01/FS-04 deferred item carried forward from H4d audits) — analyze-clean is the proxy verification. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — confirmed correct CA-* (presentation → domain), TS-01 deferral not worsened, LT-01 clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1520 — loop-state advance** (record M1518+M1519 + queue D23 slice 1b)
+- Committed: prior to M1521 (this iteration)
+- TaskList ID: 161 closeout
+- Notes: Recorded slice 1a + TS-04 fix-forward. Advanced **Current** pointer to slice 1b (source_view refactor). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1518 + M1519 — D23 interactions slice 1a + TS-04 fix-forward (slash_trigger helper extracted)** (first concrete D-phase TDD slice)
 - Committed: (this iteration)
