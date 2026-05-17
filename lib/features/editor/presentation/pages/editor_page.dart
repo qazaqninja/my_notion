@@ -1939,6 +1939,7 @@ class _EditorBodyState extends State<_EditorBody> {
                                   key: ValueKey('source-${page.ulid}'),
                                   initialText: page.body,
                                   locked: locked,
+                                  pageUlid: page.ulid,
                                 ),
                               if (mobile) ...[
                                 const SizedBox(height: 24),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -16,6 +17,9 @@ import '../../../../shared/widgets/quill_overlays.dart';
 import '../../../relations/domain/usecases/search_pages.dart';
 import '../../../relations/presentation/cubit/relation_picker_cubit.dart';
 import '../../../relations/presentation/widgets/relation_picker_overlay.dart';
+import '../../../sync/domain/entities/awareness_message.dart';
+import '../../../sync/domain/usecases/peer_color_from_user_id.dart';
+import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/editor_sync_ws_mount.dart';
 import 'remote_cursor_overlay.dart';
 import '../../../vault/data/daily_note.dart';
@@ -41,6 +45,7 @@ class SourceView extends StatefulWidget {
     super.key,
     required this.initialText,
     this.locked = false,
+    this.pageUlid,
   });
   final String initialText;
 
@@ -49,6 +54,12 @@ class SourceView extends StatefulWidget {
   /// swallowed by EditorBloc, see editor_bloc.dart:112). Mirrors the
   /// kebab/title/properties-panel locked guards (M679–M681).
   final bool locked;
+
+  /// H4d-iii-d-iii — page identifier used to tag outbound presence
+  /// AwarenessMessages. Optional because not every embedder of
+  /// SourceView is page-bound (e.g. dialog previews). When null,
+  /// presence broadcasts are skipped.
+  final String? pageUlid;
 
   @override
   State<SourceView> createState() => _SourceViewState();
@@ -66,6 +77,14 @@ class _SourceViewState extends State<SourceView> {
   /// Used by [_onPick] to know how much prefix to strip when splicing.
   int _triggerLen = 2;
   int? _slashTriggerStart;
+
+  /// H4d-iii-d-iii — debounce window for outbound presence so
+  /// dragging the selection / holding arrow keys doesn't flood
+  /// the WS. 100 ms matches the y_crdt awareness convention
+  /// (long enough to coalesce keystroke bursts, short enough that
+  /// peers see the cursor track in real time).
+  Timer? _presenceDebounce;
+  int? _lastSentCursor;
 
   @override
   void initState() {
@@ -100,12 +119,52 @@ class _SourceViewState extends State<SourceView> {
 
   @override
   void dispose() {
+    _presenceDebounce?.cancel();
     _controller.removeListener(_onChanged);
     _controller.dispose();
     _focus.dispose();
     _picker.dismiss();
     _slash.close();
     super.dispose();
+  }
+
+  /// H4d-iii-d-iii — schedule (or reschedule) a debounced
+  /// outbound presence broadcast. No-op when:
+  ///   - the page has no pageUlid (embedded preview, etc.),
+  ///   - the editor is mounted outside an EditorSyncWsScope (no
+  ///     active multiplayer session),
+  ///   - the SyncBloc isn't authed,
+  ///   - the JWT didn't carry a `sub` claim,
+  ///   - the cursor index hasn't changed since the last send.
+  /// Last cursor tracked in [_lastSentCursor] so a text-edit that
+  /// doesn't move the caret doesn't emit a redundant message.
+  void _scheduleOutboundPresence() {
+    final ulid = widget.pageUlid;
+    if (ulid == null || ulid.isEmpty) return;
+    final scope = EditorSyncWsScope.maybeOf(context);
+    if (scope == null) return;
+    final sync = context.read<SyncBloc>();
+    if (!sync.state.isAuthed) return;
+    final userId = sync.state.userId;
+    if (userId == null) return;
+    final cursor = _controller.selection.baseOffset;
+    if (cursor < 0) return;
+    if (cursor == _lastSentCursor) return;
+    _presenceDebounce?.cancel();
+    _presenceDebounce =
+        Timer(const Duration(milliseconds: 100), () {
+      if (!mounted) return;
+      final live = _controller.selection.baseOffset;
+      if (live < 0) return;
+      if (live == _lastSentCursor) return;
+      scope.sendAwareness(AwarenessMessage(
+        userId: userId,
+        pageUlid: ulid,
+        cursorIndex: live,
+        color: peerColorFromUserId(userId),
+      ));
+      _lastSentCursor = live;
+    });
   }
 
   void _onChanged() {
@@ -126,6 +185,13 @@ class _SourceViewState extends State<SourceView> {
     // H2.4d-iii) by inbound peer updates — a listener would
     // re-broadcast those and loop.
     EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(_controller.text);
+
+    // H4d-iii-d-iii — outbound presence on every controller
+    // notification (text edits AND selection-only moves trigger
+    // the listener). The helper debounces + dedups internally so
+    // a flurry of single-keystroke edits emits one cursor update
+    // per ~100 ms.
+    _scheduleOutboundPresence();
 
     final text = _controller.text;
     final selection = _controller.selection;
