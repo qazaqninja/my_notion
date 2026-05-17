@@ -7,10 +7,20 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** H2.4d-ii — wire the editor save path → `EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(body)`. Find the EditBody / SaveNow dispatch in _EditorBodyState, fan out the local body push to peers right after the bloc.add. Tests: bloc_test-style fake that asserts pushLocalUpdate is called whenever the editor dispatches EditBody (when authed+published) and silently skipped otherwise.
+- **Task:** H2.4d-iii — onRemoteDoc consumer wiring: pass an onRemoteDoc callback to EditorSyncWsMount that dispatches EditorBloc.add(EditBody(doc.body)) when a peer message lands; pass an onConnectionError callback that surfaces a transient banner via context.toastError (or the M1365 friendlyNetworkErrorLabel pattern). The BL-11 rationale comment from M1391 explicitly notes the loop-guard: the H2.4d-ii dispatch-site placement of pushLocalUpdate skips remote-origin EditBody dispatches, so the onRemoteDoc path is safe to wire as `EditorBloc.add(EditBody(doc.body))` without creating an A→server→B→server→A loop.
 - **Status:** pending
 
 ## Last completed
+
+- **M1391 — H2.4d-ii cleanup** (orchestrator gate: document BL-11 dispatch-site rationale at both call sites)
+- Committed: (this iteration)
+- TaskList ID: 103b
+- Notes: Orchestrator audit returned 0 BLOCK / 1 WARN (BL-11 suggesting BlocListener on EditorState.body instead of inline fan-out) / 2 INFO (cross-feature presentation import OK, no wire-in test OK). The BL-11 fix is intentionally NOT applied: EditBody is dispatched by three distinct origins (user typing → should broadcast; pull-from-server → should NOT; inbound peer updates from H2.4d-iii → MUST NOT, would loop A→server→B→server→A). A BlocListener on EditorState.body would fire on all three and need additional state-tagging to distinguish. Dispatch-site placement naturally distinguishes by code path — only user typing goes through onBodyChange/_onChanged. Added a ~10-line rationale comment to editor_page.dart's rendered-mode handler and a shorter cross-reference comment in source_view.dart's _onChanged. flutter analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1390 — H2.4d-ii** (wire editor save path → EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate)
+- Committed: (this iteration)
+- TaskList ID: 103
+- Notes: Both local-edit dispatch sites now fan out to peers. editor_page.dart line ~1909 MarkdownRenderer.onBodyChange (rendered-mode block edits): converted `=> bloc.add(EditBody(next))` arrow expression into a block closure firing both bloc.add AND `EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(next)`. Locked-page guard preserved (`locked ? null : ...`). source_view.dart line 102 `_onChanged()` (source-mode TextField): added the scope push right after the existing EditBody dispatch; locked guard at line 101 covers both. Import of EditorSyncWsScope added to source_view.dart imports. The scope returns null when EditorSyncWsMount isn't an ancestor (unauthed or unpublished page), so the push is silently skipped — no branch on isAuthed/isPublished needed at either dispatch site. No new tests this slice (G2.5/H2.4c precedent — wire-in of already-tested components ships without new tests; scope-lookup pattern is covered by M1382, controller pushLocalUpdate by M1379, transport by M1373/M1376). flutter analyze clean; markdown_renderer (15/15) + sync + editor_bloc tests all green. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1388 — H2.4d-i** (extract defaultEditorSyncBinderFactory + retire editor→sync/data import; closes CA-04 from M1385)
 - Committed: (this iteration)
