@@ -7,10 +7,15 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** H2.4d — consumer hooks: wire editor save path → EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(body); subscribe to onRemoteDoc → setState/triggerRender (peer updates appear without page reload); subscribe to onConnectionError → context.toastError / "reconnect needed" banner; plus the CA-04 factory extraction (`defaultEditorSyncBinderFactory` to sync/presentation/) flagged by the M1385 orchestrator audit
+- **Task:** H2.4d-ii — wire the editor save path → `EditorSyncWsScope.maybeOf(context)?.pushLocalUpdate(body)`. Find the EditBody / SaveNow dispatch in _EditorBodyState, fan out the local body push to peers right after the bloc.add. Tests: bloc_test-style fake that asserts pushLocalUpdate is called whenever the editor dispatches EditBody (when authed+published) and silently skipped otherwise.
 - **Status:** pending
 
 ## Last completed
+
+- **M1388 — H2.4d-i** (extract defaultEditorSyncBinderFactory + retire editor→sync/data import; closes CA-04 from M1385)
+- Committed: (this iteration)
+- TaskList ID: 102a
+- Notes: Resolves the CA-04 cleanup the M1385 orchestrator audit deferred. editor_page.dart no longer imports from sync/data/ directly — it now reads only from sync/presentation/, matching the rule's same-layer-or-domain dependency direction. New `lib/features/sync/presentation/default_editor_sync_binder_factory.dart` (~30 lines): top-level `defaultEditorSyncBinderFactory({required String wsUrl})` returning a `SyncWsBinderFactory` closure that constructs SyncWsClient + SyncWsBinder + QuillCrdtDoc.fromMarkdown(initialBody). Lives in sync/presentation because it IS the canonical production wiring for the editor's binderFactory prop — belongs alongside EditorSyncWsMount that consumes it; sync/presentation→sync/data is same-feature presentation→data which is the rule's private-internals exception. 3 tests: returned closure constructs real SyncWsBinder with initialDoc.body matching initialBody; two calls return independent binders (no shared state); empty initialBody → clock 0. editor_page.dart diff: dropped 3 imports (crdt/domain/entities/quill_crdt_doc.dart, sync/data/sync_ws_binder.dart, sync/data/sync_ws_client.dart), added 1 (sync/presentation/default_editor_sync_binder_factory.dart). Replaced inline 8-line binderFactory closure with single call to `defaultEditorSyncBinderFactory(wsUrl: 'ws://localhost:8080')`. Orchestrator audit: 0 BLOCK / 1 WARN (TS-03 explicitly not applicable, noted for future interface abstraction) / 2 INFO (optional CA-04 inline comment, CA-07 inherited waiver — both no-action). CA-04 from M1385 fully closed. flutter analyze clean; sync + editor_bloc tests pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1386 — H2.4c cleanup** (orchestrator gate: BL-12 narrow rebuild scope via BlocBuilder buildWhen; CA-04 deferred)
 - Committed: (this iteration)
