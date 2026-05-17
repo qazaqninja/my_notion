@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **bold + italic + strike autoformat live**
-- **Task:** D26 inline autoformat slice 4 — inline code `` `X` ``. M1556 added strike detector + reaction + 20 tests with the explicit boundary that `~X~` (single tilde) is NOT strike — protects the upcoming sub/sup slices. Pipeline order now: bold → italic → strike. Slice 4 applies the template to inline code: single backtick marker, inner must not contain another backtick or newline. Register after strike. Use `codeAttribution` (super_editor reuses the same NamedAttribution for code-block blockType metadata and inline-code attribution — they live in different scopes so the overload is intentional). Following slices: highlight `==X==` (5), sub `~X~` (6 — must check after strike), sup `^X^` (7). After D26 closes: D24/D25 plugin opt-ins, D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **bold + italic + strike + inline code live**
+- **Task:** D26 inline autoformat slice 5 — highlight `==X==`. M1558 added inline code detector + reaction + 20 tests. M1559 fix-forward sub-grouped the inline-code reaction tests per orchestrator's TS-04 INFO suggestion; new convention (`guards / dispatch` inner groups) applies forward from this slice onward. Pipeline order now: bold → italic → strike → inline code. Slice 5 applies the template to highlight: symmetric 2-char `=` marker, inner must not contain `==` or newline. Use the existing `highlightAttribution` NamedAttribution defined at `lib/core/markdown/super_editor_serializer.dart:907` (super_editor doesn't ship one). Register after inline code. Following: sub `~X~` (6 — must check after strike's `~~`), sup `^X^` (7). After D26 closes: D24/D25 plugin opt-ins, D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1558 + M1559 — D26 inline autoformat slice 4 — inline code `` `X` `` (detector + reaction + tests + TS-04 fix-forward)** (20 tests; cumulative D26 = 85)
+- Committed: (this iteration)
+- TaskList ID: 178 closeout
+- Notes: Inline code is the simplest of the inline marks — single backtick marker, no flanking or double-char disambiguation. `lib/features/editor/domain/inline_code_autoformat.dart` (~37 lines): `detectInlineCodeAutoformat({text, caret})` walks back for an opening backtick, rejects empty inner / newline / out-of-bounds. Initial test had a hand-counted off-by-one in `markerStart` (algorithm correctly returns the CLOSEST opener at index 3, test asserted 4); fixed by tightening the test comment + adjusting the expected value to 3. `InlineCodeAutoformatReaction` uses `codeAttribution` (super_editor's dual-use NamedAttribution — same one used as code-block blockType metadata, applied as inline-mark text attribution here). Wired AFTER bold/italic/strike. M1559 fix-forward addressed orchestrator's M1558 TS-04 INFO by sub-grouping the inline-code reaction tests into `guards (no-op paths)` + `dispatch (positive path)` inner groups; this convention applies forward from slice 5 onward. The bold/italic/strike reaction tests stay single-group (not load-bearing to rework). flutter analyze clean on all 5 touched files; 15+5 = 20 inline-code tests green. Cumulative D26: 14+5 + 19+7 + 15+5 + 15+5 = 85 tests. Behaviour: `` `x` `` in WYSIWYG now strips markers and applies codeAttribution. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1557 — loop-state advance** (record M1556 + queue D26 slice 4)
+- Committed: prior to M1558 (this iteration)
+- TaskList ID: 177 advance
+- Notes: Recorded strike detector + reaction + tests. Advanced **Current** pointer to slice 4. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1556 — D26 inline autoformat slice 3 — strike `~~X~~` detector + reaction + tests** (20 strike tests; cumulative D26 = 65)
 - Committed: (this iteration)
