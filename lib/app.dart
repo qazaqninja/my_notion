@@ -155,6 +155,12 @@ class _QuillAppState extends State<QuillApp> {
         RepositoryProvider<NotificationScheduler>.value(value: _scheduler),
         RepositoryProvider<SyncRepository>.value(value: _syncRepo),
         RepositoryProvider<FormsRepository>.value(value: _formsRepo),
+        // E58b-iii: FormBearingPagesRepository feeds only the
+        // Settings → Forms pane today, so a route-scoped Provider
+        // would be more granular per DI-03. We hoist it to root
+        // for symmetry with FormsRepository above (same pattern,
+        // both repos are stateless thin wrappers) — when a second
+        // consumer appears or the app grows multi-vault, revisit.
         RepositoryProvider<FormBearingPagesRepository>.value(
             value: _formBearingPagesRepo),
       ],
