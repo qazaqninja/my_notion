@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** Strike shipped items in CLAUDE.md v1.x backlog (Task A2 from the original plan). The "What is NOT implemented" list has 10 items with 7 already struck through (~~bold~~). The unstruck items are #7 (macOS bookmarks), #9 (WYSIWYG editor — but D-fp1/2/3/4 just landed), #10 (mobile UI — CLAUDE.md notes "1 day remaining"). Verify each still pending or update — particularly #9 since D-fp parity arc landed. Then re-think pick-next: D28-D30 cutover, BL-12 refactor, mobile polish, NV-02 typed routes, Phase E continuation, D-fp5 parity ports remain on the menu.
+- **Task:** Pick-next survey #12 — after CLAUDE.md sync arc closed (Tasks A1+A2). With the backlog now accurately reflecting current state, the natural next slice is **D28 cutover slice 1**: introduce a SharedPreferences-backed `editor.useBeta` toggle in Settings → Advanced (default `false` to start), have `/editor/:ulid` route fork between `EditorPage` (toggle off, default) and `EditorBetaPage` (toggle on). Existing `/editor-beta/:ulid` route stays for direct beta entry. This is a 1-iteration slice that opens the cutover door without committing to the flip. D29 would default toggle to `true`. D30 would delete legacy `EditorPage` + toggle. Alternatives remain: BL-12 _FindBarHost extraction, NV-02 typed routes, mobile polish (CLAUDE.md item 10 — half-day remaining), Phase E continuation, D-fp5 parity ports.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1660 — Task A2 — strike shipped items in CLAUDE.md v1.x backlog** (1 file modified; +4 / -4; doc-only)
+- Committed: (this iteration)
+- TaskList ID: 228 closeout
+- Notes: Updates 3 paragraphs in CLAUDE.md backlog list. Item #9 (WYSIWYG editor) prose rewritten — was "🚧 Still pending: D23 interactions, D24-D27 polish, D28-D30 cutover (~7-8 slices remaining)"; now reflects D1-D22 ✅ + D23 ✅ (M1521-M1545 slash menu wiring) + D24a/c/d ✅ (reorder/duplicate/delete keyboard ops) + D25 ✅ (M1597-M1607 multi-block selection) + D26 ✅ (M1549-M1564 inline autoformat) + D27 ✅ (heading + list/todo conversion keyboard shortcuts) + D-fp parity ✅ (Move-to-Trash M1621 / Pull-from-server M1623 / Share M1625 / Find-in-page M1627-M1638). Only D28-D30 cutover remains. super_editor version reference bumped 0.3.0-dev.44 → 0.3.0-dev.51. Item #10 (Mobile UI) — struck through "per-page mobile-optimised editor toolbar" mention since G2/G2.5 shipped MobileEditorToolbar; only mobile-first properties panel + touch-tuned slash menu remain (~half day). Item #16 test-file count refreshed 144 → 180. Top-of-file editor stack description (line 45) updated to reflect beta route runs full WYSIWYG. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine (doc-only diff).** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1658 — pick-next #11 closeout: sync CLAUDE.md status block to current milestone** (1 file modified; 1 line replaced; doc-only)
 - Committed: (this iteration)
