@@ -121,6 +121,22 @@ class SyncWsBinder {
     _client.send(body);
   }
 
+  /// H4d-ii — broadcast a local presence "awareness" event to
+  /// peers (cursor reposition, color tag, etc.). Encodes [msg] to
+  /// JSON and pushes through the same `_client.send` path as
+  /// CRDT updates — the H4d-i dispatcher on the receiving side
+  /// routes the payload back into [awarenessStream] via the kind
+  /// discriminator. Silent no-op when not attached or the
+  /// underlying transport isn't connected.
+  ///
+  /// Outbound presence does NOT mutate the local CRDT doc — peer
+  /// cursors are a presentation concern, not part of the document
+  /// state.
+  void sendAwareness(AwarenessMessage msg) {
+    if (!_attached || !_client.isConnected) return;
+    _client.send(msg.encode());
+  }
+
   /// Tear down: cancel the incoming subscription + close the
   /// client. Idempotent.
   Future<void> detach() async {

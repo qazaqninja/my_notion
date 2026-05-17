@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
 import 'package:my_notion/features/sync/data/sync_ws_binder.dart';
 import 'package:my_notion/features/sync/data/sync_ws_client.dart';
+import 'package:my_notion/features/sync/domain/entities/awareness_message.dart';
 import 'package:my_notion/features/sync/domain/repositories/sync_repository.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -407,6 +408,84 @@ void main() {
         await pumpEventQueue();
         expect(
             binder.doc.body, '{"kind":"update","payload":"abc"}');
+        await binder.dispose();
+      });
+    });
+
+    group('sendAwareness() (H4d-ii)', () {
+      const msg = AwarenessMessage(
+        userId: 'alice',
+        pageUlid: 'U',
+        cursorIndex: 42,
+        color: '#FF5722',
+      );
+
+      test('encodes the message and pushes through the WS sink',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        binder.sendAwareness(msg);
+        await pumpEventQueue();
+        expect(ch.outbound, hasLength(1));
+        expect(ch.outbound.single, msg.encode());
+        await binder.dispose();
+      });
+
+      test('does NOT mutate the local CRDT doc', () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.fromMarkdown('original'),
+        );
+        await binder.attach();
+        binder.sendAwareness(msg);
+        await pumpEventQueue();
+        // Presence is presentation-only; doc must stay untouched.
+        expect(binder.doc.body, 'original');
+        await binder.dispose();
+      });
+
+      test('before attach() is a silent no-op (no send)', () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        binder.sendAwareness(msg);
+        await pumpEventQueue();
+        expect(ch.outbound, isEmpty);
+        await binder.dispose();
+      });
+
+      test('after detach() is a silent no-op (no send)', () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        await binder.detach();
+        binder.sendAwareness(msg);
+        await pumpEventQueue();
+        // The CRDT pushLocalUpdate has the same gate; awareness
+        // must match for consistency.
+        expect(ch.outbound, isEmpty);
         await binder.dispose();
       });
     });
