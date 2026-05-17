@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'core/db/quill_database.dart' hide Page;
+import 'core/network/backend_endpoint.dart';
 // Composition root — app.dart is the one place that constructs concrete
 // data-layer impls and wires them through RepositoryProvider. Other
 // presentation files MUST consume the abstract interfaces, never the
@@ -88,15 +89,14 @@ class _QuillAppState extends State<QuillApp> {
     _scheduler = LocalNotificationScheduler();
     unawaited(_scheduler.init());
     _remindersBloc = RemindersBloc(scheduler: _scheduler);
-    // V2 backend client (Phase E E12-E13). baseUrl currently hard-coded
-    // to localhost — a settings page (slice E14+) will let users set
-    // their own self-hosted endpoint.
-    // E54: shared backend base URL — keeps Sync and Forms repos from
-    // drifting if/when a settings entry lets users override it.
-    // Configure once, read twice.
-    const backendBaseUrl = 'http://localhost:8080';
-    _syncRepo = HttpSyncRepository(baseUrl: backendBaseUrl);
-    _formsRepo = HttpFormsRepository(baseUrl: backendBaseUrl);
+    // V2 backend client (Phase E E12-E13). baseUrl currently hard-
+    // coded to localhost via kBackendHttpBaseUrl — a settings page
+    // (slice E14+) will let users override it. E57 promoted the
+    // constant out of this file so editor_page.dart's WS factory
+    // + the kebab's "Copy form link" handler share one source of
+    // truth.
+    _syncRepo = HttpSyncRepository(baseUrl: kBackendHttpBaseUrl);
+    _formsRepo = HttpFormsRepository(baseUrl: kBackendHttpBaseUrl);
     _syncBloc = SyncBloc(repo: _syncRepo)
       // E15: restore the persisted JWT (if any) so a quit + relaunch
       // doesn't force users to re-authenticate.

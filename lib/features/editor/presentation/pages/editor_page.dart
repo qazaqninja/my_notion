@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/yaml_scalar.dart';
+import '../../../../core/network/backend_endpoint.dart';
 import '../../../../core/paths.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../core/util/throttle.dart';
@@ -473,11 +474,22 @@ class _EditorBodyState extends State<_EditorBody> {
         // `forms:` frontmatter field. Only shown when the page is
         // actually form-bearing — otherwise the menu would always
         // resolve to a 403 / not_owner.
-        if (_hasForms(loaded))
+        if (_hasForms(loaded)) ...[
+          // E57 — author-facing share helper: copy the public
+          // /forms/<ulid> URL to clipboard so the author can paste
+          // it anywhere (Slack, email, embed). Visitors fill out
+          // the rendered HTML (E56b) and their submissions land in
+          // the per-page list reached via "View form submissions →"
+          // below.
+          const QuillMenuItem(
+              icon: 'link',
+              label: 'Copy form link',
+              value: 'copy-form-link'),
           const QuillMenuItem(
               icon: 'inbox',
               label: 'View form submissions →',
               value: 'view-form-submissions'),
+        ],
         QuillMenuItem.separator<String>(),
         const QuillMenuItem(icon: 'trash', label: 'Move to trash', danger: true, value: 'trash'),
         const QuillMenuItem(icon: 'sync', label: 'Reindex vault', value: 'reindex'),
@@ -488,6 +500,17 @@ class _EditorBodyState extends State<_EditorBody> {
       case 'copy-ulid':
         await Clipboard.setData(ClipboardData(text: ulid));
         if (context.mounted) context.toastSuccess('Copied $ulid', subMono: true);
+      case 'copy-form-link':
+        // E57: build the public form URL via the shared helper so a
+        // future E14+ override doesn't drift between consumers.
+        final url = publicFormUrl(
+          backendBaseUrl: kBackendHttpBaseUrl,
+          pageUlid: ulid,
+        );
+        await Clipboard.setData(ClipboardData(text: url));
+        if (context.mounted) {
+          context.toastSuccess('Copied form link', sub: url, subMono: true);
+        }
       case 'copy-link':
         await Clipboard.setData(ClipboardData(text: '[[$ulid]]'));
         if (context.mounted) context.toastSuccess('Copied [[$ulid]]', subMono: true);
@@ -1637,16 +1660,17 @@ class _EditorBodyState extends State<_EditorBody> {
               isAuthed: syncState.isAuthed,
               token: syncState.token,
               initialBody: page.body,
-              // H2.4c: wsUrl mirrors app.dart's hardcoded
-              // backendBaseUrl ('http://localhost:8080'). When
-              // E14+ exposes a settings-page override, both
-              // strings will read from the same source.
+              // H2.4c: wsUrl mirrors app.dart's HTTP base URL.
+              // E57 promoted both to lib/core/network/backend_endpoint.dart
+              // as the single source of truth — when E14+ exposes a
+              // settings-page override, both constants will read
+              // from the same stored value.
               // H2.4d-i: factory closure extracted to
               // sync/presentation so this presentation file no
               // longer imports from sync/data/ directly (resolves
               // the CA-04 cleanup deferred from M1385).
               binderFactory:
-                  defaultEditorSyncBinderFactory(wsUrl: 'ws://localhost:8080'),
+                  defaultEditorSyncBinderFactory(wsUrl: kBackendWsBaseUrl),
               // H2.4d-iii: inbound peer updates apply via the
               // EditorBloc.EditBody event, which mutates the loaded
               // state's body. The renderer / SourceView re-render
