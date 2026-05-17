@@ -20,6 +20,7 @@ import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
 import '../../domain/slash_entries.dart';
 import '../../domain/slash_entry_block_type.dart';
+import '../controllers/block_conversion_keyboard_action.dart';
 import '../controllers/block_delete_keyboard_action.dart';
 import '../controllers/block_duplicate_keyboard_action.dart';
 import '../controllers/block_reorder_keyboard_action.dart';
@@ -249,6 +250,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
               blockDuplicateKeyboardAction,
               blockDeleteKeyboardAction,
               headingConversionKeyboardAction,
+              blockConversionKeyboardAction,
               ...defaultKeyboardActions,
             ],
           ),
