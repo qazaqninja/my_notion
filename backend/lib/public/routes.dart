@@ -1,3 +1,11 @@
+// File contains HTML/CSS template renderers (`_renderUnlockForm`,
+// `_renderHtml`) — adjacent string literals are concatenated to
+// assemble template output without semantically meaningful
+// whitespace. The missing_whitespace_between_adjacent_strings lint
+// flags every line of those templates; the rule doesn't apply to
+// this idiom.
+// ignore_for_file: missing_whitespace_between_adjacent_strings
+
 import 'package:backend/public/markdown_html.dart';
 import 'package:bcrypt/bcrypt.dart';
 import 'package:postgres/postgres.dart';

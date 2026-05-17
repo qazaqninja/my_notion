@@ -1,3 +1,10 @@
+// File is an HTML template renderer — adjacent string literals are
+// concatenated to assemble HTML/CSS without semantically meaningful
+// whitespace. The missing_whitespace_between_adjacent_strings lint
+// flags every line of these templates; the rule doesn't apply to
+// this idiom.
+// ignore_for_file: missing_whitespace_between_adjacent_strings
+
 import 'dart:convert' show HtmlEscape, HtmlEscapeMode;
 
 import 'package:backend/forms/form_schema.dart';

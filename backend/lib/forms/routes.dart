@@ -1,3 +1,10 @@
+// File contains the `_renderThanksHtml` HTML template renderer —
+// adjacent string literals concatenate to assemble HTML/CSS without
+// semantically meaningful whitespace. The
+// missing_whitespace_between_adjacent_strings lint flags every line
+// of the template; the rule doesn't apply to this idiom.
+// ignore_for_file: missing_whitespace_between_adjacent_strings
+
 import 'dart:convert';
 
 import 'package:backend/auth/middleware.dart';
