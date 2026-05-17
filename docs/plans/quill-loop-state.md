@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** NV-03 migration slice 2b — swap legacy editor_page.dart bare '/home' call sites. Two sites: line 668 (`GoRouter.of(context).go('/home')` in `_moveToTrash`, the legacy precedent for D-fp1's port) and line 1531 (`context.go('/home')` in another navigation callback). Same one-line swap pattern as M1640/M1643. Then queue slice 2c (mobile_chrome.dart 3 sites + vault_shell_page.dart 2 sites). After NV-03 fully resolved: revisit pick-next survey for cutover prep vs Phase E continuation.
+- **Task:** NV-03 migration slice 2c — final 5 bare '/home' call sites. `lib/features/vault/presentation/widgets/mobile_chrome.dart`: line 25 (`context.go('/home')` in some nav callback), line 36 (`void goHome() => context.go('/home');` helper), line 48 (`active: route == '/home'` in NavBar active-tab compare — purely a comparison; constant works the same). `lib/features/vault/presentation/pages/vault_shell_page.dart`: lines 177 + 179 (two `context.go('/home')` calls). Same mechanical swap pattern. After 2c: NV-03 is fully resolved across the whole codebase — revisit pick-next survey for cutover prep vs Phase E continuation.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1645 — NV-03 slice 2b — swap legacy editor_page.dart bare '/home' sites** (1 file modified, +3 / -2; no new tests; 7/7 routes tests pass)
+- Committed: (this iteration)
+- TaskList ID: 221 closeout
+- Notes: Continued NV-03 cleanup arc (M1640 → M1643 → this). Both bare `'/home'` literals in `lib/features/editor/presentation/pages/editor_page.dart` swapped to `Routes.home`: line 668 (kebab `'trash'` case — legacy precedent for D-fp1's port) and line 1531 (locked-page "Back to home" TextButton). Imported `routes.dart` at same depth as existing `core/db/quill_database.dart` + `core/markdown/yaml_scalar.dart`. editor_page.dart now has zero bare `'/home'` string literals. Remaining 5 sites: `lib/features/vault/presentation/widgets/mobile_chrome.dart` (lines 25, 36, 48) + `lib/features/vault/presentation/pages/vault_shell_page.dart` (lines 177, 179). flutter analyze clean. 7/7 routes tests pass. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** Mechanical refactor, no functional change. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1643 — NV-03 slice 2a — migrate app.dart simple paths to Routes constants** (3 files modified; 1 new routes test for `Routes.lab`; 7/7 routes + 46/46 find-related editor tests pass)
 - Committed: (this iteration)
