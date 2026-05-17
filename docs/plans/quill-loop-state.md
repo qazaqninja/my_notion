@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. Pivoted back to E-phase. E60 slices 1+2+3 shipped — email, url, longtext HTML5 input types.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. **E60 forms-polish CLOSED: 4 slices, 39 new backend tests, FormFieldType extended from 6 to 10 (added email, url, longtext, pattern). 233 backend tests pass.**
 - **Phase:** D (super_editor WYSIWYG migration) — 292 tests. Cutover deferred.
-- **Task:** E60 slice 4 — `FormFieldType.pattern` for arbitrary regex matching. New field shape: schema includes a per-field `pattern:` string from yaml; renderer emits `<input pattern="…">`; validator compiles the pattern at validate-time and matches against input. Edge: if pattern is invalid regex, fail-soft (accept input — log a warning rather than reject all submissions for a broken schema). Changes: enum variant `pattern`, `FormFieldDef` adds `String? pattern` field, `_parseType` accepts `'pattern'`/`'regex'`, parser reads new `pattern: '...'` yaml key, validator case-tests regex with `RegExp(...)`-try-catch, renderer emits `<input pattern="…">` HTML-escaped. After E60 slice 4 → E60 closes; survey what's next.
+- **Task:** E-phase pick-next survey #7 — E60 closed. Candidates for next slice: (a) **Editor parity slices** to unblock D28-D30 cutover — port Move-to-Trash / Pull-from-server / Find-in-Page / Share-via-OS-sheet from EditorPage to EditorBetaPage. (b) **Web clipper** (separate browser-extension package). (c) **y_crdt WASM swap** (perf, needs build infra). (d) **TS-08 alchemist editor goldens** (defensive). (e) **TS-01 lcov directive sweep** (orchestrator recurring carry-forward). (f) **Other E60 polish** — Flutter-side `FormFieldType` mirror so the database table cell rendering also benefits, or column-level validators on `.database.yaml` schemas. (g) **G4 docker smoke** (user-time-gated). Lean toward (f) Flutter-side mirror as continuation of forms work — natural next step for the polish slice, small bite, immediate user-visible. Or pivot to (a) editor parity to unblock cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1616 — E60 slice 4 — FormFieldType.pattern (arbitrary regex matching) — FINAL E60 SLICE** (9 new backend tests; 233 backend tests pass; E60 fully closed)
+- Committed: (this iteration)
+- TaskList ID: 207 closeout
+- Notes: Final E60 forms-polish slice. New field shape — adds per-field `pattern:` yaml key alongside `type:`/`required:`/`options:`. `enum FormFieldType` adds `pattern` variant; `FormFieldDef` gets new nullable `String? pattern`; `parseFormSchema` reads `pattern: '<regex>'` yaml; `_parseType` accepts `'pattern'`/`'regex'`. Validator uses try-catch on `RegExp(pat).hasMatch(input)` — emits `expected_pattern` on mismatch; fails-soft (accepts input) when pattern is null/empty OR when regex compilation throws FormatException, so a schema typo doesn't reject every submission. Renderer emits `<input type="text" pattern="…">` with the pattern attribute attribute-mode escaped against `"><script>` breakouts. 11 new tests (6 schema + 3 renderer + 2 fail-soft cases). 233/224+9 backend tests pass; `dart analyze` clean. Orchestrator audit: 0 BLOCK / 0 WARN / 2 INFO (both non-blocking: CA-01 backend-not-applicable + ReDoS security note — informational since YAML is operator-controlled in single-tenant; mitigation deferred to multi-tenant future). **E60 fully closed: 4 slices (email/url/longtext/pattern), 39 new backend tests, FormFieldType extended from 6→10 variants, one new yaml key (`pattern:`).** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1614 — E60 slice 3 — FormFieldType.longtext → multi-line textarea** (9 new backend tests; 224 backend tests pass)
 - Committed: (this iteration)
