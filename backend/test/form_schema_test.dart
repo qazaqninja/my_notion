@@ -217,7 +217,10 @@ title: Customers
     });
   });
 
-  group('FormFieldType.date (M1479)', () {
+  // M1479-added date support, organised under the canonical
+  // parse/validate group names (per TS-04: nest by method/feature
+  // under test, not by milestone tag).
+  group('parseFormSchema date types', () {
     test('"date" parses to FormFieldType.date', () {
       const src = '''
 columns:
