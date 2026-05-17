@@ -80,7 +80,20 @@ class _SourceViewState extends State<SourceView> {
   void didUpdateWidget(SourceView old) {
     super.didUpdateWidget(old);
     if (widget.initialText != old.initialText && _controller.text != widget.initialText) {
+      // H2.4d-iii: silence _onChanged during programmatic mutation
+      // so the H2.4d-ii fan-out doesn't echo the new body straight
+      // back to peers. Without this guard, an inbound peer update
+      // would land here via EditorBloc state → BlocBuilder rebuild
+      // → didUpdateWidget → _controller.value = newBody → notifyListeners
+      // → _onChanged → pushLocalUpdate(newBody) → WsHub broadcasts
+      // to all peers EXCEPT the echoing peer → those peers' state
+      // already matches so EditorBloc short-circuits, but the
+      // broadcast is wasted bandwidth that scales O(N) per remote
+      // update. Removing+re-adding the listener keeps user-typed
+      // edits firing _onChanged while skipping programmatic ones.
+      _controller.removeListener(_onChanged);
       _controller.value = TextEditingValue(text: widget.initialText);
+      _controller.addListener(_onChanged);
     }
   }
 
