@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 5 — final tail of ~26 misc info findings. Cluster 4 (public_member_api_docs) fully complete at M1508 (-68 across 4 sub-passes M1502/M1504/M1506/M1508). Cluster 5 distribution per orchestrator's M1508 audit: (1) `unnecessary_raw_strings` in lib/public/markdown_html.dart (mechanical 2-line fix); (2) test/* lints — `prefer_const_declarations`, `type_annotate_public_apis`, `always_declare_return_types` (mechanical, low-risk per-line); (3) `sort_constructors_first` + `avoid_equals_and_hash_code_on_mutable_classes` in awareness_message.dart + file_summary.dart (small design choice — add `@immutable` or per-line ignore). Slice in 2-3 sub-passes by rule cluster. After cluster 5 full clear: dart analyze should reach 0 issues; then revisit-by-priority survey to pivot to next milestone (G4 docker-compose smoke / E59 pick-next survey / D1 super_editor next slices / new feature work).
+- **Phase:** E (V2 Backend Scaffold) — **lint baseline complete, pivot pending**
+- **Task:** Revisit-by-priority survey to pick the next milestone. Backend `dart analyze` reaches 0 issues for the first time at M1510+M1511 (Forms polish slice 3b complete — M1485-M1511 cleared 252+ findings across 5 clusters). 192/192 backend tests green. Slice 3b summary: cluster 1 (avoid_dynamic_calls -22) → cluster 2 (always_use_package_imports -23) → cluster 3a auto-fix (-82) → cluster 3b cascade_invocations (-26) → cluster 3c whitespace/casts/length (-73) → cluster 4 public_member_api_docs (-68) → cluster 5 final tail (-26). Pivot candidates per FEATURES.md + plan: (a) G4 docker-compose live smoke per phase-e-sanity-checklist (end-to-end verification of the entire Phase E stack); (b) D1 super_editor slices 6+ + cutover (WYSIWYG migration from v1.x backlog); (c) Phase B mobile media inline playback (video/audio/PDF/notifications/mermaid); (d) Phase C macOS bookmark persistence + share-sheet; (e) E59 pick-next #3 survey (y_crdt swap vs presence vs forms polish vs web clipper vs FS-04 decomposition). Most-impact-first: G4 validates everything just stabilized; D1 unblocks long-tail editor parity.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,21 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1511 — fix-forward on M1510 audit (RP-03 FileBody immutability)** (closes Forms polish slice 3b)
+- Committed: (this iteration)
+- TaskList ID: 158 closeout
+- Notes: Orchestrator's M1510 audit raised one warn-severity finding: FileBody at backend/lib/sync/file_summary.dart had no @immutable / no `==` / no hashCode override while its sibling FileSummary just got those treatments. Fix-forward: add `@immutable` annotation + `==` comparing summary+body + hashCode hashing `Object.hash(summary, body)`. 8 inserts. dart analyze still "No issues found!" 192/192 tests still green. Closes cluster 5 cleanly. **Forms polish slice 3b (M1485-M1511) is fully done — 252+ findings cleared to 0 across 5 clusters + 11 sub-passes.** Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1510 — backend lint cleanup 5 (final tail 26 → 0)** ★ **dart analyze "No issues found!" first time**
+- Committed: (this iteration)
+- TaskList ID: 158
+- Notes: 11 rule clusters cleared in a single 15-file sweep, 71 inserts / 53 deletes. (1) avoid_catches_without_on_clauses (3): bare `catch (e)`/`catch (_)` → `on Object catch (e)`/`on Object`. (2) missing_code_block_language_in_doc_comment (2): ```dart and ```json tags. (3) avoid_equals_and_hash_code_on_mutable_classes (6): `@immutable` on User + AwarenessMessage + FileSummary. (4) depend_on_referenced_packages (3): `meta: ^1.16.0` added to dependencies (with rationale comment). (5) comment_references (4): `[ref]` → `\`ref\`` for cross-file/route-param mentions. (6) avoid_catching_errors (1): `// ignore: avoid_catching_errors` directive + rationale around documented ArgumentError throw from Uri.decodeQueryComponent. (7) sort_constructors_first (1): factory AwarenessMessage.fromJson moved above non-ctor members. (8) avoid_redundant_argument_values (1): drop `multiLine: false` default. (9) unnecessary_raw_strings (2): backtick + tilde regex strings unraw'd. (10) prefer_const_declarations (2): test/auth + test/server final→const. (11) type_annotate_public_apis + always_declare_return_types (2 each, same sites): `dynamic` return on ws_hub_test noSuchMethod. Plus 4 prefer_const_literals_to_create_immutables paired finds in test/awareness_message_test (exposed by adding `@immutable` to AwarenessMessage) — fixed via `const <String, Object?>{...}` map literals. **dart analyze 26 → 0: backend lint baseline reaches zero issues for the first time.** dart test 192/192 still green. Orchestrator audit: 0 BLOCK / 1 WARN (FileBody @immutable consistency gap — fixed in M1511) / 2 INFO (LT-02/LT-03 N/A for Bloc-free backend + TS-02 mocktail YAGNI trade-off documented). Pivot signal: clear to advance to G4 docker-compose smoke / D1 super_editor / Phase B-C feature work / new feature. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1509 — loop-state advance** (record M1508 + advance to cluster 5)
+- Committed: prior to M1510 (this iteration)
+- TaskList ID: 157 closeout
+- Notes: Recorded M1508 (auth+sync+public docs). **Cluster 4 fully complete** across M1502+M1504+M1506+M1508 (-68 public_member_api_docs total). Advanced **Current** pointer to cluster 5 (final tail). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1508 — backend lint cleanup 4 sub-pass 4 (public_member_api_docs auth+sync+public tail 15 → 0)** (cluster 4 complete!)
 - Committed: (this iteration)
