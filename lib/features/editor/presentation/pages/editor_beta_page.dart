@@ -10,9 +10,12 @@ import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
 import '../../../vault/presentation/bloc/vault_bloc.dart';
 import '../../../vault/presentation/bloc/vault_state.dart';
+import '../../../../core/ui/anchor_rect.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
 import '../bloc/editor_state.dart';
+import '../controllers/slash_trigger_session.dart';
+import '../controllers/super_editor_caret.dart';
 import '../cubit/slash_menu_cubit.dart';
 
 /// Beta WYSIWYG editor route powered by `super_editor` (Phase D / D1 slice 23
@@ -108,6 +111,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   late final MutableDocument _doc;
   late final MutableDocumentComposer _composer;
   late final Editor _editor;
+  late final SlashTriggerSession _session;
 
   @override
   void initState() {
@@ -118,13 +122,38 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       document: _doc,
       composer: _composer,
     );
+    _session = SlashTriggerSession();
+    // D23 slice 2d (M1531): every composer selection / document mutation
+    // projects to a flat (text, caret) via M1528's plainTextAndCaret and
+    // feeds M1525's SlashTriggerSession, which routes to the SlashMenuCubit
+    // provided by the parent MultiBlocProvider (M1523). Anchor stays
+    // Rect.zero in this slice — slice 2e adds real positioning, slice 2f
+    // the overlay + selection-splice command.
+    _composer.addListener(_onComposerChanged);
   }
 
   @override
   void dispose() {
+    _composer.removeListener(_onComposerChanged);
+    _session.reset();
     _composer.dispose();
     _doc.dispose();
     super.dispose();
+  }
+
+  void _onComposerChanged() {
+    final cubit = context.read<SlashMenuCubit>();
+    final snapshot = plainTextAndCaret(doc: _doc, composer: _composer);
+    _session.update(
+      text: snapshot.text,
+      caret: snapshot.caret,
+      onOpen: (triggerOffset) => cubit.openAt(
+        anchor: const AnchorRect(left: 0, top: 0, right: 0, bottom: 0),
+        triggerOffset: triggerOffset,
+      ),
+      onDismiss: cubit.dismiss,
+      onQuery: cubit.setQuery,
+    );
   }
 
   @override
