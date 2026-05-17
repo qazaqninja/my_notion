@@ -128,11 +128,11 @@ void main() {
         await binder.attach();
         expect(binder.doc.body, 'hello');
         ch.simulateMessage('from peer 1');
-        await Future<void>.delayed(const Duration(milliseconds: 5));
+        await pumpEventQueue();
         expect(binder.doc.body, 'from peer 1');
         expect(binder.doc.clock, greaterThan(0));
         ch.simulateMessage('from peer 2');
-        await Future<void>.delayed(const Duration(milliseconds: 5));
+        await pumpEventQueue();
         expect(binder.doc.body, 'from peer 2');
         await binder.detach();
       });
@@ -153,7 +153,7 @@ void main() {
         ch.simulateMessage('a');
         ch.simulateMessage('b');
         ch.simulateMessage('c');
-        await Future<void>.delayed(const Duration(milliseconds: 10));
+        await pumpEventQueue();
         expect(emitted, ['a', 'b', 'c']);
         await sub.cancel();
         await binder.detach();
@@ -189,7 +189,7 @@ void main() {
         final emitted = <String>[];
         final sub = binder.docStream.listen((d) => emitted.add(d.body));
         binder.pushLocalUpdate('mine');
-        await Future<void>.delayed(const Duration(milliseconds: 5));
+        await pumpEventQueue();
         expect(binder.doc.body, 'mine');
         expect(emitted, ['mine']);
         await sub.cancel();
@@ -228,7 +228,7 @@ void main() {
         final sub = binder.errorStream.listen(errors.add);
         await binder.attach();
         ch.simulateError('boom');
-        await Future<void>.delayed(const Duration(milliseconds: 5));
+        await pumpEventQueue();
         expect(errors.single, isA<SyncConnectionLostException>());
         await sub.cancel();
         await binder.detach();
@@ -250,6 +250,46 @@ void main() {
         expect(client.isConnected, isFalse);
         // Second detach() must not throw.
         await binder.detach();
+      });
+    });
+
+    group('dispose()', () {
+      test('cold dispose (no prior attach) closes streams cleanly',
+          () async {
+        final binder = SyncWsBinder(
+          client: _makeClient(),
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        // Should not throw — covers the editor-tears-down-before-mount
+        // race that the F2 IncomingShareBinder also has to handle.
+        await binder.dispose();
+        // Listening to a closed broadcast controller returns a stream
+        // that yields no events and completes; expect a `done` event
+        // immediately.
+        final hasEvents =
+            await binder.docStream.isEmpty.timeout(const Duration(seconds: 1));
+        expect(hasEvents, isTrue);
+      });
+
+      test('warm dispose (after attach + push) closes streams cleanly',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        binder.pushLocalUpdate('warm');
+        await pumpEventQueue();
+        await binder.dispose();
+        expect(client.isConnected, isFalse);
+        // dispose() must be idempotent.
+        await binder.dispose();
       });
     });
   });

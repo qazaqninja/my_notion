@@ -1,5 +1,10 @@
 import 'dart:async';
 
+// Cross-feature import: pinned to crdt/domain/entities only — the
+// stable value-type seam (QuillCrdtDoc + sealed QuillCrdtUpdate).
+// Do NOT widen this to crdt/data or crdt/presentation (CA-07): the
+// binder is allowed to know the CRDT entity shape but must never
+// reach into the crdt feature's storage or UI layers.
 import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
 import 'package:my_notion/features/sync/data/sync_ws_client.dart';
 
