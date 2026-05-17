@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:my_notion/features/sync/domain/repositories/sync_repository.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// Test seam for SyncWsClient — abstracts the WebSocketChannel
@@ -89,9 +90,18 @@ class SyncWsClient {
         _channelSub = null;
       },
       onError: (Object error) {
+        // Transport-level failure on an established connection —
+        // forward a typed error so the Bloc can transition to a
+        // "reconnect needed" state rather than the stream going
+        // silently quiet.
         _channel = null;
         _ulid = null;
         _channelSub = null;
+        if (!_incomingController.isClosed) {
+          _incomingController.addError(
+            SyncConnectionLostException(error.toString()),
+          );
+        }
       },
       cancelOnError: true,
     );

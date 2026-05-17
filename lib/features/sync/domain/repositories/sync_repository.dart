@@ -82,3 +82,13 @@ class SyncEmailTakenException extends SyncException {
 class SyncNetworkException extends SyncException {
   const SyncNetworkException([super.message = 'network_error']);
 }
+
+/// Thrown when the multiplayer WebSocket subscription drops mid-
+/// session — emitted on `SyncWsClient.incoming` via `addError` so a
+/// listening Bloc/Cubit can transition to a "reconnect needed" state
+/// rather than the stream silently going quiet. Distinct from
+/// `SyncNetworkException` because the failure mode is "lost an
+/// already-established connection," not "couldn't reach the server".
+class SyncConnectionLostException extends SyncException {
+  const SyncConnectionLostException([super.message = 'connection_lost']);
+}
