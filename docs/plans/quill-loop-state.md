@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** E (V2 Backend Scaffold) — **lint baseline complete, pivot pending**
-- **Task:** Revisit-by-priority survey to pick the next milestone. Backend `dart analyze` reaches 0 issues for the first time at M1510+M1511 (Forms polish slice 3b complete — M1485-M1511 cleared 252+ findings across 5 clusters). 192/192 backend tests green. Slice 3b summary: cluster 1 (avoid_dynamic_calls -22) → cluster 2 (always_use_package_imports -23) → cluster 3a auto-fix (-82) → cluster 3b cascade_invocations (-26) → cluster 3c whitespace/casts/length (-73) → cluster 4 public_member_api_docs (-68) → cluster 5 final tail (-26). Pivot candidates per FEATURES.md + plan: (a) G4 docker-compose live smoke per phase-e-sanity-checklist (end-to-end verification of the entire Phase E stack); (b) D1 super_editor slices 6+ + cutover (WYSIWYG migration from v1.x backlog); (c) Phase B mobile media inline playback (video/audio/PDF/notifications/mermaid); (d) Phase C macOS bookmark persistence + share-sheet; (e) E59 pick-next #3 survey (y_crdt swap vs presence vs forms polish vs web clipper vs FS-04 decomposition). Most-impact-first: G4 validates everything just stabilized; D1 unblocks long-tail editor parity.
+- **Phase:** D (super_editor WYSIWYG migration)
+- **Task:** D6 — super_editor block-type parity slice 1. Pivot survey (#159) at M1513-M1514 confirmed: items 11-16 of the CLAUDE.md v1.x backlog are all dep-shipped (most have wired-up usecases too); item 9 (WYSIWYG super_editor) is the one outstanding lift. `super_editor: 0.3.0-dev.44` is in pubspec; `lib/core/markdown/super_editor_serializer.dart` ships the markdown↔MutableDocument bridge skeleton (D1-D5 work). Next: D6 paragraph round-trip — audit the current serializer for the simplest block-type still missing/weakly-tested (likely heading vs paragraph fidelity around frontmatter), add a focused round-trip test, fix any regression. Then D7-D15 sweep through ul/ol/todo/blockquote/code/hr/callouts/tables/math/mermaid/image/file/video/audio/pdf/bookmark/sub-page/transclusion blocks; D16-D22 inline marks; D23-D27 interactions; D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1513 + M1514 — CLAUDE.md docs refresh: status + v1.x backlog** (pivot-survey iteration #159)
+- Committed: (this iteration)
+- TaskList ID: 159 closeout
+- Notes: Pivot survey to pick next milestone after backend lint baseline reached 0 at M1510-M1511. Found CLAUDE.md was ~330 commits stale across two sections. M1513 refreshed the status block (M1186 → M1512, "2,600 tests across 91 files" → "2,800 Flutter tests across 144 files + 192 backend tests across 15 files", mentions Phase E V2 backend + Phase G mobile + Phase H presence as the major milestones shipped), added `cd backend && dart analyze` + `dart test` to the quick-start commands. M1514 audited the v1.x backlog: items 11-16 were all marked pending but the relevant packages (video_player, audioplayers, pdfx, flutter_local_notifications, timezone, webview_flutter, share_plus, home_widget, bloc_test, alchemist, mockingjay, mocktail) have been in `pubspec.yaml` for many milestones — struck items 11-16 with verify notes referencing the actual pubspec versions + the corresponding bloc/widget/usecase paths. Item 9 (super_editor WYSIWYG) updated from "not in pubspec" to "shipped at D1-D5; D6-D30 outstanding" (the actual state). Net effect: the v1.x backlog now correctly reflects only one outstanding lift (item 9 WYSIWYG) plus partial mobile work (item 10). Pivot signal: **D-phase is the only meaningful Flutter-side lift remaining for v1**. Survey closed; queued #160 = D6 paragraph round-trip slice. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1511 — fix-forward on M1510 audit (RP-03 FileBody immutability)** (closes Forms polish slice 3b)
 - Committed: (this iteration)
