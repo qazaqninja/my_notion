@@ -116,13 +116,27 @@ void main() {
         expect(calls, 1);
       });
 
-      testWidgets('next/prev are disabled when matches == 0', (tester) async {
+      testWidgets('next/prev do not fire when matches == 0', (tester) async {
+        var nextCalls = 0;
+        var prevCalls = 0;
         await _pumpBar(
           tester,
           controller: TextEditingController(),
           matches: 0,
           cursor: 0,
+          onNext: () => nextCalls++,
+          onPrev: () => prevCalls++,
         );
+        await tester.tap(
+          find.widgetWithIcon(IconButton, Icons.keyboard_arrow_down),
+        );
+        await tester.tap(
+          find.widgetWithIcon(IconButton, Icons.keyboard_arrow_up),
+        );
+        expect(nextCalls, 0);
+        expect(prevCalls, 0);
+        // Secondary assertion confirming the disabled state without
+        // relying solely on it (TS-06 behavior over property).
         final nextBtn = tester.widget<IconButton>(
           find.widgetWithIcon(IconButton, Icons.keyboard_arrow_down),
         );
