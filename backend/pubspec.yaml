@@ -22,5 +22,9 @@ dependencies:
 
 dev_dependencies:
   http: ^1.2.2
-  lints: ^6.0.0
+  # M1485: dropped lints in favor of very_good_analysis to align
+  # with the Flutter-side baseline (TS-02 + LT-01 deferrals
+  # confirmed at M1479 + M1482 + M1483 audits).
+  mocktail: ^1.0.4
   test: ^1.25.6
+  very_good_analysis: ^9.0.0
