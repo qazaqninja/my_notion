@@ -11,6 +11,10 @@ void main() {
       expect(Routes.picker, '/');
     });
 
+    test('exposes the static `vault` path', () {
+      expect(Routes.vault, '/vault');
+    });
+
     test('exposes the static `databases` path', () {
       expect(Routes.databases, '/databases');
     });
