@@ -576,14 +576,15 @@ void main() {
       expect(res.statusCode, 200);
       final body = jsonDecode(await res.readAsString())
           as Map<String, dynamic>;
-      final list = body['submissions'] as List;
+      final list =
+          (body['submissions'] as List).cast<Map<String, Object?>>();
       expect(list.length, 2);
       expect(list[0]['id'], 'sub-1');
       expect(list[0]['fields'], {'name': 'Pat', 'email': 'p@x'});
       expect(list[0]['source_ip'], '203.0.113.42');
       expect(list[1]['id'], 'sub-2');
       // sourceIp omitted when null.
-      expect((list[1] as Map).containsKey('source_ip'), isFalse);
+      expect(list[1].containsKey('source_ip'), isFalse);
     });
 
     test(

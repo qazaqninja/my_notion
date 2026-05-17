@@ -174,7 +174,8 @@ void main() {
         ),
       );
       expect(res.statusCode, 200);
-      final body = jsonDecode(await res.readAsString()) as List;
+      final body = (jsonDecode(await res.readAsString()) as List)
+          .cast<Map<String, Object?>>();
       expect(body, hasLength(2));
       expect(body[0]['relpath'], 'Inbox/Note.md');
       expect(body[0]['sha256'], 'aaa');
@@ -250,7 +251,10 @@ void main() {
         ),
       );
       expect(res.statusCode, 404);
-      expect(jsonDecode(await res.readAsString())['error'], 'not_found');
+      expect(
+          (jsonDecode(await res.readAsString())
+              as Map<String, Object?>)['error'],
+          'not_found');
     });
 
     test('PUT /put then GET /get round-trips the body', () async {
@@ -385,7 +389,10 @@ void main() {
         ),
       );
       expect(res.statusCode, 404);
-      expect(jsonDecode(await res.readAsString())['error'], 'not_found');
+      expect(
+          (jsonDecode(await res.readAsString())
+              as Map<String, Object?>)['error'],
+          'not_found');
     });
 
     test('GET /get/<relpath> is scoped to caller user_id', () async {
@@ -436,7 +443,8 @@ void main() {
           headers: {'authorization': 'Bearer $aliceTok'},
         ),
       );
-      final body = jsonDecode(await res.readAsString()) as List;
+      final body = (jsonDecode(await res.readAsString()) as List)
+          .cast<Map<String, Object?>>();
       expect(body, hasLength(1));
       expect(body[0]['relpath'], 'alice.md');
       // Bob's file must NOT appear.

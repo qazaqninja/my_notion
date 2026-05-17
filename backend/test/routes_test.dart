@@ -6,6 +6,7 @@ import 'package:backend/auth/tokens.dart';
 import 'package:backend/auth/user.dart';
 import 'package:backend/db/users.dart';
 import 'package:shelf/shelf.dart';
+import 'package:shelf_router/shelf_router.dart';
 import 'package:test/test.dart';
 import 'package:ulid/ulid.dart';
 
@@ -52,22 +53,23 @@ class _FakeUsers implements UserRepositoryBase {
 
 Future<Response> _request(
   String path,
-  Map<String, dynamic> body,
-  dynamic router,
-) {
+  Map<String, Object?> body,
+  Router router,
+) async {
   final req = Request(
     'POST',
     Uri.parse('http://localhost$path'),
     body: jsonEncode(body),
     headers: const {'content-type': 'application/json'},
   );
-  return router.call(req) as Future<Response>;
+  // Router.call returns FutureOr<Response>; await unwraps both.
+  return router.call(req);
 }
 
 void main() {
   group('Auth routes (E6)', () {
     late _FakeUsers users;
-    late dynamic router;
+    late Router router;
 
     setUp(() {
       users = _FakeUsers();
@@ -85,9 +87,10 @@ void main() {
         body: 'not json',
         headers: const {'content-type': 'application/json'},
       );
-      final res = await router.call(req) as Response;
+      final res = await router.call(req);
       expect(res.statusCode, 400);
-      final body = jsonDecode(await res.readAsString());
+      final body =
+          jsonDecode(await res.readAsString()) as Map<String, Object?>;
       expect(body['error'], 'invalid_json');
     });
 
@@ -99,7 +102,7 @@ void main() {
       );
       expect(res.statusCode, 400);
       expect(
-        jsonDecode(await res.readAsString())['error'],
+        (jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
         'email_or_password_invalid',
       );
     });
@@ -133,7 +136,7 @@ void main() {
         router,
       );
       expect(res.statusCode, 409);
-      expect(jsonDecode(await res.readAsString())['error'], 'email_taken');
+      expect((jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'], 'email_taken');
     });
 
     test('POST /signup normalises email to lowercase', () async {
@@ -160,7 +163,7 @@ void main() {
       );
       expect(res.statusCode, 401);
       expect(
-        jsonDecode(await res.readAsString())['error'],
+        (jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
         'invalid_credentials',
       );
     });
@@ -174,7 +177,7 @@ void main() {
       );
       expect(res.statusCode, 401);
       expect(
-        jsonDecode(await res.readAsString())['error'],
+        (jsonDecode(await res.readAsString()) as Map<String, Object?>)['error'],
         'invalid_credentials',
       );
     });
