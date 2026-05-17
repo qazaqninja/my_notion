@@ -7,6 +7,7 @@ import 'dart:async';
 // reach into the crdt feature's storage or UI layers.
 import 'package:my_notion/features/crdt/domain/entities/quill_crdt_doc.dart';
 import 'package:my_notion/features/sync/data/sync_ws_client.dart';
+import 'package:my_notion/features/sync/domain/entities/awareness_message.dart';
 
 /// H2.3 — per-editor wiring between a [SyncWsClient] and a local
 /// [QuillCrdtDoc]. One binder lives for the duration of one editor
@@ -45,6 +46,8 @@ class SyncWsBinder {
   StreamSubscription<String>? _incomingSub;
   final _docController = StreamController<QuillCrdtDoc>.broadcast();
   final _errorController = StreamController<Object>.broadcast();
+  final _awarenessController =
+      StreamController<AwarenessMessage>.broadcast();
   bool _attached = false;
 
   /// Current local doc — always in sync with the last apply().
@@ -60,6 +63,15 @@ class SyncWsBinder {
   /// to flag a "reconnect needed" state.
   Stream<Object> get errorStream => _errorController.stream;
 
+  /// H4d-i — broadcast stream of presence "awareness" messages
+  /// parsed from the same `/sync/sub/<ulid>` channel. The wire
+  /// dispatcher tries `AwarenessMessage.tryDecode(payload)` first;
+  /// non-null payloads are routed here and never reach the CRDT
+  /// path, so the host editor can subscribe directly without
+  /// re-parsing or risking double-application on the doc.
+  Stream<AwarenessMessage> get awarenessStream =>
+      _awarenessController.stream;
+
   /// True iff [attach] has been called and [detach] hasn't.
   bool get isAttached => _attached;
 
@@ -71,6 +83,19 @@ class SyncWsBinder {
     await _client.connect(token: _token, ulid: _ulid);
     _incomingSub = _client.incoming.listen(
       (payload) {
+        // H4d-i — presence-first dispatch. Try parsing as an
+        // AwarenessMessage envelope; on success route to the
+        // awareness stream and short-circuit so the payload
+        // never lands on the CRDT doc. On null (any non-
+        // awareness payload — CRDT updates, malformed JSON,
+        // mismatched kind) fall through to the existing path.
+        final awareness = AwarenessMessage.tryDecode(payload);
+        if (awareness != null) {
+          if (!_awarenessController.isClosed) {
+            _awarenessController.add(awareness);
+          }
+          return;
+        }
         _doc = _doc.apply(QuillCrdtSetBody(payload));
         if (!_docController.isClosed) {
           _docController.add(_doc);
@@ -113,5 +138,6 @@ class SyncWsBinder {
     await detach();
     await _docController.close();
     await _errorController.close();
+    await _awarenessController.close();
   }
 }

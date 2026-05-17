@@ -292,5 +292,122 @@ void main() {
         await binder.dispose();
       });
     });
+
+    group('incoming → awareness (H4d-i)', () {
+      const awarenessJson =
+          '{"kind":"awareness","userId":"alice","pageUlid":"U",'
+          '"cursorIndex":42,"color":"#FF5722"}';
+
+      test('parsed awareness payload is routed to awarenessStream',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        final received = <int>[];
+        final sub = binder.awarenessStream
+            .listen((msg) => received.add(msg.cursorIndex));
+        await binder.attach();
+        ch.simulateMessage(awarenessJson);
+        await pumpEventQueue();
+        expect(received, [42]);
+        await sub.cancel();
+        await binder.dispose();
+      });
+
+      test('awareness payload does NOT reach the CRDT doc',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.fromMarkdown('original'),
+        );
+        await binder.attach();
+        ch.simulateMessage(awarenessJson);
+        await pumpEventQueue();
+        // Doc body unchanged; awareness short-circuited the dispatch.
+        expect(binder.doc.body, 'original');
+        await binder.dispose();
+      });
+
+      test('opaque (non-awareness) payload still goes to the CRDT path',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        final awarenessReceived = <Object?>[];
+        final sub =
+            binder.awarenessStream.listen(awarenessReceived.add);
+        await binder.attach();
+        ch.simulateMessage('opaque crdt blob');
+        await pumpEventQueue();
+        expect(binder.doc.body, 'opaque crdt blob');
+        expect(awarenessReceived, isEmpty);
+        await sub.cancel();
+        await binder.dispose();
+      });
+
+      test('mixed stream — awareness + CRDT routed to their own paths',
+          () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        final awarenessReceived = <String>[];
+        final docBodies = <String>[];
+        final aSub = binder.awarenessStream
+            .listen((m) => awarenessReceived.add(m.userId));
+        final dSub =
+            binder.docStream.listen((d) => docBodies.add(d.body));
+        await binder.attach();
+        ch.simulateMessage(awarenessJson); // alice cursor
+        ch.simulateMessage('crdt body 1');
+        ch.simulateMessage(
+            '{"kind":"awareness","userId":"bob","pageUlid":"U",'
+            '"cursorIndex":7,"color":"#00FF00"}');
+        ch.simulateMessage('crdt body 2');
+        await pumpEventQueue();
+        expect(awarenessReceived, ['alice', 'bob']);
+        expect(docBodies, ['crdt body 1', 'crdt body 2']);
+        await aSub.cancel();
+        await dSub.cancel();
+        await binder.dispose();
+      });
+
+      test('malformed JSON falls through to the CRDT path', () async {
+        final ch = _FakeChannel();
+        final client = _makeClient(out: ch);
+        final binder = SyncWsBinder(
+          client: client,
+          ulid: 'U',
+          token: 't',
+          initialDoc: QuillCrdtDoc.empty(),
+        );
+        await binder.attach();
+        // Mismatched kind → tryDecode returns null → CRDT path.
+        ch.simulateMessage(
+            '{"kind":"update","payload":"abc"}');
+        await pumpEventQueue();
+        expect(
+            binder.doc.body, '{"kind":"update","payload":"abc"}');
+        await binder.dispose();
+      });
+    });
   });
 }
