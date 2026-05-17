@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **Rect→AnchorRect mapping shared**
-- **Task:** D23 interactions slice 2f — DocumentLayout caret-rect lookup in EditorBetaPage. M1533 narrowed slice 2e to "extract the Rect→AnchorRect mapping into core/ui/anchor_rect_x.dart so source_view + EditorBetaPage share one converter" (26 lines + 5 tests; source_view refactored to delegate). Slice 2f now finishes the positioning work: capture a `GlobalKey<DocumentLayoutState>` on the SuperEditor mount, in `_onComposerChanged.onOpen` call `key.currentState!.getRectForPosition(extentPosition)` → `localToGlobal` → `anchorRectFromRect`. Null-guard for the pre-layout boot case (fallback Rect.zero). After 2f: typing `/` in WYSIWYG opens SlashMenuCubit with a real anchor. Slice 2g wires the overlay rendering (porting SlashMenuOverlay consumption) + the selection-splice command (super_editor Document mutation API). Then D24-D27 polish + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **anchor positioning live in WYSIWYG**
+- **Task:** D23 interactions slice 2g — final D23 slice: overlay rendering + selection-splice. M1535 landed the `_caretAnchor()` helper inside `_BetaEditorShellState`: it queries the SuperEditor's GlobalKey-attached DocumentLayout, falls back to AnchorRect.zero on each of three null branches (no layout / no selection / no rect-for-position), and otherwise routes through M1533's `anchorRectFromRect`. Typing `/` in WYSIWYG now opens SlashMenuCubit at the real caret. Slice 2g closes the loop in two parts: (a) wrap the SuperEditor body in a Stack and render SlashMenuOverlay positioned by the cubit's `anchorRect` when `state.open`; (b) handle entry-selection by stripping the typed `/query` from the document (super_editor Document mutation via Editor.execute) and splicing the chosen snippet at the trigger offset. After 2g closes: D24-D27 polish (drag handles, multi-select, M234-M268 source-mode shortcuts ported) + D28-D30 cutover (flip default `/editor` route, delete old route).
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1535 — D23 interactions slice 2f — DocumentLayout caret-rect lookup in EditorBetaPage** (`/` in WYSIWYG now anchors at the caret)
+- Committed: (this iteration)
+- TaskList ID: 168 closeout
+- Notes: Replaced the M1531 zero AnchorRect literal in `_BetaEditorShellState._onComposerChanged.onOpen` with a real screen-space anchor. New State field `final GlobalKey _docLayoutKey = GlobalKey()` is passed to the SuperEditor widget via `documentLayoutKey: _docLayoutKey` so the State can reach the live DocumentLayout via `_docLayoutKey.currentState`. New private `_caretAnchor()` helper resolves the layout (typed as `DocumentLayout?` to avoid the `cast_nullable_to_non_nullable` lint that a bare `as DocumentLayout` would trigger), reads `_composer.selection`, calls `layout.getRectForPosition(selection.extent)`, and routes through M1533's `anchorRectFromRect`. Returns AnchorRect.zero on each of three null branches (no layout / no selection / no rect-for-position). Added `core/ui/anchor_rect_x.dart` import. 5-line rationale comment on `_docLayoutKey` notes the editor-local coordinate space (slice 2g overlay stacks against the same parent so no localToGlobal hop is needed). flutter analyze clean. No new test — DocumentLayout queries require a pumped SuperEditor widget, deferred to EditorBetaPage's existing TS-01 carry-forward from H4d audits. Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (TS-01 widget-test deferral, pre-existing carry-forward, not widened by this commit). Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1534 — loop-state advance** (record M1533 + queue D23 slice 2f)
+- Committed: prior to M1535 (this iteration)
+- TaskList ID: 167 advance
+- Notes: Recorded Rect→AnchorRect converter extraction. Advanced **Current** pointer to slice 2f. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1533 — D23 interactions slice 2e (narrowed) — Rect→AnchorRect converter shared by source_view + EditorBetaPage** (26 lines + 5 tests in core/ui/)
 - Committed: (this iteration)
