@@ -18,9 +18,8 @@ import 'package:shelf_web_socket/shelf_web_socket.dart';
 /// Mounted at `/sub/` by `buildSyncRouter`, which itself mounts at
 /// `/sync/` in server.dart. So the public path is `/sync/sub/<ulid>`.
 Router buildWsRouter({required WsHub hub}) {
-  final router = Router();
-
-  router.get('/<ulid>', (Request req) async {
+  return Router()
+    ..get('/<ulid>', (Request req) async {
     final ulid = req.params['ulid'];
     if (ulid == null || !_isUlid(ulid)) {
       return Response(404, body: 'not_found');
@@ -55,8 +54,6 @@ Router buildWsRouter({required WsHub hub}) {
     });
     return handler(req);
   });
-
-  return router;
 }
 
 bool _isUlid(String s) =>

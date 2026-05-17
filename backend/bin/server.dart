@@ -122,14 +122,15 @@ void main(List<String> args) async {
         );
     router.mount('/forms/', formsPipeline);
   } else {
-    router.all('/auth/<ignored|.*>',
-        (Request req) => Response(503, body: 'db: not connected\n'));
-    router.all('/sync/<ignored|.*>',
-        (Request req) => Response(503, body: 'db: not connected\n'));
-    router.all('/public/<ignored|.*>',
-        (Request req) => Response(503, body: 'db: not connected\n'));
-    router.all('/forms/<ignored|.*>',
-        (Request req) => Response(503, body: 'db: not connected\n'));
+    router
+      ..all('/auth/<ignored|.*>',
+          (Request req) => Response(503, body: 'db: not connected\n'))
+      ..all('/sync/<ignored|.*>',
+          (Request req) => Response(503, body: 'db: not connected\n'))
+      ..all('/public/<ignored|.*>',
+          (Request req) => Response(503, body: 'db: not connected\n'))
+      ..all('/forms/<ignored|.*>',
+          (Request req) => Response(503, body: 'db: not connected\n'));
   }
 
   final handler =

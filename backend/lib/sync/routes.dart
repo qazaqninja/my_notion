@@ -36,86 +36,83 @@ Router buildSyncRouter({
     router.mount('/sub/', buildWsRouter(hub: wsHub).call);
   }
 
-  router.get('/list', (Request req) async {
-    final user = currentUser(req);
-    final files = await sync.listFor(user.id);
-    return Response.ok(
-      jsonEncode([for (final f in files) f.toJson()]),
-      headers: const {'content-type': 'application/json'},
-    );
-  });
-
-  router.get('/get/<relpath|.*>', (Request req) async {
-    final user = currentUser(req);
-    final relpath = req.params['relpath'];
-    if (relpath == null || relpath.isEmpty) {
-      return _err(400, 'missing_relpath');
-    }
-    if (!_isSafeRelpath(relpath)) {
-      return _err(400, 'invalid_relpath');
-    }
-    final file = await sync.fetch(userId: user.id, relpath: relpath);
-    if (file == null) {
-      return _err(404, 'not_found');
-    }
-    return Response.ok(
-      jsonEncode(file.toJson()),
-      headers: const {'content-type': 'application/json'},
-    );
-  });
-
-  // `PUT /put/<relpath...>` — `relpath` is captured as the suffix of the
-  // URL after `/put/`. The body is the raw markdown source; we compute
-  // sha256 server-side so the canonical hash is authoritative.
-  router.put('/put/<relpath|.*>', (Request req) async {
-    final user = currentUser(req);
-    final relpath = req.params['relpath'];
-    if (relpath == null || relpath.isEmpty) {
-      return _err(400, 'missing_relpath');
-    }
-    if (!_isSafeRelpath(relpath)) {
-      return _err(400, 'invalid_relpath');
-    }
-    final body = await req.readAsString();
-    final hash = sha256.convert(utf8.encode(body)).toString();
-    final outcome = await sync.upsert(
-      userId: user.id,
-      relpath: relpath,
-      body: body,
-      sha256: hash,
-      ifMatch: req.headers['if-match'],
-    );
-    if (outcome.isConflict) {
-      return Response(
-        409,
-        body: jsonEncode({
-          'error': 'conflict',
-          'current': outcome.conflict!.toJson(),
-        }),
+  return router
+    ..get('/list', (Request req) async {
+      final user = currentUser(req);
+      final files = await sync.listFor(user.id);
+      return Response.ok(
+        jsonEncode([for (final f in files) f.toJson()]),
         headers: const {'content-type': 'application/json'},
       );
-    }
-    return Response.ok(
-      jsonEncode(outcome.summary!.toJson()),
-      headers: const {'content-type': 'application/json'},
-    );
-  });
-
-  router.delete('/del/<relpath|.*>', (Request req) async {
-    final user = currentUser(req);
-    final relpath = req.params['relpath'];
-    if (relpath == null || relpath.isEmpty) {
-      return _err(400, 'missing_relpath');
-    }
-    if (!_isSafeRelpath(relpath)) {
-      return _err(400, 'invalid_relpath');
-    }
-    final removed = await sync.delete(userId: user.id, relpath: relpath);
-    if (!removed) return _err(404, 'not_found');
-    return Response(204);
-  });
-
-  return router;
+    })
+    ..get('/get/<relpath|.*>', (Request req) async {
+      final user = currentUser(req);
+      final relpath = req.params['relpath'];
+      if (relpath == null || relpath.isEmpty) {
+        return _err(400, 'missing_relpath');
+      }
+      if (!_isSafeRelpath(relpath)) {
+        return _err(400, 'invalid_relpath');
+      }
+      final file = await sync.fetch(userId: user.id, relpath: relpath);
+      if (file == null) {
+        return _err(404, 'not_found');
+      }
+      return Response.ok(
+        jsonEncode(file.toJson()),
+        headers: const {'content-type': 'application/json'},
+      );
+    })
+    // `PUT /put/<relpath...>` — `relpath` is captured as the suffix
+    // of the URL after `/put/`. The body is the raw markdown source;
+    // we compute sha256 server-side so the canonical hash is
+    // authoritative.
+    ..put('/put/<relpath|.*>', (Request req) async {
+      final user = currentUser(req);
+      final relpath = req.params['relpath'];
+      if (relpath == null || relpath.isEmpty) {
+        return _err(400, 'missing_relpath');
+      }
+      if (!_isSafeRelpath(relpath)) {
+        return _err(400, 'invalid_relpath');
+      }
+      final body = await req.readAsString();
+      final hash = sha256.convert(utf8.encode(body)).toString();
+      final outcome = await sync.upsert(
+        userId: user.id,
+        relpath: relpath,
+        body: body,
+        sha256: hash,
+        ifMatch: req.headers['if-match'],
+      );
+      if (outcome.isConflict) {
+        return Response(
+          409,
+          body: jsonEncode({
+            'error': 'conflict',
+            'current': outcome.conflict!.toJson(),
+          }),
+          headers: const {'content-type': 'application/json'},
+        );
+      }
+      return Response.ok(
+        jsonEncode(outcome.summary!.toJson()),
+        headers: const {'content-type': 'application/json'},
+      );
+    })
+    ..delete('/del/<relpath|.*>', (Request req) async {
+      final user = currentUser(req);
+      final relpath = req.params['relpath'];
+      if (relpath == null || relpath.isEmpty) {
+        return _err(400, 'missing_relpath');
+      }
+      if (!_isSafeRelpath(relpath)) {
+        return _err(400, 'invalid_relpath');
+      }
+      final removed = await sync.delete(userId: user.id, relpath: relpath);
+      if (!removed) return _err(404, 'not_found');
+      return Response(204);
+    });
 }
 
 /// Reject path-traversal (`..` segments), absolute paths, and any leading

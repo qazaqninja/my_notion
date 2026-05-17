@@ -23,9 +23,8 @@ import 'package:shelf_router/shelf_router.dart';
 /// as plain text so a public page doesn't leak arbitrary cross-vault
 /// IDs as clickable URLs.
 Router buildPublicRouter({required Connection conn}) {
-  final router = Router();
-
-  router.get('/<ulid>', (Request req) async {
+  return Router()
+    ..get('/<ulid>', (Request req) async {
     final ulid = req.params['ulid'];
     if (ulid == null || !_isUlid(ulid)) {
       return Response(404, body: 'not_found');
@@ -59,9 +58,8 @@ Router buildPublicRouter({required Connection conn}) {
       _renderHtml(body),
       headers: const {'content-type': 'text/html; charset=utf-8'},
     );
-  });
-
-  router.post('/<ulid>/unlock', (Request req) async {
+  })
+    ..post('/<ulid>/unlock', (Request req) async {
     final ulid = req.params['ulid'];
     if (ulid == null || !_isUlid(ulid)) {
       return Response(404, body: 'not_found');
@@ -106,8 +104,6 @@ Router buildPublicRouter({required Connection conn}) {
       },
     );
   });
-
-  return router;
 }
 
 /// True iff the request carries a `quill_unlock_<ulid>` cookie whose

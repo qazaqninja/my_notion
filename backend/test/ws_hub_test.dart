@@ -43,9 +43,10 @@ void main() {
       final alice1 = _FakeChannel('alice1');
       final alice2 = _FakeChannel('alice2');
       final alice3 = _FakeChannel('alice3');
-      hub.subscribe(userId: 'alice', pageUlid: 'ULID1', channel: alice1);
-      hub.subscribe(userId: 'alice', pageUlid: 'ULID1', channel: alice2);
-      hub.subscribe(userId: 'alice', pageUlid: 'ULID1', channel: alice3);
+      hub
+        ..subscribe(userId: 'alice', pageUlid: 'ULID1', channel: alice1)
+        ..subscribe(userId: 'alice', pageUlid: 'ULID1', channel: alice2)
+        ..subscribe(userId: 'alice', pageUlid: 'ULID1', channel: alice3);
 
       final sent = hub.broadcast(
         userId: 'alice',
@@ -64,15 +65,15 @@ void main() {
       final hub = WsHub();
       final a = _FakeChannel('a');
       final b = _FakeChannel('b');
-      hub.subscribe(userId: 'alice', pageUlid: 'ULID1', channel: a);
-      hub.subscribe(userId: 'alice', pageUlid: 'ULID2', channel: b);
-
-      hub.broadcast(
-        userId: 'alice',
-        pageUlid: 'ULID1',
-        from: a,
-        payload: 'only-room-1',
-      );
+      hub
+        ..subscribe(userId: 'alice', pageUlid: 'ULID1', channel: a)
+        ..subscribe(userId: 'alice', pageUlid: 'ULID2', channel: b)
+        ..broadcast(
+          userId: 'alice',
+          pageUlid: 'ULID1',
+          from: a,
+          payload: 'only-room-1',
+        );
       expect(b.received, isEmpty);
     });
 
@@ -80,15 +81,15 @@ void main() {
       final hub = WsHub();
       final aliceCh = _FakeChannel('alice');
       final bobCh = _FakeChannel('bob');
-      hub.subscribe(userId: 'alice', pageUlid: 'ULID', channel: aliceCh);
-      hub.subscribe(userId: 'bob', pageUlid: 'ULID', channel: bobCh);
-
-      hub.broadcast(
-        userId: 'alice',
-        pageUlid: 'ULID',
-        from: aliceCh,
-        payload: 'alice-only',
-      );
+      hub
+        ..subscribe(userId: 'alice', pageUlid: 'ULID', channel: aliceCh)
+        ..subscribe(userId: 'bob', pageUlid: 'ULID', channel: bobCh)
+        ..broadcast(
+          userId: 'alice',
+          pageUlid: 'ULID',
+          from: aliceCh,
+          payload: 'alice-only',
+        );
       expect(bobCh.received, isEmpty);
       // Cross-direction too.
       hub.broadcast(
@@ -117,9 +118,10 @@ void main() {
       final hub = WsHub();
       final a = _FakeChannel('a');
       final b = _FakeChannel('b');
-      hub.subscribe(userId: 'alice', pageUlid: 'X', channel: a);
-      hub.subscribe(userId: 'alice', pageUlid: 'Y', channel: a);
-      hub.subscribe(userId: 'alice', pageUlid: 'X', channel: b);
+      hub
+        ..subscribe(userId: 'alice', pageUlid: 'X', channel: a)
+        ..subscribe(userId: 'alice', pageUlid: 'Y', channel: a)
+        ..subscribe(userId: 'alice', pageUlid: 'X', channel: b);
       expect(hub.subscriberCount, 3);
 
       hub.unsubscribe(a);
@@ -131,12 +133,10 @@ void main() {
     test('subscriberCount totals across all rooms', () {
       final hub = WsHub();
       expect(hub.subscriberCount, 0);
-      hub.subscribe(
-          userId: 'a', pageUlid: '1', channel: _FakeChannel('a1'));
-      hub.subscribe(
-          userId: 'a', pageUlid: '2', channel: _FakeChannel('a2'));
-      hub.subscribe(
-          userId: 'b', pageUlid: '1', channel: _FakeChannel('b1'));
+      hub
+        ..subscribe(userId: 'a', pageUlid: '1', channel: _FakeChannel('a1'))
+        ..subscribe(userId: 'a', pageUlid: '2', channel: _FakeChannel('a2'))
+        ..subscribe(userId: 'b', pageUlid: '1', channel: _FakeChannel('b1'));
       expect(hub.subscriberCount, 3);
     });
   });

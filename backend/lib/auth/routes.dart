@@ -16,9 +16,8 @@ Router buildAuthRouter({
   required PasswordHasher hasher,
   required TokenIssuer tokens,
 }) {
-  final router = Router();
-
-  router.post('/signup', (Request req) async {
+  return Router()
+    ..post('/signup', (Request req) async {
     final body = await _readJson(req);
     if (body == null) {
       return _err(400, 'invalid_json');
@@ -38,9 +37,8 @@ Router buildAuthRouter({
     } on EmailAlreadyTakenException {
       return _err(409, 'email_taken');
     }
-  });
-
-  router.post('/login', (Request req) async {
+  })
+    ..post('/login', (Request req) async {
     final body = await _readJson(req);
     if (body == null) {
       return _err(400, 'invalid_json');
@@ -67,8 +65,6 @@ Router buildAuthRouter({
       'user': _publicUser(user.id, user.email, user.createdAt),
     });
   });
-
-  return router;
 }
 
 Map<String, dynamic> _publicUser(String id, String email, DateTime createdAt) =>
