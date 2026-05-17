@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder Cmd+Shift+Up/Down, 18 tests).**
-- **Task:** D-phase pick-next survey — D24a is fully shipped. Choose between (a) D24b indent/outdent via Cmd+[ / Cmd+] using super_editor's IndentListItemRequest / UnIndentListItemRequest (built-in for list items), (b) D25 multi-select port (no built-in; would need a Notion-style click+shift-click selection-set), (c) D28-D30 cutover risk-budget, (d) other deferred work (G4 docker smoke, E59 pick-next #3, TS-08 alchemist editor goldens). Lean toward D24b — it's the natural sibling of D24a (another keyboard shortcut with a built-in request), reuses the parser-handler split pattern, and matches what Notion users expect for nested-list editing. Run the survey, commit pivot decision as M1573, queue next slice.
+- **Phase:** D (super_editor WYSIWYG migration) — **D26 closed (7/7 inline marks, 148 tests). D24a closed (block reorder Cmd+Shift+Up/Down, 18 tests). Pivot to D24c (block duplicate Cmd+D).**
+- **Task:** D24c slice 1 — block duplicate resolver (pure-Dart). M1573 ruled out D24b (Tab/Shift+Tab already wired by super_editor's defaultKeyboardActions at super_editor.dart:1506-1508 — adding Cmd+[/Cmd+] would duplicate built-in behavior). Pivoted to D24c (Cmd+D block duplicate, free + Notion-native, source-mode equivalent at `lib/features/editor/domain/source_line_ops.dart:350` `duplicateLineAt`). Super_editor ships `InsertNodeAtIndexRequest` (multi_node_editing.dart:355) — clone the active node, insert at `currentIndex + 1`. Slice 1: pure-Dart resolver `({DocumentNode duplicatedNode, int newIndex})? resolveBlockDuplicate({document, selection})` mirroring resolveBlockReorder's shape. Slice 2: keyboard handler (parser + dispatcher) following the D24a M1570 template.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1573 — D-phase pick-next survey closeout — D24b ruled out, pivot to D24c (Cmd+D block duplicate)** (no code; doc-only pivot decision)
+- Committed: (this iteration)
+- TaskList ID: 185 closeout
+- Notes: Investigated super_editor 0.3.0-dev.51's indent surface for D24b candidacy. Found that Tab/Shift+Tab/Backspace are ALREADY in `defaultKeyboardActions` at `lib/src/default_editor/super_editor.dart:1506-1508` via `tabToIndentListItem`/`shiftTabToUnIndentListItem`/`backspaceToUnIndentListItem`. Adding Cmd+[/Cmd+] would duplicate built-in behavior with marginal value — Notion users already learn Tab via every other editor. Pivoted to **D24c block duplicate via Cmd+D**, motivated by: (1) source-mode has `duplicateLineAt` at source_line_ops.dart:350 (already battle-tested), (2) Notion uses Cmd+D natively, (3) super_editor ships `InsertNodeAtIndexRequest` (multi_node_editing.dart:355) — the duplicate clones the active node + inserts at currentIndex+1, no custom command needed, (4) Cmd+D is free in defaultKeyboardActions (no handler claims it). Slice 1 will be a pure-Dart resolver mirroring `resolveBlockReorder`'s shape; slice 2 the parser+handler pair. D25 multi-select deferred (no built-in support). D28-D30 cutover stays last. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1570 + M1571 — D24a slice 2 — block reorder keyboard handler + EditorBetaPage wiring + TS-01 fix-forward** (7 parser tests; cumulative D24a = 18 tests; D24a fully closed)
 - Committed: (this iteration)
