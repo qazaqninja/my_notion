@@ -148,11 +148,12 @@ void main() {
             .thenThrow(const FormBearingPagesLoadException('temp'));
         await tester.pumpWidget(tree.widget);
         await tester.pumpAndSettle();
-        // First call from the BlocProvider's initial load.
-        verify(tree.pagesRepo.loadAll).called(1);
         await tester.tap(find.text('Retry'));
         await tester.pumpAndSettle();
-        verify(tree.pagesRepo.loadAll).called(1);
+        // 2 calls: initial load from BlocProvider create + the
+        // Retry-button click. Cumulative count is more self-
+        // documenting than two split checkpoints (M1443 TS-04 INFO).
+        verify(tree.pagesRepo.loadAll).called(2);
       });
     });
 
@@ -208,9 +209,13 @@ void main() {
     });
 
     group('row tap → auth gate', () {
+      // Canonical 26-char base32 ULID (M1443 INFO fix). Widget
+      // treats the ulid as opaque, but matching shape keeps any
+      // future ULID-aware test path honest.
+      const sampleUlid = '01H8XGJWBWBAQ4Q9BHV0DAB001';
       final onePage = [
         const FormBearingPage(
-          ulid: '01HXSAMPLE0001',
+          ulid: sampleUlid,
           title: 'Bug reports',
           relativePath: 'Operations/Bug reports.md',
           formsRef: 'true',
@@ -256,8 +261,14 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text('Bug reports'));
         await tester.pumpAndSettle();
-        // The dialog renders into an AlertDialog/Dialog.
         expect(find.byType(Dialog), findsOneWidget);
+        // Bind the dialog's load callback to the right token+ulid
+        // (M1443 TS-06 INFO — without this, a future refactor that
+        // swapped token sources or ulid wiring would silently pass).
+        verify(() => tree.formsRepo.listSubmissions(
+              token: 'jwt-test-token',
+              ulid: sampleUlid,
+            )).called(1);
       });
     });
   });
