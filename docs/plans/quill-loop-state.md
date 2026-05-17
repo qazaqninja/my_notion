@@ -7,8 +7,8 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
 - **Phase:** E (V2 Backend Scaffold)
-- **Task:** Forms polish slice 3b cluster 4 sub-pass 2/N — public_member_api_docs continued. Sub-pass 1 (M1502) cleared form_schema.dart (18). 50 findings remain across 12 files. Next-largest cluster: forms/routes.dart (9) + sync/file_summary.dart (9) — bundle as sub-pass 2 (~18 findings). Then db/users.dart (7) + db/sync.dart (6) + db/exceptions.dart (4) as sub-pass 3 (17). Then auth/user.dart (4) + auth/tokens.dart (3) + auth/password.dart (2) + sync/frontmatter_probe.dart (3) + sync/ws_hub.dart (1) + sync/awareness_message.dart (1) + public/markdown_html.dart (1) as sub-pass 4 (15). After cluster 4 full clear: ~25 misc info findings then revisit-by-priority survey.
-- **Status:** in_progress (sub-pass 1 of ~4 complete)
+- **Task:** Forms polish slice 3b cluster 4 sub-pass 3/4 — public_member_api_docs for db/* cluster: db/users.dart (7) + db/sync.dart (6) + db/exceptions.dart (4) = 17 findings. After this sub-pass: sub-pass 4 covers the auth + sync tail (auth/user.dart 4 + auth/tokens.dart 3 + auth/password.dart 2 + sync/frontmatter_probe.dart 3 + sync/ws_hub.dart 1 + sync/awareness_message.dart 1 + public/markdown_html.dart 1 = 15). After cluster 4 full clear: ~25 misc info findings then revisit-by-priority survey.
+- **Status:** in_progress (sub-passes 1+2 of ~4 complete)
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
   - BL-12 design smell on RemoteCursorOverlay: hard `BlocBuilder<PresenceCubit, PresenceState>` requires the cubit ancestor, blocking isolated SourceView tests. Switch to a maybeOf-tolerant pattern when the SourceView test sweep lands — paired refactor.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1504 — backend lint cleanup 4 sub-pass 2 (public_member_api_docs for forms/routes + sync/file_summary 18 → 0)** (pure-doc commit, second slice of cluster 4)
+- Committed: (this iteration)
+- TaskList ID: 157 (slice 3b cluster 4 sub-pass 2 of ~4)
+- Notes: Second sub-pass of cluster 4. Two files, 31 inserts. `lib/forms/routes.dart` 9 findings: FormSubmission const ctor + 5 fields (id/pageUlid/fields/createdAt/sourceIp) + toJson(); NoFormsRepository const ctor doc noting the no-op contract; FormsRepository const ctor doc noting connection ownership. `lib/sync/file_summary.dart` 9 findings: FileSummary const ctor + 3 fields (relpath/sha256/mtime) + toJson(); FileBody const ctor + 2 fields (summary/body) + toJson(). All doc comments are concise one-liners — no behavior change, no signature change. dart analyze: 75 → 57 (-18, exact match). public_member_api_docs cluster: 50 → 32. dart test: 192/192 still green. Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — clean across all 5 specialists. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1503 — loop-state advance** (record M1502 + advance to cluster 4 sub-pass 2)
+- Committed: prior to M1504 (this iteration)
+- TaskList ID: 157 sub-pass 1 closeout
+- Notes: Recorded M1502 (form_schema docs). Advanced **Current** pointer to sub-pass 2 (forms/routes + sync/file_summary). No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1502 — backend lint cleanup 4 sub-pass 1 (public_member_api_docs for form_schema.dart 18 → 0)** (pure-doc commit, first slice of cluster 4)
 - Committed: (this iteration)
