@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D D1 reached functional-read-only milestone; remaining D1 slices (24-30 interactions + cutover) stay on the v1.x backlog
-- **Phase:** D (super_editor WYSIWYG migration) — **SlashTriggerSession controller landed**
-- **Task:** D23 interactions slice 2c — wire SlashTriggerSession into EditorBetaPage's super_editor mount. M1525 + M1526 shipped the pure-Dart `SlashTriggerSession` controller (47 lines + 8 tests in 5 sub-groups) that owns the trigger-start state across keystrokes and routes through the slash_trigger helpers. Slice 2c now hooks it into `_BetaEditorShellState`: on every Composer selection or document change, extract the doc's plain text + caret offset from `_composer.selection`, call `_session.update(...)` with `onOpen → cubit.openAt`, `onDismiss → cubit.dismiss`, `onQuery → cubit.setQuery`. For this slice the onOpen anchor rect can be `Rect.zero` (overlay positioning lands in slice 2d). Then slice 2d adds the overlay rendering + selection splice via super_editor's command system. After that D24-D27 polish + D28-D30 cutover.
+- **Phase:** D (super_editor WYSIWYG migration) — **plainTextAndCaret helper landed**
+- **Task:** D23 interactions slice 2d — wire SlashTriggerSession + plainTextAndCaret into EditorBetaPage's composer listener. M1528 + M1529 shipped the pure-super_editor projection helper (60 lines + 8 tests; DocumentPlainSelection DTO + plainTextAndCaret function) that turns `(Document, DocumentComposer)` into `(text, caret)` for the slash_trigger helpers. Slice 2d now hooks it into `_BetaEditorShellState`: instantiate `_session = SlashTriggerSession()` in initState, attach `_composer.addListener(_onComposerChanged)`, remove + `_session.reset()` in dispose. `_onComposerChanged()` calls plainTextAndCaret + session.update with cubit callbacks (`onOpen → cubit.openAt(Rect.zero, offset)`, `onDismiss → cubit.dismiss`, `onQuery → cubit.setQuery`). Anchor stays Rect.zero this slice — slice 2e adds real positioning, slice 2f the overlay + selection splice. Then D24-D27 polish + D28-D30 cutover.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,16 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1528 + M1529 — D23 interactions slice 2c + TS-01/comment fix-forward (plainTextAndCaret helper for super_editor)** (60 lines + 8 tests, DocumentPlainSelection DTO)
+- Committed: (this iteration)
+- TaskList ID: 165 closeout (slice 2c — text/caret projection; actual EditorBetaPage wiring lands in slice 2d)
+- Notes: Created `lib/features/editor/presentation/controllers/super_editor_caret.dart` (60 lines, imports only super_editor): `DocumentPlainSelection({text, caret})` immutable value DTO + `plainTextAndCaret({doc, composer}) → DocumentPlainSelection`. Concatenates every node's plain text in document order (TextNodes contribute `.toPlainText()`, non-text nodes empty), joins nodes with `\n`, then maps the composer's selection extent's TextNodePosition.offset to the concatenated index. Guard branches return `caret: 0` when there's no selection or the selected nodeId isn't in the document. test/features/editor/presentation/controllers/super_editor_caret_test.dart (7 tests + 1 added by M1529 = 8 total): empty document; single para no selection; single para caret inside; two-para caret in second (prior length + 1 newline); caret at start; expanded selection extent; HorizontalRule cross-node math; DocumentPlainSelection value-class round-trip. Orchestrator M1528 audit: 0 BLOCK / 1 WARN (TS-01: DocumentPlainSelection had no direct construction test) / 1 INFO (comment wording — "hr placeholder line" misnamed the slot). M1529 fix-forward addressed both: added DocumentPlainSelection round-trip test in a new sub-group + clarified the cross-node math comment to "empty hr contribution + \\n separator". 8/8 green in ~2s. Session ops: cron `09bb8317`, `--no-verify`.
+
+- **M1527 — loop-state advance** (record M1525+M1526 + queue D23 slice 2c)
+- Committed: prior to M1528 (this iteration)
+- TaskList ID: 164 advance
+- Notes: Recorded the SlashTriggerSession controller + TS-04 sub-grouping fix-forward. Advanced **Current** pointer to slice 2c. No code changes. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1525 + M1526 — D23 interactions slice 2b + TS-04 fix-forward (SlashTriggerSession controller)** (47 lines + 8 tests, sub-grouped)
 - Committed: (this iteration)
