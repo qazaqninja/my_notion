@@ -62,6 +62,27 @@ void main() {
         'todo',
       );
     });
+
+    test('returns empty when caret is before triggerStart (guard branch)', () {
+      expect(
+        slashQueryBetween(text: '/foo', triggerStart: 4, caret: 2),
+        '',
+      );
+    });
+
+    test('returns empty when triggerStart is negative (guard branch)', () {
+      expect(
+        slashQueryBetween(text: 'foo', triggerStart: -1, caret: 0),
+        '',
+      );
+    });
+
+    test('returns empty when caret exceeds text length (guard branch)', () {
+      expect(
+        slashQueryBetween(text: 'ab', triggerStart: 1, caret: 99),
+        '',
+      );
+    });
   });
 
   group('slashShouldDismiss', () {
