@@ -35,6 +35,7 @@ import '../controllers/block_delete_keyboard_action.dart';
 import '../controllers/block_duplicate_keyboard_action.dart';
 import '../controllers/block_reorder_keyboard_action.dart';
 import '../controllers/bold_autoformat_reaction.dart';
+import '../controllers/find_in_page_keyboard_action.dart';
 import '../controllers/heading_conversion_keyboard_action.dart';
 import '../controllers/highlight_autoformat_reaction.dart';
 import '../controllers/inline_code_autoformat_reaction.dart';
@@ -476,6 +477,59 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         blockSelection: context.read<BlockSelectionCubit>().state,
       );
 
+  /// D-fp4 slice 4b (M1638): named-method SuperEditorKeyboardAction
+  /// bridging [parseFindInPageKey] (M1636) to the find-bar state on
+  /// `_BetaEditorShellState`. Same shape as the M1607 cubit-bound
+  /// handlers (named method so the state read happens in the callback,
+  /// not the closure literal inside `build`).
+  ///
+  /// Intent → side effect:
+  /// - open    → toggle bar visible + focus the TextField (halts)
+  /// - next    → advance MatchCursor + dispatch selection (halts iff
+  ///             cursor non-empty; otherwise falls through so other
+  ///             handlers can still see Cmd+G)
+  /// - previous → step back the cursor + dispatch (same gate)
+  /// - close   → close the bar — only consumes Esc when the bar is
+  ///             actually visible, so Esc still passes through to
+  ///             super_editor's caret-blur handlers when the bar is
+  ///             closed
+  /// - none    → continueExecution
+  ///
+  /// Coverage exemption (TS-01): handler composes the M1636 parser
+  /// (11 unit tests) + the M1634 state methods (M1571-exempt). Same
+  /// M1571 pattern as the other D-fp parity ports.
+  // coverage:ignore-start
+  ExecutionInstruction _findInPageKeyboardAction({
+    required SuperEditorContext editContext,
+    required KeyEvent keyEvent,
+  }) {
+    final intent = parseFindInPageKey(
+      keyEvent: keyEvent,
+      isShiftPressed: HardwareKeyboard.instance.isShiftPressed,
+      isPrimaryShortcutPressed: keyEvent.isPrimaryShortcutKeyPressed,
+    );
+    switch (intent) {
+      case FindInPageKeyIntent.open:
+        _toggleFindBar();
+        return ExecutionInstruction.haltExecution;
+      case FindInPageKeyIntent.next:
+        if (_findCursor.isEmpty) return ExecutionInstruction.continueExecution;
+        _onFindNext();
+        return ExecutionInstruction.haltExecution;
+      case FindInPageKeyIntent.previous:
+        if (_findCursor.isEmpty) return ExecutionInstruction.continueExecution;
+        _onFindPrev();
+        return ExecutionInstruction.haltExecution;
+      case FindInPageKeyIntent.close:
+        if (!_findBarVisible) return ExecutionInstruction.continueExecution;
+        _toggleFindBar();
+        return ExecutionInstruction.haltExecution;
+      case FindInPageKeyIntent.none:
+        return ExecutionInstruction.continueExecution;
+    }
+  }
+  // coverage:ignore-end
+
   /// D25 slice 4b (M1602): passive pointer-down observer that mutates
   /// `BlockSelectionCubit` based on the click's hit-test + modifier
   /// state. Wired via a `Listener` (not a `GestureDetector`) so we
@@ -611,6 +665,11 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
                     // Cmd+Shift+ArrowUp/Down moves the active block before
                     // super_editor's default arrow-key selection-move fires.
                     keyboardActions: [
+                      // D-fp4 slice 4b (M1638): Cmd+F / ⌘G / ⌘⇧G / Esc
+                      // routed to the FindBar state. Prepended so Cmd+F
+                      // is not swallowed by super_editor's default
+                      // text-input pipeline.
+                      _findInPageKeyboardAction,
                       blockReorderKeyboardAction,
                       blockDuplicateKeyboardAction,
                       // D25 slice 5b (M1606 + M1607 DI-04 fix-forward):
