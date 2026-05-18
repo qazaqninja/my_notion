@@ -865,6 +865,51 @@ void main() {
         });
       });
 
+      // M1867 — seventh dialog smoke. `_onSnoozeReminder` (D-fp16,
+      // M1735, editor_beta_page.dart:687) has a no-reminder-yet
+      // guard branch that fires when the seed page's frontmatter
+      // has no `reminder:` field. With the default seedPage
+      // primitive (only `id:` + `title:` are written), the guard
+      // SnackBar 'No reminder set. Use "Set reminder…" first.'
+      // surfaces instead of the modal-mount path.
+      //
+      // Same SnackBar template shape as M1856 _onPublishToggle +
+      // M1863 _onMoveToFolder guard branch — just a different
+      // predicate. The modal-mount branch (4 options: +1 day /
+      // +3 days / +1 week / +1 month) would require seeding
+      // `reminder:` frontmatter; that's a harness extension
+      // queued for when the modal options themselves need
+      // coverage. snoozeBaseFor + isoDate +
+      // relativeReminderLabel logic is pre-tested in
+      // reminder_date_test.dart.
+      group('_onSnoozeReminder (D-fp16, M1735) — per-handler smoke', () {
+        testWidgets('kebab → Snooze reminder → SnackBar reports no reminder '
+            'when seedPage has no reminder frontmatter', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(
+            tester,
+            EditorBetaAppBarAction.snoozeReminder,
+          );
+
+          expect(
+            find.text('No reminder set. Use "Set reminder…" first.'),
+            findsOneWidget,
+          );
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
