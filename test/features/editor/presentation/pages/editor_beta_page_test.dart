@@ -479,6 +479,44 @@ void main() {
         });
       });
 
+      // M1848 — first NON-clipboard kebab smoke. Establishes the
+      // dialog-handler template for the ~6-8 D-fp kebab actions
+      // that open a modal (set-font, set-goal, set-reminder,
+      // add-tags, move-to-folder, publish-with-password, etc.).
+      //
+      // Production handler at editor_beta_page.dart:859 reads
+      // EditorBloc.state.page.frontmatter for the current `font:`
+      // value, opens a 3-option `showQuillChoice<String>` modal
+      // titled "Page font", and `await`s the user's pick before
+      // dispatching the frontmatter edit. The test asserts the
+      // modal mounts — it does not pick an option, so the
+      // handler stays suspended at the await (which is fine for
+      // a "dialog opens" smoke).
+      group('_onSetFont (D-fp14, M1731) — per-handler smoke', () {
+        testWidgets('kebab → Set page font → modal opens with 3 options',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.setFont);
+
+          expect(find.text('Page font'), findsOneWidget);
+          expect(find.text('Sans-serif (default)'), findsOneWidget);
+          expect(find.text('Serif (Georgia)'), findsOneWidget);
+          expect(find.text('Monospace (JetBrainsMono)'), findsOneWidget);
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
