@@ -41,6 +41,16 @@ void main() {
       );
     });
 
+    test('does not still claim "Latest commit on `main` is M1796"', () {
+      expect(
+        source.contains('Latest commit on `main` is M1796'),
+        isFalse,
+        reason:
+            'M1802: bumped to M1800+ after CA-04 Indexer boundary '
+            'survey (M1800)',
+      );
+    });
+
     test('does not list EditorPreferencesStore as a live abstraction', () {
       expect(
         source.contains('`EditorPreferencesStore` BL-01 abstraction'),

@@ -60,6 +60,22 @@ void main() {
           reason: 'M1798: also bumped the prose counter on line 12',
         );
       });
+
+      test('is not still M1796+ after CA-04 Indexer boundary survey landed',
+          () {
+        expect(
+          source.contains('M0–M1796+'),
+          isFalse,
+          reason:
+              'M1802: bumped to M1800+ after CA-04 Indexer boundary '
+              'survey (M1800)',
+        );
+        expect(
+          source.contains('1,796+ milestones'),
+          isFalse,
+          reason: 'M1802: also bumped the prose counter on line 12',
+        );
+      });
     });
 
     group('block-editor paragraph', () {
