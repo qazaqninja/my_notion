@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp9 shipped (+ reveal).**
-- **Phase:** D (super_editor WYSIWYG migration) — 324 tests after M1715 (+2). D-fp parity arc in progress.
-- **Task:** Pick-next survey #30 — after M1715 D-fp9 reveal port. Options: (a) D-fp10 — rename / history / publish-toggle / set-font / set-reminder; (b) Coordinated BL-11 refactor across all 9 D-fp handlers (substantial slice); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 38+ slice dogfood; (f) Phase E continuation; (g) NV-03 GoRouter.of cleanup at editor_beta_page.dart:455 (one-liner pre-existing carry-forward); (h) FEATURES.md late-section sweep. Default lean: option (g) — one-liner NV-03 fix-forward clears a long-standing carry-forward.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp9 shipped.**
+- **Phase:** D (super_editor WYSIWYG migration) — 324 tests. D-fp parity arc in progress.
+- **Task:** Pick-next survey #31 — after M1717 NV-03 GoRouter.of cleanup (pristine 0/0/0). Options: (a) D-fp10 — rename / history / publish-toggle / set-font / set-reminder (~5 high-value handlers left in legacy kebab); (b) Coordinated BL-11 refactor across all 9 D-fp handlers (substantial slice); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 40+ slice dogfood; (f) Phase E continuation; (g) TS-01/FS-04 widget test gap (recurring carry-forward); (h) FEATURES.md mid-section sweep. Default lean: option (a) D-fp10 rename — RenamePage bloc event likely exists; user-visible value high; fits scaffolding.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1717 — pick-next #30 closeout: NV-03 GoRouter.of cleanup (one-liner)** (1 file modified; +1 / -1; no new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 253 closeout
+- Notes: One-line NV-03 fix-forward in `editor_beta_page.dart:455`: swapped `GoRouter.of(context).go(Routes.home)` → `context.go(Routes.home)` inside `_onMoveToTrash`. The verbose form was a carry-forward flagged by orchestrator across M1656 / M1705 / M1715 — used for capturing the router before async gaps, but this call site dispatches synchronously after the mounted check, so the short idiom is correct. **Intentionally left line 503 (`_onDuplicate`) alone** — that's where `final router = GoRouter.of(context);` captures the router before the VaultBloc(DuplicatePage) dispatch so the deferred `onCreated` callback can navigate after the BuildContext potentially unmounts (canonical router-capture-before-async-gap pattern). **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** The auditor explicitly validated the line-503 retention as architecturally correct. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1715 — pick-next #29 closeout: D-fp9 Reveal-in-Finder/Explorer port (TDD)** (5 files; +61 / -2; 2 new tests; analyze clean)
 - Committed: (this iteration)
