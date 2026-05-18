@@ -7,6 +7,53 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../theme/tokens.dart';
 
+/// Builds the HTML scaffold injected into the MermaidView WebView.
+///
+/// Extracted to a top-level pure function at M1686 so it's unit-testable
+/// without a WebView / platform channel. `source` is mermaid diagram
+/// source (the body of a ```` ```mermaid ```` fence); `mermaidJs` is the
+/// inlined contents of `assets/mermaid/mermaid.min.js` (pass an empty
+/// string when the asset isn't vendored — the scaffold then renders a
+/// visible "not vendored yet" notice instead of a silent blank page).
+///
+/// The vendored `mermaid.min.js` is inlined into a `<script>` block
+/// rather than loaded via `<script src=>` because `loadHtmlString` has
+/// no asset-relative URL resolution — it serves the string from a
+/// synthetic `about:blank` origin where relative paths point nowhere.
+String mermaidHtmlFor({required String source, required String mermaidJs}) {
+  // `&` MUST be escaped before `<`/`>` — otherwise the second pass would
+  // double-escape the freshly inserted `&lt;`/`&gt;` into `&amp;lt;` etc.
+  final escaped = source
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;');
+  final mermaidBlock = mermaidJs.isEmpty
+      ? '<script>document.body.innerHTML += '
+          "' <p style=\"color:#c00;font-size:12px\">mermaid.min.js not vendored yet (assets/mermaid/mermaid.min.js)</p>';"
+          ' </script>'
+      : '<script>$mermaidJs</script>';
+  return '''
+<!doctype html>
+<html><head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { margin: 0; padding: 8px; font-family: -apple-system, system-ui, sans-serif; }
+    .mermaid { background: transparent; }
+  </style>
+</head>
+<body>
+  <div class="mermaid">$escaped</div>
+  $mermaidBlock
+  <script>
+    if (window.mermaid) {
+      mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+    }
+  </script>
+</body></html>
+''';
+}
+
 /// Renders a mermaid diagram source string. On supported platforms
 /// (iOS / Android / macOS) it loads the vendored `mermaid.min.js`
 /// (`assets/mermaid/mermaid.min.js`, declared in pubspec) inside a
@@ -73,7 +120,9 @@ class _MermaidViewState extends State<MermaidView> {
     final controller = WebViewController();
     await controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     await controller.setBackgroundColor(const Color(0x00000000));
-    await controller.loadHtmlString(_htmlFor(widget.source, mermaidJs));
+    await controller.loadHtmlString(
+      mermaidHtmlFor(source: widget.source, mermaidJs: mermaidJs),
+    );
     if (!mounted) return;
     setState(() => _controller = controller);
   }
@@ -87,47 +136,6 @@ class _MermaidViewState extends State<MermaidView> {
     } catch (_) {
       return '';
     }
-  }
-
-  /// Build the HTML scaffold injected into the WebView. The vendored
-  /// `mermaid.min.js` is inlined into a `<script>` block (rather than loaded
-  /// via `<script src=>`) because `loadHtmlString` has no asset-relative
-  /// URL resolution — it serves a string from a synthetic `about:blank`
-  /// origin where relative paths point nowhere.
-  ///
-  /// On DOMContentLoaded the inlined script runs `mermaid.initialize` +
-  /// `mermaid.run`, replacing the `<div class="mermaid">` source with
-  /// rendered SVG.
-  String _htmlFor(String source, String mermaidJs) {
-    final escaped = source
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;');
-    final mermaidBlock = mermaidJs.isEmpty
-        ? '<script>document.body.innerHTML += '
-            "' <p style=\"color:#c00;font-size:12px\">mermaid.min.js not vendored yet (assets/mermaid/mermaid.min.js)</p>';"
-            ' </script>'
-        : '<script>$mermaidJs</script>';
-    return '''
-<!doctype html>
-<html><head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body { margin: 0; padding: 8px; font-family: -apple-system, system-ui, sans-serif; }
-    .mermaid { background: transparent; }
-  </style>
-</head>
-<body>
-  <div class="mermaid">$escaped</div>
-  $mermaidBlock
-  <script>
-    if (window.mermaid) {
-      mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
-    }
-  </script>
-</body></html>
-''';
   }
 
   @override
