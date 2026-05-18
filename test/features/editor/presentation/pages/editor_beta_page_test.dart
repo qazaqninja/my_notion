@@ -492,6 +492,15 @@ void main() {
       // modal mounts — it does not pick an option, so the
       // handler stays suspended at the await (which is fine for
       // a "dialog opens" smoke).
+      //
+      // M1849 (orchestrator M1848 TS-06 WARN): `tapKebabItem`'s
+      // direct-callback dispatch — accepted for clipboard smokes
+      // at M1838 because super_editor's Overlay intercepts the
+      // pointer-tap path — applies identically for dialog smokes.
+      // The handler closure invoked is the production one; the
+      // only thing skipped is `PopupMenuButton`'s internal
+      // navigator pop. `showQuillChoice`'s own `showDialog` route
+      // push runs normally, so the modal renders as expected.
       group('_onSetFont (D-fp14, M1731) — per-handler smoke', () {
         testWidgets('kebab → Set page font → modal opens with 3 options',
             (tester) async {
