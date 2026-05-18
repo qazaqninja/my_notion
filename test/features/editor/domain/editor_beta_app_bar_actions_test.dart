@@ -19,6 +19,7 @@ void main() {
         EditorBetaAppBarAction.share,
         EditorBetaAppBarAction.copyLink,
         EditorBetaAppBarAction.copyUlid,
+        EditorBetaAppBarAction.copyPath,
         EditorBetaAppBarAction.moveToTrash,
       };
       final authed = editorBetaAppBarActions(isAuthed: true).toSet();
@@ -28,8 +29,9 @@ void main() {
     });
 
     test('returns actions in the stable AppBar order: '
-        'pull → find → share → copyLink → copyUlid → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp5
+        'pull → find → share → copyLink → copyUlid → copyPath → moveToTrash',
+        () {
+      // Order matters so the rendered AppBar matches the post-D-fp7
       // layout users have already learned. Future kebab refactor will
       // map this directly to PopupMenuItem rows.
       expect(editorBetaAppBarActions(isAuthed: true).toList(), [
@@ -38,6 +40,7 @@ void main() {
         EditorBetaAppBarAction.share,
         EditorBetaAppBarAction.copyLink,
         EditorBetaAppBarAction.copyUlid,
+        EditorBetaAppBarAction.copyPath,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -48,6 +51,7 @@ void main() {
         EditorBetaAppBarAction.share,
         EditorBetaAppBarAction.copyLink,
         EditorBetaAppBarAction.copyUlid,
+        EditorBetaAppBarAction.copyPath,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -74,6 +78,10 @@ void main() {
           EditorBetaAppBarAction.copyLink.tooltip,
           'Copy [[link]] to this page',
         );
+      });
+
+      test('copyPath tooltip reads "Copy file path" (D-fp7 port label)', () {
+        expect(EditorBetaAppBarAction.copyPath.tooltip, 'Copy file path');
       });
     });
   });

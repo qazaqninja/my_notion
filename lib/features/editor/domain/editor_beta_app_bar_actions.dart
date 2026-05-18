@@ -27,6 +27,12 @@ enum EditorBetaAppBarAction {
   /// `editor_page.dart` case `'copy-ulid'`.
   copyUlid(tooltip: 'Copy ULID'),
 
+  /// Writes the absolute filesystem path to the clipboard. D-fp7 port
+  /// from legacy `editor_page.dart` case `'copy-path'`. Built via
+  /// `vaultAbsolutePath(rootPath: …, relativePath: …)` so the join
+  /// rules stay centralised.
+  copyPath(tooltip: 'Copy file path'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -51,5 +57,6 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.share;
   yield EditorBetaAppBarAction.copyLink;
   yield EditorBetaAppBarAction.copyUlid;
+  yield EditorBetaAppBarAction.copyPath;
   yield EditorBetaAppBarAction.moveToTrash;
 }

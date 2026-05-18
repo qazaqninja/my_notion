@@ -28,6 +28,13 @@ void main() {
       expect(iconFor(EditorBetaAppBarAction.copyUlid), Icons.tag);
     });
 
+    test('copyPath → Icons.folder_outlined (D-fp7 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.copyPath),
+        Icons.folder_outlined,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

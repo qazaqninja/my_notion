@@ -17,6 +17,7 @@ IconData iconFor(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.share => Icons.share_outlined,
     EditorBetaAppBarAction.copyLink => Icons.link,
     EditorBetaAppBarAction.copyUlid => Icons.tag,
+    EditorBetaAppBarAction.copyPath => Icons.folder_outlined,
     EditorBetaAppBarAction.moveToTrash => Icons.delete_outline,
   };
 }

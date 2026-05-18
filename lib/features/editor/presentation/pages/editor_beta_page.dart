@@ -25,6 +25,7 @@ import '../../../../core/ui/anchor_rect.dart';
 import '../../../../core/ui/anchor_rect_x.dart';
 import '../../domain/attachment_writer.dart';
 import '../../domain/block_selection_gesture.dart';
+import '../../../vault/domain/vault_absolute_path.dart';
 import '../../domain/document_search.dart';
 import '../../domain/editor_beta_app_bar_actions.dart';
 import '../../domain/find_in_page_navigation.dart';
@@ -448,6 +449,35 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp7 (M1709): port Copy-path from legacy editor_page.dart:518.
+  /// Writes the absolute filesystem path (`vault.rootPath + '/' +
+  /// widget.relativePath`) to the system clipboard via the M1709
+  /// `vaultAbsolutePath` helper. Falls back to the bare relative
+  /// path if VaultBloc hasn't loaded yet — same defensive behaviour
+  /// as the legacy handler.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `Clipboard.setData` + `ScaffoldMessenger`. The join logic is
+  /// pre-tested in `vault_absolute_path_test.dart` (6 tests).
+  // coverage:ignore-start
+  Future<void> _onCopyPath() async {
+    final vault = context.read<VaultBloc>().state;
+    final rootPath = vault is VaultLoaded ? vault.rootPath : null;
+    final path = vaultAbsolutePath(
+      rootPath: rootPath,
+      relativePath: widget.relativePath,
+    );
+    await Clipboard.setData(ClipboardData(text: path));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Copied $path'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
   /// D-fp6 (M1703): port Copy-ULID from legacy editor_page.dart:501.
   /// Writes the bare ULID to the system clipboard so users can paste it
   /// into external scripts, frontmatter, or git commit messages — same
@@ -640,6 +670,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.share => _onSharePage,
         EditorBetaAppBarAction.copyLink => _onCopyLink,
         EditorBetaAppBarAction.copyUlid => _onCopyUlid,
+        EditorBetaAppBarAction.copyPath => _onCopyPath,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       },
     );
