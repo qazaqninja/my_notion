@@ -82,6 +82,13 @@ enum EditorBetaAppBarAction {
   /// not).
   pageHistory(tooltip: 'Page history (git log)'),
 
+  /// Opens a `showQuillPrompt` for comma-separated tag input; merges
+  /// the result into the page's `tags:` frontmatter list via
+  /// [mergeTags] (case-insensitive dedup against current, preserving
+  /// existing casing). D-fp26 port from legacy `editor_page.dart`
+  /// case `'add-tags'`. **Final D-fp port — closes the parity arc.**
+  addTags(tooltip: 'Add tags…'),
+
   /// Opens a 3-option chooser (sans / serif / mono) for the page's
   /// font; dispatches Add/Edit/Remove FrontmatterField against
   /// `font:` per the [pageFontActionFor] planner. D-fp14 port from
@@ -201,6 +208,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.publishToggle;
   yield EditorBetaAppBarAction.publishWithPassword;
   yield EditorBetaAppBarAction.pageHistory;
+  yield EditorBetaAppBarAction.addTags;
   yield EditorBetaAppBarAction.setFont;
   yield EditorBetaAppBarAction.setGoal;
   yield EditorBetaAppBarAction.exportMarkdown;
@@ -251,6 +259,7 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.publishToggle ||
     EditorBetaAppBarAction.publishWithPassword ||
     EditorBetaAppBarAction.pageHistory ||
+    EditorBetaAppBarAction.addTags ||
     EditorBetaAppBarAction.setFont ||
     EditorBetaAppBarAction.setGoal ||
     EditorBetaAppBarAction.exportMarkdown ||

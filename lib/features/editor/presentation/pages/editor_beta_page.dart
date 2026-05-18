@@ -38,7 +38,9 @@ import '../../../forms/domain/repositories/forms_repository.dart';
 import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
 import '../../domain/copy_labels.dart';
 import '../../domain/folder_picker_options.dart';
+import '../../../../core/markdown/yaml_scalar.dart';
 import '../../domain/has_forms_frontmatter.dart';
+import '../../domain/tag_merge.dart';
 import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/pdf_exporter.dart';
 import '../../domain/page_font.dart';
@@ -1148,6 +1150,85 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp26 (M1755): port Add-tags from legacy editor_page.dart:872
+  /// (`_addTags`). **Final D-fp port — closes the parity arc.**
+  /// Reads existing tags via [readExistingTags], builds a hint with
+  /// the current set, opens `showQuillPrompt` for comma-separated
+  /// input, splits via `parseMultiValueInput` (quote-aware), merges
+  /// via [mergeTags] (case-insensitive dedup preserving original
+  /// casing), then dispatches Add/EditFrontmatterField with a
+  /// `[a, b, c]` flow-list `rawScalar` built via `yamlFlowItem`. The
+  /// SnackBar reports the actually-added count via [addedTagsLabel].
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `showQuillPrompt` + frontmatter events + `ScaffoldMessenger`.
+  /// All branching logic is unit-tested via `tag_merge_test.dart`
+  /// + `yaml_scalar_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onAddTags() async {
+    final bloc = context.read<EditorBloc>();
+    final editorState = bloc.state;
+    if (editorState is! EditorLoaded) return;
+    final fm = editorState.page.frontmatter;
+    final existing = fm.find('tags');
+    final currentTags = readExistingTags(existing);
+    final hint = currentTags.isEmpty
+        ? 'Comma-separated. New tags are merged with current.'
+        : 'Current: ${currentTags.join(', ')} · new tags are merged.';
+    final result = await showQuillPrompt(
+      context,
+      title: 'Add tags',
+      icon: 'tag',
+      label: 'Tags',
+      hint: hint,
+      placeholder: 'tag1, tag2',
+      confirmLabel: 'Add',
+    );
+    if (result == null || !mounted) return;
+    final added = parseMultiValueInput(result);
+    if (added.isEmpty) return;
+    final outcome = mergeTags(current: currentTags, added: added);
+    if (outcome.actuallyNew.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All tags already on this page'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final raw = '[${outcome.merged.map(yamlFlowItem).join(', ')}]';
+    if (existing == null) {
+      bloc.add(
+        AddFrontmatterField(
+          FrontmatterEntry(
+            key: 'tags',
+            rawScalar: raw,
+            type: FrontmatterType.multi,
+            value: outcome.merged,
+          ),
+        ),
+      );
+    } else {
+      bloc.add(
+        EditFrontmatterField(
+          'tags',
+          existing.copyWith(rawScalar: raw, value: outcome.merged),
+        ),
+      );
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${addedTagsLabel(outcome.actuallyNew.length)}: '
+          '${outcome.actuallyNew.join(', ')}',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
   /// D-fp12 (M1725): port Page-history from legacy editor_page.dart:534
   /// (`_showPageHistory`). Reads the VaultBloc's rootPath, opens the
   /// [PageHistoryDialog] backed by `git log`. The dialog handles the
@@ -1749,6 +1830,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.publishToggle => _onPublishToggle,
         EditorBetaAppBarAction.publishWithPassword => _onPublishWithPassword,
         EditorBetaAppBarAction.pageHistory => _onPageHistory,
+        EditorBetaAppBarAction.addTags => _onAddTags,
         EditorBetaAppBarAction.setFont => _onSetFont,
         EditorBetaAppBarAction.setGoal => _onSetGoal,
         EditorBetaAppBarAction.exportMarkdown => _onExportMarkdown,

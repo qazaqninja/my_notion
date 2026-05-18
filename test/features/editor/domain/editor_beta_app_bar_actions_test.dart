@@ -30,6 +30,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.publishWithPassword,
         EditorBetaAppBarAction.pageHistory,
+        EditorBetaAppBarAction.addTags,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setGoal,
         EditorBetaAppBarAction.exportMarkdown,
@@ -53,22 +54,22 @@ void main() {
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → moveToFolder → '
         'publishToggle → publishWithPassword → pageHistory → '
-        'setFont → setGoal → exportMarkdown → exportHtml → '
+        'addTags → setFont → setGoal → exportMarkdown → exportHtml → '
         'printPage → setReminder → snoozeReminder → clearReminder → '
         'copyBody → copyPlain → copyJson → copyFormLink? → '
         'viewFormSubmissions? → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp25
-      // layout users have already learned. moveToFolder slots
-      // directly after rename (D-fp25 / M1753) — both file-system
-      // mutation actions paired together. publishWithPassword slots
-      // directly after publishToggle (D-fp24 / M1751). setGoal
-      // between setFont and setReminder (D-fp21 / M1745);
-      // exportMarkdown + exportHtml between setGoal and setReminder
-      // (D-fp22 / M1747); printPage closes the export trio
-      // immediately after exportHtml (D-fp23 / M1749). The three
-      // copy-* entries group together; copyFormLink +
-      // viewFormSubmissions (when present) form the form-bearing
-      // pair immediately before moveToTrash.
+      // Order matters so the rendered AppBar matches the post-D-fp26
+      // layout users have already learned. addTags slots directly
+      // after pageHistory (D-fp26 / M1755 — the final D-fp port,
+      // closes the parity arc). moveToFolder slots directly after
+      // rename (D-fp25 / M1753); publishWithPassword directly after
+      // publishToggle (D-fp24 / M1751); setGoal between setFont and
+      // setReminder (D-fp21 / M1745); exportMarkdown + exportHtml
+      // between setGoal and setReminder (D-fp22 / M1747); printPage
+      // closes the export trio immediately after exportHtml
+      // (D-fp23 / M1749). The three copy-* entries group together;
+      // copyFormLink + viewFormSubmissions (when present) form the
+      // form-bearing pair immediately before moveToTrash.
       expect(
           editorBetaAppBarActions(isAuthed: true, isFormBearing: true).toList(),
           [
@@ -85,6 +86,7 @@ void main() {
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
+            EditorBetaAppBarAction.addTags,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.exportMarkdown,
@@ -119,6 +121,7 @@ void main() {
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
+            EditorBetaAppBarAction.addTags,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.exportMarkdown,
@@ -208,6 +211,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.publishWithPassword,
         EditorBetaAppBarAction.pageHistory,
+        EditorBetaAppBarAction.addTags,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setGoal,
         EditorBetaAppBarAction.exportMarkdown,
@@ -298,6 +302,7 @@ void main() {
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
+            EditorBetaAppBarAction.addTags,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.exportMarkdown,
@@ -384,6 +389,10 @@ void main() {
           EditorBetaAppBarAction.pageHistory.tooltip,
           'Page history (git log)',
         );
+      });
+
+      test('addTags tooltip reads the D-fp26 port label', () {
+        expect(EditorBetaAppBarAction.addTags.tooltip, 'Add tags…');
       });
 
       test('setFont tooltip reads the D-fp14 port label', () {

@@ -83,6 +83,13 @@ void main() {
       expect(iconFor(EditorBetaAppBarAction.pageHistory), Icons.history);
     });
 
+    test('addTags → Icons.label_outline (D-fp26 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.addTags),
+        Icons.label_outline,
+      );
+    });
+
     test('setFont → Icons.font_download_outlined (D-fp14 port glyph)', () {
       expect(
         iconFor(EditorBetaAppBarAction.setFont),

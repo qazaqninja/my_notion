@@ -25,6 +25,7 @@ IconData iconFor(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.publishToggle => Icons.public_outlined,
     EditorBetaAppBarAction.publishWithPassword => Icons.lock_outline,
     EditorBetaAppBarAction.pageHistory => Icons.history,
+    EditorBetaAppBarAction.addTags => Icons.label_outline,
     EditorBetaAppBarAction.setFont => Icons.font_download_outlined,
     EditorBetaAppBarAction.setGoal => Icons.flag_outlined,
     EditorBetaAppBarAction.exportMarkdown => Icons.file_download_outlined,
