@@ -299,7 +299,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
 
   /// D-fp3 (M1625): port Share-via-OS-sheet from legacy
-  /// editor_page.dart:1344 `_sharePage`. Tries `SharePlus.instance.share`
+  /// legacy editor `_sharePage`. Tries `SharePlus.instance.share`
   /// with the file as `XFile` first (works on iOS / macOS / Android), falls
   /// back to plain-text body share on platforms without file-share
   /// (notably plain Linux). Reads the vault rootPath to compute the
@@ -347,10 +347,10 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp2 (M1623): port Pull-from-server from legacy editor_page.dart:604.
+  /// D-fp2 (M1623): port Pull-from-server from the legacy editor.
   /// Dispatches `SyncFetchFileRequested` against the server-known relpath
   /// when authed; shows a SnackBar with the result. Mirrors the legacy
-  /// kebab `'pull'` case at editor_page.dart:604-612.
+  /// kebab `'pull'` case at legacy editor.
   ///
   /// The button is hidden when not authed via a `BlocBuilder` gate at the
   /// AppBar level, so this handler doesn't need the redundant
@@ -372,8 +372,8 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   /// D-fp4 slice 3b (M1634): toggle the Find-in-page bar. On open,
   /// requests focus on the bar's TextField after the next frame so
   /// the user can start typing immediately. On close, clears the
-  /// query + resets the cursor — mirrors editor_page.dart's M85
-  /// behaviour at editor_page.dart:1989.
+  /// query + resets the cursor — mirrors legacy editor's M85
+  /// behaviour at legacy editor.
   ///
   /// Coverage exemption (TS-01): widget-tier orchestration over
   /// state-setter + post-frame focus. Same M1571 pattern as the
@@ -438,7 +438,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
+  /// D-fp1 (M1621): port Move-to-Trash from the legacy editor.
   /// Confirm via dialog, dispatch VaultBloc(MoveToTrash) + optional
   /// SyncBloc(SyncDeleteFileRequested) when authed, navigate home.
   /// Coverage exemption (TS-01): widget-tier handler over already-tested
@@ -469,7 +469,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     if (confirmed != true || !mounted) return;
     context.read<VaultBloc>().add(MoveToTrash(widget.ulid));
     // Mirror to the v2 backend when authed so the server tombstones
-    // the row and forgets the knownSha (matches editor_page.dart:660-663).
+    // the row and forgets the knownSha (matches legacy editor).
     final sync = context.read<SyncBloc>();
     if (sync.state.isAuthed) {
       sync.add(SyncDeleteFileRequested(relpath: widget.relativePath));
@@ -480,7 +480,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp17 (M1737): port Copy-body from legacy
-  /// editor_page.dart:536 (case 'copy-body'). Writes the current
+  /// legacy editor (case 'copy-body'). Writes the current
   /// page body to the system clipboard; toast reports the char
   /// count via the M1737 [copiedCharsLabel] helper.
   ///
@@ -504,7 +504,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp18 (M1739): port Copy-plain from legacy
-  /// editor_page.dart:543 (case 'copy-plain'). Runs the page body
+  /// legacy editor (case 'copy-plain'). Runs the page body
   /// through [stripMarkdown] to drop syntax characters, writes the
   /// result to the system clipboard, and reports the new char count
   /// via [copiedCharsLabel] with the "as plain text" suffix.
@@ -530,7 +530,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp20 (M1743): port Copy-form-link from legacy
-  /// editor_page.dart:504 (case 'copy-form-link'). Builds the public
+  /// legacy editor (case 'copy-form-link'). Builds the public
   /// `<backendBaseUrl>/forms/<ulid>` URL via [publicFormUrl] and
   /// writes it to the system clipboard so the author can paste it
   /// anywhere (Slack, email, embed). Visitors fill out the rendered
@@ -573,7 +573,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp19 (M1741): port View-form-submissions from legacy
-  /// editor_page.dart:614 (case 'view-form-submissions') →
+  /// legacy editor (case 'view-form-submissions') →
   /// `_viewFormSubmissions`. Reads the SyncBloc token, checks
   /// `isAuthed`, then opens the [FormSubmissionsDialog] backed by
   /// `FormsRepository.listSubmissions(token:, ulid:)`. SnackBars when
@@ -623,7 +623,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp18 (M1739): port Copy-JSON from legacy
-  /// editor_page.dart:555 (case 'copy-json'). Builds the canonical
+  /// legacy editor (case 'copy-json'). Builds the canonical
   /// `{ ulid, relativePath, frontmatter, body }` payload via
   /// [pageAsJsonPayload], writes the JSON string to the clipboard,
   /// and reports the byte length via [copiedCharsLabel] with the
@@ -659,7 +659,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp16 (M1735): port Snooze-reminder from legacy
-  /// editor_page.dart:1010 (`_snoozeReminder`). Opens a 4-option
+  /// legacy editor (`_snoozeReminder`). Opens a 4-option
   /// chooser (+1 / +3 / +7 / +30 days), computes the new ISO date
   /// via the M1733 [isoDate] helper relative to the M1735
   /// [snoozeBaseFor] start (which guards against snoozing a
@@ -724,7 +724,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp16 (M1735): port Clear-reminder from legacy
-  /// editor_page.dart:582 (case 'clear-reminder'). Removes the
+  /// legacy editor (case 'clear-reminder'). Removes the
   /// `reminder:` frontmatter field; SnackBars "no reminder set"
   /// when there's nothing to clear.
   ///
@@ -761,7 +761,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp15 (M1733): port Set-reminder from legacy
-  /// editor_page.dart:1055 (`_setReminder`). Opens
+  /// legacy editor (`_setReminder`). Opens
   /// `showQuillDatePicker`, formats the pick via M1733
   /// [isoDate] for the `reminder:` frontmatter value, and dispatches
   /// `AddFrontmatterField` / `EditFrontmatterField` (with the no-op
@@ -832,7 +832,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp14 (M1731): port Set-font from legacy editor_page.dart:805
+  /// D-fp14 (M1731): port Set-font from the legacy editor
   /// (`_setFont`). Opens a 3-option `showQuillChoice` (sans / serif /
   /// mono); the result is routed through `pageFontActionFor` (M1731
   /// pure-Dart planner) so the no-op detection is reuseable. Mirrors
@@ -914,7 +914,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp21 (M1745): port Set-word-count-goal from legacy
-  /// editor_page.dart:954 (`_setWordGoal`). Opens a [showQuillPrompt]
+  /// legacy editor (`_setWordGoal`). Opens a [showQuillPrompt]
   /// seeded with the existing rawScalar (or empty), routes the
   /// trimmed input through the M1745 [wordGoalActionFor] planner,
   /// then dispatches the matching frontmatter event (Remove / Add /
@@ -1018,7 +1018,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp22 (M1747): port Export-as-Markdown from legacy
-  /// editor_page.dart:1134 (`_exportPageAsMarkdown`). Reads
+  /// legacy editor (`_exportPageAsMarkdown`). Reads
   /// VaultBloc's rootPath, copies the source `.md` file to the
   /// user-picked path via `FilePicker.platform.saveFile`. The filename
   /// seed comes from [safeExportFilename] applied to `page.title`.
@@ -1066,7 +1066,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp23 (M1749): port Print-page from legacy editor_page.dart:690
+  /// D-fp23 (M1749): port Print-page from the legacy editor
   /// (`_printPage`). Renders the page body as a PDF via
   /// `PdfExporter.exportSingle(title:, body:)` and hands it to
   /// `Printing.layoutPdf` so the OS print dialog can offer Print /
@@ -1104,7 +1104,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp22 (M1747): port Export-as-HTML from legacy
-  /// editor_page.dart:1107 (`_exportPageAsHtml`). Renders
+  /// legacy editor (`_exportPageAsHtml`). Renders
   /// `HtmlExporter.renderStandalonePage(title:, body:)` and writes
   /// the resulting standalone HTML to the user-picked path. Shares
   /// the [safeExportFilename] seed with the markdown variant.
@@ -1150,7 +1150,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp26 (M1755): port Add-tags from legacy editor_page.dart:872
+  /// D-fp26 (M1755): port Add-tags from the legacy editor
   /// (`_addTags`). **Final D-fp port — closes the parity arc.**
   /// Reads existing tags via [readExistingTags], builds a hint with
   /// the current set, opens `showQuillPrompt` for comma-separated
@@ -1229,7 +1229,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp12 (M1725): port Page-history from legacy editor_page.dart:534
+  /// D-fp12 (M1725): port Page-history from the legacy editor
   /// (`_showPageHistory`). Reads the VaultBloc's rootPath, opens the
   /// [PageHistoryDialog] backed by `git log`. The dialog handles the
   /// "no git history" case itself when the vault is not a git repo.
@@ -1251,7 +1251,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp11 (M1722): port Publish-toggle from legacy
-  /// editor_page.dart:599 ('publish') + :603 ('unpublish'). Reads
+  /// legacy editor ('publish') + :603 ('unpublish'). Reads
   /// the EditorBloc's current state to inspect frontmatter; if
   /// `public:` is present, dispatch `RemoveFrontmatterField('public')`
   /// (and also `public_password` if set); otherwise dispatch an
@@ -1259,7 +1259,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   /// resulting state.
   ///
   /// The password-gated variant (legacy `'publish-password'` case at
-  /// `editor_page.dart:601`) is deliberately deferred — keeps this
+  /// `legacy editor`) is deliberately deferred — keeps this
   /// slice bite-sized.
   ///
   /// Coverage exemption (TS-01): widget-tier orchestration over the
@@ -1304,7 +1304,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp24 (M1751): port Publish-with-password from legacy
-  /// editor_page.dart:1269 (`_publishPageWithPassword`). Prompts the
+  /// legacy editor (`_publishPageWithPassword`). Prompts the
   /// user for a password via an obscured `AlertDialog` (mirroring the
   /// legacy `_promptForPassword`), then stamps `public: true` +
   /// `public_password: <bcrypt>` into frontmatter via
@@ -1404,7 +1404,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp10 (M1719): port Rename-file from legacy
-  /// editor_page.dart:705 (`_renameFile`). Opens a [showQuillPrompt]
+  /// legacy editor (`_renameFile`). Opens a [showQuillPrompt]
   /// dialog seeded with the current basename, runs the picked value
   /// through the M1719 [sanitizedBasename] helper for a preview, and
   /// dispatches `RenamePage(ulid:, newBasename:)` against VaultBloc.
@@ -1466,7 +1466,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp25 (M1753): port Move-to-folder from legacy
-  /// editor_page.dart:745 (`_moveToFolder`). Walks VaultBloc's tree
+  /// legacy editor (`_moveToFolder`). Walks VaultBloc's tree
   /// via [collectVaultFolders], filters out the current folder via
   /// [currentFolderOf], opens `showQuillChoice<String>` with a
   /// "(vault root)" entry prepended when the page is already nested.
@@ -1532,7 +1532,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp9 (M1715): port Reveal-in-Finder/Explorer from legacy
-  /// editor_page.dart:525. Resolves the absolute filesystem path via
+  /// legacy editor. Resolves the absolute filesystem path via
   /// the M1709 [vaultAbsolutePath] helper, then dispatches through
   /// the cross-platform `Reveal.show()` (macOS: `open -R`; Linux:
   /// `xdg-open` on the parent dir; Windows: `explorer.exe /select,`).
@@ -1564,7 +1564,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   // coverage:ignore-end
 
   /// D-fp8 (M1712): port Duplicate page from legacy
-  /// editor_page.dart:620. Dispatches the existing
+  /// legacy editor. Dispatches the existing
   /// [DuplicatePage] VaultBloc event with an `onCreated` callback
   /// that navigates the editor to the freshly created copy + shows a
   /// transient SnackBar with the new ULID.
@@ -1599,7 +1599,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp7 (M1709): port Copy-path from legacy editor_page.dart:518.
+  /// D-fp7 (M1709): port Copy-path from the legacy editor.
   /// Writes the absolute filesystem path (`vault.rootPath + '/' +
   /// widget.relativePath`) to the system clipboard via the M1709
   /// `vaultAbsolutePath` helper. Falls back to the bare relative
@@ -1628,7 +1628,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp6 (M1703): port Copy-ULID from legacy editor_page.dart:501.
+  /// D-fp6 (M1703): port Copy-ULID from the legacy editor.
   /// Writes the bare ULID to the system clipboard so users can paste it
   /// into external scripts, frontmatter, or git commit messages — same
   /// Clipboard pattern as D-fp5 [_onCopyLink] but without the `[[…]]`
@@ -1652,7 +1652,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp5 (M1696): port Copy-[[link]] from legacy editor_page.dart:515.
+  /// D-fp5 (M1696): port Copy-[[link]] from the legacy editor.
   /// Writes `[[<ulid>]]` to the system clipboard so the user can paste
   /// it into any other page; pops a transient SnackBar confirming.
   /// Wraps the M1696 [wikilinkLiteralFor] so the literal format lives
