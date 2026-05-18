@@ -20,6 +20,7 @@ import 'package:my_notion/features/sync/presentation/bloc/sync_state.dart';
 import 'package:my_notion/features/vault/data/datasources/vault_fs_datasource.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/data/repositories/vault_repository_impl.dart';
+import 'package:my_notion/features/vault/domain/entities/vault_tree.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_event.dart';
@@ -94,16 +95,36 @@ Future<EditorBetaHarness> pumpEditorBeta(
   WidgetTester tester, {
   required String ulid,
   Widget? probe,
+  bool seedPage = false,
+  String seedTitle = 'Test',
+  String seedBody = 'Hello.',
 }) async {
   final fs = MemoryFileSystem();
+  const rootPath = '/vault';
   final ds = VaultFsDatasource(ulids: const UlidGenerator(), fs: fs);
   final db = QuillDatabase.forTesting(NativeDatabase.memory());
   final indexer = Indexer(db, ds);
   final repo = VaultRepositoryImpl(ds);
   final vaultBloc = _StubVaultBloc();
   final syncBloc = _StubSyncBloc();
+  final VaultState vaultState;
+  if (seedPage) {
+    final root = fs.directory(rootPath)..createSync(recursive: true);
+    root.childFile('page.md').writeAsStringSync(
+          '---\nid: $ulid\ntitle: $seedTitle\n---\n\n$seedBody\n',
+        );
+    await indexer.reindex(root);
+    vaultState = VaultLoaded(
+      rootPath: rootPath,
+      tree: VaultTree.empty,
+      expandedFolders: const <String>{},
+      pageCount: 1,
+    );
+  } else {
+    vaultState = const VaultInitial();
+  }
   whenListen(vaultBloc, const Stream<VaultState>.empty(),
-      initialState: const VaultInitial());
+      initialState: vaultState);
   whenListen(syncBloc, const Stream<SyncState>.empty(),
       initialState: const SyncState());
 

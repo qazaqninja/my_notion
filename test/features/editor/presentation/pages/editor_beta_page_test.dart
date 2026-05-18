@@ -10,6 +10,7 @@ import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
+import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
 
 import '_harness/editor_beta_pump.dart';
 
@@ -136,28 +137,45 @@ void main() {
       // M1811 sub-slice 4: VaultBloc + SyncBloc resolvable via
       // bloc_test MockBloc stubs (no-op initial state). 8 of 9
       // collaborators wired after this slice.
-      // M1818 fix-forward (TS-04): wrap the M1817 spike tombstone
-      // in a stub group so the queued `_onCopyUlid` test lands in
-      // the canonical location once the seed-page harness sub-slice
-      // ships (pick-next #76).
-      group('_onCopyUlid (D-fp6, M1703) — per-handler smoke', () {
-        // M1817 spike: attempting a per-handler kebab smoke
-        // (`_onCopyUlid` clipboard test) discovered the harness
-        // can't yet reach `EditorLoaded` — the in-memory drift db
-        // is empty, `EditorBloc.OpenEditor → indexer lookup`
-        // returns no page, the bloc transitions away from
-        // `EditorLoaded`, and the page never renders the AppBar
-        // that hosts the kebab. The kebab tests therefore need a
-        // **seeded vault page** first — a small follow-on harness
-        // sub-slice (queued as pick-next #76) that writes one
-        // `.md` to the in-memory filesystem + reindexes +
-        // `whenListen`s the VaultBloc stub into
-        // `VaultLoaded(rootPath: ...)` so `EditorBloc` resolves
-        // the ulid all the way to `EditorLoaded`. Once seeded,
-        // the `_onCopyUlid` test (tap kebab → tap "Copy ULID" →
-        // assert clipboard via `SystemChannels.platform`
-        // mock-method-call-handler) lands here as the first
-        // per-handler smoke.
+      // M1820 sub-slice 6: pumpEditorBeta now takes an optional
+      // `seedPage` parameter that:
+      //   (a) writes one `.md` file to the in-memory
+      //       MemoryFileSystem at `<rootPath>/page.md` with
+      //       `id: <ulid>` + `title: <seedTitle>` frontmatter,
+      //   (b) runs `indexer.reindex(rootDir)` so the in-memory
+      //       drift db gets the page row,
+      //   (c) `whenListen`s the existing `_StubVaultBloc` into
+      //       `VaultLoaded(rootPath:, tree:, expandedFolders:,
+      //       pageCount: 1)` so editor handlers that early-return
+      //       on `vaultState is VaultLoaded` see a loaded vault.
+      //
+      // This probe-style test exercises the seed path without
+      // mounting the real `EditorBetaPage`. A follow-on slice
+      // will swap the probe for the page itself + tap the kebab,
+      // but that path currently trips super_editor's
+      // pumpAndSettle on the empty-document layout (see the
+      // multi-exception trace in the M1820 attempt). Splitting
+      // the harness-seed deliverable from the kebab-interaction
+      // test keeps each slice bite-sized + lands the seedPage
+      // primitive that per-handler smokes need.
+      group('seedPage:true', () {
+        testWidgets('writes the page to drift + emits VaultLoaded',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            seedTitle: 'Seeded',
+            probe: const SizedBox.shrink(),
+          );
+          addTearDown(harness.dispose);
+
+          final pages = await harness.db.select(harness.db.pages).get();
+          expect(pages.map((p) => p.ulid), [ulid]);
+          expect(pages.single.title, 'Seeded');
+          expect(harness.vaultBloc.state, isA<VaultLoaded>());
+        });
       });
 
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
