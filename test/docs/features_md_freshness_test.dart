@@ -8,50 +8,64 @@ void main() {
   // Mirrors that pattern — five string-grep asserts against the
   // most-likely-to-rot phrases. After M1755 (D-fp arc) + M1765 (D30d)
   // the WYSIWYG editor is fully shipped, not "🚧 partial".
+  // M1770 fix-forward: TS-04 sub-grouping per stale-axis (the
+  // flat single-group structure surfaced as a WARN in M1769's
+  // orchestrator audit). Three sub-groups mirror the three axes
+  // documented in M1769's commit message: status counter,
+  // block-editor paragraph, WYSIWYG pick-next item #2.
   group('FEATURES.md freshness', () {
     final source = File('docs/FEATURES.md').readAsStringSync();
 
-    test('status counter is not M1690+ or M1186+', () {
-      expect(
-        source.contains('M0–M1690+)'),
-        isFalse,
-        reason: 'M1769: counter advanced to M1766+ after D30 arc closed',
-      );
-      expect(
-        source.contains('M0–M1186+'),
-        isFalse,
-        reason: 'M1769: the 1,186 baseline is from M1248-era counter advance',
-      );
+    group('status counter', () {
+      test('is not M1690+ or M1186+', () {
+        expect(
+          source.contains('M0–M1690+)'),
+          isFalse,
+          reason: 'M1769: counter advanced to M1766+ after D30 arc closed',
+        );
+        expect(
+          source.contains('M0–M1186+'),
+          isFalse,
+          reason:
+              'M1769: the 1,186 baseline is from M1248-era counter advance',
+        );
+      });
     });
 
-    test('WYSIWYG #2 backlog does not say super_editor is "future work"', () {
-      expect(
-        source.contains(
-          'True `super_editor` integration with a markdown serializer remains future work',
-        ),
-        isFalse,
-        reason:
-            'M1755 (D-fp arc) + M1765 (D30d): WYSIWYG fully shipped — flip 🚧 → ✅',
-      );
+    group('block-editor paragraph', () {
+      test('legacy editor description is gone', () {
+        expect(
+          source.contains('The legacy per-block source-mode editor stays '
+              'reachable through the opt-out toggle (Settings → Advanced) '
+              'until D30 cutover deletes it'),
+          isFalse,
+          reason:
+              'M1761 (Settings toggle) + M1765 (legacy EditorPage) deleted',
+        );
+      });
+
+      test('no remaining "D30 cutover deletes it" phrasing', () {
+        expect(
+          source.contains('until D30 cutover deletes it'),
+          isFalse,
+          reason: 'D30 cutover arc fully closed at M1765',
+        );
+      });
     });
 
-    test('legacy editor description is gone', () {
-      expect(
-        source.contains('The legacy per-block source-mode editor stays '
-            'reachable through the opt-out toggle (Settings → Advanced) '
-            'until D30 cutover deletes it'),
-        isFalse,
-        reason:
-            'M1761 (Settings toggle deleted) + M1765 (legacy EditorPage deleted)',
-      );
-    });
-
-    test('no remaining "D30 cutover deletes it" phrasing', () {
-      expect(
-        source.contains('until D30 cutover deletes it'),
-        isFalse,
-        reason: 'D30 cutover arc fully closed at M1765',
-      );
+    group('WYSIWYG pick-next item #2', () {
+      test('does not say super_editor is "future work"', () {
+        expect(
+          source.contains(
+            'True `super_editor` integration with a markdown serializer '
+            'remains future work',
+          ),
+          isFalse,
+          reason:
+              'M1755 (D-fp arc) + M1765 (D30d): WYSIWYG fully shipped — '
+              'flip 🚧 → ✅',
+        );
+      });
     });
   });
 }
