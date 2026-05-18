@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 293 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #20 — after M1692 FEATURES.md early-section sweep (status counter ×2 + public-sharing 🔮 → ✅). Options: (a) BL-11 D-fp callback cleanup; (b) Phase E continuation (G4 docker smoke or further forms polish); (c) D-fp5 next parity port; (d) NV-02 GoRouteData typed routes; (e) D30b/c — 22+ slices since D29 default flip; (f) FEATURES.md mid-section sweep (lines 100-200 workspace/sidebar/sharing area); (g) BL-12 _FindBarHost; (h) CLAUDE.md status block refresh (M1657 → M1692, 35+ commits stale). Default lean: option (h) CLAUDE.md status sync — counter pair-flow with M1692; cleanly bite-sized.
+- **Task:** Pick-next survey #21 — after M1694 CLAUDE.md status refresh. **4 of last 5 commits doc-only; pivot back to code slice.** Options: (a) BL-11 D-fp callback cleanup — concrete refactor lifting `// coverage:ignore-start/end` blocks into named state methods (M1607 precedent); (b) D-fp5 next parity port; (c) BL-12 _FindBarHost — extract FindBar state into a Cubit; (d) NV-02 GoRouteData typed routes; (e) D30b/c after 24+ slice dogfood; (f) Phase E continuation (G4 docker smoke deferred — needs user wall-time). Default lean: option (a) BL-11 D-fp callback cleanup — concrete code slice, named-method-on-state pattern, well-scoped to EditorBetaPage's 5 D-fp callbacks, restores test-coverage visibility on those handlers.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1694 — pick-next #20 closeout: CLAUDE.md status block refresh (M1657 → M1693)** (1 file modified; +1 / -1; doc-only)
+- Committed: (this iteration)
+- TaskList ID: 243 closeout
+- Notes: Pick-next survey #20 picked option (h) — pair-flow with the M1692 FEATURES.md counter refresh. CLAUDE.md "Status" block was 36+ commits stale. Replaced single status paragraph: counter `M0–M1657+` → `M0–M1693+`; latest-commit description swapped from M1657's NV-03 carry-forward → M1693's loop-state advance for M1692 FEATURES.md early-section sweep (status counter + public-sharing 🔮 → ✅); prose `1,650+ commits` → `1,690+ commits`; test file count 180 → 185 (`find test -name '*_test.dart' | wc -l`); running-list additions covering D28-D30a WYSIWYG cutover gateway, EditorPreferencesStore BL-01 abstraction, and the touch-tuned mobile UI pass (slash menu + properties panel 44pt). Future sessions reading the status block now get current context. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1692 — pick-next #19 closeout: FEATURES.md early-section sweep (status counters + public-sharing 🔮 → ✅)** (1 file modified; +3 / -3; doc-only)
 - Committed: (this iteration)
