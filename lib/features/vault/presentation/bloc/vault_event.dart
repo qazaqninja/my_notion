@@ -119,6 +119,12 @@ class DuplicatePage extends VaultEvent {
   final String? titleOverride;
 
   final void Function(String newUlid)? onCreated;
+  // [onCreated] is intentionally excluded from props: closures are not
+  // structurally equatable, and two `DuplicatePage(ulid: …)` events
+  // sharing the same identity payload should compare equal even if
+  // their callbacks differ. The callback is a fire-and-forget
+  // side-effect channel, not part of the event's identity. (M1713
+  // documents this rationale per the M1712 orchestrator BL-06 note.)
   @override
   List<Object?> get props => [ulid, targetFolder, titleOverride];
 }
