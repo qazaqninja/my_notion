@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp15 shipped (14 D-fp actions; kebab now holds 10).**
-- **Phase:** D (super_editor WYSIWYG migration) — 361 tests after M1733 (+10). D-fp parity arc in progress.
-- **Task:** Pick-next survey #38 — after M1733 D-fp15 set-reminder port. Options: (a) D-fp16 reminder family (snooze + clear); (b) D-fp16 add-tags; (c) D-fp16 view-form-submissions; (d) D-fp16 export-md / export-html / print-page; (e) D-fp16 copy-body / copy-plain / copy-json; (f) Coordinated BL-11 SnackBar→BlocListener refactor (substantial); (g) Stub editor_beta_page_test.dart finally; (h) Phase E continuation. Default lean: option (a) D-fp16 snooze + clear — finishes the reminder family.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp16 shipped (16 D-fp actions; kebab now holds 12).**
+- **Phase:** D (super_editor WYSIWYG migration) — 371 tests after M1735 (+10). D-fp parity arc in progress.
+- **Task:** Pick-next survey #39 — after M1735 D-fp16 reminder family completion. Options: (a) D-fp17 add-tags; (b) D-fp17 view-form-submissions; (c) D-fp17 copy-body / copy-plain / copy-json (clipboard variants); (d) D-fp17 export-md / export-html / print-page (output actions); (e) D-fp17 set-goal; (f) D-fp17 move-to-folder; (g) Coordinated BL-11 SnackBar→BlocListener refactor (substantial); (h) Stub editor_beta_page_test.dart. Default lean: option (c) D-fp17 copy-body — simplest remaining; extends the established copy-link/copy-ulid/copy-path triplet pattern.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1735 — pick-next #38 closeout: D-fp16 reminder family — snooze + clear (TDD)** (7 files; +228 / -4; 10 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 261 closeout
+- Notes: Finishes the reminder family started by D-fp15. Two new kebab actions in one slice. **D-fp16 ports:** appended `DateTime snoozeBaseFor({existing, today})` planner to `reminder_date.dart` — implements the legacy "snooze always lands in the future" rule (null or past existing → today; future existing → existing; trim-tolerant on both sides). 6 new unit tests covering null / past / today / future / time-stripping cases. Two new `EditorBetaAppBarAction` slots — `snoozeReminder` (tooltip "Snooze reminder…", `Icons.snooze`) and `clearReminder` (tooltip "Clear reminder", `Icons.alarm_off`) — inserted between `setReminder` and `moveToTrash`; both classified into the kebab. New `_onSnoozeReminder()` async handler: reads EditorBloc state, parses existing rawScalar, computes `snoozeBaseFor`, opens `showQuillChoice<int>` (+1/+3/+7/+30 days), `isoDate` formats the result, dispatches `EditFrontmatterField` with `existing.copyWith`, confirms via `relativeReminderLabel` toast. New `_onClearReminder()` handler: reads existing, SnackBars "No reminder set" when null, otherwise dispatches `RemoveFrontmatterField('reminder')` with an echoed cleared-value toast. Both under M1571 coverage:ignore. `_handlerFor` switch arms appended for both. **Orchestrator audit: 0 BLOCK / 2 WARN (both pre-existing project-pattern carry-forwards — BL-11 SnackBar-in-callback consistent with all 12+ prior D-fp ports; TS-04 positive group placement note) / 3 INFO (CA-01 confirmation; BL-12 listenWhen note for hypothetical future BlocListener migration; TS-04 tooltip-group placement positive).** No regressions introduced. 58/58 tests pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1733 — pick-next #37 closeout: D-fp15 Set-reminder kebab port (TDD)** (7 files; +212 / -2; 11 new tests; analyze clean)
 - Committed: (this iteration)
