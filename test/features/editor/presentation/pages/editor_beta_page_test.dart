@@ -831,6 +831,40 @@ void main() {
         });
       });
 
+      // M1865 — sixth dialog smoke. `_onPublishWithPassword`
+      // (D-fp24, M1751, editor_beta_page.dart:1345) opens a
+      // password-input AlertDialog (showDialog<String> with
+      // `Set page password` title, obscureText TextField,
+      // Cancel/Publish actions). Same AlertDialog shape as
+      // `_onMoveToTrash` confirm (M1853) — bcrypt + entry-build
+      // logic pre-tested in build_public_password_entries_test.dart.
+      group('_onPublishWithPassword (D-fp24, M1751) — per-handler smoke', () {
+        testWidgets('kebab → Publish with password → password modal opens',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(
+            tester,
+            EditorBetaAppBarAction.publishWithPassword,
+          );
+
+          expect(find.text('Set page password'), findsOneWidget);
+          expect(find.text('Cancel'), findsOneWidget);
+          expect(find.text('Publish'), findsOneWidget);
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
