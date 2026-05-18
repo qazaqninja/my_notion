@@ -45,6 +45,21 @@ void main() {
           reason: 'M1792: also bumped the prose counter on line 12',
         );
       });
+
+      test('is not still M1790+ after CA-04 ExportRepository arc landed', () {
+        expect(
+          source.contains('M0–M1790+'),
+          isFalse,
+          reason:
+              'M1798: bumped to M1796+ after CA-04 ExportRepository arc '
+              'closure (M1794 Html + M1796 Pdf)',
+        );
+        expect(
+          source.contains('1,790+ milestones'),
+          isFalse,
+          reason: 'M1798: also bumped the prose counter on line 12',
+        );
+      });
     });
 
     group('block-editor paragraph', () {

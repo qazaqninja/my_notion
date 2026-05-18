@@ -31,6 +31,16 @@ void main() {
       );
     });
 
+    test('does not still claim "Latest commit on `main` is M1789"', () {
+      expect(
+        source.contains('Latest commit on `main` is M1789'),
+        isFalse,
+        reason:
+            'M1798: bumped to M1796+ after CA-04 ExportRepository arc '
+            'closure (M1794 HtmlExportRepository + M1796 PdfExportRepository)',
+      );
+    });
+
     test('does not list EditorPreferencesStore as a live abstraction', () {
       expect(
         source.contains('`EditorPreferencesStore` BL-01 abstraction'),
