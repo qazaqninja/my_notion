@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
-- **Phase:** D (super_editor WYSIWYG migration) — 292 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #17 — after M1686 mermaidHtmlFor extraction (FEATURES.md item 276 turned out to be stale doc; Mermaid native rendering shipped at C1). Remaining options menu: (a) flip FEATURES.md items 276 + 56 ✅ doc-correctness slice (both are demonstrably stale — MermaidView+WebView shipped; super_editor block-level cursor nav now ships via D29-default EditorBetaPage); (b) BL-11 D-fp callback cleanup deferred from M1631+; (c) Phase E continuation; (d) D-fp5 next parity port; (e) NV-02 GoRouteData typed routes; (f) D30b/c — 16+ slices have elapsed since M1670 D29 default flip so the dogfood window should now be enough; (g) Another FEATURES.md sweep for stale 🚧 markers; (h) Address the M1686 audit TS-04 sub-group naming + TS-06 property assertion INFOs. Default lean: option (a) — quick correctness doc strike since both lines 276 and 56 are demonstrably stale; pairs cleanly with M1685 pick-next #15 doc-strike closeout pattern.
+- **Phase:** D (super_editor WYSIWYG migration) — 293 tests after M1686 (+9). D-fp parity arc in progress.
+- **Task:** Pick-next survey #18 — after M1688 FEATURES.md doc-strikes (items 56 + 276 now ✅). Options: (a) BL-11 D-fp callback cleanup deferred from M1631+; (b) Phase E continuation; (c) D-fp5 next parity port; (d) NV-02 GoRouteData typed routes; (e) D30b/c — 18+ slices since D29 default flip so the dogfood window should now be enough; (f) Another FEATURES.md sweep for stale 🚧 (lines 17-50 area not yet scanned this cycle); (g) Address M1686 audit TS-04 sub-group naming + TS-06 property assertion INFO fix-forwards; (h) BL-12 _FindBarHost. Default lean: option (g) TS-04/TS-06 fix-forward on the M1686 test groups — small, well-scoped, captures the cosmetic INFOs before they rot.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1688 — pick-next #17 closeout: flip FEATURES.md items 56 + 276 ✅** (1 file modified; +2 / -2; doc-only)
+- Committed: (this iteration)
+- TaskList ID: 240 closeout
+- Notes: Pick-next survey #17 picked option (a) — refresh both stale markers FEATURES.md surfaced after M1686's mermaid TDD slice. **Item 56** (Block-based editing) flipped 🚧 → ✅ — the "Full block-level cursor nav still needs super_editor" clause was true pre-D-phase; D29 cutover (M1670) made `EditorBetaPage`/super_editor the default at `/editor/:ulid` via the `editor.useBeta` toggle, so users now get block-level cursor nav out of the box. Legacy per-block source-mode editor stays reachable through the opt-out toggle (Settings → Advanced) until D30 deletes it. **Item 276** (Math + Mermaid) flipped 🚧 → ✅ — the "Mermaid blocks get a styled placeholder card; native rendering still needs flutter_mermaid or a webview" clause was ~1,500 commits stale. C1 shipped `MermaidView` at `lib/shared/widgets/mermaid_view.dart` with `webview_flutter: ^4.13.1` + vendored 3.3 MB `assets/mermaid/mermaid.min.js` inlined into a `loadHtmlString` scaffold; `markdown_renderer.dart:2588` already invokes it for both editor modes. M1686 reference cross-linked. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine (doc-only diff, no Dart files touched, `dart analyze` + `dart run custom_lint` both clean).** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1686 — pick-next #16 closeout: extract mermaidHtmlFor pure-Dart helper (TDD)** (2 files modified; +118 / -48; 9 new tests; analyze clean)
 - Committed: (this iteration)
