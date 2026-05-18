@@ -284,7 +284,13 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   Future<void> _onSharePage() async {
     final vault = context.read<VaultBloc>().state;
     if (vault is! VaultLoaded) return;
-    final absolutePath = '${vault.rootPath}/${widget.relativePath}';
+    // M1710 (M1709 CA-07 fix-forward): use the shared vaultAbsolutePath
+    // helper introduced by D-fp7 so trailing-slash dedup + null fallback
+    // stay consistent between Share and Copy-path.
+    final absolutePath = vaultAbsolutePath(
+      rootPath: vault.rootPath,
+      relativePath: widget.relativePath,
+    );
     final file = File(absolutePath);
     if (!await file.exists()) {
       if (!mounted) return;
