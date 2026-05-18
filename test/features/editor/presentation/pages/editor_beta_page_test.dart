@@ -13,10 +13,21 @@ import 'package:my_notion/features/forms/domain/repositories/forms_repository.da
 import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
+import 'package:my_notion/features/vault/presentation/bloc/vault_event.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
 
 import '_harness/editor_beta_pump.dart';
+
+/// M1853: mocktail needs a fallback instance for `VaultEvent`
+/// before `verify(() => mock.add(any(that: ...)))` can match —
+/// without it, the `any()` call throws `Bad state:
+/// registerFallbackValue was not previously called`. `VaultEvent`
+/// is sealed (cannot be extended outside its library), so use a
+/// real concrete subclass as the fallback. Never interacted with
+/// at runtime — only its type identity matters.
+final VaultEvent _fallbackVaultEvent = const MoveToTrash('');
 
 /// Installs a mock `SystemChannels.platform` method-call handler
 /// that captures `Clipboard.setData(text:)` calls and returns a
@@ -49,6 +60,14 @@ ValueGetter<String?> _installClipboardMock(WidgetTester tester) {
 }
 
 void main() {
+  setUpAll(() {
+    // M1853: register the Fake before `verify(() => mock.add(any(...)))`
+    // can match against `VaultEvent` arguments. Mocktail needs a
+    // valid instance of the parameter type to avoid TypeErrors
+    // under Dart sound null safety.
+    registerFallbackValue(_fallbackVaultEvent);
+  });
+
   // M1787 (TS-01 stub): minimal smoke test for EditorBetaPage. The
   // 26+ D-fp `_on…` async handlers in this file are all
   // `coverage:ignore-start/end`-exempt per M1571 because their
@@ -559,6 +578,64 @@ void main() {
             findsOneWidget,
           );
           expect(find.text('Save'), findsOneWidget);
+        });
+      });
+
+      // M1853 — first NAVIGATION + EVENT-DISPATCH smoke. Adds the
+      // third per-handler shape to the arc (clipboard / dialog /
+      // navigation). Production handler at
+      // `editor_beta_page.dart:460` shows a confirmation
+      // `AlertDialog`, then on confirm dispatches `MoveToTrash` to
+      // `VaultBloc` and navigates to `Routes.home`. The handler
+      // also conditionally dispatches a `SyncBloc` event when
+      // authed; the harness stub's `isAuthed` is `false` so that
+      // branch skips.
+      //
+      // Two assertions chain:
+      //   1. After `tapKebabItem(moveToTrash)`, the AlertDialog
+      //      mounts with title "Move to trash?" and a "Move to
+      //      trash" confirm button.
+      //   2. After tapping the confirm button, the VaultBloc stub
+      //      received `add(MoveToTrash(<ulid>))` exactly once.
+      //
+      // Navigation assertion is deferred: the harness's
+      // `_defaultProbe` uses a real `GoRouter` with `/home` →
+      // `SizedBox.shrink`, so post-navigation the EditorBetaPage
+      // unmounts. A MockGoRouter-based `verify(() => router.go(...))`
+      // would be more precise but requires harness restructuring
+      // — queued as a follow-on slice. The event-dispatch
+      // assertion is sufficient evidence that the confirmation
+      // path runs end-to-end.
+      group('_onMoveToTrash (D-fp1, M1683) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Move to trash → confirm → VaultBloc receives '
+            'MoveToTrash event', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.moveToTrash);
+
+          expect(find.text('Move to trash?'), findsOneWidget);
+
+          await tester.tap(find.widgetWithText(FilledButton, 'Move to trash'));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 50));
+
+          verify(
+            () => harness.vaultBloc.add(
+              any(that: isA<MoveToTrash>()),
+            ),
+          ).called(1);
         });
       });
 
