@@ -289,19 +289,18 @@ void main() {
           for (var i = 0; i < 5; i++) {
             await tester.pump(const Duration(milliseconds: 50));
           }
-          // The PopupMenu items have an intrinsic Material max-width
-          // of ~256px. Under flutter_test's default Ahem font (wider
-          // glyphs than production Inter), the longer tooltip labels
-          // overflow the Row by a few pixels. These are cosmetic
-          // `RenderFlex overflowed` warnings — the tap dispatch still
-          // works. Drain them so they don't fail the test. Future
-          // slice: wrap the PopupMenuItem Text in `Expanded(...,
-          // overflow: TextOverflow.ellipsis)` so the menu is robust
-          // at narrow widths in production too.
-          while (tester.takeException() != null) {}
+          // M1827 fix-forward: the production `PopupMenuItem` Row
+          // now wraps its `Text` child in
+          // `Expanded(..., overflow: TextOverflow.ellipsis)` so the
+          // popup no longer overflows the Material ~256px max width
+          // under flutter_test's Ahem font. Per orchestrator M1826
+          // TS-06: tighter `isNull` assert replaces the previous
+          // drain loop; future per-handler tests inherit this shape
+          // so genuine exceptions can't be silently swallowed.
+          expect(tester.takeException(), isNull);
           await tester.tap(find.text('Copy ULID'));
           await tester.pump();
-          while (tester.takeException() != null) {}
+          expect(tester.takeException(), isNull);
 
           expect(clipboardText, ulid);
         });

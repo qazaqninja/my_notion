@@ -1906,7 +1906,18 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
               children: [
                 Icon(iconFor(action), size: 18),
                 const SizedBox(width: 12),
-                Text(action.tooltip),
+                // M1827: Expanded + ellipsis so long tooltip labels
+                // (e.g. "Move to folder…", "Publish with password…")
+                // never overflow the Material PopupMenu's intrinsic
+                // ~256px max width. Without this, narrow popup widths
+                // (test fonts or constrained viewports) throw
+                // `RenderFlex overflowed` during layout.
+                Expanded(
+                  child: Text(
+                    action.tooltip,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
           ),
