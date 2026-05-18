@@ -788,6 +788,49 @@ void main() {
         });
       });
 
+      // M1863 — fifth dialog smoke. `_onMoveToFolder` (D-fp25,
+      // M1753, editor_beta_page.dart:1505) has a no-folders-yet
+      // guard branch that fires when:
+      //   * VaultBloc is VaultLoaded with an empty tree, AND
+      //   * the current page is in the vault root.
+      // Both conditions hold for our seedPage primitive (the
+      // harness emits VaultLoaded with VaultTree.empty + writes
+      // `<rootPath>/page.md` so currentFolder is '').
+      //
+      // So this slice asserts the guard-SnackBar text instead of
+      // the modal mount — same SnackBar template as M1856
+      // _onPublishToggle. Asserting the modal would require
+      // seeding a non-empty VaultTree, which is a meaningful
+      // harness extension queued for a follow-on if the modal
+      // path itself needs coverage. The folder-walking +
+      // currentFolderOf logic is pre-tested in
+      // `folder_picker_options_test.dart`.
+      group('_onMoveToFolder (D-fp25, M1753) — per-handler smoke', () {
+        testWidgets('kebab → Move to folder → SnackBar reports no folders '
+            'when vault tree is empty', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.moveToFolder);
+
+          expect(
+            find.text(
+                'No folders to move to. Create a folder in the sidebar first.'),
+            findsOneWidget,
+          );
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
