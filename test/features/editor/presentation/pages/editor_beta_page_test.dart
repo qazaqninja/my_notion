@@ -391,6 +391,45 @@ void main() {
         });
       });
 
+      // M1843 — fifth per-handler clipboard smoke. Production handler
+      // at editor_beta_page.dart:530 runs `stripMarkdown(page.body)`
+      // and writes the plain-text result to the clipboard. The
+      // strip helper drops bold/italic/etc. markers + does a final
+      // `.trim()` on the result.
+      //
+      // With `seedBody: '**bold** text.'` (production path):
+      //   page.body = '\n**bold** text.\n'  (raw post-frontmatter)
+      //   → stripMarkdown drops `**…**` markers
+      //   → '\nbold text.\n'
+      //   → trim()
+      //   → 'bold text.'
+      //
+      // The expected clipboard value is therefore the trimmed
+      // plain-text form — no leading/trailing newlines.
+      group('_onCopyPlain (D-fp18, M1739) — per-handler smoke', () {
+        testWidgets('kebab → Copy as plain text → clipboard receives '
+            'stripped+trimmed body', (tester) async {
+          final clipboard = _installClipboardMock(tester);
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            seedBody: '**bold** text.',
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.copyPlain);
+
+          expect(clipboard(), 'bold text.');
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
