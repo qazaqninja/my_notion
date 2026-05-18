@@ -476,11 +476,13 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   /// that the legacy editor already fires.
   // coverage:ignore-start
   void _onPublishToggle() {
-    final editorState = context.read<EditorBloc>().state;
+    // M1723 (M1722 CA-06 fix-forward): capture EditorBloc once so the
+    // state read + add() share a single context.read.
+    final bloc = context.read<EditorBloc>();
+    final editorState = bloc.state;
     if (editorState is! EditorLoaded) return;
     final fm = editorState.page.frontmatter;
     final isPublic = fm.find('public') != null;
-    final bloc = context.read<EditorBloc>();
     if (isPublic) {
       bloc.add(const RemoveFrontmatterField('public'));
       if (fm.find('public_password') != null) {
