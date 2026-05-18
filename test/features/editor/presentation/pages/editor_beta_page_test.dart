@@ -631,9 +631,19 @@ void main() {
           await tester.pump();
           await tester.pump(const Duration(milliseconds: 50));
 
+          // M1854 (orchestrator M1853 TS-03 WARN): constrain the
+          // `ulid` field, not just the event type. A typo regression
+          // that passed the wrong ULID would otherwise satisfy
+          // `isA<MoveToTrash>()` and the test would silently pass.
           verify(
             () => harness.vaultBloc.add(
-              any(that: isA<MoveToTrash>()),
+              any(
+                that: isA<MoveToTrash>().having(
+                  (e) => e.ulid,
+                  'ulid',
+                  ulid,
+                ),
+              ),
             ),
           ).called(1);
         });
