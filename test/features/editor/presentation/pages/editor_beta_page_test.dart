@@ -13,6 +13,7 @@ import 'package:my_notion/features/editor/presentation/bloc/editor_state.dart';
 import 'package:my_notion/features/editor/domain/repositories/html_export_repository.dart';
 import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
+import 'package:my_notion/features/editor/presentation/widgets/page_history_dialog.dart';
 import 'package:my_notion/features/forms/domain/repositories/forms_repository.dart';
 import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
@@ -1139,6 +1140,40 @@ void main() {
           expect(find.text('Rename file'), findsOneWidget);
           expect(find.text('New name'), findsOneWidget);
           expect(find.text('Rename'), findsOneWidget);
+        });
+      });
+
+      // M1882 — third fresh post-dialog-family port. `_onPageHistory`
+      // opens `PageHistoryDialog` via `showDialog<void>` after
+      // reading the VaultBloc's rootPath. Production handler at
+      // editor_beta_page.dart:1265 requires VaultLoaded state (which
+      // the seedPage:true harness emits). The dialog's content is
+      // state-dependent (FutureBuilder over `git log` Process.run):
+      // loading/error/empty/list. The user-observable surface this
+      // smoke covers is the dialog widget mounting — `find.byType(
+      // PageHistoryDialog)` is the most robust assertion since the
+      // initial render content (CircularProgressIndicator) depends on
+      // platform git invocation timing.
+      group('_onPageHistory (D-fp12, M1725) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Page history → PageHistoryDialog mounts',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.pageHistory);
+
+          expect(find.byType(PageHistoryDialog), findsOneWidget);
         });
       });
 
