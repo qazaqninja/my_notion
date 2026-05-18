@@ -21,6 +21,16 @@ void main() {
       );
     });
 
+    test('does not still claim "Latest commit on `main` is M1766"', () {
+      expect(
+        source.contains('Latest commit on `main` is M1766'),
+        isFalse,
+        reason:
+            'M1790: bumped to M1789+ after archaeology arc + TS-01 stub '
+            'closures',
+      );
+    });
+
     test('does not list EditorPreferencesStore as a live abstraction', () {
       expect(
         source.contains('`EditorPreferencesStore` BL-01 abstraction'),
