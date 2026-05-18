@@ -37,6 +37,7 @@ import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
 import '../../domain/copy_labels.dart';
 import '../../domain/has_forms_frontmatter.dart';
 import '../../domain/page_font.dart';
+import '../../domain/word_goal.dart';
 import '../../domain/page_json_payload.dart';
 import '../../domain/reminder_date.dart';
 import '../../domain/strip_markdown.dart';
@@ -904,6 +905,110 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp21 (M1745): port Set-word-count-goal from legacy
+  /// editor_page.dart:954 (`_setWordGoal`). Opens a [showQuillPrompt]
+  /// seeded with the existing rawScalar (or empty), routes the
+  /// trimmed input through the M1745 [wordGoalActionFor] planner,
+  /// then dispatches the matching frontmatter event (Remove / Add /
+  /// Edit) or SnackBars the no-op / invalid result. Pluralisation in
+  /// SnackBars uses [wordGoalLabel].
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `showQuillPrompt` + `ScaffoldMessenger` + frontmatter events.
+  /// All branching logic is unit-tested via `wordGoalActionFor`.
+  // coverage:ignore-start
+  Future<void> _onSetGoal() async {
+    final bloc = context.read<EditorBloc>();
+    final editorState = bloc.state;
+    if (editorState is! EditorLoaded) return;
+    final existing = editorState.page.frontmatter.find('goal');
+    final initial = existing?.rawScalar ?? '';
+    final picked = await showQuillPrompt(
+      context,
+      title: 'Set word count goal',
+      icon: 'hash',
+      label: 'Goal',
+      hint: 'Empty to clear. The footer will show progress.',
+      placeholder: 'e.g. 500',
+      initial: initial,
+      confirmLabel: 'Save',
+      mono: true,
+    );
+    if (picked == null || !mounted) return;
+    final plan = wordGoalActionFor(
+      picked: picked,
+      existing: existing?.rawScalar,
+    );
+    switch (plan) {
+      case WordGoalAction.noop:
+        return;
+      case WordGoalAction.invalid:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Goal must be a positive whole number'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      case WordGoalAction.remove:
+        final was = existing!.rawScalar.trim();
+        bloc.add(const RemoveFrontmatterField('goal'));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(was.isEmpty
+                ? 'Word count goal cleared'
+                : 'Word count goal cleared (was $was)'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        return;
+      case WordGoalAction.noopAlreadySet:
+        final n = int.parse(picked.trim());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Word count goal already ${wordGoalLabel(n)}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        return;
+      case WordGoalAction.add:
+        final n = int.parse(picked.trim());
+        bloc.add(
+          AddFrontmatterField(
+            FrontmatterEntry(
+              key: 'goal',
+              rawScalar: '$n',
+              type: FrontmatterType.number,
+              value: n,
+            ),
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Word count goal: ${wordGoalLabel(n)}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        return;
+      case WordGoalAction.edit:
+        final n = int.parse(picked.trim());
+        bloc.add(
+          EditFrontmatterField(
+            'goal',
+            existing!.copyWith(rawScalar: '$n', value: n),
+          ),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Word count goal: ${wordGoalLabel(n)}'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        return;
+    }
+  }
+  // coverage:ignore-end
+
   /// D-fp12 (M1725): port Page-history from legacy editor_page.dart:534
   /// (`_showPageHistory`). Reads the VaultBloc's rootPath, opens the
   /// [PageHistoryDialog] backed by `git log`. The dialog handles the
@@ -1338,6 +1443,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.publishToggle => _onPublishToggle,
         EditorBetaAppBarAction.pageHistory => _onPageHistory,
         EditorBetaAppBarAction.setFont => _onSetFont,
+        EditorBetaAppBarAction.setGoal => _onSetGoal,
         EditorBetaAppBarAction.setReminder => _onSetReminder,
         EditorBetaAppBarAction.snoozeReminder => _onSnoozeReminder,
         EditorBetaAppBarAction.clearReminder => _onClearReminder,

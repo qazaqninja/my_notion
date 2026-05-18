@@ -72,6 +72,13 @@ enum EditorBetaAppBarAction {
   /// legacy `editor_page.dart` case `'set-font'`.
   setFont(tooltip: 'Set page font'),
 
+  /// Opens a `showQuillPrompt` that takes a positive whole number;
+  /// writes it (or removes) the page's `goal:` frontmatter. D-fp21
+  /// port from legacy `editor_page.dart` case `'set-goal'`. Planner
+  /// logic lives in [wordGoalActionFor]; pluralisation in
+  /// [wordGoalLabel].
+  setGoal(tooltip: 'Set word count goal…'),
+
   /// Opens a date picker; writes the picked date as ISO `YYYY-MM-DD`
   /// into the page's `reminder:` frontmatter. D-fp15 port from
   /// legacy `editor_page.dart` case `'set-reminder'`.
@@ -156,6 +163,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.publishToggle;
   yield EditorBetaAppBarAction.pageHistory;
   yield EditorBetaAppBarAction.setFont;
+  yield EditorBetaAppBarAction.setGoal;
   yield EditorBetaAppBarAction.setReminder;
   yield EditorBetaAppBarAction.snoozeReminder;
   yield EditorBetaAppBarAction.clearReminder;
@@ -200,6 +208,7 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.publishToggle ||
     EditorBetaAppBarAction.pageHistory ||
     EditorBetaAppBarAction.setFont ||
+    EditorBetaAppBarAction.setGoal ||
     EditorBetaAppBarAction.setReminder ||
     EditorBetaAppBarAction.snoozeReminder ||
     EditorBetaAppBarAction.clearReminder ||

@@ -29,6 +29,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
+        EditorBetaAppBarAction.setGoal,
         EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
@@ -46,13 +47,14 @@ void main() {
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → publishToggle → pageHistory → '
-        'setFont → setReminder → snoozeReminder → clearReminder → '
-        'copyBody → copyPlain → copyJson → copyFormLink? → '
-        'viewFormSubmissions? → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp20
-      // layout users have already learned. The three copy-* entries
-      // group together; copyFormLink + viewFormSubmissions (when
-      // present) form the form-bearing pair immediately before
+        'setFont → setGoal → setReminder → snoozeReminder → '
+        'clearReminder → copyBody → copyPlain → copyJson → '
+        'copyFormLink? → viewFormSubmissions? → moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp21
+      // layout users have already learned. setGoal slots between
+      // setFont and setReminder (D-fp21 / M1745). The three copy-*
+      // entries group together; copyFormLink + viewFormSubmissions
+      // (when present) form the form-bearing pair immediately before
       // moveToTrash.
       expect(
           editorBetaAppBarActions(isAuthed: true, isFormBearing: true).toList(),
@@ -69,6 +71,7 @@ void main() {
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
+            EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -97,6 +100,7 @@ void main() {
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
+            EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -180,6 +184,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
+        EditorBetaAppBarAction.setGoal,
         EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
@@ -264,6 +269,7 @@ void main() {
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
+            EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -335,6 +341,13 @@ void main() {
 
       test('setFont tooltip reads the D-fp14 port label', () {
         expect(EditorBetaAppBarAction.setFont.tooltip, 'Set page font');
+      });
+
+      test('setGoal tooltip reads the D-fp21 port label', () {
+        expect(
+          EditorBetaAppBarAction.setGoal.tooltip,
+          'Set word count goal…',
+        );
       });
 
       test('setReminder tooltip reads the D-fp15 port label', () {

@@ -74,6 +74,10 @@ void main() {
       );
     });
 
+    test('setGoal → Icons.flag_outlined (D-fp21 port glyph)', () {
+      expect(iconFor(EditorBetaAppBarAction.setGoal), Icons.flag_outlined);
+    });
+
     test('setReminder → Icons.alarm (D-fp15 port glyph)', () {
       expect(iconFor(EditorBetaAppBarAction.setReminder), Icons.alarm);
     });

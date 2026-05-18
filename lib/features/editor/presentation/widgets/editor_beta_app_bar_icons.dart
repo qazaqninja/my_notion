@@ -24,6 +24,7 @@ IconData iconFor(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.publishToggle => Icons.public_outlined,
     EditorBetaAppBarAction.pageHistory => Icons.history,
     EditorBetaAppBarAction.setFont => Icons.font_download_outlined,
+    EditorBetaAppBarAction.setGoal => Icons.flag_outlined,
     EditorBetaAppBarAction.setReminder => Icons.alarm,
     EditorBetaAppBarAction.snoozeReminder => Icons.snooze,
     EditorBetaAppBarAction.clearReminder => Icons.alarm_off,
