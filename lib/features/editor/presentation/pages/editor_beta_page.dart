@@ -624,6 +624,45 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     }
   }
 
+  /// M1705: maps an [EditorBetaAppBarAction] enum value to the concrete
+  /// `IconButton` the AppBar renders. Keeps the icon (presentation
+  /// concern) + handler reference in the widget layer while the
+  /// tooltip + visibility rules live on the M1700 domain enum.
+  IconButton _iconButtonFor(EditorBetaAppBarAction action) {
+    return switch (action) {
+      EditorBetaAppBarAction.pullFromServer => IconButton(
+          icon: const Icon(Icons.cloud_download_outlined),
+          tooltip: action.tooltip,
+          onPressed: _onPullFromServer,
+        ),
+      EditorBetaAppBarAction.findInPage => IconButton(
+          icon: const Icon(Icons.search),
+          tooltip: action.tooltip,
+          onPressed: _toggleFindBar,
+        ),
+      EditorBetaAppBarAction.share => IconButton(
+          icon: const Icon(Icons.share_outlined),
+          tooltip: action.tooltip,
+          onPressed: _onSharePage,
+        ),
+      EditorBetaAppBarAction.copyLink => IconButton(
+          icon: const Icon(Icons.link),
+          tooltip: action.tooltip,
+          onPressed: _onCopyLink,
+        ),
+      EditorBetaAppBarAction.copyUlid => IconButton(
+          icon: const Icon(Icons.tag),
+          tooltip: action.tooltip,
+          onPressed: _onCopyUlid,
+        ),
+      EditorBetaAppBarAction.moveToTrash => IconButton(
+          icon: const Icon(Icons.delete_outline),
+          tooltip: action.tooltip,
+          onPressed: _onMoveToTrash,
+        ),
+    };
+  }
+
   AnchorRect _caretAnchor() {
     const zero = AnchorRect(left: 0, top: 0, right: 0, bottom: 0);
     final DocumentLayout? layout =
@@ -642,60 +681,29 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          // D-fp2 (M1623): port Pull-from-server from legacy editor_page.dart:604.
-          // Only visible when authed to the v2 backend — sync state drives
-          // a BlocBuilder gate so the button vanishes when SyncBloc is in
-          // its anonymous/unauthed state.
+          // M1705 wire-up: the AppBar action sequence is now driven by
+          // the M1700 [editorBetaAppBarActions] enum. A single
+          // BlocBuilder<SyncBloc> gates the whole row on `isAuthed`
+          // (replaces five per-action checks plus the prior nested
+          // BlocBuilder around just `pullFromServer`). Order, tooltips,
+          // and the auth-visibility rule are all unit-tested via
+          // editor_beta_app_bar_actions_test.dart.
           BlocBuilder<SyncBloc, SyncState>(
             buildWhen: (prev, next) => prev.isAuthed != next.isAuthed,
-            builder: (context, syncState) => syncState.isAuthed
-                ? IconButton(
-                    icon: const Icon(Icons.cloud_download_outlined),
-                    tooltip: 'Pull from server',
-                    onPressed: _onPullFromServer,
-                  )
-                : const SizedBox.shrink(),
+            builder: (context, syncState) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final action in editorBetaAppBarActions(
+                    isAuthed: syncState.isAuthed))
+                  _iconButtonFor(action),
+              ],
+            ),
           ),
-          // D-fp4 slice 3b (M1634): Find-in-page toggle. The bar mounts
-          // at the bottom of the body Column when active (next to the
-          // Stack that hosts SuperEditor + overlays).
-          IconButton(
-            icon: const Icon(Icons.search),
-            tooltip: 'Find in page',
-            onPressed: _toggleFindBar,
-          ),
-          // D-fp3 (M1625): port Share-via-OS-sheet from legacy
-          // editor_page.dart:1344 _sharePage. Same try-XFile-then-fall-back-
-          // to-text strategy.
-          IconButton(
-            icon: const Icon(Icons.share_outlined),
-            tooltip: 'Share',
-            onPressed: _onSharePage,
-          ),
-          // D-fp5 (M1696): port Copy-[[link]] from legacy
-          // editor_page.dart:515. Writes `[[<ulid>]]` to clipboard via
-          // [wikilinkLiteralFor] so the literal format stays
-          // centralised.
-          IconButton(
-            icon: const Icon(Icons.link),
-            tooltip: EditorBetaAppBarAction.copyLink.tooltip,
-            onPressed: _onCopyLink,
-          ),
-          // D-fp6 (M1703): port Copy-ULID from legacy editor_page.dart:501.
-          // Bare ULID to clipboard for paste into scripts / frontmatter
-          // / git commit messages. Tooltip + slot ordering live on the
-          // M1700 enum.
-          IconButton(
-            icon: const Icon(Icons.tag),
-            tooltip: EditorBetaAppBarAction.copyUlid.tooltip,
-            onPressed: _onCopyUlid,
-          ),
-          // D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            tooltip: 'Move to trash',
-            onPressed: _onMoveToTrash,
-          ),
+          // BETA badge sits outside the BlocBuilder above so a SyncBloc
+          // state change can't accidentally remount it. All D-fp ports
+          // (Move-to-Trash / Pull-from-server / Share / Find-in-page /
+          // Copy-[[link]] / Copy-ULID) now live inside the
+          // [editorBetaAppBarActions] enum-driven Row.
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Center(
