@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/db/quill_database.dart' hide Page;
 import 'core/network/backend_endpoint.dart';
@@ -32,8 +31,6 @@ import 'features/sync/presentation/bloc/sync_bloc.dart';
 import 'features/sync/presentation/bloc/sync_event.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
 import 'features/editor/presentation/pages/editor_beta_page.dart';
-import 'features/settings/data/editor_preferences_store.dart';
-import 'features/settings/presentation/cubit/editor_preferences_cubit.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/vault/data/indexer.dart';
 import 'features/vault/data/repositories/vault_repository_impl.dart';
@@ -68,12 +65,6 @@ class _QuillAppState extends State<QuillApp> {
   late final RemindersBloc _remindersBloc;
   late final SyncRepository _syncRepo;
   late final SyncBloc _syncBloc;
-  // D28 cutover slice 1b (M1665): the WYSIWYG opt-in. Constructed
-  // sync at app start, then `..hydrate()` loads the persisted
-  // SharedPreferences value asynchronously. /editor/:ulid (slice 1c)
-  // will fork on `state.useBetaEditor`; default false until the user
-  // flips the Settings → Advanced toggle.
-  late final EditorPreferencesCubit _editorPreferencesCubit;
   // E51: forms repo lives alongside the sync one — same backend, same
   // base URL — but stays bloc-less for now. The editor consumes it via
   // RepositoryProvider directly inside a FutureBuilder dialog.
@@ -122,18 +113,6 @@ class _QuillAppState extends State<QuillApp> {
       // E15: restore the persisted JWT (if any) so a quit + relaunch
       // doesn't force users to re-authenticate.
       ..add(const SyncRestoreRequested());
-    // D28 cutover slice 1b (M1665) + BL-01 slice 2 (M1677): hydrate
-    // from SharedPreferences in the background via the lazy store
-    // wrapper. The cubit starts at `useBetaEditor: true` (D29
-    // default) and emits the persisted value once
-    // `SharedPreferences.getInstance()` resolves + the user's
-    // recorded preference flows through `hydrate()`.
-    _editorPreferencesCubit = EditorPreferencesCubit(
-      LazySharedPreferencesEditorPreferencesStore(
-        SharedPreferences.getInstance(),
-      ),
-    );
-    unawaited(_editorPreferencesCubit.hydrate());
     _router = _buildRouter(_vaultBloc);
     // F2: start the inbound share-sheet binder. It attaches to the
     // VaultBloc stream and starts/stops an IncomingShareListener as
@@ -157,7 +136,6 @@ class _QuillAppState extends State<QuillApp> {
     _remindersBloc.close();
     _vaultBloc.close();
     _themeCubit.close();
-    _editorPreferencesCubit.close();
     _db.close();
     super.dispose();
   }
@@ -281,12 +259,13 @@ GoRouter _buildRouter(VaultBloc vault) {
             // beta path; the two routes are now structurally identical
             // (same widget, same key shape).
             //
-            // EditorPreferencesCubit + the Settings → Advanced "Use
-            // beta WYSIWYG editor" toggle are still in the tree as
-            // dead code; D30c-b/c remove them. `buildEditorPageForFork`
-            // + its M1673 widget tests were removed at M1759 (D30c-a)
-            // — the helper had no remaining callers after the route
-            // collapse above.
+            // D30c-a (M1759): `buildEditorPageForFork` + its M1673
+            // widget tests deleted. D30c-c (M1761): Settings →
+            // Advanced "Use beta WYSIWYG editor" toggle row + the
+            // root provider for the beta-opt-in cubit removed. D30c-b
+            // (M1763): the beta-opt-in cubit + state + store family
+            // + the orphan field/construction/hydrate/dispose in
+            // app.dart removed entirely.
             builder: (context, state) => EditorBetaPage(
               key: ValueKey(
                 'editor-${state.pathParameters['ulid']}',
