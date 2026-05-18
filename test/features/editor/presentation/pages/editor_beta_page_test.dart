@@ -1305,6 +1305,52 @@ void main() {
         });
       });
 
+      // M1890 — seventh fresh post-dialog-family port. Production
+      // handler at editor_beta_page.dart:603 has three branches:
+      //   1. Page ULID empty → SnackBar 'Cannot list submissions:
+      //      page has no ULID'
+      //   2. Not authed (token null or !isAuthed) → SnackBar 'Not
+      //      logged in — sign in to view submissions.'
+      //   3. Authed → showDialog with FormSubmissionsDialog
+      //
+      // Default harness emits SyncState() with token: null +
+      // isAuthed: false, so branch 2 fires deterministically when
+      // seedPage:true gives the page a non-empty ULID. Same shape
+      // as M1863 _onMoveToFolder no-folders guard.
+      //
+      // The authed-happy-path (branch 3) would require seeding a
+      // SyncBloc state with token + isAuthed: true — deferred as
+      // a future harness extension follow-on.
+      group('_onViewFormSubmissions (D-fp19, M1741) — per-handler smoke',
+          () {
+        testWidgets(
+            'kebab → View form submissions → SnackBar reports not '
+            'logged in when SyncBloc is unauthed', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(
+            tester,
+            EditorBetaAppBarAction.viewFormSubmissions,
+          );
+
+          expect(
+            find.text('Not logged in — sign in to view submissions.'),
+            findsOneWidget,
+          );
+        });
+      });
+
       // M1869 — eighth + final dialog handler. CLOSES THE DIALOG
       // FAMILY: every kebab dialog handler now has behavioral
       // coverage. Production handler at editor_beta_page.dart:747
