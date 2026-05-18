@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp6 shipped. M1700 enum extraction + M1705 AppBar wire-up + M1707 iconFor() helper complete.**
-- **Phase:** D (super_editor WYSIWYG migration) — 313 tests after M1707 (+7). D-fp parity arc in progress.
-- **Task:** Pick-next survey #27 — after M1707 iconFor() extraction (TS-01 carry-forward closed). Options: (a) D-fp7 next port — copy-path / reveal / rename / duplicate per legacy editor kebab; (b) NV-02 typed routes; (c) BL-12 _FindBarHost extraction (TDD-able as a Cubit); (d) D30b/c after 32+ slice dogfood; (e) Phase E continuation; (f) Add buildWhen to BlocBuilder<EditorBloc> at line 118 (M1705 BL-12 info); (g) CA-04 Indexer cross-codebase RepositoryProvider injection. Default lean: option (a) D-fp7 — the enum/iconFor scaffolding makes new actions cheap; keep the D-fp parity arc moving.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp7 shipped (Move-to-Trash + Pull-from-server + Share + Find-in-page + Copy-[[link]] + Copy-ULID + Copy-path).**
+- **Phase:** D (super_editor WYSIWYG migration) — 320 tests after M1709 (+7). D-fp parity arc in progress.
+- **Task:** Pick-next survey #28 — after M1709 D-fp7 Copy-path + M1710 share-route fix-forward. Options: (a) D-fp8 next port — duplicate (best TDD-fit: bloc dispatch); reveal (weak surface — needs Process.run mocking); rename / history (mid-sized dialogs); (b) NV-02 typed routes; (c) BL-12 _FindBarHost extraction; (d) D30b/c after 34+ slice dogfood; (e) Phase E continuation; (f) BL-12 buildWhen on EditorBloc builder (carry-forward); (g) CA-04 Indexer cross-codebase RepositoryProvider injection. Default lean: option (a) D-fp8 duplicate — DuplicatePage bloc event already exists; handler is a simple dispatch; fits the M1700/M1705/M1707 scaffolding pattern.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1709 + M1710 — pick-next #27 closeout: D-fp7 Copy-path port + same-iteration CA-07 fix-forward** (8 files; +142 / -3; 13 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 250 closeout
+- Notes: First slice to exercise the full M1700 + M1705 + M1707 scaffolding end-to-end — adding a single AppBar action now touches 6 small files at most. **M1709 TDD red→green:** new pure-Dart helper `lib/features/vault/domain/vault_absolute_path.dart` with `vaultAbsolutePath({rootPath, relativePath})` (handles null/empty rootPath fallback, trailing-slash dedup, empty relativePath edge case; 6 unit tests in `test/features/vault/domain/vault_absolute_path_test.dart`). Then `copyPath` enum value added between `copyUlid` and `moveToTrash` with tooltip "Copy file path" (1 new tooltip test + existing order/visibility tests refreshed). `iconFor` switch arm: `copyPath` → `Icons.folder_outlined` (+1 iconFor test). `_onCopyPath()` async handler on `_BetaEditorShellState` reads VaultBloc, calls `vaultAbsolutePath`, Clipboard.setData, SnackBar — same M1571 widget-tier coverage:ignore-start/end pattern as the 6 prior D-fp ports. `_iconButtonFor` switch arm appended. **Orchestrator on M1709: 0 BLOCK / 1 WARN (CA-07 — `_onSharePage` still inlined the same path-join the new helper was written to dedupe; trailing-slash + null-fallback rules didn't apply to the share path) / 2 INFO (TS-01 flutter_test vs dart:test for pure-Dart domain; TS-04 tooltip group placement — acknowledged M1701 carry-forward).** **M1710 same-iteration fix-forward:** swapped `_onSharePage`'s inline `'${vault.rootPath}/${widget.relativePath}'` to `vaultAbsolutePath(rootPath: vault.rootPath, relativePath: widget.relativePath)`. Both consumers now share the join rules. Effective audit state after both commits: 0/0/2 (info-only, non-actionable carry-forwards). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1707 — pick-next #26 closeout: iconFor() helper extraction (TDD; TS-01 carry-forward closed)** (3 files; +89 / -35; 7 new tests; analyze clean)
 - Committed: (this iteration)
