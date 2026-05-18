@@ -104,6 +104,15 @@ enum EditorBetaAppBarAction {
   /// `editor_page.dart` case `'copy-json'`. Toast tails with "JSON".
   copyJson(tooltip: 'Copy page as JSON'),
 
+  /// Opens the [FormSubmissionsDialog] backed by
+  /// `FormsRepository.listSubmissions(token:, ulid:)`. D-fp19 port
+  /// from legacy `editor_page.dart` case `'view-form-submissions'`.
+  /// Conditional — only renders when the page declares a non-empty
+  /// `forms:` frontmatter field (gate via [hasFormsFrontmatter]) and
+  /// the SyncBloc is authed (handler emits a "not logged in" toast
+  /// otherwise, matching the legacy editor).
+  viewFormSubmissions(tooltip: 'View form submissions →'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -116,12 +125,15 @@ enum EditorBetaAppBarAction {
 
 /// Returns the AppBar actions in the order they should appear, with
 /// auth-gated entries (currently only [EditorBetaAppBarAction.pullFromServer])
-/// filtered out when `isAuthed` is false. The order mirrors the
+/// filtered out when `isAuthed` is false, and form-only entries
+/// ([EditorBetaAppBarAction.viewFormSubmissions], D-fp19 / M1741)
+/// filtered out when `isFormBearing` is false. The order mirrors the
 /// existing AppBar layout — Pull, Find, Share, Copy-link, Copy-ULID,
 /// Move-to-trash — so a downstream widget can map directly to icons /
 /// menu rows without re-sorting.
 Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   required bool isAuthed,
+  bool isFormBearing = false,
 }) sync* {
   if (isAuthed) yield EditorBetaAppBarAction.pullFromServer;
   yield EditorBetaAppBarAction.findInPage;
@@ -141,6 +153,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.copyBody;
   yield EditorBetaAppBarAction.copyPlain;
   yield EditorBetaAppBarAction.copyJson;
+  if (isFormBearing) yield EditorBetaAppBarAction.viewFormSubmissions;
   yield EditorBetaAppBarAction.moveToTrash;
 }
 
@@ -182,26 +195,38 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.clearReminder ||
     EditorBetaAppBarAction.copyBody ||
     EditorBetaAppBarAction.copyPlain ||
-    EditorBetaAppBarAction.copyJson =>
+    EditorBetaAppBarAction.copyJson ||
+    EditorBetaAppBarAction.viewFormSubmissions =>
       true,
   };
 }
 
 /// The subset of [editorBetaAppBarActions] that renders as bare
 /// IconButtons on the AppBar. Preserves the order from
-/// [editorBetaAppBarActions].
+/// [editorBetaAppBarActions]. `isFormBearing` plumbs through to
+/// drop [EditorBetaAppBarAction.viewFormSubmissions] when the page
+/// has no `forms:` field; today that entry lives in the kebab so
+/// the top-bar value is invariant under that flag, but the parameter
+/// is plumbed for symmetry + future moves.
 Iterable<EditorBetaAppBarAction> editorBetaTopBarActions({
   required bool isAuthed,
+  bool isFormBearing = false,
 }) =>
-    editorBetaAppBarActions(isAuthed: isAuthed)
-        .where((a) => !isEditorBetaKebabAction(a));
+    editorBetaAppBarActions(
+      isAuthed: isAuthed,
+      isFormBearing: isFormBearing,
+    ).where((a) => !isEditorBetaKebabAction(a));
 
 /// The subset of [editorBetaAppBarActions] that folds into the
 /// PopupMenuButton kebab. Auth gating doesn't apply here today
 /// (none of the kebab entries depend on `isAuthed`), but the
-/// parameter is plumbed for future symmetry.
+/// parameter is plumbed for future symmetry. `isFormBearing` gates
+/// the D-fp19 viewFormSubmissions entry.
 Iterable<EditorBetaAppBarAction> editorBetaKebabActions({
   required bool isAuthed,
+  bool isFormBearing = false,
 }) =>
-    editorBetaAppBarActions(isAuthed: isAuthed)
-        .where(isEditorBetaKebabAction);
+    editorBetaAppBarActions(
+      isAuthed: isAuthed,
+      isFormBearing: isFormBearing,
+    ).where(isEditorBetaKebabAction);

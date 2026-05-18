@@ -31,7 +31,10 @@ import '../../../vault/domain/sanitized_basename.dart';
 import '../../../vault/domain/vault_absolute_path.dart';
 import '../../domain/document_search.dart';
 import '../../domain/editor_beta_app_bar_actions.dart';
+import '../../../forms/domain/repositories/forms_repository.dart';
+import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
 import '../../domain/copy_labels.dart';
+import '../../domain/has_forms_frontmatter.dart';
 import '../../domain/page_font.dart';
 import '../../domain/page_json_payload.dart';
 import '../../domain/reminder_date.dart';
@@ -511,6 +514,56 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       SnackBar(
         content: Text(copiedCharsLabel(plain.length, suffix: 'as plain text')),
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
+  /// D-fp19 (M1741): port View-form-submissions from legacy
+  /// editor_page.dart:614 (case 'view-form-submissions') →
+  /// `_viewFormSubmissions`. Reads the SyncBloc token, checks
+  /// `isAuthed`, then opens the [FormSubmissionsDialog] backed by
+  /// `FormsRepository.listSubmissions(token:, ulid:)`. SnackBars when
+  /// the page lacks a ULID or the user is signed out, matching the
+  /// legacy editor's behaviour exactly. The kebab entry that triggers
+  /// this handler only renders when [hasFormsFrontmatter] returns
+  /// true for the current page (see [EditorBetaAppBarAction]
+  /// `isFormBearing` gate).
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over the
+  /// pre-existing `FormSubmissionsDialog` (E51) + a `FormsRepository`
+  /// lookup. The hasFormsFrontmatter gate has its own 6 unit tests.
+  // coverage:ignore-start
+  Future<void> _onViewFormSubmissions() async {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final pageUlid = editorState.page.ulid;
+    if (pageUlid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot list submissions: page has no ULID'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final sync = context.read<SyncBloc>();
+    final token = sync.state.token;
+    if (token == null || !sync.state.isAuthed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Not logged in — sign in to view submissions.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final repo = context.read<FormsRepository>();
+    await showDialog<void>(
+      context: context,
+      builder: (_) => FormSubmissionsDialog(
+        ulid: pageUlid,
+        load: () => repo.listSubmissions(token: token, ulid: pageUlid),
       ),
     );
   }
@@ -1247,6 +1300,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.copyBody => _onCopyBody,
         EditorBetaAppBarAction.copyPlain => _onCopyPlain,
         EditorBetaAppBarAction.copyJson => _onCopyJson,
+        EditorBetaAppBarAction.viewFormSubmissions => _onViewFormSubmissions,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       };
 
@@ -1258,19 +1312,26 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     );
   }
 
-  /// M1729 (D-fp13 kebab refactor slice 2): render the 8 secondary
+  /// M1729 (D-fp13 kebab refactor slice 2): render the secondary
   /// AppBar actions as a single trailing `PopupMenuButton` kebab. The
   /// partition order is locked by `editorBetaKebabActions` unit
-  /// tests, so the rendered menu always matches the docs.
+  /// tests, so the rendered menu always matches the docs. The
+  /// `isFormBearing` flag (M1741, D-fp19) gates the
+  /// `viewFormSubmissions` row to pages that declare a non-empty
+  /// `forms:` frontmatter field.
   PopupMenuButton<EditorBetaAppBarAction> _kebabFor({
     required bool isAuthed,
+    required bool isFormBearing,
   }) {
     return PopupMenuButton<EditorBetaAppBarAction>(
       icon: const Icon(Icons.more_vert),
       tooltip: 'More actions',
       onSelected: (action) => _handlerFor(action).call(),
       itemBuilder: (context) => [
-        for (final action in editorBetaKebabActions(isAuthed: isAuthed))
+        for (final action in editorBetaKebabActions(
+          isAuthed: isAuthed,
+          isFormBearing: isFormBearing,
+        ))
           PopupMenuItem<EditorBetaAppBarAction>(
             value: action,
             child: Row(
@@ -1304,22 +1365,44 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         title: Text(widget.title),
         actions: [
           // M1729 wire-up: top-bar IconButtons + trailing
-          // PopupMenuButton kebab, driven by the M1727 partition. A
-          // single BlocBuilder<SyncBloc> still gates the whole row on
-          // `isAuthed` (only pullFromServer cares today). Order,
-          // tooltips, and the partition rules are unit-tested via
-          // editor_beta_app_bar_actions_test.dart.
+          // PopupMenuButton kebab, driven by the M1727 partition.
+          // Nested BlocBuilders gate the whole row on
+          // `SyncBloc.isAuthed` (the outer one) + `EditorBloc`'s
+          // frontmatter probe via [hasFormsFrontmatter] (the inner
+          // one, M1741 D-fp19). Both `buildWhen` clauses narrow
+          // rebuilds so a body-only EditorBloc emission doesn't
+          // bounce the AppBar.
           BlocBuilder<SyncBloc, SyncState>(
             buildWhen: (prev, next) => prev.isAuthed != next.isAuthed,
-            builder: (context, syncState) => Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final action in editorBetaTopBarActions(
-                    isAuthed: syncState.isAuthed))
-                  _iconButtonFor(action),
-                _kebabFor(isAuthed: syncState.isAuthed),
-              ],
-            ),
+            builder: (context, syncState) {
+              return BlocBuilder<EditorBloc, EditorState>(
+                buildWhen: (prev, next) {
+                  final p = prev is EditorLoaded &&
+                      hasFormsFrontmatter(prev.page.frontmatter);
+                  final n = next is EditorLoaded &&
+                      hasFormsFrontmatter(next.page.frontmatter);
+                  return p != n;
+                },
+                builder: (context, editorState) {
+                  final isFormBearing = editorState is EditorLoaded &&
+                      hasFormsFrontmatter(editorState.page.frontmatter);
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final action in editorBetaTopBarActions(
+                        isAuthed: syncState.isAuthed,
+                        isFormBearing: isFormBearing,
+                      ))
+                        _iconButtonFor(action),
+                      _kebabFor(
+                        isAuthed: syncState.isAuthed,
+                        isFormBearing: isFormBearing,
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
           ),
           // BETA badge sits outside the BlocBuilder above so a SyncBloc
           // state change can't accidentally remount it. The kebab

@@ -107,6 +107,14 @@ void main() {
       expect(iconFor(EditorBetaAppBarAction.copyJson), Icons.data_object);
     });
 
+    test('viewFormSubmissions → Icons.inbox_outlined (D-fp19 port glyph)',
+        () {
+      expect(
+        iconFor(EditorBetaAppBarAction.viewFormSubmissions),
+        Icons.inbox_outlined,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

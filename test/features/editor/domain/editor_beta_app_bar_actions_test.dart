@@ -14,6 +14,9 @@ void main() {
     });
 
     test('always includes the always-on actions regardless of auth', () {
+      // viewFormSubmissions is page-conditional rather than session-
+      // conditional, so it lives outside this "always-on" set — see
+      // the dedicated isFormBearing tests below.
       final alwaysOn = <EditorBetaAppBarAction>{
         EditorBetaAppBarAction.findInPage,
         EditorBetaAppBarAction.share,
@@ -44,54 +47,82 @@ void main() {
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → publishToggle → pageHistory → '
         'setFont → setReminder → snoozeReminder → clearReminder → '
-        'copyBody → copyPlain → copyJson → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp18
+        'copyBody → copyPlain → copyJson → viewFormSubmissions? → '
+        'moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp19
       // layout users have already learned. The three copy-* entries
-      // group together immediately before moveToTrash.
-      expect(editorBetaAppBarActions(isAuthed: true).toList(), [
-        EditorBetaAppBarAction.pullFromServer,
-        EditorBetaAppBarAction.findInPage,
-        EditorBetaAppBarAction.share,
-        EditorBetaAppBarAction.copyLink,
-        EditorBetaAppBarAction.copyUlid,
-        EditorBetaAppBarAction.copyPath,
-        EditorBetaAppBarAction.duplicate,
-        EditorBetaAppBarAction.reveal,
-        EditorBetaAppBarAction.rename,
-        EditorBetaAppBarAction.publishToggle,
-        EditorBetaAppBarAction.pageHistory,
-        EditorBetaAppBarAction.setFont,
-        EditorBetaAppBarAction.setReminder,
-        EditorBetaAppBarAction.snoozeReminder,
-        EditorBetaAppBarAction.clearReminder,
-        EditorBetaAppBarAction.copyBody,
-        EditorBetaAppBarAction.copyPlain,
-        EditorBetaAppBarAction.copyJson,
-        EditorBetaAppBarAction.moveToTrash,
-      ]);
+      // group together; viewFormSubmissions (when present) sits
+      // immediately before moveToTrash.
+      expect(
+          editorBetaAppBarActions(isAuthed: true, isFormBearing: true).toList(),
+          [
+            EditorBetaAppBarAction.pullFromServer,
+            EditorBetaAppBarAction.findInPage,
+            EditorBetaAppBarAction.share,
+            EditorBetaAppBarAction.copyLink,
+            EditorBetaAppBarAction.copyUlid,
+            EditorBetaAppBarAction.copyPath,
+            EditorBetaAppBarAction.duplicate,
+            EditorBetaAppBarAction.reveal,
+            EditorBetaAppBarAction.rename,
+            EditorBetaAppBarAction.publishToggle,
+            EditorBetaAppBarAction.pageHistory,
+            EditorBetaAppBarAction.setFont,
+            EditorBetaAppBarAction.setReminder,
+            EditorBetaAppBarAction.snoozeReminder,
+            EditorBetaAppBarAction.clearReminder,
+            EditorBetaAppBarAction.copyBody,
+            EditorBetaAppBarAction.copyPlain,
+            EditorBetaAppBarAction.copyJson,
+            EditorBetaAppBarAction.viewFormSubmissions,
+            EditorBetaAppBarAction.moveToTrash,
+          ]);
     });
 
     test('drops only pullFromServer in the unauthed sequence', () {
-      expect(editorBetaAppBarActions(isAuthed: false).toList(), [
-        EditorBetaAppBarAction.findInPage,
-        EditorBetaAppBarAction.share,
-        EditorBetaAppBarAction.copyLink,
-        EditorBetaAppBarAction.copyUlid,
-        EditorBetaAppBarAction.copyPath,
-        EditorBetaAppBarAction.duplicate,
-        EditorBetaAppBarAction.reveal,
-        EditorBetaAppBarAction.rename,
-        EditorBetaAppBarAction.publishToggle,
-        EditorBetaAppBarAction.pageHistory,
-        EditorBetaAppBarAction.setFont,
-        EditorBetaAppBarAction.setReminder,
-        EditorBetaAppBarAction.snoozeReminder,
-        EditorBetaAppBarAction.clearReminder,
-        EditorBetaAppBarAction.copyBody,
-        EditorBetaAppBarAction.copyPlain,
-        EditorBetaAppBarAction.copyJson,
-        EditorBetaAppBarAction.moveToTrash,
-      ]);
+      expect(
+          editorBetaAppBarActions(isAuthed: false, isFormBearing: true)
+              .toList(),
+          [
+            EditorBetaAppBarAction.findInPage,
+            EditorBetaAppBarAction.share,
+            EditorBetaAppBarAction.copyLink,
+            EditorBetaAppBarAction.copyUlid,
+            EditorBetaAppBarAction.copyPath,
+            EditorBetaAppBarAction.duplicate,
+            EditorBetaAppBarAction.reveal,
+            EditorBetaAppBarAction.rename,
+            EditorBetaAppBarAction.publishToggle,
+            EditorBetaAppBarAction.pageHistory,
+            EditorBetaAppBarAction.setFont,
+            EditorBetaAppBarAction.setReminder,
+            EditorBetaAppBarAction.snoozeReminder,
+            EditorBetaAppBarAction.clearReminder,
+            EditorBetaAppBarAction.copyBody,
+            EditorBetaAppBarAction.copyPlain,
+            EditorBetaAppBarAction.copyJson,
+            EditorBetaAppBarAction.viewFormSubmissions,
+            EditorBetaAppBarAction.moveToTrash,
+          ]);
+    });
+
+    test('drops viewFormSubmissions when isFormBearing is false (M1741)', () {
+      // D-fp19 / M1741: the kebab "View form submissions →" entry is
+      // page-conditional, not session-conditional. A non-form-bearing
+      // page should not see the option at all — matches the legacy
+      // editor's `if (_hasForms(loaded)) ...[ … ]` gate.
+      final actions = editorBetaAppBarActions(isAuthed: true).toList();
+      expect(actions, isNot(contains(
+        EditorBetaAppBarAction.viewFormSubmissions,
+      )));
+    });
+
+    test('includes viewFormSubmissions when isFormBearing is true', () {
+      final actions = editorBetaAppBarActions(
+        isAuthed: true,
+        isFormBearing: true,
+      ).toList();
+      expect(actions, contains(EditorBetaAppBarAction.viewFormSubmissions));
     });
   });
 
@@ -135,6 +166,7 @@ void main() {
         EditorBetaAppBarAction.copyBody,
         EditorBetaAppBarAction.copyPlain,
         EditorBetaAppBarAction.copyJson,
+        EditorBetaAppBarAction.viewFormSubmissions,
       };
       for (final action in kebab) {
         expect(
@@ -157,12 +189,19 @@ void main() {
 
   group('editorBetaTopBarActions / editorBetaKebabActions', () {
     test('together cover the full action set in stable order', () {
-      final top = editorBetaTopBarActions(isAuthed: true).toList();
-      final kebab = editorBetaKebabActions(isAuthed: true).toList();
+      final top = editorBetaTopBarActions(
+        isAuthed: true,
+        isFormBearing: true,
+      ).toList();
+      final kebab = editorBetaKebabActions(
+        isAuthed: true,
+        isFormBearing: true,
+      ).toList();
       expect(
         {...top, ...kebab},
         EditorBetaAppBarAction.values.toSet(),
-        reason: 'partition should cover every enum value',
+        reason: 'partition should cover every enum value when '
+            'isFormBearing is true',
       );
       // No overlap between the two sets.
       expect(top.toSet().intersection(kebab.toSet()), isEmpty);
@@ -189,23 +228,28 @@ void main() {
       // The secondary entries must appear in the same relative
       // order as in editorBetaAppBarActions so users see a consistent
       // sequence as actions move between the top-bar and the kebab.
-      expect(editorBetaKebabActions(isAuthed: true).toList(), [
-        EditorBetaAppBarAction.copyLink,
-        EditorBetaAppBarAction.copyUlid,
-        EditorBetaAppBarAction.copyPath,
-        EditorBetaAppBarAction.duplicate,
-        EditorBetaAppBarAction.reveal,
-        EditorBetaAppBarAction.rename,
-        EditorBetaAppBarAction.publishToggle,
-        EditorBetaAppBarAction.pageHistory,
-        EditorBetaAppBarAction.setFont,
-        EditorBetaAppBarAction.setReminder,
-        EditorBetaAppBarAction.snoozeReminder,
-        EditorBetaAppBarAction.clearReminder,
-        EditorBetaAppBarAction.copyBody,
-        EditorBetaAppBarAction.copyPlain,
-        EditorBetaAppBarAction.copyJson,
-      ]);
+      // viewFormSubmissions only enters when isFormBearing is true; the
+      // non-form sequence keeps its existing 15-row layout.
+      expect(
+          editorBetaKebabActions(isAuthed: true, isFormBearing: true).toList(),
+          [
+            EditorBetaAppBarAction.copyLink,
+            EditorBetaAppBarAction.copyUlid,
+            EditorBetaAppBarAction.copyPath,
+            EditorBetaAppBarAction.duplicate,
+            EditorBetaAppBarAction.reveal,
+            EditorBetaAppBarAction.rename,
+            EditorBetaAppBarAction.publishToggle,
+            EditorBetaAppBarAction.pageHistory,
+            EditorBetaAppBarAction.setFont,
+            EditorBetaAppBarAction.setReminder,
+            EditorBetaAppBarAction.snoozeReminder,
+            EditorBetaAppBarAction.clearReminder,
+            EditorBetaAppBarAction.copyBody,
+            EditorBetaAppBarAction.copyPlain,
+            EditorBetaAppBarAction.copyJson,
+            EditorBetaAppBarAction.viewFormSubmissions,
+          ]);
     });
   });
 
@@ -306,6 +350,13 @@ void main() {
         expect(
           EditorBetaAppBarAction.copyJson.tooltip,
           'Copy page as JSON',
+        );
+      });
+
+      test('viewFormSubmissions tooltip reads the D-fp19 port label', () {
+        expect(
+          EditorBetaAppBarAction.viewFormSubmissions.tooltip,
+          'View form submissions →',
         );
       });
     });
