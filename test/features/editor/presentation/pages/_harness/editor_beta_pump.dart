@@ -104,7 +104,25 @@ Future<EditorBetaHarness> pumpEditorBeta(
   bool seedPage = false,
   String seedTitle = 'Test',
   String seedBody = 'Hello.',
+  Size? surface,
+  double? devicePixelRatio,
 }) async {
+  // M1831: absorb the per-test `tester.view.physicalSize` + DPR
+  // dance into the harness. Callers that need the real editor
+  // tree to lay out (kebab popup, slash menu overlay, find bar)
+  // pass `surface: const Size(1200, 900)` + (optionally)
+  // `devicePixelRatio: 1.0` and the harness registers the
+  // corresponding `addTearDown` resets so the surface doesn't
+  // leak into adjacent tests. Probe-only tests (default null)
+  // keep flutter_test's default 800×600 surface.
+  if (surface != null) {
+    tester.view.physicalSize = surface;
+    addTearDown(tester.view.resetPhysicalSize);
+  }
+  if (devicePixelRatio != null) {
+    tester.view.devicePixelRatio = devicePixelRatio;
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
   final fs = MemoryFileSystem();
   const rootPath = '/vault';
   final ds = VaultFsDatasource(ulids: const UlidGenerator(), fs: fs);

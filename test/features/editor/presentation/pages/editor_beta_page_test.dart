@@ -15,6 +15,36 @@ import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
 
 import '_harness/editor_beta_pump.dart';
 
+/// Installs a mock `SystemChannels.platform` method-call handler
+/// that captures `Clipboard.setData(text:)` calls and returns a
+/// getter for the most-recent captured value. Registers a teardown
+/// that uninstalls the mock so the platform channel returns to its
+/// default no-op behavior for subsequent tests.
+///
+/// M1831 — extracted from M1826 / M1829 per orchestrator INFO
+/// (TS-04 clipboard-mock duplication). Future per-handler clipboard
+/// smokes (`_onCopyPath`, `_onCopyBody`, `_onCopyPlain`,
+/// `_onCopyJson`, …) call this helper instead of redeclaring the 14
+/// lines of mock-handler boilerplate.
+ValueGetter<String?> _installClipboardMock(WidgetTester tester) {
+  String? captured;
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    SystemChannels.platform,
+    (call) async {
+      if (call.method == 'Clipboard.setData') {
+        captured = (call.arguments as Map<Object?, Object?>)['text']
+            as String?;
+      }
+      return null;
+    },
+  );
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null),
+  );
+  return () => captured;
+}
+
 void main() {
   // M1787 (TS-01 stub): minimal smoke test for EditorBetaPage. The
   // 26+ D-fp `_on…` async handlers in this file are all
@@ -205,18 +235,14 @@ void main() {
         // is mechanical.
         testWidgets('real-page mount with surface 1200×900 → kebab visible',
             (tester) async {
-          tester.view.physicalSize = const Size(1200, 900);
-          tester.view.devicePixelRatio = 1.0;
-          addTearDown(() {
-            tester.view.resetPhysicalSize();
-            tester.view.resetDevicePixelRatio();
-          });
-
+          // M1831: surface + DPR now passed through pumpEditorBeta.
           const ulid = '01H0000000000000000000ABCD';
           final harness = await pumpEditorBeta(
             tester,
             ulid: ulid,
             seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
           );
           addTearDown(harness.dispose);
           for (var i = 0; i < 5; i++) {
@@ -248,35 +274,18 @@ void main() {
       group('_onCopyUlid (D-fp6, M1703) — per-handler smoke', () {
         testWidgets('tap kebab → Copy ULID → clipboard receives ulid',
             (tester) async {
-          tester.view.physicalSize = const Size(1200, 900);
-          tester.view.devicePixelRatio = 1.0;
-          addTearDown(() {
-            tester.view.resetPhysicalSize();
-            tester.view.resetDevicePixelRatio();
-          });
-
-          String? clipboardText;
-          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-            SystemChannels.platform,
-            (call) async {
-              if (call.method == 'Clipboard.setData') {
-                clipboardText =
-                    (call.arguments as Map<Object?, Object?>)['text']
-                        as String?;
-              }
-              return null;
-            },
-          );
-          addTearDown(
-            () => tester.binding.defaultBinaryMessenger
-                .setMockMethodCallHandler(SystemChannels.platform, null),
-          );
-
+          // M1831: surface + clipboard mock now extracted into the
+          // harness param + `_installClipboardMock` helper. Each
+          // per-handler clipboard smoke is now ~15 lines instead of
+          // the original ~50.
+          final clipboard = _installClipboardMock(tester);
           const ulid = '01H0000000000000000000ABCD';
           final harness = await pumpEditorBeta(
             tester,
             ulid: ulid,
             seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
           );
           addTearDown(harness.dispose);
           for (var i = 0; i < 5; i++) {
@@ -284,25 +293,18 @@ void main() {
           }
 
           await tester.tap(find.byTooltip('More actions'));
-          // Pump enough frames for the PopupMenu to open without
-          // triggering pumpAndSettle's pending-animation noise.
           for (var i = 0; i < 5; i++) {
             await tester.pump(const Duration(milliseconds: 50));
           }
-          // M1827 fix-forward: the production `PopupMenuItem` Row
-          // now wraps its `Text` child in
-          // `Expanded(..., overflow: TextOverflow.ellipsis)` so the
-          // popup no longer overflows the Material ~256px max width
-          // under flutter_test's Ahem font. Per orchestrator M1826
-          // TS-06: tighter `isNull` assert replaces the previous
-          // drain loop; future per-handler tests inherit this shape
-          // so genuine exceptions can't be silently swallowed.
+          // M1827 fix-forward: PopupMenuItem Row now uses
+          // Expanded+ellipsis so the popup no longer overflows;
+          // tighter `isNull` assert replaces the previous drain loop.
           expect(tester.takeException(), isNull);
           await tester.tap(find.text('Copy ULID'));
           await tester.pump();
           expect(tester.takeException(), isNull);
 
-          expect(clipboardText, ulid);
+          expect(clipboard(), ulid);
         });
       });
 
@@ -317,35 +319,14 @@ void main() {
         testWidgets(
             'tap kebab → Copy [[link]] to this page → clipboard '
             'receives [[ulid]]', (tester) async {
-          tester.view.physicalSize = const Size(1200, 900);
-          tester.view.devicePixelRatio = 1.0;
-          addTearDown(() {
-            tester.view.resetPhysicalSize();
-            tester.view.resetDevicePixelRatio();
-          });
-
-          String? clipboardText;
-          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-            SystemChannels.platform,
-            (call) async {
-              if (call.method == 'Clipboard.setData') {
-                clipboardText =
-                    (call.arguments as Map<Object?, Object?>)['text']
-                        as String?;
-              }
-              return null;
-            },
-          );
-          addTearDown(
-            () => tester.binding.defaultBinaryMessenger
-                .setMockMethodCallHandler(SystemChannels.platform, null),
-          );
-
+          final clipboard = _installClipboardMock(tester);
           const ulid = '01H0000000000000000000ABCD';
           final harness = await pumpEditorBeta(
             tester,
             ulid: ulid,
             seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
           );
           addTearDown(harness.dispose);
           for (var i = 0; i < 5; i++) {
@@ -361,7 +342,7 @@ void main() {
           await tester.pump();
           expect(tester.takeException(), isNull);
 
-          expect(clipboardText, '[[$ulid]]');
+          expect(clipboard(), '[[$ulid]]');
         });
       });
 
