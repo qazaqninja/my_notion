@@ -500,8 +500,16 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       );
       return;
     }
+    // M1720 (M1719 TS-01 info fix-forward): dispatch the sanitised
+    // preview, not the raw picked string. Two reasons:
+    // 1. The SnackBar shows "Renamed to $preview.md"; the event
+    //    should carry exactly what the user will see persisted.
+    // 2. VaultBloc._onRenamePage runs its own _safeFileName(...) but
+    //    if that helper ever diverges from sanitizedBasename the two
+    //    views (toast + on-disk) would drift. Sending preview makes
+    //    sanitizedBasename the single source of truth.
     context.read<VaultBloc>().add(
-          RenamePage(ulid: widget.ulid, newBasename: picked),
+          RenamePage(ulid: widget.ulid, newBasename: preview),
         );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
