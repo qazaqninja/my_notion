@@ -26,6 +26,7 @@ import '../../../../core/ui/anchor_rect_x.dart';
 import '../../domain/attachment_writer.dart';
 import '../../domain/block_selection_gesture.dart';
 import '../../domain/document_search.dart';
+import '../../domain/editor_beta_app_bar_actions.dart';
 import '../../domain/find_in_page_navigation.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
@@ -446,6 +447,30 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp6 (M1703): port Copy-ULID from legacy editor_page.dart:501.
+  /// Writes the bare ULID to the system clipboard so users can paste it
+  /// into external scripts, frontmatter, or git commit messages — same
+  /// Clipboard pattern as D-fp5 [_onCopyLink] but without the `[[…]]`
+  /// brackets. The tooltip + ordering for the AppBar button live on
+  /// [EditorBetaAppBarAction.copyUlid] (M1700).
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `Clipboard.setData` + `ScaffoldMessenger`. The enum slot is
+  /// pre-tested by `editor_beta_app_bar_actions_test.dart` (M1700,
+  /// M1701).
+  // coverage:ignore-start
+  Future<void> _onCopyUlid() async {
+    await Clipboard.setData(ClipboardData(text: widget.ulid));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Copied ${widget.ulid}'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
   /// D-fp5 (M1696): port Copy-[[link]] from legacy editor_page.dart:515.
   /// Writes `[[<ulid>]]` to the system clipboard so the user can paste
   /// it into any other page; pops a transient SnackBar confirming.
@@ -653,8 +678,17 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
           // centralised.
           IconButton(
             icon: const Icon(Icons.link),
-            tooltip: 'Copy [[link]] to this page',
+            tooltip: EditorBetaAppBarAction.copyLink.tooltip,
             onPressed: _onCopyLink,
+          ),
+          // D-fp6 (M1703): port Copy-ULID from legacy editor_page.dart:501.
+          // Bare ULID to clipboard for paste into scripts / frontmatter
+          // / git commit messages. Tooltip + slot ordering live on the
+          // M1700 enum.
+          IconButton(
+            icon: const Icon(Icons.tag),
+            tooltip: EditorBetaAppBarAction.copyUlid.tooltip,
+            onPressed: _onCopyUlid,
           ),
           // D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
           IconButton(
