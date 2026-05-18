@@ -649,6 +649,53 @@ void main() {
         });
       });
 
+      // M1856 — fourth per-handler template: SnackBar assertion. The
+      // existing templates (clipboard / dialog / event-dispatch via
+      // mockbloc) all addressed handlers whose primary side effect
+      // landed on an externally-mockable surface (SystemChannels,
+      // a freshly-pumped dialog widget, or a MockBloc with verify).
+      //
+      // `_onPublishToggle` (editor_beta_page.dart:1294) reads
+      // `EditorBloc.state.page.frontmatter`, dispatches an
+      // `AddFrontmatterField` event when no `public:` exists, and
+      // surfaces a SnackBar. EditorBloc is the REAL one (the
+      // harness only stubs Vault + Sync); mocktail's `verify`
+      // doesn't apply, but the SnackBar text is the
+      // user-visible contract anyway. Assert it directly.
+      //
+      // Seed page has no `public:` frontmatter, so the
+      // unpublished → published branch fires:
+      //   * SnackBar text: 'Published — public: true added to
+      //     frontmatter'
+      group('_onPublishToggle (D-fp11, M1722) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Publish → SnackBar reports "Published"',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(
+            tester,
+            EditorBetaAppBarAction.publishToggle,
+          );
+
+          expect(
+            find.text('Published — public: true added to frontmatter'),
+            findsOneWidget,
+          );
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
