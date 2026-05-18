@@ -245,8 +245,14 @@ class EditorBetaHarness {
 /// exceptions (10)" trace — not super_editor layout.
 Widget _defaultProbe({required String ulid}) {
   final tokens = buildTokens(Brightness.light, AccentKey.sage);
+  // M1824 fix-forward (TH-01): `useMaterial3: true` matches
+  // production `makeTheme` in `lib/shared/theme/tokens.dart` so the
+  // harness reproduces the M3 rendering path (component sizing,
+  // color roles, shape system). Without this, any future
+  // behavioral test that asserts on visual widget metrics would
+  // measure against M2 defaults, not what the app delivers.
   return MaterialApp.router(
-    theme: ThemeData.light().copyWith(extensions: [tokens]),
+    theme: ThemeData.light(useMaterial3: true).copyWith(extensions: [tokens]),
     routerConfig: GoRouter(
       initialLocation: '/editor/$ulid',
       routes: [
