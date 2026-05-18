@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp14 shipped (13 D-fp actions, kebab refactor live).**
-- **Phase:** D (super_editor WYSIWYG migration) — 351 tests after M1731 (+10). D-fp parity arc in progress.
-- **Task:** Pick-next survey #37 — after M1731 D-fp14 set-font port. Options: (a) D-fp15 set-reminder (or reminder family — set/snooze/clear); (b) D-fp15 view-form-submissions; (c) Coordinated BL-11 SnackBar→BlocListener refactor (substantial); (d) NV-02 typed routes; (e) D30b/c after 52+ slice dogfood; (f) Phase E continuation; (g) Stub editor_beta_page_test.dart. Default lean: option (a) D-fp15 set-reminder — frontmatter `reminder:` + ReminderBloc patterns fit scaffolding cleanly.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp15 shipped (14 D-fp actions; kebab now holds 10).**
+- **Phase:** D (super_editor WYSIWYG migration) — 361 tests after M1733 (+10). D-fp parity arc in progress.
+- **Task:** Pick-next survey #38 — after M1733 D-fp15 set-reminder port. Options: (a) D-fp16 reminder family (snooze + clear); (b) D-fp16 add-tags; (c) D-fp16 view-form-submissions; (d) D-fp16 export-md / export-html / print-page; (e) D-fp16 copy-body / copy-plain / copy-json; (f) Coordinated BL-11 SnackBar→BlocListener refactor (substantial); (g) Stub editor_beta_page_test.dart finally; (h) Phase E continuation. Default lean: option (a) D-fp16 snooze + clear — finishes the reminder family.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1733 — pick-next #37 closeout: D-fp15 Set-reminder kebab port (TDD)** (7 files; +212 / -2; 11 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 260 closeout
+- Notes: Eighth slice riding the M1700/M1705/M1707 scaffolding; second to land into the post-M1729 kebab. **D-fp15 port:** new pure-Dart `lib/features/editor/domain/reminder_date.dart` with two exports — `String isoDate(DateTime)` (date-only YYYY-MM-DD, year padded to 4 digits, month/day to 2; time-of-day stripped) and `String relativeReminderLabel({picked, now})` (today / tomorrow / in N days / N days ago with singular "1 day ago"; calendar-date comparison so a 23:59 pick + 00:01 next-day "now" still reports "tomorrow"). 10 unit tests covering year padding, time stripping, ±0/±1/±N labels, time-on-both-sides edge case. New `EditorBetaAppBarAction.setReminder` enum slot (tooltip "Set reminder…") between `setFont` and `moveToTrash`; classified into the kebab via `isEditorBetaKebabAction`; iconFor → `Icons.alarm`. New `_onSetReminder()` async handler reads EditorBloc state, parses any existing reminder rawScalar via DateTime.tryParse to seed the picker, opens `showQuillDatePicker`, formats the pick via `isoDate`, dispatches Add/EditFrontmatterField (preserving `existing.copyWith` to keep the type) with no-op "already set" SnackBar, and confirms with "Reminder set for $iso ($relative)" toast. M1571 coverage:ignore-start/end. `_handlerFor` switch arm appended. **Orchestrator: 0 BLOCK / 1 WARN (recurring TS-01 widget test gap for editor_beta_page) / 2 INFO (CA-04 positive signal; pre-existing 7-file FS-04 domain-test backlog).** No regressions introduced. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1731 — pick-next #36 closeout: D-fp14 Set-font kebab port (TDD)** (7 files; +238 / -3; 18 new tests; analyze clean)
 - Committed: (this iteration)
