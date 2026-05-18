@@ -30,14 +30,34 @@ void main() {
       expect(find.textContaining('graph TD'), findsOneWidget);
     });
 
-    testWidgets('exposes the source via the widget API', (tester) async {
-      const widget = MermaidView(source: 'sequenceDiagram\n  A->>B: hello');
-      expect(widget.source, 'sequenceDiagram\n  A->>B: hello');
+    testWidgets('renders the source through the fallback path '
+        '(behavioral cover for the widget API)', (tester) async {
+      // M1690 (TS-06 fix-forward): the prior incarnation asserted on the
+      // `widget.source` field directly, which only proved the constructor
+      // stored the value. This pumps the widget and observes that the
+      // source actually flows through to the rendered output via the
+      // fallback card path — same coverage, behavior-first.
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: MermaidView(
+              source: 'sequenceDiagram\n  A->>B: hello',
+              forceFallback: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.textContaining('sequenceDiagram'), findsOneWidget);
+      expect(find.textContaining('A->>B: hello'), findsOneWidget);
     });
   });
 
   group('mermaidHtmlFor (M1686)', () {
-    group('source escaping', () {
+    // M1690 (TS-04 fix-forward): sub-group labels now prefix the function
+    // under test so the test runner output reads `mermaidHtmlFor() source
+    // escaping › escapes ampersands …` rather than the bare concern name.
+    group('mermaidHtmlFor() source escaping', () {
       test('escapes ampersands as &amp;', () {
         final html = mermaidHtmlFor(source: 'A & B', mermaidJs: 'x');
         expect(html, contains('A &amp; B'));
@@ -63,7 +83,7 @@ void main() {
       });
     });
 
-    group('mermaid.min.js inlining', () {
+    group('mermaidHtmlFor() mermaid.min.js inlining', () {
       test('inlines the JS payload inside a <script> tag when non-empty', () {
         final html = mermaidHtmlFor(
           source: 'graph TD',
@@ -80,7 +100,7 @@ void main() {
       });
     });
 
-    group('HTML scaffold', () {
+    group('mermaidHtmlFor() HTML scaffold', () {
       test('starts with the HTML5 doctype', () {
         final html = mermaidHtmlFor(source: 'graph TD', mermaidJs: 'x');
         expect(html.trimLeft(), startsWith('<!doctype html>'));
