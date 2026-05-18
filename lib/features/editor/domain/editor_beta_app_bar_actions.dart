@@ -52,6 +52,14 @@ enum EditorBetaAppBarAction {
   /// toast preview matches the actual filename on disk.
   rename(tooltip: 'Rename file…'),
 
+  /// Opens a `showQuillChoice<String>` listing every vault folder
+  /// (plus a "(vault root)" entry when the page isn't already
+  /// there) and dispatches `MovePage(ulid:, targetFolder:)` against
+  /// VaultBloc. D-fp25 port from legacy `editor_page.dart` case
+  /// `'move'` (`_moveToFolder`). The folder list comes from
+  /// [collectVaultFolders] with the current folder filtered out.
+  moveToFolder(tooltip: 'Move to folder…'),
+
   /// Toggles the `public: true` frontmatter field so the page
   /// becomes (or stops being) reachable via the backend
   /// `GET /public/<ulid>` route. D-fp11 port from legacy
@@ -189,6 +197,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.duplicate;
   yield EditorBetaAppBarAction.reveal;
   yield EditorBetaAppBarAction.rename;
+  yield EditorBetaAppBarAction.moveToFolder;
   yield EditorBetaAppBarAction.publishToggle;
   yield EditorBetaAppBarAction.publishWithPassword;
   yield EditorBetaAppBarAction.pageHistory;
@@ -238,6 +247,7 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.duplicate ||
     EditorBetaAppBarAction.reveal ||
     EditorBetaAppBarAction.rename ||
+    EditorBetaAppBarAction.moveToFolder ||
     EditorBetaAppBarAction.publishToggle ||
     EditorBetaAppBarAction.publishWithPassword ||
     EditorBetaAppBarAction.pageHistory ||

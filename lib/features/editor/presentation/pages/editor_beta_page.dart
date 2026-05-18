@@ -37,6 +37,7 @@ import '../../domain/editor_beta_app_bar_actions.dart';
 import '../../../forms/domain/repositories/forms_repository.dart';
 import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
 import '../../domain/copy_labels.dart';
+import '../../domain/folder_picker_options.dart';
 import '../../domain/has_forms_frontmatter.dart';
 import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/pdf_exporter.dart';
@@ -1383,6 +1384,72 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp25 (M1753): port Move-to-folder from legacy
+  /// editor_page.dart:745 (`_moveToFolder`). Walks VaultBloc's tree
+  /// via [collectVaultFolders], filters out the current folder via
+  /// [currentFolderOf], opens `showQuillChoice<String>` with a
+  /// "(vault root)" entry prepended when the page is already nested.
+  /// On pick, dispatches `MovePage(ulid:, targetFolder:)`.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `showQuillChoice` + `ScaffoldMessenger` + a VaultBloc dispatch.
+  /// The folder-walking + current-folder logic is pre-tested via
+  /// `folder_picker_options_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onMoveToFolder() async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final page = editorState.page;
+    final folders = collectVaultFolders(vault.tree);
+    final currentFolder = currentFolderOf(page.relativePath);
+    final hasOtherFolder = folders.any((f) => f != currentFolder);
+    if (currentFolder == '' && !hasOtherFolder) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'No folders to move to. Create a folder in the sidebar first.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final picked = await showQuillChoice<String>(
+      context,
+      title: 'Move to folder',
+      icon: 'folder',
+      options: [
+        if (currentFolder != '')
+          const QuillChoiceOption<String>(
+            value: '',
+            label: '(vault root)',
+            icon: 'home',
+          ),
+        for (final f in folders)
+          if (f != currentFolder)
+            QuillChoiceOption<String>(
+              value: f,
+              label: f,
+              icon: 'folder',
+            ),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    context
+        .read<VaultBloc>()
+        .add(MovePage(ulid: widget.ulid, targetFolder: picked));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          picked.isEmpty ? 'Moved to vault root' : 'Moved to $picked',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
   /// D-fp9 (M1715): port Reveal-in-Finder/Explorer from legacy
   /// editor_page.dart:525. Resolves the absolute filesystem path via
   /// the M1709 [vaultAbsolutePath] helper, then dispatches through
@@ -1678,6 +1745,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.duplicate => _onDuplicate,
         EditorBetaAppBarAction.reveal => _onReveal,
         EditorBetaAppBarAction.rename => _onRename,
+        EditorBetaAppBarAction.moveToFolder => _onMoveToFolder,
         EditorBetaAppBarAction.publishToggle => _onPublishToggle,
         EditorBetaAppBarAction.publishWithPassword => _onPublishWithPassword,
         EditorBetaAppBarAction.pageHistory => _onPageHistory,

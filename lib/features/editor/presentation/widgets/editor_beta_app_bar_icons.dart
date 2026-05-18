@@ -21,6 +21,7 @@ IconData iconFor(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.duplicate => Icons.copy_outlined,
     EditorBetaAppBarAction.reveal => Icons.folder_open_outlined,
     EditorBetaAppBarAction.rename => Icons.drive_file_rename_outline,
+    EditorBetaAppBarAction.moveToFolder => Icons.drive_file_move_outline,
     EditorBetaAppBarAction.publishToggle => Icons.public_outlined,
     EditorBetaAppBarAction.publishWithPassword => Icons.lock_outline,
     EditorBetaAppBarAction.pageHistory => Icons.history,

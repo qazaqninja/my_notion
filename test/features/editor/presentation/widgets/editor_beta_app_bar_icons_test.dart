@@ -56,6 +56,14 @@ void main() {
       );
     });
 
+    test('moveToFolder → Icons.drive_file_move_outline (D-fp25 port glyph)',
+        () {
+      expect(
+        iconFor(EditorBetaAppBarAction.moveToFolder),
+        Icons.drive_file_move_outline,
+      );
+    });
+
     test('publishToggle → Icons.public_outlined (D-fp11 port glyph)', () {
       expect(
         iconFor(EditorBetaAppBarAction.publishToggle),

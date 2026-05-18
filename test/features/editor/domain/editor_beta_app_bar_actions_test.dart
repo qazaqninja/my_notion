@@ -26,6 +26,7 @@ void main() {
         EditorBetaAppBarAction.duplicate,
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
+        EditorBetaAppBarAction.moveToFolder,
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.publishWithPassword,
         EditorBetaAppBarAction.pageHistory,
@@ -50,16 +51,17 @@ void main() {
 
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
-        'duplicate → reveal → rename → publishToggle → '
-        'publishWithPassword → pageHistory → setFont → setGoal → '
-        'exportMarkdown → exportHtml → printPage → setReminder → '
-        'snoozeReminder → clearReminder → copyBody → copyPlain → '
-        'copyJson → copyFormLink? → viewFormSubmissions? → '
-        'moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp24
-      // layout users have already learned. publishWithPassword slots
-      // directly after publishToggle (D-fp24 / M1751), mirroring the
-      // legacy `editor_page.dart:464-467` kebab layout. setGoal
+        'duplicate → reveal → rename → moveToFolder → '
+        'publishToggle → publishWithPassword → pageHistory → '
+        'setFont → setGoal → exportMarkdown → exportHtml → '
+        'printPage → setReminder → snoozeReminder → clearReminder → '
+        'copyBody → copyPlain → copyJson → copyFormLink? → '
+        'viewFormSubmissions? → moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp25
+      // layout users have already learned. moveToFolder slots
+      // directly after rename (D-fp25 / M1753) — both file-system
+      // mutation actions paired together. publishWithPassword slots
+      // directly after publishToggle (D-fp24 / M1751). setGoal
       // between setFont and setReminder (D-fp21 / M1745);
       // exportMarkdown + exportHtml between setGoal and setReminder
       // (D-fp22 / M1747); printPage closes the export trio
@@ -79,6 +81,7 @@ void main() {
             EditorBetaAppBarAction.duplicate,
             EditorBetaAppBarAction.reveal,
             EditorBetaAppBarAction.rename,
+            EditorBetaAppBarAction.moveToFolder,
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
@@ -112,6 +115,7 @@ void main() {
             EditorBetaAppBarAction.duplicate,
             EditorBetaAppBarAction.reveal,
             EditorBetaAppBarAction.rename,
+            EditorBetaAppBarAction.moveToFolder,
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
@@ -200,6 +204,7 @@ void main() {
         EditorBetaAppBarAction.duplicate,
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
+        EditorBetaAppBarAction.moveToFolder,
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.publishWithPassword,
         EditorBetaAppBarAction.pageHistory,
@@ -289,6 +294,7 @@ void main() {
             EditorBetaAppBarAction.duplicate,
             EditorBetaAppBarAction.reveal,
             EditorBetaAppBarAction.rename,
+            EditorBetaAppBarAction.moveToFolder,
             EditorBetaAppBarAction.publishToggle,
             EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
@@ -350,6 +356,13 @@ void main() {
 
       test('rename tooltip reads the D-fp10 port label', () {
         expect(EditorBetaAppBarAction.rename.tooltip, 'Rename file…');
+      });
+
+      test('moveToFolder tooltip reads the D-fp25 port label', () {
+        expect(
+          EditorBetaAppBarAction.moveToFolder.tooltip,
+          'Move to folder…',
+        );
       });
 
       test('publishToggle tooltip reads the D-fp11 port label', () {
