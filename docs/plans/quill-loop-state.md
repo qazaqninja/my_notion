@@ -6,8 +6,8 @@
 ## Current
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
-- **Phase:** D (super_editor WYSIWYG migration) — 293 tests after M1686 (+9). D-fp parity arc in progress.
-- **Task:** Pick-next survey #18 — after M1688 FEATURES.md doc-strikes (items 56 + 276 now ✅). Options: (a) BL-11 D-fp callback cleanup deferred from M1631+; (b) Phase E continuation; (c) D-fp5 next parity port; (d) NV-02 GoRouteData typed routes; (e) D30b/c — 18+ slices since D29 default flip so the dogfood window should now be enough; (f) Another FEATURES.md sweep for stale 🚧 (lines 17-50 area not yet scanned this cycle); (g) Address M1686 audit TS-04 sub-group naming + TS-06 property assertion INFO fix-forwards; (h) BL-12 _FindBarHost. Default lean: option (g) TS-04/TS-06 fix-forward on the M1686 test groups — small, well-scoped, captures the cosmetic INFOs before they rot.
+- **Phase:** D (super_editor WYSIWYG migration) — 293 tests. D-fp parity arc in progress.
+- **Task:** Pick-next survey #19 — after M1690 audit fix-forwards (M1686's TS-04 + TS-06 INFOs resolved; orchestrator 0/0/0 pristine). Options: (a) BL-11 D-fp callback cleanup deferred from M1631+; (b) Phase E continuation; (c) D-fp5 next parity port; (d) NV-02 GoRouteData typed routes; (e) D30b/c — 20+ slices since D29 default flip so the dogfood window should now be enough; (f) FEATURES.md early-section sweep (lines 17-50) for stale 🚧 — top of file is the most-stale region; (g) BL-12 _FindBarHost. Default lean: option (f) early-section FEATURES.md sweep — low-risk doc work, captures stale markers in a section the loop rarely revisits.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1690 — pick-next #18 closeout: M1686 audit fix-forwards (TS-04 + TS-06)** (1 file modified; +26 / -6; 11/11 mermaid tests pass; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 241 closeout
+- Notes: Pick-next survey #18 picked option (g) — capture the two M1686 cosmetic INFOs (TS-04 sub-group naming + TS-06 property assertion) before they rot. **TS-04 fix:** three inner `group()` labels under `mermaidHtmlFor (M1686)` now prefix the function under test — `mermaidHtmlFor() source escaping` / `mermaidHtmlFor() mermaid.min.js inlining` / `mermaidHtmlFor() HTML scaffold`. Runner output reads as a fully qualified path the auditor's TS-04 convention expects. **TS-06 fix:** the property-assertion test at line 33 ("exposes the source via the widget API") swapped from `expect(widget.source, ...)` field check to a pump-and-find behavioral test that exercises the `forceFallback` path and asserts both `'sequenceDiagram'` + `'A->>B: hello'` appear in the rendered output via `find.textContaining(...)`. Test title updated to "renders the source through the fallback path (behavioral cover for the widget API)" so the original intent stays discoverable. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** Both M1686 INFOs closed. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1688 — pick-next #17 closeout: flip FEATURES.md items 56 + 276 ✅** (1 file modified; +2 / -2; doc-only)
 - Committed: (this iteration)
