@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:my_notion/core/db/quill_database.dart' hide Page;
+import 'package:my_notion/core/routing/routes.dart';
 import 'package:my_notion/features/editor/domain/editor_beta_app_bar_actions.dart';
 import 'package:my_notion/features/editor/presentation/bloc/editor_bloc.dart';
 import 'package:my_notion/features/editor/presentation/bloc/editor_state.dart';
@@ -19,8 +21,25 @@ import 'package:mocktail/mocktail.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_event.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
+import 'package:my_notion/shared/theme/accent.dart';
+import 'package:my_notion/shared/theme/tokens.dart';
 
 import '_harness/editor_beta_pump.dart';
+
+/// M1871 — `MockGoRouter` for the `_onMoveToTrash` navigation
+/// follow-on. Per the M1853/M1854 closeout, the existing dialog +
+/// event-dispatch smoke deferred `context.go(Routes.home)`
+/// verification because the harness's `_defaultProbe` uses a real
+/// `GoRouter` whose `/home` route is `SizedBox.shrink` — adequate
+/// for the dispatch smoke, but post-go the page unmounts and
+/// there's no observable surface to assert against. Per RULES.md
+/// TS-09 this is exactly what mockingjay-style `GoRouter` mocking is
+/// for: subclass `Mock` and implement `GoRouter`, then wrap the page
+/// in `InheritedGoRouter(goRouter: mock, child: ...)` so the
+/// production `GoRouterHelper.go(context, ...)` extension resolves
+/// to the mock. `verify(() => mock.go(Routes.home)).called(1)`
+/// closes the gap with no harness restructuring.
+class _MockGoRouter extends Mock implements GoRouter {}
 
 /// M1853: mocktail needs a fallback instance for `VaultEvent`
 /// before `verify(() => mock.add(any(that: ...)))` can match —
@@ -637,6 +656,80 @@ void main() {
           // `ulid` field, not just the event type. A typo regression
           // that passed the wrong ULID would otherwise satisfy
           // `isA<MoveToTrash>()` and the test would silently pass.
+          verify(
+            () => harness.vaultBloc.add(
+              any(
+                that: isA<MoveToTrash>().having(
+                  (e) => e.ulid,
+                  'ulid',
+                  ulid,
+                ),
+              ),
+            ),
+          ).called(1);
+        });
+
+        // M1871 — MockGoRouter follow-on. Closes the M1853 TS-09
+        // gap deferred at the closeout: "Navigation half (`context.go`)
+        // deferred — event-dispatch is sufficient evidence the
+        // confirmation path runs end-to-end." A real GoRouter routing
+        // `/home` → `SizedBox.shrink` unmounts EditorBetaPage on
+        // success, so the assertion surface is post-tear-down — hard
+        // to verify cleanly. `InheritedGoRouter(goRouter: mockRouter,
+        // child: EditorBetaPage(...))` lets the production
+        // `context.go(Routes.home)` call resolve via the mock instead
+        // of a real Router, leaving the page mounted and the call
+        // recorded for `verify`. Pattern matches the foundation
+        // mockingjay smoke at `test/foundation/mockingjay_smoke_test`
+        // (TS-09).
+        //
+        // The probe replaces `_defaultProbe`'s `MaterialApp.router`
+        // with a `MaterialApp` whose `home` is the mock-wrapped page.
+        // The same surface override (1200×900 + DPR 1.0) + QuillTokens
+        // theme extension as the default probe — needed so the editor
+        // tree's many `QuillTokens.of(context)` calls don't trip the
+        // M1823 assert. VaultBloc dispatch is still asserted (carries
+        // forward the M1854 `having((e) => e.ulid, 'ulid', ulid)`
+        // tightening) so both observable surfaces of the confirmation
+        // path are now verified: bloc event + router navigation.
+        testWidgets(
+            'kebab → Move to trash → confirm → router.go(Routes.home) '
+            '+ VaultBloc receives MoveToTrash event', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final mockRouter = _MockGoRouter();
+          when(() => mockRouter.go(any())).thenReturn(null);
+
+          final tokens = buildTokens(Brightness.light, AccentKey.sage);
+          final probe = MaterialApp(
+            theme: ThemeData.light(useMaterial3: true)
+                .copyWith(extensions: [tokens]),
+            home: InheritedGoRouter(
+              goRouter: mockRouter,
+              child: const EditorBetaPage(ulid: ulid),
+            ),
+          );
+
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+            probe: probe,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.moveToTrash);
+          expect(find.text('Move to trash?'), findsOneWidget);
+
+          await tester.tap(find.widgetWithText(FilledButton, 'Move to trash'));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 50));
+
+          verify(() => mockRouter.go(Routes.home)).called(1);
           verify(
             () => harness.vaultBloc.add(
               any(
