@@ -346,6 +346,43 @@ void main() {
         });
       });
 
+      // M1833 — third per-handler clipboard smoke; first to land on
+      // the M1831 helpers (~15 lines vs the original ~50). The
+      // handler at editor_beta_page.dart:1638 reads `VaultBloc.state`
+      // for `rootPath` and joins via `vaultAbsolutePath(...)`. The
+      // seedPage:true harness emits `VaultLoaded(rootPath: '/vault')`
+      // and writes `<rootPath>/page.md`, so the captured clipboard
+      // text is `/vault/page.md`.
+      group('_onCopyPath (D-fp7, M1709) — per-handler smoke', () {
+        testWidgets('tap kebab → Copy file path → clipboard receives '
+            '<vault>/<relpath>', (tester) async {
+          final clipboard = _installClipboardMock(tester);
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tester.tap(find.byTooltip('More actions'));
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.text('Copy file path'));
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+
+          expect(clipboard(), '/vault/page.md');
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
