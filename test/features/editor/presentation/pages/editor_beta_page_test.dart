@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/core/db/quill_database.dart' hide Page;
 import 'package:my_notion/features/editor/domain/editor_beta_app_bar_actions.dart';
+import 'package:my_notion/features/editor/presentation/bloc/editor_bloc.dart';
+import 'package:my_notion/features/editor/presentation/bloc/editor_state.dart';
 import 'package:my_notion/features/editor/domain/repositories/html_export_repository.dart';
 import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
@@ -693,6 +695,26 @@ void main() {
             find.text('Published — public: true added to frontmatter'),
             findsOneWidget,
           );
+
+          // M1857 (orchestrator M1856 TS-03 WARN): also verify the
+          // EditorBloc state reflects the AddFrontmatterField event.
+          // The SnackBar fires after `bloc.add(...)` — if a future
+          // regression deleted the `bloc.add` call but left the
+          // SnackBar, the test would still pass. Reading the bloc's
+          // current state directly closes that gap.
+          // EditorBloc is provided INSIDE EditorBetaPage by the
+          // page's own BlocProvider, so read it from any descendant
+          // context — the SnackBar text widget is convenient and
+          // already located.
+          final editorBloc = tester
+              .element(
+                find.text('Published — public: true added to frontmatter'),
+              )
+              .read<EditorBloc>();
+          final state = editorBloc.state;
+          expect(state, isA<EditorLoaded>());
+          final loaded = state as EditorLoaded;
+          expect(loaded.page.frontmatter.find('public'), isNotNull);
         });
       });
 
