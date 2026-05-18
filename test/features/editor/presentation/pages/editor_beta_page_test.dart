@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
 
+import '_harness/editor_beta_pump.dart';
+
 void main() {
   // M1787 (TS-01 stub): minimal smoke test for EditorBetaPage. The
   // 26+ D-fp `_on…` async handlers in this file are all
@@ -27,6 +29,22 @@ void main() {
 
         expect(page.ulid, '01H0000000000000000000ABCD');
         expect(page, isA<StatelessWidget>());
+      });
+    });
+
+    // M1804: pumpEditorBeta scaffold landed in
+    // _harness/editor_beta_pump.dart. The helper currently throws
+    // UnimplementedError — per-collaborator wiring follows in
+    // successive slices. This meta-test asserts the helper is
+    // wired into the test file (`import` resolves) so future
+    // slices know where to extend.
+    group('shared pump harness scaffold', () {
+      testWidgets('pumpEditorBeta throws UnimplementedError until wired',
+          (tester) async {
+        await expectLater(
+          pumpEditorBeta(tester, ulid: '01H0000000000000000000ABCD'),
+          throwsUnimplementedError,
+        );
       });
     });
   });
