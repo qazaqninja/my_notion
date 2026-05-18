@@ -35,6 +35,13 @@ void main() {
       );
     });
 
+    test('duplicate → Icons.copy_outlined (D-fp8 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.duplicate),
+        Icons.copy_outlined,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

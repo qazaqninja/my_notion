@@ -33,6 +33,12 @@ enum EditorBetaAppBarAction {
   /// rules stay centralised.
   copyPath(tooltip: 'Copy file path'),
 
+  /// Duplicates the page (frontmatter + body) into a sibling file
+  /// with a fresh ULID; navigates the editor to the copy. D-fp8 port
+  /// from legacy `editor_page.dart` case `'duplicate'` (dispatches the
+  /// existing `DuplicatePage` VaultBloc event).
+  duplicate(tooltip: 'Duplicate page'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -58,5 +64,6 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.copyLink;
   yield EditorBetaAppBarAction.copyUlid;
   yield EditorBetaAppBarAction.copyPath;
+  yield EditorBetaAppBarAction.duplicate;
   yield EditorBetaAppBarAction.moveToTrash;
 }

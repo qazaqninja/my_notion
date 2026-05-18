@@ -455,6 +455,42 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp8 (M1712): port Duplicate page from legacy
+  /// editor_page.dart:620. Dispatches the existing
+  /// [DuplicatePage] VaultBloc event with an `onCreated` callback
+  /// that navigates the editor to the freshly created copy + shows a
+  /// transient SnackBar with the new ULID.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over a
+  /// VaultBloc event the legacy editor already fires + a router go.
+  /// The DuplicatePage handler in `vault_bloc.dart:_onDuplicate` has
+  /// its own test coverage.
+  // coverage:ignore-start
+  void _onDuplicate() {
+    final router = GoRouter.of(context);
+    final scope = context;
+    final sourceTitle = widget.title;
+    context.read<VaultBloc>().add(
+          DuplicatePage(
+            widget.ulid,
+            onCreated: (newUlid) {
+              if (!scope.mounted) return;
+              final main = sourceTitle.isEmpty
+                  ? 'Page duplicated'
+                  : 'Duplicated "$sourceTitle"';
+              ScaffoldMessenger.of(scope).showSnackBar(
+                SnackBar(
+                  content: Text('$main • new ULID: $newUlid'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+              router.go(Routes.editor(newUlid));
+            },
+          ),
+        );
+  }
+  // coverage:ignore-end
+
   /// D-fp7 (M1709): port Copy-path from legacy editor_page.dart:518.
   /// Writes the absolute filesystem path (`vault.rootPath + '/' +
   /// widget.relativePath`) to the system clipboard via the M1709
@@ -677,6 +713,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.copyLink => _onCopyLink,
         EditorBetaAppBarAction.copyUlid => _onCopyUlid,
         EditorBetaAppBarAction.copyPath => _onCopyPath,
+        EditorBetaAppBarAction.duplicate => _onDuplicate,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       },
     );
