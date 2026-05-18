@@ -1,6 +1,6 @@
 # Feature roadmap — Quill (my_notion)
 
-> Reconciliation of every Notion feature against what Quill has actually shipped (M0–M1186+), what is partially done, what is queued, and what is explicitly out of scope. The goal is that any agent landing in this repo for the first time can open this file, pick an item, follow the file pointers it includes, and ship it as the next milestone (Mxxxx) without re-discovering the codebase.
+> Reconciliation of every Notion feature against what Quill has actually shipped (M0–M1690+), what is partially done, what is queued, and what is explicitly out of scope. The goal is that any agent landing in this repo for the first time can open this file, pick an item, follow the file pointers it includes, and ship it as the next milestone (Mxxxx) without re-discovering the codebase.
 
 Read `CLAUDE.md` first for invariants and conventions. Read `~/.claude/plans/1m-run-until-we-frolicking-thompson.md` for the current 1m-loop plan (Phase A foundation → B media → C platform → D WYSIWYG → E V2 backend); the original milestone plan at `~/.claude/plans/build-prompt-self-hosted-transient-bear.md` is the historical pre-M30 blueprint. Then come back here.
 
@@ -9,7 +9,7 @@ Read `CLAUDE.md` first for invariants and conventions. Read `~/.claude/plans/1m-
 1. Scan the **Pick-next queue** at the bottom — it's the prioritized work list. The top item is what you should pick.
 2. Find the item in the categorized list to see which file(s) and patterns to touch.
 3. Follow the **Architecture invariants** below — they are non-negotiable and they tell you *where* state lives (markdown frontmatter vs. drift vs. nowhere).
-4. Ship as the next milestone commit `Mxxxx: <feature>`, matching the style of the existing 1,180+ milestones (commits use 4-digit milestone IDs once the count crosses M1000).
+4. Ship as the next milestone commit `Mxxxx: <feature>`, matching the style of the existing 1,690+ milestones (commits use 4-digit milestone IDs once the count crosses M1000).
 
 ## Status legend
 
@@ -44,7 +44,7 @@ If your feature wants to store something new, the answer is almost always "add a
 - ✅ Trash with restore — M28 + M61, file context menu → "Move to trash" renames to `.trash/<YYYY-MM>/...`; "Show trash" command palette entry opens a dialog with restore / delete-forever per row. M247 extends the database table row context menu with "Copy ULID" + "Move to trash" alongside the existing Open / Copy [[link]] / Duplicate entries.
 - ✅ Page comments (general thread) — M69, `<vault>/.quill/comments/<page-ulid>.yaml` sidecar; properties-panel "Comments" action opens a dialog. Block-anchored comments shipped M180–M186.
 - ✅ Page mentions (@page-name) — M5/M6 (`[[ULID]]` source format) + source_view.dart already opens the relation picker on a boundary `@` (line 136). Pick replaces the `@`-trigger with `[[ULID]]`, which the renderer shows as a clickable chip.
-- 🔮 Public page sharing via web link — Requires hosting backend.
+- ✅ Public page sharing via web link — Shipped at **E16/E17/E21/E43/E44** (Phase E backend). Frontmatter `public: true` exposes the page through the Dart Frog `GET /public/<ulid>` route (`backend/lib/public/routes.dart` + `markdown_html.dart` for the server-side renderer). Editor kebab "Publish" toggle flips the flag (`lib/features/sync/domain/usecases/build_public_password_entries.dart` and the wire-in at `editor_page.dart`). Password protection via `public_password:` frontmatter + bcrypt-checked cookie (E43/E44). Walkthrough: `docs/phase-e-sanity-checklist.md`.
 - 🚫 Custom page URLs / domains (paid) — Quill is a desktop app, not a publishing platform.
 - 🚫 Page analytics (views, visitors) — Same reason.
 - ✅ Wiki mode (turn page into a wiki with owners and verification) — M159, frontmatter `wiki: true`, `owners: [...]`, `verified: <date>`. Editor PageHeader renders a colour-coded pill with owners + verified tooltip; flips to "wiki · stale" past 90 days.
