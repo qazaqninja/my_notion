@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp17 shipped (17 D-fp actions; kebab now holds 13).**
-- **Phase:** D (super_editor WYSIWYG migration) — 375 tests after M1737 (+4). D-fp parity arc in progress.
-- **Task:** Pick-next survey #40 — after M1737 D-fp17 copy-body port. Options: (a) D-fp18 copy-plain + copy-json (clipboard variants extending D-fp17); (b) D-fp18 add-tags; (c) D-fp18 export-md / export-html / print-page; (d) D-fp18 set-goal; (e) D-fp18 view-form-submissions; (f) D-fp18 move-to-folder; (g) Coordinated BL-11 SnackBar→BlocListener refactor; (h) Stub editor_beta_page_test.dart. Default lean: option (a) D-fp18 copy-plain + copy-json — extends D-fp17 / copy_labels.dart helper; copy-plain via stripMarkdown, copy-json via jsonEncode.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp18 shipped (18 D-fp actions; kebab now holds 15).**
+- **Phase:** D (super_editor WYSIWYG migration) — 384 tests after M1739 (+9). D-fp parity arc in progress.
+- **Task:** Pick-next survey #41 — after M1739 D-fp18 copy-plain + copy-json port. Options: (a) D-fp19 add-tags (frontmatter `tags:` chip editor — moderate scope: chip-row dialog UI + comma-separated list value parser); (b) D-fp19 export-md / export-html / print-page (file-system writes; existing Exporter/HtmlExporter reuse); (c) D-fp19 set-goal (frontmatter `goal:` planner + reminder integration); (d) D-fp19 view-form-submissions (existing dialog widget; conditional on hasFormDefinition); (e) D-fp19 move-to-folder (path picker + VaultBloc `MovePage` event); (f) Coordinated BL-11 SnackBar→BlocListener refactor (touches all 19 D-fp handlers); (g) Stub editor_beta_page_test.dart (TS-01 carry-forward closure). Default lean: option (d) D-fp19 view-form-submissions — already has a dialog widget shipped by E51; the editor_page hook just needs a conditional kebab entry and the gate against `hasFormDefinition`.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1739 — pick-next #40 closeout: D-fp18 Copy-plain + Copy-JSON kebab ports (TDD)** (9 files; +249 / -12; 9 new tests; analyze clean)
+- Committed: 5f0e07e (this iteration)
+- TaskList ID: 263 closeout
+- Notes: Eleventh slice riding the M1700/M1705/M1707 scaffolding; second-to-final D-fp port (only "view-form-submissions" + a few stretch goals remain before D-fp closeout). **D-fp18 ports — two new kebab actions in one slice:** new pure-Dart `lib/features/editor/domain/page_json_payload.dart` exposing `String pageAsJsonPayload({ulid, relativePath, frontmatter, body})` which `jsonEncode`'s the canonical `{ulid, relativePath, frontmatter, body}` payload in the legacy editor's exact key order so diff tooling sees identical output across editors. 4 unit tests covering full serialise / key ordering / empty frontmatter / non-ASCII round-trip. `copy_labels.dart` `copiedCharsLabel` generalised to `(int n, {String suffix = 'to clipboard'})` — one helper now drives all three copy-* SnackBars (body / plain / JSON). +3 unit tests for the new suffix variants. Two new `EditorBetaAppBarAction` slots — `copyPlain` (tooltip "Copy body as plain text", `Icons.text_snippet_outlined`) and `copyJson` (tooltip "Copy page as JSON", `Icons.data_object`) — inserted between `copyBody` and `moveToTrash`; both classified into the kebab. Enum + icon test files refreshed (order, visibility, partition, 2 new tooltip tests, 2 new icon tests). New `_onCopyPlain()` async handler reads EditorBloc state, runs `stripMarkdown(body)`, Clipboard.setData, SnackBars via `copiedCharsLabel(plain.length, suffix: 'as plain text')`. New `_onCopyJson()` handler builds `pageAsJsonPayload(...)`, Clipboard.setData, SnackBars via `copiedCharsLabel(payload.length, suffix: 'JSON')`. Both under M1571 coverage:ignore. `_handlerFor` switch arms appended for both. **Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (FS-04 carry-forward — test/features/editor/domain/ flat folder note; not introduced by this slice).** No regressions. 59/59 targeted tests pass; full editor subset (2,600 tests) green in 10s. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1737 — pick-next #39 closeout: D-fp17 Copy-body kebab port (TDD)** (7 files; +88 / -2; 5 new tests; analyze clean)
 - Committed: (this iteration)
