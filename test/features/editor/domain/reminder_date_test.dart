@@ -74,4 +74,52 @@ void main() {
       );
     });
   });
+
+  group('snoozeBaseFor', () {
+    final today = DateTime(2026, 5, 7);
+
+    test('returns start-of-today when existing is null', () {
+      expect(snoozeBaseFor(existing: null, today: today), today);
+    });
+
+    test('returns start-of-today when existing is strictly in the past', () {
+      expect(
+        snoozeBaseFor(existing: DateTime(2025, 12, 1), today: today),
+        today,
+      );
+    });
+
+    test('returns existing day when it equals today', () {
+      expect(
+        snoozeBaseFor(existing: DateTime(2026, 5, 7), today: today),
+        DateTime(2026, 5, 7),
+      );
+    });
+
+    test('returns existing day when it is in the future', () {
+      expect(
+        snoozeBaseFor(existing: DateTime(2026, 6, 1), today: today),
+        DateTime(2026, 6, 1),
+      );
+    });
+
+    test('strips time-of-day from existing future day', () {
+      // The legacy helper called DateTime(year, month, day) on the
+      // parsed result; ours should too so the resulting iso line up.
+      expect(
+        snoozeBaseFor(
+          existing: DateTime(2026, 6, 1, 23, 45),
+          today: today,
+        ),
+        DateTime(2026, 6, 1),
+      );
+    });
+
+    test('strips time-of-day from today when existing is null', () {
+      expect(
+        snoozeBaseFor(existing: null, today: DateTime(2026, 5, 7, 13, 30)),
+        DateTime(2026, 5, 7),
+      );
+    });
+  });
 }

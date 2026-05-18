@@ -31,3 +31,23 @@ String relativeReminderLabel({
   final ago = -days;
   return '$ago ${ago == 1 ? 'day' : 'days'} ago';
 }
+
+/// Pick the "base day" to add a snooze offset to. Mirrors the legacy
+/// `_snoozeReminder` semantics: snooze always lands in the future, so
+/// if the existing reminder is already past, count from `today`
+/// instead of the past — otherwise "+ 7 days" on a 2025-01-01
+/// reminder produces 2025-01-08, still in the past.
+///
+/// - `existing == null` → returns `today` (no reminder set; the caller
+///   will SnackBar "no reminder" but the math still works).
+/// - `existing` strictly before `today` → returns `today`.
+/// - otherwise → returns the start-of-day of `existing`.
+DateTime snoozeBaseFor({
+  required DateTime? existing,
+  required DateTime today,
+}) {
+  final startOfToday = DateTime(today.year, today.month, today.day);
+  if (existing == null) return startOfToday;
+  final existingDay = DateTime(existing.year, existing.month, existing.day);
+  return existingDay.isBefore(startOfToday) ? startOfToday : existingDay;
+}

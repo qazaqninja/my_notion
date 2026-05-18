@@ -463,6 +463,108 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp16 (M1735): port Snooze-reminder from legacy
+  /// editor_page.dart:1010 (`_snoozeReminder`). Opens a 4-option
+  /// chooser (+1 / +3 / +7 / +30 days), computes the new ISO date
+  /// via the M1733 [isoDate] helper relative to the M1735
+  /// [snoozeBaseFor] start (which guards against snoozing a
+  /// past-due reminder back into the past), and dispatches
+  /// EditFrontmatterField to update the `reminder:` field. SnackBars
+  /// "No reminder set" when the page has none.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over the
+  /// pure-Dart `snoozeBaseFor` + `isoDate` + `relativeReminderLabel`
+  /// helpers (all unit-tested in `reminder_date_test.dart`).
+  // coverage:ignore-start
+  Future<void> _onSnoozeReminder() async {
+    final bloc = context.read<EditorBloc>();
+    final editorState = bloc.state;
+    if (editorState is! EditorLoaded) return;
+    final fm = editorState.page.frontmatter;
+    final existing = fm.find('reminder');
+    if (existing == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No reminder set. Use "Set reminder…" first.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final parsed = DateTime.tryParse(existing.rawScalar);
+    final now = DateTime.now();
+    final start = snoozeBaseFor(existing: parsed, today: now);
+    final picked = await showQuillChoice<int>(
+      context,
+      title: 'Snooze reminder',
+      icon: 'clock',
+      options: const [
+        QuillChoiceOption<int>(value: 1, label: '+ 1 day', icon: 'clock'),
+        QuillChoiceOption<int>(value: 3, label: '+ 3 days', icon: 'clock'),
+        QuillChoiceOption<int>(value: 7, label: '+ 1 week', icon: 'clock'),
+        QuillChoiceOption<int>(
+          value: 30,
+          label: '+ 1 month (30d)',
+          icon: 'clock',
+        ),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    final next = start.add(Duration(days: picked));
+    final iso = isoDate(next);
+    bloc.add(
+      EditFrontmatterField(
+        'reminder',
+        existing.copyWith(rawScalar: iso, value: iso),
+      ),
+    );
+    final relative = relativeReminderLabel(picked: next, now: now);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Snoozed reminder to $iso ($relative)'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
+  /// D-fp16 (M1735): port Clear-reminder from legacy
+  /// editor_page.dart:582 (case 'clear-reminder'). Removes the
+  /// `reminder:` frontmatter field; SnackBars "no reminder set"
+  /// when there's nothing to clear.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// the EditorBloc Remove event.
+  // coverage:ignore-start
+  void _onClearReminder() {
+    final bloc = context.read<EditorBloc>();
+    final editorState = bloc.state;
+    if (editorState is! EditorLoaded) return;
+    final existing = editorState.page.frontmatter.find('reminder');
+    if (existing == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No reminder set on this page.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final was = existing.rawScalar.trim();
+    bloc.add(const RemoveFrontmatterField('reminder'));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          was.isEmpty
+              ? 'Reminder cleared.'
+              : 'Reminder cleared (was $was).',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
   /// D-fp15 (M1733): port Set-reminder from legacy
   /// editor_page.dart:1055 (`_setReminder`). Opens
   /// `showQuillDatePicker`, formats the pick via M1733
@@ -1051,6 +1153,8 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.pageHistory => _onPageHistory,
         EditorBetaAppBarAction.setFont => _onSetFont,
         EditorBetaAppBarAction.setReminder => _onSetReminder,
+        EditorBetaAppBarAction.snoozeReminder => _onSnoozeReminder,
+        EditorBetaAppBarAction.clearReminder => _onClearReminder,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       };
 

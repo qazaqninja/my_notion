@@ -27,6 +27,8 @@ void main() {
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setReminder,
+        EditorBetaAppBarAction.snoozeReminder,
+        EditorBetaAppBarAction.clearReminder,
         EditorBetaAppBarAction.moveToTrash,
       };
       final authed = editorBetaAppBarActions(isAuthed: true).toSet();
@@ -38,7 +40,8 @@ void main() {
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → publishToggle → pageHistory → '
-        'setFont → setReminder → moveToTrash', () {
+        'setFont → setReminder → snoozeReminder → clearReminder → '
+        'moveToTrash', () {
       // Order matters so the rendered AppBar matches the post-D-fp14
       // layout users have already learned. Future kebab refactor will
       // map this directly to PopupMenuItem rows.
@@ -56,6 +59,8 @@ void main() {
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setReminder,
+        EditorBetaAppBarAction.snoozeReminder,
+        EditorBetaAppBarAction.clearReminder,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -74,6 +79,8 @@ void main() {
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setReminder,
+        EditorBetaAppBarAction.snoozeReminder,
+        EditorBetaAppBarAction.clearReminder,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -114,6 +121,8 @@ void main() {
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setReminder,
+        EditorBetaAppBarAction.snoozeReminder,
+        EditorBetaAppBarAction.clearReminder,
       };
       for (final action in kebab) {
         expect(
@@ -179,6 +188,8 @@ void main() {
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setReminder,
+        EditorBetaAppBarAction.snoozeReminder,
+        EditorBetaAppBarAction.clearReminder,
       ]);
     });
   });
@@ -248,6 +259,20 @@ void main() {
         expect(
           EditorBetaAppBarAction.setReminder.tooltip,
           'Set reminder…',
+        );
+      });
+
+      test('snoozeReminder tooltip reads the D-fp16 port label', () {
+        expect(
+          EditorBetaAppBarAction.snoozeReminder.tooltip,
+          'Snooze reminder…',
+        );
+      });
+
+      test('clearReminder tooltip reads the D-fp16 port label', () {
+        expect(
+          EditorBetaAppBarAction.clearReminder.tooltip,
+          'Clear reminder',
         );
       });
     });

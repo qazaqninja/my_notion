@@ -74,9 +74,19 @@ enum EditorBetaAppBarAction {
 
   /// Opens a date picker; writes the picked date as ISO `YYYY-MM-DD`
   /// into the page's `reminder:` frontmatter. D-fp15 port from
-  /// legacy `editor_page.dart` case `'set-reminder'`. Snooze and
-  /// clear remain on the legacy kebab for now.
+  /// legacy `editor_page.dart` case `'set-reminder'`.
   setReminder(tooltip: 'Set reminder…'),
+
+  /// Opens a 4-option chooser (+1/+3/+7/+30 days) and pushes the
+  /// page's `reminder:` forward by that many days from `today` (or
+  /// from the existing future date, whichever is later). D-fp16 port
+  /// from legacy `editor_page.dart` case `'snooze-reminder'`.
+  snoozeReminder(tooltip: 'Snooze reminder…'),
+
+  /// Removes the `reminder:` frontmatter field. D-fp16 port from
+  /// legacy `editor_page.dart` case `'clear-reminder'`. No-op when
+  /// no reminder is currently set.
+  clearReminder(tooltip: 'Clear reminder'),
 
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
@@ -110,6 +120,8 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.pageHistory;
   yield EditorBetaAppBarAction.setFont;
   yield EditorBetaAppBarAction.setReminder;
+  yield EditorBetaAppBarAction.snoozeReminder;
+  yield EditorBetaAppBarAction.clearReminder;
   yield EditorBetaAppBarAction.moveToTrash;
 }
 
@@ -146,7 +158,9 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.publishToggle ||
     EditorBetaAppBarAction.pageHistory ||
     EditorBetaAppBarAction.setFont ||
-    EditorBetaAppBarAction.setReminder =>
+    EditorBetaAppBarAction.setReminder ||
+    EditorBetaAppBarAction.snoozeReminder ||
+    EditorBetaAppBarAction.clearReminder =>
       true,
   };
 }

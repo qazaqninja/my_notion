@@ -78,6 +78,17 @@ void main() {
       expect(iconFor(EditorBetaAppBarAction.setReminder), Icons.alarm);
     });
 
+    test('snoozeReminder → Icons.snooze (D-fp16 port glyph)', () {
+      expect(iconFor(EditorBetaAppBarAction.snoozeReminder), Icons.snooze);
+    });
+
+    test('clearReminder → Icons.alarm_off (D-fp16 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.clearReminder),
+        Icons.alarm_off,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),
