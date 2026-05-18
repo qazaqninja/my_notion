@@ -24,60 +24,58 @@ enum EditorBetaAppBarAction {
   copyLink(tooltip: 'Copy [[link]] to this page'),
 
   /// Writes the bare ULID to the clipboard. D-fp6 port from legacy
-  /// `editor_page.dart` case `'copy-ulid'`.
+  /// case `'copy-ulid'`.
   copyUlid(tooltip: 'Copy ULID'),
 
   /// Writes the absolute filesystem path to the clipboard. D-fp7 port
-  /// from legacy `editor_page.dart` case `'copy-path'`. Built via
+  /// from legacy case `'copy-path'`. Built via
   /// `vaultAbsolutePath(rootPath: …, relativePath: …)` so the join
   /// rules stay centralised.
   copyPath(tooltip: 'Copy file path'),
 
   /// Duplicates the page (frontmatter + body) into a sibling file
   /// with a fresh ULID; navigates the editor to the copy. D-fp8 port
-  /// from legacy `editor_page.dart` case `'duplicate'` (dispatches the
+  /// from legacy case `'duplicate'` (dispatches the
   /// existing `DuplicatePage` VaultBloc event).
   duplicate(tooltip: 'Duplicate page'),
 
   /// Opens the page's `.md` file in the OS file browser (Finder /
-  /// Files / Explorer). D-fp9 port from legacy `editor_page.dart`
+  /// Files / Explorer). D-fp9 port from legacy
   /// case `'reveal'`. Routes through the `Reveal.show()` platform
   /// helper at `lib/core/platform/reveal.dart`.
   reveal(tooltip: 'Reveal in OS file browser'),
 
   /// Renames the on-disk `.md` filename via the existing
   /// `RenamePage` VaultBloc event; the page's ULID + wikilinks
-  /// survive. D-fp10 port from legacy `editor_page.dart` case
-  /// `'rename'`. Sanitised via `sanitizedBasename(input)` so the
+  /// survive. D-fp10 port from legacy case `'rename'`. Sanitised via `sanitizedBasename(input)` so the
   /// toast preview matches the actual filename on disk.
   rename(tooltip: 'Rename file…'),
 
   /// Opens a `showQuillChoice<String>` listing every vault folder
   /// (plus a "(vault root)" entry when the page isn't already
   /// there) and dispatches `MovePage(ulid:, targetFolder:)` against
-  /// VaultBloc. D-fp25 port from legacy `editor_page.dart` case
-  /// `'move'` (`_moveToFolder`). The folder list comes from
+  /// VaultBloc. D-fp25 port from legacy case `'move'` (`_moveToFolder`). The folder list comes from
   /// [collectVaultFolders] with the current folder filtered out.
   moveToFolder(tooltip: 'Move to folder…'),
 
   /// Toggles the `public: true` frontmatter field so the page
   /// becomes (or stops being) reachable via the backend
   /// `GET /public/<ulid>` route. D-fp11 port from legacy
-  /// `editor_page.dart` cases `'publish'` + `'unpublish'`. Password
+  /// cases `'publish'` + `'unpublish'`. Password
   /// gating remains on the legacy editor for now.
   publishToggle(tooltip: 'Publish / unpublish'),
 
   /// Prompts the user for a password, then stamps both `public:
   /// true` and `public_password: [bcrypt-hash]` into the page's
   /// frontmatter via [buildPublicPasswordEntries]. D-fp24 port from
-  /// legacy `editor_page.dart` case `'publish-password'`
+  /// legacy case `'publish-password'`
   /// (`_publishPageWithPassword`). The backend's E43 probe then
   /// gates `GET /public/[ulid]` on the matching bcrypt cookie.
   publishWithPassword(tooltip: 'Publish with password…'),
 
   /// Opens the [PageHistoryDialog] backed by `git log` on the
   /// current page's `.md` file. D-fp12 port from legacy
-  /// `editor_page.dart` case `'history'`. Only useful when the vault
+  /// case `'history'`. Only useful when the vault
   /// is a git repo (the dialog itself reports "no git history" when
   /// not).
   pageHistory(tooltip: 'Page history (git log)'),
@@ -85,33 +83,33 @@ enum EditorBetaAppBarAction {
   /// Opens a `showQuillPrompt` for comma-separated tag input; merges
   /// the result into the page's `tags:` frontmatter list via
   /// [mergeTags] (case-insensitive dedup against current, preserving
-  /// existing casing). D-fp26 port from legacy `editor_page.dart`
+  /// existing casing). D-fp26 port from legacy
   /// case `'add-tags'`. **Final D-fp port — closes the parity arc.**
   addTags(tooltip: 'Add tags…'),
 
   /// Opens a 3-option chooser (sans / serif / mono) for the page's
   /// font; dispatches Add/Edit/Remove FrontmatterField against
   /// `font:` per the [pageFontActionFor] planner. D-fp14 port from
-  /// legacy `editor_page.dart` case `'set-font'`.
+  /// legacy case `'set-font'`.
   setFont(tooltip: 'Set page font'),
 
   /// Opens a `showQuillPrompt` that takes a positive whole number;
   /// writes it (or removes) the page's `goal:` frontmatter. D-fp21
-  /// port from legacy `editor_page.dart` case `'set-goal'`. Planner
+  /// port from legacy case `'set-goal'`. Planner
   /// logic lives in [wordGoalActionFor]; pluralisation in
   /// [wordGoalLabel].
   setGoal(tooltip: 'Set word count goal…'),
 
   /// Copies the page's `.md` file to a user-picked path via
   /// `FilePicker.platform.saveFile`. D-fp22 port from legacy
-  /// `editor_page.dart` case `'export-md'` (`_exportPageAsMarkdown`).
+  /// case `'export-md'` (`_exportPageAsMarkdown`).
   /// The filename seed comes from [safeExportFilename] applied to
   /// `page.title`.
   exportMarkdown(tooltip: 'Export as .md…'),
 
   /// Renders the page body via `HtmlExporter.renderStandalonePage`
   /// and writes the resulting standalone HTML to a user-picked path.
-  /// D-fp22 port from legacy `editor_page.dart` case `'export-html'`
+  /// D-fp22 port from legacy case `'export-html'`
   /// (`_exportPageAsHtml`). Shares the filename seed with the
   /// markdown variant via [safeExportFilename].
   exportHtml(tooltip: 'Export as .html…'),
@@ -119,44 +117,44 @@ enum EditorBetaAppBarAction {
   /// Renders the page as a PDF via `PdfExporter.exportSingle` and
   /// hands it to `Printing.layoutPdf` — the user's OS print dialog
   /// then offers Print / Save as PDF / open in Preview. D-fp23 port
-  /// from legacy `editor_page.dart` case `'print-page'`
+  /// from legacy case `'print-page'`
   /// (`_printPage`). Closes the export trio (md / html / pdf).
   printPage(tooltip: 'Print / Save as PDF…'),
 
   /// Opens a date picker; writes the picked date as ISO `YYYY-MM-DD`
   /// into the page's `reminder:` frontmatter. D-fp15 port from
-  /// legacy `editor_page.dart` case `'set-reminder'`.
+  /// legacy case `'set-reminder'`.
   setReminder(tooltip: 'Set reminder…'),
 
   /// Opens a 4-option chooser (+1/+3/+7/+30 days) and pushes the
   /// page's `reminder:` forward by that many days from `today` (or
   /// from the existing future date, whichever is later). D-fp16 port
-  /// from legacy `editor_page.dart` case `'snooze-reminder'`.
+  /// from legacy case `'snooze-reminder'`.
   snoozeReminder(tooltip: 'Snooze reminder…'),
 
   /// Removes the `reminder:` frontmatter field. D-fp16 port from
-  /// legacy `editor_page.dart` case `'clear-reminder'`. No-op when
+  /// legacy case `'clear-reminder'`. No-op when
   /// no reminder is currently set.
   clearReminder(tooltip: 'Clear reminder'),
 
   /// Writes the current page body to the clipboard. D-fp17 port from
-  /// legacy `editor_page.dart` case `'copy-body'`. Toast reports the
+  /// legacy case `'copy-body'`. Toast reports the
   /// char count via the M1737 [copiedCharsLabel] helper.
   copyBody(tooltip: 'Copy body text'),
 
   /// Writes the page body to the clipboard with markdown syntax
   /// stripped via `stripMarkdown(body)`. D-fp18 port from legacy
-  /// `editor_page.dart` case `'copy-plain'`. Toast tails with
+  /// case `'copy-plain'`. Toast tails with
   /// "as plain text".
   copyPlain(tooltip: 'Copy body as plain text'),
 
   /// Writes the page identity + frontmatter + body as a JSON payload
   /// to the clipboard via [pageAsJsonPayload]. D-fp18 port from legacy
-  /// `editor_page.dart` case `'copy-json'`. Toast tails with "JSON".
+  /// case `'copy-json'`. Toast tails with "JSON".
   copyJson(tooltip: 'Copy page as JSON'),
 
   /// Writes the public `/forms/<ulid>` URL to the clipboard via
-  /// [publicFormUrl]. D-fp20 port from legacy `editor_page.dart`
+  /// [publicFormUrl]. D-fp20 port from legacy
   /// case `'copy-form-link'`. Same page-conditional gate as
   /// [EditorBetaAppBarAction.viewFormSubmissions] (only renders when
   /// [hasFormsFrontmatter] returns true) — matches the legacy
@@ -166,7 +164,7 @@ enum EditorBetaAppBarAction {
 
   /// Opens the [FormSubmissionsDialog] backed by
   /// `FormsRepository.listSubmissions(token:, ulid:)`. D-fp19 port
-  /// from legacy `editor_page.dart` case `'view-form-submissions'`.
+  /// from legacy case `'view-form-submissions'`.
   /// Conditional — only renders when the page declares a non-empty
   /// `forms:` frontmatter field (gate via [hasFormsFrontmatter]) and
   /// the SyncBloc is authed (handler emits a "not logged in" toast
