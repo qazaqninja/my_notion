@@ -32,7 +32,6 @@ import 'features/sync/presentation/bloc/sync_bloc.dart';
 import 'features/sync/presentation/bloc/sync_event.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
 import 'features/editor/presentation/pages/editor_beta_page.dart';
-import 'features/editor/presentation/pages/editor_page.dart';
 import 'features/settings/data/editor_preferences_store.dart';
 import 'features/settings/presentation/cubit/editor_preferences_cubit.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
@@ -294,11 +293,11 @@ GoRouter _buildRouter(VaultBloc vault) {
             // (same widget, same key shape).
             //
             // EditorPreferencesCubit + the Settings → Advanced "Use
-            // beta WYSIWYG editor" toggle + the [buildEditorPageForFork]
-            // helper + its M1673 widget tests are dead code as of this
-            // commit but stay in the tree until D30c (next slice) for
-            // a cleaner reverting-window if the new direct build
-            // surfaces a regression during dogfood.
+            // beta WYSIWYG editor" toggle are still in the tree as
+            // dead code; D30c-b/c remove them. `buildEditorPageForFork`
+            // + its M1673 widget tests were removed at M1759 (D30c-a)
+            // — the helper had no remaining callers after the route
+            // collapse above.
             builder: (context, state) => EditorBetaPage(
               key: ValueKey(
                 'editor-${state.pathParameters['ulid']}',
@@ -362,32 +361,4 @@ class _StreamListenable extends ChangeNotifier {
     _sub.cancel();
     super.dispose();
   }
-}
-
-/// D28 cutover branch helper (D30a / M1673): given the live
-/// `useBetaEditor` value plus the route's `ulid` + optional `anchor`
-/// query param, returns the editor widget the `/editor/:ulid`
-/// GoRoute should render.
-///
-/// Split out as a top-level function so it can be unit-tested without
-/// pumping a full app harness — the helper is pure given inputs.
-/// Production calls it from the `BlocSelector` builder inside
-/// `_buildRouter`. D30 will collapse this helper to a direct
-/// `EditorBetaPage` build once the dogfood window closes.
-Widget buildEditorPageForFork({
-  required bool useBetaEditor,
-  required String ulid,
-  required String? anchor,
-}) {
-  if (useBetaEditor) {
-    return EditorBetaPage(
-      key: ValueKey('beta-fork-$ulid'),
-      ulid: ulid,
-    );
-  }
-  return EditorPage(
-    key: ValueKey('$ulid#${anchor ?? ''}'),
-    ulid: ulid,
-    anchor: anchor,
-  );
 }
