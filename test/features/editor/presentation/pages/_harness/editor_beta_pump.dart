@@ -5,6 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/core/db/quill_database.dart';
 import 'package:my_notion/core/ulid/ulid_generator.dart';
+import 'package:my_notion/features/editor/data/repositories/html_export_repository_impl.dart';
+import 'package:my_notion/features/editor/data/repositories/pdf_export_repository_impl.dart';
+import 'package:my_notion/features/editor/domain/repositories/html_export_repository.dart';
+import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
+import 'package:my_notion/features/forms/domain/entities/form_submission.dart';
+import 'package:my_notion/features/forms/domain/repositories/forms_repository.dart';
 import 'package:my_notion/features/vault/data/datasources/vault_fs_datasource.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/data/repositories/vault_repository_impl.dart';
@@ -20,14 +26,22 @@ import 'package:my_notion/features/vault/domain/repositories/vault_repository.da
 /// assert dispatch) reuse this single helper instead of rebuilding
 /// the provider stack in every file.
 ///
-/// **Status:** sub-slice 2 (M1806). Three foundation providers
-/// (VaultRepository + Indexer + QuillDatabase) are now wired via
-/// in-memory fakes (drift `NativeDatabase.memory()` + `MemoryFileSystem`).
-/// The helper mounts a probe widget that proves these are
-/// resolvable via `context.read`. Subsequent sub-slices add the
-/// remaining 6 collaborators (HtmlExportRepository,
-/// PdfExportRepository, FormsRepository, VaultBloc, SyncBloc, and
-/// the 3 self-provided blocs/cubits via the page itself) and
+/// **Status:** sub-slice 3 (M1809). 6 of 9 collaborators now
+/// wired — the 3 M1806 foundations (VaultRepository + Indexer +
+/// QuillDatabase) plus the 3 added in this slice
+/// (HtmlExportRepository + PdfExportRepository + FormsRepository).
+/// The two ExportRepository impls are stateless `const Impl()`
+/// (they wrap the M1794/M1796 pure-function adapters already
+/// covered in `vault/data/` tests). FormsRepository uses a tiny
+/// in-test `_NoopFormsRepository` that returns empty submission
+/// lists — the auth-gated `listSubmissions` is only invoked from
+/// `_onViewFormSubmissions` (D-fp19, M1741), and an empty list is
+/// the same shape the kebab handler sees from the real backend
+/// when no forms have been submitted yet.
+///
+/// Subsequent sub-slices add the remaining 3 collaborators
+/// (VaultBloc + SyncBloc + the page itself, which internally
+/// provides EditorBloc + SlashMenuCubit + BlockSelectionCubit) and
 /// finally swap the probe for the actual `EditorBetaPage`.
 ///
 /// **Provider stack the editor needs** (verified via grep on
@@ -36,9 +50,9 @@ import 'package:my_notion/features/vault/domain/repositories/vault_repository.da
 /// * `RepositoryProvider<VaultRepository>` ✅ M1806
 /// * `RepositoryProvider<Indexer>` ✅ M1806
 /// * `RepositoryProvider<QuillDatabase>` ✅ M1806
-/// * `RepositoryProvider<HtmlExportRepository>` (M1794) — queued
-/// * `RepositoryProvider<PdfExportRepository>` (M1796) — queued
-/// * `RepositoryProvider<FormsRepository>` (D-fp19, M1741) — queued
+/// * `RepositoryProvider<HtmlExportRepository>` (M1794) ✅ M1809
+/// * `RepositoryProvider<PdfExportRepository>` (M1796) ✅ M1809
+/// * `RepositoryProvider<FormsRepository>` (D-fp19, M1741) ✅ M1809
 /// * `BlocProvider<VaultBloc>` (read for `rootPath`) — queued
 /// * `BlocProvider<SyncBloc>` (read for `isAuthed`) — queued
 /// * The editor provides `EditorBloc`, `SlashMenuCubit`, and
@@ -76,12 +90,41 @@ Future<EditorBetaHarness> pumpEditorBeta(
         RepositoryProvider<VaultRepository>.value(value: repo),
         RepositoryProvider<Indexer>.value(value: indexer),
         RepositoryProvider<QuillDatabase>.value(value: db),
+        RepositoryProvider<HtmlExportRepository>(
+          create: (_) => const HtmlExportRepositoryImpl(),
+        ),
+        RepositoryProvider<PdfExportRepository>(
+          create: (_) => const PdfExportRepositoryImpl(),
+        ),
+        RepositoryProvider<FormsRepository>(
+          create: (_) => const _NoopFormsRepository(),
+        ),
       ],
       child: probe ?? const _UnwiredPagePlaceholder(),
     ),
   );
 
   return EditorBetaHarness._(db: db, indexer: indexer, repo: repo, fs: fs);
+}
+
+/// In-test stand-in for [FormsRepository] that returns an empty
+/// submission list. The only consumer in `editor_beta_page.dart` is
+/// `_onViewFormSubmissions` (D-fp19, M1741), which shows an empty
+/// state when there are no rows — exactly the shape this stub
+/// produces. Per-handler slices that need richer behavior (e.g.,
+/// "tap row → open detail") will override the impl via the
+/// `RepositoryProvider<FormsRepository>` they wrap around their
+/// own `pumpEditorBeta` call.
+class _NoopFormsRepository implements FormsRepository {
+  const _NoopFormsRepository();
+
+  @override
+  Future<List<FormSubmission>> listSubmissions({
+    required String token,
+    required String ulid,
+  }) async {
+    return const [];
+  }
 }
 
 /// Handles returned from [pumpEditorBeta] so per-handler slices can

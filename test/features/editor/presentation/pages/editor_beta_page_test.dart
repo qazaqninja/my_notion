@@ -2,7 +2,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/core/db/quill_database.dart' hide Page;
+import 'package:my_notion/features/editor/domain/repositories/html_export_repository.dart';
+import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
+import 'package:my_notion/features/forms/domain/repositories/forms_repository.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
 
@@ -71,6 +74,41 @@ void main() {
         expect(foundRepo, isA<VaultRepository>());
         expect(foundIndexer, isA<Indexer>());
         expect(foundDb, isA<QuillDatabase>());
+      });
+
+      // M1809 sub-slice 3: HtmlExportRepository + PdfExportRepository +
+      // FormsRepository also resolvable now. Per-handler slices that
+      // need richer FormsRepository behavior can wrap their own
+      // RepositoryProvider override around the call site.
+      testWidgets(
+          'mounts ExportRepository pair + FormsRepository (no-op stub)',
+          (tester) async {
+        late HtmlExportRepository foundHtml;
+        late PdfExportRepository foundPdf;
+        late FormsRepository foundForms;
+
+        final harness = await pumpEditorBeta(
+          tester,
+          ulid: '01H0000000000000000000ABCD',
+          probe: Builder(
+            builder: (context) {
+              foundHtml = context.read<HtmlExportRepository>();
+              foundPdf = context.read<PdfExportRepository>();
+              foundForms = context.read<FormsRepository>();
+              return const SizedBox.shrink();
+            },
+          ),
+        );
+        addTearDown(harness.dispose);
+
+        expect(foundHtml, isA<HtmlExportRepository>());
+        expect(foundPdf, isA<PdfExportRepository>());
+        expect(foundForms, isA<FormsRepository>());
+        // The no-op stub returns an empty list for any (token, ulid).
+        await expectLater(
+          foundForms.listSubmissions(token: 't', ulid: 'u'),
+          completion(isEmpty),
+        );
       });
     });
   });
