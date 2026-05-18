@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp6 shipped (Move-to-Trash + Pull-from-server + Share + Find-in-page + Copy-[[link]] + Copy-ULID).**
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp6 shipped. M1700 enum extraction + M1705 AppBar wire-up complete.**
 - **Phase:** D (super_editor WYSIWYG migration) — 306 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #25 — after M1703 D-fp6 Copy-ULID port. Options: (a) Wire enum into AppBar — replace inline IconButton sequence with `for (action in editorBetaAppBarActions(...))` loop, eliminates the BlocBuilder<SyncBloc> manual gate; (b) D-fp7 next port — copy-path / reveal / rename / duplicate; (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction (TDD-able as a Cubit); (e) D30b/c after 28+ slice dogfood; (f) Phase E continuation. Default lean: option (a) — completes M1700's two-step refactor, removes duplication, gives the enum a real consumer.
+- **Task:** Pick-next survey #26 — after M1705 enum wire-up. Options: (a) D-fp7 next port — copy-path / reveal / rename / duplicate; (b) NV-02 typed routes; (c) BL-12 _FindBarHost extraction (TDD-able as a Cubit); (d) D30b/c after 30+ slice dogfood; (e) Phase E continuation; (f) Add buildWhen to BlocBuilder<EditorBloc> at editor_beta_page.dart:118 (M1705 BL-12 info); (g) Close the TS-01 widget test gap with a stub `editor_beta_page_test.dart` (carry-forward WARN now flagged on M1703 + M1705). Default lean: option (g) — TS-01 stub closes the recurring WARN; small one-off slice, opens future widget-tier coverage.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1705 — pick-next #25 closeout: wire EditorBetaAppBarAction enum into AppBar build path** (1 file modified; +59 / -51; no new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 248 closeout
+- Notes: Completes M1700's two-step refactor. Two changes in `editor_beta_page.dart`: (1) new `IconButton _iconButtonFor(EditorBetaAppBarAction action)` switch-based factory on `_BetaEditorShellState` mapping each enum value to its concrete IconButton (icon literal + `action.tooltip` + handler reference); (2) `AppBar.actions` collapsed from six inline IconButton entries (one wrapped in its own BlocBuilder for the auth gate) to a single top-level `BlocBuilder<SyncBloc, SyncState>(buildWhen: (p,n) => p.isAuthed != n.isAuthed, builder: ... Row(... for action in editorBetaAppBarActions(isAuthed: state.isAuthed) _iconButtonFor(action) ...))`. BETA badge kept outside the BlocBuilder so SyncBloc emissions can't accidentally remount it. No new tests — visibility/order/tooltip contracts pre-covered by M1700/M1701's 8 enum tests. The enum extraction + wire-up arc cleanly demonstrates the two-step refactor discipline (domain shape first then widget consumer). **Orchestrator audit: 0 BLOCK / 2 WARN (CA-04 pre-existing Indexer cross-codebase pattern not introduced by M1705; TS-01/FS-04 widget test gap same as M1703 — `test/features/editor/presentation/pages/` absent, carry-forward) / 3 INFO (BL-12 hint on the unrelated EditorBloc builder at line 118 lacking buildWhen; TH-03 BETA badge inline TextStyle clean; DI-04 confirmation all context.read sites are in callback/factory contexts).** Both WARN are pre-existing, not newly introduced. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1703 — pick-next #24 closeout: D-fp6 Copy-ULID port (wire-up)** (1 file modified; +35 / -1; no new tests; analyze clean)
 - Committed: (this iteration)
