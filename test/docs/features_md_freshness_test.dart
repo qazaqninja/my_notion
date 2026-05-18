@@ -92,6 +92,24 @@ void main() {
           reason: 'M1815: also bumped the prose counter on line 12',
         );
       });
+
+      test('is not still M1813+ after D-fp per-handler smoke arc landed',
+          () {
+        expect(
+          source.contains('M0–M1813+'),
+          isFalse,
+          reason:
+              'M1892: bumped to M1891+ after the D-fp per-handler smoke '
+              'arc reached 25/26 coverage (M1817 spike → M1888 _onFindInPage '
+              '→ M1890 _onViewFormSubmissions) with all deterministic '
+              'widget-only handlers smoked',
+        );
+        expect(
+          source.contains('1,813+ milestones'),
+          isFalse,
+          reason: 'M1892: also bumped the prose counter on line 12',
+        );
+      });
     });
 
     group('block-editor paragraph', () {
