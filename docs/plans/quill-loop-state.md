@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp13 shipped (kebab refactor complete).**
-- **Phase:** D (super_editor WYSIWYG migration) — 341 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #36 — after M1729 D-fp13 kebab slice 2 wire-up. Options: (a) D-fp14 set-font / set-reminder / view-form-submissions / move-to-folder / add-tags (legacy kebab still has ~7); (b) Coordinated BL-11 SnackBar→BlocListener refactor across 12 D-fp handlers (substantial); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 50+ slice dogfood; (f) Phase E continuation; (g) Stub editor_beta_page_test.dart with a _kebabFor widget smoke; (h) Relocate editorBetaXxxActions helpers from domain/ to presentation/ if pure-domain audit becomes priority. Default lean: option (a) D-fp14 set-font — frontmatter `font:` + EditorBloc EditFrontmatterField pattern already exists.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp14 shipped (13 D-fp actions, kebab refactor live).**
+- **Phase:** D (super_editor WYSIWYG migration) — 351 tests after M1731 (+10). D-fp parity arc in progress.
+- **Task:** Pick-next survey #37 — after M1731 D-fp14 set-font port. Options: (a) D-fp15 set-reminder (or reminder family — set/snooze/clear); (b) D-fp15 view-form-submissions; (c) Coordinated BL-11 SnackBar→BlocListener refactor (substantial); (d) NV-02 typed routes; (e) D30b/c after 52+ slice dogfood; (f) Phase E continuation; (g) Stub editor_beta_page_test.dart. Default lean: option (a) D-fp15 set-reminder — frontmatter `reminder:` + ReminderBloc patterns fit scaffolding cleanly.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1731 — pick-next #36 closeout: D-fp14 Set-font kebab port (TDD)** (7 files; +238 / -3; 18 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 259 closeout
+- Notes: Seventh slice riding the M1700/M1705/M1707 scaffolding; first D-fp port to land directly into the post-M1729 kebab partition. **D-fp14 port:** new pure-Dart `lib/features/editor/domain/page_font.dart` with three exports — `String pageFontLabel(picked)` (sans → "sans-serif (default)", serif → "serif", mono → "monospace", unknown passes through); `enum PageFontAction { noop, remove, add, edit }`; `pageFontActionFor({picked, existing})` planner with full no-op detection (sans+null = noop, sans+existing = remove, matching = noop, null existing = add, otherwise edit; trim-tolerant). 10 unit tests covering all branches incl. whitespace-around-existing edge case. New `EditorBetaAppBarAction.setFont` enum slot (tooltip "Set page font") between `pageHistory` and `moveToTrash`; classified into the kebab via `isEditorBetaKebabAction`; iconFor → `Icons.font_download_outlined`. New `_onSetFont()` async handler reads EditorBloc state, opens `showQuillChoice<String>` 3-option chooser (sans / serif / mono), routes the pick through `pageFontActionFor`, switches on the resulting plan to dispatch Remove/Add/EditFrontmatterField (or just a "Page font already set to X" SnackBar for noop) + a success "Page font: X" SnackBar. Same M1571 widget-tier coverage:ignore-start/end pattern. `_handlerFor` switch arm appended. **Orchestrator audit: 0 BLOCK / 0 WARN / 2 INFO (both pre-existing carry-forwards: `_onSetFont` coverage:ignore consistent with M1571 policy; iconFor uniqueness test is correct today, future polish if two actions ever share an icon).** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1729 — pick-next #35 closeout: D-fp13 kebab refactor slice 2 (AppBar wire-up)** (1 file modified; +54 / -17; no new tests; analyze clean)
 - Committed: (this iteration)
