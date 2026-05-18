@@ -13,6 +13,7 @@ import 'package:my_notion/core/db/quill_database.dart' hide Page;
 import 'package:my_notion/core/ulid/ulid_generator.dart';
 import 'package:my_notion/features/editor/data/repositories/html_export_repository_impl.dart';
 import 'package:my_notion/features/editor/data/repositories/pdf_export_repository_impl.dart';
+import 'package:my_notion/features/editor/domain/editor_beta_app_bar_actions.dart';
 import 'package:my_notion/features/editor/domain/repositories/html_export_repository.dart';
 import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
@@ -291,4 +292,53 @@ Widget _defaultProbe({required String ulid}) {
       ],
     ),
   );
+}
+
+/// Dispatches a kebab [EditorBetaAppBarAction] by invoking the
+/// production `PopupMenuButton.onSelected` callback directly,
+/// bypassing the pointer-tap path entirely.
+///
+/// **M1838/M1839** — supersedes the previous `find.byTooltip('More
+/// actions')` + `find.text(label)` pattern. Pointer taps work for
+/// menu items at the top of the kebab popup (3 existing per-handler
+/// smokes: `_onCopyUlid`, `_onCopyLink`, `_onCopyPath`) but fail for
+/// items past the initial viewport because super_editor inserts an
+/// Overlay above the PopupMenu route that intercepts hit-tests (see
+/// the M1835 spike trace). The orchestrator's M1838 TS-06 WARN
+/// explicitly accepts this workaround as load-bearing for the
+/// remaining ~7 kebab handlers.
+///
+/// **Trade-off (TS-06):** invoking the production callback skips the
+/// internal dispatch chain (`PopupMenuButton._handleItemSelected` →
+/// `Navigator.pop` → `onSelected`). If a future Flutter / super_editor
+/// upgrade moves dispatch off `onSelected`, tests using this helper
+/// pass while the real UI breaks silently. Acceptable because the
+/// pointer-tap alternative is currently impossible; revisit when
+/// `flutter_test` ships a test-mode Overlay-suppression flag or
+/// super_editor's Overlay stops intercepting taps.
+Future<void> tapKebabItem(
+  WidgetTester tester,
+  EditorBetaAppBarAction action,
+) async {
+  final button = tester.widget<PopupMenuButton<EditorBetaAppBarAction>>(
+    find.byType(PopupMenuButton<EditorBetaAppBarAction>),
+  );
+  // M1839 (orchestrator M1838 INFO): guard the bang so a future
+  // production refactor that nulls out `onSelected` (e.g., migrating
+  // to per-item `onTap` callbacks) produces a clear test failure
+  // here, not a generic `Null check operator used on null` deep in
+  // the harness.
+  expect(
+    button.onSelected,
+    isNotNull,
+    reason: 'PopupMenuButton.onSelected must be set for tapKebabItem '
+        'to dispatch. Production refactor needed if this fires.',
+  );
+  button.onSelected!(action);
+  // The handler is async (`Future<void> _on…() async { … }`) — pump
+  // a handful of frames so the awaited `Clipboard.setData` / dialog
+  // / etc. side effects land before the test asserts.
+  for (var i = 0; i < 3; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
 }

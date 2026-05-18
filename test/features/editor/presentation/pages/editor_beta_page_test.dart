@@ -27,43 +27,6 @@ import '_harness/editor_beta_pump.dart';
 /// smokes (`_onCopyPath`, `_onCopyBody`, `_onCopyPlain`,
 /// `_onCopyJson`, …) call this helper instead of redeclaring the 14
 /// lines of mock-handler boilerplate.
-/// Dispatches a kebab `EditorBetaAppBarAction` by invoking the
-/// `PopupMenuButton.onSelected` callback directly, bypassing the
-/// pointer-tap path entirely.
-///
-/// M1838 — supersedes the previous `find.byTooltip('More actions')`
-/// + `find.text(label)` pattern used by `_onCopyUlid` / `_onCopyLink`
-/// / `_onCopyPath`. The pointer-tap path works for menu items at the
-/// top of the popup but breaks at the 4th-or-lower item because
-/// super_editor inserts an Overlay above the PopupMenu route that
-/// intercepts pointer events (see M1835 spike).
-///
-/// Direct-callback dispatch:
-///   * still exercises the production handler closure (so the
-///     handler's `context.read<X>()` reads work the same way)
-///   * doesn't require the popup to render at all (no surface-size
-///     adjustment, no `ensureVisible`, no menu-position math)
-///   * works for any item in the kebab regardless of viewport
-///
-/// Future per-handler smokes (`_onCopyBody`, `_onCopyPlain`,
-/// `_onCopyJson`, `Move to trash`, kebab handlers requiring dialogs,
-/// etc.) call this helper instead of the pointer-tap pattern.
-Future<void> tapKebabItem(
-  WidgetTester tester,
-  EditorBetaAppBarAction action,
-) async {
-  final button = tester.widget<PopupMenuButton<EditorBetaAppBarAction>>(
-    find.byType(PopupMenuButton<EditorBetaAppBarAction>),
-  );
-  button.onSelected!(action);
-  // The handler is async (`Future<void> _on…() async { … }`) — pump
-  // a handful of frames so the awaited `Clipboard.setData` / dialog
-  // / etc. side effects land before the test asserts.
-  for (var i = 0; i < 3; i++) {
-    await tester.pump(const Duration(milliseconds: 50));
-  }
-}
-
 ValueGetter<String?> _installClipboardMock(WidgetTester tester) {
   String? captured;
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
