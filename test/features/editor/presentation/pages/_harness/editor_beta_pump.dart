@@ -105,6 +105,7 @@ Future<EditorBetaHarness> pumpEditorBeta(
   bool seedPage = false,
   String seedTitle = 'Test',
   String seedBody = 'Hello.',
+  Map<String, String> seedExtraFrontmatter = const <String, String>{},
   Size? surface,
   double? devicePixelRatio,
 }) async {
@@ -142,8 +143,22 @@ Future<EditorBetaHarness> pumpEditorBeta(
   final VaultState vaultState;
   if (seedPage) {
     final root = fs.directory(rootPath)..createSync(recursive: true);
+    // M1874: optional `seedExtraFrontmatter` map serializes each
+    // `key: value` pair as its own YAML scalar line under the
+    // mandatory `id:` + `title:` keys. Unblocks the three deferred
+    // happy-path smokes (snooze 4-option modal, clear success
+    // branch, set-reminder replace) currently behind no-reminder
+    // guards — each only needs `reminder: <iso-date>` seeded.
+    // Values are interpolated raw (no escaping); intended for
+    // simple scalar strings (dates, slugs, plain text) — the
+    // production frontmatter writer is the production code-path,
+    // so anything more exotic should go through it instead.
+    final extraLines = seedExtraFrontmatter.entries
+        .map((entry) => '${entry.key}: ${entry.value}\n')
+        .join();
     root.childFile('page.md').writeAsStringSync(
-          '---\nid: $ulid\ntitle: $seedTitle\n---\n\n$seedBody\n',
+          '---\nid: $ulid\ntitle: $seedTitle\n'
+          '$extraLines---\n\n$seedBody\n',
         );
     await indexer.reindex(root);
     vaultState = VaultLoaded(

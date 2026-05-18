@@ -1045,6 +1045,52 @@ void main() {
             findsOneWidget,
           );
         });
+
+        // M1874 — happy-path smoke. Closes the M1869 deferred path:
+        // when frontmatter has `reminder: <iso-date>`, the handler
+        // dispatches `RemoveFrontmatterField('reminder')` to the
+        // EditorBloc and shows SnackBar 'Reminder cleared (was
+        // <was>).' Uses the new `seedExtraFrontmatter` harness
+        // primitive to write `reminder: 2026-05-25` into the page's
+        // YAML block so the production handler at
+        // `editor_beta_page.dart:747` reaches the success branch
+        // instead of the no-reminder guard.
+        //
+        // Bloc-dispatch verification is out of scope here because
+        // EditorBloc is the page's INTERNAL bloc (provided inside
+        // EditorBetaPage's own MultiBlocProvider); the harness only
+        // stubs VaultBloc + SyncBloc. The user-observable outcome
+        // is the SnackBar text, which is what we assert. The
+        // RemoveFrontmatterField → frontmatter mutation is covered
+        // by existing EditorBloc unit tests.
+        testWidgets(
+            'kebab → Clear reminder → SnackBar reports cleared value '
+            'when seedPage has reminder frontmatter', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          const reminderDate = '2026-05-25';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            seedExtraFrontmatter: const {'reminder': reminderDate},
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(
+            tester,
+            EditorBetaAppBarAction.clearReminder,
+          );
+
+          expect(
+            find.text('Reminder cleared (was $reminderDate).'),
+            findsOneWidget,
+          );
+        });
       });
 
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
