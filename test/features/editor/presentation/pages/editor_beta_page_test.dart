@@ -408,7 +408,7 @@ void main() {
       //
       // The expected clipboard value is therefore the trimmed
       // plain-text form — no leading/trailing newlines.
-      group('_onCopyPlain (D-fp18, M1739) — per-handler smoke', () {
+      group('_onCopyPlain (D-fp18a, M1739) — per-handler smoke', () {
         testWidgets('kebab → Copy as plain text → clipboard receives '
             'stripped+trimmed body', (tester) async {
           final clipboard = _installClipboardMock(tester);
@@ -442,7 +442,7 @@ void main() {
       // payload helper but escaping rules (newlines, quotes) on the
       // body field would make the literal-assertion fragile and
       // sensitive to harmless serialiser changes.
-      group('_onCopyJson (D-fp18, M1739) — per-handler smoke', () {
+      group('_onCopyJson (D-fp18b, M1739) — per-handler smoke', () {
         testWidgets(
             'kebab → Copy as JSON → clipboard receives '
             'canonical {ulid, relativePath, frontmatter, body} envelope',
