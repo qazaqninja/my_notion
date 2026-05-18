@@ -306,6 +306,65 @@ void main() {
         });
       });
 
+      // M1829 — second per-handler smoke using the M1826 template.
+      // `_onCopyLink` (D-fp5, M1696) writes `wikilinkLiteralFor(ulid:)`
+      // = `[[<ulid>]]` to the clipboard. Validates the template
+      // generalizes: same mount + same SystemChannels.platform mock
+      // + different menu item label + different expected clipboard
+      // payload. Future identical clipboard handlers (_onCopyPath,
+      // _onCopyBody, _onCopyPlain, _onCopyJson) inherit this shape.
+      group('_onCopyLink (D-fp5, M1696) — per-handler smoke', () {
+        testWidgets(
+            'tap kebab → Copy [[link]] to this page → clipboard '
+            'receives [[ulid]]', (tester) async {
+          tester.view.physicalSize = const Size(1200, 900);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(() {
+            tester.view.resetPhysicalSize();
+            tester.view.resetDevicePixelRatio();
+          });
+
+          String? clipboardText;
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            (call) async {
+              if (call.method == 'Clipboard.setData') {
+                clipboardText =
+                    (call.arguments as Map<Object?, Object?>)['text']
+                        as String?;
+              }
+              return null;
+            },
+          );
+          addTearDown(
+            () => tester.binding.defaultBinaryMessenger
+                .setMockMethodCallHandler(SystemChannels.platform, null),
+          );
+
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tester.tap(find.byTooltip('More actions'));
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+          expect(tester.takeException(), isNull);
+          await tester.tap(find.text('Copy [[link]] to this page'));
+          await tester.pump();
+          expect(tester.takeException(), isNull);
+
+          expect(clipboardText, '[[$ulid]]');
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
