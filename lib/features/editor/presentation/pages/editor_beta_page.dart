@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:super_editor/super_editor.dart';
 
@@ -37,6 +38,7 @@ import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
 import '../../domain/copy_labels.dart';
 import '../../domain/has_forms_frontmatter.dart';
 import '../../../vault/data/html_exporter.dart';
+import '../../../vault/data/pdf_exporter.dart';
 import '../../domain/page_font.dart';
 import '../../domain/safe_export_filename.dart';
 import '../../domain/word_goal.dart';
@@ -1060,6 +1062,43 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp23 (M1749): port Print-page from legacy editor_page.dart:690
+  /// (`_printPage`). Renders the page body as a PDF via
+  /// `PdfExporter.exportSingle(title:, body:)` and hands it to
+  /// `Printing.layoutPdf` so the OS print dialog can offer Print /
+  /// Save as PDF / Preview. Closes the export trio (md / html /
+  /// pdf). Errors SnackBar "Print failed: $e" — matches the legacy
+  /// catch-all.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `PdfExporter` + `Printing.layoutPdf` + `ScaffoldMessenger`. The
+  /// PDF builder + the printing dep both have their own coverage.
+  // coverage:ignore-start
+  Future<void> _onPrintPage() async {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final page = editorState.page;
+    try {
+      final bytes = await const PdfExporter().exportSingle(
+        title: page.title,
+        body: page.body,
+      );
+      await Printing.layoutPdf(
+        name: page.title,
+        onLayout: (_) async => Uint8List.fromList(bytes),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Print failed: $e'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+  // coverage:ignore-end
+
   /// D-fp22 (M1747): port Export-as-HTML from legacy
   /// editor_page.dart:1107 (`_exportPageAsHtml`). Renders
   /// `HtmlExporter.renderStandalonePage(title:, body:)` and writes
@@ -1544,6 +1583,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.setGoal => _onSetGoal,
         EditorBetaAppBarAction.exportMarkdown => _onExportMarkdown,
         EditorBetaAppBarAction.exportHtml => _onExportHtml,
+        EditorBetaAppBarAction.printPage => _onPrintPage,
         EditorBetaAppBarAction.setReminder => _onSetReminder,
         EditorBetaAppBarAction.snoozeReminder => _onSnoozeReminder,
         EditorBetaAppBarAction.clearReminder => _onClearReminder,

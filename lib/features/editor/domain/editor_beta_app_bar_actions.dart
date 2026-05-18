@@ -93,6 +93,13 @@ enum EditorBetaAppBarAction {
   /// markdown variant via [safeExportFilename].
   exportHtml(tooltip: 'Export as .html…'),
 
+  /// Renders the page as a PDF via `PdfExporter.exportSingle` and
+  /// hands it to `Printing.layoutPdf` — the user's OS print dialog
+  /// then offers Print / Save as PDF / open in Preview. D-fp23 port
+  /// from legacy `editor_page.dart` case `'print-page'`
+  /// (`_printPage`). Closes the export trio (md / html / pdf).
+  printPage(tooltip: 'Print / Save as PDF…'),
+
   /// Opens a date picker; writes the picked date as ISO `YYYY-MM-DD`
   /// into the page's `reminder:` frontmatter. D-fp15 port from
   /// legacy `editor_page.dart` case `'set-reminder'`.
@@ -180,6 +187,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.setGoal;
   yield EditorBetaAppBarAction.exportMarkdown;
   yield EditorBetaAppBarAction.exportHtml;
+  yield EditorBetaAppBarAction.printPage;
   yield EditorBetaAppBarAction.setReminder;
   yield EditorBetaAppBarAction.snoozeReminder;
   yield EditorBetaAppBarAction.clearReminder;
@@ -227,6 +235,7 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.setGoal ||
     EditorBetaAppBarAction.exportMarkdown ||
     EditorBetaAppBarAction.exportHtml ||
+    EditorBetaAppBarAction.printPage ||
     EditorBetaAppBarAction.setReminder ||
     EditorBetaAppBarAction.snoozeReminder ||
     EditorBetaAppBarAction.clearReminder ||

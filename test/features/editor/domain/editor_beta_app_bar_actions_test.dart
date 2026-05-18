@@ -32,6 +32,7 @@ void main() {
         EditorBetaAppBarAction.setGoal,
         EditorBetaAppBarAction.exportMarkdown,
         EditorBetaAppBarAction.exportHtml,
+        EditorBetaAppBarAction.printPage,
         EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
@@ -50,16 +51,17 @@ void main() {
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → publishToggle → pageHistory → '
         'setFont → setGoal → exportMarkdown → exportHtml → '
-        'setReminder → snoozeReminder → clearReminder → copyBody → '
-        'copyPlain → copyJson → copyFormLink? → '
+        'printPage → setReminder → snoozeReminder → clearReminder → '
+        'copyBody → copyPlain → copyJson → copyFormLink? → '
         'viewFormSubmissions? → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp22
+      // Order matters so the rendered AppBar matches the post-D-fp23
       // layout users have already learned. setGoal slots between
       // setFont and setReminder (D-fp21 / M1745); exportMarkdown +
       // exportHtml slot between setGoal and setReminder (D-fp22 /
-      // M1747). The three copy-* entries group together;
-      // copyFormLink + viewFormSubmissions (when present) form the
-      // form-bearing pair immediately before moveToTrash.
+      // M1747); printPage closes the export trio immediately after
+      // exportHtml (D-fp23 / M1749). The three copy-* entries group
+      // together; copyFormLink + viewFormSubmissions (when present)
+      // form the form-bearing pair immediately before moveToTrash.
       expect(
           editorBetaAppBarActions(isAuthed: true, isFormBearing: true).toList(),
           [
@@ -78,6 +80,7 @@ void main() {
             EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.exportMarkdown,
             EditorBetaAppBarAction.exportHtml,
+            EditorBetaAppBarAction.printPage,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -109,6 +112,7 @@ void main() {
             EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.exportMarkdown,
             EditorBetaAppBarAction.exportHtml,
+            EditorBetaAppBarAction.printPage,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -195,6 +199,7 @@ void main() {
         EditorBetaAppBarAction.setGoal,
         EditorBetaAppBarAction.exportMarkdown,
         EditorBetaAppBarAction.exportHtml,
+        EditorBetaAppBarAction.printPage,
         EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
@@ -282,6 +287,7 @@ void main() {
             EditorBetaAppBarAction.setGoal,
             EditorBetaAppBarAction.exportMarkdown,
             EditorBetaAppBarAction.exportHtml,
+            EditorBetaAppBarAction.printPage,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -373,6 +379,13 @@ void main() {
         expect(
           EditorBetaAppBarAction.exportHtml.tooltip,
           'Export as .html…',
+        );
+      });
+
+      test('printPage tooltip reads the D-fp23 port label', () {
+        expect(
+          EditorBetaAppBarAction.printPage.tooltip,
+          'Print / Save as PDF…',
         );
       });
 

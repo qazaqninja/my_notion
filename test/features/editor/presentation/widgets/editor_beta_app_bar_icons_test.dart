@@ -90,6 +90,13 @@ void main() {
       expect(iconFor(EditorBetaAppBarAction.exportHtml), Icons.code);
     });
 
+    test('printPage → Icons.print_outlined (D-fp23 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.printPage),
+        Icons.print_outlined,
+      );
+    });
+
     test('setReminder → Icons.alarm (D-fp15 port glyph)', () {
       expect(iconFor(EditorBetaAppBarAction.setReminder), Icons.alarm);
     });
