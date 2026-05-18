@@ -15,19 +15,22 @@ void main() {
   //
   // First slice: editor_beta_app_bar_actions.dart, which had 16
   // citations in enum doc comments.
-  test('editor_beta_app_bar_actions.dart has no `editor_page.dart` refs',
-      () {
-    final file = File(
-      'lib/features/editor/domain/editor_beta_app_bar_actions.dart',
-    );
-    final source = file.readAsStringSync();
-    expect(
-      source.contains('editor_page.dart'),
-      isFalse,
-      reason:
-          'M1773: legacy filename removed from enum doc comments — '
-          'kept the case-label + D-fp / M-milestone refs; git history '
-          'holds the full source.',
-    );
+  //
+  // M1774 fix-forward: TS-04 group wrap (M1773 audit info finding).
+  group('editor_beta_app_bar_actions.dart stale citations', () {
+    test('has no `editor_page.dart` refs', () {
+      final file = File(
+        'lib/features/editor/domain/editor_beta_app_bar_actions.dart',
+      );
+      final source = file.readAsStringSync();
+      expect(
+        source.contains('editor_page.dart'),
+        isFalse,
+        reason:
+            'M1773: legacy filename removed from enum doc comments — '
+            'kept the case-label + D-fp / M-milestone refs; git history '
+            'holds the full source.',
+      );
+    });
   });
 }
