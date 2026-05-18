@@ -875,11 +875,13 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   /// at M1707 into the top-level [iconFor] helper so each action's icon
   /// is unit-testable without a widget tree; the handler-reference
   /// switch stays here since it's bound to State methods.
-  IconButton _iconButtonFor(EditorBetaAppBarAction action) {
-    return IconButton(
-      icon: Icon(iconFor(action)),
-      tooltip: action.tooltip,
-      onPressed: switch (action) {
+  /// M1729 (D-fp13 kebab refactor slice 2): map each
+  /// [EditorBetaAppBarAction] enum value to the State method that
+  /// executes it. Pulled out of `_iconButtonFor` so the new
+  /// `PopupMenuButton` kebab can dispatch the same way without
+  /// duplicating the switch.
+  VoidCallback _handlerFor(EditorBetaAppBarAction action) =>
+      switch (action) {
         EditorBetaAppBarAction.pullFromServer => _onPullFromServer,
         EditorBetaAppBarAction.findInPage => _toggleFindBar,
         EditorBetaAppBarAction.share => _onSharePage,
@@ -892,7 +894,40 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.publishToggle => _onPublishToggle,
         EditorBetaAppBarAction.pageHistory => _onPageHistory,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
-      },
+      };
+
+  IconButton _iconButtonFor(EditorBetaAppBarAction action) {
+    return IconButton(
+      icon: Icon(iconFor(action)),
+      tooltip: action.tooltip,
+      onPressed: _handlerFor(action),
+    );
+  }
+
+  /// M1729 (D-fp13 kebab refactor slice 2): render the 8 secondary
+  /// AppBar actions as a single trailing `PopupMenuButton` kebab. The
+  /// partition order is locked by `editorBetaKebabActions` unit
+  /// tests, so the rendered menu always matches the docs.
+  PopupMenuButton<EditorBetaAppBarAction> _kebabFor({
+    required bool isAuthed,
+  }) {
+    return PopupMenuButton<EditorBetaAppBarAction>(
+      icon: const Icon(Icons.more_vert),
+      tooltip: 'More actions',
+      onSelected: (action) => _handlerFor(action).call(),
+      itemBuilder: (context) => [
+        for (final action in editorBetaKebabActions(isAuthed: isAuthed))
+          PopupMenuItem<EditorBetaAppBarAction>(
+            value: action,
+            child: Row(
+              children: [
+                Icon(iconFor(action), size: 18),
+                const SizedBox(width: 12),
+                Text(action.tooltip),
+              ],
+            ),
+          ),
+      ],
     );
   }
 
@@ -914,29 +949,31 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          // M1705 wire-up: the AppBar action sequence is now driven by
-          // the M1700 [editorBetaAppBarActions] enum. A single
-          // BlocBuilder<SyncBloc> gates the whole row on `isAuthed`
-          // (replaces five per-action checks plus the prior nested
-          // BlocBuilder around just `pullFromServer`). Order, tooltips,
-          // and the auth-visibility rule are all unit-tested via
+          // M1729 wire-up: top-bar IconButtons + trailing
+          // PopupMenuButton kebab, driven by the M1727 partition. A
+          // single BlocBuilder<SyncBloc> still gates the whole row on
+          // `isAuthed` (only pullFromServer cares today). Order,
+          // tooltips, and the partition rules are unit-tested via
           // editor_beta_app_bar_actions_test.dart.
           BlocBuilder<SyncBloc, SyncState>(
             buildWhen: (prev, next) => prev.isAuthed != next.isAuthed,
             builder: (context, syncState) => Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                for (final action in editorBetaAppBarActions(
+                for (final action in editorBetaTopBarActions(
                     isAuthed: syncState.isAuthed))
                   _iconButtonFor(action),
+                _kebabFor(isAuthed: syncState.isAuthed),
               ],
             ),
           ),
           // BETA badge sits outside the BlocBuilder above so a SyncBloc
-          // state change can't accidentally remount it. All D-fp ports
-          // (Move-to-Trash / Pull-from-server / Share / Find-in-page /
-          // Copy-[[link]] / Copy-ULID) now live inside the
-          // [editorBetaAppBarActions] enum-driven Row.
+          // state change can't accidentally remount it. The kebab
+          // (`_kebabFor`) holds the 8 secondary D-fp ports
+          // (copyLink/copyUlid/copyPath/duplicate/reveal/rename/
+          // publishToggle/pageHistory); the top-bar IconButtons hold
+          // the 4 most-frequent + destructive (pullFromServer/
+          // findInPage/share/moveToTrash).
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 12),
             child: Center(
