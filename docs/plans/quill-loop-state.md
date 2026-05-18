@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp11 shipped (11 AppBar actions).**
-- **Phase:** D (super_editor WYSIWYG migration) — 332 tests after M1722 (+2). D-fp parity arc in progress.
-- **Task:** Pick-next survey #33 — after M1722 D-fp11 publish-toggle + M1723 CA-06 fix-forward. Options: (a) D-fp12 — history / set-font / set-reminder (legacy kebab still has these); (b) Coordinated BL-11 SnackBar→BlocListener refactor across all 11 D-fp handlers (substantial slice); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 44+ slice dogfood; (f) Phase E continuation; (g) TS-01/FS-04 stub editor_beta_page_test.dart; (h) FEATURES.md mid-section sweep. Default lean: option (a) D-fp12 history — `lib/features/editor/data/page_history.dart` already shipped (`git log` shell-out); user-visible value high.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp12 shipped (12 AppBar actions).**
+- **Phase:** D (super_editor WYSIWYG migration) — 334 tests after M1725 (+2). D-fp parity arc in progress.
+- **Task:** Pick-next survey #34 — after M1725 D-fp12 page-history port. Options: (a) D-fp13 set-font; (b) D-fp13 set-reminder; (c) Coordinated BL-11 SnackBar→BlocListener refactor (substantial); (d) NV-02 typed routes; (e) BL-12 _FindBarHost extraction; (f) D30b/c after 46+ slice dogfood; (g) Phase E continuation; (h) FEATURES.md mid-section sweep; (i) PopupMenuButton kebab refactor — at 12 IconButtons the AppBar is genuinely crowded; collapsing matches legacy UX. Default lean: option (i) PopupMenuButton kebab refactor — addresses real visual debt; defers further D-fp ports until grouping is right.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1725 — pick-next #33 closeout: D-fp12 Page-history port (TDD)** (5 files; +49 / -2; 2 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 256 closeout
+- Notes: Sixth slice riding the M1700/M1705/M1707 scaffolding pattern. **D-fp12 port:** new `EditorBetaAppBarAction.pageHistory` enum slot with tooltip "Page history (git log)" inserted between `publishToggle` and `moveToTrash`; iconFor → `Icons.history`; new `_onPageHistory()` async handler reads VaultBloc state for rootPath, opens `PageHistoryDialog(vaultRoot:, relativePath:)` via `showDialog<void>`. New import `presentation/widgets/page_history_dialog.dart`. Same M1571 widget-tier coverage:ignore-start/end pattern. 2 new tests (tooltip + iconFor). **Orchestrator audit: 0 BLOCK / 0 WARN / 1 INFO (recurring TS-01 widget-test gap carry-forward — handler is M1571-exempt, underlying PageHistoryDialog has its own coverage).** Cleanest D-fp port audit yet — single info-only finding. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1722 + M1723 — pick-next #32 closeout: D-fp11 Publish-toggle port + CA-06 fix-forward** (5 files; +85 / -4; 2 new tests; analyze clean)
 - Committed: (this iteration)
