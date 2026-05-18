@@ -1051,6 +1051,56 @@ void main() {
         });
       });
 
+      // M1878 — first FRESH per-handler port post-dialog-family.
+      // `_onDuplicate` is a clean M1853-template clone (event-dispatch
+      // verify) — production handler at editor_beta_page.dart:1602 is
+      // synchronous, no dialog, dispatches `VaultBloc.add(DuplicatePage
+      // (widget.ulid, onCreated: <closure>))`. The `onCreated` closure
+      // handles SnackBar + `context.go(Routes.editor(newUlid))` but
+      // only fires when the real VaultBloc handler runs (not the
+      // MockBloc). The smoke verifies the bloc received the event with
+      // the right ulid; the dispatched closure's nav/SnackBar effects
+      // are out of scope.
+      //
+      // Survey #100 lean: post _onSetReminder inspection (which has
+      // no cheap distinct replace-branch surface beyond M1859's
+      // modal-mount assertion), pivot to fresh handler ports.
+      // _onDuplicate is the cheapest first port — same `having((e) =>
+      // e.ulid, 'ulid', ulid)` matcher pattern as M1854, no harness
+      // restructuring, ~25 lines.
+      group('_onDuplicate (D-fp8, M1712) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Duplicate page → VaultBloc receives DuplicatePage event',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.duplicate);
+
+          verify(
+            () => harness.vaultBloc.add(
+              any(
+                that: isA<DuplicatePage>().having(
+                  (e) => e.ulid,
+                  'ulid',
+                  ulid,
+                ),
+              ),
+            ),
+          ).called(1);
+        });
+      });
+
       // M1869 — eighth + final dialog handler. CLOSES THE DIALOG
       // FAMILY: every kebab dialog handler now has behavioral
       // coverage. Production handler at editor_beta_page.dart:747
