@@ -74,7 +74,11 @@ Line two [[01HX0VH3AW0N0V5C8C4F6H8K9L]].
     });
   });
 
-  group('wikilinkLiteralFor (M1696)', () {
+  // M1698 (TS-04 fix-forward on M1696 audit): outer group named after
+  // the function under test, not the milestone. Test runner output
+  // reads `wikilinkLiteralFor › wraps the ULID in [[ ... ]]` instead
+  // of `wikilinkLiteralFor (M1696) › …`.
+  group('wikilinkLiteralFor', () {
     test('wraps the ULID in [[ ... ]]', () {
       expect(
         wikilinkLiteralFor(ulid: '01HX0VEY5T6K7R9X4Y8Z0A3D4G'),
