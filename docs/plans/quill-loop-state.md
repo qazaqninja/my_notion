@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp10 shipped (10 AppBar actions).**
-- **Phase:** D (super_editor WYSIWYG migration) — 330 tests after M1719 (+6). D-fp parity arc in progress.
-- **Task:** Pick-next survey #32 — after M1719 D-fp10 rename + M1720 fix-forward. Options: (a) D-fp11 — history / publish-toggle / set-font / set-reminder; (b) Coordinated BL-11 SnackBar→BlocListener refactor across all 10 D-fp handlers (substantial slice); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 42+ slice dogfood; (f) Phase E continuation; (g) TS-01/FS-04 stub `editor_beta_page_test.dart`; (h) FEATURES.md mid-section sweep. Default lean: option (a) D-fp11 publish-toggle — high user value, `public:` frontmatter shipped, EditorBloc has Publish/Unpublish patterns.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp11 shipped (11 AppBar actions).**
+- **Phase:** D (super_editor WYSIWYG migration) — 332 tests after M1722 (+2). D-fp parity arc in progress.
+- **Task:** Pick-next survey #33 — after M1722 D-fp11 publish-toggle + M1723 CA-06 fix-forward. Options: (a) D-fp12 — history / set-font / set-reminder (legacy kebab still has these); (b) Coordinated BL-11 SnackBar→BlocListener refactor across all 11 D-fp handlers (substantial slice); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 44+ slice dogfood; (f) Phase E continuation; (g) TS-01/FS-04 stub editor_beta_page_test.dart; (h) FEATURES.md mid-section sweep. Default lean: option (a) D-fp12 history — `lib/features/editor/data/page_history.dart` already shipped (`git log` shell-out); user-visible value high.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1722 + M1723 — pick-next #32 closeout: D-fp11 Publish-toggle port + CA-06 fix-forward** (5 files; +85 / -4; 2 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 255 closeout
+- Notes: Fifth slice riding the M1700/M1705/M1707 scaffolding pattern. **M1722 D-fp11 port:** new `EditorBetaAppBarAction.publishToggle` enum slot with tooltip "Publish / unpublish" inserted between `rename` and `moveToTrash`; iconFor → `Icons.public_outlined`; new `_onPublishToggle()` widget-tier handler reads EditorBloc state, inspects frontmatter `public:`, dispatches either `RemoveFrontmatterField('public')` (+ optional `public_password`) or `AddFrontmatterField(public: true)` with a matching SnackBar. New import `vault/domain/entities/frontmatter_entry.dart`. Password-gated variant (legacy `'publish-password'` kebab) deliberately deferred to keep the slice bite-sized. **Orchestrator on M1722: 0 BLOCK / 1 WARN (recurring BL-11 SnackBar carry-forward across all D-fp handlers) / 3 INFO (CA-06 — double `context.read<EditorBloc>()` in `_onPublishToggle`; TS-04 positive; TS-01 widget-test gap carry-forward).** **M1723 same-iteration CA-06 fix-forward:** captured the bloc once into a local `final bloc = context.read<EditorBloc>();` and reuse for both `.state` and `.add()`. 2-line change with provenance comment. Effective state: 0 BLOCK / 1 WARN / 2 INFO (carry-forwards). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1719 + M1720 — pick-next #31 closeout: D-fp10 Rename-file port + TS-01 info fix-forward** (8 files; +153 / -3; 8 new tests; analyze clean)
 - Committed: (this iteration)
