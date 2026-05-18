@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp7 shipped (Move-to-Trash + Pull-from-server + Share + Find-in-page + Copy-[[link]] + Copy-ULID + Copy-path).**
-- **Phase:** D (super_editor WYSIWYG migration) — 320 tests after M1709 (+7). D-fp parity arc in progress.
-- **Task:** Pick-next survey #28 — after M1709 D-fp7 Copy-path + M1710 share-route fix-forward. Options: (a) D-fp8 next port — duplicate (best TDD-fit: bloc dispatch); reveal (weak surface — needs Process.run mocking); rename / history (mid-sized dialogs); (b) NV-02 typed routes; (c) BL-12 _FindBarHost extraction; (d) D30b/c after 34+ slice dogfood; (e) Phase E continuation; (f) BL-12 buildWhen on EditorBloc builder (carry-forward); (g) CA-04 Indexer cross-codebase RepositoryProvider injection. Default lean: option (a) D-fp8 duplicate — DuplicatePage bloc event already exists; handler is a simple dispatch; fits the M1700/M1705/M1707 scaffolding pattern.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp8 shipped (+ duplicate).**
+- **Phase:** D (super_editor WYSIWYG migration) — 322 tests after M1712 (+2). D-fp parity arc in progress.
+- **Task:** Pick-next survey #29 — after M1712 D-fp8 duplicate + M1713 BL-06 fix-forward. Options: (a) D-fp9 next port — reveal (could DI Process.run for testability) / rename / history / publish-toggle; (b) NV-02 typed routes; (c) BL-12 _FindBarHost extraction; (d) D30b/c after 36+ slice dogfood; (e) Phase E continuation; (f) CA-04 Indexer cross-codebase carry-forward; (g) TS-01/FS-04 widget test gap for editor_beta_page (recurring carry-forward); (h) FEATURES.md late-section sweep (lines 100-200 mobile/share/forms area). Default lean: option (a) D-fp9 reveal — Process.run-via-DI pattern would unblock TDD on the platform helper + close the gap on legacy kebab parity.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1712 + M1713 — pick-next #28 closeout: D-fp8 Duplicate-page port + BL-06 documentation fix-forward** (6 files; +69 / -3; 2 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 251 closeout
+- Notes: Second slice riding the M1700/M1705/M1707 scaffolding pattern at full speed. **M1712 D-fp8 port:** `EditorBetaAppBarAction.duplicate` enum value with tooltip "Duplicate page" inserted between `copyPath` and `moveToTrash`; `iconFor(duplicate) → Icons.copy_outlined`; `_onDuplicate()` async handler on `_BetaEditorShellState` reads VaultBloc, dispatches `DuplicatePage(widget.ulid, onCreated: cb)` where the callback shows a SnackBar with source title + new ULID then navigates via `GoRouter.of(context).go(Routes.editor(newUlid))`. Same M1571 coverage:ignore-start/end pattern. 2 new tests (1 tooltip + 1 iconFor); existing order/visibility tests refreshed to expect the new slot. **Orchestrator on M1712: 0 BLOCK / 2 WARN (BL-06 — DuplicatePage.onCreated excluded from props without documentation; TS-01/FS-04 — recurring `test/.../pages/` widget test gap, same carry-forward as M1703/M1705/M1709) / 1 INFO (BL-11 — callback vs BlocListener pattern, pre-existing throughout codebase).** **M1713 same-iteration fix-forward** for BL-06: 6-line comment above `DuplicatePage.props` override explaining closures aren't equatable + the callback is a side-effect channel, not part of event identity. Doc-only diff. The TS-01 widget test gap remains deferred (speculative-prevention WARN, methods are M1571-exempt). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1709 + M1710 — pick-next #27 closeout: D-fp7 Copy-path port + same-iteration CA-07 fix-forward** (8 files; +142 / -3; 13 new tests; analyze clean)
 - Committed: (this iteration)
