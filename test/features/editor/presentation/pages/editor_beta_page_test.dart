@@ -383,31 +383,28 @@ void main() {
         });
       });
 
-      // M1835 spike: attempted `_onCopyBody` smoke deferred until a
-      // shared `tapKebabItem(tester, label)` helper lands. Discovery:
-      // even with surface 1200×1400 and `tester.ensureVisible`, the
-      // `Copy body text` menu item's tap dispatch lands on the
-      // PopupMenu's `_RenderTheater`/modal-barrier layer rather than
-      // the InkWell behind the `Text` child. Earlier handlers
-      // (`Copy ULID`, `Copy [[link]] to this page`, `Copy file path`)
-      // sit at the top of the kebab popup and hit-test cleanly. The
-      // failure mode appeared at the first handler far enough down
-      // the popup to need scroll-into-view.
+      // M1835/M1836 — per-handler smoke landing site for kebab items
+      // beneath the popup's initial viewport. Skipped pending the
+      // `tapKebabItem(WidgetTester, String label)` helper that opens
+      // the kebab + scrolls the item into view + dispatches via the
+      // PopupMenuItem.onTap callback (bypassing the overlay-stack
+      // hit-test gotcha — `_RenderTheater` / `RenderTapRegionSurface`
+      // intercepting pointer taps when the item sits below the
+      // initial 800×600 viewport, even with surface 1200×1400 + the
+      // `tester.ensureVisible` dance).
       //
-      // Suspect: super_editor inserts an Overlay (slash menu /
-      // remote-cursor / find bar) above the PopupMenu's overlay
-      // layer that intercepts pointer events for offsets that fall
-      // *under* its bounds. The hit-test result includes
-      // `_RenderTheater` + `RenderTapRegionSurface` rather than the
-      // expected `PopupMenuItem` InkWell.
-      //
-      // Next slice (M1836): write a `tapKebabItem(WidgetTester, String
-      // label)` helper that opens the kebab + scrolls the
-      // PopupMenuItem into view + dispatches via the
-      // PopupMenuItem.onTap callback instead of pointer tap (bypasses
-      // the overlay-stack hit-test issue). Then land
-      // `_onCopyBody`/`_onCopyPlain`/`_onCopyJson`/`Move to trash` in
-      // successive bite-sized slices.
+      // Once the helper ships, this stub becomes the actual
+      // `_onCopyBody` (D-fp17, M1737) smoke + the same shape repeats
+      // for `_onCopyPlain`, `_onCopyJson`, `Move to trash`, etc.
+      group('_onCopyBody (D-fp17, M1737) — per-handler smoke', () {
+        testWidgets(
+          'tap kebab → Copy body text → clipboard receives page.body '
+          '[SKIP: M1836 tapKebabItem helper needed — PopupMenu '
+          'overlay hit-test gotcha]',
+          (tester) async {},
+          skip: true,
+        );
+      });
 
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
