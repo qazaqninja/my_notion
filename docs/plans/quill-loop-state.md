@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp9 shipped.**
-- **Phase:** D (super_editor WYSIWYG migration) — 324 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #31 — after M1717 NV-03 GoRouter.of cleanup (pristine 0/0/0). Options: (a) D-fp10 — rename / history / publish-toggle / set-font / set-reminder (~5 high-value handlers left in legacy kebab); (b) Coordinated BL-11 refactor across all 9 D-fp handlers (substantial slice); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 40+ slice dogfood; (f) Phase E continuation; (g) TS-01/FS-04 widget test gap (recurring carry-forward); (h) FEATURES.md mid-section sweep. Default lean: option (a) D-fp10 rename — RenamePage bloc event likely exists; user-visible value high; fits scaffolding.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp10 shipped (10 AppBar actions).**
+- **Phase:** D (super_editor WYSIWYG migration) — 330 tests after M1719 (+6). D-fp parity arc in progress.
+- **Task:** Pick-next survey #32 — after M1719 D-fp10 rename + M1720 fix-forward. Options: (a) D-fp11 — history / publish-toggle / set-font / set-reminder; (b) Coordinated BL-11 SnackBar→BlocListener refactor across all 10 D-fp handlers (substantial slice); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 42+ slice dogfood; (f) Phase E continuation; (g) TS-01/FS-04 stub `editor_beta_page_test.dart`; (h) FEATURES.md mid-section sweep. Default lean: option (a) D-fp11 publish-toggle — high user value, `public:` frontmatter shipped, EditorBloc has Publish/Unpublish patterns.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1719 + M1720 — pick-next #31 closeout: D-fp10 Rename-file port + TS-01 info fix-forward** (8 files; +153 / -3; 8 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 254 closeout
+- Notes: Fourth slice riding the M1700/M1705/M1707 scaffolding pattern. **M1719 D-fp10 port:** new pure-Dart `sanitizedBasename(input)` helper in `lib/features/vault/domain/sanitized_basename.dart` mirroring the legacy `_safeFileName` transformation (strips trailing `.md`, replaces filesystem-illegal chars `\\/<>:"|?*` with `-`, collapses whitespace, falls back to "Untitled"). 6 unit tests covering all branches incl. edge cases like `"///"` → "Untitled" and case-insensitive `.MD` stripping. `EditorBetaAppBarAction.rename` enum value with tooltip "Rename file…" inserted between `reveal` and `moveToTrash`; iconFor mapping → `Icons.drive_file_rename_outline`; new `_onRename()` async handler that opens `showQuillPrompt`, computes preview via `sanitizedBasename(picked)`, falls back to "Filename unchanged" SnackBar if equal to base, otherwise dispatches `RenamePage(ulid:, newBasename:)` and shows "Renamed to X.md" SnackBar. Same M1571 widget-tier coverage:ignore-start/end pattern. New imports `vault/domain/sanitized_basename.dart` + `shared/widgets/quill_modal.dart`. 2 new enum/iconFor tests + 6 sanitizedBasename = 8 new tests. **Orchestrator on M1719: 0 BLOCK / 1 WARN (recurring TS-01 widget test gap for editor_beta_page) / 4 INFO (BL-11 onDismiss carry-forward, TS-04 positive grouping note, TS-04 acknowledged M1701 fix-forward, **NEW: TS-01 info on `_onRename` passing raw `picked` to RenamePage while SnackBar showed sanitized `preview` — latent divergence risk if VaultBloc's `_safeFileName` ever diverges from `sanitizedBasename`**).** **M1720 same-iteration fix-forward:** dispatch `RenamePage(newBasename: preview)` instead of raw `picked` so sanitizedBasename becomes the single source of truth across both the toast and the on-disk persistence; 7-line rationale comment cites the M1719 audit thread. Effective state: 0 BLOCK / 1 WARN / 3 INFO (all carry-forwards). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1717 — pick-next #30 closeout: NV-03 GoRouter.of cleanup (one-liner)** (1 file modified; +1 / -1; no new tests; analyze clean)
 - Committed: (this iteration)
