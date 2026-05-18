@@ -1,6 +1,10 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_notion/core/db/quill_database.dart' hide Page;
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
+import 'package:my_notion/features/vault/data/indexer.dart';
+import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
 
 import '_harness/editor_beta_pump.dart';
 
@@ -32,19 +36,36 @@ void main() {
       });
     });
 
-    // M1804: pumpEditorBeta scaffold landed in
-    // _harness/editor_beta_pump.dart. The helper currently throws
-    // UnimplementedError — per-collaborator wiring follows in
-    // successive slices. This meta-test asserts the helper is
-    // wired into the test file (`import` resolves) so future
-    // slices know where to extend.
-    group('shared pump harness scaffold', () {
-      testWidgets('pumpEditorBeta throws UnimplementedError until wired',
+    // M1804/M1806: pumpEditorBeta scaffold in _harness/editor_beta_pump.dart.
+    // Sub-slice 2 (M1806) wired the 3 foundation providers
+    // (VaultRepository + Indexer + QuillDatabase) via in-memory fakes.
+    // Subsequent sub-slices add the remaining 6 collaborators + swap the
+    // probe for EditorBetaPage itself.
+    group('shared pump harness foundations', () {
+      testWidgets('mounts MultiRepositoryProvider with VaultRepository + '
+          'Indexer + QuillDatabase resolvable via context.read',
           (tester) async {
-        await expectLater(
-          pumpEditorBeta(tester, ulid: '01H0000000000000000000ABCD'),
-          throwsUnimplementedError,
+        late VaultRepository foundRepo;
+        late Indexer foundIndexer;
+        late QuillDatabase foundDb;
+
+        final harness = await pumpEditorBeta(
+          tester,
+          ulid: '01H0000000000000000000ABCD',
+          probe: Builder(
+            builder: (context) {
+              foundRepo = context.read<VaultRepository>();
+              foundIndexer = context.read<Indexer>();
+              foundDb = context.read<QuillDatabase>();
+              return const SizedBox.shrink();
+            },
+          ),
         );
+        addTearDown(harness.dispose);
+
+        expect(foundRepo, isA<VaultRepository>());
+        expect(foundIndexer, isA<Indexer>());
+        expect(foundDb, isA<QuillDatabase>());
       });
     });
   });
