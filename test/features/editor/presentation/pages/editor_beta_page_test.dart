@@ -526,6 +526,42 @@ void main() {
         });
       });
 
+      // M1851 — second dialog smoke. Validates the M1848 template
+      // generalizes from `showQuillChoice` (option list modal) to
+      // `showQuillPrompt` (text-input modal). Production handler at
+      // editor_beta_page.dart:941 opens a `showQuillPrompt` titled
+      // "Set word count goal" with placeholder hint and Save
+      // confirm button. The test asserts the modal mounts via
+      // title + placeholder hint + confirm button labels; doesn't
+      // type into the field (downstream branches covered by domain
+      // unit tests on `wordGoalActionFor`).
+      group('_onSetGoal (D-fp21, M1745) — per-handler smoke', () {
+        testWidgets('kebab → Set word count goal → prompt modal opens',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.setGoal);
+
+          expect(find.text('Set word count goal'), findsOneWidget);
+          expect(
+            find.text('Empty to clear. The footer will show progress.'),
+            findsOneWidget,
+          );
+          expect(find.text('Save'), findsOneWidget);
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
