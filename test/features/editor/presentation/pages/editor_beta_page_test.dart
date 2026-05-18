@@ -41,6 +41,11 @@ void main() {
     // (VaultRepository + Indexer + QuillDatabase) via in-memory fakes.
     // Subsequent sub-slices add the remaining 6 collaborators + swap the
     // probe for EditorBetaPage itself.
+    //
+    // TS-06 acceptance note: this probe test verifies *wiring* (DI
+    // resolution), not behavior. When per-handler slices swap the
+    // probe for `EditorBetaPage`, they must shift to behavioral
+    // assertions (tap → assert dispatch) per TS-06.
     group('shared pump harness foundations', () {
       testWidgets('mounts MultiRepositoryProvider with VaultRepository + '
           'Indexer + QuillDatabase resolvable via context.read',

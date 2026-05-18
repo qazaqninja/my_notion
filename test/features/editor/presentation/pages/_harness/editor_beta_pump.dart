@@ -10,6 +10,11 @@ import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/data/repositories/vault_repository_impl.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
 
+// TS-05 exception: shared harness by design — every per-handler
+// test file imports `pumpEditorBeta` + `EditorBetaHarness` from
+// this file rather than re-declaring a private clone. See the
+// M1806 orchestrator audit for the explicit acknowledgement.
+
 /// Shared `pumpWidget` harness for `editor_beta_page_test.dart`
 /// suites. Future per-handler smoke tests (mount → tap kebab →
 /// assert dispatch) reuse this single helper instead of rebuilding
@@ -96,6 +101,13 @@ class EditorBetaHarness {
   final MemoryFileSystem fs;
 
   /// Convenience cleanup hook so callers can `addTearDown(harness.dispose)`.
+  ///
+  /// TODO: expand `dispose()` as new resources are wired in
+  /// successive sub-slices (e.g., bloc.close() once VaultBloc /
+  /// SyncBloc fakes land; stream subscriptions; open file handles).
+  /// Today only `db.close()` is needed — `MemoryFileSystem` has no
+  /// close contract and `Indexer`/`VaultRepositoryImpl` are
+  /// stateless.
   Future<void> dispose() async {
     await db.close();
   }
