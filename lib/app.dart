@@ -283,30 +283,28 @@ GoRouter _buildRouter(VaultBloc vault) {
           GoRoute(path: Routes.home, builder: (_, __) => const HomePage()),
           GoRoute(
             path: '/editor/:ulid',
-            // D28 cutover slice 1c (M1667): wrap in BlocSelector on
-            // EditorPreferencesCubit so flipping the Settings →
-            // Advanced toggle takes effect immediately (no app
-            // restart). Selects only the `useBetaEditor` bool so the
-            // route rebuilds at most once per toggle, not on every
-            // unrelated state emission. The branch decision lives in
-            // [buildEditorPageForFork] for unit-testability (D30a /
-            // M1673 — pre-deletion regression coverage). `/editor-
-            // beta/:ulid` stays available for direct beta entry
-            // regardless of the toggle (slice 1c is non-destructive
-            // — D30 deletes the legacy branch).
-            builder: (context, state) {
-              final ulid = state.pathParameters['ulid']!;
-              final anchor = state.uri.queryParameters['anchor'];
-              return BlocSelector<EditorPreferencesCubit,
-                  EditorPreferencesState, bool>(
-                selector: (prefs) => prefs.useBetaEditor,
-                builder: (context, useBeta) => buildEditorPageForFork(
-                  useBetaEditor: useBeta,
-                  ulid: ulid,
-                  anchor: anchor,
-                ),
-              );
-            },
+            // D30b cutover slice (M1757): collapse the M1667 BlocSelector
+            // + buildEditorPageForFork indirection. The D-fp parity arc
+            // closed at M1755 (26 D-fp actions ported); EditorBetaPage
+            // now has full kebab feature parity with the legacy editor,
+            // so the runtime fork has no remaining purpose. /editor-
+            // beta/:ulid below still exists for direct beta entry +
+            // backwards-compat with any wikilinks that hard-coded the
+            // beta path; the two routes are now structurally identical
+            // (same widget, same key shape).
+            //
+            // EditorPreferencesCubit + the Settings → Advanced "Use
+            // beta WYSIWYG editor" toggle + the [buildEditorPageForFork]
+            // helper + its M1673 widget tests are dead code as of this
+            // commit but stay in the tree until D30c (next slice) for
+            // a cleaner reverting-window if the new direct build
+            // surfaces a regression during dogfood.
+            builder: (context, state) => EditorBetaPage(
+              key: ValueKey(
+                'editor-${state.pathParameters['ulid']}',
+              ),
+              ulid: state.pathParameters['ulid']!,
+            ),
           ),
           // Phase D D1 slice 23 (M1284): beta WYSIWYG editor backed by
           // super_editor + SuperEditorSerializer. Lives at /editor-beta/
