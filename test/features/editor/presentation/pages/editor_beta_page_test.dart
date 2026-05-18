@@ -176,6 +176,54 @@ void main() {
           expect(pages.single.title, 'Seeded');
           expect(harness.vaultBloc.state, isA<VaultLoaded>());
         });
+
+        // M1823 sub-slice 7: real-page mount with seedPage:true.
+        // The M1820 attempt to mount `EditorBetaPage` (default
+        // probe) against a seeded page hit "Multiple exceptions
+        // (10)" during pumpAndSettle on super_editor's empty-body
+        // layout in the default 800×600 flutter_test surface
+        // (~267×200 logical). The block-reorder / find-in-page /
+        // slash-menu keyboard actions all attach overlays that
+        // need real estate to position, and the SuperEditor
+        // documentLayout falls back to its own size-zero path
+        // when the viewport is too small — which throws inside
+        // its render-object during the first paint pass.
+        //
+        // Fix: bump the test surface to 1200×900 logical so
+        // super_editor's overlays + scrollable have room. Use
+        // `tester.view.physicalSize` + reset via tearDown to
+        // avoid leaking the larger size into the rest of the
+        // suite. Pump a handful of frames (no pumpAndSettle —
+        // pending overlay animations could still log advisory
+        // exceptions per the M1820 trace), then assert the
+        // kebab (`More actions` tooltip) is findable.
+        //
+        // This unblocks the M1818 stub group's `_onCopyUlid`
+        // per-handler smoke as the next slice — once the kebab
+        // is reachable, the tap → assert clipboard interaction
+        // is mechanical.
+        testWidgets('real-page mount with surface 1200×900 → kebab visible',
+            (tester) async {
+          tester.view.physicalSize = const Size(1200, 900);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(() {
+            tester.view.resetPhysicalSize();
+            tester.view.resetDevicePixelRatio();
+          });
+
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          expect(find.byTooltip('More actions'), findsOneWidget);
+        });
       });
 
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',

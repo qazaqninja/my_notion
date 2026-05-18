@@ -29,6 +29,8 @@ import 'package:my_notion/features/vault/domain/repositories/vault_repository.da
 import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_event.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
+import 'package:my_notion/shared/theme/accent.dart';
+import 'package:my_notion/shared/theme/tokens.dart';
 
 // TS-05 exception: shared harness by design — every per-handler
 // test file imports `pumpEditorBeta` + `EditorBetaHarness` from
@@ -230,8 +232,21 @@ class EditorBetaHarness {
 /// `MaterialApp.router` (GoRouter shell needed by the page's
 /// `GoRouter.of(context).go(...)` calls in the Move-to-Trash
 /// kebab handler).
+///
+/// **M1823 (sub-slice 7):** the `theme:` now carries a
+/// `QuillTokens` `ThemeExtension` produced by the same
+/// `buildTokens(...)` factory `lib/app.dart` uses. Without this,
+/// the editor tree's many `QuillTokens.of(context)` calls (slash
+/// menu overlay, remote-cursor overlay, kebab, etc.) trip the
+/// `assert(ext != null, 'QuillTokens not found in Theme. Did you
+/// wrap with QuillApp?')` assertion as soon as a seeded page
+/// reaches `EditorLoaded` and the full editor body renders. This
+/// was the actual root cause behind the M1820 "Multiple
+/// exceptions (10)" trace — not super_editor layout.
 Widget _defaultProbe({required String ulid}) {
+  final tokens = buildTokens(Brightness.light, AccentKey.sage);
   return MaterialApp.router(
+    theme: ThemeData.light().copyWith(extensions: [tokens]),
     routerConfig: GoRouter(
       initialLocation: '/editor/$ulid',
       routes: [
