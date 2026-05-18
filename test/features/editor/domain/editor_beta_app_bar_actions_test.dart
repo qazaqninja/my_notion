@@ -23,6 +23,7 @@ void main() {
         EditorBetaAppBarAction.duplicate,
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
+        EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.moveToTrash,
       };
       final authed = editorBetaAppBarActions(isAuthed: true).toSet();
@@ -33,8 +34,8 @@ void main() {
 
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
-        'duplicate → reveal → rename → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp10
+        'duplicate → reveal → rename → publishToggle → moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp11
       // layout users have already learned. Future kebab refactor will
       // map this directly to PopupMenuItem rows.
       expect(editorBetaAppBarActions(isAuthed: true).toList(), [
@@ -47,6 +48,7 @@ void main() {
         EditorBetaAppBarAction.duplicate,
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
+        EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -61,6 +63,7 @@ void main() {
         EditorBetaAppBarAction.duplicate,
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
+        EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -107,6 +110,13 @@ void main() {
 
       test('rename tooltip reads the D-fp10 port label', () {
         expect(EditorBetaAppBarAction.rename.tooltip, 'Rename file…');
+      });
+
+      test('publishToggle tooltip reads the D-fp11 port label', () {
+        expect(
+          EditorBetaAppBarAction.publishToggle.tooltip,
+          'Publish / unpublish',
+        );
       });
     });
   });

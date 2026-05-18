@@ -56,6 +56,13 @@ void main() {
       );
     });
 
+    test('publishToggle → Icons.public_outlined (D-fp11 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.publishToggle),
+        Icons.public_outlined,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

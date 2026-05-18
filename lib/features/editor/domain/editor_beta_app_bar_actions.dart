@@ -52,6 +52,13 @@ enum EditorBetaAppBarAction {
   /// toast preview matches the actual filename on disk.
   rename(tooltip: 'Rename file…'),
 
+  /// Toggles the `public: true` frontmatter field so the page
+  /// becomes (or stops being) reachable via the backend
+  /// `GET /public/<ulid>` route. D-fp11 port from legacy
+  /// `editor_page.dart` cases `'publish'` + `'unpublish'`. Password
+  /// gating remains on the legacy editor for now.
+  publishToggle(tooltip: 'Publish / unpublish'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -80,5 +87,6 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.duplicate;
   yield EditorBetaAppBarAction.reveal;
   yield EditorBetaAppBarAction.rename;
+  yield EditorBetaAppBarAction.publishToggle;
   yield EditorBetaAppBarAction.moveToTrash;
 }

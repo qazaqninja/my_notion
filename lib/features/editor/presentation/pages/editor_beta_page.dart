@@ -26,6 +26,7 @@ import '../../../../core/ui/anchor_rect.dart';
 import '../../../../core/ui/anchor_rect_x.dart';
 import '../../domain/attachment_writer.dart';
 import '../../domain/block_selection_gesture.dart';
+import '../../../vault/domain/entities/frontmatter_entry.dart';
 import '../../../vault/domain/sanitized_basename.dart';
 import '../../../vault/domain/vault_absolute_path.dart';
 import '../../domain/document_search.dart';
@@ -458,6 +459,57 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp11 (M1722): port Publish-toggle from legacy
+  /// editor_page.dart:599 ('publish') + :603 ('unpublish'). Reads
+  /// the EditorBloc's current state to inspect frontmatter; if
+  /// `public:` is present, dispatch `RemoveFrontmatterField('public')`
+  /// (and also `public_password` if set); otherwise dispatch an
+  /// `AddFrontmatterField(public: true)` event. SnackBar mirrors the
+  /// resulting state.
+  ///
+  /// The password-gated variant (legacy `'publish-password'` case at
+  /// `editor_page.dart:601`) is deliberately deferred — keeps this
+  /// slice bite-sized.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over the
+  /// pre-existing AddFrontmatterField / RemoveFrontmatterField events
+  /// that the legacy editor already fires.
+  // coverage:ignore-start
+  void _onPublishToggle() {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final fm = editorState.page.frontmatter;
+    final isPublic = fm.find('public') != null;
+    final bloc = context.read<EditorBloc>();
+    if (isPublic) {
+      bloc.add(const RemoveFrontmatterField('public'));
+      if (fm.find('public_password') != null) {
+        bloc.add(const RemoveFrontmatterField('public_password'));
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unpublished'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      const entry = FrontmatterEntry(
+        key: 'public',
+        rawScalar: 'true',
+        type: FrontmatterType.checkbox,
+        value: true,
+      );
+      bloc.add(const AddFrontmatterField(entry));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Published — public: true added to frontmatter'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+  // coverage:ignore-end
+
   /// D-fp10 (M1719): port Rename-file from legacy
   /// editor_page.dart:705 (`_renameFile`). Opens a [showQuillPrompt]
   /// dialog seeded with the current basename, runs the picked value
@@ -813,6 +865,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.duplicate => _onDuplicate,
         EditorBetaAppBarAction.reveal => _onReveal,
         EditorBetaAppBarAction.rename => _onRename,
+        EditorBetaAppBarAction.publishToggle => _onPublishToggle,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       },
     );
