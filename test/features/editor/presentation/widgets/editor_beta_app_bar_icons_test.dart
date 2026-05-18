@@ -115,6 +115,12 @@ void main() {
       );
     });
 
+    test('copyFormLink → Icons.add_link (D-fp20 port glyph)', () {
+      // Distinct from copyLink (Icons.link, M1696) — semantically
+      // "compose a link to share with non-authors".
+      expect(iconFor(EditorBetaAppBarAction.copyFormLink), Icons.add_link);
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

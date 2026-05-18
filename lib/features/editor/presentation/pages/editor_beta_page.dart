@@ -12,6 +12,7 @@ import 'package:super_editor/super_editor.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/super_editor_serializer.dart';
 import '../../../../core/markdown/wikilink_parser.dart';
+import '../../../../core/network/backend_endpoint.dart';
 import '../../../../core/platform/reveal.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../vault/data/indexer.dart';
@@ -513,6 +514,49 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(copiedCharsLabel(plain.length, suffix: 'as plain text')),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
+  /// D-fp20 (M1743): port Copy-form-link from legacy
+  /// editor_page.dart:504 (case 'copy-form-link'). Builds the public
+  /// `<backendBaseUrl>/forms/<ulid>` URL via [publicFormUrl] and
+  /// writes it to the system clipboard so the author can paste it
+  /// anywhere (Slack, email, embed). Visitors fill out the rendered
+  /// form (E56b) and submissions land in the per-page list reachable
+  /// via the [EditorBetaAppBarAction.viewFormSubmissions] entry. The
+  /// kebab entry that triggers this handler only renders when
+  /// [hasFormsFrontmatter] returns true for the current page (same
+  /// `isFormBearing` gate as viewFormSubmissions).
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `Clipboard.setData` + `ScaffoldMessenger`. The URL-build helper
+  /// has 4 unit tests in `backend_endpoint_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onCopyFormLink() async {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final pageUlid = editorState.page.ulid;
+    if (pageUlid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot copy form link: page has no ULID'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final url = publicFormUrl(
+      backendBaseUrl: kBackendHttpBaseUrl,
+      pageUlid: pageUlid,
+    );
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Copied form link: $url'),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -1300,6 +1344,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.copyBody => _onCopyBody,
         EditorBetaAppBarAction.copyPlain => _onCopyPlain,
         EditorBetaAppBarAction.copyJson => _onCopyJson,
+        EditorBetaAppBarAction.copyFormLink => _onCopyFormLink,
         EditorBetaAppBarAction.viewFormSubmissions => _onViewFormSubmissions,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       };

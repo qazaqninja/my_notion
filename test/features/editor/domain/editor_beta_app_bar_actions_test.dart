@@ -14,9 +14,9 @@ void main() {
     });
 
     test('always includes the always-on actions regardless of auth', () {
-      // viewFormSubmissions is page-conditional rather than session-
-      // conditional, so it lives outside this "always-on" set — see
-      // the dedicated isFormBearing tests below.
+      // viewFormSubmissions + copyFormLink are page-conditional rather
+      // than session-conditional, so they live outside this
+      // "always-on" set — see the dedicated isFormBearing tests below.
       final alwaysOn = <EditorBetaAppBarAction>{
         EditorBetaAppBarAction.findInPage,
         EditorBetaAppBarAction.share,
@@ -47,12 +47,13 @@ void main() {
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → publishToggle → pageHistory → '
         'setFont → setReminder → snoozeReminder → clearReminder → '
-        'copyBody → copyPlain → copyJson → viewFormSubmissions? → '
-        'moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp19
+        'copyBody → copyPlain → copyJson → copyFormLink? → '
+        'viewFormSubmissions? → moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp20
       // layout users have already learned. The three copy-* entries
-      // group together; viewFormSubmissions (when present) sits
-      // immediately before moveToTrash.
+      // group together; copyFormLink + viewFormSubmissions (when
+      // present) form the form-bearing pair immediately before
+      // moveToTrash.
       expect(
           editorBetaAppBarActions(isAuthed: true, isFormBearing: true).toList(),
           [
@@ -74,6 +75,7 @@ void main() {
             EditorBetaAppBarAction.copyBody,
             EditorBetaAppBarAction.copyPlain,
             EditorBetaAppBarAction.copyJson,
+            EditorBetaAppBarAction.copyFormLink,
             EditorBetaAppBarAction.viewFormSubmissions,
             EditorBetaAppBarAction.moveToTrash,
           ]);
@@ -101,6 +103,7 @@ void main() {
             EditorBetaAppBarAction.copyBody,
             EditorBetaAppBarAction.copyPlain,
             EditorBetaAppBarAction.copyJson,
+            EditorBetaAppBarAction.copyFormLink,
             EditorBetaAppBarAction.viewFormSubmissions,
             EditorBetaAppBarAction.moveToTrash,
           ]);
@@ -117,12 +120,29 @@ void main() {
       )));
     });
 
+    test('drops copyFormLink when isFormBearing is false (M1743)', () {
+      // D-fp20 / M1743: pairs with viewFormSubmissions — same
+      // form-bearing gate, same legacy `if (_hasForms(loaded))`
+      // wrap that hides both entries when the page lacks a `forms:`
+      // field.
+      final actions = editorBetaAppBarActions(isAuthed: true).toList();
+      expect(actions, isNot(contains(EditorBetaAppBarAction.copyFormLink)));
+    });
+
     test('includes viewFormSubmissions when isFormBearing is true', () {
       final actions = editorBetaAppBarActions(
         isAuthed: true,
         isFormBearing: true,
       ).toList();
       expect(actions, contains(EditorBetaAppBarAction.viewFormSubmissions));
+    });
+
+    test('includes copyFormLink when isFormBearing is true', () {
+      final actions = editorBetaAppBarActions(
+        isAuthed: true,
+        isFormBearing: true,
+      ).toList();
+      expect(actions, contains(EditorBetaAppBarAction.copyFormLink));
     });
   });
 
@@ -166,6 +186,7 @@ void main() {
         EditorBetaAppBarAction.copyBody,
         EditorBetaAppBarAction.copyPlain,
         EditorBetaAppBarAction.copyJson,
+        EditorBetaAppBarAction.copyFormLink,
         EditorBetaAppBarAction.viewFormSubmissions,
       };
       for (final action in kebab) {
@@ -228,8 +249,9 @@ void main() {
       // The secondary entries must appear in the same relative
       // order as in editorBetaAppBarActions so users see a consistent
       // sequence as actions move between the top-bar and the kebab.
-      // viewFormSubmissions only enters when isFormBearing is true; the
-      // non-form sequence keeps its existing 15-row layout.
+      // copyFormLink + viewFormSubmissions only enter when
+      // isFormBearing is true; the non-form sequence keeps its
+      // existing 15-row layout.
       expect(
           editorBetaKebabActions(isAuthed: true, isFormBearing: true).toList(),
           [
@@ -248,6 +270,7 @@ void main() {
             EditorBetaAppBarAction.copyBody,
             EditorBetaAppBarAction.copyPlain,
             EditorBetaAppBarAction.copyJson,
+            EditorBetaAppBarAction.copyFormLink,
             EditorBetaAppBarAction.viewFormSubmissions,
           ]);
     });
@@ -357,6 +380,13 @@ void main() {
         expect(
           EditorBetaAppBarAction.viewFormSubmissions.tooltip,
           'View form submissions →',
+        );
+      });
+
+      test('copyFormLink tooltip reads the D-fp20 port label', () {
+        expect(
+          EditorBetaAppBarAction.copyFormLink.tooltip,
+          'Copy form link',
         );
       });
     });

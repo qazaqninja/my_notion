@@ -104,6 +104,15 @@ enum EditorBetaAppBarAction {
   /// `editor_page.dart` case `'copy-json'`. Toast tails with "JSON".
   copyJson(tooltip: 'Copy page as JSON'),
 
+  /// Writes the public `/forms/<ulid>` URL to the clipboard via
+  /// [publicFormUrl]. D-fp20 port from legacy `editor_page.dart`
+  /// case `'copy-form-link'`. Same page-conditional gate as
+  /// [EditorBetaAppBarAction.viewFormSubmissions] (only renders when
+  /// [hasFormsFrontmatter] returns true) — matches the legacy
+  /// `if (_hasForms(loaded)) [...]` kebab wrap that bundles both
+  /// form-bearing entries.
+  copyFormLink(tooltip: 'Copy form link'),
+
   /// Opens the [FormSubmissionsDialog] backed by
   /// `FormsRepository.listSubmissions(token:, ulid:)`. D-fp19 port
   /// from legacy `editor_page.dart` case `'view-form-submissions'`.
@@ -153,6 +162,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.copyBody;
   yield EditorBetaAppBarAction.copyPlain;
   yield EditorBetaAppBarAction.copyJson;
+  if (isFormBearing) yield EditorBetaAppBarAction.copyFormLink;
   if (isFormBearing) yield EditorBetaAppBarAction.viewFormSubmissions;
   yield EditorBetaAppBarAction.moveToTrash;
 }
@@ -196,6 +206,7 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.copyBody ||
     EditorBetaAppBarAction.copyPlain ||
     EditorBetaAppBarAction.copyJson ||
+    EditorBetaAppBarAction.copyFormLink ||
     EditorBetaAppBarAction.viewFormSubmissions =>
       true,
   };

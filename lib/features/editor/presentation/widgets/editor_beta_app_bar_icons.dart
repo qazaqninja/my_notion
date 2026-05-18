@@ -30,6 +30,7 @@ IconData iconFor(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.copyBody => Icons.content_paste,
     EditorBetaAppBarAction.copyPlain => Icons.text_snippet_outlined,
     EditorBetaAppBarAction.copyJson => Icons.data_object,
+    EditorBetaAppBarAction.copyFormLink => Icons.add_link,
     EditorBetaAppBarAction.viewFormSubmissions => Icons.inbox_outlined,
     EditorBetaAppBarAction.moveToTrash => Icons.delete_outline,
   };
