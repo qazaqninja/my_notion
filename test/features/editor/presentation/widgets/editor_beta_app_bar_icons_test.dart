@@ -89,6 +89,13 @@ void main() {
       );
     });
 
+    test('copyBody → Icons.content_paste (D-fp17 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.copyBody),
+        Icons.content_paste,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

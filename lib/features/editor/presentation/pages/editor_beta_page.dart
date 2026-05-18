@@ -31,6 +31,7 @@ import '../../../vault/domain/sanitized_basename.dart';
 import '../../../vault/domain/vault_absolute_path.dart';
 import '../../domain/document_search.dart';
 import '../../domain/editor_beta_app_bar_actions.dart';
+import '../../domain/copy_labels.dart';
 import '../../domain/page_font.dart';
 import '../../domain/reminder_date.dart';
 import '../../domain/find_in_page_navigation.dart';
@@ -460,6 +461,30 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     }
     if (!mounted) return;
     context.go(Routes.home);
+  }
+  // coverage:ignore-end
+
+  /// D-fp17 (M1737): port Copy-body from legacy
+  /// editor_page.dart:536 (case 'copy-body'). Writes the current
+  /// page body to the system clipboard; toast reports the char
+  /// count via the M1737 [copiedCharsLabel] helper.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `Clipboard.setData` + `ScaffoldMessenger`. The label is
+  /// independently tested in `copy_labels_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onCopyBody() async {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final body = editorState.page.body;
+    await Clipboard.setData(ClipboardData(text: body));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(copiedCharsLabel(body.length)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
   // coverage:ignore-end
 
@@ -1155,6 +1180,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.setReminder => _onSetReminder,
         EditorBetaAppBarAction.snoozeReminder => _onSnoozeReminder,
         EditorBetaAppBarAction.clearReminder => _onClearReminder,
+        EditorBetaAppBarAction.copyBody => _onCopyBody,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       };
 

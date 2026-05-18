@@ -27,6 +27,7 @@ IconData iconFor(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.setReminder => Icons.alarm,
     EditorBetaAppBarAction.snoozeReminder => Icons.snooze,
     EditorBetaAppBarAction.clearReminder => Icons.alarm_off,
+    EditorBetaAppBarAction.copyBody => Icons.content_paste,
     EditorBetaAppBarAction.moveToTrash => Icons.delete_outline,
   };
 }
