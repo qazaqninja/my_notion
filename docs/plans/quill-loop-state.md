@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp5 shipped (Move-to-Trash + Pull-from-server + Share + Find-in-page + Copy-[[link]]).**
-- **Phase:** D (super_editor WYSIWYG migration) — 298 tests after M1696 (+5). D-fp parity arc in progress.
-- **Task:** Pick-next survey #22 — after M1696 D-fp5 Copy-[[link]] port. Options: (a) D-fp6 next parity port — copy-ulid / copy-path / reveal / rename / duplicate; (b) M1696 audit TS-04 fix-forward (rename group name to drop the M1696 tag); (c) NV-02 GoRouteData typed routes; (d) BL-12 _FindBarHost; (e) D30b/c after 24+ slice dogfood; (f) Phase E continuation. Default lean: option (a) D-fp6 — keep the parity arc moving since each port is one bite-sized AppBar IconButton + handler + occasionally a domain helper test.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp5 shipped.**
+- **Phase:** D (super_editor WYSIWYG migration) — 298 tests. D-fp parity arc in progress.
+- **Task:** Pick-next survey #23 — after M1698 M1696 TS-04 fix-forward (group rename). Options: (a) D-fp6 next parity port — copy-ulid / copy-path / reveal (note: reveal has weak TDD surface, copy-ulid is too trivial without helper extraction); (b) NV-02 GoRouteData typed routes; (c) BL-12 _FindBarHost — extract FindBar state into a Cubit; (d) D30b/c after 26+ slice dogfood; (e) Phase E continuation; (f) PopupMenuButton kebab refactor — collapse the 5+ AppBar IconButtons into a single kebab menu mirroring legacy editor; makes future D-fp ports a 1-line PopupMenuItem add + addresses mobile crowding. Default lean: option (f) PopupMenuButton kebab refactor — high-value structural change with multiplier effect on remaining D-fp work.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1698 — pick-next #22 closeout: M1696 audit TS-04 fix-forward (group rename)** (1 file modified; +5 / -1; 15/15 tests pass; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 245 closeout
+- Notes: Pick-next survey #22 originally leaned option (a) D-fp6 but pivoted on inspection — reveal has weak TDD surface (Process.run mocking is bigger than a slice), copy-ulid is too trivial without helper extraction, copy-path needs a pure-Dart join helper that overlaps with `package:path`. Picked option (b) — M1696 audit TS-04 fix-forward, M1690 precedent. Renamed outer test group `wikilinkLiteralFor (M1696)` → `wikilinkLiteralFor` so runner output reads as a fully qualified function-name path (`wikilinkLiteralFor › wraps the ULID in [[ ... ]]`) per the VGV convention. 4-line provenance comment above the group documents the M1696 → M1698 closure trail for future readers. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** M1696's TS-04 INFO closed. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1696 — pick-next #21 closeout: D-fp5 Copy-[[link]] kebab port (TDD)** (3 files modified; +92 / 0; 5 new tests; analyze clean)
 - Committed: (this iteration)
