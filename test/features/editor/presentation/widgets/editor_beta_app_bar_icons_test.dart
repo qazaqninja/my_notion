@@ -78,6 +78,18 @@ void main() {
       expect(iconFor(EditorBetaAppBarAction.setGoal), Icons.flag_outlined);
     });
 
+    test('exportMarkdown → Icons.file_download_outlined (D-fp22 port glyph)',
+        () {
+      expect(
+        iconFor(EditorBetaAppBarAction.exportMarkdown),
+        Icons.file_download_outlined,
+      );
+    });
+
+    test('exportHtml → Icons.code (D-fp22 port glyph)', () {
+      expect(iconFor(EditorBetaAppBarAction.exportHtml), Icons.code);
+    });
+
     test('setReminder → Icons.alarm (D-fp15 port glyph)', () {
       expect(iconFor(EditorBetaAppBarAction.setReminder), Icons.alarm);
     });

@@ -79,6 +79,20 @@ enum EditorBetaAppBarAction {
   /// [wordGoalLabel].
   setGoal(tooltip: 'Set word count goal…'),
 
+  /// Copies the page's `.md` file to a user-picked path via
+  /// `FilePicker.platform.saveFile`. D-fp22 port from legacy
+  /// `editor_page.dart` case `'export-md'` (`_exportPageAsMarkdown`).
+  /// The filename seed comes from [safeExportFilename] applied to
+  /// `page.title`.
+  exportMarkdown(tooltip: 'Export as .md…'),
+
+  /// Renders the page body via `HtmlExporter.renderStandalonePage`
+  /// and writes the resulting standalone HTML to a user-picked path.
+  /// D-fp22 port from legacy `editor_page.dart` case `'export-html'`
+  /// (`_exportPageAsHtml`). Shares the filename seed with the
+  /// markdown variant via [safeExportFilename].
+  exportHtml(tooltip: 'Export as .html…'),
+
   /// Opens a date picker; writes the picked date as ISO `YYYY-MM-DD`
   /// into the page's `reminder:` frontmatter. D-fp15 port from
   /// legacy `editor_page.dart` case `'set-reminder'`.
@@ -164,6 +178,8 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.pageHistory;
   yield EditorBetaAppBarAction.setFont;
   yield EditorBetaAppBarAction.setGoal;
+  yield EditorBetaAppBarAction.exportMarkdown;
+  yield EditorBetaAppBarAction.exportHtml;
   yield EditorBetaAppBarAction.setReminder;
   yield EditorBetaAppBarAction.snoozeReminder;
   yield EditorBetaAppBarAction.clearReminder;
@@ -209,6 +225,8 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.pageHistory ||
     EditorBetaAppBarAction.setFont ||
     EditorBetaAppBarAction.setGoal ||
+    EditorBetaAppBarAction.exportMarkdown ||
+    EditorBetaAppBarAction.exportHtml ||
     EditorBetaAppBarAction.setReminder ||
     EditorBetaAppBarAction.snoozeReminder ||
     EditorBetaAppBarAction.clearReminder ||

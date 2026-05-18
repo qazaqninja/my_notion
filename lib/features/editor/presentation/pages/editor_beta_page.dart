@@ -36,7 +36,9 @@ import '../../../forms/domain/repositories/forms_repository.dart';
 import '../../../forms/presentation/widgets/form_submissions_dialog.dart';
 import '../../domain/copy_labels.dart';
 import '../../domain/has_forms_frontmatter.dart';
+import '../../../vault/data/html_exporter.dart';
 import '../../domain/page_font.dart';
+import '../../domain/safe_export_filename.dart';
 import '../../domain/word_goal.dart';
 import '../../domain/page_json_payload.dart';
 import '../../domain/reminder_date.dart';
@@ -1009,6 +1011,102 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp22 (M1747): port Export-as-Markdown from legacy
+  /// editor_page.dart:1134 (`_exportPageAsMarkdown`). Reads
+  /// VaultBloc's rootPath, copies the source `.md` file to the
+  /// user-picked path via `FilePicker.platform.saveFile`. The filename
+  /// seed comes from [safeExportFilename] applied to `page.title`.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `FilePicker` + `dart:io` `File.copy` + `ScaffoldMessenger`. The
+  /// filename normaliser has 7 unit tests in
+  /// `safe_export_filename_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onExportMarkdown() async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final page = editorState.page;
+    final source = File('${vault.rootPath}/${page.relativePath}');
+    if (!await source.exists()) return;
+    if (!mounted) return;
+    final safeName = safeExportFilename(page.title);
+    final picked = await FilePicker.platform.saveFile(
+      dialogTitle: 'Export page as Markdown…',
+      fileName: '$safeName.md',
+      type: FileType.custom,
+      allowedExtensions: const ['md'],
+    );
+    if (picked == null || !mounted) return;
+    try {
+      await source.copy(picked);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Exported markdown: $picked'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Export failed: $e'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+  // coverage:ignore-end
+
+  /// D-fp22 (M1747): port Export-as-HTML from legacy
+  /// editor_page.dart:1107 (`_exportPageAsHtml`). Renders
+  /// `HtmlExporter.renderStandalonePage(title:, body:)` and writes
+  /// the resulting standalone HTML to the user-picked path. Shares
+  /// the [safeExportFilename] seed with the markdown variant.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `FilePicker` + `dart:io` `File.writeAsString` +
+  /// `ScaffoldMessenger`. HtmlExporter has its own test coverage.
+  // coverage:ignore-start
+  Future<void> _onExportHtml() async {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final page = editorState.page;
+    final safeName = safeExportFilename(page.title);
+    final picked = await FilePicker.platform.saveFile(
+      dialogTitle: 'Export page as HTML…',
+      fileName: '$safeName.html',
+      type: FileType.custom,
+      allowedExtensions: const ['html'],
+    );
+    if (picked == null || !mounted) return;
+    try {
+      final html = HtmlExporter.renderStandalonePage(
+        title: page.title,
+        body: page.body,
+      );
+      await File(picked).writeAsString(html);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Exported HTML: $picked'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Export failed: $e'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+  // coverage:ignore-end
+
   /// D-fp12 (M1725): port Page-history from legacy editor_page.dart:534
   /// (`_showPageHistory`). Reads the VaultBloc's rootPath, opens the
   /// [PageHistoryDialog] backed by `git log`. The dialog handles the
@@ -1444,6 +1542,8 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.pageHistory => _onPageHistory,
         EditorBetaAppBarAction.setFont => _onSetFont,
         EditorBetaAppBarAction.setGoal => _onSetGoal,
+        EditorBetaAppBarAction.exportMarkdown => _onExportMarkdown,
+        EditorBetaAppBarAction.exportHtml => _onExportHtml,
         EditorBetaAppBarAction.setReminder => _onSetReminder,
         EditorBetaAppBarAction.snoozeReminder => _onSnoozeReminder,
         EditorBetaAppBarAction.clearReminder => _onClearReminder,

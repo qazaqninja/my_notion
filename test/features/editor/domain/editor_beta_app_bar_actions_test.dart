@@ -30,6 +30,8 @@ void main() {
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setGoal,
+        EditorBetaAppBarAction.exportMarkdown,
+        EditorBetaAppBarAction.exportHtml,
         EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
@@ -72,6 +74,8 @@ void main() {
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
+            EditorBetaAppBarAction.exportMarkdown,
+            EditorBetaAppBarAction.exportHtml,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -101,6 +105,8 @@ void main() {
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
+            EditorBetaAppBarAction.exportMarkdown,
+            EditorBetaAppBarAction.exportHtml,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -185,6 +191,8 @@ void main() {
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setGoal,
+        EditorBetaAppBarAction.exportMarkdown,
+        EditorBetaAppBarAction.exportHtml,
         EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
@@ -270,6 +278,8 @@ void main() {
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
+            EditorBetaAppBarAction.exportMarkdown,
+            EditorBetaAppBarAction.exportHtml,
             EditorBetaAppBarAction.setReminder,
             EditorBetaAppBarAction.snoozeReminder,
             EditorBetaAppBarAction.clearReminder,
@@ -347,6 +357,20 @@ void main() {
         expect(
           EditorBetaAppBarAction.setGoal.tooltip,
           'Set word count goal…',
+        );
+      });
+
+      test('exportMarkdown tooltip reads the D-fp22 port label', () {
+        expect(
+          EditorBetaAppBarAction.exportMarkdown.tooltip,
+          'Export as .md…',
+        );
+      });
+
+      test('exportHtml tooltip reads the D-fp22 port label', () {
+        expect(
+          EditorBetaAppBarAction.exportHtml.tooltip,
+          'Export as .html…',
         );
       });
 
