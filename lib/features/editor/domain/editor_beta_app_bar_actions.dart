@@ -98,3 +98,58 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.pageHistory;
   yield EditorBetaAppBarAction.moveToTrash;
 }
+
+/// M1727 (D-fp13 kebab refactor slice 1): partition the AppBar
+/// actions into a small "always-visible" set rendered as bare
+/// IconButtons + a larger "secondary" set folded into a
+/// PopupMenuButton kebab. The split mirrors the legacy editor's
+/// "top of kebab vs. inside kebab" UX and addresses the visual
+/// crowding observed once 12 D-fp actions all rendered as side-by-
+/// side IconButtons.
+///
+/// **Top bar** (most frequent + destructive): pullFromServer,
+/// findInPage, share, moveToTrash.
+///
+/// **Kebab**: copyLink, copyUlid, copyPath, duplicate, reveal,
+/// rename, publishToggle, pageHistory.
+///
+/// Splitting in a pure-Dart helper (rather than at the widget tree)
+/// keeps the visibility + ordering rules testable independently of
+/// the AppBar build path. UI wire-up lands in slice 2.
+bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
+  return switch (action) {
+    EditorBetaAppBarAction.pullFromServer ||
+    EditorBetaAppBarAction.findInPage ||
+    EditorBetaAppBarAction.share ||
+    EditorBetaAppBarAction.moveToTrash =>
+      false,
+    EditorBetaAppBarAction.copyLink ||
+    EditorBetaAppBarAction.copyUlid ||
+    EditorBetaAppBarAction.copyPath ||
+    EditorBetaAppBarAction.duplicate ||
+    EditorBetaAppBarAction.reveal ||
+    EditorBetaAppBarAction.rename ||
+    EditorBetaAppBarAction.publishToggle ||
+    EditorBetaAppBarAction.pageHistory =>
+      true,
+  };
+}
+
+/// The subset of [editorBetaAppBarActions] that renders as bare
+/// IconButtons on the AppBar. Preserves the order from
+/// [editorBetaAppBarActions].
+Iterable<EditorBetaAppBarAction> editorBetaTopBarActions({
+  required bool isAuthed,
+}) =>
+    editorBetaAppBarActions(isAuthed: isAuthed)
+        .where((a) => !isEditorBetaKebabAction(a));
+
+/// The subset of [editorBetaAppBarActions] that folds into the
+/// PopupMenuButton kebab. Auth gating doesn't apply here today
+/// (none of the kebab entries depend on `isAuthed`), but the
+/// parameter is plumbed for future symmetry.
+Iterable<EditorBetaAppBarAction> editorBetaKebabActions({
+  required bool isAuthed,
+}) =>
+    editorBetaAppBarActions(isAuthed: isAuthed)
+        .where(isEditorBetaKebabAction);

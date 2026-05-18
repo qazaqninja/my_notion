@@ -73,6 +73,106 @@ void main() {
     });
   });
 
+  // M1727 (D-fp13 kebab refactor slice 1): partition the actions
+  // into the AppBar top-bar IconButtons + the kebab PopupMenuButton
+  // entries. Tests are pure-Dart against the enum.
+  group('isEditorBetaKebabAction', () {
+    test('pullFromServer / findInPage / share / moveToTrash are top-bar', () {
+      expect(
+        isEditorBetaKebabAction(EditorBetaAppBarAction.pullFromServer),
+        isFalse,
+      );
+      expect(
+        isEditorBetaKebabAction(EditorBetaAppBarAction.findInPage),
+        isFalse,
+      );
+      expect(
+        isEditorBetaKebabAction(EditorBetaAppBarAction.share),
+        isFalse,
+      );
+      expect(
+        isEditorBetaKebabAction(EditorBetaAppBarAction.moveToTrash),
+        isFalse,
+      );
+    });
+
+    test('all secondary actions are kebab entries', () {
+      const kebab = <EditorBetaAppBarAction>{
+        EditorBetaAppBarAction.copyLink,
+        EditorBetaAppBarAction.copyUlid,
+        EditorBetaAppBarAction.copyPath,
+        EditorBetaAppBarAction.duplicate,
+        EditorBetaAppBarAction.reveal,
+        EditorBetaAppBarAction.rename,
+        EditorBetaAppBarAction.publishToggle,
+        EditorBetaAppBarAction.pageHistory,
+      };
+      for (final action in kebab) {
+        expect(
+          isEditorBetaKebabAction(action),
+          isTrue,
+          reason: '${action.name} should be in the kebab',
+        );
+      }
+    });
+
+    test('partition is exhaustive — every enum value is classified', () {
+      for (final action in EditorBetaAppBarAction.values) {
+        // Calling isEditorBetaKebabAction shouldn't throw or hit an
+        // unreached switch arm; both branches return a concrete bool.
+        final classified = isEditorBetaKebabAction(action);
+        expect(classified, isA<bool>());
+      }
+    });
+  });
+
+  group('editorBetaTopBarActions / editorBetaKebabActions', () {
+    test('together cover the full action set in stable order', () {
+      final top = editorBetaTopBarActions(isAuthed: true).toList();
+      final kebab = editorBetaKebabActions(isAuthed: true).toList();
+      expect(
+        {...top, ...kebab},
+        EditorBetaAppBarAction.values.toSet(),
+        reason: 'partition should cover every enum value',
+      );
+      // No overlap between the two sets.
+      expect(top.toSet().intersection(kebab.toSet()), isEmpty);
+    });
+
+    test('top-bar drops pullFromServer in the unauthed sequence', () {
+      expect(editorBetaTopBarActions(isAuthed: false).toList(), [
+        EditorBetaAppBarAction.findInPage,
+        EditorBetaAppBarAction.share,
+        EditorBetaAppBarAction.moveToTrash,
+      ]);
+    });
+
+    test('top-bar authed sequence is pull → find → share → moveToTrash', () {
+      expect(editorBetaTopBarActions(isAuthed: true).toList(), [
+        EditorBetaAppBarAction.pullFromServer,
+        EditorBetaAppBarAction.findInPage,
+        EditorBetaAppBarAction.share,
+        EditorBetaAppBarAction.moveToTrash,
+      ]);
+    });
+
+    test('kebab sequence preserves the original ordering', () {
+      // The 8 secondary entries must appear in the same relative
+      // order as in editorBetaAppBarActions so users see a consistent
+      // sequence as actions move between the top-bar and the kebab.
+      expect(editorBetaKebabActions(isAuthed: true).toList(), [
+        EditorBetaAppBarAction.copyLink,
+        EditorBetaAppBarAction.copyUlid,
+        EditorBetaAppBarAction.copyPath,
+        EditorBetaAppBarAction.duplicate,
+        EditorBetaAppBarAction.reveal,
+        EditorBetaAppBarAction.rename,
+        EditorBetaAppBarAction.publishToggle,
+        EditorBetaAppBarAction.pageHistory,
+      ]);
+    });
+  });
+
   // M1701 (TS-04 fix-forward on M1700 audit): tooltip tests live inside
   // the enum-named outer group with `.tooltip getter` as the sub-group,
   // since the property is the unit under test rather than a method.
