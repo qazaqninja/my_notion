@@ -30,6 +30,8 @@ import 'features/sync/domain/repositories/sync_repository.dart';
 import 'features/sync/presentation/bloc/sync_bloc.dart';
 import 'features/sync/presentation/bloc/sync_event.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
+import 'features/editor/data/repositories/html_export_repository_impl.dart';
+import 'features/editor/domain/repositories/html_export_repository.dart';
 import 'features/editor/presentation/pages/editor_beta_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/vault/data/indexer.dart';
@@ -162,6 +164,14 @@ class _QuillAppState extends State<QuillApp> {
         // consumer appears or the app grows multi-vault, revisit.
         RepositoryProvider<FormBearingPagesRepository>.value(
             value: _formBearingPagesRepo),
+        // CA-04 (M1794): editor-domain interface that adapts
+        // vault/data/html_exporter.dart for the Export-as-.html
+        // kebab handler. Lets editor_beta_page.dart resolve the
+        // renderer via `context.read<HtmlExportRepository>()`
+        // instead of crossing the feature boundary at import time.
+        RepositoryProvider<HtmlExportRepository>(
+          create: (_) => const HtmlExportRepositoryImpl(),
+        ),
       ],
       child: MultiBlocProvider(
         // DI-03 (docs/RULES.md): blocs are normally scoped to the

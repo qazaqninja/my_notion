@@ -41,8 +41,8 @@ import '../../domain/folder_picker_options.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../domain/has_forms_frontmatter.dart';
 import '../../domain/tag_merge.dart';
-import '../../../vault/data/html_exporter.dart';
 import '../../../vault/data/pdf_exporter.dart';
+import '../../domain/repositories/html_export_repository.dart';
 import '../../domain/page_font.dart';
 import '../../domain/safe_export_filename.dart';
 import '../../domain/word_goal.dart';
@@ -1103,20 +1103,26 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
-  /// D-fp22 (M1747): port Export-as-HTML from legacy
-  /// legacy editor (`_exportPageAsHtml`). Renders
-  /// `HtmlExporter.renderStandalonePage(title:, body:)` and writes
-  /// the resulting standalone HTML to the user-picked path. Shares
-  /// the [safeExportFilename] seed with the markdown variant.
+  /// D-fp22 (M1747): port Export-as-HTML from the legacy editor
+  /// (`_exportPageAsHtml`). Renders via
+  /// [HtmlExportRepository.renderStandalonePage] and writes the
+  /// resulting standalone HTML to the user-picked path. Shares the
+  /// [safeExportFilename] seed with the markdown variant.
+  ///
+  /// CA-04 (M1794): renderer reached through the editor-domain
+  /// [HtmlExportRepository] interface, not a direct cross-feature
+  /// import from `vault/data/html_exporter.dart`.
   ///
   /// Coverage exemption (TS-01): widget-tier orchestration over
   /// `FilePicker` + `dart:io` `File.writeAsString` +
-  /// `ScaffoldMessenger`. HtmlExporter has its own test coverage.
+  /// `ScaffoldMessenger`. HtmlExportRepository has its own test
+  /// coverage at `test/features/editor/data/html_export_repository_test.dart`.
   // coverage:ignore-start
   Future<void> _onExportHtml() async {
     final editorState = context.read<EditorBloc>().state;
     if (editorState is! EditorLoaded) return;
     final page = editorState.page;
+    final renderer = context.read<HtmlExportRepository>();
     final safeName = safeExportFilename(page.title);
     final picked = await FilePicker.platform.saveFile(
       dialogTitle: 'Export page as HTML…',
@@ -1126,7 +1132,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     );
     if (picked == null || !mounted) return;
     try {
-      final html = HtmlExporter.renderStandalonePage(
+      final html = renderer.renderStandalonePage(
         title: page.title,
         body: page.body,
       );
