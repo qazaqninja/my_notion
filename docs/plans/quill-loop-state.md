@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
-- **Phase:** D (super_editor WYSIWYG migration) — 293 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #21 — after M1694 CLAUDE.md status refresh. **4 of last 5 commits doc-only; pivot back to code slice.** Options: (a) BL-11 D-fp callback cleanup — concrete refactor lifting `// coverage:ignore-start/end` blocks into named state methods (M1607 precedent); (b) D-fp5 next parity port; (c) BL-12 _FindBarHost — extract FindBar state into a Cubit; (d) NV-02 GoRouteData typed routes; (e) D30b/c after 24+ slice dogfood; (f) Phase E continuation (G4 docker smoke deferred — needs user wall-time). Default lean: option (a) BL-11 D-fp callback cleanup — concrete code slice, named-method-on-state pattern, well-scoped to EditorBetaPage's 5 D-fp callbacks, restores test-coverage visibility on those handlers.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp5 shipped (Move-to-Trash + Pull-from-server + Share + Find-in-page + Copy-[[link]]).**
+- **Phase:** D (super_editor WYSIWYG migration) — 298 tests after M1696 (+5). D-fp parity arc in progress.
+- **Task:** Pick-next survey #22 — after M1696 D-fp5 Copy-[[link]] port. Options: (a) D-fp6 next parity port — copy-ulid / copy-path / reveal / rename / duplicate; (b) M1696 audit TS-04 fix-forward (rename group name to drop the M1696 tag); (c) NV-02 GoRouteData typed routes; (d) BL-12 _FindBarHost; (e) D30b/c after 24+ slice dogfood; (f) Phase E continuation. Default lean: option (a) D-fp6 — keep the parity arc moving since each port is one bite-sized AppBar IconButton + handler + occasionally a domain helper test.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1696 — pick-next #21 closeout: D-fp5 Copy-[[link]] kebab port (TDD)** (3 files modified; +92 / 0; 5 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 244 closeout
+- Notes: Pick-next survey #21 picked option (a)-pivoted — original BL-11 D-fp callback cleanup turned out a soft target (D-fp callbacks already use named-method-on-state per M1607; carry-forward is rationale-comment work not code change). Pivoted to D-fp5 — port Copy-[[link]] from legacy `editor_page.dart:515` kebab to `EditorBetaPage` AppBar. Most useful next port since `[[ULID]]` wikilinks are Quill's core content-authoring primitive. **TDD red→green:** new pure-Dart helper `wikilinkLiteralFor({required ulid, anchor})` in `lib/core/markdown/wikilink_parser.dart` centralises the `[[<ulid>]]` / `[[<ulid>#<anchor>]]` literal format (the inverse of `WikilinkParser.find`). 5 new unit tests under `wikilinkLiteralFor (M1696)`: bracket-wrap, round-trip-via-find (byte-identical), `#anchor` append, null anchor omits `#`, empty-string anchor omits `#`. Then `_onCopyLink()` async handler on `_BetaEditorShellState` (same M1571 coverage-ignore pattern as the other D-fp ports) calls the helper + `Clipboard.setData` + a SnackBar; new AppBar IconButton (`Icons.link`, tooltip "Copy [[link]] to this page") between Share and Move-to-Trash. 15/15 wikilink tests pass; flutter analyze clean. **Orchestrator audit: 0 BLOCK / 1 WARN (BL-11 — `_onCopyLink` SnackBar issued direct from State method; acknowledged carry-forward under M1571 widget-tier coverage-ignore exemption pattern, consistent with the prior 4 D-fp ports) / 2 INFO (TS-04 — group name carries the M1696 milestone tag, same cosmetic noted on M1680 / M1682 / M1686; TH-03 — pre-existing BETA badge inline `fontSize: 11` not introduced in this slice).** Non-actionable cosmetic INFOs. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1694 — pick-next #20 closeout: CLAUDE.md status block refresh (M1657 → M1693)** (1 file modified; +1 / -1; doc-only)
 - Committed: (this iteration)
