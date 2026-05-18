@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp12 shipped; D-fp13 kebab partition (slice 1) shipped.**
-- **Phase:** D (super_editor WYSIWYG migration) — 341 tests after M1727 (+7). D-fp parity arc in progress.
-- **Task:** Pick-next survey #35 — after M1727 D-fp13 kebab partition (slice 1). Options: (a) D-fp13 slice 2 — wire AppBar to use editorBetaTopBarActions + trailing PopupMenuButton driven by editorBetaKebabActions; (b) D-fp14 set-font / set-reminder; (c) Coordinated BL-11 SnackBar→BlocListener refactor; (d) NV-02 typed routes; (e) D30b/c after 48+ slice dogfood; (f) Phase E continuation; (g) TS-01/FS-04 stub editor_beta_page_test.dart. Default lean: option (a) — completes M1727's two-step refactor; visible AppBar cleanup; visibility/order/disjoint invariants already locked by 21 enum tests.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp13 shipped (kebab refactor complete).**
+- **Phase:** D (super_editor WYSIWYG migration) — 341 tests. D-fp parity arc in progress.
+- **Task:** Pick-next survey #36 — after M1729 D-fp13 kebab slice 2 wire-up. Options: (a) D-fp14 set-font / set-reminder / view-form-submissions / move-to-folder / add-tags (legacy kebab still has ~7); (b) Coordinated BL-11 SnackBar→BlocListener refactor across 12 D-fp handlers (substantial); (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction; (e) D30b/c after 50+ slice dogfood; (f) Phase E continuation; (g) Stub editor_beta_page_test.dart with a _kebabFor widget smoke; (h) Relocate editorBetaXxxActions helpers from domain/ to presentation/ if pure-domain audit becomes priority. Default lean: option (a) D-fp14 set-font — frontmatter `font:` + EditorBloc EditFrontmatterField pattern already exists.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1729 — pick-next #35 closeout: D-fp13 kebab refactor slice 2 (AppBar wire-up)** (1 file modified; +54 / -17; no new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 258 closeout
+- Notes: Completes the M1727 two-step kebab refactor. Three changes in `editor_beta_page.dart`: (1) extracted `VoidCallback _handlerFor(EditorBetaAppBarAction)` from `_iconButtonFor` body — same exhaustive switch, now reusable; (2) `_iconButtonFor` simplified to a 4-line `IconButton(icon, tooltip, onPressed: _handlerFor(action))` constructor; (3) new `PopupMenuButton<EditorBetaAppBarAction> _kebabFor({isAuthed})` factory that builds a `PopupMenuItem` per `editorBetaKebabActions(...)` entry with `Icon(iconFor, size: 18) + Text(action.tooltip)` and `onSelected: (action) => _handlerFor(action).call()`. AppBar build path now iterates `editorBetaTopBarActions(isAuthed:)` (4 IconButtons: pullFromServer/findInPage/share/moveToTrash) and appends the kebab (`copyLink/copyUlid/copyPath/duplicate/reveal/rename/publishToggle/pageHistory` — 8 entries) at the end. **Visual debt closed:** the 12-IconButton-wide AppBar from M1725 is now 4 IconButtons + 1 kebab, matching legacy editor UX. No new tests — visibility/order/disjoint invariants pre-covered by M1727's 7 partition tests + 14 prior enum tests = 21 total. **Orchestrator audit: 0 BLOCK / 0 WARN / 2 INFO (CA-01 — domain placement note on UI-partition helpers, deferrable refactor; TS-01 — `_kebabFor` widget test deferrable to D30 cleanup).** 34/34 enum + iconFor tests still pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1727 — pick-next #34 closeout: D-fp13 kebab refactor slice 1 (domain partition)** (2 files; +155 / 0; 7 new tests; analyze clean)
 - Committed: (this iteration)
