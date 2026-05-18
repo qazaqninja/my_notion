@@ -6,8 +6,10 @@ import 'package:my_notion/features/editor/domain/repositories/html_export_reposi
 import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
 import 'package:my_notion/features/forms/domain/repositories/forms_repository.dart';
+import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
+import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
 
 import '_harness/editor_beta_pump.dart';
 
@@ -109,6 +111,35 @@ void main() {
           foundForms.listSubmissions(token: 't', ulid: 'u'),
           completion(isEmpty),
         );
+      });
+
+      // M1811 sub-slice 4: VaultBloc + SyncBloc resolvable via
+      // bloc_test MockBloc stubs (no-op initial state). 8 of 9
+      // collaborators wired after this slice.
+      testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
+          (tester) async {
+        late VaultBloc foundVault;
+        late SyncBloc foundSync;
+
+        final harness = await pumpEditorBeta(
+          tester,
+          ulid: '01H0000000000000000000ABCD',
+          probe: Builder(
+            builder: (context) {
+              foundVault = context.read<VaultBloc>();
+              foundSync = context.read<SyncBloc>();
+              return const SizedBox.shrink();
+            },
+          ),
+        );
+        addTearDown(harness.dispose);
+
+        expect(foundVault, isA<VaultBloc>());
+        expect(foundSync, isA<SyncBloc>());
+        // Both stubs start at their canonical "no work done yet"
+        // state — matches what the editor handlers' early-return
+        // guards check for.
+        expect(foundSync.state.isAuthed, isFalse);
       });
     });
   });

@@ -1,3 +1,4 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:drift/native.dart';
 import 'package:file/memory.dart';
 import 'package:flutter/widgets.dart';
@@ -11,10 +12,16 @@ import 'package:my_notion/features/editor/domain/repositories/html_export_reposi
 import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
 import 'package:my_notion/features/forms/domain/entities/form_submission.dart';
 import 'package:my_notion/features/forms/domain/repositories/forms_repository.dart';
+import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:my_notion/features/sync/presentation/bloc/sync_event.dart';
+import 'package:my_notion/features/sync/presentation/bloc/sync_state.dart';
 import 'package:my_notion/features/vault/data/datasources/vault_fs_datasource.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/data/repositories/vault_repository_impl.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
+import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
+import 'package:my_notion/features/vault/presentation/bloc/vault_event.dart';
+import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
 
 // TS-05 exception: shared harness by design — every per-handler
 // test file imports `pumpEditorBeta` + `EditorBetaHarness` from
@@ -26,7 +33,7 @@ import 'package:my_notion/features/vault/domain/repositories/vault_repository.da
 /// assert dispatch) reuse this single helper instead of rebuilding
 /// the provider stack in every file.
 ///
-/// **Status:** sub-slice 3 (M1809). 6 of 9 collaborators now
+/// **Status:** sub-slice 4 (M1811). 8 of 9 collaborators now
 /// wired — the 3 M1806 foundations (VaultRepository + Indexer +
 /// QuillDatabase) plus the 3 added in this slice
 /// (HtmlExportRepository + PdfExportRepository + FormsRepository).
@@ -53,11 +60,11 @@ import 'package:my_notion/features/vault/domain/repositories/vault_repository.da
 /// * `RepositoryProvider<HtmlExportRepository>` (M1794) ✅ M1809
 /// * `RepositoryProvider<PdfExportRepository>` (M1796) ✅ M1809
 /// * `RepositoryProvider<FormsRepository>` (D-fp19, M1741) ✅ M1809
-/// * `BlocProvider<VaultBloc>` (read for `rootPath`) — queued
-/// * `BlocProvider<SyncBloc>` (read for `isAuthed`) — queued
+/// * `BlocProvider<VaultBloc>` (read for `rootPath`) ✅ M1811
+/// * `BlocProvider<SyncBloc>` (read for `isAuthed`) ✅ M1811
 /// * The editor provides `EditorBloc`, `SlashMenuCubit`, and
 ///   `BlockSelectionCubit` internally — drops out once the page
-///   itself mounts.
+///   itself mounts (final sub-slice).
 ///
 /// **Wiring options when more handlers come in scope:**
 ///
@@ -83,6 +90,12 @@ Future<EditorBetaHarness> pumpEditorBeta(
   final db = QuillDatabase.forTesting(NativeDatabase.memory());
   final indexer = Indexer(db, ds);
   final repo = VaultRepositoryImpl(ds);
+  final vaultBloc = _StubVaultBloc();
+  final syncBloc = _StubSyncBloc();
+  whenListen(vaultBloc, const Stream<VaultState>.empty(),
+      initialState: const VaultInitial());
+  whenListen(syncBloc, const Stream<SyncState>.empty(),
+      initialState: const SyncState());
 
   await tester.pumpWidget(
     MultiRepositoryProvider(
@@ -100,12 +113,31 @@ Future<EditorBetaHarness> pumpEditorBeta(
           create: (_) => const _NoopFormsRepository(),
         ),
       ],
-      child: probe ?? const _UnwiredPagePlaceholder(),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<VaultBloc>.value(value: vaultBloc),
+          BlocProvider<SyncBloc>.value(value: syncBloc),
+        ],
+        child: probe ?? const _UnwiredPagePlaceholder(),
+      ),
     ),
   );
 
-  return EditorBetaHarness._(db: db, indexer: indexer, repo: repo, fs: fs);
+  return EditorBetaHarness._(
+    db: db,
+    indexer: indexer,
+    repo: repo,
+    fs: fs,
+    vaultBloc: vaultBloc,
+    syncBloc: syncBloc,
+  );
 }
+
+class _StubVaultBloc extends MockBloc<VaultEvent, VaultState>
+    implements VaultBloc {}
+
+class _StubSyncBloc extends MockBloc<SyncEvent, SyncState>
+    implements SyncBloc {}
 
 /// In-test stand-in for [FormsRepository] that returns an empty
 /// submission list. The only consumer in `editor_beta_page.dart` is
@@ -136,22 +168,25 @@ class EditorBetaHarness {
     required this.indexer,
     required this.repo,
     required this.fs,
+    required this.vaultBloc,
+    required this.syncBloc,
   });
 
   final QuillDatabase db;
   final Indexer indexer;
   final VaultRepository repo;
   final MemoryFileSystem fs;
+  final VaultBloc vaultBloc;
+  final SyncBloc syncBloc;
 
   /// Convenience cleanup hook so callers can `addTearDown(harness.dispose)`.
   ///
-  /// TODO: expand `dispose()` as new resources are wired in
-  /// successive sub-slices (e.g., bloc.close() once VaultBloc /
-  /// SyncBloc fakes land; stream subscriptions; open file handles).
-  /// Today only `db.close()` is needed — `MemoryFileSystem` has no
-  /// close contract and `Indexer`/`VaultRepositoryImpl` are
-  /// stateless.
+  /// As of M1811 closes the two MockBloc stubs alongside the in-memory
+  /// drift database.  Stream subscriptions and open file handles will
+  /// land here as later sub-slices wire them.
   Future<void> dispose() async {
+    await vaultBloc.close();
+    await syncBloc.close();
     await db.close();
   }
 }
