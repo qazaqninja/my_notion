@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp5 shipped.**
-- **Phase:** D (super_editor WYSIWYG migration) — 298 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #23 — after M1698 M1696 TS-04 fix-forward (group rename). Options: (a) D-fp6 next parity port — copy-ulid / copy-path / reveal (note: reveal has weak TDD surface, copy-ulid is too trivial without helper extraction); (b) NV-02 GoRouteData typed routes; (c) BL-12 _FindBarHost — extract FindBar state into a Cubit; (d) D30b/c after 26+ slice dogfood; (e) Phase E continuation; (f) PopupMenuButton kebab refactor — collapse the 5+ AppBar IconButtons into a single kebab menu mirroring legacy editor; makes future D-fp ports a 1-line PopupMenuItem add + addresses mobile crowding. Default lean: option (f) PopupMenuButton kebab refactor — high-value structural change with multiplier effect on remaining D-fp work.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp5 shipped. D-fp6 enum reserved (M1700); wire-up + copyUlid handler next.**
+- **Phase:** D (super_editor WYSIWYG migration) — 306 tests after M1700 (+8). D-fp parity arc in progress.
+- **Task:** Pick-next survey #24 — after M1700 EditorBetaAppBarAction enum + M1701 fix-forwards. Options: (a) Wire enum into editor_beta_page.dart AppBar (deferred slice 2); (b) D-fp6 copyUlid port — add `_onCopyUlid()` + new AppBar button using the enum slot already reserved; (c) NV-02 GoRouteData typed routes; (d) BL-12 _FindBarHost; (e) D30b/c after 26+ slice dogfood; (f) Phase E continuation. Default lean: option (b) D-fp6 copyUlid port — completes the D-fp6 work the M1700 enum was scaffolding for; the wire-up (option a) can be a cleaner separate slice afterward.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1700 + M1701 — pick-next #23 closeout: EditorBetaAppBarAction enum extraction + same-iteration audit fix-forwards** (3 files; +130 / -15; 8 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 246 closeout
+- Notes: Pick-next survey #23 picked option (f) — PopupMenuButton kebab refactor — but split into TWO bite-sized slices since the structural rewrite was too big for one TDD cycle. **M1700 slice 1** extracts the pure-Dart enum + helper to a new domain file: `lib/features/editor/domain/editor_beta_app_bar_actions.dart` with `enum EditorBetaAppBarAction { pullFromServer, findInPage, share, copyLink, copyUlid, moveToTrash }` (each with a `tooltip` instance field), plus `Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({required bool isAuthed}) sync*` yielding entries in the existing AppBar order, gating `pullFromServer` on `isAuthed`. 8 new unit tests covering: pullFromServer visibility, always-on actions, stable order (both authed + anon variants), non-empty tooltips, specific labels for copyUlid + copyLink. **`copyUlid` reserved in the enum now so the upcoming D-fp6 port lands as a 1-line PopupMenuItem add.** Wire-up scheduled for next slice — domain shape ships first so the API can be reviewed in isolation. **Orchestrator audit on M1700: 0 BLOCK / 1 WARN (TS-04 — second outer group named `EditorBetaAppBarAction.tooltip` after a property, not a method) / 2 INFO (FS-04 — test path `test/features/editor/` should mirror `lib/features/editor/domain/`; TS-03 — `test()` is correct for pure-Dart generator, flagged for traceability only).** **M1701 same-iteration fix-forwards:** moved test file → `test/features/editor/domain/` for FS-04 mirror; restructured the tooltip group to `EditorBetaAppBarAction › .tooltip getter` nested form. Both findings closed. 8/8 enum tests still pass; analyze clean. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1698 — pick-next #22 closeout: M1696 audit TS-04 fix-forward (group rename)** (1 file modified; +5 / -1; 15/15 tests pass; analyze clean)
 - Committed: (this iteration)
