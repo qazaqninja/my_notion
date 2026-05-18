@@ -30,6 +30,21 @@ void main() {
               'M1769: the 1,186 baseline is from M1248-era counter advance',
         );
       });
+
+      test('is not still M1766+ after post-D30d arcs landed', () {
+        expect(
+          source.contains('M0–M1766+'),
+          isFalse,
+          reason:
+              'M1792: bumped to M1790+ after post-D30d archaeology arc + '
+              'TS-01 stub + CLAUDE.md refresh',
+        );
+        expect(
+          source.contains('1,766+ milestones'),
+          isFalse,
+          reason: 'M1792: also bumped the prose counter on line 12',
+        );
+      });
     });
 
     group('block-editor paragraph', () {
