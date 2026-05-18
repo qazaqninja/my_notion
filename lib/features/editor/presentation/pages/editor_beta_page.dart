@@ -18,6 +18,7 @@ import '../../../../core/platform/reveal.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
+import '../../../sync/domain/usecases/build_public_password_entries.dart';
 import '../../../sync/presentation/bloc/sync_bloc.dart';
 import '../../../sync/presentation/bloc/sync_event.dart';
 import '../../../sync/presentation/bloc/sync_state.dart';
@@ -1220,6 +1221,106 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp24 (M1751): port Publish-with-password from legacy
+  /// editor_page.dart:1269 (`_publishPageWithPassword`). Prompts the
+  /// user for a password via an obscured `AlertDialog` (mirroring the
+  /// legacy `_promptForPassword`), then stamps `public: true` +
+  /// `public_password: <bcrypt>` into frontmatter via
+  /// [buildPublicPasswordEntries]. The backend's E43 probe gates
+  /// `GET /public/<ulid>` on the matching cookie. URL is copied to
+  /// the clipboard and announced via SnackBar.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over an
+  /// `AlertDialog` + `Clipboard.setData` + `ScaffoldMessenger` +
+  /// frontmatter events. The bcrypt + entry-build logic is pre-tested
+  /// in `build_public_password_entries_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onPublishWithPassword() async {
+    final bloc = context.read<EditorBloc>();
+    final editorState = bloc.state;
+    if (editorState is! EditorLoaded) return;
+    final ulid = editorState.page.ulid;
+    if (ulid.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot publish: page has no ULID'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final password = await _promptForPassword();
+    if (password == null || password.isEmpty || !mounted) return;
+    final entries = buildPublicPasswordEntries(password);
+    final fm = editorState.page.frontmatter;
+    if (fm.find('public') == null) {
+      bloc.add(AddFrontmatterField(entries.publicFlag));
+    } else {
+      bloc.add(EditFrontmatterField('public', entries.publicFlag));
+    }
+    if (fm.find('public_password') == null) {
+      bloc.add(AddFrontmatterField(entries.passwordHash));
+    } else {
+      bloc.add(EditFrontmatterField('public_password', entries.passwordHash));
+    }
+    final url = '$kBackendHttpBaseUrl/public/$ulid';
+    await Clipboard.setData(ClipboardData(text: url));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Published (password-protected): $url'),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
+  /// D-fp24 modal text-field prompt — mirrors legacy
+  /// `_promptForPassword`. Returns null on dismiss/cancel, the
+  /// entered string otherwise. Auto-focuses the field and supports
+  /// onSubmitted (Enter) for one-tap completion. Owns its own
+  /// controller — disposing inside the builder so the dialog
+  /// transition has finished by the time the controller goes out of
+  /// scope.
+  ///
+  /// Coverage exemption (TS-01): widget-tier dialog orchestration.
+  // coverage:ignore-start
+  Future<String?> _promptForPassword() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Set page password'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            obscureText: true,
+            decoration: const InputDecoration(
+              hintText: 'Password',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (v) => Navigator.of(dialogContext).pop(v),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () =>
+                  Navigator.of(dialogContext).pop(controller.text),
+              child: const Text('Publish'),
+            ),
+          ],
+        );
+      },
+    );
+    controller.dispose();
+    return result;
+  }
+  // coverage:ignore-end
+
   /// D-fp10 (M1719): port Rename-file from legacy
   /// editor_page.dart:705 (`_renameFile`). Opens a [showQuillPrompt]
   /// dialog seeded with the current basename, runs the picked value
@@ -1578,6 +1679,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.reveal => _onReveal,
         EditorBetaAppBarAction.rename => _onRename,
         EditorBetaAppBarAction.publishToggle => _onPublishToggle,
+        EditorBetaAppBarAction.publishWithPassword => _onPublishWithPassword,
         EditorBetaAppBarAction.pageHistory => _onPageHistory,
         EditorBetaAppBarAction.setFont => _onSetFont,
         EditorBetaAppBarAction.setGoal => _onSetGoal,

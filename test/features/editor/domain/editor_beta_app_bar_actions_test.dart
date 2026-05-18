@@ -27,6 +27,7 @@ void main() {
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
+        EditorBetaAppBarAction.publishWithPassword,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setGoal,
@@ -49,19 +50,23 @@ void main() {
 
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
-        'duplicate → reveal → rename → publishToggle → pageHistory → '
-        'setFont → setGoal → exportMarkdown → exportHtml → '
-        'printPage → setReminder → snoozeReminder → clearReminder → '
-        'copyBody → copyPlain → copyJson → copyFormLink? → '
-        'viewFormSubmissions? → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp23
-      // layout users have already learned. setGoal slots between
-      // setFont and setReminder (D-fp21 / M1745); exportMarkdown +
-      // exportHtml slot between setGoal and setReminder (D-fp22 /
-      // M1747); printPage closes the export trio immediately after
-      // exportHtml (D-fp23 / M1749). The three copy-* entries group
-      // together; copyFormLink + viewFormSubmissions (when present)
-      // form the form-bearing pair immediately before moveToTrash.
+        'duplicate → reveal → rename → publishToggle → '
+        'publishWithPassword → pageHistory → setFont → setGoal → '
+        'exportMarkdown → exportHtml → printPage → setReminder → '
+        'snoozeReminder → clearReminder → copyBody → copyPlain → '
+        'copyJson → copyFormLink? → viewFormSubmissions? → '
+        'moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp24
+      // layout users have already learned. publishWithPassword slots
+      // directly after publishToggle (D-fp24 / M1751), mirroring the
+      // legacy `editor_page.dart:464-467` kebab layout. setGoal
+      // between setFont and setReminder (D-fp21 / M1745);
+      // exportMarkdown + exportHtml between setGoal and setReminder
+      // (D-fp22 / M1747); printPage closes the export trio
+      // immediately after exportHtml (D-fp23 / M1749). The three
+      // copy-* entries group together; copyFormLink +
+      // viewFormSubmissions (when present) form the form-bearing
+      // pair immediately before moveToTrash.
       expect(
           editorBetaAppBarActions(isAuthed: true, isFormBearing: true).toList(),
           [
@@ -75,6 +80,7 @@ void main() {
             EditorBetaAppBarAction.reveal,
             EditorBetaAppBarAction.rename,
             EditorBetaAppBarAction.publishToggle,
+            EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
@@ -107,6 +113,7 @@ void main() {
             EditorBetaAppBarAction.reveal,
             EditorBetaAppBarAction.rename,
             EditorBetaAppBarAction.publishToggle,
+            EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
@@ -194,6 +201,7 @@ void main() {
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
+        EditorBetaAppBarAction.publishWithPassword,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.setGoal,
@@ -282,6 +290,7 @@ void main() {
             EditorBetaAppBarAction.reveal,
             EditorBetaAppBarAction.rename,
             EditorBetaAppBarAction.publishToggle,
+            EditorBetaAppBarAction.publishWithPassword,
             EditorBetaAppBarAction.pageHistory,
             EditorBetaAppBarAction.setFont,
             EditorBetaAppBarAction.setGoal,
@@ -347,6 +356,13 @@ void main() {
         expect(
           EditorBetaAppBarAction.publishToggle.tooltip,
           'Publish / unpublish',
+        );
+      });
+
+      test('publishWithPassword tooltip reads the D-fp24 port label', () {
+        expect(
+          EditorBetaAppBarAction.publishWithPassword.tooltip,
+          'Publish with password…',
         );
       });
 

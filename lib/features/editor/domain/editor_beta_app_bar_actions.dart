@@ -59,6 +59,14 @@ enum EditorBetaAppBarAction {
   /// gating remains on the legacy editor for now.
   publishToggle(tooltip: 'Publish / unpublish'),
 
+  /// Prompts the user for a password, then stamps both `public:
+  /// true` and `public_password: [bcrypt-hash]` into the page's
+  /// frontmatter via [buildPublicPasswordEntries]. D-fp24 port from
+  /// legacy `editor_page.dart` case `'publish-password'`
+  /// (`_publishPageWithPassword`). The backend's E43 probe then
+  /// gates `GET /public/[ulid]` on the matching bcrypt cookie.
+  publishWithPassword(tooltip: 'Publish with password…'),
+
   /// Opens the [PageHistoryDialog] backed by `git log` on the
   /// current page's `.md` file. D-fp12 port from legacy
   /// `editor_page.dart` case `'history'`. Only useful when the vault
@@ -182,6 +190,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.reveal;
   yield EditorBetaAppBarAction.rename;
   yield EditorBetaAppBarAction.publishToggle;
+  yield EditorBetaAppBarAction.publishWithPassword;
   yield EditorBetaAppBarAction.pageHistory;
   yield EditorBetaAppBarAction.setFont;
   yield EditorBetaAppBarAction.setGoal;
@@ -230,6 +239,7 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.reveal ||
     EditorBetaAppBarAction.rename ||
     EditorBetaAppBarAction.publishToggle ||
+    EditorBetaAppBarAction.publishWithPassword ||
     EditorBetaAppBarAction.pageHistory ||
     EditorBetaAppBarAction.setFont ||
     EditorBetaAppBarAction.setGoal ||

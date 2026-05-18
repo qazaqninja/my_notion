@@ -63,6 +63,14 @@ void main() {
       );
     });
 
+    test('publishWithPassword → Icons.lock_outline (D-fp24 port glyph)',
+        () {
+      expect(
+        iconFor(EditorBetaAppBarAction.publishWithPassword),
+        Icons.lock_outline,
+      );
+    });
+
     test('pageHistory → Icons.history (D-fp12 port glyph)', () {
       expect(iconFor(EditorBetaAppBarAction.pageHistory), Icons.history);
     });
