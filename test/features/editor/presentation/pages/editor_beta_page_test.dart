@@ -136,20 +136,29 @@ void main() {
       // M1811 sub-slice 4: VaultBloc + SyncBloc resolvable via
       // bloc_test MockBloc stubs (no-op initial state). 8 of 9
       // collaborators wired after this slice.
-      // M1817 spike: attempting a per-handler kebab smoke
-      // (`_onCopyUlid` clipboard test) discovered the harness can't
-      // yet reach `EditorLoaded` — the in-memory drift db is empty,
-      // `EditorBloc.OpenEditor → indexer lookup` returns no page,
-      // the bloc transitions away from `EditorLoaded`, and the
-      // page never renders the AppBar that hosts the kebab. The
-      // kebab tests therefore need a **seeded vault page** first
-      // — a small follow-on harness sub-slice (queued as pick-next
-      // #76) that writes one `.md` to the in-memory filesystem +
-      // reindexes + `whenListen`s the VaultBloc stub into
-      // `VaultLoaded(rootPath: ...)` so `EditorBloc` resolves the
-      // ulid all the way to `EditorLoaded`. Once seeded, the
-      // `_onCopyUlid` test (`tap More actions → tap "Copy ULID" →
-      // assert clipboard`) lands as the first per-handler smoke.
+      // M1818 fix-forward (TS-04): wrap the M1817 spike tombstone
+      // in a stub group so the queued `_onCopyUlid` test lands in
+      // the canonical location once the seed-page harness sub-slice
+      // ships (pick-next #76).
+      group('_onCopyUlid (D-fp6, M1703) — per-handler smoke', () {
+        // M1817 spike: attempting a per-handler kebab smoke
+        // (`_onCopyUlid` clipboard test) discovered the harness
+        // can't yet reach `EditorLoaded` — the in-memory drift db
+        // is empty, `EditorBloc.OpenEditor → indexer lookup`
+        // returns no page, the bloc transitions away from
+        // `EditorLoaded`, and the page never renders the AppBar
+        // that hosts the kebab. The kebab tests therefore need a
+        // **seeded vault page** first — a small follow-on harness
+        // sub-slice (queued as pick-next #76) that writes one
+        // `.md` to the in-memory filesystem + reindexes +
+        // `whenListen`s the VaultBloc stub into
+        // `VaultLoaded(rootPath: ...)` so `EditorBloc` resolves
+        // the ulid all the way to `EditorLoaded`. Once seeded,
+        // the `_onCopyUlid` test (tap kebab → tap "Copy ULID" →
+        // assert clipboard via `SystemChannels.platform`
+        // mock-method-call-handler) lands here as the first
+        // per-handler smoke.
+      });
 
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
