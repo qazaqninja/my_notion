@@ -1007,6 +1007,48 @@ void main() {
             findsOneWidget,
           );
         });
+
+        // M1876 — second consumer of the M1874 `seedExtraFrontmatter`
+        // primitive. Happy path: when frontmatter has `reminder:
+        // <iso-date>`, the handler opens a 4-option
+        // `showQuillChoice<int>` titled 'Snooze reminder' with
+        // options '+ 1 day' / '+ 3 days' / '+ 1 week' / '+ 1 month
+        // (30d)'. Test asserts the modal mounts with title + all 4
+        // option labels (5 find.text calls). Doesn't pick an option;
+        // downstream branches (snoozeBaseFor → EditFrontmatterField
+        // → SnackBar 'Snoozed reminder to <iso> (<relative>)') are
+        // pre-tested in reminder_date_test.dart against the planner
+        // helpers, and the dispatch is to EditorBloc which is
+        // provided inside EditorBetaPage's own MultiBlocProvider
+        // (not stubbed).
+        testWidgets(
+            'kebab → Snooze reminder → 4-option modal mounts '
+            'when seedPage has reminder frontmatter', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            seedExtraFrontmatter: const {'reminder': '2026-05-25'},
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(
+            tester,
+            EditorBetaAppBarAction.snoozeReminder,
+          );
+
+          expect(find.text('Snooze reminder'), findsOneWidget);
+          expect(find.text('+ 1 day'), findsOneWidget);
+          expect(find.text('+ 3 days'), findsOneWidget);
+          expect(find.text('+ 1 week'), findsOneWidget);
+          expect(find.text('+ 1 month (30d)'), findsOneWidget);
+        });
       });
 
       // M1869 — eighth + final dialog handler. CLOSES THE DIALOG
