@@ -45,6 +45,13 @@ enum EditorBetaAppBarAction {
   /// helper at `lib/core/platform/reveal.dart`.
   reveal(tooltip: 'Reveal in OS file browser'),
 
+  /// Renames the on-disk `.md` filename via the existing
+  /// `RenamePage` VaultBloc event; the page's ULID + wikilinks
+  /// survive. D-fp10 port from legacy `editor_page.dart` case
+  /// `'rename'`. Sanitised via `sanitizedBasename(input)` so the
+  /// toast preview matches the actual filename on disk.
+  rename(tooltip: 'Rename file…'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -72,5 +79,6 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.copyPath;
   yield EditorBetaAppBarAction.duplicate;
   yield EditorBetaAppBarAction.reveal;
+  yield EditorBetaAppBarAction.rename;
   yield EditorBetaAppBarAction.moveToTrash;
 }

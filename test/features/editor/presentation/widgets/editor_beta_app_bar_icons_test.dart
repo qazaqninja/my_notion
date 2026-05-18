@@ -49,6 +49,13 @@ void main() {
       );
     });
 
+    test('rename → Icons.drive_file_rename_outline (D-fp10 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.rename),
+        Icons.drive_file_rename_outline,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

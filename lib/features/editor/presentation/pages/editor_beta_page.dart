@@ -26,6 +26,7 @@ import '../../../../core/ui/anchor_rect.dart';
 import '../../../../core/ui/anchor_rect_x.dart';
 import '../../domain/attachment_writer.dart';
 import '../../domain/block_selection_gesture.dart';
+import '../../../vault/domain/sanitized_basename.dart';
 import '../../../vault/domain/vault_absolute_path.dart';
 import '../../domain/document_search.dart';
 import '../../domain/editor_beta_app_bar_actions.dart';
@@ -52,6 +53,7 @@ import '../controllers/super_editor_caret.dart';
 import '../controllers/superscript_autoformat_reaction.dart';
 import '../cubit/block_selection_cubit.dart';
 import '../cubit/slash_menu_cubit.dart';
+import '../../../../shared/widgets/quill_modal.dart';
 import '../widgets/block_selection_overlay.dart';
 import '../widgets/editor_beta_app_bar_icons.dart';
 import '../widgets/find_bar.dart';
@@ -456,6 +458,60 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp10 (M1719): port Rename-file from legacy
+  /// editor_page.dart:705 (`_renameFile`). Opens a [showQuillPrompt]
+  /// dialog seeded with the current basename, runs the picked value
+  /// through the M1719 [sanitizedBasename] helper for a preview, and
+  /// dispatches `RenamePage(ulid:, newBasename:)` against VaultBloc.
+  /// The ULID + wikilinks survive the rename — only the on-disk
+  /// filename changes.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `showQuillPrompt` + `ScaffoldMessenger` + a VaultBloc dispatch.
+  /// The sanitisation logic has 6 unit tests via
+  /// `sanitized_basename_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onRename() async {
+    final current = widget.relativePath;
+    final slash = current.lastIndexOf('/');
+    final basename = current.substring(slash + 1);
+    final base = basename.endsWith('.md')
+        ? basename.substring(0, basename.length - 3)
+        : basename;
+    final picked = await showQuillPrompt(
+      context,
+      title: 'Rename file',
+      icon: 'edit',
+      label: 'New name',
+      hint: 'ULID is unchanged — wikilinks survive the rename.',
+      placeholder: 'new-name (without .md)',
+      initial: base,
+      confirmLabel: 'Rename',
+    );
+    if (picked == null || picked.isEmpty) return;
+    if (!mounted) return;
+    final preview = sanitizedBasename(picked);
+    if (preview == base) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Filename unchanged'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    context.read<VaultBloc>().add(
+          RenamePage(ulid: widget.ulid, newBasename: picked),
+        );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Renamed to $preview.md'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
   /// D-fp9 (M1715): port Reveal-in-Finder/Explorer from legacy
   /// editor_page.dart:525. Resolves the absolute filesystem path via
   /// the M1709 [vaultAbsolutePath] helper, then dispatches through
@@ -748,6 +804,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.copyPath => _onCopyPath,
         EditorBetaAppBarAction.duplicate => _onDuplicate,
         EditorBetaAppBarAction.reveal => _onReveal,
+        EditorBetaAppBarAction.rename => _onRename,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       },
     );
