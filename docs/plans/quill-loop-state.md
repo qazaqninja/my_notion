@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp5 shipped. D-fp6 enum reserved (M1700); wire-up + copyUlid handler next.**
-- **Phase:** D (super_editor WYSIWYG migration) — 306 tests after M1700 (+8). D-fp parity arc in progress.
-- **Task:** Pick-next survey #24 — after M1700 EditorBetaAppBarAction enum + M1701 fix-forwards. Options: (a) Wire enum into editor_beta_page.dart AppBar (deferred slice 2); (b) D-fp6 copyUlid port — add `_onCopyUlid()` + new AppBar button using the enum slot already reserved; (c) NV-02 GoRouteData typed routes; (d) BL-12 _FindBarHost; (e) D30b/c after 26+ slice dogfood; (f) Phase E continuation. Default lean: option (b) D-fp6 copyUlid port — completes the D-fp6 work the M1700 enum was scaffolding for; the wire-up (option a) can be a cleaner separate slice afterward.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp6 shipped (Move-to-Trash + Pull-from-server + Share + Find-in-page + Copy-[[link]] + Copy-ULID).**
+- **Phase:** D (super_editor WYSIWYG migration) — 306 tests. D-fp parity arc in progress.
+- **Task:** Pick-next survey #25 — after M1703 D-fp6 Copy-ULID port. Options: (a) Wire enum into AppBar — replace inline IconButton sequence with `for (action in editorBetaAppBarActions(...))` loop, eliminates the BlocBuilder<SyncBloc> manual gate; (b) D-fp7 next port — copy-path / reveal / rename / duplicate; (c) NV-02 typed routes; (d) BL-12 _FindBarHost extraction (TDD-able as a Cubit); (e) D30b/c after 28+ slice dogfood; (f) Phase E continuation. Default lean: option (a) — completes M1700's two-step refactor, removes duplication, gives the enum a real consumer.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1703 — pick-next #24 closeout: D-fp6 Copy-ULID port (wire-up)** (1 file modified; +35 / -1; no new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 247 closeout
+- Notes: Wire-up half of D-fp6, complementing M1700's enum reservation. Three additions in `lib/features/editor/presentation/pages/editor_beta_page.dart`: (1) new `import '../../domain/editor_beta_app_bar_actions.dart';`; (2) `_onCopyUlid()` async handler on `_BetaEditorShellState` (same M1571 widget-tier coverage-ignore pattern as all 5 prior D-fp ports — `Clipboard.setData(ClipboardData(text: widget.ulid))` + transient SnackBar `'Copied ${widget.ulid}'`); (3) new `IconButton(Icons.tag, tooltip: EditorBetaAppBarAction.copyUlid.tooltip, onPressed: _onCopyUlid)` in `AppBar.actions` between Copy-link and Move-to-trash. **Bonus refactor:** swapped the M1696 Copy-link IconButton's tooltip string to also read from the enum (`EditorBetaAppBarAction.copyLink.tooltip`), so both copy-* actions now route through the M1700 enum — first widget-layer consumer of the domain extraction. No new TDD surface — user-visible string + slot ordering pre-covered by M1700/M1701's 8 enum tests. **Orchestrator audit: 0 BLOCK / 1 WARN (TS-01/FS-04 — `test/features/editor/presentation/pages/` directory absent; speculative "prevent future debt" suggestion, deferred since all `_BetaEditorShellState` methods are M1571-exempt and creating an empty stub would be noise) / 2 INFO (BL-01 traceability note, NV-03 traceability note — both non-actionable).** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1700 + M1701 — pick-next #23 closeout: EditorBetaAppBarAction enum extraction + same-iteration audit fix-forwards** (3 files; +130 / -15; 8 new tests; analyze clean)
 - Committed: (this iteration)
