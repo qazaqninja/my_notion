@@ -7,8 +7,8 @@ import '../../../../shared/theme/tokens.dart';
 /// editor body when the user opens find-in-page (⌘F in legacy mode;
 /// AppBar `IconButton(Icons.search)` in EditorBetaPage).
 ///
-/// 1:1 port of the legacy `_FindBar` (private widget at
-/// `editor_page.dart:2040`) to a public reusable widget so the new
+/// 1:1 port of the legacy `_FindBar` (previously a private widget
+/// in the deprecated editor) to a public reusable widget so the
 /// `/editor-beta` route can mount the same surface. All state
 /// (controller, matches/cursor counts) is supplied by the parent —
 /// the bar is intentionally stateless so the parent's editor

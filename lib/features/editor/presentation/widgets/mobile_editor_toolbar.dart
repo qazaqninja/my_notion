@@ -5,7 +5,7 @@ import '../../../../shared/widgets/quill_icon.dart';
 
 /// G2 — sticky bottom toolbar that surfaces the most-used kebab
 /// actions on mobile/narrow widths. Pure presentation; callbacks
-/// are wired by the parent (editor_page.dart's body column).
+/// are wired by the parent editor's body column.
 ///
 /// On wide layouts the kebab itself stays as the action surface;
 /// this toolbar only renders when `isMobileWidth(context)` is true.

@@ -186,8 +186,8 @@ class _SourceViewState extends State<SourceView> {
     // when the editor is mounted outside an active multiplayer
     // session (unauthed or unpublished page).
     //
-    // Dispatch-site placement is intentional (see longer
-    // rationale in editor_page.dart's rendered-mode handler):
+    // Dispatch-site placement is intentional (the legacy editor's
+    // rendered-mode handler carried the same rationale):
     // BL-11 would prefer a BlocListener on EditorState.body, but
     // EditBody is also dispatched by Pull-from-server and (in
     // H2.4d-iii) by inbound peer updates — a listener would
