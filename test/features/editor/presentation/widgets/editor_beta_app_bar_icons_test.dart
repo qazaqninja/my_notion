@@ -42,6 +42,13 @@ void main() {
       );
     });
 
+    test('reveal → Icons.folder_open_outlined (D-fp9 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.reveal),
+        Icons.folder_open_outlined,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

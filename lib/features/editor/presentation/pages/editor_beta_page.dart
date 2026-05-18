@@ -12,6 +12,7 @@ import 'package:super_editor/super_editor.dart';
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/super_editor_serializer.dart';
 import '../../../../core/markdown/wikilink_parser.dart';
+import '../../../../core/platform/reveal.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
@@ -455,6 +456,38 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp9 (M1715): port Reveal-in-Finder/Explorer from legacy
+  /// editor_page.dart:525. Resolves the absolute filesystem path via
+  /// the M1709 [vaultAbsolutePath] helper, then dispatches through
+  /// the cross-platform `Reveal.show()` (macOS: `open -R`; Linux:
+  /// `xdg-open` on the parent dir; Windows: `explorer.exe /select,`).
+  /// On failure (unsupported platform / non-zero exit) shows a
+  /// SnackBar with the path so the user can copy it manually.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over the
+  /// pre-existing `Reveal.show()` platform helper and VaultBloc
+  /// state read. `vaultAbsolutePath` has its own 6 unit tests.
+  // coverage:ignore-start
+  Future<void> _onReveal() async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    final path = vaultAbsolutePath(
+      rootPath: vault.rootPath,
+      relativePath: widget.relativePath,
+    );
+    final ok = await Reveal.show(path);
+    if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not reveal: $path'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+  // coverage:ignore-end
+
   /// D-fp8 (M1712): port Duplicate page from legacy
   /// editor_page.dart:620. Dispatches the existing
   /// [DuplicatePage] VaultBloc event with an `onCreated` callback
@@ -714,6 +747,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.copyUlid => _onCopyUlid,
         EditorBetaAppBarAction.copyPath => _onCopyPath,
         EditorBetaAppBarAction.duplicate => _onDuplicate,
+        EditorBetaAppBarAction.reveal => _onReveal,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       },
     );

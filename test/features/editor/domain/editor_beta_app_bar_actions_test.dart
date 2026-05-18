@@ -21,6 +21,7 @@ void main() {
         EditorBetaAppBarAction.copyUlid,
         EditorBetaAppBarAction.copyPath,
         EditorBetaAppBarAction.duplicate,
+        EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.moveToTrash,
       };
       final authed = editorBetaAppBarActions(isAuthed: true).toSet();
@@ -31,8 +32,8 @@ void main() {
 
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
-        'duplicate → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp8
+        'duplicate → reveal → moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp9
       // layout users have already learned. Future kebab refactor will
       // map this directly to PopupMenuItem rows.
       expect(editorBetaAppBarActions(isAuthed: true).toList(), [
@@ -43,6 +44,7 @@ void main() {
         EditorBetaAppBarAction.copyUlid,
         EditorBetaAppBarAction.copyPath,
         EditorBetaAppBarAction.duplicate,
+        EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -55,6 +57,7 @@ void main() {
         EditorBetaAppBarAction.copyUlid,
         EditorBetaAppBarAction.copyPath,
         EditorBetaAppBarAction.duplicate,
+        EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -90,6 +93,13 @@ void main() {
       test('duplicate tooltip reads "Duplicate page" (D-fp8 port label)',
           () {
         expect(EditorBetaAppBarAction.duplicate.tooltip, 'Duplicate page');
+      });
+
+      test('reveal tooltip reads the D-fp9 port label', () {
+        expect(
+          EditorBetaAppBarAction.reveal.tooltip,
+          'Reveal in OS file browser',
+        );
       });
     });
   });

@@ -39,6 +39,12 @@ enum EditorBetaAppBarAction {
   /// existing `DuplicatePage` VaultBloc event).
   duplicate(tooltip: 'Duplicate page'),
 
+  /// Opens the page's `.md` file in the OS file browser (Finder /
+  /// Files / Explorer). D-fp9 port from legacy `editor_page.dart`
+  /// case `'reveal'`. Routes through the `Reveal.show()` platform
+  /// helper at `lib/core/platform/reveal.dart`.
+  reveal(tooltip: 'Reveal in OS file browser'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -65,5 +71,6 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.copyUlid;
   yield EditorBetaAppBarAction.copyPath;
   yield EditorBetaAppBarAction.duplicate;
+  yield EditorBetaAppBarAction.reveal;
   yield EditorBetaAppBarAction.moveToTrash;
 }
