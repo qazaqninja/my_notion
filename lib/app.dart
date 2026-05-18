@@ -31,7 +31,9 @@ import 'features/sync/presentation/bloc/sync_bloc.dart';
 import 'features/sync/presentation/bloc/sync_event.dart';
 import 'features/vault/presentation/pages/tags_page.dart';
 import 'features/editor/data/repositories/html_export_repository_impl.dart';
+import 'features/editor/data/repositories/pdf_export_repository_impl.dart';
 import 'features/editor/domain/repositories/html_export_repository.dart';
+import 'features/editor/domain/repositories/pdf_export_repository.dart';
 import 'features/editor/presentation/pages/editor_beta_page.dart';
 import 'features/settings/presentation/pages/settings_page.dart';
 import 'features/vault/data/indexer.dart';
@@ -171,6 +173,13 @@ class _QuillAppState extends State<QuillApp> {
         // instead of crossing the feature boundary at import time.
         RepositoryProvider<HtmlExportRepository>(
           create: (_) => const HtmlExportRepositoryImpl(),
+        ),
+        // CA-04 (M1796): editor-domain interface that adapts
+        // vault/data/pdf_exporter.dart for the Print-page kebab
+        // handler. Closes the CA-04 ExportRepository arc that
+        // started at M1794 (Html half).
+        RepositoryProvider<PdfExportRepository>(
+          create: (_) => const PdfExportRepositoryImpl(),
         ),
       ],
       child: MultiBlocProvider(

@@ -41,8 +41,8 @@ import '../../domain/folder_picker_options.dart';
 import '../../../../core/markdown/yaml_scalar.dart';
 import '../../domain/has_forms_frontmatter.dart';
 import '../../domain/tag_merge.dart';
-import '../../../vault/data/pdf_exporter.dart';
 import '../../domain/repositories/html_export_repository.dart';
+import '../../domain/repositories/pdf_export_repository.dart';
 import '../../domain/page_font.dart';
 import '../../domain/safe_export_filename.dart';
 import '../../domain/word_goal.dart';
@@ -1068,22 +1068,28 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
 
   /// D-fp23 (M1749): port Print-page from the legacy editor
   /// (`_printPage`). Renders the page body as a PDF via
-  /// `PdfExporter.exportSingle(title:, body:)` and hands it to
+  /// [PdfExportRepository.renderPdf] and hands it to
   /// `Printing.layoutPdf` so the OS print dialog can offer Print /
   /// Save as PDF / Preview. Closes the export trio (md / html /
   /// pdf). Errors SnackBar "Print failed: $e" — matches the legacy
   /// catch-all.
   ///
+  /// CA-04 (M1796): renderer reached through the editor-domain
+  /// [PdfExportRepository] interface, not a direct cross-feature
+  /// import from `vault/data/pdf_exporter.dart`.
+  ///
   /// Coverage exemption (TS-01): widget-tier orchestration over
-  /// `PdfExporter` + `Printing.layoutPdf` + `ScaffoldMessenger`. The
-  /// PDF builder + the printing dep both have their own coverage.
+  /// `PdfExportRepository` + `Printing.layoutPdf` +
+  /// `ScaffoldMessenger`. The PDF builder + the printing dep both
+  /// have their own coverage.
   // coverage:ignore-start
   Future<void> _onPrintPage() async {
     final editorState = context.read<EditorBloc>().state;
     if (editorState is! EditorLoaded) return;
     final page = editorState.page;
+    final renderer = context.read<PdfExportRepository>();
     try {
-      final bytes = await const PdfExporter().exportSingle(
+      final bytes = await renderer.renderPdf(
         title: page.title,
         body: page.body,
       );
