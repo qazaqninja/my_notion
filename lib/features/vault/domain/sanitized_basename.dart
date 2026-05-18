@@ -1,6 +1,6 @@
 /// Sanitise a user-supplied page basename for use as the filename on
-/// disk. Mirrors the legacy `_safeFileName` transformation in
-/// `editor_page.dart:_renameFile`:
+/// disk. Mirrors the legacy `_safeFileName` transformation used by
+/// the editor's `_renameFile` handler:
 ///
 /// - replace filesystem-illegal chars (`\\/<>:"|?*`) with `-`,
 /// - collapse runs of whitespace,

@@ -13,7 +13,7 @@ export 'package:my_notion/features/forms/domain/entities/form_bearing_page.dart'
 
 /// Filter + project [pages] down to the ones that declare a
 /// non-empty `forms:` frontmatter entry. Mirrors the
-/// `_hasForms` predicate already used by editor_page.dart and the
+/// `_hasForms` predicate already used by the editor and the
 /// backend's `FrontmatterProbe.hasForms` rule — keeps client and
 /// server views of "form-bearing" in lockstep.
 ///

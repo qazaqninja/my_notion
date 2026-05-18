@@ -6,11 +6,10 @@
 /// remaining bare path strings on grep).
 ///
 /// Introduced for the D28-D30 cutover prep (NV-03 carry-forward from
-/// the D-fp1 / M1621 orchestrator audit). Other call sites — the
-/// legacy `editor_page.dart` + `mobile_chrome.dart` +
-/// `vault_shell_page.dart` + `app.dart` `redirect` callback +
-/// `GoRoute` declarations — will be migrated incrementally as the
-/// 1m-loop revisits each file.
+/// the D-fp1 / M1621 orchestrator audit). Other call sites —
+/// `mobile_chrome.dart` + `vault_shell_page.dart` + `app.dart`
+/// `redirect` callback + `GoRoute` declarations — will be migrated
+/// incrementally as the 1m-loop revisits each file.
 abstract class Routes {
   /// `/` — the vault picker page (and the redirect target when no
   /// vault has been loaded yet).

@@ -100,9 +100,8 @@ class _QuillAppState extends State<QuillApp> {
     // V2 backend client (Phase E E12-E13). baseUrl currently hard-
     // coded to localhost via kBackendHttpBaseUrl — a settings page
     // (slice E14+) will let users override it. E57 promoted the
-    // constant out of this file so editor_page.dart's WS factory
-    // + the kebab's "Copy form link" handler share one source of
-    // truth.
+    // constant out of this file so the editor's WS factory + the
+    // kebab's "Copy form link" handler share one source of truth.
     _syncRepo = HttpSyncRepository(baseUrl: kBackendHttpBaseUrl);
     _formsRepo = HttpFormsRepository(baseUrl: kBackendHttpBaseUrl);
     // E58b: backed by the same QuillDatabase as the rest of the

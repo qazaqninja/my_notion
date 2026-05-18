@@ -1,6 +1,6 @@
 /// E57 — single-source-of-truth for the V2 backend endpoint. Three
 /// consumers today: `app.dart` constructs HttpSyncRepository +
-/// HttpFormsRepository with the HTTP base URL; `editor_page.dart`'s
+/// HttpFormsRepository with the HTTP base URL; the editor's
 /// EditorSyncWsMount opens a multiplayer WebSocket against the WS
 /// variant; and the editor kebab's "Copy form link" action builds
 /// the public form URL via [publicFormUrl].

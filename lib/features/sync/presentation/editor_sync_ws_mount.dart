@@ -14,8 +14,8 @@ import 'package:my_notion/features/sync/presentation/editor_ws_attach_controller
 /// via [EditorSyncWsScope] so the editor's save path can call
 /// `pushLocalUpdate` without prop-drilling.
 ///
-/// Designed to be dropped into `editor_page.dart` between the
-/// existing `MultiBlocListener` and the `_EditorBody` widget tree.
+/// Designed to be dropped into the editor between the existing
+/// `MultiBlocListener` and the `_EditorBody` widget tree.
 /// The host (H2.4c) extracts (isAuthed, token) from `SyncBloc` and
 /// (isPublished) from the loaded page's frontmatter, then forwards
 /// them as widget props — pure-presentational wrapper, no Bloc
