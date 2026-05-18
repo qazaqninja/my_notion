@@ -107,6 +107,19 @@ class EditorBetaPage extends StatelessWidget {
       key: ValueKey('beta-$ulid'),
       providers: [
         BlocProvider<EditorBloc>(
+          // CA-04 boundary (M1800): the two cross-feature reads
+          // below (Indexer + QuillDatabase) pull `vault/data/` types
+          // into this presentation file. Unlike
+          // the M1794/M1796 export-handler extractions, these reads
+          // are pure type-erasure: the widget never calls a method
+          // on either value — it only forwards them to EditorBloc's
+          // constructor. The actual data-layer coupling lives in
+          // EditorBloc (data layer), not here. Extracting interfaces
+          // for these two types would require updating 9+ consumers
+          // (database/, vault/, integration tests, …) and would only
+          // move the import-site, not eliminate the coupling. Deferred
+          // until a project-wide RP-01 sweep makes the multi-file
+          // refactor worthwhile.
           create: (context) {
             final bloc = EditorBloc(
               repo: context.read<VaultRepository>(),
