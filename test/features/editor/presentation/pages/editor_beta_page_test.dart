@@ -16,6 +16,7 @@ import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.da
 import 'package:my_notion/features/editor/presentation/widgets/page_history_dialog.dart';
 import 'package:my_notion/features/forms/domain/repositories/forms_repository.dart';
 import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:my_notion/features/sync/presentation/bloc/sync_event.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
 // M1872 (orchestrator M1871 TS-09 WARN): mockingjay 2.0.0 re-exports
@@ -57,6 +58,14 @@ class _MockGoRouter extends Mock implements GoRouter {}
 /// at runtime — only its type identity matters.
 final VaultEvent _fallbackVaultEvent = const MoveToTrash('');
 
+/// M1884: mocktail also needs a SyncEvent fallback for the
+/// `_onPullFromServer` smoke that verifies `SyncBloc.add(
+/// SyncFetchFileRequested(...))`. Same sealed-class workaround as
+/// the VaultEvent fallback above — concrete instance, never
+/// interacted with, only the type identity matters to mocktail.
+final SyncEvent _fallbackSyncEvent =
+    const SyncFetchFileRequested(relpath: '');
+
 /// Installs a mock `SystemChannels.platform` method-call handler
 /// that captures `Clipboard.setData(text:)` calls and returns a
 /// getter for the most-recent captured value. Registers a teardown
@@ -94,6 +103,7 @@ void main() {
     // valid instance of the parameter type to avoid TypeErrors
     // under Dart sound null safety.
     registerFallbackValue(_fallbackVaultEvent);
+    registerFallbackValue(_fallbackSyncEvent);
   });
 
   // M1787 (TS-01 stub): minimal smoke test for EditorBetaPage. The
@@ -1174,6 +1184,53 @@ void main() {
           await tapKebabItem(tester, EditorBetaAppBarAction.pageHistory);
 
           expect(find.byType(PageHistoryDialog), findsOneWidget);
+        });
+      });
+
+      // M1884 — fourth fresh post-dialog-family port. `_onPullFromServer`
+      // is the SyncBloc event-dispatch clone of M1878 `_onDuplicate`.
+      // Production handler at editor_beta_page.dart:373 is synchronous,
+      // no dialog: dispatches `SyncBloc.add(SyncFetchFileRequested(
+      // relpath: widget.relativePath))` and shows SnackBar 'Pulling
+      // latest from server…' — both surfaces asserted.
+      //
+      // Adds the `_fallbackSyncEvent` registration so mocktail's
+      // `any()` matcher works against the sealed SyncEvent type (same
+      // workaround as the VaultEvent fallback). `having((e) =>
+      // e.relpath, 'relpath', 'page.md')` carries forward the M1854
+      // tightening — a typo regression that passed the wrong relpath
+      // would otherwise silently pass.
+      group('_onPullFromServer (D-fp2, M1685) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Pull from server → SyncBloc receives '
+            'SyncFetchFileRequested + SnackBar', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.pullFromServer);
+
+          verify(
+            () => harness.syncBloc.add(
+              any(
+                that: isA<SyncFetchFileRequested>().having(
+                  (e) => e.relpath,
+                  'relpath',
+                  'page.md',
+                ),
+              ),
+            ),
+          ).called(1);
+          expect(find.text('Pulling latest from server…'), findsOneWidget);
         });
       });
 
