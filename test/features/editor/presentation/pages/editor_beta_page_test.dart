@@ -910,6 +910,44 @@ void main() {
         });
       });
 
+      // M1869 — eighth + final dialog handler. CLOSES THE DIALOG
+      // FAMILY: every kebab dialog handler now has behavioral
+      // coverage. Production handler at editor_beta_page.dart:747
+      // mirrors `_onSnoozeReminder`'s no-reminder-yet guard:
+      // when `fm.find('reminder') == null`, shows SnackBar 'No
+      // reminder set on this page.' Default seedPage has only id
+      // + title, so guard fires. Same SnackBar template as the
+      // M1856/M1863/M1867 guards. The happy path
+      // (RemoveFrontmatterField + success SnackBar) requires
+      // seeded `reminder:` frontmatter — deferred.
+      group('_onClearReminder (D-fp16, M1735) — per-handler smoke', () {
+        testWidgets('kebab → Clear reminder → SnackBar reports no reminder '
+            'when seedPage has no reminder frontmatter', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(
+            tester,
+            EditorBetaAppBarAction.clearReminder,
+          );
+
+          expect(
+            find.text('No reminder set on this page.'),
+            findsOneWidget,
+          );
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
