@@ -7,7 +7,7 @@
 
 - **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1 + D-fp2 + D-fp3 shipped (Move-to-Trash + Pull-from-server + Share).**
 - **Phase:** D (super_editor WYSIWYG migration) — 293 tests. D-fp parity arc in progress.
-- **Task:** Pick-next survey #19 — after M1690 audit fix-forwards (M1686's TS-04 + TS-06 INFOs resolved; orchestrator 0/0/0 pristine). Options: (a) BL-11 D-fp callback cleanup deferred from M1631+; (b) Phase E continuation; (c) D-fp5 next parity port; (d) NV-02 GoRouteData typed routes; (e) D30b/c — 20+ slices since D29 default flip so the dogfood window should now be enough; (f) FEATURES.md early-section sweep (lines 17-50) for stale 🚧 — top of file is the most-stale region; (g) BL-12 _FindBarHost. Default lean: option (f) early-section FEATURES.md sweep — low-risk doc work, captures stale markers in a section the loop rarely revisits.
+- **Task:** Pick-next survey #20 — after M1692 FEATURES.md early-section sweep (status counter ×2 + public-sharing 🔮 → ✅). Options: (a) BL-11 D-fp callback cleanup; (b) Phase E continuation (G4 docker smoke or further forms polish); (c) D-fp5 next parity port; (d) NV-02 GoRouteData typed routes; (e) D30b/c — 22+ slices since D29 default flip; (f) FEATURES.md mid-section sweep (lines 100-200 workspace/sidebar/sharing area); (g) BL-12 _FindBarHost; (h) CLAUDE.md status block refresh (M1657 → M1692, 35+ commits stale). Default lean: option (h) CLAUDE.md status sync — counter pair-flow with M1692; cleanly bite-sized.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1692 — pick-next #19 closeout: FEATURES.md early-section sweep (status counters + public-sharing 🔮 → ✅)** (1 file modified; +3 / -3; doc-only)
+- Committed: (this iteration)
+- TaskList ID: 242 closeout
+- Notes: Pick-next survey #19 picked option (f) — sweep FEATURES.md lines 1-50 for stale items the 1m-loop rarely revisits. Three corrections landed: (1) line 3 status counter `M0–M1186+` → `M0–M1690+` (~500 milestones stale); (2) line 12 milestone-count prose `1,180+ milestones` → `1,690+ milestones` (same drift); (3) line 47 Public-page-sharing 🔮 → ✅ — Phase E (E16/E17/E21/E43/E44) already shipped this across `backend/lib/public/{routes,markdown_html}.dart` for the Dart Frog `GET /public/<ulid>` route, editor kebab "Publish" toggle, server-side markdown→HTML rendering, and bcrypt-protected `public_password:` cookie. Cross-linked to `docs/phase-e-sanity-checklist.md`. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1690 — pick-next #18 closeout: M1686 audit fix-forwards (TS-04 + TS-06)** (1 file modified; +26 / -6; 11/11 mermaid tests pass; analyze clean)
 - Committed: (this iteration)
