@@ -13,6 +13,7 @@ import 'package:my_notion/features/editor/presentation/bloc/editor_state.dart';
 import 'package:my_notion/features/editor/domain/repositories/html_export_repository.dart';
 import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
+import 'package:my_notion/features/editor/presentation/widgets/find_bar.dart';
 import 'package:my_notion/features/editor/presentation/widgets/page_history_dialog.dart';
 import 'package:my_notion/features/forms/domain/repositories/forms_repository.dart';
 import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
@@ -1269,6 +1270,38 @@ void main() {
           await tapKebabItem(tester, EditorBetaAppBarAction.copyFormLink);
 
           expect(clipboard(), 'http://localhost:8080/forms/$ulid');
+        });
+      });
+
+      // M1888 — sixth fresh post-dialog-family port. `_onFindInPage`
+      // (wired as `_toggleFindBar` at editor_beta_page.dart:395)
+      // flips `_findBarVisible` state. When true, the FindBar widget
+      // mounts at line 2059 in the body Stack. Deterministic widget
+      // surface: `find.byType(FindBar)` returns no widget before
+      // tap, one widget after. Same shape as M1882 _onPageHistory's
+      // find.byType assertion.
+      group('_onFindInPage (D-fp4, M1634) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Find in page → FindBar mounts (toggle visible)',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          expect(find.byType(FindBar), findsNothing);
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.findInPage);
+
+          expect(find.byType(FindBar), findsOneWidget);
         });
       });
 
