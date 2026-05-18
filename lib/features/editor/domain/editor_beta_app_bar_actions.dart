@@ -93,6 +93,17 @@ enum EditorBetaAppBarAction {
   /// char count via the M1737 [copiedCharsLabel] helper.
   copyBody(tooltip: 'Copy body text'),
 
+  /// Writes the page body to the clipboard with markdown syntax
+  /// stripped via `stripMarkdown(body)`. D-fp18 port from legacy
+  /// `editor_page.dart` case `'copy-plain'`. Toast tails with
+  /// "as plain text".
+  copyPlain(tooltip: 'Copy body as plain text'),
+
+  /// Writes the page identity + frontmatter + body as a JSON payload
+  /// to the clipboard via [pageAsJsonPayload]. D-fp18 port from legacy
+  /// `editor_page.dart` case `'copy-json'`. Toast tails with "JSON".
+  copyJson(tooltip: 'Copy page as JSON'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -128,6 +139,8 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.snoozeReminder;
   yield EditorBetaAppBarAction.clearReminder;
   yield EditorBetaAppBarAction.copyBody;
+  yield EditorBetaAppBarAction.copyPlain;
+  yield EditorBetaAppBarAction.copyJson;
   yield EditorBetaAppBarAction.moveToTrash;
 }
 
@@ -167,7 +180,9 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.setReminder ||
     EditorBetaAppBarAction.snoozeReminder ||
     EditorBetaAppBarAction.clearReminder ||
-    EditorBetaAppBarAction.copyBody =>
+    EditorBetaAppBarAction.copyBody ||
+    EditorBetaAppBarAction.copyPlain ||
+    EditorBetaAppBarAction.copyJson =>
       true,
   };
 }

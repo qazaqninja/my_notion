@@ -30,6 +30,8 @@ void main() {
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
         EditorBetaAppBarAction.copyBody,
+        EditorBetaAppBarAction.copyPlain,
+        EditorBetaAppBarAction.copyJson,
         EditorBetaAppBarAction.moveToTrash,
       };
       final authed = editorBetaAppBarActions(isAuthed: true).toSet();
@@ -42,10 +44,10 @@ void main() {
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → publishToggle → pageHistory → '
         'setFont → setReminder → snoozeReminder → clearReminder → '
-        'copyBody → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp14
-      // layout users have already learned. Future kebab refactor will
-      // map this directly to PopupMenuItem rows.
+        'copyBody → copyPlain → copyJson → moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp18
+      // layout users have already learned. The three copy-* entries
+      // group together immediately before moveToTrash.
       expect(editorBetaAppBarActions(isAuthed: true).toList(), [
         EditorBetaAppBarAction.pullFromServer,
         EditorBetaAppBarAction.findInPage,
@@ -63,6 +65,8 @@ void main() {
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
         EditorBetaAppBarAction.copyBody,
+        EditorBetaAppBarAction.copyPlain,
+        EditorBetaAppBarAction.copyJson,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -84,6 +88,8 @@ void main() {
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
         EditorBetaAppBarAction.copyBody,
+        EditorBetaAppBarAction.copyPlain,
+        EditorBetaAppBarAction.copyJson,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -127,6 +133,8 @@ void main() {
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
         EditorBetaAppBarAction.copyBody,
+        EditorBetaAppBarAction.copyPlain,
+        EditorBetaAppBarAction.copyJson,
       };
       for (final action in kebab) {
         expect(
@@ -178,7 +186,7 @@ void main() {
     });
 
     test('kebab sequence preserves the original ordering', () {
-      // The 8 secondary entries must appear in the same relative
+      // The secondary entries must appear in the same relative
       // order as in editorBetaAppBarActions so users see a consistent
       // sequence as actions move between the top-bar and the kebab.
       expect(editorBetaKebabActions(isAuthed: true).toList(), [
@@ -195,6 +203,8 @@ void main() {
         EditorBetaAppBarAction.snoozeReminder,
         EditorBetaAppBarAction.clearReminder,
         EditorBetaAppBarAction.copyBody,
+        EditorBetaAppBarAction.copyPlain,
+        EditorBetaAppBarAction.copyJson,
       ]);
     });
   });
@@ -283,6 +293,20 @@ void main() {
 
       test('copyBody tooltip reads the D-fp17 port label', () {
         expect(EditorBetaAppBarAction.copyBody.tooltip, 'Copy body text');
+      });
+
+      test('copyPlain tooltip reads the D-fp18 port label', () {
+        expect(
+          EditorBetaAppBarAction.copyPlain.tooltip,
+          'Copy body as plain text',
+        );
+      });
+
+      test('copyJson tooltip reads the D-fp18 port label', () {
+        expect(
+          EditorBetaAppBarAction.copyJson.tooltip,
+          'Copy page as JSON',
+        );
       });
     });
   });

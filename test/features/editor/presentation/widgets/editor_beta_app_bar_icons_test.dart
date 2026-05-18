@@ -96,6 +96,17 @@ void main() {
       );
     });
 
+    test('copyPlain → Icons.text_snippet_outlined (D-fp18 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.copyPlain),
+        Icons.text_snippet_outlined,
+      );
+    });
+
+    test('copyJson → Icons.data_object (D-fp18 port glyph)', () {
+      expect(iconFor(EditorBetaAppBarAction.copyJson), Icons.data_object);
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

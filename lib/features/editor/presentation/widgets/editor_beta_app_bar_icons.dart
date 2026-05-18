@@ -28,6 +28,8 @@ IconData iconFor(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.snoozeReminder => Icons.snooze,
     EditorBetaAppBarAction.clearReminder => Icons.alarm_off,
     EditorBetaAppBarAction.copyBody => Icons.content_paste,
+    EditorBetaAppBarAction.copyPlain => Icons.text_snippet_outlined,
+    EditorBetaAppBarAction.copyJson => Icons.data_object,
     EditorBetaAppBarAction.moveToTrash => Icons.delete_outline,
   };
 }

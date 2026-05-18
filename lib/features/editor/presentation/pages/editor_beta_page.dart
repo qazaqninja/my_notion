@@ -33,7 +33,9 @@ import '../../domain/document_search.dart';
 import '../../domain/editor_beta_app_bar_actions.dart';
 import '../../domain/copy_labels.dart';
 import '../../domain/page_font.dart';
+import '../../domain/page_json_payload.dart';
 import '../../domain/reminder_date.dart';
+import '../../domain/strip_markdown.dart';
 import '../../domain/find_in_page_navigation.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
@@ -482,6 +484,68 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(copiedCharsLabel(body.length)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
+  /// D-fp18 (M1739): port Copy-plain from legacy
+  /// editor_page.dart:543 (case 'copy-plain'). Runs the page body
+  /// through [stripMarkdown] to drop syntax characters, writes the
+  /// result to the system clipboard, and reports the new char count
+  /// via [copiedCharsLabel] with the "as plain text" suffix.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `Clipboard.setData` + `ScaffoldMessenger`. The label suffix +
+  /// strip helper are independently tested in
+  /// `copy_labels_test.dart` and `strip_markdown_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onCopyPlain() async {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final plain = stripMarkdown(editorState.page.body);
+    await Clipboard.setData(ClipboardData(text: plain));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(copiedCharsLabel(plain.length, suffix: 'as plain text')),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  // coverage:ignore-end
+
+  /// D-fp18 (M1739): port Copy-JSON from legacy
+  /// editor_page.dart:555 (case 'copy-json'). Builds the canonical
+  /// `{ ulid, relativePath, frontmatter, body }` payload via
+  /// [pageAsJsonPayload], writes the JSON string to the clipboard,
+  /// and reports the byte length via [copiedCharsLabel] with the
+  /// "JSON" suffix.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `Clipboard.setData` + `ScaffoldMessenger`. The payload shape is
+  /// independently tested in `page_json_payload_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onCopyJson() async {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final page = editorState.page;
+    final fmMap = <String, Object?>{};
+    for (final e in page.frontmatter.entries) {
+      fmMap[e.key] = e.value;
+    }
+    final payload = pageAsJsonPayload(
+      ulid: page.ulid,
+      relativePath: page.relativePath,
+      frontmatter: fmMap,
+      body: page.body,
+    );
+    await Clipboard.setData(ClipboardData(text: payload));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(copiedCharsLabel(payload.length, suffix: 'JSON')),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -1181,6 +1245,8 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.snoozeReminder => _onSnoozeReminder,
         EditorBetaAppBarAction.clearReminder => _onClearReminder,
         EditorBetaAppBarAction.copyBody => _onCopyBody,
+        EditorBetaAppBarAction.copyPlain => _onCopyPlain,
+        EditorBetaAppBarAction.copyJson => _onCopyJson,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       };
 

@@ -22,5 +22,26 @@ void main() {
       // Just confirms the string template doesn't pull a NumberFormat.
       expect(copiedCharsLabel(12345), 'Copied 12345 chars to clipboard');
     });
+
+    test('accepts a custom suffix (copy-plain variant)', () {
+      expect(
+        copiedCharsLabel(42, suffix: 'as plain text'),
+        'Copied 42 chars as plain text',
+      );
+    });
+
+    test('accepts a custom suffix (copy-json variant)', () {
+      expect(
+        copiedCharsLabel(99, suffix: 'JSON'),
+        'Copied 99 chars JSON',
+      );
+    });
+
+    test('singular form pairs correctly with custom suffix', () {
+      expect(
+        copiedCharsLabel(1, suffix: 'as plain text'),
+        'Copied 1 char as plain text',
+      );
+    });
   });
 }
