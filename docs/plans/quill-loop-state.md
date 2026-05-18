@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp12 shipped (12 AppBar actions).**
-- **Phase:** D (super_editor WYSIWYG migration) — 334 tests after M1725 (+2). D-fp parity arc in progress.
-- **Task:** Pick-next survey #34 — after M1725 D-fp12 page-history port. Options: (a) D-fp13 set-font; (b) D-fp13 set-reminder; (c) Coordinated BL-11 SnackBar→BlocListener refactor (substantial); (d) NV-02 typed routes; (e) BL-12 _FindBarHost extraction; (f) D30b/c after 46+ slice dogfood; (g) Phase E continuation; (h) FEATURES.md mid-section sweep; (i) PopupMenuButton kebab refactor — at 12 IconButtons the AppBar is genuinely crowded; collapsing matches legacy UX. Default lean: option (i) PopupMenuButton kebab refactor — addresses real visual debt; defers further D-fp ports until grouping is right.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp12 shipped; D-fp13 kebab partition (slice 1) shipped.**
+- **Phase:** D (super_editor WYSIWYG migration) — 341 tests after M1727 (+7). D-fp parity arc in progress.
+- **Task:** Pick-next survey #35 — after M1727 D-fp13 kebab partition (slice 1). Options: (a) D-fp13 slice 2 — wire AppBar to use editorBetaTopBarActions + trailing PopupMenuButton driven by editorBetaKebabActions; (b) D-fp14 set-font / set-reminder; (c) Coordinated BL-11 SnackBar→BlocListener refactor; (d) NV-02 typed routes; (e) D30b/c after 48+ slice dogfood; (f) Phase E continuation; (g) TS-01/FS-04 stub editor_beta_page_test.dart. Default lean: option (a) — completes M1727's two-step refactor; visible AppBar cleanup; visibility/order/disjoint invariants already locked by 21 enum tests.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1727 — pick-next #34 closeout: D-fp13 kebab refactor slice 1 (domain partition)** (2 files; +155 / 0; 7 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 257 closeout
+- Notes: First of a two-step PopupMenuButton kebab refactor (same discipline as M1700 → M1705). The 12 D-fp AppBar actions now classified: top-bar (`pullFromServer`, `findInPage`, `share`, `moveToTrash`) vs kebab (`copyLink`, `copyUlid`, `copyPath`, `duplicate`, `reveal`, `rename`, `publishToggle`, `pageHistory`). New pure-Dart API in `lib/features/editor/domain/editor_beta_app_bar_actions.dart`: `bool isEditorBetaKebabAction(action)` (exhaustive switch, no default arm — compiler enforces classification for future enum values), `editorBetaTopBarActions({isAuthed})` + `editorBetaKebabActions({isAuthed})` partition helpers preserving the original `editorBetaAppBarActions` ordering. 7 new tests covering: per-arm classification, partition exhaustivity (every enum value classified), partition coverage (union == values), no overlap, auth gating in the top bar, kebab ordering preservation. Wire-up to the AppBar build path scheduled for slice 2 — domain shape ships first so the partition rules can be reviewed independently. **Orchestrator audit: 0 BLOCK / 0 WARN / 0 INFO — pristine.** Cleanest slice in the D-fp arc; production file has zero imports (pure Dart end-to-end). Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1725 — pick-next #33 closeout: D-fp12 Page-history port (TDD)** (5 files; +49 / -2; 2 new tests; analyze clean)
 - Committed: (this iteration)
