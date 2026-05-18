@@ -1101,6 +1101,47 @@ void main() {
         });
       });
 
+      // M1880 — second fresh post-dialog-family port. `_onRename`
+      // is a clean M1851-template clone (showQuillPrompt modal-mount):
+      // production handler at editor_beta_page.dart:1444 opens a
+      // showQuillPrompt titled 'Rename file' with label 'New name',
+      // hint 'ULID is unchanged — wikilinks survive the rename.',
+      // placeholder 'new-name (without .md)', and confirm button
+      // 'Rename'. Test asserts the modal mounts via 3 find.text
+      // calls (title + label + confirm).
+      //
+      // Doesn't type into the field; downstream branches are
+      // pre-tested at the domain level: `sanitizedBasename` has its
+      // own unit tests, the unchanged-name guard at line 1464 dispatches
+      // SnackBar 'Filename unchanged', and the rename dispatch goes
+      // through VaultBloc.add(RenamePage(...)) which has bloc unit
+      // tests. The user-observable surface this smoke covers is the
+      // modal mount itself.
+      group('_onRename (D-fp10, M1719) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Rename file → prompt modal mounts with title + '
+            'label + confirm button', (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.rename);
+
+          expect(find.text('Rename file'), findsOneWidget);
+          expect(find.text('New name'), findsOneWidget);
+          expect(find.text('Rename'), findsOneWidget);
+        });
+      });
+
       // M1869 — eighth + final dialog handler. CLOSES THE DIALOG
       // FAMILY: every kebab dialog handler now has behavioral
       // coverage. Production handler at editor_beta_page.dart:747
