@@ -11,6 +11,7 @@ import 'package:super_editor/super_editor.dart';
 
 import '../../../../core/db/quill_database.dart' hide Page;
 import '../../../../core/markdown/super_editor_serializer.dart';
+import '../../../../core/markdown/wikilink_parser.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../vault/data/indexer.dart';
 import '../../../vault/domain/repositories/vault_repository.dart';
@@ -445,6 +446,26 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
   // coverage:ignore-end
 
+  /// D-fp5 (M1696): port Copy-[[link]] from legacy editor_page.dart:515.
+  /// Writes `[[<ulid>]]` to the system clipboard so the user can paste
+  /// it into any other page; pops a transient SnackBar confirming.
+  /// Wraps the M1696 [wikilinkLiteralFor] so the literal format lives
+  /// in one place (see lib/core/markdown/wikilink_parser.dart).
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `Clipboard.setData` + `ScaffoldMessenger`. The actual literal
+  /// formatting has its own 5 unit tests via [wikilinkLiteralFor].
+  // coverage:ignore-start
+  Future<void> _onCopyLink() async {
+    final literal = wikilinkLiteralFor(ulid: widget.ulid);
+    await Clipboard.setData(ClipboardData(text: literal));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Copied $literal'), duration: const Duration(seconds: 2)),
+    );
+  }
+  // coverage:ignore-end
+
   /// D25 slice 5b (M1607): named-method keyboard handlers that read
   /// the BlockSelectionCubit at callback time (not at build time), so
   /// DI-04 lint doesn't fire on `context.read` inside `build`.
@@ -625,6 +646,15 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
             icon: const Icon(Icons.share_outlined),
             tooltip: 'Share',
             onPressed: _onSharePage,
+          ),
+          // D-fp5 (M1696): port Copy-[[link]] from legacy
+          // editor_page.dart:515. Writes `[[<ulid>]]` to clipboard via
+          // [wikilinkLiteralFor] so the literal format stays
+          // centralised.
+          IconButton(
+            icon: const Icon(Icons.link),
+            tooltip: 'Copy [[link]] to this page',
+            onPressed: _onCopyLink,
           ),
           // D-fp1 (M1621): port Move-to-Trash from legacy editor_page.dart:654.
           IconButton(

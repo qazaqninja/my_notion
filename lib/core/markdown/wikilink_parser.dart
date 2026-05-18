@@ -66,3 +66,20 @@ class WikilinkParser {
     ];
   }
 }
+
+/// Build the literal `[[ULID]]` / `[[ULID#anchor]]` form a Quill
+/// editor pastes into the document and the renderer parses back via
+/// [WikilinkParser.find]. Centralised so the format lives in one
+/// place — adding a `>` flag or alt-text suffix later would only need
+/// this helper to change.
+///
+/// `ulid` is **not** validated against the Crockford alphabet; the
+/// caller is expected to pass a value sourced from a [Wikilink],
+/// frontmatter `id:`, or `UlidGenerator.next()`. `anchor` is appended
+/// after a literal `#` when non-null and non-empty; null / empty
+/// `anchor` omits the `#` entirely so the bare-link round-trip stays
+/// byte-identical.
+String wikilinkLiteralFor({required String ulid, String? anchor}) {
+  if (anchor == null || anchor.isEmpty) return '[[$ulid]]';
+  return '[[$ulid#$anchor]]';
+}

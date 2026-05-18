@@ -73,4 +73,49 @@ Line two [[01HX0VH3AW0N0V5C8C4F6H8K9L]].
       expect(links.first.anchor, isNull);
     });
   });
+
+  group('wikilinkLiteralFor (M1696)', () {
+    test('wraps the ULID in [[ ... ]]', () {
+      expect(
+        wikilinkLiteralFor(ulid: '01HX0VEY5T6K7R9X4Y8Z0A3D4G'),
+        '[[01HX0VEY5T6K7R9X4Y8Z0A3D4G]]',
+      );
+    });
+
+    test('does not slugify or normalise the ULID', () {
+      // The helper is the inverse of `WikilinkParser.find` for a single
+      // page reference — round-tripping `[[ulid]]` → `find` → `[[ulid]]`
+      // must be byte-identical or the renderer's relation table would
+      // re-key on each save.
+      const ulid = '01HX0VEY5T6K7R9X4Y8Z0A3D4G';
+      final literal = wikilinkLiteralFor(ulid: ulid);
+      final parsed = WikilinkParser.find(literal);
+      expect(parsed, hasLength(1));
+      expect(parsed.first.ulid, ulid);
+    });
+
+    test('appends #anchor when supplied', () {
+      expect(
+        wikilinkLiteralFor(
+          ulid: '01HX0VEY5T6K7R9X4Y8Z0A3D4G',
+          anchor: 'install',
+        ),
+        '[[01HX0VEY5T6K7R9X4Y8Z0A3D4G#install]]',
+      );
+    });
+
+    test('omits the # when anchor is null', () {
+      expect(
+        wikilinkLiteralFor(ulid: '01HX0VEY5T6K7R9X4Y8Z0A3D4G'),
+        isNot(contains('#')),
+      );
+    });
+
+    test('omits the # when anchor is the empty string', () {
+      expect(
+        wikilinkLiteralFor(ulid: '01HX0VEY5T6K7R9X4Y8Z0A3D4G', anchor: ''),
+        '[[01HX0VEY5T6K7R9X4Y8Z0A3D4G]]',
+      );
+    });
+  });
 }
