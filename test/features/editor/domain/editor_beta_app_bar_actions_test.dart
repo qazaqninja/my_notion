@@ -53,23 +53,28 @@ void main() {
     });
   });
 
-  group('EditorBetaAppBarAction.tooltip', () {
-    test('each enum carries a non-empty user-visible tooltip', () {
-      for (final action in EditorBetaAppBarAction.values) {
-        expect(action.tooltip.isNotEmpty, isTrue,
-            reason: '${action.name} should have a tooltip');
-      }
-    });
+  // M1701 (TS-04 fix-forward on M1700 audit): tooltip tests live inside
+  // the enum-named outer group with `.tooltip getter` as the sub-group,
+  // since the property is the unit under test rather than a method.
+  group('EditorBetaAppBarAction', () {
+    group('.tooltip getter', () {
+      test('each enum carries a non-empty user-visible tooltip', () {
+        for (final action in EditorBetaAppBarAction.values) {
+          expect(action.tooltip.isNotEmpty, isTrue,
+              reason: '${action.name} should have a tooltip');
+        }
+      });
 
-    test('copyUlid tooltip reads "Copy ULID" (D-fp6 port label)', () {
-      expect(EditorBetaAppBarAction.copyUlid.tooltip, 'Copy ULID');
-    });
+      test('copyUlid tooltip reads "Copy ULID" (D-fp6 port label)', () {
+        expect(EditorBetaAppBarAction.copyUlid.tooltip, 'Copy ULID');
+      });
 
-    test('copyLink tooltip reads the M1696-shipped label', () {
-      expect(
-        EditorBetaAppBarAction.copyLink.tooltip,
-        'Copy [[link]] to this page',
-      );
+      test('copyLink tooltip reads the M1696-shipped label', () {
+        expect(
+          EditorBetaAppBarAction.copyLink.tooltip,
+          'Copy [[link]] to this page',
+        );
+      });
     });
   });
 }
