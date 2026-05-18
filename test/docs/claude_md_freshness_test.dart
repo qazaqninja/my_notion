@@ -61,6 +61,18 @@ void main() {
       );
     });
 
+    test('does not still claim "Latest commit on `main` is M1813"', () {
+      expect(
+        source.contains('Latest commit on `main` is M1813'),
+        isFalse,
+        reason:
+            'M1894: bumped to M1893+ after the D-fp per-handler smoke '
+            'arc reached 25/26 coverage (effective closure at M1890 '
+            '_onViewFormSubmissions) + M1892 FEATURES.md sibling counter '
+            'refresh',
+      );
+    });
+
     test('does not list EditorPreferencesStore as a live abstraction', () {
       expect(
         source.contains('`EditorPreferencesStore` BL-01 abstraction'),
