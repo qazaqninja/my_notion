@@ -452,7 +452,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
       sync.add(SyncDeleteFileRequested(relpath: widget.relativePath));
     }
     if (!mounted) return;
-    GoRouter.of(context).go(Routes.home);
+    context.go(Routes.home);
   }
   // coverage:ignore-end
 
