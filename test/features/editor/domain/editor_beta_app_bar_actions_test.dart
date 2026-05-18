@@ -25,6 +25,7 @@ void main() {
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
+        EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.moveToTrash,
       };
       final authed = editorBetaAppBarActions(isAuthed: true).toSet();
@@ -36,8 +37,8 @@ void main() {
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → publishToggle → pageHistory → '
-        'moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp12
+        'setFont → moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp14
       // layout users have already learned. Future kebab refactor will
       // map this directly to PopupMenuItem rows.
       expect(editorBetaAppBarActions(isAuthed: true).toList(), [
@@ -52,6 +53,7 @@ void main() {
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
+        EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -68,6 +70,7 @@ void main() {
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
+        EditorBetaAppBarAction.setFont,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -106,6 +109,7 @@ void main() {
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
+        EditorBetaAppBarAction.setFont,
       };
       for (final action in kebab) {
         expect(
@@ -169,6 +173,7 @@ void main() {
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
+        EditorBetaAppBarAction.setFont,
       ]);
     });
   });
@@ -228,6 +233,10 @@ void main() {
           EditorBetaAppBarAction.pageHistory.tooltip,
           'Page history (git log)',
         );
+      });
+
+      test('setFont tooltip reads the D-fp14 port label', () {
+        expect(EditorBetaAppBarAction.setFont.tooltip, 'Set page font');
       });
     });
   });

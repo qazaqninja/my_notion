@@ -23,6 +23,7 @@ IconData iconFor(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.rename => Icons.drive_file_rename_outline,
     EditorBetaAppBarAction.publishToggle => Icons.public_outlined,
     EditorBetaAppBarAction.pageHistory => Icons.history,
+    EditorBetaAppBarAction.setFont => Icons.font_download_outlined,
     EditorBetaAppBarAction.moveToTrash => Icons.delete_outline,
   };
 }

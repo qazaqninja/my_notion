@@ -66,6 +66,12 @@ enum EditorBetaAppBarAction {
   /// not).
   pageHistory(tooltip: 'Page history (git log)'),
 
+  /// Opens a 3-option chooser (sans / serif / mono) for the page's
+  /// font; dispatches Add/Edit/Remove FrontmatterField against
+  /// `font:` per the [pageFontActionFor] planner. D-fp14 port from
+  /// legacy `editor_page.dart` case `'set-font'`.
+  setFont(tooltip: 'Set page font'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -96,6 +102,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.rename;
   yield EditorBetaAppBarAction.publishToggle;
   yield EditorBetaAppBarAction.pageHistory;
+  yield EditorBetaAppBarAction.setFont;
   yield EditorBetaAppBarAction.moveToTrash;
 }
 
@@ -130,7 +137,8 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.reveal ||
     EditorBetaAppBarAction.rename ||
     EditorBetaAppBarAction.publishToggle ||
-    EditorBetaAppBarAction.pageHistory =>
+    EditorBetaAppBarAction.pageHistory ||
+    EditorBetaAppBarAction.setFont =>
       true,
   };
 }

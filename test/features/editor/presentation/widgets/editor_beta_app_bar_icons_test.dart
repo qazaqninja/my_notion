@@ -67,6 +67,13 @@ void main() {
       expect(iconFor(EditorBetaAppBarAction.pageHistory), Icons.history);
     });
 
+    test('setFont → Icons.font_download_outlined (D-fp14 port glyph)', () {
+      expect(
+        iconFor(EditorBetaAppBarAction.setFont),
+        Icons.font_download_outlined,
+      );
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

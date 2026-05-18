@@ -31,6 +31,7 @@ import '../../../vault/domain/sanitized_basename.dart';
 import '../../../vault/domain/vault_absolute_path.dart';
 import '../../domain/document_search.dart';
 import '../../domain/editor_beta_app_bar_actions.dart';
+import '../../domain/page_font.dart';
 import '../../domain/find_in_page_navigation.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
@@ -457,6 +458,87 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     }
     if (!mounted) return;
     context.go(Routes.home);
+  }
+  // coverage:ignore-end
+
+  /// D-fp14 (M1731): port Set-font from legacy editor_page.dart:805
+  /// (`_setFont`). Opens a 3-option `showQuillChoice` (sans / serif /
+  /// mono); the result is routed through `pageFontActionFor` (M1731
+  /// pure-Dart planner) so the no-op detection is reuseable. Mirrors
+  /// the legacy add / edit / remove dispatch logic against
+  /// frontmatter `font:`.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `showQuillChoice` + `ScaffoldMessenger` + frontmatter events.
+  /// All branching logic is unit-tested via `pageFontActionFor`.
+  // coverage:ignore-start
+  Future<void> _onSetFont() async {
+    final editorState = context.read<EditorBloc>().state;
+    if (editorState is! EditorLoaded) return;
+    final existing = editorState.page.frontmatter.find('font')?.rawScalar;
+    final picked = await showQuillChoice<String>(
+      context,
+      title: 'Page font',
+      icon: 'edit',
+      options: const [
+        QuillChoiceOption<String>(
+          value: 'sans',
+          label: 'Sans-serif (default)',
+        ),
+        QuillChoiceOption<String>(value: 'serif', label: 'Serif (Georgia)'),
+        QuillChoiceOption<String>(
+          value: 'mono',
+          label: 'Monospace (JetBrainsMono)',
+        ),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    final plan = pageFontActionFor(picked: picked, existing: existing);
+    if (plan == PageFontAction.noop) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Page font already set to ${pageFontLabel(picked)}'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    final bloc = context.read<EditorBloc>();
+    switch (plan) {
+      case PageFontAction.remove:
+        bloc.add(const RemoveFrontmatterField('font'));
+      case PageFontAction.add:
+        bloc.add(
+          AddFrontmatterField(
+            FrontmatterEntry(
+              key: 'font',
+              rawScalar: picked,
+              type: FrontmatterType.text,
+              value: picked,
+            ),
+          ),
+        );
+      case PageFontAction.edit:
+        bloc.add(
+          EditFrontmatterField(
+            'font',
+            FrontmatterEntry(
+              key: 'font',
+              rawScalar: picked,
+              type: FrontmatterType.text,
+              value: picked,
+            ),
+          ),
+        );
+      case PageFontAction.noop:
+        return; // already handled above
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Page font: ${pageFontLabel(picked)}'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
   // coverage:ignore-end
 
@@ -893,6 +975,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.rename => _onRename,
         EditorBetaAppBarAction.publishToggle => _onPublishToggle,
         EditorBetaAppBarAction.pageHistory => _onPageHistory,
+        EditorBetaAppBarAction.setFont => _onSetFont,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       };
 
