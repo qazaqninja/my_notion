@@ -17,7 +17,13 @@ import 'package:my_notion/features/forms/domain/repositories/forms_repository.da
 import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
 import 'package:my_notion/features/vault/data/indexer.dart';
 import 'package:my_notion/features/vault/domain/repositories/vault_repository.dart';
-import 'package:mocktail/mocktail.dart';
+// M1872 (orchestrator M1871 TS-09 WARN): mockingjay 2.0.0 re-exports
+// mocktail's `Mock`, `when`, `verify`, etc., so switching the import
+// source from `mocktail` to `mockingjay` is a 1-line change that
+// closes the TS-09 import-graph gap without affecting runtime
+// behavior. Foundation smoke at
+// `test/foundation/mockingjay_smoke_test.dart` uses the same source.
+import 'package:mockingjay/mockingjay.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_bloc.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_event.dart';
 import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
