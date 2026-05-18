@@ -273,12 +273,10 @@ void main() {
       // _onCopyPath, _onCopyBody, _onCopyPlain, _onCopyJson, etc.
       // (TS-04 per-handler grouping per orchestrator INFO M1823.)
       group('_onCopyUlid (D-fp6, M1703) — per-handler smoke', () {
-        testWidgets('tap kebab → Copy ULID → clipboard receives ulid',
+        testWidgets('kebab → Copy ULID → clipboard receives ulid',
             (tester) async {
-          // M1831: surface + clipboard mock now extracted into the
-          // harness param + `_installClipboardMock` helper. Each
-          // per-handler clipboard smoke is now ~15 lines instead of
-          // the original ~50.
+          // M1841: migrated from the pre-M1838 pointer-tap pattern to
+          // `tapKebabItem` for consistency with `_onCopyBody`.
           final clipboard = _installClipboardMock(tester);
           const ulid = '01H0000000000000000000ABCD';
           final harness = await pumpEditorBeta(
@@ -293,17 +291,7 @@ void main() {
             await tester.pump(const Duration(milliseconds: 50));
           }
 
-          await tester.tap(find.byTooltip('More actions'));
-          for (var i = 0; i < 5; i++) {
-            await tester.pump(const Duration(milliseconds: 50));
-          }
-          // M1827 fix-forward: PopupMenuItem Row now uses
-          // Expanded+ellipsis so the popup no longer overflows;
-          // tighter `isNull` assert replaces the previous drain loop.
-          expect(tester.takeException(), isNull);
-          await tester.tap(find.text('Copy ULID'));
-          await tester.pump();
-          expect(tester.takeException(), isNull);
+          await tapKebabItem(tester, EditorBetaAppBarAction.copyUlid);
 
           expect(clipboard(), ulid);
         });
@@ -317,9 +305,8 @@ void main() {
       // payload. Future identical clipboard handlers (_onCopyPath,
       // _onCopyBody, _onCopyPlain, _onCopyJson) inherit this shape.
       group('_onCopyLink (D-fp5, M1696) — per-handler smoke', () {
-        testWidgets(
-            'tap kebab → Copy [[link]] to this page → clipboard '
-            'receives [[ulid]]', (tester) async {
+        testWidgets('kebab → Copy [[link]] → clipboard receives [[ulid]]',
+            (tester) async {
           final clipboard = _installClipboardMock(tester);
           const ulid = '01H0000000000000000000ABCD';
           final harness = await pumpEditorBeta(
@@ -334,14 +321,7 @@ void main() {
             await tester.pump(const Duration(milliseconds: 50));
           }
 
-          await tester.tap(find.byTooltip('More actions'));
-          for (var i = 0; i < 5; i++) {
-            await tester.pump(const Duration(milliseconds: 50));
-          }
-          expect(tester.takeException(), isNull);
-          await tester.tap(find.text('Copy [[link]] to this page'));
-          await tester.pump();
-          expect(tester.takeException(), isNull);
+          await tapKebabItem(tester, EditorBetaAppBarAction.copyLink);
 
           expect(clipboard(), '[[$ulid]]');
         });
@@ -355,8 +335,8 @@ void main() {
       // and writes `<rootPath>/page.md`, so the captured clipboard
       // text is `/vault/page.md`.
       group('_onCopyPath (D-fp7, M1709) — per-handler smoke', () {
-        testWidgets('tap kebab → Copy file path → clipboard receives '
-            '<vault>/<relpath>', (tester) async {
+        testWidgets('kebab → Copy file path → clipboard receives '
+            '/vault/page.md', (tester) async {
           final clipboard = _installClipboardMock(tester);
           const ulid = '01H0000000000000000000ABCD';
           final harness = await pumpEditorBeta(
@@ -371,14 +351,7 @@ void main() {
             await tester.pump(const Duration(milliseconds: 50));
           }
 
-          await tester.tap(find.byTooltip('More actions'));
-          for (var i = 0; i < 5; i++) {
-            await tester.pump(const Duration(milliseconds: 50));
-          }
-          expect(tester.takeException(), isNull);
-          await tester.tap(find.text('Copy file path'));
-          await tester.pump();
-          expect(tester.takeException(), isNull);
+          await tapKebabItem(tester, EditorBetaAppBarAction.copyPath);
 
           expect(clipboard(), '/vault/page.md');
         });
