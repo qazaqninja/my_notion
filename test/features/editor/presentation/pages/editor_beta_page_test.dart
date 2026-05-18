@@ -752,6 +752,42 @@ void main() {
         });
       });
 
+      // M1861 — fourth dialog smoke (second showQuillPrompt instance).
+      // `_onAddTags` (editor_beta_page.dart:1193) opens a
+      // `showQuillPrompt` titled 'Add tags' with placeholder
+      // 'tag1, tag2' and confirm label 'Add'. With no existing
+      // `tags:` frontmatter, the hint is the empty-state copy
+      // 'Comma-separated. New tags are merged with current.'.
+      //
+      // Merge logic + frontmatter dispatch covered by
+      // tag_merge_test.dart + yaml_scalar_test.dart unit tests.
+      group('_onAddTags (D-fp26, M1755) — per-handler smoke', () {
+        testWidgets('kebab → Add tags → prompt modal opens',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.addTags);
+
+          expect(find.text('Add tags'), findsOneWidget);
+          expect(
+            find.text('Comma-separated. New tags are merged with current.'),
+            findsOneWidget,
+          );
+          expect(find.text('Add'), findsOneWidget);
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
