@@ -51,6 +51,7 @@ import '../controllers/superscript_autoformat_reaction.dart';
 import '../cubit/block_selection_cubit.dart';
 import '../cubit/slash_menu_cubit.dart';
 import '../widgets/block_selection_overlay.dart';
+import '../widgets/editor_beta_app_bar_icons.dart';
 import '../widgets/find_bar.dart';
 import '../widgets/slash_menu_overlay.dart';
 
@@ -625,42 +626,23 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
   }
 
   /// M1705: maps an [EditorBetaAppBarAction] enum value to the concrete
-  /// `IconButton` the AppBar renders. Keeps the icon (presentation
-  /// concern) + handler reference in the widget layer while the
-  /// tooltip + visibility rules live on the M1700 domain enum.
+  /// `IconButton` the AppBar renders. Icon mapping was further extracted
+  /// at M1707 into the top-level [iconFor] helper so each action's icon
+  /// is unit-testable without a widget tree; the handler-reference
+  /// switch stays here since it's bound to State methods.
   IconButton _iconButtonFor(EditorBetaAppBarAction action) {
-    return switch (action) {
-      EditorBetaAppBarAction.pullFromServer => IconButton(
-          icon: const Icon(Icons.cloud_download_outlined),
-          tooltip: action.tooltip,
-          onPressed: _onPullFromServer,
-        ),
-      EditorBetaAppBarAction.findInPage => IconButton(
-          icon: const Icon(Icons.search),
-          tooltip: action.tooltip,
-          onPressed: _toggleFindBar,
-        ),
-      EditorBetaAppBarAction.share => IconButton(
-          icon: const Icon(Icons.share_outlined),
-          tooltip: action.tooltip,
-          onPressed: _onSharePage,
-        ),
-      EditorBetaAppBarAction.copyLink => IconButton(
-          icon: const Icon(Icons.link),
-          tooltip: action.tooltip,
-          onPressed: _onCopyLink,
-        ),
-      EditorBetaAppBarAction.copyUlid => IconButton(
-          icon: const Icon(Icons.tag),
-          tooltip: action.tooltip,
-          onPressed: _onCopyUlid,
-        ),
-      EditorBetaAppBarAction.moveToTrash => IconButton(
-          icon: const Icon(Icons.delete_outline),
-          tooltip: action.tooltip,
-          onPressed: _onMoveToTrash,
-        ),
-    };
+    return IconButton(
+      icon: Icon(iconFor(action)),
+      tooltip: action.tooltip,
+      onPressed: switch (action) {
+        EditorBetaAppBarAction.pullFromServer => _onPullFromServer,
+        EditorBetaAppBarAction.findInPage => _toggleFindBar,
+        EditorBetaAppBarAction.share => _onSharePage,
+        EditorBetaAppBarAction.copyLink => _onCopyLink,
+        EditorBetaAppBarAction.copyUlid => _onCopyUlid,
+        EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
+      },
+    );
   }
 
   AnchorRect _caretAnchor() {
