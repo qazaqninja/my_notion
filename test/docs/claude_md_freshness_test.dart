@@ -51,6 +51,16 @@ void main() {
       );
     });
 
+    test('does not still claim "Latest commit on `main` is M1801"', () {
+      expect(
+        source.contains('Latest commit on `main` is M1801'),
+        isFalse,
+        reason:
+            'M1815: bumped to M1813+ after shared provider harness '
+            'arc closure (M1804/M1806/M1809/M1811/M1813)',
+      );
+    });
+
     test('does not list EditorPreferencesStore as a live abstraction', () {
       expect(
         source.contains('`EditorPreferencesStore` BL-01 abstraction'),

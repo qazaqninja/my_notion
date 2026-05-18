@@ -76,6 +76,22 @@ void main() {
           reason: 'M1802: also bumped the prose counter on line 12',
         );
       });
+
+      test('is not still M1801+ after shared provider harness arc landed',
+          () {
+        expect(
+          source.contains('M0–M1801+'),
+          isFalse,
+          reason:
+              'M1815: bumped to M1813+ after shared provider harness '
+              'arc closure (M1804/M1806/M1809/M1811/M1813)',
+        );
+        expect(
+          source.contains('1,801+ milestones'),
+          isFalse,
+          reason: 'M1815: also bumped the prose counter on line 12',
+        );
+      });
     });
 
     group('block-editor paragraph', () {
