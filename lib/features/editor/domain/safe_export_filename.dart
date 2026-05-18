@@ -1,5 +1,5 @@
 /// Reserved characters disallowed in cross-platform filenames —
-/// matches the legacy `editor_page.dart` regex used by every export
+/// matches the legacy regex used by every export
 /// handler (export-md / export-html). Centralised so a future tuning
 /// (e.g. allow non-Latin scripts more aggressively) flips both
 /// exporters at once.

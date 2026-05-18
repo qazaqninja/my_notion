@@ -1,8 +1,7 @@
 import 'dart:convert';
 
 /// Serialise a page's identity + frontmatter + body as a JSON string,
-/// matching the legacy `editor_page.dart:555` "Copy as JSON" payload
-/// shape exactly:
+/// matching the legacy "Copy as JSON" payload shape exactly:
 ///
 ///     { "ulid": …, "relativePath": …, "frontmatter": {…}, "body": … }
 ///

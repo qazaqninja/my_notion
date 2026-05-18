@@ -38,7 +38,7 @@ enum PageFontAction {
 /// `existing` is the page's current frontmatter `font:` rawScalar
 /// (null when absent).
 ///
-/// Rules (mirrors legacy `editor_page.dart:_setFont` exactly):
+/// Rules (mirrors the legacy `_setFont` handler exactly):
 /// 1. `picked == 'sans' && existing == null` → noop (already default).
 /// 2. `picked == 'sans' && existing != null` → remove.
 /// 3. `existing != null && existing.trim() == picked` → noop.

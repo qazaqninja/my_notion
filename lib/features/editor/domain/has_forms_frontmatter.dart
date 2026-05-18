@@ -1,9 +1,9 @@
 import '../../vault/domain/entities/frontmatter.dart';
 
 /// Returns true when [frontmatter] declares a `forms:` field with a
-/// non-empty (post-trim) value. Mirrors the legacy
-/// `editor_page.dart:_hasForms` and the backend
-/// `FrontmatterProbe.hasForms` rule so the kebab "View form
+/// non-empty (post-trim) value. Mirrors the legacy `_hasForms`
+/// predicate and the backend `FrontmatterProbe.hasForms` rule so
+/// the kebab "View form
 /// submissions →" entry only renders when the server would accept the
 /// list-submissions request — otherwise the click resolves to a 403 /
 /// not-owner.

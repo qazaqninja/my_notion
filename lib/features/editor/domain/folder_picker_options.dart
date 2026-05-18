@@ -1,8 +1,8 @@
 import '../../vault/domain/entities/vault_tree.dart';
 
 /// Returns the parent folder of [relativePath], or `''` for top-level
-/// (vault root) files. Mirrors the legacy `editor_page.dart:763-766`
-/// inline `lastIndexOf('/')` computation; pulled into the domain
+/// (vault root) files. Mirrors the legacy inline
+/// `lastIndexOf('/')` computation; pulled into the domain
 /// layer at M1753 so the D-fp25 move-to-folder port can build its
 /// "drop the current folder from the chooser" guard without
 /// duplicating the logic.
@@ -18,8 +18,8 @@ String currentFolderOf(String relativePath) {
 /// well-formed tree but YAGNI bites if drift fixtures shift) collapse
 /// to a single entry.
 ///
-/// Drop-in replacement for the inline `walk` closure in legacy
-/// `editor_page.dart:_moveToFolder` (lines 749-761). Lives in the
+/// Drop-in replacement for the inline `walk` closure in the legacy
+/// `_moveToFolder` handler. Lives in the
 /// editor domain layer since the "list every folder for a Move-to
 /// chooser" semantic is editor-specific — VaultTree itself only
 /// promises the structural recursion.

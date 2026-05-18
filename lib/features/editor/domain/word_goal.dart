@@ -1,7 +1,7 @@
 /// User-visible label for the word-count goal frontmatter field.
-/// Mirrors the legacy `editor_page.dart:_setWordGoal` plural rule —
-/// only `n == 1` triggers the singular "word"; `0 words` matches the
-/// legacy plural-for-zero choice.
+/// Mirrors the legacy `_setWordGoal` plural rule — only `n == 1`
+/// triggers the singular "word"; `0 words` matches the legacy
+/// plural-for-zero choice.
 String wordGoalLabel(int n) {
   return n == 1 ? '$n word' : '$n words';
 }

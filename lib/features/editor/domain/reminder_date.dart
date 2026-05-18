@@ -12,8 +12,8 @@ String isoDate(DateTime d) {
 
 /// User-visible "today / tomorrow / in N days / N days ago" label
 /// for a reminder date relative to "now". Mirrors the legacy
-/// editor_page.dart `_setReminder` toast suffix so the WYSIWYG and
-/// legacy editors say the same thing for the same pick.
+/// `_setReminder` toast suffix so the WYSIWYG editor matches the
+/// historical phrasing for the same pick.
 ///
 /// Comparison is on the calendar date (time-of-day is ignored) so a
 /// 23:59 pick and a 00:01 "now" the next morning still report

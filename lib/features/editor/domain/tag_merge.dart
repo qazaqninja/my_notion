@@ -4,7 +4,7 @@ import '../../vault/domain/entities/frontmatter_entry.dart';
 /// both the YAML-flow-list shape (`tags: [foo, bar]` → `List<dynamic>`)
 /// and the bare-string shape (`tags: draft` → `String`). Every entry
 /// is trimmed and dropped if empty after trim. Mirrors the legacy
-/// `editor_page.dart:_addTags` 877-887 inline logic.
+/// `_addTags` inline read.
 ///
 /// Returns `[]` for null entries, unsupported value types, or
 /// all-whitespace strings.
@@ -46,7 +46,7 @@ class TagMergeResult {
 /// legacy editor's semantics: case-insensitive dedup against existing
 /// + within the addition list itself, preserving the order +
 /// original casing of existing tags. Mirrors the legacy
-/// `editor_page.dart:_addTags` 911-921 inline loop.
+/// `_addTags` inline merge loop.
 TagMergeResult mergeTags({
   required List<String> current,
   required List<String> added,
