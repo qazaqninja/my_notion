@@ -1,6 +1,6 @@
 # Feature roadmap — Quill (my_notion)
 
-> Reconciliation of every Notion feature against what Quill has actually shipped (M0–M1690+), what is partially done, what is queued, and what is explicitly out of scope. The goal is that any agent landing in this repo for the first time can open this file, pick an item, follow the file pointers it includes, and ship it as the next milestone (Mxxxx) without re-discovering the codebase.
+> Reconciliation of every Notion feature against what Quill has actually shipped (M0–M1766+), what is partially done, what is queued, and what is explicitly out of scope. The goal is that any agent landing in this repo for the first time can open this file, pick an item, follow the file pointers it includes, and ship it as the next milestone (Mxxxx) without re-discovering the codebase.
 
 Read `CLAUDE.md` first for invariants and conventions. Read `~/.claude/plans/1m-run-until-we-frolicking-thompson.md` for the current 1m-loop plan (Phase A foundation → B media → C platform → D WYSIWYG → E V2 backend); the original milestone plan at `~/.claude/plans/build-prompt-self-hosted-transient-bear.md` is the historical pre-M30 blueprint. Then come back here.
 
@@ -9,11 +9,11 @@ Read `CLAUDE.md` first for invariants and conventions. Read `~/.claude/plans/1m-
 1. Scan the **Pick-next queue** at the bottom — it's the prioritized work list. The top item is what you should pick.
 2. Find the item in the categorized list to see which file(s) and patterns to touch.
 3. Follow the **Architecture invariants** below — they are non-negotiable and they tell you *where* state lives (markdown frontmatter vs. drift vs. nowhere).
-4. Ship as the next milestone commit `Mxxxx: <feature>`, matching the style of the existing 1,690+ milestones (commits use 4-digit milestone IDs once the count crosses M1000).
+4. Ship as the next milestone commit `Mxxxx: <feature>`, matching the style of the existing 1,766+ milestones (commits use 4-digit milestone IDs once the count crosses M1000).
 
 ## Status legend
 
-- ✅ **Shipped** — landed somewhere in M0–M1186+. Commit hash in parens when notable.
+- ✅ **Shipped** — landed somewhere in M0–M1766+. Commit hash in parens when notable.
 - 🚧 **Partial** — some of it works, the rest is queued in the 1m-loop plan (Phase B onward).
 - 📋 **Backlog** — ready to pick up. No backend or new architecture required.
 - 🔮 **v2 — requires backend** — needs the Dart Frog/Serverpod + Postgres + Docker layer (Phase E of the 1m-loop plan).
@@ -53,7 +53,7 @@ If your feature wants to store something new, the answer is almost always "add a
 
 ## Block Editor
 
-- ✅ Block-based editing (everything is a block) — Tap-to-edit M40 (paragraphs / headings / blockquotes), M176 (list items with auto-renumber), M198 (code + math), M199 (tables — all via per-block source mode). hr is decorative-only. Full block-level cursor nav lands via the D29-default `EditorBetaPage` (super_editor at `/editor/:ulid` with the `editor.useBeta` toggle defaulting to `true` after M1670). The legacy per-block source-mode editor stays reachable through the opt-out toggle (Settings → Advanced) until D30 cutover deletes it.
+- ✅ Block-based editing (everything is a block) — Full WYSIWYG block-based editing via `EditorBetaPage` (super_editor at both `/editor/:ulid` and `/editor-beta/:ulid` — identical widget after the D30 cutover arc closed at M1765). Block-level cursor nav, drag handles (D24a), duplicate (D24c), delete (D24d), multi-block selection (D25), inline autoformat (D26: bold/italic/strike/inline-code/highlight/sub/sup), heading + list/todo conversion (D27), slash menu (D23), 26 kebab actions (D-fp arc M1700-M1755). The legacy per-block source-mode editor (`EditorPage`) was deleted at M1765 (2,625 LOC removed) along with the `EditorPreferencesCubit` opt-in family (M1763) and the Settings → Advanced toggle (M1761).
 - ✅ **Slash command menu (/)** — M23+. 19 entries including all block types, image picker, button (M70), inline database (M78), today's date (M103).
 - ✅ Drag and drop blocks — M65, `_BlockDragWrap` on every block. Hover-revealed handle on the left margin; drop reorders via source-offset splicing.
 - ✅ Multi-column layouts — M66, `:::cols` / `:::col` / `:::` fence.
@@ -270,7 +270,7 @@ If your feature wants to store something new, the answer is almost always "add a
 Top 10, ordered. Each is sized for one or two milestone commits. The first six mirror `CLAUDE.md`'s "What is NOT implemented" list; the next four come from this reconciliation.
 
 1. ✅ **Slash command menu (`/`)** — Shipped **M23**. Files: `lib/features/editor/{domain/slash_entries,presentation/cubit/slash_menu_cubit,presentation/widgets/slash_menu_overlay}.dart` + hook in `source_view.dart`. 13 entries.
-2. 🚧 **WYSIWYG editing** — MVP M40 (paragraph / heading / blockquote tap-to-edit) extended M176 (list items, ul + ol with auto-renumber), M198 (code + math), M199 (tables — all via per-block source mode). Each `_Block` carries a `(sourceStart, sourceEnd)` range; `_EditableBlock` / `_EditableListItem` swap the rendered widget for a TextField on tap, splice the new source via `ListReorder.emit` (renumbers ol) and dispatch `onBodyChange`. Hover chrome grows a per-block delete chip M202 + comment chip M186 alongside the drag handle M65. hr is decorative. True `super_editor` integration with a markdown serializer remains future work for users who want block-level cursor navigation and drag-drop reordering.
+2. ✅ **WYSIWYG editing** — **Fully shipped via D + D-fp + D30 cutover arcs.** `super_editor: 0.3.0-dev.51` backs `EditorBetaPage` (served at both `/editor/:ulid` and `/editor-beta/:ulid` after the D30 collapse at M1757). Markdown↔MutableDocument bridge at `lib/core/markdown/super_editor_serializer.dart`. D1-D22 block types ✅ (paragraph/headings/lists/todos/code/hr/blockquote/callouts/math/mermaid/tables/image-cards/files/bookmarks/sub-page/transclusion/columns/breadcrumb/toc/buttons + all inline marks). D23 slash menu ✅ (M1521-M1545). D24a/c/d block reorder + duplicate + delete ✅ (M1570/M1574/M1578). D25 multi-block selection ✅ (M1597-M1607). D26 inline autoformat ✅ (M1549-M1564). D27 heading + list/todo conversion ✅ (M1583/M1591). **D-fp parity arc ✅** (M1700-M1755 — 26 kebab actions). **D30 cutover arc ✅** (M1757-M1765 — fork collapse + helper/Settings toggle/EditorPreferencesCubit/legacy `EditorPage` source all deleted). Zero legacy artifacts remain in the editor feature.
 3. ✅ **Page hierarchy UX** — Shipped **M24**. Right-click / long-press on tree rows opens a context menu (folders get "New page here" + "Reveal", files get "Reveal" + "Copy ULID" + "Move to trash"). Folders also have a hover `+` icon for new subpages. Editor breadcrumbs already render via `PageHeader`.
 4. ✅ **Page icons + covers** — Shipped **M26**. `lib/shared/widgets/page_icon.dart` renders `icon:` (emoji / asset / file / URL) and `cover:` as a hero band. Sidebar tree icons are deferred (would require extending VaultFile + the indexer).
 5. ✅ **Math (KaTeX) + Mermaid** — Math shipped **M32** via `flutter_math_fork` (pure Dart). `$$ ... $$` blocks render in `markdown_renderer.dart`; the slash menu inserts the snippet. Mermaid native rendering shipped at **C1** (`lib/shared/widgets/mermaid_view.dart`) — `webview_flutter: ^4.13.1` host with the vendored `assets/mermaid/mermaid.min.js` (3.3 MB) inlined into a `loadHtmlString` scaffold. `_MermaidPlaceholder` (M200) was replaced by `MermaidView` and is now called from `markdown_renderer.dart:2588` for both editor modes. Linux / Windows / web / test environments fall back to a styled source-text card (the original M200 behaviour). M1686 extracted the HTML scaffold into a `mermaidHtmlFor()` pure-Dart helper for direct unit-test coverage of escaping + not-vendored fallback invariants.
