@@ -58,6 +58,7 @@ import '../../../../shared/widgets/quill_modal.dart';
 import '../widgets/block_selection_overlay.dart';
 import '../widgets/editor_beta_app_bar_icons.dart';
 import '../widgets/find_bar.dart';
+import '../widgets/page_history_dialog.dart';
 import '../widgets/slash_menu_overlay.dart';
 
 /// Beta WYSIWYG editor route powered by `super_editor` (Phase D / D1 slice 23
@@ -456,6 +457,27 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     }
     if (!mounted) return;
     context.go(Routes.home);
+  }
+  // coverage:ignore-end
+
+  /// D-fp12 (M1725): port Page-history from legacy editor_page.dart:534
+  /// (`_showPageHistory`). Reads the VaultBloc's rootPath, opens the
+  /// [PageHistoryDialog] backed by `git log`. The dialog handles the
+  /// "no git history" case itself when the vault is not a git repo.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over a
+  /// pre-existing dialog widget that already has its own coverage.
+  // coverage:ignore-start
+  Future<void> _onPageHistory() async {
+    final vault = context.read<VaultBloc>().state;
+    if (vault is! VaultLoaded) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => PageHistoryDialog(
+        vaultRoot: vault.rootPath,
+        relativePath: widget.relativePath,
+      ),
+    );
   }
   // coverage:ignore-end
 
@@ -868,6 +890,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.reveal => _onReveal,
         EditorBetaAppBarAction.rename => _onRename,
         EditorBetaAppBarAction.publishToggle => _onPublishToggle,
+        EditorBetaAppBarAction.pageHistory => _onPageHistory,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       },
     );

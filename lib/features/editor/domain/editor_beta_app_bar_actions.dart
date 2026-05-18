@@ -59,6 +59,13 @@ enum EditorBetaAppBarAction {
   /// gating remains on the legacy editor for now.
   publishToggle(tooltip: 'Publish / unpublish'),
 
+  /// Opens the [PageHistoryDialog] backed by `git log` on the
+  /// current page's `.md` file. D-fp12 port from legacy
+  /// `editor_page.dart` case `'history'`. Only useful when the vault
+  /// is a git repo (the dialog itself reports "no git history" when
+  /// not).
+  pageHistory(tooltip: 'Page history (git log)'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -88,5 +95,6 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.reveal;
   yield EditorBetaAppBarAction.rename;
   yield EditorBetaAppBarAction.publishToggle;
+  yield EditorBetaAppBarAction.pageHistory;
   yield EditorBetaAppBarAction.moveToTrash;
 }

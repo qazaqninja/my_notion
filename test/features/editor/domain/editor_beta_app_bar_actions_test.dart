@@ -24,6 +24,7 @@ void main() {
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
+        EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.moveToTrash,
       };
       final authed = editorBetaAppBarActions(isAuthed: true).toSet();
@@ -34,8 +35,9 @@ void main() {
 
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
-        'duplicate → reveal → rename → publishToggle → moveToTrash', () {
-      // Order matters so the rendered AppBar matches the post-D-fp11
+        'duplicate → reveal → rename → publishToggle → pageHistory → '
+        'moveToTrash', () {
+      // Order matters so the rendered AppBar matches the post-D-fp12
       // layout users have already learned. Future kebab refactor will
       // map this directly to PopupMenuItem rows.
       expect(editorBetaAppBarActions(isAuthed: true).toList(), [
@@ -49,6 +51,7 @@ void main() {
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
+        EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -64,6 +67,7 @@ void main() {
         EditorBetaAppBarAction.reveal,
         EditorBetaAppBarAction.rename,
         EditorBetaAppBarAction.publishToggle,
+        EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -116,6 +120,13 @@ void main() {
         expect(
           EditorBetaAppBarAction.publishToggle.tooltip,
           'Publish / unpublish',
+        );
+      });
+
+      test('pageHistory tooltip reads the D-fp12 port label', () {
+        expect(
+          EditorBetaAppBarAction.pageHistory.tooltip,
+          'Page history (git log)',
         );
       });
     });

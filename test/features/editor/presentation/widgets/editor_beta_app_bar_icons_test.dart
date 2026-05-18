@@ -63,6 +63,10 @@ void main() {
       );
     });
 
+    test('pageHistory → Icons.history (D-fp12 port glyph)', () {
+      expect(iconFor(EditorBetaAppBarAction.pageHistory), Icons.history);
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),
