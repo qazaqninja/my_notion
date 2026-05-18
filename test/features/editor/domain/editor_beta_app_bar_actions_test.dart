@@ -26,6 +26,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
+        EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.moveToTrash,
       };
       final authed = editorBetaAppBarActions(isAuthed: true).toSet();
@@ -37,7 +38,7 @@ void main() {
     test('returns actions in the stable AppBar order: '
         'pull → find → share → copyLink → copyUlid → copyPath → '
         'duplicate → reveal → rename → publishToggle → pageHistory → '
-        'setFont → moveToTrash', () {
+        'setFont → setReminder → moveToTrash', () {
       // Order matters so the rendered AppBar matches the post-D-fp14
       // layout users have already learned. Future kebab refactor will
       // map this directly to PopupMenuItem rows.
@@ -54,6 +55,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
+        EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -71,6 +73,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
+        EditorBetaAppBarAction.setReminder,
         EditorBetaAppBarAction.moveToTrash,
       ]);
     });
@@ -110,6 +113,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
+        EditorBetaAppBarAction.setReminder,
       };
       for (final action in kebab) {
         expect(
@@ -174,6 +178,7 @@ void main() {
         EditorBetaAppBarAction.publishToggle,
         EditorBetaAppBarAction.pageHistory,
         EditorBetaAppBarAction.setFont,
+        EditorBetaAppBarAction.setReminder,
       ]);
     });
   });
@@ -237,6 +242,13 @@ void main() {
 
       test('setFont tooltip reads the D-fp14 port label', () {
         expect(EditorBetaAppBarAction.setFont.tooltip, 'Set page font');
+      });
+
+      test('setReminder tooltip reads the D-fp15 port label', () {
+        expect(
+          EditorBetaAppBarAction.setReminder.tooltip,
+          'Set reminder…',
+        );
       });
     });
   });

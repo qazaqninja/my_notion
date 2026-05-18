@@ -32,6 +32,7 @@ import '../../../vault/domain/vault_absolute_path.dart';
 import '../../domain/document_search.dart';
 import '../../domain/editor_beta_app_bar_actions.dart';
 import '../../domain/page_font.dart';
+import '../../domain/reminder_date.dart';
 import '../../domain/find_in_page_navigation.dart';
 import '../bloc/editor_bloc.dart';
 import '../bloc/editor_event.dart';
@@ -55,6 +56,7 @@ import '../controllers/super_editor_caret.dart';
 import '../controllers/superscript_autoformat_reaction.dart';
 import '../cubit/block_selection_cubit.dart';
 import '../cubit/slash_menu_cubit.dart';
+import '../../../../shared/widgets/quill_date_picker.dart';
 import '../../../../shared/widgets/quill_modal.dart';
 import '../widgets/block_selection_overlay.dart';
 import '../widgets/editor_beta_app_bar_icons.dart';
@@ -458,6 +460,78 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
     }
     if (!mounted) return;
     context.go(Routes.home);
+  }
+  // coverage:ignore-end
+
+  /// D-fp15 (M1733): port Set-reminder from legacy
+  /// editor_page.dart:1055 (`_setReminder`). Opens
+  /// `showQuillDatePicker`, formats the pick via M1733
+  /// [isoDate] for the `reminder:` frontmatter value, and dispatches
+  /// `AddFrontmatterField` / `EditFrontmatterField` (with the no-op
+  /// "already set" SnackBar when picking the same date). Toast uses
+  /// [relativeReminderLabel] for the "today / tomorrow / in N days"
+  /// suffix, matching the legacy UX exactly.
+  ///
+  /// Coverage exemption (TS-01): widget-tier orchestration over
+  /// `showQuillDatePicker` + `ScaffoldMessenger` + frontmatter
+  /// events. All formatting logic is unit-tested via
+  /// `reminder_date_test.dart`.
+  // coverage:ignore-start
+  Future<void> _onSetReminder() async {
+    final bloc = context.read<EditorBloc>();
+    final editorState = bloc.state;
+    if (editorState is! EditorLoaded) return;
+    final fm = editorState.page.frontmatter;
+    final existing = fm.find('reminder');
+    final now = DateTime.now();
+    var initial = DateTime(now.year, now.month, now.day);
+    if (existing != null) {
+      final parsed = DateTime.tryParse(existing.rawScalar);
+      if (parsed != null) initial = parsed;
+    }
+    final picked = await showQuillDatePicker(
+      context,
+      initial: initial,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked == null || !mounted) return;
+    final iso = isoDate(picked);
+    if (existing != null && existing.rawScalar.trim() == iso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Reminder already set for $iso'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    if (existing == null) {
+      bloc.add(
+        AddFrontmatterField(
+          FrontmatterEntry(
+            key: 'reminder',
+            rawScalar: iso,
+            type: FrontmatterType.date,
+            value: iso,
+          ),
+        ),
+      );
+    } else {
+      bloc.add(
+        EditFrontmatterField(
+          'reminder',
+          existing.copyWith(rawScalar: iso, value: iso),
+        ),
+      );
+    }
+    final relative = relativeReminderLabel(picked: picked, now: now);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Reminder set for $iso ($relative)'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
   // coverage:ignore-end
 
@@ -976,6 +1050,7 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         EditorBetaAppBarAction.publishToggle => _onPublishToggle,
         EditorBetaAppBarAction.pageHistory => _onPageHistory,
         EditorBetaAppBarAction.setFont => _onSetFont,
+        EditorBetaAppBarAction.setReminder => _onSetReminder,
         EditorBetaAppBarAction.moveToTrash => _onMoveToTrash,
       };
 

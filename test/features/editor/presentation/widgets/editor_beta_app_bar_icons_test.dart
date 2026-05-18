@@ -74,6 +74,10 @@ void main() {
       );
     });
 
+    test('setReminder → Icons.alarm (D-fp15 port glyph)', () {
+      expect(iconFor(EditorBetaAppBarAction.setReminder), Icons.alarm);
+    });
+
     test('moveToTrash → Icons.delete_outline', () {
       expect(
         iconFor(EditorBetaAppBarAction.moveToTrash),

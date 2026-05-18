@@ -72,6 +72,12 @@ enum EditorBetaAppBarAction {
   /// legacy `editor_page.dart` case `'set-font'`.
   setFont(tooltip: 'Set page font'),
 
+  /// Opens a date picker; writes the picked date as ISO `YYYY-MM-DD`
+  /// into the page's `reminder:` frontmatter. D-fp15 port from
+  /// legacy `editor_page.dart` case `'set-reminder'`. Snooze and
+  /// clear remain on the legacy kebab for now.
+  setReminder(tooltip: 'Set reminder…'),
+
   /// Moves the file to `.trash/` + tombstones the server row when
   /// authed (D-fp1).
   moveToTrash(tooltip: 'Move to trash');
@@ -103,6 +109,7 @@ Iterable<EditorBetaAppBarAction> editorBetaAppBarActions({
   yield EditorBetaAppBarAction.publishToggle;
   yield EditorBetaAppBarAction.pageHistory;
   yield EditorBetaAppBarAction.setFont;
+  yield EditorBetaAppBarAction.setReminder;
   yield EditorBetaAppBarAction.moveToTrash;
 }
 
@@ -138,7 +145,8 @@ bool isEditorBetaKebabAction(EditorBetaAppBarAction action) {
     EditorBetaAppBarAction.rename ||
     EditorBetaAppBarAction.publishToggle ||
     EditorBetaAppBarAction.pageHistory ||
-    EditorBetaAppBarAction.setFont =>
+    EditorBetaAppBarAction.setFont ||
+    EditorBetaAppBarAction.setReminder =>
       true,
   };
 }
