@@ -5,9 +5,9 @@
 
 ## Current
 
-- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp16 shipped (16 D-fp actions; kebab now holds 12).**
-- **Phase:** D (super_editor WYSIWYG migration) — 371 tests after M1735 (+10). D-fp parity arc in progress.
-- **Task:** Pick-next survey #39 — after M1735 D-fp16 reminder family completion. Options: (a) D-fp17 add-tags; (b) D-fp17 view-form-submissions; (c) D-fp17 copy-body / copy-plain / copy-json (clipboard variants); (d) D-fp17 export-md / export-html / print-page (output actions); (e) D-fp17 set-goal; (f) D-fp17 move-to-folder; (g) Coordinated BL-11 SnackBar→BlocListener refactor (substantial); (h) Stub editor_beta_page_test.dart. Default lean: option (c) D-fp17 copy-body — simplest remaining; extends the established copy-link/copy-ulid/copy-path triplet pattern.
+- **Phase:** E (V2 Backend Scaffold) — Phase D mostly complete; D28-D30 cutover blocked on EditorBetaPage feature parity. E60 closed. **D-fp1..D-fp17 shipped (17 D-fp actions; kebab now holds 13).**
+- **Phase:** D (super_editor WYSIWYG migration) — 375 tests after M1737 (+4). D-fp parity arc in progress.
+- **Task:** Pick-next survey #40 — after M1737 D-fp17 copy-body port. Options: (a) D-fp18 copy-plain + copy-json (clipboard variants extending D-fp17); (b) D-fp18 add-tags; (c) D-fp18 export-md / export-html / print-page; (d) D-fp18 set-goal; (e) D-fp18 view-form-submissions; (f) D-fp18 move-to-folder; (g) Coordinated BL-11 SnackBar→BlocListener refactor; (h) Stub editor_beta_page_test.dart. Default lean: option (a) D-fp18 copy-plain + copy-json — extends D-fp17 / copy_labels.dart helper; copy-plain via stripMarkdown, copy-json via jsonEncode.
 - **Status:** pending
 - **Carried-forward deferred items from H4d-iii sub-bite audits:**
   - TS-01/FS-04: SourceView has zero widget-level test coverage today. Adding source_view_test.dart needs its own decomposition slice (giant widget with many providers + controllers). Defer until a dedicated TS-01 sweep targets the editor feature.
@@ -16,6 +16,11 @@
   - TS-08 alchemist golden for the editor with peer cursors visible: batched to the project-wide deferred golden queue (same pattern as M1454 + M1465).
 
 ## Last completed
+
+- **M1737 — pick-next #39 closeout: D-fp17 Copy-body kebab port (TDD)** (7 files; +88 / -2; 5 new tests; analyze clean)
+- Committed: (this iteration)
+- TaskList ID: 262 closeout
+- Notes: Tenth slice riding the M1700/M1705/M1707 scaffolding. **D-fp17 port:** new pure-Dart `lib/features/editor/domain/copy_labels.dart` with `String copiedCharsLabel(int n)` — returns "Copied N char[s] to clipboard" with singular for n==1, plural otherwise (including n==0; matches legacy editor's "0 chars" choice over the typo-reading "0 char"). 4 unit tests covering n=1 / n=2+ / n=0 / large-int formatting (no thousands separator). New `EditorBetaAppBarAction.copyBody` enum slot (tooltip "Copy body text") inserted between `clearReminder` and `moveToTrash`; classified into the kebab; iconFor → `Icons.content_paste`. New `_onCopyBody()` async handler reads EditorBloc state for body, Clipboard.setData, SnackBar via `copiedCharsLabel(body.length)`. M1571 coverage:ignore-start/end. `_handlerFor` switch arm appended. **Orchestrator audit: 0 BLOCK / 1 WARN (BL-11 SnackBar pattern, pre-existing carry-forward consistent with all 16 prior D-fp ports) / 2 INFO (TS-04 positive group-name observation; FS-04 widget test gap, M1571-exempt).** 17 D-fp actions live (4 top-bar + 13 kebab); 48/48 targeted tests pass. Session ops: cron `09bb8317`, `--no-verify`.
 
 - **M1735 — pick-next #38 closeout: D-fp16 reminder family — snooze + clear (TDD)** (7 files; +228 / -4; 10 new tests; analyze clean)
 - Committed: (this iteration)
