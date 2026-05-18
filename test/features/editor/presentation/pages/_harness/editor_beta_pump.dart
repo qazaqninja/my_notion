@@ -5,7 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:my_notion/core/db/quill_database.dart';
+// Drift generates a `Page` data class from the `pages` table that
+// would shadow our domain `Page` entity if any future line in this
+// harness happens to type-annotate against it. Project convention
+// (CLAUDE.md) bans the bare import everywhere outside `lib/core/db/`.
+import 'package:my_notion/core/db/quill_database.dart' hide Page;
 import 'package:my_notion/core/ulid/ulid_generator.dart';
 import 'package:my_notion/features/editor/data/repositories/html_export_repository_impl.dart';
 import 'package:my_notion/features/editor/data/repositories/pdf_export_repository_impl.dart';
