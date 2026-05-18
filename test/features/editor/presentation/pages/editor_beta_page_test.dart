@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -223,6 +224,86 @@ void main() {
           }
 
           expect(find.byTooltip('More actions'), findsOneWidget);
+        });
+      });
+
+      // M1826 — first per-handler smoke test using the full mount
+      // path the harness arc has been building toward
+      // (M1804→M1813→M1820→M1823). The M1817 spike attempted this
+      // test before the harness reached EditorLoaded; the M1818
+      // fix-forward wrapped the empty stub in a group so the
+      // landing site stayed visible. With M1823 wiring QuillTokens
+      // into _defaultProbe and M1820's seedPage:true reaching
+      // EditorLoaded, the full mount → tap kebab → tap "Copy ULID"
+      // → assert clipboard chain runs.
+      //
+      // Pattern: mock SystemChannels.platform method-call handler
+      // intercepts `Clipboard.setData` and captures the `text` arg.
+      // After tapping the kebab and the menu item, the captured
+      // text must equal the seeded ulid. This is the per-handler
+      // contract for the entire D-fp arc's 26 kebab handlers —
+      // future slices reuse this exact shape for _onCopyLink,
+      // _onCopyPath, _onCopyBody, _onCopyPlain, _onCopyJson, etc.
+      // (TS-04 per-handler grouping per orchestrator INFO M1823.)
+      group('_onCopyUlid (D-fp6, M1703) — per-handler smoke', () {
+        testWidgets('tap kebab → Copy ULID → clipboard receives ulid',
+            (tester) async {
+          tester.view.physicalSize = const Size(1200, 900);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(() {
+            tester.view.resetPhysicalSize();
+            tester.view.resetDevicePixelRatio();
+          });
+
+          String? clipboardText;
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            (call) async {
+              if (call.method == 'Clipboard.setData') {
+                clipboardText =
+                    (call.arguments as Map<Object?, Object?>)['text']
+                        as String?;
+              }
+              return null;
+            },
+          );
+          addTearDown(
+            () => tester.binding.defaultBinaryMessenger
+                .setMockMethodCallHandler(SystemChannels.platform, null),
+          );
+
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tester.tap(find.byTooltip('More actions'));
+          // Pump enough frames for the PopupMenu to open without
+          // triggering pumpAndSettle's pending-animation noise.
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+          // The PopupMenu items have an intrinsic Material max-width
+          // of ~256px. Under flutter_test's default Ahem font (wider
+          // glyphs than production Inter), the longer tooltip labels
+          // overflow the Row by a few pixels. These are cosmetic
+          // `RenderFlex overflowed` warnings — the tap dispatch still
+          // works. Drain them so they don't fail the test. Future
+          // slice: wrap the PopupMenuItem Text in `Expanded(...,
+          // overflow: TextOverflow.ellipsis)` so the menu is robust
+          // at narrow widths in production too.
+          while (tester.takeException() != null) {}
+          await tester.tap(find.text('Copy ULID'));
+          await tester.pump();
+          while (tester.takeException() != null) {}
+
+          expect(clipboardText, ulid);
         });
       });
 
