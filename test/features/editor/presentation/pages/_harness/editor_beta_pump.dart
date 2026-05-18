@@ -1,15 +1,17 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:drift/native.dart';
 import 'package:file/memory.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:my_notion/core/db/quill_database.dart';
 import 'package:my_notion/core/ulid/ulid_generator.dart';
 import 'package:my_notion/features/editor/data/repositories/html_export_repository_impl.dart';
 import 'package:my_notion/features/editor/data/repositories/pdf_export_repository_impl.dart';
 import 'package:my_notion/features/editor/domain/repositories/html_export_repository.dart';
 import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
+import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
 import 'package:my_notion/features/forms/domain/entities/form_submission.dart';
 import 'package:my_notion/features/forms/domain/repositories/forms_repository.dart';
 import 'package:my_notion/features/sync/presentation/bloc/sync_bloc.dart';
@@ -33,8 +35,8 @@ import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
 /// assert dispatch) reuse this single helper instead of rebuilding
 /// the provider stack in every file.
 ///
-/// **Status:** sub-slice 4 (M1811). 8 of 9 collaborators now
-/// wired — the 3 M1806 foundations (VaultRepository + Indexer +
+/// **Status:** sub-slice 5 FINAL (M1813). All 9 collaborators
+/// now wired — the 3 M1806 foundations (VaultRepository + Indexer +
 /// QuillDatabase) plus the 3 added in this slice
 /// (HtmlExportRepository + PdfExportRepository + FormsRepository).
 /// The two ExportRepository impls are stateless `const Impl()`
@@ -63,8 +65,9 @@ import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
 /// * `BlocProvider<VaultBloc>` (read for `rootPath`) ✅ M1811
 /// * `BlocProvider<SyncBloc>` (read for `isAuthed`) ✅ M1811
 /// * The editor provides `EditorBloc`, `SlashMenuCubit`, and
-///   `BlockSelectionCubit` internally — drops out once the page
-///   itself mounts (final sub-slice).
+///   `BlockSelectionCubit` internally via the page's own
+///   `MultiBlocProvider` ✅ M1813 (default probe is now the page
+///   itself, wrapped in `MaterialApp`).
 ///
 /// **Wiring options when more handlers come in scope:**
 ///
@@ -80,6 +83,13 @@ import 'package:my_notion/features/vault/presentation/bloc/vault_state.dart';
 /// landing the full harness in a single slice would balloon past
 /// the loop's bite-sized budget. Splitting per-collaborator keeps
 /// each iteration small + lets the orchestrator gate each addition.
+/// When [probe] is null the default mount is the real
+/// `EditorBetaPage(ulid:)` wrapped in `MaterialApp.router` so the
+/// page can resolve `Directionality` + `MediaQuery` + `GoRouter`
+/// (the AppBar uses `GoRouter.of(context).go(...)` for nav back to
+/// `/home` after Move-to-Trash). Pass an override `probe:` (a
+/// `Builder` or a different widget) to drive the legacy
+/// foundation/probe assertions from M1806/M1809/M1811.
 Future<EditorBetaHarness> pumpEditorBeta(
   WidgetTester tester, {
   required String ulid,
@@ -118,7 +128,7 @@ Future<EditorBetaHarness> pumpEditorBeta(
           BlocProvider<VaultBloc>.value(value: vaultBloc),
           BlocProvider<SyncBloc>.value(value: syncBloc),
         ],
-        child: probe ?? const _UnwiredPagePlaceholder(),
+        child: probe ?? _defaultProbe(ulid: ulid),
       ),
     ),
   );
@@ -191,14 +201,23 @@ class EditorBetaHarness {
   }
 }
 
-/// Placeholder mounted when no `probe` widget is passed.  Future
-/// sub-slices swap this for `EditorBetaPage(ulid: …)` once the
-/// remaining 6 providers + 3 self-provided blocs are wired.
-class _UnwiredPagePlaceholder extends StatelessWidget {
-  const _UnwiredPagePlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox.shrink();
-  }
+/// Default mount: real `EditorBetaPage(ulid:)` inside a minimal
+/// `MaterialApp.router` (GoRouter shell needed by the page's
+/// `GoRouter.of(context).go(...)` calls in the Move-to-Trash
+/// kebab handler).
+Widget _defaultProbe({required String ulid}) {
+  return MaterialApp.router(
+    routerConfig: GoRouter(
+      initialLocation: '/editor/$ulid',
+      routes: [
+        GoRoute(
+          path: '/editor/:ulid',
+          builder: (_, state) => EditorBetaPage(
+            ulid: state.pathParameters['ulid']!,
+          ),
+        ),
+        GoRoute(path: '/home', builder: (_, _) => const SizedBox.shrink()),
+      ],
+    ),
+  );
 }

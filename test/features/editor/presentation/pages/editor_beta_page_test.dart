@@ -113,6 +113,26 @@ void main() {
         );
       });
 
+      // M1813 sub-slice 5 FINAL: default probe is now the real
+      // `EditorBetaPage(ulid: ...)` wrapped in `MaterialApp.router`.
+      // This first behavioral smoke test verifies the page mounts
+      // without throwing — promotes the M1811 scaffold-only probes
+      // into a real widget test per the M1811 TS-03 forward note.
+      testWidgets('default probe mounts EditorBetaPage without throwing',
+          (tester) async {
+        final harness = await pumpEditorBeta(
+          tester,
+          ulid: '01H0000000000000000000ABCD',
+        );
+        addTearDown(harness.dispose);
+        // Let any post-mount async work (EditorBloc OpenEditor →
+        // indexer lookup → state emit) settle before asserting.
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(EditorBetaPage), findsOneWidget);
+      });
+
       // M1811 sub-slice 4: VaultBloc + SyncBloc resolvable via
       // bloc_test MockBloc stubs (no-op initial state). 8 of 9
       // collaborators wired after this slice.
