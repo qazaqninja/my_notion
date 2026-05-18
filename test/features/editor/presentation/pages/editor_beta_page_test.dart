@@ -1234,6 +1234,44 @@ void main() {
         });
       });
 
+      // M1886 — fifth fresh post-dialog-family port. `_onCopyFormLink`
+      // is a clean clipboard-template port (M1826 _onCopyUlid shape).
+      // Production handler at editor_beta_page.dart:560 reads EditorBloc
+      // state, builds the public form URL via `publicFormUrl(
+      // backendBaseUrl: kBackendHttpBaseUrl, pageUlid: pageUlid)` and
+      // clipboards it. Default kBackendHttpBaseUrl == 'http://localhost:8080'
+      // and publicFormUrl returns '$base/forms/$pageUlid', so the
+      // expected clipboard payload is deterministic.
+      //
+      // Note: the kebab menu item is gated on `hasFormDefinition` in
+      // production, but `tapKebabItem` dispatches via the production
+      // `onSelected` callback directly, bypassing the visibility gate.
+      // The handler itself has no gate beyond the EditorLoaded + non-
+      // empty-ulid check, both of which seedPage:true satisfies.
+      group('_onCopyFormLink (D-fp20, M1743) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Copy form link → clipboard receives '
+            'http://localhost:8080/forms/<ulid>', (tester) async {
+          final clipboard = _installClipboardMock(tester);
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.copyFormLink);
+
+          expect(clipboard(), 'http://localhost:8080/forms/$ulid');
+        });
+      });
+
       // M1869 — eighth + final dialog handler. CLOSES THE DIALOG
       // FAMILY: every kebab dialog handler now has behavioral
       // coverage. Production handler at editor_beta_page.dart:747
