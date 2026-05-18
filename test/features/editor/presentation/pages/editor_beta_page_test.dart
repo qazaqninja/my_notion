@@ -1,8 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_notion/core/db/quill_database.dart' hide Page;
+import 'package:my_notion/features/editor/domain/editor_beta_app_bar_actions.dart';
 import 'package:my_notion/features/editor/domain/repositories/html_export_repository.dart';
 import 'package:my_notion/features/editor/domain/repositories/pdf_export_repository.dart';
 import 'package:my_notion/features/editor/presentation/pages/editor_beta_page.dart';
@@ -26,6 +27,43 @@ import '_harness/editor_beta_pump.dart';
 /// smokes (`_onCopyPath`, `_onCopyBody`, `_onCopyPlain`,
 /// `_onCopyJson`, …) call this helper instead of redeclaring the 14
 /// lines of mock-handler boilerplate.
+/// Dispatches a kebab `EditorBetaAppBarAction` by invoking the
+/// `PopupMenuButton.onSelected` callback directly, bypassing the
+/// pointer-tap path entirely.
+///
+/// M1838 — supersedes the previous `find.byTooltip('More actions')`
+/// + `find.text(label)` pattern used by `_onCopyUlid` / `_onCopyLink`
+/// / `_onCopyPath`. The pointer-tap path works for menu items at the
+/// top of the popup but breaks at the 4th-or-lower item because
+/// super_editor inserts an Overlay above the PopupMenu route that
+/// intercepts pointer events (see M1835 spike).
+///
+/// Direct-callback dispatch:
+///   * still exercises the production handler closure (so the
+///     handler's `context.read<X>()` reads work the same way)
+///   * doesn't require the popup to render at all (no surface-size
+///     adjustment, no `ensureVisible`, no menu-position math)
+///   * works for any item in the kebab regardless of viewport
+///
+/// Future per-handler smokes (`_onCopyBody`, `_onCopyPlain`,
+/// `_onCopyJson`, `Move to trash`, kebab handlers requiring dialogs,
+/// etc.) call this helper instead of the pointer-tap pattern.
+Future<void> tapKebabItem(
+  WidgetTester tester,
+  EditorBetaAppBarAction action,
+) async {
+  final button = tester.widget<PopupMenuButton<EditorBetaAppBarAction>>(
+    find.byType(PopupMenuButton<EditorBetaAppBarAction>),
+  );
+  button.onSelected!(action);
+  // The handler is async (`Future<void> _on…() async { … }`) — pump
+  // a handful of frames so the awaited `Clipboard.setData` / dialog
+  // / etc. side effects land before the test asserts.
+  for (var i = 0; i < 3; i++) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
 ValueGetter<String?> _installClipboardMock(WidgetTester tester) {
   String? captured;
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
@@ -383,27 +421,38 @@ void main() {
         });
       });
 
-      // M1835/M1836 — per-handler smoke landing site for kebab items
-      // beneath the popup's initial viewport. Skipped pending the
-      // `tapKebabItem(WidgetTester, String label)` helper that opens
-      // the kebab + scrolls the item into view + dispatches via the
-      // PopupMenuItem.onTap callback (bypassing the overlay-stack
-      // hit-test gotcha — `_RenderTheater` / `RenderTapRegionSurface`
-      // intercepting pointer taps when the item sits below the
-      // initial 800×600 viewport, even with surface 1200×1400 + the
-      // `tester.ensureVisible` dance).
-      //
-      // Once the helper ships, this stub becomes the actual
-      // `_onCopyBody` (D-fp17, M1737) smoke + the same shape repeats
-      // for `_onCopyPlain`, `_onCopyJson`, `Move to trash`, etc.
+      // M1838 — un-skips the M1836 stub. The `tapKebabItem` helper
+      // (declared at file scope above) bypasses the pointer-tap
+      // path that fails for popup items below the initial viewport.
+      // Same template as M1826/M1829/M1833 (clipboard mock + seedPage
+      // mount), just swaps the kebab+tap pair for one helper call.
       group('_onCopyBody (D-fp17, M1737) — per-handler smoke', () {
-        testWidgets(
-          'tap kebab → Copy body text → clipboard receives page.body '
-          '[SKIP: M1836 tapKebabItem helper needed — PopupMenu '
-          'overlay hit-test gotcha]',
-          (tester) async {},
-          skip: true,
-        );
+        testWidgets('kebab → Copy body text → clipboard receives '
+            'page.body', (tester) async {
+          final clipboard = _installClipboardMock(tester);
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            seedBody: 'Body text.',
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.copyBody);
+
+          // page.body is `raw.substring(closeEnd)` where closeEnd is
+          // past the closing `---\n` of the frontmatter, so the
+          // seeded body `'Body text.'` lands in the clipboard as
+          // `'\nBody text.\n'` (leading newline + trailing newline
+          // from the seedPage primitive).
+          expect(clipboard(), '\nBody text.\n');
+        });
       });
 
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
