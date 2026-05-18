@@ -116,8 +116,15 @@ Future<EditorBetaHarness> pumpEditorBeta(
   // leak into adjacent tests. Probe-only tests (default null)
   // keep flutter_test's default 800×600 surface.
   if (surface != null) {
-    tester.view.physicalSize = surface;
-    addTearDown(tester.view.resetPhysicalSize);
+    // `tester.binding.setSurfaceSize` writes through to the render
+    // tree so subsequent `pumpWidget` calls lay out against the new
+    // bounds. `tester.view.physicalSize = ...` (the alternative) sets
+    // the View's nominal size but doesn't always propagate to
+    // `_ReusableRenderView`'s constraints in time for the first
+    // pump, which leaves child widgets hit-testing against stale
+    // bounds.
+    await tester.binding.setSurfaceSize(surface);
+    addTearDown(() => tester.binding.setSurfaceSize(null));
   }
   if (devicePixelRatio != null) {
     tester.view.devicePixelRatio = devicePixelRatio;
