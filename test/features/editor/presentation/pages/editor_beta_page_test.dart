@@ -718,6 +718,40 @@ void main() {
         });
       });
 
+      // M1859 — third dialog smoke. Extends the dialog template to
+      // a third modal shape: `showQuillDatePicker` (date picker
+      // calendar) alongside `showQuillChoice` (option modal, M1848)
+      // and `showQuillPrompt` (text-input modal, M1851). Production
+      // handler at editor_beta_page.dart:790 opens the picker via
+      // `showQuillModal<DateTime>` with `QuillDatePicker` body —
+      // title "Pick date", `Today` quick-jump button.
+      //
+      // Test asserts the modal mounts. Date selection + frontmatter
+      // dispatch branches are domain-tested via `reminder_date_test.dart`
+      // and `pageReminderActionFor`.
+      group('_onSetReminder (D-fp15, M1733) — per-handler smoke', () {
+        testWidgets('kebab → Set reminder → date picker modal opens',
+            (tester) async {
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.setReminder);
+
+          expect(find.text('Pick date'), findsOneWidget);
+          expect(find.text('Today'), findsOneWidget);
+        });
+      });
+
       testWidgets('mounts VaultBloc + SyncBloc stubs (no-op initial state)',
           (tester) async {
         late VaultBloc foundVault;
