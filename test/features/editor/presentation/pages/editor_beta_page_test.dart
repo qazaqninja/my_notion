@@ -15,6 +15,11 @@ void main() {
   // Per-handler smoke tests are deferred until a dedicated
   // editor_beta_page widget-test sweep (next-after-this slice) can
   // build the provider harness once and reuse it across cases.
+  // M1788 fix-forward: dropped the structural `isNot` duplicate
+  // assert per the M1787 audit's TS-06 WARN. Single stub assert
+  // here is intentionally narrow — behavioral per-handler tests
+  // (mount → tap kebab → assert dispatch) land once the shared
+  // provider harness is built in the next slice.
   group('EditorBetaPage', () {
     group('public construction surface', () {
       test('accepts `ulid` and is a StatelessWidget', () {
@@ -22,13 +27,6 @@ void main() {
 
         expect(page.ulid, '01H0000000000000000000ABCD');
         expect(page, isA<StatelessWidget>());
-      });
-
-      test('different `ulid` values are not equal', () {
-        const a = EditorBetaPage(ulid: '01H0000000000000000000ABCD');
-        const b = EditorBetaPage(ulid: '01H0000000000000000000EFGH');
-
-        expect(a.ulid, isNot(b.ulid));
       });
     });
   });
