@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -427,6 +429,53 @@ void main() {
           await tapKebabItem(tester, EditorBetaAppBarAction.copyPlain);
 
           expect(clipboard(), 'bold text.');
+        });
+      });
+
+      // M1845 — sixth + final D-fp clipboard handler. Production
+      // handler at editor_beta_page.dart:649 builds the canonical
+      // `{ ulid, relativePath, frontmatter, body }` JSON envelope
+      // via `pageAsJsonPayload(...)` and clipboards it.
+      //
+      // Asserts via `jsonDecode` round-trip instead of literal
+      // string match — key order is documented as preserved in the
+      // payload helper but escaping rules (newlines, quotes) on the
+      // body field would make the literal-assertion fragile and
+      // sensitive to harmless serialiser changes.
+      group('_onCopyJson (D-fp18, M1739) — per-handler smoke', () {
+        testWidgets(
+            'kebab → Copy as JSON → clipboard receives '
+            'canonical {ulid, relativePath, frontmatter, body} envelope',
+            (tester) async {
+          final clipboard = _installClipboardMock(tester);
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            seedTitle: 'JSON test',
+            seedBody: 'JSON body.',
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(tester, EditorBetaAppBarAction.copyJson);
+
+          final captured = clipboard();
+          expect(captured, isNotNull);
+          final decoded = jsonDecode(captured!) as Map<String, Object?>;
+          expect(decoded['ulid'], ulid);
+          expect(decoded['relativePath'], 'page.md');
+          expect(decoded['body'], '\nJSON body.\n');
+          // Frontmatter is parsed from YAML in the seedPage primitive,
+          // so `id` + `title` round-trip into the envelope.
+          final frontmatter = decoded['frontmatter']! as Map<String, Object?>;
+          expect(frontmatter['id'], ulid);
+          expect(frontmatter['title'], 'JSON test');
         });
       });
 
