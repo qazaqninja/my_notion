@@ -148,6 +148,28 @@ void main() {
       });
     });
 
+    group('post-D30d editor file pointers', () {
+      test('does not reference deleted lib editor_page.dart', () {
+        // M1765 (D30d) deleted lib/features/editor/presentation/pages/
+        // editor_page.dart (2,625 LOC). Any prose file-pointer trace
+        // that still names that path is a stale archaeology marker
+        // and should point to editor_beta_page.dart or the relocated
+        // implementation (e.g., markdown_renderer.dart for the
+        // breadcrumb body). The substring used here is
+        // intentionally narrow ('editor_page.dart') so test-suite
+        // entries that genuinely reference test files are not
+        // tripped — the production file is gone.
+        expect(
+          source.contains('editor_page.dart'),
+          isFalse,
+          reason:
+              'M1900: D30d deleted editor_page.dart; doc pointers must '
+              'name editor_beta_page.dart or the relocated host '
+              '(markdown_renderer.dart for the breadcrumb body)',
+        );
+      });
+    });
+
     group('share sheet integration', () {
       test('inbound share is not marked "remains on the backlog"', () {
         expect(
