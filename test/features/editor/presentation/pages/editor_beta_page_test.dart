@@ -1351,6 +1351,63 @@ void main() {
         });
       });
 
+      // M1896 — submit-path follow-on for `_onPublishWithPassword`,
+      // closing the M1865 TS-01 WARN that flagged the modal-mount-only
+      // smoke as missing the happy path. Production handler at
+      // editor_beta_page.dart:1345 opens an AlertDialog via
+      // `_promptForPassword`, then on confirm builds bcrypt-stamped
+      // public+password entries via `buildPublicPasswordEntries`,
+      // dispatches AddFrontmatterField for both, clipboards the
+      // `kBackendHttpBaseUrl/public/<ulid>` URL, and SnackBars
+      // 'Published (password-protected): <url>'. The clipboard URL
+      // is fully deterministic (`http://localhost:8080/public/<ulid>`);
+      // the bcrypt hash itself is not asserted (randomized salt) —
+      // the bcrypt + entry-build logic has its own unit tests at
+      // `build_public_password_entries_test.dart`. EditorBloc dispatch
+      // is internal (not stubbed) — bloc-dispatch verification stays
+      // out of scope, same shape as the M1856 _onPublishToggle test.
+      group('_onPublishWithPassword (D-fp24, M1751) — submit-path smoke',
+          () {
+        testWidgets(
+            'kebab → Publish with password → enter password → '
+            'tap Publish → clipboard + SnackBar carry the URL',
+            (tester) async {
+          final clipboard = _installClipboardMock(tester);
+          const ulid = '01H0000000000000000000ABCD';
+          final harness = await pumpEditorBeta(
+            tester,
+            ulid: ulid,
+            seedPage: true,
+            surface: const Size(1200, 900),
+            devicePixelRatio: 1.0,
+          );
+          addTearDown(harness.dispose);
+          for (var i = 0; i < 5; i++) {
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+
+          await tapKebabItem(
+            tester,
+            EditorBetaAppBarAction.publishWithPassword,
+          );
+          // Confirm the modal mounted before we type into it.
+          expect(find.text('Set page password'), findsOneWidget);
+
+          await tester.enterText(find.byType(TextField), 'hunter2');
+          await tester.pump();
+          await tester.tap(find.widgetWithText(FilledButton, 'Publish'));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 50));
+
+          final expectedUrl = 'http://localhost:8080/public/$ulid';
+          expect(clipboard(), expectedUrl);
+          expect(
+            find.text('Published (password-protected): $expectedUrl'),
+            findsOneWidget,
+          );
+        });
+      });
+
       // M1869 — eighth + final dialog handler. CLOSES THE DIALOG
       // FAMILY: every kebab dialog handler now has behavioral
       // coverage. Production handler at editor_beta_page.dart:747

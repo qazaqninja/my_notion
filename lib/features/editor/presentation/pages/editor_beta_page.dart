@@ -1423,7 +1423,17 @@ class _BetaEditorShellState extends State<_BetaEditorShell> {
         );
       },
     );
-    controller.dispose();
+    // M1896 fix-forward (surfaced by the _onPublishWithPassword
+    // submit-path smoke): defer controller dispose to the next frame
+    // so the dialog's close animation can finish any final rebuilds
+    // against the still-live controller before it's torn down.
+    // Without this, the rebuild fires `_MergingListenable.addListener`
+    // on a disposed ChangeNotifier and throws. Mirrors the intent
+    // captured in this method's own doc-comment ("disposing inside
+    // the builder so the dialog transition has finished by the time
+    // the controller goes out of scope") — the original synchronous
+    // dispose was a latent timing bug.
+    WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
     return result;
   }
   // coverage:ignore-end
