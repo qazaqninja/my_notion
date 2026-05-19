@@ -147,5 +147,21 @@ void main() {
         );
       });
     });
+
+    group('share sheet integration', () {
+      test('inbound share is not marked "remains on the backlog"', () {
+        expect(
+          source.contains(
+            'Inbound** share (open-in-Quill from Safari etc.) requires '
+            'iOS share extension Xcode setup; remains on the backlog',
+          ),
+          isFalse,
+          reason:
+              'M1898: inbound share shipped at F1-F3 — '
+              'receive_sharing_intent dep + IncomingShareListener + '
+              'app.dart wire-up are all live; flip 🚧 → ✅',
+        );
+      });
+    });
   });
 }
